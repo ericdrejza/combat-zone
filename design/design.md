@@ -147,15 +147,15 @@ Properties:
 - toZoneId
 - directionality (one-way / two-way)
 - movementRule:
-- - free
-- - blocked
-- - skillCheck
-- - difficult
+  - free
+  - blocked
+  - skillCheck
+  - difficult
 - visibilityRule:
-- - clear
-- - obscured
-- - blocked
-- - oneWay
+  - clear
+  - obscured
+  - blocked
+  - oneWay
 - interactionTags[] (free-form)
 - notes
 
@@ -235,16 +235,16 @@ Validation modes:
 ### 6.1 Zone Layout Strategies
 
 - FLEX (default)
-- - Center-weighted distribution
-- - Dynamic spacing
+  - Center-weighted distribution
+  - Dynamic spacing
 - SEQUENTIAL
-- - Fixed positional slots around polygon perimeter
-- - Deterministic ordering
+- Fixed positional slots around polygon perimeter
+- Deterministic ordering
 - SPLIT_SEQUENTIAL
-- - Three logical partitions:
-- - - Heroes
-- - - Enemies
-- - - Engagements
+  - Three logical partitions:
+    - Heroes
+    - Enemies
+    - Engagements
 - Each partition uses sequential placement internally
 
 ### 6.2 Engagement Layout Strategies
@@ -276,7 +276,8 @@ Panels:
 - Initiative Panel
 - Properties Panel
 - Validation Panel
-  Panels update based on selection context.
+
+Panels update based on selection context.
 
 ### 7.3 Properties Panel
 
