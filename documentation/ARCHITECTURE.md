@@ -1,20 +1,7 @@
 ## COMMAND OBJECT SCHEMA (locked)
 
 Every state mutation in the system must be expressed as a command matching
-this shape:
-
-```typescript
-interface Command<TPayload = unknown> {
-  id: string; // uuid, generated at creation
-  type: string; // e.g. "ACTOR_MOVE", "ZONE_CREATE", "ENGAGEMENT_MERGE"
-  timestamp: number; // Date.now() at creation
-  payload: TPayload; // data needed to apply the command
-  inversePayload: TPayload; // data needed to undo the command (captured BEFORE apply)
-  do(state: EncounterState): EncounterState; // pure function, returns new state
-  undo(state: EncounterState): EncounterState; // pure function, returns new state
-  validationResult?: ValidationResult; // attached by the validation pipeline before execution
-}
-```
+the interface in `../src/core/commands/types.ts`
 
 Rules:
 
@@ -39,3 +26,30 @@ Rules:
 
 If you need a command that doesn't cleanly fit this shape, ask before
 inventing a variant schema.
+
+## PROCESS RULES (from original constraints — retained, not duplicated from documentation/DESIGN.md)
+
+- **No simulation logic.** Represent state and relationships only. Do not
+  implement RPG rules engines, dice systems, or narrative generation.
+- **GM authority is absolute outside Strict mode.** Validation is advisory
+  unless Strict mode is explicitly enabled (see `documentation/DESIGN.md` §5.5 
+  for the four validation levels). Never block a GM action in non-Strict modes.
+- **Every mutation is a Command.** No direct state writes anywhere in the
+  codebase, including "internal" or "derived" updates like layout
+  recalculation after a move — if it changes `EncounterState`, it's a
+  Command.  See `documentation/ARCHITECTURE.md` if more architecture information
+  is needed.
+- **Tool-driven UI, no global mode system.** Each tool in `interaction/tools/`
+  owns its own selection rules, drag behavior, click behavior, and keyboard
+  shortcuts. Do not introduce a global "mode" enum that tools all branch on.
+- **Layout strategies are pluggable, not hardcoded.** FLEX / SEQUENTIAL /
+  SPLIT_SEQUENTIAL live behind a shared strategy interface in
+  `core/layout/`, used by both Zones and Engagements. Adding a new strategy
+  should not require touching Zone or Engagement code.
+- **Engagements are groups, never pairwise.** No participant should ever be
+  linked only to one other participant — membership is transitive within
+  the group.
+- **Edges are graph objects, not geometry.** Do not derive edge validity or
+  behavior from canvas coordinates or polygon adjacency — edges are
+  explicit directional relationships with their own rules
+  (`documentation/DESIGN.md` §4.5).

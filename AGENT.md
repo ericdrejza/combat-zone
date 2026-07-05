@@ -6,19 +6,24 @@ You are an expert frontend-heavy full-stack engineer building a zone-based
 TTRPG encounter management system.
 
 Your job is to implement a production-quality application based strictly on
-`documentation/DESIGN.md`. That document is the **single source of truth for product and
+`documentation/DESIGN.md` and `documentation/ARCHITECTURE.md`.
+That document is the **single source of truth for product and
 domain decisions** — entities, properties, layout strategies, interaction
 rules, MVP scope. Do not redefine or restate domain facts here. If you
 believe `documentation/DESIGN.md` is wrong, incomplete, or ambiguous for something you're
 about to build, **stop and ask** rather than assuming or inventing behavior.
 
+Only look at `documentation/ARCHITECTURE.md` if there is an architecture related
+information you need but do not have from the context.
+
 This file covers **how to build it**: stack, technical contracts, module
 boundaries, and process rules. It intentionally does not repeat what's
-already in `documentation/DESIGN.md`.
+already in `documentation/DESIGN.md` or `documentation/ARCHITECTURE.md`.
 
 ## GOLDEN RULE: DO NOT ASSUME DESIGN DECISIONS
 
-If you hit a decision point that isn't explicitly covered by `documentation/DESIGN.md` or
+If you hit a decision point that isn't explicitly covered by
+`documentation/DESIGN.md`, `documentation/ARCHITECTURE.md`, or
 this file — a new edge case, an ambiguous interaction, a missing property,
 a UX question — do not silently pick an answer and move on. Ask. This
 applies especially to:
@@ -86,33 +91,6 @@ entity type (a Zone-only command, an Actor-only validator) → that entity's
 folder in `entities/`. If it's about _how the user interacts_ with the
 canvas regardless of entity (tool switching, selection modifiers) →
 `interaction/`. If it's chrome around the canvas (panels, toolbar) → `ui/`.
-
-## PROCESS RULES (from original constraints — retained, not duplicated from documentation/DESIGN.md)
-
-- **No simulation logic.** Represent state and relationships only. Do not
-  implement RPG rules engines, dice systems, or narrative generation.
-- **GM authority is absolute outside Strict mode.** Validation is advisory
-  unless Strict mode is explicitly enabled (see `documentation/DESIGN.md` §5.5 
-  for the four validation levels). Never block a GM action in non-Strict modes.
-- **Every mutation is a Command.** No direct state writes anywhere in the
-  codebase, including "internal" or "derived" updates like layout
-  recalculation after a move — if it changes `EncounterState`, it's a
-  Command.  See `documentation/ARCHITECTURE.md` if more architecture information
-  is needed.
-- **Tool-driven UI, no global mode system.** Each tool in `interaction/tools/`
-  owns its own selection rules, drag behavior, click behavior, and keyboard
-  shortcuts. Do not introduce a global "mode" enum that tools all branch on.
-- **Layout strategies are pluggable, not hardcoded.** FLEX / SEQUENTIAL /
-  SPLIT_SEQUENTIAL live behind a shared strategy interface in
-  `core/layout/`, used by both Zones and Engagements. Adding a new strategy
-  should not require touching Zone or Engagement code.
-- **Engagements are groups, never pairwise.** No participant should ever be
-  linked only to one other participant — membership is transitive within
-  the group.
-- **Edges are graph objects, not geometry.** Do not derive edge validity or
-  behavior from canvas coordinates or polygon adjacency — edges are
-  explicit directional relationships with their own rules
-  (`documentation/DESIGN.md` §4.5).
 
 ## DEFINITION OF DONE (per feature)
 
