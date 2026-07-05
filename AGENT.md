@@ -109,6 +109,8 @@ A feature is not complete until:
 5. Any new edge case discovered during implementation that isn't covered by
    `documentation/DESIGN.md` or the Resolved Edge Cases section above has been raised as a
    question, not silently resolved.
+6. The appropriate checkbox is checked in `documentation/ROADMAP.md`; it will
+   only be allowed to be checked if the previous criteria are met.
 
 ## ACCEPTANCE CRITERIA
 
