@@ -26,11 +26,21 @@ const encounterSlice = createSlice({
       state,
       { payload }: PayloadAction<CommitEncounterChangePayload>
     ) {
+      const nextEncounter = payload.action.validationResult
+        ? {
+            ...payload.nextEncounter,
+            validationState: {
+              ...payload.nextEncounter.validationState,
+              messages: payload.action.validationResult.messages
+            }
+          }
+        : payload.nextEncounter;
+
       state.past.push({
         action: payload.action,
         snapshot: state.present
       });
-      state.present = payload.nextEncounter;
+      state.present = nextEncounter;
       state.future = [];
     },
     undoEncounterChange(state) {

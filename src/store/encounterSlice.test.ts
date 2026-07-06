@@ -217,4 +217,40 @@ describe("encounter Redux history", () => {
     expect(clearedState.past).toEqual([]);
     expect(clearedState.future).toEqual([]);
   });
+
+  it("plumbs committed validation results into the current encounter snapshot", () => {
+    const initialState = reducer(undefined, { type: "test/init" });
+    const nextEncounter = {
+      ...renamePresentEncounter(initialState, 1),
+      validationState: {
+        mode: "ADVISORY" as const,
+        messages: []
+      }
+    };
+    const validationMessage = {
+      code: "movement.destinationZoneMissing",
+      message: "Movement references a destination zone that does not exist.",
+      severity: "error" as const
+    };
+    const committedState = reducer(
+      initialState,
+      commitEncounterChange({
+        action: {
+          ...actionRecord(1),
+          validationResult: {
+            valid: false,
+            messages: [validationMessage]
+          }
+        },
+        nextEncounter
+      })
+    );
+
+    expect(committedState.present.validationState.messages).toEqual([
+      validationMessage
+    ]);
+    expect(committedState.past[0].snapshot.validationState.messages).toEqual(
+      []
+    );
+  });
 });

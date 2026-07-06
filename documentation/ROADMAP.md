@@ -57,20 +57,20 @@ before persistence and final MVP verification.
 
 ## 4. Validation Pipeline Foundation
 
-- [ ] Implement validation pipeline structure.
+- [x] Implement validation pipeline structure.
   - Action -> Validators[] -> Result -> Redux history commit or warning.
-- [ ] Add validation mode state.
+- [x] Add validation mode state.
   - `OFF`
   - `ADVISORY`
   - `ASSISTED`
   - `STRICT`
-- [ ] Implement MVP validators as advisory/non-blocking outside Strict mode.
+- [x] Implement MVP validators as advisory/non-blocking outside Strict mode.
   - `MovementValidator`
   - `EdgeValidator`
   - `EngagementValidator`
   - `ZoneIntegrityValidator`
-- [ ] Ensure GM authority is preserved outside Strict mode.
-- [ ] Add validation result plumbing for the status/validation panel.
+- [x] Ensure GM authority is preserved outside Strict mode.
+- [x] Add validation result plumbing for the status/validation panel.
 
 ## 5. Canvas Shell and Rendering Order
 
