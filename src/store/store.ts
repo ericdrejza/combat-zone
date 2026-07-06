@@ -1,10 +1,12 @@
 import { configureStore } from "@reduxjs/toolkit";
 
+import interactionReducer from "../interaction/interactionState";
 import encounterReducer from "./encounterSlice";
 
 export const store = configureStore({
   reducer: {
-    encounter: encounterReducer
+    encounter: encounterReducer,
+    interaction: interactionReducer
   }
 });
 

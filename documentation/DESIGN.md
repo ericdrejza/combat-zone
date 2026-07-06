@@ -213,14 +213,12 @@ Non-game objects:
 
 Tools define interaction behavior:
 
-- Select
+- Background Tool
 - Zone Tool
 - Edge Tool
-- Actor Tool
-- Engagement Tool
 - Annotation Tool
-- Background Tool
-- Delete Tool
+- Actor Tool
+- Select
 
 Panning is handled by right-click drag rather than a dedicated toolbar tool.
 

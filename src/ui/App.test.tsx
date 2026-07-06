@@ -9,6 +9,7 @@ import userEvent from "@testing-library/user-event";
 import { Provider } from "react-redux";
 
 import { RENDER_LAYERS } from "../core/rendering/types";
+import { clearSelection, setActiveTool } from "../interaction/interactionState";
 import { store } from "../store/store";
 import { App, movePanel } from "./App";
 
@@ -39,6 +40,67 @@ describe("App", () => {
     );
 
     expect(screen.queryByRole("button", { name: "Pan" })).not.toBeInTheDocument();
+  });
+
+  it("renders toolbar tools in the expected order with requested separators", () => {
+    render(
+      <Provider store={store}>
+        <App />
+      </Provider>
+    );
+    const tools = screen.getByRole("navigation", { name: "Tools" });
+
+    expect(
+      within(tools)
+        .getAllByRole("button")
+        .map((button) => button.textContent)
+    ).toEqual(["Zone", "Edge", "Background", "Annotation", "Actor", "Select"]);
+    expect(screen.getAllByRole("button", { name: "Background" })).toHaveLength(1);
+    expect(screen.queryByRole("button", { name: "Engagement" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Delete" })).not.toBeInTheDocument();
+    expect(within(tools).getAllByRole("separator")).toHaveLength(2);
+  });
+
+  it("activates toolbar tools from button clicks and keyboard shortcuts", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <Provider store={store}>
+        <App />
+      </Provider>
+    );
+
+    await user.click(screen.getByRole("button", { name: "Zone" }));
+
+    expect(screen.getByRole("button", { name: "Zone" })).toHaveAttribute(
+      "aria-pressed",
+      "true"
+    );
+
+    fireEvent.keyDown(window, { key: "a" });
+
+    expect(screen.getByRole("button", { name: "Actor" })).toHaveAttribute(
+      "aria-pressed",
+      "true"
+    );
+  });
+
+  it("selects canvas entities through the active tool interaction contract", () => {
+    store.dispatch(setActiveTool("select"));
+    store.dispatch(clearSelection());
+
+    render(
+      <Provider store={store}>
+        <App />
+      </Provider>
+    );
+
+    fireEvent.click(screen.getByLabelText("Selection overlay placeholder"));
+
+    expect(store.getState().interaction.selection).toMatchObject({
+      selectedEntityType: "zone",
+      selectedIds: ["selection-placeholder"]
+    });
   });
 
   it("renders canvas layers in documented order with selection overlay support", () => {

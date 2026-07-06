@@ -4,11 +4,35 @@ import { useDispatch, useSelector } from "react-redux";
 
 import type { EncounterBackgroundImage } from "../../core/encounter/types";
 import type { EncounterActionRecord } from "../../core/history/types";
-import { MVP_TOOLS } from "../../interaction/tools/toolRegistry";
+import { setActiveTool } from "../../interaction/interactionState";
+import {
+  TOOL_DEFINITIONS_BY_ID
+} from "../../interaction/tools/toolRegistry";
+import type { ToolDefinition } from "../../interaction/tools/toolRegistry";
 import type { RootState } from "../../store/store";
 import { commitEncounterChange } from "../../store/encounterSlice";
 
 type BackgroundAction = "add" | "replace";
+type ToolbarItem =
+  | {
+      type: "tool";
+      tool: ToolDefinition;
+    }
+  | {
+      id: string;
+      type: "separator";
+    };
+
+const TOOLBAR_ITEMS: ToolbarItem[] = [
+  { type: "tool", tool: TOOL_DEFINITIONS_BY_ID.background },
+  { type: "tool", tool: TOOL_DEFINITIONS_BY_ID.zone },
+  { type: "tool", tool: TOOL_DEFINITIONS_BY_ID.edge },
+  { type: "tool", tool: TOOL_DEFINITIONS_BY_ID.annotation },
+  { id: "annotation-actor", type: "separator" },
+  { type: "tool", tool: TOOL_DEFINITIONS_BY_ID.actor },
+  { id: "actor-select", type: "separator" },
+  { type: "tool", tool: TOOL_DEFINITIONS_BY_ID.select }
+];
 
 function readImageFile(file: File): Promise<EncounterBackgroundImage> {
   return new Promise((resolve, reject) => {
@@ -52,6 +76,9 @@ function createBackgroundActionRecord(
 export function Toolbar() {
   const dispatch = useDispatch();
   const encounter = useSelector((state: RootState) => state.encounter.present);
+  const activeToolId = useSelector(
+    (state: RootState) => state.interaction.activeToolId
+  );
   const backgroundImage = encounter.backgroundImage;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [backgroundMenuOpen, setBackgroundMenuOpen] = useState(false);
@@ -114,6 +141,102 @@ export function Toolbar() {
     );
   }
 
+  function renderToolButton(tool: ToolDefinition) {
+    if (tool.id === "background") {
+      return (
+        <div key={tool.id} className="relative">
+          <button
+            aria-expanded={backgroundMenuOpen}
+            aria-haspopup="menu"
+            aria-pressed={activeToolId === "background"}
+            className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium shadow-sm transition hover:bg-canvas ${
+              activeToolId === "background"
+                ? "border-canvas-ink bg-canvas-ink text-white"
+                : "border-canvas-line bg-white text-canvas-ink"
+            }`}
+            onClick={() => {
+              dispatch(setActiveTool("background"));
+              setBackgroundMenuOpen((isMenuOpen) => !isMenuOpen);
+            }}
+            title={tool.tooltip}
+            type="button"
+          >
+            <Image aria-hidden="true" className="h-4 w-4" />
+            {tool.label}
+          </button>
+          {backgroundMenuOpen ? (
+            <div
+              aria-label="Background options"
+              className="absolute left-0 top-full z-10 mt-2 min-w-36 rounded-2xl border border-canvas-line bg-canvas-panel p-2 shadow-lg"
+              role="menu"
+            >
+              {!backgroundImage ? (
+                <button
+                  className="w-full rounded-xl px-3 py-2 text-left text-sm transition hover:bg-canvas"
+                  onClick={() => requestBackgroundUpload("add")}
+                  role="menuitem"
+                  type="button"
+                >
+                  Add
+                </button>
+              ) : (
+                <>
+                  <button
+                    className="w-full rounded-xl px-3 py-2 text-left text-sm transition hover:bg-canvas"
+                    onClick={() => requestBackgroundUpload("replace")}
+                    role="menuitem"
+                    type="button"
+                  >
+                    Replace
+                  </button>
+                  <button
+                    className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-red-700 transition hover:bg-red-50"
+                    onClick={deleteBackground}
+                    role="menuitem"
+                    type="button"
+                  >
+                    <Trash2 aria-hidden="true" className="h-4 w-4" />
+                    Delete
+                  </button>
+                </>
+              )}
+            </div>
+          ) : null}
+          <input
+            ref={fileInputRef}
+            accept="image/*"
+            aria-label="Upload background image"
+            className="sr-only"
+            onChange={(event) => {
+              void handleBackgroundFileChange(event);
+            }}
+            type="file"
+          />
+        </div>
+      );
+    }
+
+    return (
+      <button
+        key={tool.id}
+        aria-pressed={activeToolId === tool.id}
+        className={`rounded-full border px-3 py-1.5 text-sm font-medium shadow-sm transition hover:bg-canvas ${
+          activeToolId === tool.id
+            ? "border-canvas-ink bg-canvas-ink text-white"
+            : "border-canvas-line bg-white text-canvas-ink"
+        }`}
+        onClick={() => {
+          dispatch(setActiveTool(tool.id));
+          setBackgroundMenuOpen(false);
+        }}
+        title={tool.tooltip}
+        type="button"
+      >
+        {tool.label}
+      </button>
+    );
+  }
+
   return (
     <header
       aria-label="Combat Zone toolbar"
@@ -124,79 +247,18 @@ export function Toolbar() {
           Combat Zone
         </h1>
         <nav aria-label="Tools" className="flex flex-wrap gap-2">
-          <div className="relative">
-            <button
-              aria-expanded={backgroundMenuOpen}
-              aria-haspopup="menu"
-              className="inline-flex items-center gap-2 rounded-full border border-canvas-line bg-white px-3 py-1.5 text-sm font-medium text-canvas-ink shadow-sm transition hover:bg-canvas"
-              onClick={() =>
-                setBackgroundMenuOpen((isMenuOpen) => !isMenuOpen)
-              }
-              title="Add, replace, or delete the canvas background image."
-              type="button"
-            >
-              <Image aria-hidden="true" className="h-4 w-4" />
-              Background
-            </button>
-            {backgroundMenuOpen ? (
-              <div
-                aria-label="Background options"
-                className="absolute left-0 top-full z-10 mt-2 min-w-36 rounded-2xl border border-canvas-line bg-canvas-panel p-2 shadow-lg"
-                role="menu"
-              >
-                {!backgroundImage ? (
-                  <button
-                    className="w-full rounded-xl px-3 py-2 text-left text-sm transition hover:bg-canvas"
-                    onClick={() => requestBackgroundUpload("add")}
-                    role="menuitem"
-                    type="button"
-                  >
-                    Add
-                  </button>
-                ) : (
-                  <>
-                    <button
-                      className="w-full rounded-xl px-3 py-2 text-left text-sm transition hover:bg-canvas"
-                      onClick={() => requestBackgroundUpload("replace")}
-                      role="menuitem"
-                      type="button"
-                    >
-                      Replace
-                    </button>
-                    <button
-                      className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-red-700 transition hover:bg-red-50"
-                      onClick={deleteBackground}
-                      role="menuitem"
-                      type="button"
-                    >
-                      <Trash2 aria-hidden="true" className="h-4 w-4" />
-                      Delete
-                    </button>
-                  </>
-                )}
-              </div>
-            ) : null}
-            <input
-              ref={fileInputRef}
-              accept="image/*"
-              aria-label="Upload background image"
-              className="sr-only"
-              onChange={(event) => {
-                void handleBackgroundFileChange(event);
-              }}
-              type="file"
-            />
-          </div>
-          {MVP_TOOLS.map((tool) => (
-            <button
-              key={tool.id}
-              className="rounded-full border border-canvas-line bg-white px-3 py-1.5 text-sm font-medium text-canvas-ink shadow-sm transition hover:bg-canvas"
-              title={tool.tooltip}
-              type="button"
-            >
-              {tool.label}
-            </button>
-          ))}
+          {TOOLBAR_ITEMS.map((item) =>
+            item.type === "separator" ? (
+              <span
+                key={item.id}
+                aria-orientation="vertical"
+                className="mx-1 h-8 w-px self-center bg-canvas-line"
+                role="separator"
+              />
+            ) : (
+              renderToolButton(item.tool)
+            )
+          )}
         </nav>
       </div>
     </header>

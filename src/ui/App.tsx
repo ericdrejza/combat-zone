@@ -1,6 +1,10 @@
 import type { CSSProperties } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useDispatch } from "react-redux";
 
+import { setActiveTool } from "../interaction/interactionState";
+import { MVP_TOOLS } from "../interaction/tools/toolRegistry";
+import type { ToolId } from "../interaction/tools/toolRegistry";
 import { CanvasShell } from "./canvas/CanvasShell";
 import type { DockPanelDefinition, DockSide, DropTarget } from "./panels/PanelsShell";
 import { PanelsShell } from "./panels/PanelsShell";
@@ -13,19 +17,36 @@ type SidebarCollapsedState = Record<DockSide, boolean>;
 const initialPanelLayout: PanelLayout = {
   left: [
     { id: "library", title: "Library", collapsed: false },
-    { id: "initiative", title: "Initiative", collapsed: false }
+    { id: "properties", title: "Properties", collapsed: false },
+    { id: "validation", title: "Validation", collapsed: false }
   ],
   right: [
-    { id: "properties", title: "Properties", collapsed: false },
+    { id: "initiative", title: "Initiative", collapsed: false },
     {
       id: "status",
       title: "Status",
       description: "Entity detail scaffold.",
       collapsed: false
     },
-    { id: "validation", title: "Validation", collapsed: false }
   ]
 };
+
+const toolShortcutMap = Object.fromEntries(
+  MVP_TOOLS.map((tool) => [tool.contract.keyboardShortcut.toLowerCase(), tool.id])
+) as Record<string, ToolId>;
+
+function shouldIgnoreKeyboardShortcut(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) {
+    return false;
+  }
+
+  return (
+    target instanceof HTMLInputElement ||
+    target instanceof HTMLTextAreaElement ||
+    target instanceof HTMLSelectElement ||
+    target.isContentEditable
+  );
+}
 
 export function movePanel(
   layout: PanelLayout,
@@ -65,6 +86,7 @@ export function movePanel(
 }
 
 export function App() {
+  const dispatch = useDispatch();
   const [panelLayout, setPanelLayout] = useState<PanelLayout>(initialPanelLayout);
   const [sidebarCollapsed, setSidebarCollapsed] =
     useState<SidebarCollapsedState>({
@@ -76,6 +98,30 @@ export function App() {
   const workspaceColumns = `${
     sidebarCollapsed.left ? "3.25rem" : "18rem"
   } minmax(0,1fr) ${sidebarCollapsed.right ? "3.25rem" : "18rem"}`;
+
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (shouldIgnoreKeyboardShortcut(event.target)) {
+        return;
+      }
+
+      const shortcut = event.key.toLowerCase();
+      const nextToolId = toolShortcutMap[shortcut];
+
+      if (!nextToolId) {
+        return;
+      }
+
+      event.preventDefault();
+      dispatch(setActiveTool(nextToolId));
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [dispatch]);
 
   function handlePanelDrop(target: DropTarget) {
     if (!draggedPanelId) {

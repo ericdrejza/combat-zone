@@ -93,31 +93,29 @@ before persistence and final MVP verification.
 
 ## 6. Toolbar and Interaction Engine
 
-- [ ] Implement tool registration and dispatch without a global setup/combat
+- [x] Implement tool registration and dispatch without a global setup/combat
   mode.
-- [ ] Add MVP tools.
+- [x] Add MVP tools.
   - Select Tool
   - Zone Tool
   - Edge Tool
   - Actor Tool
-  - Engagement Tool
   - Annotation Tool
   - Background Tool
-  - Delete Tool
-- [ ] Give every tool a visible tooltip describing its function.
-- [ ] Implement tool-owned interaction contracts.
+- [x] Give every tool a visible tooltip describing its function.
+- [x] Implement tool-owned interaction contracts.
   - Selectable entity types
   - Drag behavior
   - Click behavior
   - Keyboard shortcuts
-- [ ] Implement selection rules.
+- [x] Implement selection rules.
   - Tool-dependent selection scope
   - No cross-type selection
   - Shift-click toggles selection
   - Ctrl-click invokes contextual action
   - Box select
   - Ctrl+Shift additive box select
-- [ ] Ensure switching tools clears stale interaction state, including
+- [x] Ensure switching tools clears stale interaction state, including
   half-drawn polygons.
 
 ## 7. Zones: Polygon Draw, Edit, Layout, and Deletion

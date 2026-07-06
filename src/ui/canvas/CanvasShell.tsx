@@ -1,6 +1,13 @@
+import type { MouseEvent } from "react";
+import { useDispatch } from "react-redux";
 import { useSelector } from "react-redux";
 
 import { RENDER_LAYERS } from "../../core/rendering/types";
+import {
+  requestContextualAction,
+  selectEntity
+} from "../../interaction/interactionState";
+import type { SelectableEntityType } from "../../interaction/selection/types";
 import type { SelectionOverlayTarget } from "../../interaction/selection/types";
 import type { RootState } from "../../store/store";
 
@@ -13,9 +20,40 @@ const placeholderSelectionTargets: SelectionOverlayTarget[] = [
 ];
 
 export function CanvasShell() {
+  const dispatch = useDispatch();
   const backgroundImage = useSelector(
     (state: RootState) => state.encounter.present.backgroundImage
   );
+
+  function handleCanvasClick(event: MouseEvent<SVGSVGElement>) {
+    const target = event.target as Element;
+    const entityElement = target.closest<SVGElement>("[data-entity-id]");
+    const entityId = entityElement?.dataset.entityId;
+    const entityType = entityElement?.dataset
+      .entityType as SelectableEntityType | undefined;
+
+    if (!entityId || !entityType) {
+      return;
+    }
+
+    if (event.ctrlKey) {
+      dispatch(
+        requestContextualAction({
+          entityId,
+          entityType
+        })
+      );
+      return;
+    }
+
+    dispatch(
+      selectEntity({
+        entityType,
+        ids: [entityId],
+        toggle: event.shiftKey
+      })
+    );
+  }
 
   return (
     <section
@@ -26,6 +64,7 @@ export function CanvasShell() {
       <svg
         aria-label="SVG encounter workspace"
         className="h-full min-h-0 w-full bg-[#fffaf0]"
+        onClick={handleCanvasClick}
         role="img"
         viewBox="0 0 960 640"
       >
@@ -63,6 +102,7 @@ export function CanvasShell() {
                     key={target.id}
                     aria-label={target.label}
                     className="fill-transparent stroke-canvas-ink stroke-2 opacity-35"
+                    data-entity-id={target.id}
                     data-entity-type={target.entityType}
                     height="96"
                     rx="16"

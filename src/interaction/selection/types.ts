@@ -13,7 +13,13 @@ export type SelectionOverlayTarget = {
   label: string;
 };
 
+export type EntitySelection = {
+  entityType: SelectableEntityType;
+  ids: string[];
+};
+
 export type SelectionState = {
+  selectedEntityType: SelectableEntityType | null;
   selectedIds: string[];
   overlayTargets: SelectionOverlayTarget[];
 };
