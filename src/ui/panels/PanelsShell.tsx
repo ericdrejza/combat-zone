@@ -42,7 +42,7 @@ export function PanelsShell({
   return (
     <aside
       aria-label={`${side} docked panels`}
-      className="space-y-2"
+      className="flex min-h-0 flex-1 flex-col overflow-y-auto pr-1"
       onDragOver={(event) => {
         if (!draggedPanelId) {
           return;
@@ -217,12 +217,39 @@ function PanelDropMarker({
   onPreviewDrop,
   side
 }: PanelDropMarkerProps) {
+  return (
+    <PanelDropTarget
+      active={active}
+      className="py-1"
+      index={index}
+      label={`Drop panel ${index} in ${side} docked panels`}
+      onDropPanel={onDropPanel}
+      onPreviewDrop={onPreviewDrop}
+      side={side}
+    />
+  );
+}
+
+type PanelDropTargetProps = PanelDropMarkerProps & {
+  className: string;
+  label: string;
+};
+
+function PanelDropTarget({
+  active,
+  className,
+  index,
+  label,
+  onDropPanel,
+  onPreviewDrop,
+  side
+}: PanelDropTargetProps) {
   const target = { side, index };
 
   return (
     <div
-      aria-label={`Drop panel ${index} in ${side} docked panels`}
-      className="py-1"
+      aria-label={label}
+      className={className}
       onDragOver={(event) => {
         event.preventDefault();
         event.stopPropagation();

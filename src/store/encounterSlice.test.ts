@@ -48,6 +48,7 @@ describe("encounter Redux history", () => {
         schemaVersion: ENCOUNTER_SCHEMA_VERSION,
         id: "active-encounter",
         name: "Untitled Encounter",
+        backgroundImage: null,
         zones: { byId: {}, allIds: [] },
         edges: { byId: {}, allIds: [] },
         actors: { byId: {}, allIds: [] },

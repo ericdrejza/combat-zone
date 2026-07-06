@@ -155,6 +155,7 @@ describe("EncounterState foundation", () => {
       schemaVersion: ENCOUNTER_SCHEMA_VERSION,
       id: "encounter-empty",
       name: "Empty Encounter",
+      backgroundImage: null,
       zones: { byId: {}, allIds: [] },
       edges: { byId: {}, allIds: [] },
       actors: { byId: {}, allIds: [] },

@@ -1,11 +1,14 @@
+import type { CSSProperties } from "react";
 import { useState } from "react";
 
 import { CanvasShell } from "./canvas/CanvasShell";
 import type { DockPanelDefinition, DockSide, DropTarget } from "./panels/PanelsShell";
 import { PanelsShell } from "./panels/PanelsShell";
+import { SidebarDock } from "./panels/SidebarDock";
 import { Toolbar } from "./toolbar/Toolbar";
 
 type PanelLayout = Record<DockSide, DockPanelDefinition[]>;
+type SidebarCollapsedState = Record<DockSide, boolean>;
 
 const initialPanelLayout: PanelLayout = {
   left: [
@@ -63,8 +66,16 @@ export function movePanel(
 
 export function App() {
   const [panelLayout, setPanelLayout] = useState<PanelLayout>(initialPanelLayout);
+  const [sidebarCollapsed, setSidebarCollapsed] =
+    useState<SidebarCollapsedState>({
+      left: false,
+      right: false
+    });
   const [draggedPanelId, setDraggedPanelId] = useState<string | null>(null);
   const [dropTarget, setDropTarget] = useState<DropTarget | null>(null);
+  const workspaceColumns = `${
+    sidebarCollapsed.left ? "3.25rem" : "18rem"
+  } minmax(0,1fr) ${sidebarCollapsed.right ? "3.25rem" : "18rem"}`;
 
   function handlePanelDrop(target: DropTarget) {
     if (!draggedPanelId) {
@@ -88,38 +99,67 @@ export function App() {
   }
 
   return (
-    <div className="min-h-screen bg-canvas text-canvas-ink">
+    <div className="flex h-screen max-h-screen w-screen max-w-screen flex-col overflow-hidden bg-canvas text-canvas-ink">
       <Toolbar />
-      <main className="grid min-h-[calc(100vh-4rem)] grid-cols-1 gap-4 p-4 lg:grid-cols-[18rem_minmax(0,1fr)_18rem]">
-        <PanelsShell
-          draggedPanelId={draggedPanelId}
-          dropTarget={dropTarget}
-          onDragEnd={() => {
-            setDraggedPanelId(null);
-            setDropTarget(null);
-          }}
-          onDragStart={setDraggedPanelId}
-          onPanelCollapsedChange={handlePanelCollapsedChange}
-          onDropPanel={handlePanelDrop}
-          onPreviewDrop={setDropTarget}
-          panels={panelLayout.left}
+      <main
+        className="grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-hidden p-4 lg:grid-cols-[var(--workspace-columns)]"
+        style={
+          {
+            "--workspace-columns": workspaceColumns
+          } as CSSProperties
+        }
+      >
+        <SidebarDock
+          collapsed={sidebarCollapsed.left}
+          onToggle={() =>
+            setSidebarCollapsed((current) => ({
+              ...current,
+              left: !current.left
+            }))
+          }
           side="left"
-        />
+        >
+          <PanelsShell
+            draggedPanelId={draggedPanelId}
+            dropTarget={dropTarget}
+            onDragEnd={() => {
+              setDraggedPanelId(null);
+              setDropTarget(null);
+            }}
+            onDragStart={setDraggedPanelId}
+            onPanelCollapsedChange={handlePanelCollapsedChange}
+            onDropPanel={handlePanelDrop}
+            onPreviewDrop={setDropTarget}
+            panels={panelLayout.left}
+            side="left"
+          />
+        </SidebarDock>
         <CanvasShell />
-        <PanelsShell
-          draggedPanelId={draggedPanelId}
-          dropTarget={dropTarget}
-          onDragEnd={() => {
-            setDraggedPanelId(null);
-            setDropTarget(null);
-          }}
-          onDragStart={setDraggedPanelId}
-          onPanelCollapsedChange={handlePanelCollapsedChange}
-          onDropPanel={handlePanelDrop}
-          onPreviewDrop={setDropTarget}
-          panels={panelLayout.right}
+        <SidebarDock
+          collapsed={sidebarCollapsed.right}
+          onToggle={() =>
+            setSidebarCollapsed((current) => ({
+              ...current,
+              right: !current.right
+            }))
+          }
           side="right"
-        />
+        >
+          <PanelsShell
+            draggedPanelId={draggedPanelId}
+            dropTarget={dropTarget}
+            onDragEnd={() => {
+              setDraggedPanelId(null);
+              setDropTarget(null);
+            }}
+            onDragStart={setDraggedPanelId}
+            onPanelCollapsedChange={handlePanelCollapsedChange}
+            onDropPanel={handlePanelDrop}
+            onPreviewDrop={setDropTarget}
+            panels={panelLayout.right}
+            side="right"
+          />
+        </SidebarDock>
       </main>
     </div>
   );

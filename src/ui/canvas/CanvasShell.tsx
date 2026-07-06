@@ -1,5 +1,8 @@
+import { useSelector } from "react-redux";
+
 import { RENDER_LAYERS } from "../../core/rendering/types";
 import type { SelectionOverlayTarget } from "../../interaction/selection/types";
+import type { RootState } from "../../store/store";
 
 const placeholderSelectionTargets: SelectionOverlayTarget[] = [
   {
@@ -10,15 +13,19 @@ const placeholderSelectionTargets: SelectionOverlayTarget[] = [
 ];
 
 export function CanvasShell() {
+  const backgroundImage = useSelector(
+    (state: RootState) => state.encounter.present.backgroundImage
+  );
+
   return (
     <section
       aria-label="Encounter canvas"
-      className="relative min-h-[32rem] overflow-hidden rounded-3xl border border-canvas-line bg-canvas-panel shadow-sm"
+      className="relative min-h-0 overflow-hidden rounded-3xl border border-canvas-line bg-canvas-panel shadow-sm"
       role="main"
     >
       <svg
         aria-label="SVG encounter workspace"
-        className="h-full min-h-[32rem] w-full bg-[#fffaf0]"
+        className="h-full min-h-0 w-full bg-[#fffaf0]"
         role="img"
         viewBox="0 0 960 640"
       >
@@ -31,6 +38,17 @@ export function CanvasShell() {
             {layer.id === "background" ? (
               <>
                 <rect fill="#fffaf0" height="640" width="960" />
+                {backgroundImage ? (
+                  <image
+                    aria-label="Canvas background image"
+                    height="640"
+                    href={backgroundImage.dataUrl}
+                    preserveAspectRatio="xMidYMid slice"
+                    width="960"
+                    x="0"
+                    y="0"
+                  />
+                ) : null}
                 <path
                   d="M0 560 C160 500 240 620 390 560 S650 480 960 560"
                   fill="none"

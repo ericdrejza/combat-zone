@@ -98,7 +98,7 @@ src/
     edge/
     annotation/
   interaction/
-    tools/            # SelectTool, ZoneTool, EdgeTool, ActorTool, EngagementTool, AnnotationTool, DeleteTool, PanTool
+    tools/            # SelectTool, ZoneTool, EdgeTool, ActorTool, EngagementTool, AnnotationTool, BackgroundTool, DeleteTool
     selection/        # shift/ctrl/box-select rules
   ui/
     toolbar/

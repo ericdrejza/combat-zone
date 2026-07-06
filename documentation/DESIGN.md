@@ -219,8 +219,10 @@ Tools define interaction behavior:
 - Actor Tool
 - Engagement Tool
 - Annotation Tool
+- Background Tool
 - Delete Tool
-- Pan Tool
+
+Panning is handled by right-click drag rather than a dedicated toolbar tool.
 
 Each tool defines:
 

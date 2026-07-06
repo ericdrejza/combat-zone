@@ -102,6 +102,7 @@ before persistence and final MVP verification.
   - Actor Tool
   - Engagement Tool
   - Annotation Tool
+  - Background Tool
   - Delete Tool
 - [ ] Give every tool a visible tooltip describing its function.
 - [ ] Implement tool-owned interaction contracts.

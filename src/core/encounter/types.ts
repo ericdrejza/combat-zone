@@ -23,10 +23,17 @@ export type EncounterValidationState = {
   messages: ValidationMessage[];
 };
 
+export type EncounterBackgroundImage = {
+  dataUrl: string;
+  mediaType: string;
+  name: string;
+};
+
 export type EncounterState = {
   schemaVersion: EncounterSchemaVersion;
   id: EntityId;
   name: string;
+  backgroundImage: EncounterBackgroundImage | null;
   zones: EntityCollection<Zone>;
   edges: EntityCollection<Edge>;
   actors: EntityCollection<Actor>;

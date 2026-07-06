@@ -16,6 +16,7 @@ export function createEncounterState({
     schemaVersion: ENCOUNTER_SCHEMA_VERSION,
     id,
     name,
+    backgroundImage: null,
     zones: createEmptyEntityCollection(),
     edges: createEmptyEntityCollection(),
     actors: createEmptyEntityCollection(),

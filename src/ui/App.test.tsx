@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Provider } from "react-redux";
 
@@ -72,6 +78,37 @@ describe("App", () => {
     ).toHaveAttribute("aria-expanded", "false");
   });
 
+  it("collapses and expands either sidebar independently", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <Provider store={store}>
+        <App />
+      </Provider>
+    );
+
+    await user.click(screen.getByRole("button", { name: "Collapse left sidebar" }));
+
+    expect(screen.queryByLabelText("left docked panels")).not.toBeInTheDocument();
+    expect(screen.getByRole("main", { name: "Encounter canvas" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Expand left sidebar" })
+    ).toHaveAttribute("aria-expanded", "false");
+
+    await user.click(screen.getByRole("button", { name: "Collapse right sidebar" }));
+
+    expect(screen.queryByLabelText("right docked panels")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Expand right sidebar" })
+    ).toHaveAttribute("aria-expanded", "false");
+
+    await user.click(screen.getByRole("button", { name: "Expand left sidebar" }));
+    await user.click(screen.getByRole("button", { name: "Expand right sidebar" }));
+
+    expect(screen.getByLabelText("left docked panels")).toBeInTheDocument();
+    expect(screen.getByLabelText("right docked panels")).toBeInTheDocument();
+  });
+
   it("moves side panels by dragging the reorder handle to a drop marker", () => {
     render(
       <Provider store={store}>
@@ -86,16 +123,16 @@ describe("App", () => {
       name: "Reorder Status panel"
     });
     const leftDock = screen.getByLabelText("left docked panels");
-    const leftFirstDropMarker = screen.getByLabelText(
+    const leftTopDropZone = screen.getByLabelText(
       "Drop panel 0 in left docked panels"
     );
 
     fireEvent.dragStart(statusHandle, { dataTransfer });
-    fireEvent.dragOver(leftFirstDropMarker, { dataTransfer });
+    fireEvent.dragOver(leftTopDropZone, { dataTransfer });
 
-    expect(leftFirstDropMarker.firstElementChild).toHaveClass("bg-canvas-ink");
+    expect(leftTopDropZone.firstElementChild).toHaveClass("bg-canvas-ink");
 
-    fireEvent.drop(leftFirstDropMarker);
+    fireEvent.drop(leftTopDropZone);
 
     expect(
       within(leftDock)
@@ -193,9 +230,12 @@ describe("App", () => {
       screen.getByRole("button", { name: "Reorder Status panel" }),
       { dataTransfer }
     );
-    fireEvent.drop(screen.getByLabelText("Drop panel 0 in left docked panels"), {
-      dataTransfer
-    });
+    fireEvent.drop(
+      screen.getByLabelText("Drop panel 0 in left docked panels"),
+      {
+        dataTransfer
+      }
+    );
 
     const leftDock = screen.getByLabelText("left docked panels");
 
@@ -208,5 +248,121 @@ describe("App", () => {
       within(leftDock).getByRole("button", { name: "Expand Status panel" })
     ).toHaveAttribute("aria-expanded", "false");
     expect(screen.queryByText("Entity detail scaffold.")).not.toBeInTheDocument();
+  });
+
+  it("supports dropping a panel below the last panel in a sidebar", () => {
+    render(
+      <Provider store={store}>
+        <App />
+      </Provider>
+    );
+    const dataTransfer = {
+      effectAllowed: "",
+      setData() {}
+    };
+    const libraryHandle = screen.getByRole("button", {
+      name: "Reorder Library panel"
+    });
+    const rightDock = screen.getByLabelText("right docked panels");
+    const rightBottomDropZone = screen.getByLabelText(
+      "Drop panel 3 in right docked panels"
+    );
+
+    fireEvent.dragStart(libraryHandle, { dataTransfer });
+    fireEvent.dragOver(rightBottomDropZone, { dataTransfer });
+
+    expect(rightBottomDropZone.firstElementChild).toHaveClass("bg-canvas-ink");
+
+    fireEvent.drop(rightBottomDropZone);
+
+    expect(
+      within(rightDock)
+        .getAllByRole("heading")
+        .map((heading) => heading.textContent)
+    ).toEqual(["Properties", "Status", "Validation", "Library"]);
+  });
+
+  it("uses open dock space as a drop target and keeps the bottom insertion marker visible", () => {
+    render(
+      <Provider store={store}>
+        <App />
+      </Provider>
+    );
+    const dataTransfer = {
+      effectAllowed: "",
+      setData() {}
+    };
+    const libraryHandle = screen.getByRole("button", {
+      name: "Reorder Library panel"
+    });
+    const rightDock = screen.getByLabelText("right docked panels");
+    const rightBottomDropZone = screen.getByLabelText(
+      "Drop panel 3 in right docked panels"
+    );
+
+    fireEvent.dragStart(libraryHandle, { dataTransfer });
+    fireEvent.dragOver(rightDock, { dataTransfer });
+
+    expect(rightBottomDropZone.firstElementChild).toHaveClass("bg-canvas-ink");
+
+    fireEvent.drop(rightDock, { dataTransfer });
+
+    expect(
+      within(rightDock)
+        .getAllByRole("heading")
+        .map((heading) => heading.textContent)
+    ).toEqual(["Properties", "Status", "Validation", "Library"]);
+  });
+
+  it("adds and deletes a canvas background image from the Background toolbar menu", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <Provider store={store}>
+        <App />
+      </Provider>
+    );
+
+    await user.click(screen.getByRole("button", { name: "Background" }));
+
+    expect(screen.getByRole("menuitem", { name: "Add" })).toBeInTheDocument();
+    expect(
+      screen.queryByRole("menuitem", { name: "Replace" })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("menuitem", { name: "Delete" })
+    ).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("menuitem", { name: "Add" }));
+
+    fireEvent.change(screen.getByLabelText("Upload background image"), {
+      target: {
+        files: [
+          new File(["background"], "battle-map.png", {
+            type: "image/png"
+          })
+        ]
+      }
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getByLabelText("Canvas background image")
+      ).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole("button", { name: "Background" }));
+
+    expect(screen.getByRole("menuitem", { name: "Replace" })).toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: "Delete" })).toBeInTheDocument();
+    expect(screen.queryByRole("menuitem", { name: "Add" })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("menuitem", { name: "Delete" }));
+
+    await waitFor(() => {
+      expect(
+        screen.queryByLabelText("Canvas background image")
+      ).not.toBeInTheDocument();
+    });
   });
 });
