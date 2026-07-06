@@ -23,14 +23,21 @@ describe("layout strategy changes through Redux history", () => {
   it("immediately reflows derived layout after a history-tracked strategy change and undoes exactly", () => {
     const initialHistory = reducer(undefined, { type: "test/init" });
     const zone: Zone = {
+      colorBorder: "#9b876b",
+      colorFill: "#ffffff",
       id: "zone-layout",
       name: "Layout Zone",
+      namePosition: "top-left",
+      opacity: 0.7,
       polygon: [
         { x: 0, y: 0 },
         { x: 120, y: 0 },
         { x: 120, y: 120 },
         { x: 0, y: 120 }
       ],
+      showBorder: true,
+      showName: false,
+      shape: "rectangle",
       layoutStrategy: "FLEX",
       layoutOrientation: "LEFT_RIGHT",
       tags: []

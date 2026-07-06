@@ -1,4 +1,8 @@
-export type LayoutStrategyId = "FLEX" | "SEQUENTIAL" | "SPLIT_SEQUENTIAL";
+export type LayoutStrategyId =
+  | "FLEX"
+  | "SEQUENTIAL"
+  | "SPLIT_FLEX"
+  | "SPLIT_SEQUENTIAL";
 export type LayoutOrientation = "LEFT_RIGHT" | "TOP_BOTTOM";
 
 export type LayoutPoint = {

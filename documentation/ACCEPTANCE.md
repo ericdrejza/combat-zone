@@ -6,16 +6,18 @@ covers `DESIGN.md` §15 "Must have" scope only.
 
 ## Zones (polygon draw/edit)
 
-- [ ] GM can draw a new polygonal zone with the Zone Tool via sequential
+- [x] GM can draw a new polygonal zone with the Zone Tool via sequential
       point placement, closing the shape on click-near-start or double-click.
-- [ ] Existing zone vertices can be dragged individually to reshape the
+- [x] Existing zone vertices can be dragged individually to reshape the
       polygon.
-- [ ] A zone can be assigned a layout strategy (FLEX / SEQUENTIAL /
-      SPLIT_SEQUENTIAL) via the Properties Panel, and actors inside
+- [x] A zone can be assigned a layout strategy (FLEX / SEQUENTIAL /
+      SPLIT_FLEX / SPLIT_SEQUENTIAL) via the Properties Panel, and actors inside
       re-flow immediately per the new strategy.
-- [ ] Deleting a zone: contained actors become zoneless (verified via state
+- [x] Deleting a zone: contained actors become zoneless (verified via state
       inspection, not just visually), edges connected to it are removed,
-      and the whole operation undoes as a single Redux history entry.
+      engagements parented to the deleted zone are removed to avoid dangling
+      zone references, and the whole operation undoes as a single Redux
+      history entry.
 
 ## Actors (drag/drop)
 

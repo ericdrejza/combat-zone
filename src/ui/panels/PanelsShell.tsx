@@ -1,4 +1,5 @@
 import { ChevronDown, ChevronUp, GripVertical } from "lucide-react";
+import type { ReactNode } from "react";
 
 export type DockSide = "left" | "right";
 
@@ -23,6 +24,8 @@ type PanelsShellProps = {
   onDropPanel: (target: DropTarget) => void;
   onPreviewDrop: (target: DropTarget) => void;
   panels: DockPanelDefinition[];
+  renderPanelHeaderActions?: (panel: DockPanelDefinition) => ReactNode;
+  renderPanelContent?: (panel: DockPanelDefinition) => ReactNode;
   side: DockSide;
 };
 
@@ -35,6 +38,8 @@ export function PanelsShell({
   onDropPanel,
   onPreviewDrop,
   panels,
+  renderPanelHeaderActions,
+  renderPanelContent,
   side
 }: PanelsShellProps) {
   const dockEndTarget = { side, index: panels.length };
@@ -84,6 +89,8 @@ export function PanelsShell({
             onDropPanel={onDropPanel}
             onPreviewDrop={onPreviewDrop}
             panel={panel}
+            renderPanelHeaderActions={renderPanelHeaderActions}
+            renderPanelContent={renderPanelContent}
             side={side}
           />
         </div>
@@ -111,6 +118,8 @@ type DockPanelProps = {
   onDropPanel: (target: DropTarget) => void;
   onPreviewDrop: (target: DropTarget) => void;
   panel: DockPanelDefinition;
+  renderPanelHeaderActions?: (panel: DockPanelDefinition) => ReactNode;
+  renderPanelContent?: (panel: DockPanelDefinition) => ReactNode;
   side: DockSide;
 };
 
@@ -122,6 +131,8 @@ function DockPanel({
   onDropPanel,
   onPreviewDrop,
   panel,
+  renderPanelHeaderActions,
+  renderPanelContent,
   side
 }: DockPanelProps) {
   function getPanelDropTarget(event: React.DragEvent<HTMLElement>): DropTarget {
@@ -155,6 +166,7 @@ function DockPanel({
       <header className="flex items-center justify-between gap-3 p-4">
         <h2 className="font-display text-lg font-semibold">{panel.title}</h2>
         <div className="flex items-center gap-2">
+          {renderPanelHeaderActions?.(panel)}
           <button
             aria-label={`Reorder ${panel.title} panel`}
             className="flex h-8 w-8 cursor-grab items-center justify-center rounded-full border border-canvas-line bg-white text-canvas-muted transition hover:bg-canvas active:cursor-grabbing"
@@ -192,10 +204,12 @@ function DockPanel({
       </header>
       {!panel.collapsed ? (
         <div className="border-t border-canvas-line px-4 pb-4 pt-3">
-          <p className="text-sm text-canvas-muted">
-            {panel.description ??
-              "Panel scaffold. Feature-specific controls will be added as roadmap tickets are implemented."}
-          </p>
+          {renderPanelContent?.(panel) ?? (
+            <p className="text-sm text-canvas-muted">
+              {panel.description ??
+                "Panel scaffold. Feature-specific controls will be added as roadmap tickets are implemented."}
+            </p>
+          )}
         </div>
       ) : null}
     </section>

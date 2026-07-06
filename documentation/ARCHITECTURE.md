@@ -43,7 +43,7 @@ inventing a variant schema.
   owns its own selection rules, drag behavior, click behavior, and keyboard
   shortcuts. Do not introduce a global "mode" enum that tools all branch on.
 - **Layout strategies are pluggable, not hardcoded.** FLEX / SEQUENTIAL /
-  SPLIT_SEQUENTIAL live behind a shared strategy interface in
+  SPLIT_FLEX / SPLIT_SEQUENTIAL live behind a shared strategy interface in
   `core/layout/`, used by both Zones and Engagements. Adding a new strategy
   should not require touching Zone or Engagement code.
 - **Engagements are groups, never pairwise.** No participant should ever be

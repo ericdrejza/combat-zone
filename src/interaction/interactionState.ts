@@ -1,15 +1,13 @@
-import type { PayloadAction } from "@reduxjs/toolkit";
-import { createSlice } from "@reduxjs/toolkit";
+import type { PayloadAction } from '@reduxjs/toolkit';
+import { createSlice } from '@reduxjs/toolkit';
 
 import type {
   EntitySelection,
   SelectableEntityType,
   SelectionState
-} from "./selection/types";
-import {
-  canToolSelectEntityType,
-  type ToolId
-} from "./tools/toolRegistry";
+} from './selection/types';
+import { canToolSelectEntityType, type ToolId } from './tools/toolRegistry';
+import type { ZoneShape } from '../entities/zone/types';
 
 export type BoxSelection = {
   start: {
@@ -33,11 +31,18 @@ export type InteractionDraftState = {
   polygonPointIds: string[];
 };
 
+export type ZonePaintBrushState = {
+  sourceZoneId: string;
+};
+
 export type InteractionState = {
   activeToolId: ToolId;
   selection: SelectionState;
   draft: InteractionDraftState;
   contextualActionRequest: ContextualActionRequest | null;
+  lastZoneOpacity: number;
+  zonePaintBrush: ZonePaintBrushState | null;
+  zoneShapeMode: ZoneShape;
 };
 
 export type SelectEntityPayload = EntitySelection & {
@@ -60,10 +65,13 @@ const initialDraft: InteractionDraftState = {
 };
 
 const initialState: InteractionState = {
-  activeToolId: "select",
+  activeToolId: 'zone',
   selection: initialSelection,
   draft: initialDraft,
-  contextualActionRequest: null
+  contextualActionRequest: null,
+  lastZoneOpacity: 0,
+  zonePaintBrush: null,
+  zoneShapeMode: 'rectangle'
 };
 
 function unique(ids: string[]): string[] {
@@ -100,13 +108,14 @@ function selectIds(
 }
 
 export const interactionSlice = createSlice({
-  name: "interaction",
+  name: 'interaction',
   initialState,
   reducers: {
     setActiveTool(state, { payload }: PayloadAction<ToolId>) {
       state.activeToolId = payload;
       state.draft = initialDraft;
       state.contextualActionRequest = null;
+      state.zonePaintBrush = null;
 
       if (
         state.selection.selectedEntityType &&
@@ -118,6 +127,23 @@ export const interactionSlice = createSlice({
     clearInteractionDraft(state) {
       state.draft = initialDraft;
       state.contextualActionRequest = null;
+      state.zonePaintBrush = null;
+    },
+    setZoneShapeMode(state, { payload }: PayloadAction<ZoneShape>) {
+      state.zoneShapeMode = payload;
+      state.draft.polygonPointIds = [];
+    },
+    setLastZoneOpacity(state, { payload }: PayloadAction<number>) {
+      state.lastZoneOpacity = payload;
+    },
+    toggleZonePaintBrush(
+      state,
+      { payload }: PayloadAction<ZonePaintBrushState>
+    ) {
+      state.zonePaintBrush = state.zonePaintBrush ? null : payload;
+    },
+    clearZonePaintBrush(state) {
+      state.zonePaintBrush = null;
     },
     selectEntity(state, { payload }: PayloadAction<SelectEntityPayload>) {
       if (!canSelect(state, payload.entityType)) {
@@ -155,7 +181,9 @@ export const interactionSlice = createSlice({
     },
     requestContextualAction(
       state,
-      { payload }: PayloadAction<Pick<ContextualActionRequest, "entityId" | "entityType">>
+      {
+        payload
+      }: PayloadAction<Pick<ContextualActionRequest, 'entityId' | 'entityType'>>
     ) {
       if (!canSelect(state, payload.entityType)) {
         return;
@@ -168,7 +196,7 @@ export const interactionSlice = createSlice({
     },
     startBoxSelection(
       state,
-      { payload }: PayloadAction<BoxSelection["start"]>
+      { payload }: PayloadAction<BoxSelection['start']>
     ) {
       state.draft.boxSelection = {
         start: payload,
@@ -177,7 +205,7 @@ export const interactionSlice = createSlice({
     },
     updateBoxSelection(
       state,
-      { payload }: PayloadAction<BoxSelection["current"]>
+      { payload }: PayloadAction<BoxSelection['current']>
     ) {
       if (!state.draft.boxSelection) {
         return;
@@ -189,23 +217,36 @@ export const interactionSlice = createSlice({
       state,
       { payload }: PayloadAction<FinishBoxSelectionPayload>
     ) {
-      selectIds(state, payload.entityType, payload.ids, payload.additive ?? false);
+      selectIds(
+        state,
+        payload.entityType,
+        payload.ids,
+        payload.additive ?? false
+      );
       state.draft.boxSelection = null;
     },
     setPolygonDraftPointIds(state, { payload }: PayloadAction<string[]>) {
       state.draft.polygonPointIds = payload;
+    },
+    resetInteractionState() {
+      return initialState;
     }
   }
 });
 
 export const {
+  clearZonePaintBrush,
   clearInteractionDraft,
   clearSelection,
   finishBoxSelection,
   requestContextualAction,
+  resetInteractionState,
   selectEntity,
   setActiveTool,
+  setLastZoneOpacity,
   setPolygonDraftPointIds,
+  setZoneShapeMode,
+  toggleZonePaintBrush,
   startBoxSelection,
   updateBoxSelection
 } = interactionSlice.actions;

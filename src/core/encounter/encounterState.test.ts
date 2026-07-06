@@ -32,26 +32,40 @@ function collection<TEntity extends { id: string }>(
 }
 
 const courtyardZone: Zone = {
+  colorBorder: "#9b876b",
+  colorFill: "#ffffff",
   id: "zone-courtyard",
   name: "Courtyard",
+  namePosition: "top-left",
+  opacity: 0.7,
   polygon: [
     { x: 0, y: 0 },
     { x: 10, y: 0 },
     { x: 10, y: 10 }
   ],
+  showBorder: true,
+  showName: false,
+  shape: "polygon",
   layoutStrategy: "FLEX",
   layoutOrientation: "LEFT_RIGHT",
   tags: ["outdoor"]
 };
 
 const towerZone: Zone = {
+  colorBorder: "#9b876b",
+  colorFill: "#ffffff",
   id: "zone-tower",
   name: "Tower",
+  namePosition: "top-left",
+  opacity: 0.7,
   polygon: [
     { x: 20, y: 0 },
     { x: 30, y: 0 },
     { x: 30, y: 10 }
   ],
+  showBorder: true,
+  showName: false,
+  shape: "polygon",
   layoutStrategy: "SEQUENTIAL",
   layoutOrientation: "TOP_BOTTOM",
   tags: []

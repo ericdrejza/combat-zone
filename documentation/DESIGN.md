@@ -104,8 +104,14 @@ Layout strategies:
 - SEQUENTIAL
   - Actors are rendered one after the other in specific order around the zone
   - Actor order is stable based on collection `allIds`
+- SPLIT_FLEX
+  - Zone is split into areas for heroes, enemies, and neutral actors
+  - `LEFT_RIGHT` orientation renders heroes left and enemies right
+  - `TOP_BOTTOM` orientation renders heroes top and enemies bottom
+  - Neutral actors render along the axis splitting heroes and enemies
+  - Actors are flex-distributed inside their specific area
 - SPLIT_SEQUENTIAL
-  - Zone is split into two areas for Actors, one for heroes and one for enemies
+  - Zone is split into areas for heroes, enemies, and neutral actors
   - `LEFT_RIGHT` orientation renders heroes left and enemies right
   - `TOP_BOTTOM` orientation renders heroes top and enemies bottom
   - Neutral actors render along the axis splitting heroes and enemies
@@ -282,6 +288,12 @@ Validation modes:
   - Dynamic spacing
 - SEQUENTIAL
   - CSS-ordered placement using deterministic collection order
+- SPLIT_FLEX
+  - Three logical partitions:
+    - hero
+    - neutral
+    - enemy
+  - CSS-distributed placement inside each partition
 - SPLIT_SEQUENTIAL
   - Three logical partitions:
     - Heroes
@@ -414,6 +426,7 @@ Placement strategies:
 
 - FLEX
 - SEQUENTIAL
+- SPLIT_FLEX
 - SPLIT_SEQUENTIAL
 
 Actor and engagement positions inside zones are not persisted in

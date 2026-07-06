@@ -57,12 +57,28 @@ function describeSplitSequential<TEntityId extends string>({
   entities,
   orientation
 }: LayoutStrategyInput<TEntityId>): LayoutDescriptor<TEntityId> {
+  return describeSplit("SPLIT_SEQUENTIAL", entities, orientation);
+}
+
+function describeSplitFlex<TEntityId extends string>({
+  entities,
+  orientation
+}: LayoutStrategyInput<TEntityId>): LayoutDescriptor<TEntityId> {
+  return describeSplit("SPLIT_FLEX", entities, orientation);
+}
+
+function describeSplit<TEntityId extends string>(
+  strategy: Extract<LayoutStrategyId, "SPLIT_FLEX" | "SPLIT_SEQUENTIAL">,
+  entities: LayoutEntity<TEntityId>[],
+  orientation: LayoutStrategyInput<TEntityId>["orientation"]
+): LayoutDescriptor<TEntityId> {
   const groups = groupEntities(entities);
+  const classStrategy = strategy.toLowerCase().replace("_", "-");
 
   return {
-    strategy: "SPLIT_SEQUENTIAL",
+    strategy,
     orientation,
-    className: `cz-layout cz-layout-split-sequential ${orientationClassName(
+    className: `cz-layout cz-layout-${classStrategy} ${orientationClassName(
       orientation
     )}`,
     sections: [
@@ -81,6 +97,10 @@ export const layoutStrategies: Record<LayoutStrategyId, LayoutStrategy> = {
   SEQUENTIAL: {
     id: "SEQUENTIAL",
     describe: (input) => describeSingleSection("SEQUENTIAL", input)
+  },
+  SPLIT_FLEX: {
+    id: "SPLIT_FLEX",
+    describe: describeSplitFlex
   },
   SPLIT_SEQUENTIAL: {
     id: "SPLIT_SEQUENTIAL",

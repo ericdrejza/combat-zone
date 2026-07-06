@@ -9,6 +9,10 @@ import { CanvasShell } from "./canvas/CanvasShell";
 import type { DockPanelDefinition, DockSide, DropTarget } from "./panels/PanelsShell";
 import { PanelsShell } from "./panels/PanelsShell";
 import { SidebarDock } from "./panels/SidebarDock";
+import {
+  ZonePropertiesHeaderActions,
+  ZonePropertiesPanel
+} from "./panels/ZonePropertiesPanel";
 import { Toolbar } from "./toolbar/Toolbar";
 
 type PanelLayout = Record<DockSide, DockPanelDefinition[]>;
@@ -105,6 +109,10 @@ export function App() {
         return;
       }
 
+      if (event.ctrlKey || event.metaKey || event.altKey) {
+        return;
+      }
+
       const shortcut = event.key.toLowerCase();
       const nextToolId = toolShortcutMap[shortcut];
 
@@ -144,6 +152,22 @@ export function App() {
     }));
   }
 
+  function renderPanelContent(panel: DockPanelDefinition) {
+    if (panel.id === "properties") {
+      return <ZonePropertiesPanel />;
+    }
+
+    return undefined;
+  }
+
+  function renderPanelHeaderActions(panel: DockPanelDefinition) {
+    if (panel.id === "properties") {
+      return <ZonePropertiesHeaderActions />;
+    }
+
+    return undefined;
+  }
+
   return (
     <div className="flex h-screen max-h-screen w-screen max-w-screen flex-col overflow-hidden bg-canvas text-canvas-ink">
       <Toolbar />
@@ -177,6 +201,8 @@ export function App() {
             onDropPanel={handlePanelDrop}
             onPreviewDrop={setDropTarget}
             panels={panelLayout.left}
+            renderPanelHeaderActions={renderPanelHeaderActions}
+            renderPanelContent={renderPanelContent}
             side="left"
           />
         </SidebarDock>
@@ -203,6 +229,8 @@ export function App() {
             onDropPanel={handlePanelDrop}
             onPreviewDrop={setDropTarget}
             panels={panelLayout.right}
+            renderPanelHeaderActions={renderPanelHeaderActions}
+            renderPanelContent={renderPanelContent}
             side="right"
           />
         </SidebarDock>

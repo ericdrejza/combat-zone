@@ -115,6 +115,8 @@ folder in `entities/`. If it's about _how the user interacts_ with the
 canvas regardless of entity (tool switching, selection modifiers) →
 `interaction/`. If it's chrome around the canvas (panels, toolbar) → `ui/`.
 
+Do not read entire directories within node_modules as that is expensive.
+
 ## DEFINITION OF DONE (per feature)
 
 A feature is not complete until:

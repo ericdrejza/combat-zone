@@ -30,7 +30,7 @@ export const MVP_TOOLS: ToolDefinition[] = [
     contract: {
       selectableEntityTypes: ["zone", "edge", "actor", "engagement", "annotation"],
       dragBehavior: "Move selected entities or box select when dragging empty canvas.",
-      clickBehavior: "Select an entity, shift-click to toggle, ctrl-click for contextual actions.",
+      clickBehavior: "Select an entity, ctrl-click to toggle one item, or ctrl-a to select all zones.",
       keyboardShortcut: "v"
     }
   },
@@ -41,7 +41,7 @@ export const MVP_TOOLS: ToolDefinition[] = [
     contract: {
       selectableEntityTypes: ["zone"],
       dragBehavior: "Edit selected zone geometry or box select zones.",
-      clickBehavior: "Select zones before zone drawing/editing behavior is implemented.",
+      clickBehavior: "Select zones, ctrl-click to toggle one zone, or ctrl-a to select all zones.",
       keyboardShortcut: "z"
     }
   },

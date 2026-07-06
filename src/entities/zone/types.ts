@@ -4,11 +4,28 @@ import type {
   LayoutStrategyId
 } from "../../core/layout/types";
 
+export type ZoneShape = "rectangle" | "circle" | "polygon";
+export type ZoneNamePosition =
+  | "top-left"
+  | "top-right"
+  | "bottom-right"
+  | "bottom-left";
+
 export type Zone = {
+  colorBorder: string;
+  colorFill: string;
   id: string;
   name: string;
+  opacity: number;
   polygon: LayoutPoint[];
-  layoutStrategy: Extract<LayoutStrategyId, "FLEX" | "SEQUENTIAL" | "SPLIT_SEQUENTIAL">;
+  showBorder: boolean;
+  showName: boolean;
+  namePosition: ZoneNamePosition;
+  shape: ZoneShape;
+  layoutStrategy: Extract<
+    LayoutStrategyId,
+    "FLEX" | "SEQUENTIAL" | "SPLIT_FLEX" | "SPLIT_SEQUENTIAL"
+  >;
   layoutOrientation: LayoutOrientation;
   tags: string[];
 };

@@ -72,6 +72,9 @@ const encounterSlice = createSlice({
     clearEncounterHistory(state) {
       state.past = [];
       state.future = [];
+    },
+    resetEncounterState() {
+      return initialState;
     }
   }
 });
@@ -80,6 +83,7 @@ export const {
   clearEncounterHistory,
   commitEncounterChange,
   redoEncounterChange,
+  resetEncounterState,
   undoEncounterChange
 } = encounterSlice.actions;
 

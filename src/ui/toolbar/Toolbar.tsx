@@ -1,18 +1,29 @@
-import { Image, Trash2 } from "lucide-react";
-import { useRef, useState } from "react";
+import { Circle, Image, Pentagon, Square, Trash2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 import type { EncounterBackgroundImage } from "../../core/encounter/types";
-import type { EncounterActionRecord } from "../../core/history/types";
-import { setActiveTool } from "../../interaction/interactionState";
+import { createEncounterActionRecord } from "../../core/history/createEncounterActionRecord";
+import {
+  setActiveTool,
+  setZoneShapeMode
+} from "../../interaction/interactionState";
 import {
   TOOL_DEFINITIONS_BY_ID
 } from "../../interaction/tools/toolRegistry";
 import type { ToolDefinition } from "../../interaction/tools/toolRegistry";
+import type { ZoneShape } from "../../entities/zone/types";
 import type { RootState } from "../../store/store";
 import { commitEncounterChange } from "../../store/encounterSlice";
+import { CLOSE_ZONE_SHAPE_MENU_EVENT } from "./events";
 
 type BackgroundAction = "add" | "replace";
+type ZoneShapeOption = {
+  icon: typeof Square;
+  keybind: string;
+  label: string;
+  shape: ZoneShape;
+};
 type ToolbarItem =
   | {
       type: "tool";
@@ -32,6 +43,12 @@ const TOOLBAR_ITEMS: ToolbarItem[] = [
   { type: "tool", tool: TOOL_DEFINITIONS_BY_ID.actor },
   { id: "actor-select", type: "separator" },
   { type: "tool", tool: TOOL_DEFINITIONS_BY_ID.select }
+];
+
+const ZONE_SHAPE_OPTIONS: ZoneShapeOption[] = [
+  { icon: Square, keybind: "1", label: "Rectangle", shape: "rectangle" },
+  { icon: Circle, keybind: "2", label: "Circle", shape: "circle" },
+  { icon: Pentagon, keybind: "3", label: "Polygon", shape: "polygon" }
 ];
 
 function readImageFile(file: File): Promise<EncounterBackgroundImage> {
@@ -57,33 +74,33 @@ function readImageFile(file: File): Promise<EncounterBackgroundImage> {
   });
 }
 
-function createBackgroundActionRecord(
-  type: string,
-  payload: EncounterActionRecord["payload"]
-): EncounterActionRecord {
-  return {
-    id: `background-${Date.now()}`,
-    type,
-    timestamp: Date.now(),
-    payload,
-    validationResult: {
-      valid: true,
-      messages: []
-    }
-  };
-}
-
 export function Toolbar() {
   const dispatch = useDispatch();
   const encounter = useSelector((state: RootState) => state.encounter.present);
   const activeToolId = useSelector(
     (state: RootState) => state.interaction.activeToolId
   );
+  const zoneShapeMode = useSelector(
+    (state: RootState) => state.interaction.zoneShapeMode
+  );
   const backgroundImage = encounter.backgroundImage;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [backgroundMenuOpen, setBackgroundMenuOpen] = useState(false);
+  const [zoneMenuOpen, setZoneMenuOpen] = useState(false);
   const [pendingBackgroundAction, setPendingBackgroundAction] =
     useState<BackgroundAction>("add");
+
+  useEffect(() => {
+    function closeZoneMenu() {
+      setZoneMenuOpen(false);
+    }
+
+    window.addEventListener(CLOSE_ZONE_SHAPE_MENU_EVENT, closeZoneMenu);
+
+    return () => {
+      window.removeEventListener(CLOSE_ZONE_SHAPE_MENU_EVENT, closeZoneMenu);
+    };
+  }, []);
 
   function requestBackgroundUpload(action: BackgroundAction) {
     setPendingBackgroundAction(action);
@@ -110,7 +127,7 @@ export function Toolbar() {
 
     dispatch(
       commitEncounterChange({
-        action: createBackgroundActionRecord(actionType, {
+        action: createEncounterActionRecord(actionType, {
           backgroundImage: nextBackgroundImage
         }),
         nextEncounter: {
@@ -119,6 +136,7 @@ export function Toolbar() {
         }
       })
     );
+    dispatch(setActiveTool("zone"));
   }
 
   function deleteBackground() {
@@ -130,7 +148,7 @@ export function Toolbar() {
 
     dispatch(
       commitEncounterChange({
-        action: createBackgroundActionRecord("background.delete", {
+        action: createEncounterActionRecord("background.delete", {
           backgroundImageName: backgroundImage.name
         }),
         nextEncounter: {
@@ -157,6 +175,7 @@ export function Toolbar() {
             onClick={() => {
               dispatch(setActiveTool("background"));
               setBackgroundMenuOpen((isMenuOpen) => !isMenuOpen);
+              setZoneMenuOpen(false);
             }}
             title={tool.tooltip}
             type="button"
@@ -216,6 +235,76 @@ export function Toolbar() {
       );
     }
 
+    if (tool.id === "zone") {
+      return (
+        <div key={tool.id} className="relative">
+          <button
+            aria-expanded={zoneMenuOpen}
+            aria-haspopup="true"
+            aria-pressed={activeToolId === "zone"}
+            className={`rounded-full border px-3 py-1.5 text-sm font-medium shadow-sm transition hover:bg-canvas ${
+              activeToolId === "zone"
+                ? "border-canvas-ink bg-canvas-ink text-white"
+                : "border-canvas-line bg-white text-canvas-ink"
+            }`}
+            onClick={() => {
+              dispatch(setActiveTool("zone"));
+              setBackgroundMenuOpen(false);
+              setZoneMenuOpen((isMenuOpen) => !isMenuOpen);
+            }}
+            title={tool.tooltip}
+            type="button"
+          >
+            {tool.label}
+          </button>
+          {zoneMenuOpen ? (
+            <div
+              aria-label="Zone shape options"
+              className="absolute left-0 top-full z-10 mt-2 rounded-2xl border border-canvas-line bg-canvas-panel p-2 shadow-lg"
+              role="radiogroup"
+            >
+              <div className="flex gap-2">
+                {ZONE_SHAPE_OPTIONS.map((option) => {
+                  const Icon = option.icon;
+                  const selected = zoneShapeMode === option.shape;
+
+                  return (
+                    <button
+                      key={option.shape}
+                      aria-checked={selected}
+                      aria-label={`${option.label} zone shape`}
+                      className={`relative flex h-11 w-11 items-center justify-center rounded-xl border transition ${
+                        selected
+                          ? "border-canvas-ink bg-canvas-ink text-white"
+                          : "border-canvas-line bg-white text-canvas-ink hover:bg-canvas"
+                      }`}
+                      onClick={() => {
+                        dispatch(setActiveTool("zone"));
+                        dispatch(setZoneShapeMode(option.shape));
+                        setZoneMenuOpen(false);
+                      }}
+                      role="radio"
+                      type="button"
+                    >
+                      <Icon aria-hidden="true" className="h-5 w-5" />
+                      <span
+                        aria-hidden="true"
+                        className={`absolute bottom-1 right-1 text-[10px] ${
+                          selected ? "text-white/60" : "text-canvas-muted/70"
+                        }`}
+                      >
+                        {option.keybind}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ) : null}
+        </div>
+      );
+    }
+
     return (
       <button
         key={tool.id}
@@ -228,6 +317,7 @@ export function Toolbar() {
         onClick={() => {
           dispatch(setActiveTool(tool.id));
           setBackgroundMenuOpen(false);
+          setZoneMenuOpen(false);
         }}
         title={tool.tooltip}
         type="button"

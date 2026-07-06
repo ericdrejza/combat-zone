@@ -22,14 +22,21 @@ function collection<TEntity extends { id: string }>(
 }
 
 const battlefieldZone: Zone = {
+  colorBorder: "#9b876b",
+  colorFill: "#ffffff",
   id: "zone-battlefield",
   name: "Battlefield",
+  namePosition: "top-left",
+  opacity: 0.7,
   polygon: [
     { x: 0, y: 0 },
     { x: 120, y: 0 },
     { x: 120, y: 120 },
     { x: 0, y: 120 }
   ],
+  showBorder: true,
+  showName: false,
+  shape: "rectangle",
   layoutStrategy: "SPLIT_SEQUENTIAL",
   layoutOrientation: "LEFT_RIGHT",
   tags: []
@@ -119,6 +126,7 @@ describe("layout strategies", () => {
   it("registers shared pluggable strategies", () => {
     expect(getLayoutStrategy("FLEX").id).toBe("FLEX");
     expect(getLayoutStrategy("SEQUENTIAL").id).toBe("SEQUENTIAL");
+    expect(getLayoutStrategy("SPLIT_FLEX").id).toBe("SPLIT_FLEX");
     expect(getLayoutStrategy("SPLIT_SEQUENTIAL").id).toBe("SPLIT_SEQUENTIAL");
   });
 
@@ -188,6 +196,43 @@ describe("layout strategies", () => {
       orientation: "LEFT_RIGHT",
       className:
         "cz-layout cz-layout-split-sequential cz-layout-orientation-left-right",
+      sections: [
+        {
+          id: "hero",
+          className: "cz-layout-section-hero",
+          items: [
+            { id: "actor-hero", layoutGroup: "hero" },
+            { id: "actor-second-hero", layoutGroup: "hero" }
+          ]
+        },
+        {
+          id: "neutral",
+          className: "cz-layout-section-neutral",
+          items: [
+            { id: "actor-objective", layoutGroup: "neutral" },
+            { id: "engagement-melee", layoutGroup: "neutral" }
+          ]
+        },
+        {
+          id: "enemy",
+          className: "cz-layout-section-enemy",
+          items: [{ id: "actor-enemy", layoutGroup: "enemy" }]
+        }
+      ]
+    });
+  });
+
+  it("supports split flex grouping with flex-specific strategy metadata", () => {
+    const state = createLayoutEncounterState({
+      zone: {
+        layoutStrategy: "SPLIT_FLEX"
+      }
+    });
+
+    expect(calculateZoneLayout(state, "zone-battlefield").descriptor).toEqual({
+      strategy: "SPLIT_FLEX",
+      orientation: "LEFT_RIGHT",
+      className: "cz-layout cz-layout-split-flex cz-layout-orientation-left-right",
       sections: [
         {
           id: "hero",

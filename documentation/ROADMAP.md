@@ -46,6 +46,7 @@ before persistence and final MVP verification.
 - [x] Implement Zone layout strategies.
   - `FLEX`
   - `SEQUENTIAL`
+  - `SPLIT_FLEX`
   - `SPLIT_SEQUENTIAL`
 - [x] Implement Engagement layout strategies.
   - `FLEX`
@@ -120,22 +121,25 @@ before persistence and final MVP verification.
 
 ## 7. Zones: Polygon Draw, Edit, Layout, and Deletion
 
-- [ ] Implement polygon zone creation with the Zone Tool.
-  - Circle and Rectangle only for MVP
+- [x] Implement polygon zone creation with the Zone Tool.
+  - Zones are stored and edited as polygon point lists.
+  - Rectangle and circle-like regions are represented by their polygon points.
   - Sequential point placement.
   - Close on click-near-start.
   - Close on double-click.
-- [ ] Implement vertex dragging for existing zones.
-- [ ] Add Zone properties editing.
+- [x] Implement vertex dragging for existing zones.
+- [x] Add Zone properties editing.
   - Name
   - Layout strategy
   - Tags and other documented metadata
-- [ ] Re-flow actors immediately when a zone layout strategy changes.
-- [ ] Implement Zone deletion as a single reversible history entry.
+- [x] Re-flow actors immediately when a zone layout strategy changes.
+- [x] Implement Zone deletion as a single reversible history entry.
   - Contained actors become zoneless.
   - Connected edges are auto-deleted.
+  - Engagements parented to the deleted zone are auto-deleted to avoid
+    dangling `parentZoneId` references.
   - Undo restores the zone, actors' prior zone assignments, and deleted edges.
-- [ ] Add Vitest coverage for create, reshape, layout change, delete, undo,
+- [x] Add Vitest coverage for create, reshape, layout change, delete, undo,
   and redo.
 
 ## 8. Actors: Library, Placement, Movement, and Zoneless State
