@@ -40,6 +40,7 @@ const courtyardZone: Zone = {
     { x: 10, y: 10 }
   ],
   layoutStrategy: "FLEX",
+  layoutOrientation: "LEFT_RIGHT",
   tags: ["outdoor"]
 };
 
@@ -52,6 +53,7 @@ const towerZone: Zone = {
     { x: 30, y: 10 }
   ],
   layoutStrategy: "SEQUENTIAL",
+  layoutOrientation: "TOP_BOTTOM",
   tags: []
 };
 
@@ -59,6 +61,7 @@ const heroActor: Actor = {
   id: "actor-hero",
   name: "Hero",
   actorType: "creature",
+  layoutGroup: "hero",
   currentZoneId: "zone-courtyard",
   initiative: 15,
   statusEffects: [],
@@ -70,6 +73,7 @@ const goblinActor: Actor = {
   id: "actor-goblin",
   name: "Goblin",
   actorType: "creature",
+  layoutGroup: "enemy",
   currentZoneId: ZONELESS_ACTOR_ZONE_ID,
   initiative: 11,
   statusEffects: ["hidden"],
@@ -80,6 +84,7 @@ const statueActor: Actor = {
   id: "actor-statue",
   name: "Ancient Statue",
   actorType: "pointOfInterest",
+  layoutGroup: "neutral",
   currentZoneId: "zone-courtyard",
   statusEffects: [],
   metadata: {}
@@ -89,7 +94,8 @@ const meleeEngagement: Engagement = {
   id: "engagement-melee",
   participantIds: ["actor-hero", "actor-goblin"],
   parentZoneId: "zone-courtyard",
-  layoutStrategy: "FLEX"
+  layoutStrategy: "FLEX",
+  layoutOrientation: "LEFT_RIGHT"
 };
 
 const towerEdge: Edge = {
@@ -180,10 +186,12 @@ describe("EncounterState foundation", () => {
     expect(state.zones.byId["zone-courtyard"]).toMatchObject({
       polygon: courtyardZone.polygon,
       layoutStrategy: "FLEX",
+      layoutOrientation: "LEFT_RIGHT",
       tags: ["outdoor"]
     });
     expect(state.actors.byId["actor-hero"]).toMatchObject({
       actorType: "creature",
+      layoutGroup: "hero",
       currentZoneId: "zone-courtyard"
     });
     expect(state.actors.byId["actor-statue"]).toMatchObject({

@@ -89,6 +89,7 @@ Properties:
 - name
 - polygon
 - layoutStrategy
+- layoutOrientation
 - tags
 
 Zone contents are derived from actor `currentZoneId` values and engagement
@@ -98,8 +99,18 @@ actor type, not a separate stored Zone collection.
 Layout strategies:
 
 - FLEX (default)
+  - Actors are rendered evenly spread out as symmetrically as possible around the zone
+  - Actor placement is dynamic and handled by CSS layout inside the zone
 - SEQUENTIAL
+  - Actors are rendered one after the other in specific order around the zone
+  - Actor order is stable based on collection `allIds`
 - SPLIT_SEQUENTIAL
+  - Zone is split into two areas for Actors, one for heroes and one for enemies
+  - `LEFT_RIGHT` orientation renders heroes left and enemies right
+  - `TOP_BOTTOM` orientation renders heroes top and enemies bottom
+  - Neutral actors render along the axis splitting heroes and enemies
+  - Actors are rendered one after the other in specific order in their specific area within the zone
+  - Actor order within each area is stable based on collection `allIds`
 
 **Deletion rule:** deleting a Zone does not delete or block deletion of its
 contents. Actors inside it become **zoneless**. Edges connected to it are
@@ -112,7 +123,6 @@ deleted edges together).
 Unified entity for:
 
 - creatures
-- NPCs
 - objects
 - objectives
 - points of interest
@@ -121,6 +131,8 @@ Properties:
 
 - id
 - name
+- actorType
+- layoutGroup (hero / enemy / neutral)
 - image
 - stats (optional system-specific blob)
 - currentZoneId | zoneless
@@ -147,6 +159,8 @@ Properties:
 - participants[]
 - parentZoneId
 - layoutStrategy
+- layoutOrientation
+  - see Zone layout strategies
 
 Rules:
 
@@ -224,6 +238,13 @@ Each tool defines:
 - Ctrl-click → contextual action (e.g. disengage)
 - Box select supported
 - Ctrl+Shift → additive box select
+- Number hotkeys focus actor layout groups:
+  - `1` selects all hero actors in the current selection scope.
+  - `2` selects all enemy actors in the current selection scope.
+  - `3` selects all neutral actors in the current selection scope.
+- `Tab` selects the next actor within the currently focused layout group.
+  Repeated `Tab` cycles forward through that filtered group using collection
+  `allIds` order.
 
 ### 5.3 Drag & Drop Behaviors
 
@@ -260,13 +281,13 @@ Validation modes:
   - Center-weighted distribution
   - Dynamic spacing
 - SEQUENTIAL
-- Fixed positional slots around polygon perimeter
-- Deterministic ordering
+  - CSS-ordered placement using deterministic collection order
 - SPLIT_SEQUENTIAL
   - Three logical partitions:
     - Heroes
     - Enemies
-    - Engagements
+    - Neutral actors
+  - Split orientation is toggleable between `LEFT_RIGHT` and `TOP_BOTTOM`
 - Each partition uses sequential placement internally
 
 ### 6.2 Engagement Layout Strategies
@@ -275,6 +296,7 @@ Same system as zones:
 
 - FLEX
 - SEQUENTIAL
+- Layout orientation is toggleable between `LEFT_RIGHT` and `TOP_BOTTOM`
 - Future strategies: radial / stack / manual
 
 ## 7. UI Architecture
@@ -393,6 +415,13 @@ Placement strategies:
 - FLEX
 - SEQUENTIAL
 - SPLIT_SEQUENTIAL
+
+Actor and engagement positions inside zones are not persisted in
+EncounterState and are not calculated as coordinates. Layout strategies derive
+CSS layout descriptors from the normalized entity collections, collection
+`allIds` ordering, each entity's layout strategy, and each entity's layout
+orientation. Zone geometry itself remains coordinate-based because zones are
+canvas objects.
 
 Rule:
 

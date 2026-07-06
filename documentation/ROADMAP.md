@@ -42,18 +42,18 @@ before persistence and final MVP verification.
 
 ## 3. Layout Strategy System
 
-- [ ] Create the shared pluggable layout strategy interface.
-- [ ] Implement Zone layout strategies.
+- [x] Create the shared pluggable layout strategy interface.
+- [x] Implement Zone layout strategies.
   - `FLEX`
   - `SEQUENTIAL`
   - `SPLIT_SEQUENTIAL`
-- [ ] Implement Engagement layout strategies.
+- [x] Implement Engagement layout strategies.
   - `FLEX`
   - `SEQUENTIAL`
-- [ ] Ensure layout recalculation is deterministic.
-- [ ] Ensure layout recalculation follows Redux history rules whenever it
+- [x] Ensure layout recalculation is deterministic.
+- [x] Ensure layout recalculation follows Redux history rules whenever it
   changes encounter state.
-- [ ] Add tests for immediate re-flow after layout strategy changes.
+- [x] Add tests for immediate re-flow after layout strategy changes.
 
 ## 4. Validation Pipeline Foundation
 
@@ -172,7 +172,7 @@ before persistence and final MVP verification.
   - Any Engagement with fewer than two members is deleted immediately.
   - Dissolution occurs as part of the history-tracked action that caused it.
 - [ ] Add Engagement properties editing, including layout strategy.
-- [ ] Apply Engagement layout strategies to participant positioning.
+- [ ] Apply Engagement layout strategies to participant CSS layout.
 - [ ] Add Vitest coverage for create, join, merge, split/leave,
   auto-dissolve, layout, undo, and redo.
 

@@ -2,15 +2,17 @@ import type { ActorZoneAssignment } from "../../core/encounter/types";
 
 export type ActorType =
   | "creature"
-  | "npc"
   | "object"
   | "objective"
   | "pointOfInterest";
+
+export type ActorLayoutGroup = "hero" | "enemy" | "neutral";
 
 export type Actor = {
   id: string;
   name: string;
   actorType: ActorType;
+  layoutGroup: ActorLayoutGroup;
   image?: string;
   currentZoneId: ActorZoneAssignment;
   initiative?: number;
