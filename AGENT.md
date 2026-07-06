@@ -41,14 +41,14 @@ always cheaper than a wrong implementation.
 
 | Concern          | Choice                                   | Why                                                                                                                                                                                                                                         |
 | ---------------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Language         | TypeScript                               | Compile-time enforcement of the unified entity contract (Zone/Actor/Engagement/Edge/Annotation) and command schema.                                                                                                                         |
+| Language         | TypeScript                               | Compile-time enforcement of the unified entity contract (Zone/Actor/Engagement/Edge/Annotation) and Redux history schema.                                                                                                                   |
 | Package Manager  | npm                                      | This should be a small project                                                                                                                                                                                                              |
 | Framework        | React                                    | Component model fits entity-per-node rendering.                                                                                                                                                                                             |
 | Rendering        | SVG (React components, not Canvas/WebGL) | Entity count per encounter is small (dozens, not thousands); SVG gives native hit-testing, CSS theming (Light/Dark/System), and debuggable DOM nodes. Konva/Pixi would be over-engineering for this scale.                                  |
-| State management | Redux Toolkit                            | The spec's hardest requirements — mandatory undo/redo on every mutation, normalized entity state — map directly onto RTK's `createEntityAdapter` and DevTools time-travel. Don't fight a lighter tool to re-derive what RTK gives for free. |
+| State management | Redux Toolkit                            | The spec's hardest requirements — mandatory undo/redo on every mutation, normalized entity state — map directly onto Redux-managed history, RTK reducers, and DevTools time-travel. Don't fight a lighter tool to re-derive what RTK gives for free. |
 | Data format      | NoSQL JSON document model                | Encounter and workspace data are versioned JSON documents with normalized `byId` / `allIds` collections, making local persistence, export/import, and future document storage straightforward without relational schema migrations.          |
 | Build tool       | Vite                                     | Standard, fast, no debate needed.                                                                                                                                                                                                           |
-| Testing          | Vitest                                   | Pairs with Vite; use for all command/reducer/validator unit tests.                                                                                                                                                                          |
+| Testing          | Vitest                                   | Pairs with Vite; use for all history/reducer/validator unit tests.                                                                                                                                                                          |
 | Styling          | Tailwind CSS                             | Utility-first, avoids repetitive hand-written CSS, keeps components modular.                                                                                                                                                                |
 
 Do not introduce alternative libraries for these concerns (e.g. a different
@@ -78,12 +78,12 @@ duplicating shared engines (layout, validation) per entity.
 ```
 src/
   core/
-    commands/         # command base types, history stack, undo/redo store
+    history/          # Redux history types and undo/redo helpers
     layout/           # FLEX, SEQUENTIAL, SPLIT_SEQUENTIAL — shared strategy pattern
     validation/       # pipeline runner + shared validators (ZoneIntegrityValidator, etc.)
     rendering/        # shared SVG primitives (selection outline, drag ghost, grid, etc.)
   entities/
-    zone/             # types, Redux slice, zone-specific commands/validators, ZoneRenderer.tsx
+    zone/             # types, Redux slice, zone-specific actions/validators, ZoneRenderer.tsx
     actor/
     engagement/
     edge/
@@ -99,9 +99,9 @@ src/
 ```
 
 **Rule of thumb for where new code goes:** if it's a strategy/engine used by
-_more than one_ entity type (layout, validation, command/history
+_more than one_ entity type (layout, validation, history
 infrastructure, shared render primitives) → `core/`. If it's specific to one
-entity type (a Zone-only command, an Actor-only validator) → that entity's
+entity type (a Zone-only action, an Actor-only validator) → that entity's
 folder in `entities/`. If it's about _how the user interacts_ with the
 canvas regardless of entity (tool switching, selection modifiers) →
 `interaction/`. If it's chrome around the canvas (panels, toolbar) → `ui/`.
@@ -110,13 +110,14 @@ canvas regardless of entity (tool switching, selection modifiers) →
 
 A feature is not complete until:
 
-1. It is implemented as one or more Commands matching the schema above.
+1. It commits EncounterState changes through Redux history using the schema
+   above.
 2. Undo and redo are verified to correctly restore prior state, including
    for cascading effects (e.g. undoing a Zone deletion restores the zone
    AND un-zonelesses the actors that were inside it AND restores the
    auto-deleted edges).
-3. It has Vitest coverage for: the command's `do`/`undo` pair, and any
-   validator it triggers.
+3. It has Vitest coverage for undo/redo behavior, and any validator it
+   triggers.
 4. It respects the current validation mode (OFF / ADVISORY / ASSISTED /
    STRICT) per `documentation/DESIGN.md` §5.5 — test at minimum that STRICT mode can
    block it and ADVISORY mode cannot.

@@ -1,7 +1,7 @@
 # Project Roadmap
 
 This roadmap is derived from `DESIGN.md`, `ARCHITECTURE.md`, and
-`ACCEPTANCE.md`. Work is ordered by dependency: shared state and command
+`ACCEPTANCE.md`. Work is ordered by dependency: shared state and Redux history
 infrastructure must land before feature tools, and feature tools must land
 before persistence and final MVP verification.
 
@@ -12,31 +12,32 @@ before persistence and final MVP verification.
     `initiativeTracker`, and `validationState`.
 - [x] Define entity models for Zones, Actors, Engagements, Edges, and
   Annotations.
-  - Zones include polygon geometry, layout strategy, actor/engagement
-    membership, points of interest, and tags.
-  - Actors include current zone, optional engagement, initiative, status
+  - Zones include polygon geometry, layout strategy, and tags; zone contents
+    are derived from actor and engagement state.
+  - Actors include current zone, actor type, initiative, status
     effects, stats, image, and metadata.
-  - Engagements are transitive participant groups, not actor pairs.
+  - Engagements are transitive participant groups, not actor pairs, and own
+    participant membership.
   - Edges are explicit graph relationships, not derived from geometry.
 - [x] Establish ID, lookup, and entity-normalization conventions.
 - [x] Represent zoneless actors explicitly.
 - [x] Add baseline state inspection helpers needed by acceptance tests.
 
-## 2. Command, History, and Undo/Redo Infrastructure
+## 2. Redux History and Undo/Redo Infrastructure
 
-- [ ] Implement the locked Command object schema from `ARCHITECTURE.md`.
-  - Capture `inversePayload` before `do()` runs.
-  - Keep `do()` and `undo()` pure and non-mutating.
-- [ ] Implement the History Store.
-  - Maintain ordered executed commands plus a cursor.
-  - Undo by moving the cursor back and applying `undo()`.
-  - Redo by moving the cursor forward and applying `do()`.
-  - Truncate redo history when a new command runs after undo.
-- [ ] Route every state mutation through the required flow:
-  Tool Handler -> Interaction Engine -> Validation Pipeline -> Command
-  Creation -> History Store -> State Update -> Layout Recalculation -> Render.
-- [ ] Add tests proving undo/redo exactness for rapid command sequences.
-  - 10+ commands followed by 10 undos returns to exact original state.
+- [x] Implement the locked Redux history schema from `ARCHITECTURE.md`.
+  - Store `past`, `present`, and `future` EncounterState snapshots.
+  - Store serializable action records as history metadata.
+  - Do not store executable command objects or functions in Redux state.
+- [x] Implement the History Store in Redux.
+  - Undo by restoring the latest past snapshot.
+  - Redo by restoring the latest future snapshot.
+  - Truncate redo history when a new committed action runs after undo.
+- [x] Route every state mutation through the required flow:
+  Tool Handler -> Interaction Engine -> Validation Pipeline -> Action Record
+  Creation -> Redux History Commit -> Layout Recalculation -> Render.
+- [x] Add tests proving undo/redo exactness for rapid state commits.
+  - 10+ commits followed by 10 undos returns to exact original state.
   - Redo reapplies the exact same state, not a re-derived approximation.
 
 ## 3. Layout Strategy System
@@ -50,14 +51,14 @@ before persistence and final MVP verification.
   - `FLEX`
   - `SEQUENTIAL`
 - [ ] Ensure layout recalculation is deterministic.
-- [ ] Ensure layout recalculation follows command/history rules whenever it
+- [ ] Ensure layout recalculation follows Redux history rules whenever it
   changes encounter state.
 - [ ] Add tests for immediate re-flow after layout strategy changes.
 
 ## 4. Validation Pipeline Foundation
 
 - [ ] Implement validation pipeline structure.
-  - Action -> Validators[] -> Result -> Command execution or warning.
+  - Action -> Validators[] -> Result -> Redux history commit or warning.
 - [ ] Add validation mode state.
   - `OFF`
   - `ADVISORY`
@@ -131,7 +132,7 @@ before persistence and final MVP verification.
   - Layout strategy
   - Tags and other documented metadata
 - [ ] Re-flow actors immediately when a zone layout strategy changes.
-- [ ] Implement Zone deletion as a single reversible command.
+- [ ] Implement Zone deletion as a single reversible history entry.
   - Contained actors become zoneless.
   - Connected edges are auto-deleted.
   - Undo restores the zone, actors' prior zone assignments, and deleted edges.
@@ -150,7 +151,7 @@ before persistence and final MVP verification.
   - Actor becomes zoneless.
 - [ ] Implement invalid drop handling.
   - Snap back to pre-drag position.
-  - Do not create a command/history entry for snap-back.
+  - Do not create a Redux history entry for snap-back.
 - [ ] Add Actor properties editing.
 - [ ] Add Vitest coverage for actor create/place/move/zoneless behavior,
   invalid drops, undo, and redo.
@@ -169,7 +170,7 @@ before persistence and final MVP verification.
   - Actor dragged to empty zone leaves the Engagement.
 - [ ] Implement automatic Engagement dissolution.
   - Any Engagement with fewer than two members is deleted immediately.
-  - Dissolution occurs as part of the command that caused it.
+  - Dissolution occurs as part of the history-tracked action that caused it.
 - [ ] Add Engagement properties editing, including layout strategy.
 - [ ] Apply Engagement layout strategies to participant positioning.
 - [ ] Add Vitest coverage for create, join, merge, split/leave,
@@ -189,7 +190,7 @@ before persistence and final MVP verification.
   - Notes
 - [ ] Ensure edges remain graph-first and geometry-independent.
 - [ ] Ensure deleting either connected zone auto-deletes the edge as part of
-  the same reversible command.
+  the same reversible history entry.
 - [ ] Add Vitest coverage for create, edit, delete, cascading zone delete,
   undo, and redo.
 
@@ -218,7 +219,7 @@ before persistence and final MVP verification.
 ## 13. Local Persistence, Save/Load, and Export
 
 - [ ] Implement autosave to local browser storage.
-  - Trigger on every committed command or a reasonable debounce.
+  - Trigger on every committed Redux history entry or a reasonable debounce.
 - [ ] Restore the latest autosaved state after browser refresh.
 - [ ] Implement manual Save and Load.
   - Round-trip full encounter state.
@@ -233,14 +234,14 @@ before persistence and final MVP verification.
 
 - [ ] Create an acceptance test matrix covering every item in
   `ACCEPTANCE.md`.
-- [ ] Verify every command type has an undo test.
+- [ ] Verify every state-changing action type has an undo test.
   - Zone create/delete/reshape
   - Actor move
   - Engagement create/merge/split
   - Edge create/delete
   - Initiative reorder
-- [ ] Verify command history remains exact under rapid sequential actions.
-- [ ] Verify no direct state mutation paths bypass the History Store.
+- [ ] Verify Redux history remains exact under rapid sequential actions.
+- [ ] Verify no direct state mutation paths bypass Redux history.
 - [ ] Verify tool switching never leaves stale interaction state.
 - [ ] Verify non-Strict validation does not block GM actions.
 - [ ] Verify state-based assertions for destructive/cascading behaviors.

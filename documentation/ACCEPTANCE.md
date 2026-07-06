@@ -15,7 +15,7 @@ covers `DESIGN.md` §15 "Must have" scope only.
       re-flow immediately per the new strategy.
 - [ ] Deleting a zone: contained actors become zoneless (verified via state
       inspection, not just visually), edges connected to it are removed,
-      and the whole operation undoes as a single Command.
+      and the whole operation undoes as a single Redux history entry.
 
 ## Actors (drag/drop)
 
@@ -24,7 +24,7 @@ covers `DESIGN.md` §15 "Must have" scope only.
       triggers layout recalculation in both the source and destination zone.
 - [ ] Actor dropped on invalid target (e.g. outside any valid drop zone for
       current tool rules) snaps back to its pre-drag position, and this
-      snap-back does **not** create a spurious Command/history entry.
+      snap-back does **not** create a spurious Redux history entry.
 - [ ] Actor dragged to empty canvas space becomes zoneless.
 
 ## Engagement groups
@@ -51,7 +51,7 @@ covers `DESIGN.md` §15 "Must have" scope only.
 - [ ] Edge visibility rule (clear / obscured / blocked / oneWay) is settable
       via Properties Panel.
 - [ ] Deleting either connected zone auto-deletes the edge as part of the
-      same Command (single undo restores both).
+      same Redux history entry (single undo restores both).
 
 ## Initiative tracker
 
@@ -71,18 +71,18 @@ covers `DESIGN.md` §15 "Must have" scope only.
 
 ## Undo/redo
 
-- [ ] Every command type listed above (zone create/delete/reshape, actor
-      move, engagement create/merge/split, edge create/delete, initiative
-      reorder) has a passing Vitest test verifying `undo()` exactly
+- [ ] Every state-changing action type listed above (zone create/delete/reshape,
+      actor move, engagement create/merge/split, edge create/delete,
+      initiative reorder) has a passing Vitest test verifying undo exactly
       restores prior state.
-- [ ] Rapid sequential actions (10+ commands in quick succession) followed
+- [ ] Rapid sequential actions (10+ commits in quick succession) followed
       by 10 undos returns to the exact original state (no drift).
 - [ ] Redo after undo re-applies the exact same state, not a re-derived
       approximation.
 
 ## Local persistence
 
-- [ ] Autosave triggers on every committed Command (or on a reasonable
+- [ ] Autosave triggers on every committed Redux history entry (or on a reasonable
       debounce) to local browser storage.
 - [ ] Manual "Save" / "Load" round-trips the full encounter state including
       all entity types without loss.

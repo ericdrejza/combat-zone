@@ -2,7 +2,7 @@
 
 > This document is the single source of truth for product and domain
 > decisions (entities, rules, interaction model, MVP scope). Technical
-> implementation decisions (stack, folder structure, command schema, coding
+> implementation decisions (stack, folder structure, Redux history, coding
 > process) live in `../AGENT.md`. Per-feature testable acceptance criteria live
 > in `ACCEPTANCE.md`. Domain facts should not be duplicated across these
 > files — if a rule changes here, `../AGENT.md` and `ACCEPTANCE.md` reference
@@ -89,10 +89,11 @@ Properties:
 - name
 - polygon
 - layoutStrategy
-- actors[]
-- engagements[]
-- POIs (Actors with type)
 - tags
+
+Zone contents are derived from actor `currentZoneId` values and engagement
+`parentZoneId` values. Points of interest are Actors with the appropriate
+actor type, not a separate stored Zone collection.
 
 Layout strategies:
 
@@ -126,6 +127,9 @@ Properties:
 - initiative
 - statusEffects[]
 - metadata
+
+Engagement membership is owned by Engagement `participants[]`; Actors do not
+store a duplicate engagement reference.
 
 Actors may be:
 
@@ -322,11 +326,15 @@ Context-sensitive editor:
 
 ## 10. Undo / Redo System
 
-Command-based architecture:
+Redux-managed history architecture:
 
-- Every interaction = command
-- Stored in history stack
-- Fully reversible state transitions
+- Every committed state-changing interaction is represented by a serializable
+  action record.
+- Redux stores encounter history as past, present, and future state snapshots.
+- Undo/redo restores exact EncounterState snapshots rather than re-deriving
+  prior state.
+- Action records are retained as metadata for auditing, validation messages,
+  persistence triggers, and future tooling.
 
 ## 11. Persistence
 
@@ -355,7 +363,7 @@ Pipeline-based architecture:
 Action
 → Validators[]
 → Result
-→ Command execution or warning
+→ Redux state commit or warning
 
 Validators:
 
