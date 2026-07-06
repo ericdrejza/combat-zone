@@ -74,14 +74,14 @@ before persistence and final MVP verification.
 
 ## 5. Canvas Shell and Rendering Order
 
-- [ ] Build the workspace frame.
+- [x] Build the workspace frame.
   - Toolbar
   - Left docked panel area
   - Canvas
   - Right docked panel area
-  - Bottom status, initiative, and validation area
-- [ ] Implement collapsible, vertically stackable dock panels.
-- [ ] Implement render layers in documented order.
+  - Status, initiative, and validation side panels
+- [x] Implement collapsible, vertically stackable, draggable dock panels.
+- [x] Implement render layers in documented order.
   - Background
   - Zones
   - Edges
@@ -89,7 +89,7 @@ before persistence and final MVP verification.
   - Engagement overlays
   - Annotations
   - UI overlays
-- [ ] Add selection overlay support for later tools.
+- [x] Add selection overlay support for later tools.
 
 ## 6. Toolbar and Interaction Engine
 
@@ -103,7 +103,6 @@ before persistence and final MVP verification.
   - Engagement Tool
   - Annotation Tool
   - Delete Tool
-  - Pan Tool
 - [ ] Give every tool a visible tooltip describing its function.
 - [ ] Implement tool-owned interaction contracts.
   - Selectable entity types
@@ -123,6 +122,7 @@ before persistence and final MVP verification.
 ## 7. Zones: Polygon Draw, Edit, Layout, and Deletion
 
 - [ ] Implement polygon zone creation with the Zone Tool.
+  - Circle and Rectangle only for MVP
   - Sequential point placement.
   - Close on click-near-start.
   - Close on double-click.

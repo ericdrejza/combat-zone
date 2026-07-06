@@ -5,8 +5,7 @@ export type ToolId =
   | "actor"
   | "engagement"
   | "annotation"
-  | "delete"
-  | "pan";
+  | "delete";
 
 export type ToolDefinition = {
   id: ToolId;
@@ -21,6 +20,5 @@ export const MVP_TOOLS: ToolDefinition[] = [
   { id: "actor", label: "Actor", tooltip: "Place and move actors." },
   { id: "engagement", label: "Engagement", tooltip: "Create and manage engagement groups." },
   { id: "annotation", label: "Annotation", tooltip: "Add notes, arrows, and markers." },
-  { id: "delete", label: "Delete", tooltip: "Delete selected entities through history-tracked actions." },
-  { id: "pan", label: "Pan", tooltip: "Move around the encounter canvas." }
+  { id: "delete", label: "Delete", tooltip: "Delete selected entities through history-tracked actions." }
 ];

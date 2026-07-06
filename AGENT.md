@@ -67,6 +67,15 @@ first — this table is a locked decision, not a suggestion.
 - Only denormalize persisted state for a proven performance or product need,
   and document the synchronization invariant before implementing it.
 
+## UI IMPLEMENTATION RULES
+
+- Prefer icon-only controls when an icon communicates the action more clearly
+  than text, while keeping accessible names through `aria-label` or equivalent
+  semantics.
+- Use established icon sets for common controls such as drag handles,
+  reorder affordances, chevrons, close buttons, and disclosure controls; do
+  not hand-author bespoke SVGs for standard icons.
+
 ## FOLDER STRUCTURE (locked)
 
 Hybrid structure: shared cross-cutting engines live in `core/`, domain
