@@ -1,4 +1,5 @@
 export type ValidationSeverity = "info" | "warning" | "error";
+export type ValidationMode = "OFF" | "ADVISORY" | "ASSISTED" | "STRICT";
 
 export type ValidationMessage = {
   code: string;

@@ -1,14 +1,11 @@
 import { createSlice } from "@reduxjs/toolkit";
 
-export type EncounterBootstrapState = {
-  schemaVersion: 1;
-  activeEncounterId: string | null;
-};
+import { createEncounterState } from "../core/encounter/createEncounterState";
 
-const initialState: EncounterBootstrapState = {
-  schemaVersion: 1,
-  activeEncounterId: null
-};
+const initialState = createEncounterState({
+  id: "active-encounter",
+  name: "Untitled Encounter"
+});
 
 const encounterSlice = createSlice({
   name: "encounter",

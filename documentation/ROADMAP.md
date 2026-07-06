@@ -7,10 +7,10 @@ before persistence and final MVP verification.
 
 ## 1. Core Encounter State Foundation
 
-- [ ] Define the full `Encounter` runtime state shape.
+- [x] Define the full `Encounter` runtime state shape.
   - Include `zones`, `edges`, `actors`, `engagements`, `annotations`,
     `initiativeTracker`, and `validationState`.
-- [ ] Define entity models for Zones, Actors, Engagements, Edges, and
+- [x] Define entity models for Zones, Actors, Engagements, Edges, and
   Annotations.
   - Zones include polygon geometry, layout strategy, actor/engagement
     membership, points of interest, and tags.
@@ -18,9 +18,9 @@ before persistence and final MVP verification.
     effects, stats, image, and metadata.
   - Engagements are transitive participant groups, not actor pairs.
   - Edges are explicit graph relationships, not derived from geometry.
-- [ ] Establish ID, lookup, and entity-normalization conventions.
-- [ ] Represent zoneless actors explicitly.
-- [ ] Add baseline state inspection helpers needed by acceptance tests.
+- [x] Establish ID, lookup, and entity-normalization conventions.
+- [x] Represent zoneless actors explicitly.
+- [x] Add baseline state inspection helpers needed by acceptance tests.
 
 ## 2. Command, History, and Undo/Redo Infrastructure
 

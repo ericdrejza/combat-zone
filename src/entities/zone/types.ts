@@ -5,7 +5,5 @@ export type Zone = {
   name: string;
   polygon: LayoutPoint[];
   layoutStrategy: Extract<LayoutStrategyId, "FLEX" | "SEQUENTIAL" | "SPLIT_SEQUENTIAL">;
-  actorIds: string[];
-  engagementIds: string[];
   tags: string[];
 };

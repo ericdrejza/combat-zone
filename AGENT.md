@@ -46,6 +46,7 @@ always cheaper than a wrong implementation.
 | Framework        | React                                    | Component model fits entity-per-node rendering.                                                                                                                                                                                             |
 | Rendering        | SVG (React components, not Canvas/WebGL) | Entity count per encounter is small (dozens, not thousands); SVG gives native hit-testing, CSS theming (Light/Dark/System), and debuggable DOM nodes. Konva/Pixi would be over-engineering for this scale.                                  |
 | State management | Redux Toolkit                            | The spec's hardest requirements — mandatory undo/redo on every mutation, normalized entity state — map directly onto RTK's `createEntityAdapter` and DevTools time-travel. Don't fight a lighter tool to re-derive what RTK gives for free. |
+| Data format      | NoSQL JSON document model                | Encounter and workspace data are versioned JSON documents with normalized `byId` / `allIds` collections, making local persistence, export/import, and future document storage straightforward without relational schema migrations.          |
 | Build tool       | Vite                                     | Standard, fast, no debate needed.                                                                                                                                                                                                           |
 | Testing          | Vitest                                   | Pairs with Vite; use for all command/reducer/validator unit tests.                                                                                                                                                                          |
 | Styling          | Tailwind CSS                             | Utility-first, avoids repetitive hand-written CSS, keeps components modular.                                                                                                                                                                |
@@ -53,6 +54,18 @@ always cheaper than a wrong implementation.
 Do not introduce alternative libraries for these concerns (e.g. a different
 state manager, a CSS-in-JS library, Jest instead of Vitest) without asking
 first — this table is a locked decision, not a suggestion.
+
+## STATE MODELING RULES
+
+- Persist every domain fact in exactly one place. Do not add duplicate
+  source-of-truth fields for convenience, reverse lookup, or rendering.
+- Model relationships with normalized IDs in the owning entity or root
+  collection, then expose resolved objects through selectors/inspectors.
+- If a relationship can be derived from an existing authoritative field,
+  derive it instead of storing a second copy. Add a selector before adding
+  redundant state.
+- Only denormalize persisted state for a proven performance or product need,
+  and document the synchronization invariant before implementing it.
 
 ## FOLDER STRUCTURE (locked)
 

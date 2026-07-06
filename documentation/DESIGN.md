@@ -123,7 +123,6 @@ Properties:
 - image
 - stats (optional system-specific blob)
 - currentZoneId | zoneless
-- engagementId (optional)
 - initiative
 - statusEffects[]
 - metadata
