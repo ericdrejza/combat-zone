@@ -67,6 +67,26 @@ first — this table is a locked decision, not a suggestion.
 - Only denormalize persisted state for a proven performance or product need,
   and document the synchronization invariant before implementing it.
 
+## ENGINEERING QUALITY RULES
+
+- Keep source files under 300 lines whenever practical. If a file approaches
+  that limit, split it by responsibility before adding more behavior.
+- Follow Single Responsibility Principle: each module, component, hook,
+  reducer, selector, validator, and test file should have one clear reason to
+  change.
+- Follow DRY without creating premature abstractions. Extract duplicated logic
+  once the shared behavior is clear and the abstraction improves readability.
+- Follow SOLID and Separation of Concerns. Keep domain state, selectors,
+  interaction handlers, rendering components, and styling concerns in focused
+  files rather than concentrating unrelated responsibilities in one module.
+- Prefer small, composable functions with explicit inputs and outputs over
+  hidden coupling or broad shared mutable state.
+- Use clear, concise comments for classes, exported functions, hooks, reducers,
+  selectors, and complex logic when the intent or invariant is not obvious
+  from the code itself.
+- Comments should explain why behavior exists, important constraints, or
+  non-obvious edge cases. Avoid comments that merely restate the code.
+
 ## UI IMPLEMENTATION RULES
 
 - Prefer icon-only controls when an icon communicates the action more clearly

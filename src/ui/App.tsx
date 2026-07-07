@@ -7,6 +7,8 @@ import { MVP_TOOLS } from "../interaction/tools/toolRegistry";
 import type { ToolId } from "../interaction/tools/toolRegistry";
 import { CanvasShell } from "./canvas/CanvasShell";
 import type { DockPanelDefinition, DockSide, DropTarget } from "./panels/PanelsShell";
+import { movePanel } from "./panels/panelLayout";
+import type { PanelLayout } from "./panels/panelLayout";
 import { PanelsShell } from "./panels/PanelsShell";
 import { SidebarDock } from "./panels/SidebarDock";
 import {
@@ -15,7 +17,6 @@ import {
 } from "./panels/ZonePropertiesPanel";
 import { Toolbar } from "./toolbar/Toolbar";
 
-type PanelLayout = Record<DockSide, DockPanelDefinition[]>;
 type SidebarCollapsedState = Record<DockSide, boolean>;
 
 const initialPanelLayout: PanelLayout = {
@@ -50,43 +51,6 @@ function shouldIgnoreKeyboardShortcut(target: EventTarget | null): boolean {
     target instanceof HTMLSelectElement ||
     target.isContentEditable
   );
-}
-
-export function movePanel(
-  layout: PanelLayout,
-  panelId: string,
-  target: DropTarget
-): PanelLayout {
-  const sourceSide = layout.left.some((panel) => panel.id === panelId)
-    ? "left"
-    : "right";
-  const sourceIndex = layout[sourceSide].findIndex(
-    (panel) => panel.id === panelId
-  );
-  const movingPanel = layout[sourceSide][sourceIndex];
-
-  if (!movingPanel) {
-    return layout;
-  }
-
-  const nextLayout: PanelLayout = {
-    left: layout.left.filter((panel) => panel.id !== panelId),
-    right: layout.right.filter((panel) => panel.id !== panelId)
-  };
-  const targetPanels = nextLayout[target.side];
-  const adjustedTargetIndex =
-    target.side === sourceSide && target.index > sourceIndex
-      ? target.index - 1
-      : target.index;
-  const targetIndex = Math.min(adjustedTargetIndex, targetPanels.length);
-
-  nextLayout[target.side] = [
-    ...targetPanels.slice(0, targetIndex),
-    movingPanel,
-    ...targetPanels.slice(targetIndex)
-  ];
-
-  return nextLayout;
 }
 
 export function App() {
