@@ -117,6 +117,10 @@ describe("App", () => {
     expect(within(shapeOptions).getByText("1")).toBeInTheDocument();
     expect(within(shapeOptions).getByText("2")).toBeInTheDocument();
     expect(within(shapeOptions).getByText("3")).toBeInTheDocument();
+    expect(within(shapeOptions).getByText("4")).toBeInTheDocument();
+    expect(
+      within(shapeOptions).getByRole("radio", { name: "Hexagon zone shape" })
+    ).toBeInTheDocument();
 
     await user.click(
       within(shapeOptions).getByRole("radio", { name: "Circle zone shape" })
@@ -526,7 +530,7 @@ describe("App", () => {
     });
 
     await user.click(screen.getByRole("button", { name: "Zone" }));
-    fireEvent.keyDown(window, { key: "3" });
+    fireEvent.keyDown(window, { key: "4" });
 
     fireEvent.click(canvas, { clientX: 100, clientY: 100 });
     fireEvent.click(canvas, { clientX: 220, clientY: 100 });
@@ -548,7 +552,7 @@ describe("App", () => {
     ).toBeInTheDocument();
   });
 
-  it("creates rectangle zones by default and circle zones with Zone Tool keybind 2", async () => {
+  it("creates rectangle zones by default, circle zones with keybind 2, and hexagon zones with keybind 3", async () => {
     const user = userEvent.setup();
     const rectangleZoneName = `Zone ${
       store.getState().encounter.present.zones.allIds.length + 1
@@ -615,6 +619,22 @@ describe("App", () => {
     const circleZone = await screen.findByLabelText(circleZoneName);
 
     expect(circleZone.getAttribute("points")?.split(" ")).toHaveLength(60);
+
+    const hexagonZoneName = `Zone ${
+      store.getState().encounter.present.zones.allIds.length + 1
+    }`;
+
+    fireEvent.keyDown(window, { key: "3" });
+
+    expect(screen.getByText("Zone shape: hexagon")).toBeInTheDocument();
+
+    fireEvent.mouseDown(canvas, { button: 0, clientX: 420, clientY: 100 });
+    fireEvent.mouseMove(canvas, { clientX: 520, clientY: 200 });
+    fireEvent.mouseUp(canvas);
+
+    const hexagonZone = await screen.findByLabelText(hexagonZoneName);
+
+    expect(hexagonZone.getAttribute("points")?.split(" ")).toHaveLength(6);
   });
 
   it("selects newly created zones without expanding a collapsed properties panel", async () => {
@@ -1439,6 +1459,153 @@ describe("App", () => {
     expect(screen.getAllByLabelText(new RegExp(`${zoneName} vertex`))).toHaveLength(8);
   });
 
+  it("shows eight hexagon resize handles while storing the hexagon as six polygon segments", async () => {
+    const user = userEvent.setup();
+    const zoneName = `Zone ${
+      store.getState().encounter.present.zones.allIds.length + 1
+    }`;
+
+    render(
+      <Provider store={store}>
+        <App />
+      </Provider>
+    );
+
+    const canvas = screen.getByLabelText("SVG encounter workspace");
+
+    canvas.getBoundingClientRect = () => ({
+      bottom: 640,
+      height: 640,
+      left: 0,
+      right: 960,
+      toJSON() {},
+      top: 0,
+      width: 960,
+      x: 0,
+      y: 0
+    });
+
+    await user.click(screen.getByRole("button", { name: "Zone" }));
+    fireEvent.keyDown(window, { key: "3" });
+
+    fireEvent.mouseDown(canvas, { button: 0, clientX: 240, clientY: 100 });
+    fireEvent.mouseMove(canvas, { clientX: 340, clientY: 200 });
+    fireEvent.mouseUp(canvas);
+
+    const zone = await screen.findByLabelText(zoneName);
+
+    expect(zone.getAttribute("points")?.split(" ")).toHaveLength(6);
+    expect(screen.getAllByLabelText(new RegExp(`${zoneName} vertex`))).toHaveLength(8);
+  });
+
+  it("keeps hexagon zones selected after resizing from orthogonal and top-left bounds handles", async () => {
+    const user = userEvent.setup();
+    const zoneName = "Zone 1";
+
+    render(
+      <Provider store={store}>
+        <App />
+      </Provider>
+    );
+
+    const canvas = screen.getByLabelText("SVG encounter workspace");
+
+    canvas.getBoundingClientRect = () => ({
+      bottom: 640,
+      height: 640,
+      left: 0,
+      right: 960,
+      toJSON() {},
+      top: 0,
+      width: 960,
+      x: 0,
+      y: 0
+    });
+
+    await user.click(screen.getByRole("button", { name: "Zone" }));
+    fireEvent.keyDown(window, { key: "3" });
+
+    fireEvent.mouseDown(canvas, { button: 0, clientX: 240, clientY: 100 });
+    fireEvent.mouseMove(canvas, { clientX: 340, clientY: 200 });
+    fireEvent.mouseUp(canvas);
+
+    const zone = await screen.findByLabelText(zoneName);
+    const originalPoints = zone.getAttribute("points");
+    const rightHandle = screen.getByLabelText(`${zoneName} vertex 3`);
+
+    fireEvent.mouseDown(rightHandle, { button: 0, clientX: 340, clientY: 150 });
+    fireEvent.mouseMove(canvas, { clientX: 390, clientY: 150 });
+    fireEvent.mouseUp(canvas);
+    fireEvent.click(canvas, { clientX: 390, clientY: 150 });
+
+    expect(zone.getAttribute("points")).not.toBe(originalPoints);
+    expect(zone.getAttribute("points")?.split(" ")).toHaveLength(6);
+    expect(store.getState().interaction.selection).toMatchObject({
+      selectedEntityType: "zone",
+      selectedIds: [zone.getAttribute("data-entity-id")]
+    });
+
+    const afterRightResizePoints = zone.getAttribute("points");
+    const leftHandle = screen.getByLabelText(`${zoneName} vertex 7`);
+
+    fireEvent.mouseDown(leftHandle, { button: 0, clientX: 240, clientY: 150 });
+    fireEvent.mouseMove(canvas, { clientX: 210, clientY: 150 });
+    fireEvent.mouseUp(canvas);
+    fireEvent.click(canvas, { clientX: 210, clientY: 150 });
+
+    expect(zone.getAttribute("points")).not.toBe(afterRightResizePoints);
+    expect(zone.getAttribute("points")?.split(" ")).toHaveLength(6);
+    expect(store.getState().interaction.selection).toMatchObject({
+      selectedEntityType: "zone",
+      selectedIds: [zone.getAttribute("data-entity-id")]
+    });
+
+    const afterLeftResizePoints = zone.getAttribute("points");
+    const topHandle = screen.getByLabelText(`${zoneName} vertex 1`);
+
+    fireEvent.mouseDown(topHandle, { button: 0, clientX: 300, clientY: 100 });
+    fireEvent.mouseMove(canvas, { clientX: 300, clientY: 80 });
+    fireEvent.mouseUp(canvas);
+    fireEvent.click(canvas, { clientX: 300, clientY: 80 });
+
+    expect(zone.getAttribute("points")).not.toBe(afterLeftResizePoints);
+    expect(zone.getAttribute("points")?.split(" ")).toHaveLength(6);
+    expect(store.getState().interaction.selection).toMatchObject({
+      selectedEntityType: "zone",
+      selectedIds: [zone.getAttribute("data-entity-id")]
+    });
+
+    const afterTopResizePoints = zone.getAttribute("points");
+    const bottomHandle = screen.getByLabelText(`${zoneName} vertex 5`);
+
+    fireEvent.mouseDown(bottomHandle, { button: 0, clientX: 300, clientY: 200 });
+    fireEvent.mouseMove(canvas, { clientX: 300, clientY: 230 });
+    fireEvent.mouseUp(canvas);
+    fireEvent.click(canvas, { clientX: 300, clientY: 230 });
+
+    expect(zone.getAttribute("points")).not.toBe(afterTopResizePoints);
+    expect(zone.getAttribute("points")?.split(" ")).toHaveLength(6);
+    expect(store.getState().interaction.selection).toMatchObject({
+      selectedEntityType: "zone",
+      selectedIds: [zone.getAttribute("data-entity-id")]
+    });
+
+    const afterBottomResizePoints = zone.getAttribute("points");
+    const topLeftHandle = screen.getByLabelText(`${zoneName} vertex 8`);
+
+    fireEvent.mouseDown(topLeftHandle, { button: 0, clientX: 210, clientY: 80 });
+    fireEvent.mouseMove(canvas, { clientX: 190, clientY: 60 });
+    fireEvent.mouseUp(canvas);
+    fireEvent.click(canvas, { clientX: 190, clientY: 60 });
+
+    expect(zone.getAttribute("points")).not.toBe(afterBottomResizePoints);
+    expect(zone.getAttribute("points")?.split(" ")).toHaveLength(6);
+    expect(store.getState().interaction.selection).toMatchObject({
+      selectedEntityType: "zone",
+      selectedIds: [zone.getAttribute("data-entity-id")]
+    });
+  });
+
   it("uses background luminance for circle zone name text even with opaque fill", async () => {
     const user = userEvent.setup();
     const zoneName = "Zone 1";
@@ -1748,7 +1915,7 @@ describe("App", () => {
     });
 
     await user.click(screen.getByRole("button", { name: "Zone" }));
-    fireEvent.keyDown(window, { key: "3" });
+    fireEvent.keyDown(window, { key: "4" });
 
     fireEvent.click(canvas, { clientX: 100, clientY: 100 });
     fireEvent.click(canvas, { clientX: 220, clientY: 100 });
@@ -1784,7 +1951,7 @@ describe("App", () => {
     });
 
     await user.click(screen.getByRole("button", { name: "Zone" }));
-    fireEvent.keyDown(window, { key: "3" });
+    fireEvent.keyDown(window, { key: "4" });
 
     fireEvent.click(canvas, { clientX: 100, clientY: 100 });
     fireEvent.click(canvas, { clientX: 220, clientY: 100 });
@@ -1824,7 +1991,7 @@ describe("App", () => {
     });
 
     await user.click(screen.getByRole("button", { name: "Zone" }));
-    fireEvent.keyDown(window, { key: "3" });
+    fireEvent.keyDown(window, { key: "4" });
 
     fireEvent.click(canvas, { clientX: 100, clientY: 100 });
     fireEvent.click(canvas, { clientX: 220, clientY: 100 });
@@ -1911,7 +2078,7 @@ describe("App", () => {
     fireEvent.mouseMove(canvas, { clientX: 260, clientY: 120 });
     fireEvent.mouseUp(canvas);
 
-    fireEvent.keyDown(window, { key: "3" });
+    fireEvent.keyDown(window, { key: "4" });
 
     fireEvent.click(canvas, { clientX: 320, clientY: 40 });
     fireEvent.click(canvas, { clientX: 440, clientY: 40 });

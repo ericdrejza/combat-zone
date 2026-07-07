@@ -34,12 +34,14 @@ const CANVAS_HEIGHT = 640;
 const CLOSE_DISTANCE = 16;
 const MIN_SHAPE_SIZE = 8;
 const CIRCLE_SEGMENTS = 60;
+const HEXAGON_SEGMENTS = 6;
 const CANVAS_BACKGROUND_COLOR = "#fffaf0";
 const LOW_ZONE_OPACITY_THRESHOLD = 0.3;
 const BACKGROUND_SAMPLE_COUNT = 20;
 
 type VertexDragState = {
   hasMoved: boolean;
+  handleStart: LayoutPoint;
   polygon: LayoutPoint[];
   vertexIndex: number;
   zoneId: string;
@@ -48,7 +50,7 @@ type VertexDragState = {
 type ShapeDraftState = {
   cloneSourceZoneId?: string;
   current: LayoutPoint;
-  shape: Extract<ZoneShape, "rectangle" | "circle">;
+  shape: Extract<ZoneShape, "rectangle" | "circle" | "hexagon">;
   start: LayoutPoint;
 };
 
@@ -114,32 +116,50 @@ function createRectanglePolygon(start: LayoutPoint, current: LayoutPoint): Layou
   ];
 }
 
-function createCirclePolygon(start: LayoutPoint, current: LayoutPoint): LayoutPoint[] {
+function createSegmentedEllipsePolygon(
+  start: LayoutPoint,
+  current: LayoutPoint,
+  segments: number
+): LayoutPoint[] {
   const center = {
     x: (start.x + current.x) / 2,
     y: (start.y + current.y) / 2
   };
   const radiusX = Math.abs(current.x - start.x) / 2;
   const radiusY = Math.abs(current.y - start.y) / 2;
+  const angles = Array.from(
+    { length: segments },
+    (_, index) => (index / segments) * Math.PI * 2
+  );
+  const maxCos = Math.max(...angles.map((angle) => Math.abs(Math.cos(angle))));
+  const maxSin = Math.max(...angles.map((angle) => Math.abs(Math.sin(angle))));
 
-  return Array.from({ length: CIRCLE_SEGMENTS }, (_, index) => {
-    const angle = (index / CIRCLE_SEGMENTS) * Math.PI * 2;
+  return angles.map((angle) => ({
+    x: center.x + Math.cos(angle) * (radiusX / maxCos),
+    y: center.y + Math.sin(angle) * (radiusY / maxSin)
+  }));
+}
 
-    return {
-      x: center.x + Math.cos(angle) * radiusX,
-      y: center.y + Math.sin(angle) * radiusY
-    };
-  });
+function createCirclePolygon(start: LayoutPoint, current: LayoutPoint): LayoutPoint[] {
+  return createSegmentedEllipsePolygon(start, current, CIRCLE_SEGMENTS);
+}
+
+function createHexagonPolygon(start: LayoutPoint, current: LayoutPoint): LayoutPoint[] {
+  return createSegmentedEllipsePolygon(start, current, HEXAGON_SEGMENTS);
 }
 
 function createShapePolygon(
-  shape: Extract<ZoneShape, "rectangle" | "circle">,
+  shape: Extract<ZoneShape, "rectangle" | "circle" | "hexagon">,
   start: LayoutPoint,
   current: LayoutPoint
 ): LayoutPoint[] {
-  return shape === "rectangle"
-    ? createRectanglePolygon(start, current)
-    : createCirclePolygon(start, current);
+  if (shape === "rectangle") {
+    return createRectanglePolygon(start, current);
+  }
+
+  return shape === "circle"
+    ? createCirclePolygon(start, current)
+    : createHexagonPolygon(start, current);
 }
 
 function getPaintableZoneProperties(zone: Zone): UpdateZonePropertiesInput {
@@ -178,6 +198,13 @@ function getCloneableZoneProperties(zone: Zone): Pick<
 
 function createCirclePolygonFromBounds(bounds: ReturnType<typeof getPolygonBounds>) {
   return createCirclePolygon(
+    { x: bounds.x, y: bounds.y },
+    { x: bounds.x + bounds.width, y: bounds.y + bounds.height }
+  );
+}
+
+function createHexagonPolygonFromBounds(bounds: ReturnType<typeof getPolygonBounds>) {
+  return createHexagonPolygon(
     { x: bounds.x, y: bounds.y },
     { x: bounds.x + bounds.width, y: bounds.y + bounds.height }
   );
@@ -352,10 +379,11 @@ function resizeRectanglePolygon(
   return nextPolygon;
 }
 
-function resizeCirclePolygon(
+function resizeGeneratedShapePolygon(
   polygon: LayoutPoint[],
   handleIndex: number,
-  point: LayoutPoint
+  point: LayoutPoint,
+  shape: Extract<ZoneShape, "circle" | "hexagon">
 ): LayoutPoint[] {
   const bounds = getPolygonBounds(polygon);
   const nextBounds = { ...bounds };
@@ -393,11 +421,13 @@ function resizeCirclePolygon(
     height: Math.max(Math.abs(nextBounds.height), MIN_SHAPE_SIZE)
   };
 
-  return createCirclePolygonFromBounds(normalizedBounds);
+  return shape === "circle"
+    ? createCirclePolygonFromBounds(normalizedBounds)
+    : createHexagonPolygonFromBounds(normalizedBounds);
 }
 
 function getZoneResizeHandles(zone: Zone, polygon: LayoutPoint[]): LayoutPoint[] {
-  if (zone.shape === "circle") {
+  if (zone.shape === "circle" || zone.shape === "hexagon") {
     const bounds = getPolygonBounds(polygon);
     const centerX = bounds.x + bounds.width / 2;
     const centerY = bounds.y + bounds.height / 2;
@@ -427,8 +457,8 @@ function resizeZonePolygon(
     return resizeRectanglePolygon(polygon, vertexIndex, point);
   }
 
-  if (zone.shape === "circle") {
-    return resizeCirclePolygon(polygon, vertexIndex, point);
+  if (zone.shape === "circle" || zone.shape === "hexagon") {
+    return resizeGeneratedShapePolygon(polygon, vertexIndex, point, zone.shape);
   }
 
   return polygon.map((existingPoint, index) =>
@@ -599,6 +629,7 @@ export function CanvasShell() {
   const [polygonDraftBackgroundLuminance, setPolygonDraftBackgroundLuminance] =
     useState(getHexLuminance(CANVAS_BACKGROUND_COLOR));
   const suppressNextCanvasClickRef = useRef(false);
+  const suppressNextCanvasClickUnconditionallyRef = useRef(false);
   const suppressNextCanvasClickPointRef = useRef<LayoutPoint | null>(null);
   const suppressNextEntityClickRef = useRef<string | null>(null);
 
@@ -712,6 +743,13 @@ export function CanvasShell() {
 
       if (event.key === "3") {
         event.preventDefault();
+        dispatch(setZoneShapeMode("hexagon"));
+        closeZoneShapeMenu();
+        setZoneDraftPoints([]);
+      }
+
+      if (event.key === "4") {
+        event.preventDefault();
         dispatch(setZoneShapeMode("polygon"));
         closeZoneShapeMenu();
         setShapeDraft(null);
@@ -747,7 +785,9 @@ export function CanvasShell() {
       .filter(
         (zone): zone is Zone =>
           Boolean(zone) &&
-          (zone.opacity < LOW_ZONE_OPACITY_THRESHOLD || zone.shape === "circle")
+          (zone.opacity < LOW_ZONE_OPACITY_THRESHOLD ||
+            zone.shape === "circle" ||
+            zone.shape === "hexagon")
       );
 
     if (backgroundTextZones.length === 0) {
@@ -1020,16 +1060,21 @@ export function CanvasShell() {
     if (suppressNextEntityClickRef.current === entityId) {
       suppressNextEntityClickRef.current = null;
       suppressNextCanvasClickRef.current = false;
+      suppressNextCanvasClickUnconditionallyRef.current = false;
       suppressNextCanvasClickPointRef.current = null;
       return;
     }
 
     if (suppressNextCanvasClickRef.current) {
       suppressNextCanvasClickRef.current = false;
+      const suppressUnconditionally =
+        suppressNextCanvasClickUnconditionallyRef.current;
+      suppressNextCanvasClickUnconditionallyRef.current = false;
       const suppressedPoint = suppressNextCanvasClickPointRef.current;
       suppressNextCanvasClickPointRef.current = null;
 
       if (
+        suppressUnconditionally ||
         !entityId &&
         suppressedPoint &&
         distance(toSvgPoint(event, event.currentTarget), suppressedPoint) <= 1
@@ -1207,7 +1252,7 @@ export function CanvasShell() {
 
     setVertexDrag({
       ...vertexDrag,
-      hasMoved: vertexDrag.hasMoved || distance(vertexDrag.polygon[vertexDrag.vertexIndex], point) >= 1,
+      hasMoved: vertexDrag.hasMoved || distance(vertexDrag.handleStart, point) >= 1,
       polygon
     });
   }
@@ -1250,6 +1295,7 @@ export function CanvasShell() {
       );
       setBoxSelection(null);
       suppressNextCanvasClickRef.current = true;
+      suppressNextCanvasClickUnconditionallyRef.current = true;
       return;
     }
 
@@ -1301,6 +1347,7 @@ export function CanvasShell() {
       : [];
 
     suppressNextCanvasClickRef.current = true;
+    suppressNextCanvasClickUnconditionallyRef.current = true;
     suppressNextCanvasClickPointRef.current =
       resizeHandles[vertexDrag.vertexIndex] ?? null;
 
@@ -1473,6 +1520,7 @@ export function CanvasShell() {
                   const namePosition = getZoneNamePosition(zone, polygon);
                   const zoneNameTextColor =
                     zone.shape === "circle" ||
+                    zone.shape === "hexagon" ||
                     zone.opacity < LOW_ZONE_OPACITY_THRESHOLD
                       ? getTextColorForLuminance(
                           backgroundLuminanceByZoneId[zone.id] ??
@@ -1527,6 +1575,7 @@ export function CanvasShell() {
                                 suppressNextCanvasClickRef.current = true;
                                 setVertexDrag({
                                   hasMoved: false,
+                                  handleStart: point,
                                   polygon,
                                   vertexIndex,
                                   zoneId: zone.id

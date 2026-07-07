@@ -1,4 +1,4 @@
-import { Circle, Image, Pentagon, Square, Trash2 } from "lucide-react";
+import { Circle, Hexagon, Image, Pentagon, Square, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
@@ -48,7 +48,8 @@ const TOOLBAR_ITEMS: ToolbarItem[] = [
 const ZONE_SHAPE_OPTIONS: ZoneShapeOption[] = [
   { icon: Square, keybind: "1", label: "Rectangle", shape: "rectangle" },
   { icon: Circle, keybind: "2", label: "Circle", shape: "circle" },
-  { icon: Pentagon, keybind: "3", label: "Polygon", shape: "polygon" }
+  { icon: Hexagon, keybind: "3", label: "Hexagon", shape: "hexagon" },
+  { icon: Pentagon, keybind: "4", label: "Polygon", shape: "polygon" }
 ];
 
 function readImageFile(file: File): Promise<EncounterBackgroundImage> {

@@ -4,7 +4,7 @@ import type {
   LayoutStrategyId
 } from "../../core/layout/types";
 
-export type ZoneShape = "rectangle" | "circle" | "polygon";
+export type ZoneShape = "rectangle" | "circle" | "hexagon" | "polygon";
 export type ZoneNamePosition =
   | "top-left"
   | "top-right"
