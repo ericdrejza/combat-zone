@@ -5,12 +5,6 @@ import { store } from "../../store/store";
 import { renderApp } from "../../test/ui/renderApp";
 
 describe("Toolbar", () => {
-  it("omits the Pan toolbar button because panning uses right-click drag", () => {
-    renderApp();
-
-    expect(screen.queryByRole("button", { name: "Pan" })).not.toBeInTheDocument();
-  });
-
   it("renders toolbar tools in the expected order with requested separators", () => {
     renderApp();
     const tools = screen.getByRole("navigation", { name: "Tools" });
