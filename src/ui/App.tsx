@@ -6,7 +6,9 @@ import { setActiveTool } from "../interaction/interactionState";
 import { MVP_TOOLS } from "../interaction/tools/toolRegistry";
 import type { ToolId } from "../interaction/tools/toolRegistry";
 import { CanvasShell } from "./canvas/CanvasShell";
+import { AssetLibraryModal } from "./library/AssetLibraryModal";
 import type { DockPanelDefinition, DockSide, DropTarget } from "./panels/PanelsShell";
+import { LibraryPanel } from "./panels/LibraryPanel";
 import { movePanel } from "./panels/panelLayout";
 import type { PanelLayout } from "./panels/panelLayout";
 import { PanelsShell } from "./panels/PanelsShell";
@@ -63,6 +65,7 @@ export function App() {
     });
   const [draggedPanelId, setDraggedPanelId] = useState<string | null>(null);
   const [dropTarget, setDropTarget] = useState<DropTarget | null>(null);
+  const [libraryModalOpen, setLibraryModalOpen] = useState(false);
   const workspaceColumns = `${
     sidebarCollapsed.left ? "3.25rem" : "18rem"
   } minmax(0,1fr) ${sidebarCollapsed.right ? "3.25rem" : "18rem"}`;
@@ -117,6 +120,10 @@ export function App() {
   }
 
   function renderPanelContent(panel: DockPanelDefinition) {
+    if (panel.id === "library") {
+      return <LibraryPanel />;
+    }
+
     if (panel.id === "properties") {
       return <ZonePropertiesPanel />;
     }
@@ -134,7 +141,7 @@ export function App() {
 
   return (
     <div className="flex h-screen max-h-screen w-screen max-w-screen flex-col overflow-hidden bg-canvas text-canvas-ink">
-      <Toolbar />
+      <Toolbar onOpenLibrary={() => setLibraryModalOpen(true)} />
       <main
         className="grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-hidden p-4 lg:grid-cols-[var(--workspace-columns)]"
         style={
@@ -199,6 +206,9 @@ export function App() {
           />
         </SidebarDock>
       </main>
+      {libraryModalOpen ? (
+        <AssetLibraryModal onClose={() => setLibraryModalOpen(false)} />
+      ) : null}
     </div>
   );
 }

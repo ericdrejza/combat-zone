@@ -4,11 +4,16 @@ import { useSelector } from "react-redux";
 import type { RootState } from "../../store/store";
 import { BackgroundToolButton } from "./background/BackgroundToolButton";
 import { CLOSE_ZONE_SHAPE_MENU_EVENT } from "./events";
+import { LibraryToolbarButton } from "./LibraryToolbarButton";
 import { ToolButton } from "./ToolButton";
 import { TOOLBAR_ITEMS } from "./toolbarItems";
 import { ZoneToolButton } from "./zone/ZoneToolButton";
 
-export function Toolbar() {
+type ToolbarProps = {
+  onOpenLibrary: () => void;
+};
+
+export function Toolbar({ onOpenLibrary }: ToolbarProps) {
   const encounter = useSelector((state: RootState) => state.encounter.present);
   const activeToolId = useSelector(
     (state: RootState) => state.interaction.activeToolId
@@ -98,6 +103,12 @@ export function Toolbar() {
           Combat Zone
         </h1>
         <nav aria-label="Tools" className="flex flex-wrap gap-2">
+          <LibraryToolbarButton onOpenLibrary={onOpenLibrary} />
+          <span
+            aria-orientation="vertical"
+            className="mx-1 h-8 w-px self-center bg-canvas-line"
+            role="separator"
+          />
           {TOOLBAR_ITEMS.map(renderTool)}
         </nav>
       </div>

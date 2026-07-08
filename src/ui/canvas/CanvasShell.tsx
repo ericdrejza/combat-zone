@@ -8,7 +8,7 @@ import { closeZoneShapeMenu } from "../toolbar/events";
 import { CanvasBackgroundLayer } from "./CanvasBackgroundLayer";
 import { CanvasOverlays } from "./CanvasOverlays";
 import { CanvasToolStatusBadge } from "./CanvasToolStatusBadge";
-import { CANVAS_HEIGHT, CANVAS_WIDTH } from "./canvasConstants";
+import { CANVAS_BACKGROUND_COLOR, CANVAS_HEIGHT, CANVAS_WIDTH } from "./canvasConstants";
 import { getTextColorForLuminance } from "./canvasLuminance";
 import type {
   ShapeDraftState,
@@ -116,7 +116,7 @@ export function CanvasShell() {
     >
       <svg
         aria-label="SVG encounter workspace"
-        className="h-full min-h-0 w-full bg-[#fffaf0]"
+        className={`h-full min-h-0 w-full bg-[${CANVAS_BACKGROUND_COLOR}]`}
         onClick={handleCanvasClick}
         onContextMenu={handleCanvasContextMenu}
         onDoubleClick={handleCanvasDoubleClick}

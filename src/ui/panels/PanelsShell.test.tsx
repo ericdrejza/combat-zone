@@ -10,13 +10,17 @@ describe("PanelsShell", () => {
 
     renderApp();
 
-    expect(screen.getAllByText("Panel scaffold.", { exact: false })).toHaveLength(3);
+    expect(screen.getByText("Select or Background tools show library assets here.")).toBeInTheDocument();
+    expect(screen.getAllByText("Panel scaffold.", { exact: false })).toHaveLength(2);
 
     await user.click(
       screen.getByRole("button", { name: "Collapse Library panel" })
     );
 
     expect(screen.getAllByText("Panel scaffold.", { exact: false })).toHaveLength(2);
+    expect(
+      screen.queryByText("Select or Background tools show library assets here.")
+    ).not.toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Expand Library panel" })
     ).toHaveAttribute("aria-expanded", "false");

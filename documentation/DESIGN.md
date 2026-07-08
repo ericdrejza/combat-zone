@@ -328,10 +328,11 @@ Panels:
 
 ### 7.2 Panels
 
-- Library Panel
-- Initiative Panel
-- Properties Panel
-- Validation Panel
+- Library
+- Initiative
+- Properties
+- Validation
+- Status
 
 Panels update based on selection context.
 

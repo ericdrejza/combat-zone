@@ -13,11 +13,40 @@ describe("Toolbar", () => {
       within(tools)
         .getAllByRole("button")
         .map((button) => button.textContent)
-    ).toEqual(["Background", "Zone", "Edge", "Annotation", "Actor", "Select"]);
+    ).toEqual([
+      "Library",
+      "Background",
+      "Zone",
+      "Edge",
+      "Annotation",
+      "Actor",
+      "Select"
+    ]);
+    expect(screen.getAllByRole("button", { name: "Library" })).toHaveLength(1);
     expect(screen.getAllByRole("button", { name: "Background" })).toHaveLength(1);
     expect(screen.queryByRole("button", { name: "Engagement" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Delete" })).not.toBeInTheDocument();
-    expect(within(tools).getAllByRole("separator")).toHaveLength(2);
+    expect(within(tools).getAllByRole("separator")).toHaveLength(3);
+  });
+
+  it("opens the Asset Library modal from the Library toolbar button", async () => {
+    const user = userEvent.setup();
+
+    renderApp();
+
+    await user.click(screen.getByRole("button", { name: "Library" }));
+
+    expect(screen.getByRole("dialog", { name: "Asset Library" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Encounters" })).toHaveAttribute(
+      "aria-selected",
+      "true"
+    );
+
+    await user.click(screen.getByRole("button", { name: "Close Asset Library" }));
+
+    expect(
+      screen.queryByRole("dialog", { name: "Asset Library" })
+    ).not.toBeInTheDocument();
   });
 
   it("activates toolbar tools from button clicks and keyboard shortcuts", async () => {
