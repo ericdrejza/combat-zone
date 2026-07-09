@@ -51,6 +51,8 @@ describe("layout strategy changes through Redux history", () => {
           name: "Hero",
           actorType: "creature" as const,
           layoutGroup: "hero" as const,
+          size: "medium" as const,
+          shape: "circle" as const,
           currentZoneId: "zone-layout",
           statusEffects: [],
           metadata: {}
@@ -60,6 +62,8 @@ describe("layout strategy changes through Redux history", () => {
           name: "Enemy",
           actorType: "creature" as const,
           layoutGroup: "enemy" as const,
+          size: "medium" as const,
+          shape: "circle" as const,
           currentZoneId: "zone-layout",
           statusEffects: [],
           metadata: {}

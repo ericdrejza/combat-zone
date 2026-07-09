@@ -20,6 +20,7 @@ import {
 
 type ZoneLayerProps = {
   activeToolId: string;
+  actorTargetZoneId: string | null;
   backgroundLuminanceByZoneId: Record<string, number>;
   getDisplayedPolygon: (zone: Zone) => LayoutPoint[];
   onResizeHandleMouseDown: (
@@ -35,6 +36,7 @@ type ZoneLayerProps = {
 
 export function ZoneLayer({
   activeToolId,
+  actorTargetZoneId,
   backgroundLuminanceByZoneId,
   getDisplayedPolygon,
   onResizeHandleMouseDown,
@@ -52,6 +54,7 @@ export function ZoneLayer({
     const selected =
       selection.selectedEntityType === "zone" &&
       selection.selectedIds.includes(zone.id);
+    const actorTargeted = actorTargetZoneId === zone.id;
     const resizeHandles = getZoneResizeHandles(zone, polygon);
     const namePosition = getZoneNamePosition(zone, polygon);
     const zoneNameTextColor =
@@ -83,6 +86,20 @@ export function ZoneLayer({
             points={polygonToPoints(polygon)}
             strokeDasharray="8 8"
           />
+        ) : null}
+        {actorTargeted ? (
+          <polygon
+            className="pointer-events-none fill-none stroke-blue-600 stroke-2"
+            points={polygonToPoints(polygon)}
+            strokeDasharray="10 6"
+          >
+            <animate
+              attributeName="stroke-opacity"
+              dur="1.2s"
+              repeatCount="indefinite"
+              values="0.25;1;0.25"
+            />
+          </polygon>
         ) : null}
         {zone.showName ? (
           <text

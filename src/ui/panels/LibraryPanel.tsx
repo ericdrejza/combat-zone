@@ -1,17 +1,21 @@
 import { ChevronLeft, FileImage, Folder, Link } from "lucide-react";
+import type { DragEvent } from "react";
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 import { createEncounterActionRecord } from "../../core/history/createEncounterActionRecord";
+import { prepareValidatedEncounterChange } from "../../core/validation/validatedEncounterChange";
+import { createActor } from "../../entities/actor/actorMutations";
 import { resolveLibraryAsset } from "../../library/librarySlice";
 import type { LibraryNode, LibrarySectionId } from "../../library/types";
 import type { ToolId } from "../../interaction/tools/toolRegistry";
 import { commitEncounterChange } from "../../store/encounterSlice";
 import type { RootState } from "../../store/store";
+import { LIBRARY_NODE_DRAG_TYPE } from "../library/libraryDrag";
 import { getFoldersFirstChildren } from "../library/libraryUi";
 
 function getPanelSectionId(activeToolId: ToolId): LibrarySectionId | null {
-  if (activeToolId === "select") {
+  if (activeToolId === "actor") {
     return "tokens";
   }
 
@@ -29,6 +33,7 @@ export function LibraryPanel() {
   const activeToolId = useSelector(
     (state: RootState) => state.interaction.activeToolId
   );
+  const actorTool = useSelector((state: RootState) => state.interaction.actorTool);
   const sectionId = getPanelSectionId(activeToolId);
   const [currentFolderBySection, setCurrentFolderBySection] = useState<
     Partial<Record<LibrarySectionId, string>>
@@ -37,7 +42,7 @@ export function LibraryPanel() {
   if (!sectionId) {
     return (
       <p className="text-sm text-canvas-muted">
-        Select or Background tools show library assets here.
+        Actor or Background tools show library assets here.
       </p>
     );
   }
@@ -81,6 +86,56 @@ export function LibraryPanel() {
     }));
   }
 
+  function startLibraryDrag(event: DragEvent<HTMLElement>, node: LibraryNode) {
+    if (activeSectionId !== "tokens" || node.type === "folder") {
+      return;
+    }
+
+    event.dataTransfer.effectAllowed = "copy";
+    event.dataTransfer.setData(LIBRARY_NODE_DRAG_TYPE, node.id);
+    event.dataTransfer.setData("text/plain", node.id);
+  }
+
+  function createActorInTargetZone(node: LibraryNode) {
+    if (activeSectionId !== "tokens" || !actorTool.targetZoneId) {
+      return;
+    }
+
+    const asset = resolveLibraryAsset(section, node.id);
+
+    if (!asset) {
+      return;
+    }
+
+    const actorId = `actor-${Date.now()}`;
+    const nextEncounter = createActor(encounter, {
+      currentZoneId: actorTool.targetZoneId,
+      id: actorId,
+      image: asset,
+      layoutGroup: actorTool.layoutGroup,
+      shape: actorTool.shape,
+      size: actorTool.size
+    });
+    const action = createEncounterActionRecord("actor.create", {
+      actorId,
+      destinationZoneId: actorTool.targetZoneId
+    });
+    const prepared = prepareValidatedEncounterChange({
+      action,
+      currentEncounter: encounter,
+      nextEncounter
+    });
+
+    if (!prepared.blocked) {
+      dispatch(
+        commitEncounterChange({
+          action: prepared.action,
+          nextEncounter: prepared.nextEncounter
+        })
+      );
+    }
+  }
+
   return (
     <div className="space-y-2">
       <div
@@ -122,14 +177,19 @@ export function LibraryPanel() {
 
         const asset = resolveLibraryAsset(section, node.id);
         const isBackground = activeSectionId === "backgrounds";
+        const isToken = activeSectionId === "tokens";
 
         return (
           <button
             key={node.id}
             className={`group flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm transition hover:bg-canvas ${
-              isBackground ? "cursor-pointer" : "cursor-default"
+              isBackground || isToken ? "cursor-pointer" : "cursor-default"
             }`}
-            onClick={() => applyBackground(node)}
+            draggable={isToken}
+            onClick={() =>
+              isBackground ? applyBackground(node) : createActorInTargetZone(node)
+            }
+            onDragStart={(event) => startLibraryDrag(event, node)}
             type="button"
           >
             <span className="flex h-16 w-16 flex-none items-center justify-center overflow-hidden rounded-lg border border-canvas-line bg-white">

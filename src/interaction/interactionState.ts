@@ -2,6 +2,11 @@ import type { PayloadAction } from '@reduxjs/toolkit';
 import { createSlice } from '@reduxjs/toolkit';
 
 import type {
+  ActorLayoutGroup,
+  ActorShape,
+  ActorSize
+} from '../entities/actor/types';
+import type {
   EntitySelection,
   SelectableEntityType,
   SelectionState
@@ -35,7 +40,16 @@ export type ZonePaintBrushState = {
   sourceZoneId: string;
 };
 
+export type ActorToolState = {
+  clipboardActorId: string | null;
+  layoutGroup: ActorLayoutGroup;
+  shape: ActorShape;
+  size: ActorSize;
+  targetZoneId: string | null;
+};
+
 export type InteractionState = {
+  actorTool: ActorToolState;
   activeToolId: ToolId;
   selection: SelectionState;
   draft: InteractionDraftState;
@@ -65,6 +79,13 @@ const initialDraft: InteractionDraftState = {
 };
 
 const initialState: InteractionState = {
+  actorTool: {
+    clipboardActorId: null,
+    layoutGroup: 'hero',
+    shape: 'circle',
+    size: 'medium',
+    targetZoneId: null
+  },
   activeToolId: 'zone',
   selection: initialSelection,
   draft: initialDraft,
@@ -116,6 +137,7 @@ export const interactionSlice = createSlice({
       state.draft = initialDraft;
       state.contextualActionRequest = null;
       state.zonePaintBrush = null;
+      state.actorTool.targetZoneId = null;
 
       if (
         state.selection.selectedEntityType &&
@@ -128,6 +150,22 @@ export const interactionSlice = createSlice({
       state.draft = initialDraft;
       state.contextualActionRequest = null;
       state.zonePaintBrush = null;
+      state.actorTool.targetZoneId = null;
+    },
+    setActorToolLayoutGroup(state, { payload }: PayloadAction<ActorLayoutGroup>) {
+      state.actorTool.layoutGroup = payload;
+    },
+    setActorToolSize(state, { payload }: PayloadAction<ActorSize>) {
+      state.actorTool.size = payload;
+    },
+    setActorToolShape(state, { payload }: PayloadAction<ActorShape>) {
+      state.actorTool.shape = payload;
+    },
+    setActorToolTargetZone(state, { payload }: PayloadAction<string | null>) {
+      state.actorTool.targetZoneId = payload;
+    },
+    setActorClipboardActor(state, { payload }: PayloadAction<string | null>) {
+      state.actorTool.clipboardActorId = payload;
     },
     setZoneShapeMode(state, { payload }: PayloadAction<ZoneShape>) {
       state.zoneShapeMode = payload;
@@ -235,6 +273,11 @@ export const interactionSlice = createSlice({
 });
 
 export const {
+  setActorClipboardActor,
+  setActorToolLayoutGroup,
+  setActorToolShape,
+  setActorToolSize,
+  setActorToolTargetZone,
   clearZonePaintBrush,
   clearInteractionDraft,
   clearSelection,

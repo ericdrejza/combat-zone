@@ -5,6 +5,7 @@ import {
   clearSelection,
   clearZonePaintBrush,
   selectEntity,
+  setActorToolTargetZone,
   setLastZoneOpacity
 } from "../../interaction/interactionState";
 import type { SelectableEntityType } from "../../interaction/selection/types";
@@ -27,6 +28,7 @@ import { getPaintableZoneProperties } from "./zonePropertyTransfers";
 type ClickHandlerInput = Pick<
   CanvasInteractionState,
   | "activeToolId"
+  | "actorTool"
   | "boxSelection"
   | "dispatch"
   | "encounter"
@@ -48,6 +50,7 @@ type ClickHandlerInput = Pick<
 export function useCanvasClickHandlers(input: ClickHandlerInput) {
   const {
     activeToolId,
+    actorTool,
     boxSelection,
     dispatch,
     encounter,
@@ -141,6 +144,19 @@ export function useCanvasClickHandlers(input: ClickHandlerInput) {
       return;
     }
 
+    if (activeToolId === "actor") {
+      if (entityType === "zone" && entityId && encounter.zones.byId[entityId]) {
+        dispatch(setActorToolTargetZone(entityId));
+        return;
+      }
+
+      if (!entityId) {
+        dispatch(setActorToolTargetZone(null));
+        dispatch(clearSelection());
+        return;
+      }
+    }
+
     if (!entityId && activeToolId === "zone" && zoneShapeMode === "polygon") {
       dispatch(clearSelection());
       closeZoneShapeMenu();
@@ -205,6 +221,12 @@ export function useCanvasClickHandlers(input: ClickHandlerInput) {
   }
 
   function handleCanvasContextMenu(event: MouseEvent<SVGSVGElement>) {
+    if (activeToolId === "actor" && actorTool.targetZoneId) {
+      event.preventDefault();
+      dispatch(setActorToolTargetZone(null));
+      return;
+    }
+
     if (zonePaintBrush) {
       event.preventDefault();
       dispatch(clearZonePaintBrush());

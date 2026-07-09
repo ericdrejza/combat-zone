@@ -76,6 +76,8 @@ const heroActor: Actor = {
   name: "Hero",
   actorType: "creature",
   layoutGroup: "hero",
+  size: "medium",
+  shape: "circle",
   currentZoneId: "zone-courtyard",
   initiative: 15,
   statusEffects: [],
@@ -88,6 +90,8 @@ const goblinActor: Actor = {
   name: "Goblin",
   actorType: "creature",
   layoutGroup: "enemy",
+  size: "medium",
+  shape: "circle",
   currentZoneId: ZONELESS_ACTOR_ZONE_ID,
   initiative: 11,
   statusEffects: ["hidden"],
@@ -99,6 +103,8 @@ const statueActor: Actor = {
   name: "Ancient Statue",
   actorType: "pointOfInterest",
   layoutGroup: "neutral",
+  size: "medium",
+  shape: "circle",
   currentZoneId: "zone-courtyard",
   statusEffects: [],
   metadata: {}
@@ -207,6 +213,8 @@ describe("EncounterState foundation", () => {
     expect(state.actors.byId["actor-hero"]).toMatchObject({
       actorType: "creature",
       layoutGroup: "hero",
+  size: "medium",
+  shape: "circle",
       currentZoneId: "zone-courtyard"
     });
     expect(state.actors.byId["actor-statue"]).toMatchObject({

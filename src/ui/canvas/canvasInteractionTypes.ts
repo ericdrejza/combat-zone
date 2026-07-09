@@ -29,17 +29,27 @@ export type ZoneDragState = {
   zoneId: string;
 };
 
+export type ActorDragState = {
+  actorId: string;
+  current: LayoutPoint;
+  hasMoved: boolean;
+  start: LayoutPoint;
+};
+
 export type MutableRefValue<TValue> = {
   current: TValue;
 };
 
 export type CanvasInteractionState = {
   activeToolId: RootState["interaction"]["activeToolId"];
+  actorDrag: ActorDragState | null;
+  actorTool: RootState["interaction"]["actorTool"];
   boxSelection: LocalBoxSelectionState | null;
   dispatch: AppDispatch;
   encounter: RootState["encounter"]["present"];
   lastZoneOpacity: RootState["interaction"]["lastZoneOpacity"];
   selection: RootState["interaction"]["selection"];
+  setActorDrag: Dispatch<SetStateAction<ActorDragState | null>>;
   setBoxSelection: Dispatch<SetStateAction<LocalBoxSelectionState | null>>;
   setShapeDraft: Dispatch<SetStateAction<ShapeDraftState | null>>;
   setVertexDrag: Dispatch<SetStateAction<VertexDragState | null>>;

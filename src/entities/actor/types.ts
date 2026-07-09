@@ -7,12 +7,16 @@ export type ActorType =
   | "pointOfInterest";
 
 export type ActorLayoutGroup = "hero" | "enemy" | "neutral";
+export type ActorSize = "small" | "medium" | "large" | "xLarge";
+export type ActorShape = "circle" | "rectangle";
 
 export type Actor = {
   id: string;
   name: string;
   actorType: ActorType;
   layoutGroup: ActorLayoutGroup;
+  size: ActorSize;
+  shape: ActorShape;
   image?: string;
   currentZoneId: ActorZoneAssignment;
   initiative?: number;

@@ -2,11 +2,14 @@ import { useEffect } from "react";
 import type { Dispatch } from "redux";
 
 import { createEncounterActionRecord } from "../../core/history/createEncounterActionRecord";
+import { duplicateActor, deleteActor } from "../../entities/actor/actorMutations";
 import { deleteZone } from "../../entities/zone/zoneMutations";
 import {
   clearSelection,
   clearZonePaintBrush,
   selectEntity,
+  setActorClipboardActor,
+  setActorToolLayoutGroup,
   setZoneShapeMode
 } from "../../interaction/interactionState";
 import { commitEncounterChange } from "../../store/encounterSlice";
@@ -15,6 +18,7 @@ import { sortZoneIdsByPosition } from "./zoneGeometry";
 
 type UseCanvasKeyboardInput = {
   activeToolId: RootState["interaction"]["activeToolId"];
+  actorTool: RootState["interaction"]["actorTool"];
   clearShapeDraft: () => void;
   clearZoneDraftPoints: () => void;
   closeZoneShapeMenu: () => void;
@@ -26,6 +30,7 @@ type UseCanvasKeyboardInput = {
 
 export function useCanvasKeyboard({
   activeToolId,
+  actorTool,
   clearShapeDraft,
   clearZoneDraftPoints,
   closeZoneShapeMenu,
@@ -44,6 +49,30 @@ export function useCanvasKeyboard({
         target instanceof HTMLSelectElement ||
         (target instanceof HTMLElement && target.isContentEditable)
       ) {
+        return;
+      }
+
+      if (
+        event.key === "Delete" &&
+        selection.selectedEntityType === "actor" &&
+        selection.selectedIds.length > 0
+      ) {
+        event.preventDefault();
+
+        const nextEncounter = selection.selectedIds.reduce(
+          (currentEncounter, actorId) => deleteActor(currentEncounter, actorId),
+          encounter
+        );
+
+        dispatch(
+          commitEncounterChange({
+            action: createEncounterActionRecord("actor.delete", {
+              actorIds: selection.selectedIds
+            }),
+            nextEncounter
+          })
+        );
+        dispatch(clearSelection());
         return;
       }
 
@@ -72,9 +101,76 @@ export function useCanvasKeyboard({
       }
 
       if (
+        event.key.toLowerCase() === "c" &&
+        (event.ctrlKey || event.metaKey) &&
+        selection.selectedEntityType === "actor" &&
+        selection.selectedIds.length === 1
+      ) {
+        event.preventDefault();
+        dispatch(setActorClipboardActor(selection.selectedIds[0]));
+        return;
+      }
+
+      if (
+        event.key.toLowerCase() === "v" &&
+        (event.ctrlKey || event.metaKey) &&
+        actorTool.clipboardActorId
+      ) {
+        event.preventDefault();
+        const sourceActor = encounter.actors.byId[actorTool.clipboardActorId];
+
+        if (!sourceActor) {
+          dispatch(setActorClipboardActor(null));
+          return;
+        }
+
+        const duplicateActorId = `actor-${Date.now()}`;
+        const destinationZoneId = actorTool.targetZoneId ?? sourceActor.currentZoneId;
+        const nextEncounter = duplicateActor(
+          encounter,
+          sourceActor.id,
+          duplicateActorId,
+          destinationZoneId
+        );
+
+        dispatch(
+          commitEncounterChange({
+            action: createEncounterActionRecord("actor.duplicate", {
+              actorId: sourceActor.id,
+              destinationZoneId,
+              duplicateActorId
+            }),
+            nextEncounter
+          })
+        );
+        dispatch(
+          selectEntity({
+            entityType: "actor",
+            ids: [duplicateActorId]
+          })
+        );
+        return;
+      }
+
+      if (
         event.key.toLowerCase() === "a" &&
         (event.ctrlKey || event.metaKey) &&
-        (activeToolId === "zone" || activeToolId === "select")
+        (activeToolId === "actor" || activeToolId === "select")
+      ) {
+        event.preventDefault();
+        dispatch(
+          selectEntity({
+            entityType: "actor",
+            ids: encounter.actors.allIds
+          })
+        );
+        return;
+      }
+
+      if (
+        event.key.toLowerCase() === "a" &&
+        (event.ctrlKey || event.metaKey) &&
+        activeToolId === "zone"
       ) {
         event.preventDefault();
         dispatch(
@@ -118,6 +214,23 @@ export function useCanvasKeyboard({
       }
 
       if (activeToolId !== "zone") {
+        if (activeToolId === "actor") {
+          if (event.key === "1") {
+            event.preventDefault();
+            dispatch(setActorToolLayoutGroup("hero"));
+          }
+
+          if (event.key === "2") {
+            event.preventDefault();
+            dispatch(setActorToolLayoutGroup("enemy"));
+          }
+
+          if (event.key === "3") {
+            event.preventDefault();
+            dispatch(setActorToolLayoutGroup("neutral"));
+          }
+        }
+
         return;
       }
 
@@ -164,6 +277,7 @@ export function useCanvasKeyboard({
     };
   }, [
     activeToolId,
+    actorTool,
     clearShapeDraft,
     clearZoneDraftPoints,
     closeZoneShapeMenu,

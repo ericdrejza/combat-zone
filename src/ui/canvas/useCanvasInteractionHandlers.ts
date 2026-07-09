@@ -10,6 +10,7 @@ export function useCanvasInteractionHandlers(input: CanvasInteractionState) {
   } = useCanvasClickHandlers(input);
   const {
     getDisplayedPolygon,
+    handleActorMouseDown,
     handleCanvasMouseDown,
     handleCanvasMouseMove,
     handleCanvasMouseUp,
@@ -18,6 +19,7 @@ export function useCanvasInteractionHandlers(input: CanvasInteractionState) {
 
   return {
     getDisplayedPolygon,
+    handleActorMouseDown,
     handleCanvasClick,
     handleCanvasContextMenu,
     handleCanvasDoubleClick,

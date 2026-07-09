@@ -1,22 +1,33 @@
-import { useRef, useState } from "react";
+import type { DragEvent } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useDispatch } from "react-redux";
 import { useSelector } from "react-redux";
+import { ZONELESS_ACTOR_ZONE_ID } from "../../core/encounter/types";
+import { createEncounterActionRecord } from "../../core/history/createEncounterActionRecord";
 import type { LayoutPoint } from "../../core/layout/types";
 import { RENDER_LAYERS } from "../../core/rendering/types";
+import { prepareValidatedEncounterChange } from "../../core/validation/validatedEncounterChange";
+import { createActor } from "../../entities/actor/actorMutations";
+import { resolveLibraryAsset } from "../../library/librarySlice";
+import { LIBRARY_NODE_DRAG_TYPE } from "../library/libraryDrag";
 import type { RootState } from "../../store/store";
+import { commitEncounterChange } from "../../store/encounterSlice";
 import { closeZoneShapeMenu } from "../toolbar/events";
+import { ActorLayer } from "./ActorLayer";
 import { CanvasBackgroundLayer } from "./CanvasBackgroundLayer";
 import { CanvasOverlays } from "./CanvasOverlays";
 import { CanvasToolStatusBadge } from "./CanvasToolStatusBadge";
 import { CANVAS_BACKGROUND_COLOR, CANVAS_HEIGHT, CANVAS_WIDTH } from "./canvasConstants";
 import { getTextColorForLuminance } from "./canvasLuminance";
 import type {
+  ActorDragState,
   ShapeDraftState,
   VertexDragState,
   ZoneDragState
 } from "./canvasInteractionTypes";
 import { ZoneLayer } from "./ZoneLayer";
-import { type LocalBoxSelectionState } from "./zoneGeometry";
+import { type LocalBoxSelectionState, toSvgPoint } from "./zoneGeometry";
+import { findZoneIdAtPoint } from "./actorCanvasLayout";
 import { useCanvasInteractionHandlers } from "./useCanvasInteractionHandlers";
 import { useCanvasKeyboard } from "./useCanvasKeyboard";
 import {
@@ -26,9 +37,11 @@ import {
 export function CanvasShell() {
   const dispatch = useDispatch();
   const encounter = useSelector((state: RootState) => state.encounter.present);
+  const library = useSelector((state: RootState) => state.library);
   const activeToolId = useSelector(
     (state: RootState) => state.interaction.activeToolId
   );
+  const actorTool = useSelector((state: RootState) => state.interaction.actorTool);
   const zoneShapeMode = useSelector(
     (state: RootState) => state.interaction.zoneShapeMode
   );
@@ -40,6 +53,8 @@ export function CanvasShell() {
   );
   const selection = useSelector((state: RootState) => state.interaction.selection);
   const backgroundImage = encounter.backgroundImage;
+  const [actorDrag, setActorDrag] = useState<ActorDragState | null>(null);
+  const [altKeyDown, setAltKeyDown] = useState(false);
   const [zoneDraftPoints, setZoneDraftPoints] = useState<LayoutPoint[]>([]);
   const [shapeDraft, setShapeDraft] = useState<ShapeDraftState | null>(null);
   const [vertexDrag, setVertexDrag] = useState<VertexDragState | null>(null);
@@ -60,8 +75,37 @@ export function CanvasShell() {
     zoneDraftPoints
   );
 
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Alt") {
+        setAltKeyDown(true);
+      }
+    }
+
+    function handleKeyUp(event: KeyboardEvent) {
+      if (event.key === "Alt") {
+        setAltKeyDown(false);
+      }
+    }
+
+    function handleWindowBlur() {
+      setAltKeyDown(false);
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+    window.addEventListener("blur", handleWindowBlur);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+      window.removeEventListener("blur", handleWindowBlur);
+    };
+  }, []);
+
   useCanvasKeyboard({
     activeToolId,
+    actorTool,
     clearShapeDraft: () => setShapeDraft(null),
     clearZoneDraftPoints: () => setZoneDraftPoints([]),
     closeZoneShapeMenu,
@@ -79,14 +123,18 @@ export function CanvasShell() {
     handleCanvasMouseDown,
     handleCanvasMouseMove,
     handleCanvasMouseUp,
+    handleActorMouseDown,
     handleResizeHandleMouseDown
   } = useCanvasInteractionHandlers({
     activeToolId,
+    actorDrag,
+    actorTool,
     boxSelection,
     dispatch,
     encounter,
     lastZoneOpacity,
     selection,
+    setActorDrag,
     setBoxSelection,
     setShapeDraft,
     setVertexDrag,
@@ -107,6 +155,76 @@ export function CanvasShell() {
   const polygonDraftColor = getTextColorForLuminance(
     polygonDraftBackgroundLuminance
   );
+  const showFactionOutlines =
+    altKeyDown && (activeToolId === "actor" || activeToolId === "select");
+
+  function commitActorFromLibraryNode(nodeId: string, destinationZoneId: string) {
+    const tokens = library.sections.tokens;
+    const asset = resolveLibraryAsset(tokens, nodeId);
+
+    if (!asset) {
+      return;
+    }
+
+    const actorId = `actor-${Date.now()}`;
+    const nextEncounter = createActor(encounter, {
+      currentZoneId: destinationZoneId,
+      id: actorId,
+      image: asset,
+      layoutGroup: actorTool.layoutGroup,
+      shape: actorTool.shape,
+      size: actorTool.size
+    });
+    const action = createEncounterActionRecord("actor.create", {
+      actorId,
+      destinationZoneId
+    });
+    const prepared = prepareValidatedEncounterChange({
+      action,
+      currentEncounter: encounter,
+      nextEncounter
+    });
+
+    if (!prepared.blocked) {
+      dispatch(
+        commitEncounterChange({
+          action: prepared.action,
+          nextEncounter: prepared.nextEncounter
+        })
+      );
+    }
+  }
+
+  function handleCanvasDragOver(event: DragEvent<SVGSVGElement>) {
+    if (
+      activeToolId !== "actor" ||
+      !Array.from(event.dataTransfer.types).includes(LIBRARY_NODE_DRAG_TYPE)
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "copy";
+  }
+
+  function handleCanvasDrop(event: DragEvent<SVGSVGElement>) {
+    if (activeToolId !== "actor") {
+      return;
+    }
+
+    const nodeId = event.dataTransfer.getData(LIBRARY_NODE_DRAG_TYPE);
+
+    if (!nodeId) {
+      return;
+    }
+
+    event.preventDefault();
+    const point = toSvgPoint(event, event.currentTarget);
+    const destinationZoneId =
+      findZoneIdAtPoint(encounter, point) ?? ZONELESS_ACTOR_ZONE_ID;
+
+    commitActorFromLibraryNode(nodeId, destinationZoneId);
+  }
 
   return (
     <section
@@ -119,6 +237,8 @@ export function CanvasShell() {
         className={`h-full min-h-0 w-full bg-[${CANVAS_BACKGROUND_COLOR}]`}
         onClick={handleCanvasClick}
         onContextMenu={handleCanvasContextMenu}
+        onDragOver={handleCanvasDragOver}
+        onDrop={handleCanvasDrop}
         onDoubleClick={handleCanvasDoubleClick}
         onMouseDown={handleCanvasMouseDown}
         onMouseMove={handleCanvasMouseMove}
@@ -139,11 +259,23 @@ export function CanvasShell() {
               ? (
                   <ZoneLayer
                     activeToolId={activeToolId}
+                    actorTargetZoneId={actorTool.targetZoneId}
                     backgroundLuminanceByZoneId={backgroundLuminanceByZoneId}
                     getDisplayedPolygon={getDisplayedPolygon}
                     onResizeHandleMouseDown={handleResizeHandleMouseDown}
                     selection={selection}
                     zones={encounter.zones}
+                  />
+                )
+              : null}
+            {layer.id === "freeFloatingActors"
+              ? (
+                  <ActorLayer
+                    actorDrag={actorDrag}
+                    encounter={encounter}
+                    onActorMouseDown={handleActorMouseDown}
+                    selection={selection}
+                    showFactionOutlines={showFactionOutlines}
                   />
                 )
               : null}

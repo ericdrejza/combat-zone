@@ -69,6 +69,60 @@ describe("Toolbar", () => {
     );
   });
 
+  it("renders distinct token size icons for actor sizes", async () => {
+    const user = userEvent.setup();
+
+    renderApp();
+
+    await user.click(screen.getByRole("button", { name: "Actor" }));
+
+    const sizeButtons = [
+      screen.getByRole("button", { name: "Small actor size" }),
+      screen.getByRole("button", { name: "Medium actor size" }),
+      screen.getByRole("button", { name: "Large actor size" }),
+      screen.getByRole("button", { name: "X-large actor size" })
+    ];
+
+    expect(
+      sizeButtons.map(
+        (button) => button.querySelectorAll("svg rect").length
+      )
+    ).toEqual([1, 1, 4, 9]);
+    expect(
+      sizeButtons.map(
+        (button) => button.querySelector("svg rect")?.getAttribute("width")
+      )
+    ).toEqual(["8", "12", "5", "4"]);
+  });
+
+  it("separates actor option groups and gives option buttons concise tooltips", async () => {
+    const user = userEvent.setup();
+
+    renderApp();
+
+    await user.click(screen.getByRole("button", { name: "Actor" }));
+
+    expect(screen.getByRole("group", { name: "Actor faction" })).toHaveClass(
+      "rounded-full"
+    );
+    expect(screen.getByRole("group", { name: "Actor size" })).toHaveClass(
+      "rounded-full"
+    );
+    expect(screen.getByRole("group", { name: "Actor shape" })).toHaveClass(
+      "rounded-full"
+    );
+    expect(screen.getByRole("button", { name: "Hero faction" })).toHaveAttribute(
+      "title",
+      "Hero"
+    );
+    expect(
+      screen.getByRole("button", { name: "Small actor size" })
+    ).toHaveAttribute("title", "Small");
+    expect(
+      screen.getByRole("button", { name: "Rectangle actor shape" })
+    ).toHaveAttribute("title", "Rectangle");
+  });
+
   it("opens Zone shape radios from the Zone toolbar button", async () => {
     const user = userEvent.setup();
 

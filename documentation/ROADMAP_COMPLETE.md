@@ -168,3 +168,57 @@
   - Hovering a background image in the library panel will expand the image size
     slightly (20%) with a smooth, quick animation.  Unhovering will set the image
     thumbnail back to the original size in the panel.
+
+## 9. Actors: Placement, Movement, and Zoneless State
+
+- [x] The Actor tool now enables Library panel to be populated with
+  tokens from the asset library instead of the Select tool
+  - The select tool should collapse the Library panel automatically
+- [x] Allow tokens to be dragged from the Library Panel onto the canvas into
+  a zone.
+- [x] Implement layout strategies
+- [x] Implement actor movement between zones.
+  - Click, drag, and drop actor into zone
+  - Update `currentZoneId`.
+  - Recalculate layout in both source and destination zones.
+- [x] Implement actor movement to empty canvas space.
+  - Actor becomes zoneless.
+- [x] Implement invalid drop handling.
+  - No drop allowed outside of canvas.
+  - Layout may never place token outside zone
+    - If not a split layout, move token toward center of zone if layout would
+      attempt to place token outside zone.
+  - Snap back to pre-drag position.
+  - Do not create a Redux history entry for snap-back.
+- [x] With the actor tool selected, you may click on a zone to target it
+  (looks like a throbbing selection outline); click and release (no drag) on a
+  token from the Library panel adds an actor with that token to that target zone.
+  - Clicking out of a zone or right clicking untargets a zone
+- [x] With the Actor or Select tool, actors on the canvas are selected with a click.
+  - Delete key deletes the selected actor
+  - Ctrl+C copies the actor and Ctrl+V pastes a new copy/instance of that actor
+    - Copy is pasted in the same zone as the original if no target zone is selected.
+    - Copy is pasted in the target zone if one is selected.
+- [x] Add Actor properties editing.
+- [x] The Actor tool chooses how moved dragged tokens from the library will
+  become actors and their representation on the canvas.
+  - Below the Actor tool, there should be button groups (only one active
+    selection per button group) for:
+    - "Faction" (options: "Hero" (blue circle), "Neutral" (yellow circle), "Enemy" (red circle))
+    - "Size" - options:
+      - "Small" (small solid black square)
+      - "Medium" (medium solid black circle)
+      - "Large" (2 x 2 square grid icon)
+      - "X-Large" (3 x 3 square grid icon)
+      - Size multipliers for actor tokens displayed on canvas
+        (starting from time of dragging if dragged):
+        - small (0.75)
+        - medium (1)
+        - Large (2)
+        - X-Large (3)
+    - "Shape" options:
+      - Circle
+      - Rectangle
+    - Button group buttons should only have icons in them
+- [x] Add Vitest coverage for actor create/place/move/zoneless behavior,
+  invalid drops, undo, and redo history.

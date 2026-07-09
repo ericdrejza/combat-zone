@@ -1,4 +1,7 @@
 import { createEncounterActionRecord } from "../../core/history/createEncounterActionRecord";
+import { ZONELESS_ACTOR_ZONE_ID } from "../../core/encounter/types";
+import { prepareValidatedEncounterChange } from "../../core/validation/validatedEncounterChange";
+import { moveActor } from "../../entities/actor/actorMutations";
 import type { Zone } from "../../entities/zone/types";
 import { updateZonePolygon } from "../../entities/zone/zoneMutations";
 import {
@@ -6,6 +9,7 @@ import {
   selectEntity
 } from "../../interaction/interactionState";
 import { commitEncounterChange } from "../../store/encounterSlice";
+import { findZoneIdAtPoint } from "./actorCanvasLayout";
 import { MIN_SHAPE_SIZE } from "./canvasConstants";
 import type { CanvasInteractionState } from "./canvasInteractionTypes";
 import { commitZoneCreate } from "./zoneCreationActions";
@@ -28,7 +32,9 @@ export function useCanvasMouseUpHandler(input: MouseUpHandlerInput) {
     boxSelection,
     dispatch,
     encounter,
+    actorDrag,
     getDisplayedPolygon,
+    setActorDrag,
     setBoxSelection,
     setShapeDraft,
     setVertexDrag,
@@ -42,6 +48,45 @@ export function useCanvasMouseUpHandler(input: MouseUpHandlerInput) {
   } = input;
 
   function handleCanvasMouseUp() {
+    if (actorDrag) {
+      if (actorDrag.hasMoved) {
+        const destinationZoneId =
+          findZoneIdAtPoint(encounter, actorDrag.current) ?? ZONELESS_ACTOR_ZONE_ID;
+        const nextEncounter = moveActor(
+          encounter,
+          actorDrag.actorId,
+          destinationZoneId
+        );
+        const action = createEncounterActionRecord("actor.move", {
+          actorId: actorDrag.actorId,
+          destinationZoneId
+        });
+        const prepared = prepareValidatedEncounterChange({
+          action,
+          currentEncounter: encounter,
+          nextEncounter
+        });
+
+        if (!prepared.blocked && nextEncounter !== encounter) {
+          dispatch(
+            commitEncounterChange({
+              action: prepared.action,
+              nextEncounter: prepared.nextEncounter
+            })
+          );
+          dispatch(
+            selectEntity({
+              entityType: "actor",
+              ids: [actorDrag.actorId]
+            })
+          );
+        }
+      }
+
+      setActorDrag(null);
+      return;
+    }
+
     if (shapeDraft) {
       const polygon = createShapePolygon(
         shapeDraft.shape,

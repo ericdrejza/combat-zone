@@ -33,7 +33,7 @@ describe("LibraryPanel", () => {
     });
 
     await user.click(screen.getByRole("button", { name: "Close Asset Library" }));
-    await user.click(screen.getByRole("button", { name: "Select" }));
+    await user.click(screen.getByRole("button", { name: "Actor" }));
 
     const libraryPanel = screen.getByRole("region", { name: "Library panel" });
     const currentFolder = within(libraryPanel).getByLabelText(
@@ -89,7 +89,7 @@ describe("LibraryPanel", () => {
     });
   });
 
-  it("shows token assets when Select is active", async () => {
+  it("shows token assets when Actor is active and collapses them for Select", async () => {
     const user = userEvent.setup();
 
     renderApp();
@@ -118,10 +118,50 @@ describe("LibraryPanel", () => {
     });
 
     await user.click(screen.getByRole("button", { name: "Close Asset Library" }));
-    await user.click(screen.getByRole("button", { name: "Select" }));
+    await user.click(screen.getByRole("button", { name: "Actor" }));
 
     expect(
       screen.getByRole("button", { name: "scout-token.png" })
     ).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Select" }));
+
+    expect(
+      screen.getByRole("button", { name: "Expand Library panel" })
+    ).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("reopens the Library panel from Actor only when Select auto-collapsed it", async () => {
+    const user = userEvent.setup();
+
+    renderApp();
+
+    await user.click(screen.getByRole("button", { name: "Select" }));
+
+    expect(
+      screen.getByRole("button", { name: "Expand Library panel" })
+    ).toHaveAttribute("aria-expanded", "false");
+
+    await user.click(screen.getByRole("button", { name: "Actor" }));
+
+    expect(
+      screen.getByRole("button", { name: "Collapse Library panel" })
+    ).toHaveAttribute("aria-expanded", "true");
+  });
+
+  it("keeps the Library panel collapsed for Actor when the user collapsed it manually", async () => {
+    const user = userEvent.setup();
+
+    renderApp();
+
+    await user.click(
+      screen.getByRole("button", { name: "Collapse Library panel" })
+    );
+    await user.click(screen.getByRole("button", { name: "Select" }));
+    await user.click(screen.getByRole("button", { name: "Actor" }));
+
+    expect(
+      screen.getByRole("button", { name: "Expand Library panel" })
+    ).toHaveAttribute("aria-expanded", "false");
   });
 });

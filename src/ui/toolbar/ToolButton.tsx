@@ -9,12 +9,14 @@ import type {
 type ToolButtonProps = {
   activeToolId: ToolId;
   onCloseMenus: () => void;
+  onSelected?: () => void;
   tool: ToolDefinition;
 };
 
 export function ToolButton({
   activeToolId,
   onCloseMenus,
+  onSelected,
   tool
 }: ToolButtonProps) {
   const dispatch = useDispatch();
@@ -30,6 +32,7 @@ export function ToolButton({
       }`}
       onClick={() => {
         dispatch(setActiveTool(tool.id));
+        onSelected?.();
         onCloseMenus();
       }}
       title={tool.tooltip}

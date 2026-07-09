@@ -56,6 +56,8 @@ const actorInZone: Actor = {
   name: "Hero",
   actorType: "creature",
   layoutGroup: "hero",
+  size: "medium",
+  shape: "circle",
   currentZoneId: zone.id,
   statusEffects: [],
   metadata: {}
@@ -66,6 +68,8 @@ const actorOutsideZone: Actor = {
   name: "Enemy",
   actorType: "creature",
   layoutGroup: "enemy",
+  size: "medium",
+  shape: "circle",
   currentZoneId: ZONELESS_ACTOR_ZONE_ID,
   statusEffects: [],
   metadata: {}

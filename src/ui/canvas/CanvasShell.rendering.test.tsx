@@ -1,7 +1,20 @@
-import { fireEvent, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { Provider } from "react-redux";
 
+import { createEncounterState } from "../../core/encounter/createEncounterState";
+import { createEncounterActionRecord } from "../../core/history/createEncounterActionRecord";
 import { RENDER_LAYERS } from "../../core/rendering/types";
+import type { EntityCollection } from "../../core/state/entityCollection";
+import { ACTOR_LAYOUT_GROUP_COLORS } from "../../entities/actor/actorVisuals";
+import type { Actor } from "../../entities/actor/types";
+import type { Zone } from "../../entities/zone/types";
+import { setActiveTool } from "../../interaction/interactionState";
+import {
+  commitEncounterChange,
+  resetEncounterState
+} from "../../store/encounterSlice";
+import { store } from "../../store/store";
 import {
   createCircleZone,
   createRectangleZone,
@@ -11,6 +24,16 @@ import {
   selectZoneTool,
   startPolygonMode
 } from "../../test/ui/renderApp";
+import { App } from "../App";
+
+function collection<TEntity extends { id: string }>(
+  entities: TEntity[]
+): EntityCollection<TEntity> {
+  return {
+    byId: Object.fromEntries(entities.map((entity) => [entity.id, entity])),
+    allIds: entities.map((entity) => entity.id)
+  };
+}
 
 describe("CanvasShell rendering", () => {
   it("renders canvas layers in documented order without placeholder overlays", () => {
@@ -69,5 +92,111 @@ describe("CanvasShell rendering", () => {
 
     expect(await screen.findByLabelText("Zone 3")).toBeInTheDocument();
     expect(container.querySelector("foreignObject")).toBeNull();
+  });
+
+  it("outlines all actors by faction color while Alt is held in Actor or Select tool", () => {
+    store.dispatch(resetEncounterState());
+    const zone: Zone = {
+      colorBorder: "#9b876b",
+      colorFill: "#ffffff",
+      id: "zone-alt",
+      layoutOrientation: "LEFT_RIGHT",
+      layoutStrategy: "FLEX",
+      name: "Alt Zone",
+      namePosition: "top-left",
+      opacity: 0.7,
+      polygon: [
+        { x: 40, y: 40 },
+        { x: 280, y: 40 },
+        { x: 280, y: 200 },
+        { x: 40, y: 200 }
+      ],
+      shape: "rectangle",
+      showBorder: true,
+      showName: false,
+      tags: []
+    };
+    const actors: Actor[] = [
+      {
+        actorType: "creature",
+        currentZoneId: zone.id,
+        id: "actor-hero",
+        layoutGroup: "hero",
+        metadata: {},
+        name: "Hero",
+        shape: "circle",
+        size: "medium",
+        statusEffects: []
+      },
+      {
+        actorType: "creature",
+        currentZoneId: zone.id,
+        id: "actor-neutral",
+        layoutGroup: "neutral",
+        metadata: {},
+        name: "Neutral",
+        shape: "rectangle",
+        size: "medium",
+        statusEffects: []
+      },
+      {
+        actorType: "creature",
+        currentZoneId: zone.id,
+        id: "actor-enemy",
+        layoutGroup: "enemy",
+        metadata: {},
+        name: "Enemy",
+        shape: "circle",
+        size: "medium",
+        statusEffects: []
+      }
+    ];
+
+    store.dispatch(
+      commitEncounterChange({
+        action: createEncounterActionRecord("test.seed"),
+        nextEncounter: {
+          ...createEncounterState({
+            id: "encounter-alt",
+            name: "Alt Encounter"
+          }),
+          actors: collection(actors),
+          zones: collection([zone])
+        }
+      })
+    );
+    store.dispatch(setActiveTool("actor"));
+
+    const { container } = render(
+      <Provider store={store}>
+        <App />
+      </Provider>
+    );
+
+    fireEvent.keyDown(window, { key: "Alt" });
+
+    expect(
+      container.querySelector(
+        `[stroke="${ACTOR_LAYOUT_GROUP_COLORS.hero.outline}"]`
+      )
+    ).toBeInTheDocument();
+    expect(
+      container.querySelector(
+        `[stroke="${ACTOR_LAYOUT_GROUP_COLORS.neutral.outline}"]`
+      )
+    ).toBeInTheDocument();
+    expect(
+      container.querySelector(
+        `[stroke="${ACTOR_LAYOUT_GROUP_COLORS.enemy.outline}"]`
+      )
+    ).toBeInTheDocument();
+
+    fireEvent.keyUp(window, { key: "Alt" });
+
+    expect(
+      container.querySelector(
+        `[stroke="${ACTOR_LAYOUT_GROUP_COLORS.hero.outline}"]`
+      )
+    ).toBeNull();
   });
 });

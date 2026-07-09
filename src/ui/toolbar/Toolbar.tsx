@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 
 import type { RootState } from "../../store/store";
+import { ActorToolButton } from "./actor/ActorToolButton";
 import { BackgroundToolButton } from "./background/BackgroundToolButton";
 import { CLOSE_ZONE_SHAPE_MENU_EVENT } from "./events";
 import { LibraryToolbarButton } from "./LibraryToolbarButton";
@@ -10,10 +11,11 @@ import { TOOLBAR_ITEMS } from "./toolbarItems";
 import { ZoneToolButton } from "./zone/ZoneToolButton";
 
 type ToolbarProps = {
+  onActorToolSelected: () => void;
   onOpenLibrary: () => void;
 };
 
-export function Toolbar({ onOpenLibrary }: ToolbarProps) {
+export function Toolbar({ onActorToolSelected, onOpenLibrary }: ToolbarProps) {
   const encounter = useSelector((state: RootState) => state.encounter.present);
   const activeToolId = useSelector(
     (state: RootState) => state.interaction.activeToolId
@@ -79,6 +81,18 @@ export function Toolbar({ onOpenLibrary }: ToolbarProps) {
           setMenuOpen={setZoneMenuOpen}
           tool={tool}
           zoneShapeMode={zoneShapeMode}
+        />
+      );
+    }
+
+    if (tool.id === "actor") {
+      return (
+        <ActorToolButton
+          key={tool.id}
+          activeToolId={activeToolId}
+          onCloseMenus={closeMenus}
+          onSelected={onActorToolSelected}
+          tool={tool}
         />
       );
     }

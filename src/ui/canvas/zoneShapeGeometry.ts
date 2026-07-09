@@ -1,4 +1,4 @@
-import type { MouseEvent } from "react";
+import type { DragEvent, MouseEvent } from "react";
 
 import type { LayoutPoint } from "../../core/layout/types";
 import type { Zone } from "../../entities/zone/types";
@@ -40,7 +40,9 @@ export function distance(first: LayoutPoint, second: LayoutPoint): number {
 }
 
 export function toSvgPoint(
-  event: MouseEvent<SVGSVGElement | SVGCircleElement>,
+  event:
+    | DragEvent<SVGSVGElement>
+    | MouseEvent<SVGSVGElement | SVGCircleElement>,
   svg: SVGSVGElement
 ): LayoutPoint {
   const bounds = svg.getBoundingClientRect();

@@ -9,36 +9,6 @@ To reference completed items, see `ROADMAP_COMPLETE.md`.
 
 After completing a numbered section (## X.), move the completed section to the end of `ROADMAP_COMPLETE.md`
 
-## 9. Actors: Placement, Movement, and Zoneless State
-- [ ] Selecting the Actor tool also enables Library panel to be populated with
-  tokens from the asset library
-- [ ] Allow tokens to be dragged from the Library Panel onto the canvas into
-  a zone.
-- [ ] Implement layout strategies
-- [ ] Implement actor movement between zones.
-  - Click, drag, and drop actor into zone
-  - Update `currentZoneId`.
-  - Recalculate layout in both source and destination zones.
-- [ ] Implement actor movement to empty canvas space.
-  - Actor becomes zoneless.
-- [ ] Implement invalid drop handling.
-  - No drop allowed outside of canvas.
-  - Layout may never place token outside zone
-    - If not a split layout, move token toward center of zone if layout would
-      attempt to place token outside zone.
-  - Snap back to pre-drag position.
-  - Do not create a Redux history entry for snap-back.
-- [ ] Add Actor properties editing.
-- [ ] The Actor tool chooses how moved dragged tokens will become actors and
-  and their representation on the canvas.
-  - Below the Actor tool, there should be dropdowns for:
-    - Faction (options: "Hero" (blue circle), "Neutral" (yellow circle), "Enemy" (red circle))
-    - Size (options: "Small" (small solid black circle), 
-      "Medium" (medium solid black circle), "Large" (small solid black circle), 
-      "Extra Large" (small solid black circle))
-- [ ] Add Vitest coverage for actor create/place/move/zoneless behavior,
-  invalid drops, undo, and redo history.
-
 ## 10. Engagement Groups
 
 - [ ] Implement Engagement entity creation through drag/drop.

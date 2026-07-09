@@ -140,6 +140,7 @@ Properties:
 - actorType
 - layoutGroup (hero / enemy / neutral)
 - image
+- size
 - stats (optional system-specific blob)
 - currentZoneId | zoneless
 - initiative

@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
+import { useSelector } from "react-redux";
 
 import { setActiveTool } from "../interaction/interactionState";
 import { MVP_TOOLS } from "../interaction/tools/toolRegistry";
@@ -12,12 +13,11 @@ import { LibraryPanel } from "./panels/LibraryPanel";
 import { movePanel } from "./panels/panelLayout";
 import type { PanelLayout } from "./panels/panelLayout";
 import { PanelsShell } from "./panels/PanelsShell";
+import { PropertiesPanel } from "./panels/PropertiesPanel";
 import { SidebarDock } from "./panels/SidebarDock";
-import {
-  ZonePropertiesHeaderActions,
-  ZonePropertiesPanel
-} from "./panels/ZonePropertiesPanel";
+import { ZonePropertiesHeaderActions } from "./panels/ZonePropertiesPanel";
 import { Toolbar } from "./toolbar/Toolbar";
+import type { RootState } from "../store/store";
 
 type SidebarCollapsedState = Record<DockSide, boolean>;
 
@@ -57,7 +57,12 @@ function shouldIgnoreKeyboardShortcut(target: EventTarget | null): boolean {
 
 export function App() {
   const dispatch = useDispatch();
+  const activeToolId = useSelector(
+    (state: RootState) => state.interaction.activeToolId
+  );
   const [panelLayout, setPanelLayout] = useState<PanelLayout>(initialPanelLayout);
+  const [libraryAutoCollapsedBySelect, setLibraryAutoCollapsedBySelect] =
+    useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] =
     useState<SidebarCollapsedState>({
       left: false,
@@ -98,6 +103,53 @@ export function App() {
     };
   }, [dispatch]);
 
+  function mapLibraryPanel(
+    layout: PanelLayout,
+    mapper: (panel: DockPanelDefinition) => DockPanelDefinition
+  ): PanelLayout {
+    return {
+      left: layout.left.map((panel) =>
+        panel.id === "library" ? mapper(panel) : panel
+      ),
+      right: layout.right.map((panel) =>
+        panel.id === "library" ? mapper(panel) : panel
+      )
+    };
+  }
+
+  useEffect(() => {
+    if (activeToolId !== "select") {
+      return;
+    }
+
+    setPanelLayout((layout) => {
+      let collapsedOpenLibraryPanel = false;
+
+      const nextLayout = mapLibraryPanel(layout, (panel) => {
+        if (panel.collapsed) {
+          return panel;
+        }
+
+        collapsedOpenLibraryPanel = true;
+        return { ...panel, collapsed: true };
+      });
+
+      setLibraryAutoCollapsedBySelect(collapsedOpenLibraryPanel);
+      return nextLayout;
+    });
+  }, [activeToolId]);
+
+  function expandAutoCollapsedLibraryPanel() {
+    if (!libraryAutoCollapsedBySelect) {
+      return;
+    }
+
+    setPanelLayout((layout) =>
+      mapLibraryPanel(layout, (panel) => ({ ...panel, collapsed: false }))
+    );
+    setLibraryAutoCollapsedBySelect(false);
+  }
+
   function handlePanelDrop(target: DropTarget) {
     if (!draggedPanelId) {
       return;
@@ -109,6 +161,10 @@ export function App() {
   }
 
   function handlePanelCollapsedChange(panelId: string, collapsed: boolean) {
+    if (panelId === "library") {
+      setLibraryAutoCollapsedBySelect(false);
+    }
+
     setPanelLayout((layout) => ({
       left: layout.left.map((panel) =>
         panel.id === panelId ? { ...panel, collapsed } : panel
@@ -125,7 +181,7 @@ export function App() {
     }
 
     if (panel.id === "properties") {
-      return <ZonePropertiesPanel />;
+      return <PropertiesPanel />;
     }
 
     return undefined;
@@ -141,7 +197,10 @@ export function App() {
 
   return (
     <div className="flex h-screen max-h-screen w-screen max-w-screen flex-col overflow-hidden bg-canvas text-canvas-ink">
-      <Toolbar onOpenLibrary={() => setLibraryModalOpen(true)} />
+      <Toolbar
+        onActorToolSelected={expandAutoCollapsedLibraryPanel}
+        onOpenLibrary={() => setLibraryModalOpen(true)}
+      />
       <main
         className="grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-hidden p-4 lg:grid-cols-[var(--workspace-columns)]"
         style={

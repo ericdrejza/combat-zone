@@ -23,10 +23,12 @@ type PointerHandlerInput = CanvasInteractionState;
 export function useCanvasPointerHandlers(input: PointerHandlerInput) {
   const {
     activeToolId,
+    actorDrag,
     boxSelection,
     dispatch,
     encounter,
     selection,
+    setActorDrag,
     setBoxSelection,
     setShapeDraft,
     setVertexDrag,
@@ -60,6 +62,17 @@ export function useCanvasPointerHandlers(input: PointerHandlerInput) {
   });
 
   function handleCanvasMouseMove(event: MouseEvent<SVGSVGElement>) {
+    if (actorDrag) {
+      const current = toSvgPoint(event, event.currentTarget);
+
+      setActorDrag({
+        ...actorDrag,
+        current,
+        hasMoved: actorDrag.hasMoved || distance(actorDrag.start, current) >= 1
+      });
+      return;
+    }
+
     if (shapeDraft) {
       setShapeDraft({
         ...shapeDraft,
@@ -192,6 +205,38 @@ export function useCanvasPointerHandlers(input: PointerHandlerInput) {
     }
   }
 
+  function handleActorMouseDown(
+    actorId: string,
+    point: LayoutPoint,
+    event: MouseEvent<SVGGElement>
+  ) {
+    if (
+      event.button !== 0 ||
+      (activeToolId !== "actor" && activeToolId !== "select")
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    closeZoneShapeMenu();
+    dispatch(
+      selectEntity({
+        entityType: "actor",
+        ids: [actorId],
+        toggle: event.shiftKey || event.ctrlKey || event.metaKey
+      })
+    );
+    suppressNextCanvasClickRef.current = true;
+    suppressNextEntityClickRef.current = actorId;
+    setActorDrag({
+      actorId,
+      current: point,
+      hasMoved: false,
+      start: point
+    });
+  }
+
   function handleResizeHandleMouseDown(
     zone: Zone,
     polygon: LayoutPoint[],
@@ -214,6 +259,7 @@ export function useCanvasPointerHandlers(input: PointerHandlerInput) {
 
   return {
     getDisplayedPolygon,
+    handleActorMouseDown,
     handleCanvasMouseDown,
     handleCanvasMouseMove,
     handleCanvasMouseUp,

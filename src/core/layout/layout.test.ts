@@ -47,6 +47,8 @@ const heroActor: Actor = {
   name: "Hero",
   actorType: "creature",
   layoutGroup: "hero",
+  size: "medium",
+  shape: "circle",
   currentZoneId: "zone-battlefield",
   statusEffects: [],
   metadata: {}
@@ -57,6 +59,8 @@ const secondHeroActor: Actor = {
   name: "Second Hero",
   actorType: "creature",
   layoutGroup: "hero",
+  size: "medium",
+  shape: "circle",
   currentZoneId: "zone-battlefield",
   statusEffects: [],
   metadata: {}
@@ -67,6 +71,8 @@ const enemyActor: Actor = {
   name: "Enemy",
   actorType: "creature",
   layoutGroup: "enemy",
+  size: "medium",
+  shape: "circle",
   currentZoneId: "zone-battlefield",
   statusEffects: [],
   metadata: {}
@@ -77,6 +83,8 @@ const objectiveActor: Actor = {
   name: "Objective",
   actorType: "objective",
   layoutGroup: "neutral",
+  size: "medium",
+  shape: "circle",
   currentZoneId: "zone-battlefield",
   statusEffects: [],
   metadata: {}
