@@ -423,12 +423,22 @@ Render order:
 
 Zones & engagements share layout engines.
 
-Placement strategies:
+Layout strategies:
 
 - FLEX
+  - Tokens are spread evenly around the zone
 - SEQUENTIAL
-- SPLIT_FLEX
-- SPLIT_SEQUENTIAL
+  - Tokens are placed in a predictable order around a zone based on the shape.
+  - For non-circles, start with populating the zone just inside the corners (verticies)
+  - For circles, start populating inside the circle at the top and work clockwise
+- SPLIT (SPLIT is not a layout strategy, but rather a category of layout strategies)
+  - SPLIT_FLEX
+    - Tokens are spread evenly within their section within the zone.
+  - SPLIT_SEQUENTIAL
+    - Tokens are placed in a predictable order within their section in a zone.
+      - options: left -> right, top -> bottom
+  - For if one or more engagements exist in a split zone, a new section for
+    engagements will be created in the zone.
 
 Actor and engagement positions inside zones are not persisted in
 EncounterState and are not calculated as coordinates. Layout strategies derive

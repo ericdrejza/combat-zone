@@ -9,55 +9,35 @@ To reference completed items, see `ROADMAP_COMPLETE.md`.
 
 After completing a numbered section (## X.), move the completed section to the end of `ROADMAP_COMPLETE.md`
 
-## 8. Library
-
-- [x] Add a "Library" button to toolbar
-  - New leftmost toolbar tool section;  
-  - Button has a book icon in it
-- [x] Implement Asset Library
-  - Clicking Library tool button opens a large library modal
-  - Library modal tabs for sections: "Encounters", "Backgrounds", "Tokens"
-  - Traditional file system look and feel for each section
-  - Left side of modal is the file explorer for the given section
-    - Expand and collapse folders, right click gives basic file system changes:
-      - Rename, Delete
-    - Dragging and dropping a file (a directory also counts a file) into another
-      folder moves it into that target folder.
-      - Highlight the name of which folder it would be moved into while dragged over.
-  - Place a "plus"/"add" icon on the left side for creating/adding new items
-    - The add options it gives you should be upload new image
-    - create new folder
-    - create a link to an existing asset already in this section
-      - should prompt you with a singular Miller column to navigate and select the asset
-- [x] Implement the Library panel
-  - Contains tokens from the Tokens section when Select tool is selected.
-  - Contains reduced size background images from the Backgrounds section when
-    the Background tool is selected.
-  - This panel body should act as a singular Miller column with only the parent
-    directory (back arrow / return up icon) (if not already at the root of the
-    section folder) at the top, the available folders in the current folder, 
-    followed by files.
-- [x] Allow backgrounds to be clicked in library panel; this should update the canvas
-  with the new background.
-  - Hovering a background image in the library panel will expand the image size
-    slightly (20%) with a smooth, quick animation.  Unhovering will set the image
-    thumbnail back to the original size in the panel.
-
 ## 9. Actors: Placement, Movement, and Zoneless State
-- [ ] Allow actors to be dragged from the Library Panel onto the canvas into
+- [ ] Selecting the Actor tool also enables Library panel to be populated with
+  tokens from the asset library
+- [ ] Allow tokens to be dragged from the Library Panel onto the canvas into
   a zone.
+- [ ] Implement layout strategies
 - [ ] Implement actor movement between zones.
+  - Click, drag, and drop actor into zone
   - Update `currentZoneId`.
   - Recalculate layout in both source and destination zones.
 - [ ] Implement actor movement to empty canvas space.
   - Actor becomes zoneless.
 - [ ] Implement invalid drop handling.
   - No drop allowed outside of canvas.
+  - Layout may never place token outside zone
+    - If not a split layout, move token toward center of zone if layout would
+      attempt to place token outside zone.
   - Snap back to pre-drag position.
   - Do not create a Redux history entry for snap-back.
 - [ ] Add Actor properties editing.
+- [ ] The Actor tool chooses how moved dragged tokens will become actors and
+  and their representation on the canvas.
+  - Below the Actor tool, there should be dropdowns for:
+    - Faction (options: "Hero" (blue circle), "Neutral" (yellow circle), "Enemy" (red circle))
+    - Size (options: "Small" (small solid black circle), 
+      "Medium" (medium solid black circle), "Large" (small solid black circle), 
+      "Extra Large" (small solid black circle))
 - [ ] Add Vitest coverage for actor create/place/move/zoneless behavior,
-  invalid drops, undo, and redo.
+  invalid drops, undo, and redo history.
 
 ## 10. Engagement Groups
 

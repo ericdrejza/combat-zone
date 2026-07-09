@@ -106,25 +106,32 @@ duplicating shared engines (layout, validation) per entity.
 
 ```
 src/
+  library/           # asset library state, UI, and upload helpers
   core/
+    encounter/       # encounter state shape, creation, and inspectors
     history/          # Redux history types and undo/redo helpers
     layout/           # FLEX, SEQUENTIAL, SPLIT_SEQUENTIAL — shared strategy pattern
+    rendering/        # shared SVG primitives and overlay visuals
     validation/       # pipeline runner + shared validators (ZoneIntegrityValidator, etc.)
-    rendering/        # shared SVG primitives (selection outline, drag ghost, grid, etc.)
+    state/            # normalized entity collection helpers
   entities/
+    actor/           # actor domain types and actor-specific logic
+    engagement/      # engagement domain types and engagement-specific logic
+    edge/            # edge domain types and edge-specific logic
+    annotation/      # annotation domain types and annotation-specific logic
     zone/             # types, Redux slice, zone-specific actions/validators, ZoneRenderer.tsx
-    actor/
-    engagement/
-    edge/
-    annotation/
   interaction/
     tools/            # SelectTool, ZoneTool, EdgeTool, ActorTool, EngagementTool, AnnotationTool, BackgroundTool, DeleteTool
     selection/        # shift/ctrl/box-select rules
+  store/             # Redux store setup and slice registration
   ui/
-    toolbar/
-    panels/           # PropertiesPanel, InitiativePanel, ValidationPanel, LibraryPanel
     canvas/           # canvas shell, render-order composition (per documentation/DESIGN.md §13)
-  store/              # Redux store setup, root reducer, RTK slice registration
+    library/          # library panel and modal UI
+    panels/           # PropertiesPanel, InitiativePanel, ValidationPanel, LibraryPanel
+      zoneProperties/  # zone properties subpanels and controls
+    toolbar/          # top-level toolbar and tool buttons
+      background/     # background tool controls and file handling
+      zone/           # zone tool controls and mode switching
 ```
 
 **Rule of thumb for where new code goes:** if it's a strategy/engine used by
