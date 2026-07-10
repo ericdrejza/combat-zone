@@ -15,6 +15,8 @@ type ActorLayerProps = {
     point: LayoutPoint,
     event: MouseEvent<SVGGElement>
   ) => void;
+  onActorMouseEnter: (actorId: string) => void;
+  onActorMouseLeave: (actorId: string) => void;
   selection: RootState["interaction"]["selection"];
 };
 
@@ -38,6 +40,8 @@ export function ActorLayer({
   showFactionOutlines,
   encounter,
   onActorMouseDown,
+  onActorMouseEnter,
+  onActorMouseLeave,
   selection
 }: ActorLayerProps) {
   return getActorRenderPlacements(encounter).map(({ actor, point, radius }) => {
@@ -57,6 +61,8 @@ export function ActorLayer({
         data-entity-id={actor.id}
         data-entity-type="actor"
         onMouseDown={(event) => onActorMouseDown(actor.id, renderedPoint, event)}
+        onMouseEnter={() => onActorMouseEnter(actor.id)}
+        onMouseLeave={() => onActorMouseLeave(actor.id)}
         transform={`translate(${renderedPoint.x} ${renderedPoint.y})`}
       >
         {actor.shape === "rectangle" ? (
@@ -110,7 +116,7 @@ export function ActorLayer({
             fill="white"
             textAnchor="middle"
           >
-            {actor.name.slice(0, 2).toUpperCase()}
+            {actor.name.toUpperCase()}
           </text>
         )}
         {selected ? (
@@ -154,6 +160,17 @@ export function ActorLayer({
               strokeWidth="4"
             />
           )
+        ) : null}
+        {selected ? (
+          <text
+          className="pointer-events-none text-[10px] font-bold"
+          dominantBaseline="middle"
+          fill="white"
+          textAnchor="middle"
+          dy={radius + 16}
+          >
+            {actor.name.toUpperCase()}
+          </text>
         ) : null}
       </g>
     );

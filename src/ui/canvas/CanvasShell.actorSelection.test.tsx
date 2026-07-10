@@ -35,6 +35,17 @@ function actor(id: string, currentZoneId = ZONELESS_ACTOR_ZONE_ID): Actor {
   };
 }
 
+function namedActor(
+  id: string,
+  name: string,
+  currentZoneId = ZONELESS_ACTOR_ZONE_ID
+): Actor {
+  return {
+    ...actor(id, currentZoneId),
+    name
+  };
+}
+
 function zone(id: string, x: number, y: number, width: number, height: number): Zone {
   return {
     colorBorder: "#166534",
@@ -205,5 +216,32 @@ describe("CanvasShell actor selection", () => {
       selectedEntityType: "actor",
       selectedIds: ["actor-1", "actor-2"]
     });
+  });
+
+  it("shows hovered and selected actor names in the canvas status badge", async () => {
+    renderApp();
+
+    act(() => {
+      seedEncounter([
+        namedActor("actor-1", "Zephyr"),
+        namedActor("actor-2", "Aegis")
+      ]);
+      store.dispatch(setActiveTool("actor"));
+    });
+
+    const firstActor = await screen.findByLabelText("Zephyr");
+    const secondActor = await screen.findByLabelText("Aegis");
+
+    fireEvent.mouseEnter(firstActor);
+    expect(screen.getByText("Zephyr")).toBeInTheDocument();
+
+    fireEvent.click(firstActor, { clientX: 100, clientY: 100 });
+    fireEvent.click(secondActor, {
+      clientX: 140,
+      clientY: 100,
+      ctrlKey: true
+    });
+
+    expect(screen.getByText("Aegis, Zephyr")).toBeInTheDocument();
   });
 });

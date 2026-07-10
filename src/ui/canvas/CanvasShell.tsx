@@ -54,6 +54,7 @@ export function CanvasShell() {
   const selection = useSelector((state: RootState) => state.interaction.selection);
   const backgroundImage = encounter.backgroundImage;
   const [actorDrag, setActorDrag] = useState<ActorDragState | null>(null);
+  const [hoveredActorId, setHoveredActorId] = useState<string | null>(null);
   const [altKeyDown, setAltKeyDown] = useState(false);
   const [zoneDraftPoints, setZoneDraftPoints] = useState<LayoutPoint[]>([]);
   const [shapeDraft, setShapeDraft] = useState<ShapeDraftState | null>(null);
@@ -157,6 +158,22 @@ export function CanvasShell() {
   );
   const showFactionOutlines =
     altKeyDown && (activeToolId === "actor" || activeToolId === "select");
+  const selectedActorNames =
+    selection.selectedEntityType === "actor"
+      ? selection.selectedIds
+          .map((actorId) => encounter.actors.byId[actorId]?.name)
+          .filter((name): name is string => Boolean(name))
+          .sort((left, right) => left.localeCompare(right))
+      : [];
+  const hoveredActorName = hoveredActorId
+    ? encounter.actors.byId[hoveredActorId]?.name
+    : undefined;
+  const statusActorNames =
+    selectedActorNames.length > 0
+      ? selectedActorNames
+      : hoveredActorName
+        ? [hoveredActorName]
+        : [];
 
   function commitActorFromLibraryNode(nodeId: string, destinationZoneId: string) {
     const tokens = library.sections.tokens;
@@ -274,6 +291,12 @@ export function CanvasShell() {
                     actorDrag={actorDrag}
                     encounter={encounter}
                     onActorMouseDown={handleActorMouseDown}
+                    onActorMouseEnter={setHoveredActorId}
+                    onActorMouseLeave={(actorId) =>
+                      setHoveredActorId((current) =>
+                        current === actorId ? null : current
+                      )
+                    }
                     selection={selection}
                     showFactionOutlines={showFactionOutlines}
                   />
@@ -295,8 +318,8 @@ export function CanvasShell() {
       </svg>
       <CanvasToolStatusBadge
         activeToolId={activeToolId}
+        actorNames={statusActorNames}
         zoneShapeMode={zoneShapeMode}
-        actorId={actorTool.clipboardActorId}
       />
     </section>
   );

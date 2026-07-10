@@ -95,6 +95,25 @@ function commitState(
 }
 
 describe("actor mutations", () => {
+  it("uses image filenames without file extensions for default actor names", () => {
+    const nextEncounter = createActor(createActorEncounterState(), {
+      currentZoneId: zoneA.id,
+      id: "actor-named-token",
+      image: {
+        dataUrl: "data:image/png;base64,token",
+        mediaType: "image/png",
+        name: "Goblin Captain.final.png"
+      }
+    });
+
+    expect(nextEncounter.actors.byId["actor-named-token"]?.name).toBe(
+      "Goblin Captain.final"
+    );
+    expect(
+      nextEncounter.actors.byId["actor-named-token"]?.metadata.sourceAssetName
+    ).toBe("Goblin Captain.final.png");
+  });
+
   it("creates actors in zones and as zoneless actors with undo and redo", () => {
     const initialHistory = reducer(undefined, { type: "test/init" });
     let state = commitState(

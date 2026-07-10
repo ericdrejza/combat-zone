@@ -100,6 +100,14 @@ function removeActorFromEngagements(
   };
 }
 
+function stripFileExtension(fileName: string): string {
+  return fileName.replace(/\.[^./\\]+$/, "");
+}
+
+function getDefaultActorName(image?: ActorImageInput): string {
+  return image ? stripFileExtension(image.name) : "New Actor";
+}
+
 export function buildActor({
   actorType = "creature",
   currentZoneId,
@@ -120,7 +128,7 @@ export function buildActor({
       sourceAssetName: image?.name,
       sourceAssetMediaType: image?.mediaType
     },
-    name: name ?? image?.name ?? "New Actor",
+    name: name ?? getDefaultActorName(image),
     shape,
     size,
     statusEffects: []
