@@ -296,6 +296,7 @@ export function CanvasShell() {
       <CanvasToolStatusBadge
         activeToolId={activeToolId}
         zoneShapeMode={zoneShapeMode}
+        actorId={actorTool.clipboardActorId}
       />
     </section>
   );

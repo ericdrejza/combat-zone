@@ -145,7 +145,9 @@ export function useCanvasPointerHandlers(input: PointerHandlerInput) {
     if (
       !entityId &&
       event.shiftKey &&
-      (activeToolId === "zone" || activeToolId === "select")
+      (activeToolId === "actor" ||
+        activeToolId === "zone" ||
+        activeToolId === "select")
     ) {
       event.preventDefault();
       closeZoneShapeMenu();
@@ -220,17 +222,34 @@ export function useCanvasPointerHandlers(input: PointerHandlerInput) {
     event.preventDefault();
     event.stopPropagation();
     closeZoneShapeMenu();
-    dispatch(
-      selectEntity({
-        entityType: "actor",
-        ids: [actorId],
-        toggle: event.shiftKey || event.ctrlKey || event.metaKey
-      })
-    );
+    const dragActorIds =
+      selection.selectedEntityType === "actor" &&
+      selection.selectedIds.includes(actorId) &&
+      !event.shiftKey &&
+      !event.ctrlKey &&
+      !event.metaKey
+        ? selection.selectedIds
+        : [actorId];
+
+    if (
+      dragActorIds.length === 1 ||
+      event.shiftKey ||
+      event.ctrlKey ||
+      event.metaKey
+    ) {
+      dispatch(
+        selectEntity({
+          entityType: "actor",
+          ids: [actorId],
+          toggle: event.shiftKey || event.ctrlKey || event.metaKey
+        })
+      );
+    }
     suppressNextCanvasClickRef.current = true;
     suppressNextEntityClickRef.current = actorId;
     setActorDrag({
       actorId,
+      actorIds: dragActorIds,
       current: point,
       hasMoved: false,
       start: point

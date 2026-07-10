@@ -23,7 +23,7 @@ function getDraggedPoint(
   point: LayoutPoint,
   actorDrag: ActorDragState | null
 ): LayoutPoint {
-  if (actorDrag?.actorId !== actorId) {
+  if (!actorDrag?.actorIds.includes(actorId)) {
     return point;
   }
 

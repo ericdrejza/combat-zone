@@ -89,15 +89,15 @@ export function ZoneLayer({
         ) : null}
         {actorTargeted ? (
           <polygon
-            className="pointer-events-none fill-none stroke-blue-600 stroke-2"
+            className="pointer-events-none fill-none stroke-blue-500 stroke-2"
             points={polygonToPoints(polygon)}
-            strokeDasharray="10 6"
+            strokeDasharray="20 15"
           >
             <animate
               attributeName="stroke-opacity"
               dur="1.2s"
               repeatCount="indefinite"
-              values="0.25;1;0.25"
+              values="0.10;1;0.25"
             />
           </polygon>
         ) : null}

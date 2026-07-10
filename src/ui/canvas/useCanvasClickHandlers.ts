@@ -205,6 +205,31 @@ export function useCanvasClickHandlers(input: ClickHandlerInput) {
   }
 
   function handleCanvasDoubleClick(event: MouseEvent<SVGSVGElement>) {
+    const target = event.target as Element;
+    const entityElement = target.closest<SVGElement>("[data-entity-id]");
+    const entityId = entityElement?.dataset.entityId;
+    const entityType = entityElement?.dataset
+      .entityType as SelectableEntityType | undefined;
+
+    if (
+      (activeToolId === "actor" || activeToolId === "select") &&
+      entityType === "zone" &&
+      entityId &&
+      encounter.zones.byId[entityId]
+    ) {
+      const actorIds = encounter.actors.allIds.filter(
+        (actorId) => encounter.actors.byId[actorId]?.currentZoneId === entityId
+      );
+
+      dispatch(
+        selectEntity({
+          entityType: "actor",
+          ids: actorIds
+        })
+      );
+      return;
+    }
+
     if (activeToolId !== "zone" || vertexDrag || zoneShapeMode !== "polygon") {
       return;
     }

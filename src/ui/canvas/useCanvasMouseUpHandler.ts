@@ -9,7 +9,7 @@ import {
   selectEntity
 } from "../../interaction/interactionState";
 import { commitEncounterChange } from "../../store/encounterSlice";
-import { findZoneIdAtPoint } from "./actorCanvasLayout";
+import { findZoneIdAtPoint, getActorRenderPlacements } from "./actorCanvasLayout";
 import { MIN_SHAPE_SIZE } from "./canvasConstants";
 import type { CanvasInteractionState } from "./canvasInteractionTypes";
 import { commitZoneCreate } from "./zoneCreationActions";
@@ -52,15 +52,18 @@ export function useCanvasMouseUpHandler(input: MouseUpHandlerInput) {
       if (actorDrag.hasMoved) {
         const destinationZoneId =
           findZoneIdAtPoint(encounter, actorDrag.current) ?? ZONELESS_ACTOR_ZONE_ID;
-        const nextEncounter = moveActor(
-          encounter,
-          actorDrag.actorId,
-          destinationZoneId
+        const nextEncounter = actorDrag.actorIds.reduce(
+          (currentEncounter, actorId) =>
+            moveActor(currentEncounter, actorId, destinationZoneId),
+          encounter
         );
-        const action = createEncounterActionRecord("actor.move", {
-          actorId: actorDrag.actorId,
-          destinationZoneId
-        });
+        const action = createEncounterActionRecord(
+          actorDrag.actorIds.length > 1 ? "actor.moveMany" : "actor.move",
+          {
+            actorIds: actorDrag.actorIds,
+            destinationZoneId
+          }
+        );
         const prepared = prepareValidatedEncounterChange({
           action,
           currentEncounter: encounter,
@@ -77,7 +80,7 @@ export function useCanvasMouseUpHandler(input: MouseUpHandlerInput) {
           dispatch(
             selectEntity({
               entityType: "actor",
-              ids: [actorDrag.actorId]
+              ids: actorDrag.actorIds
             })
           );
         }
@@ -110,17 +113,29 @@ export function useCanvasMouseUpHandler(input: MouseUpHandlerInput) {
 
     if (boxSelection) {
       const bounds = getBoxSelectionBounds(boxSelection);
-      const selectedZoneIds = encounter.zones.allIds.filter((zoneId) => {
-        const zone = encounter.zones.byId[zoneId];
+      const isActorBoxSelection = input.activeToolId === "actor";
+      const selectedIds = isActorBoxSelection
+        ? getActorRenderPlacements(encounter)
+            .filter(({ point, radius }) =>
+              doBoundsOverlap(bounds, {
+                height: radius * 2,
+                width: radius * 2,
+                x: point.x - radius,
+                y: point.y - radius
+              })
+            )
+            .map(({ actor }) => actor.id)
+        : encounter.zones.allIds.filter((zoneId) => {
+            const zone = encounter.zones.byId[zoneId];
 
-        return zone && doBoundsOverlap(bounds, getPolygonBounds(zone.polygon));
-      });
+            return zone && doBoundsOverlap(bounds, getPolygonBounds(zone.polygon));
+          });
 
       dispatch(
         finishBoxSelection({
           additive: true,
-          entityType: "zone",
-          ids: selectedZoneIds
+          entityType: isActorBoxSelection ? "actor" : "zone",
+          ids: selectedIds
         })
       );
       setBoxSelection(null);

@@ -31,6 +31,7 @@ export type ZoneDragState = {
 
 export type ActorDragState = {
   actorId: string;
+  actorIds: string[];
   current: LayoutPoint;
   hasMoved: boolean;
   start: LayoutPoint;
