@@ -154,8 +154,8 @@ A feature is not complete until:
    for cascading effects (e.g. undoing a Zone deletion restores the zone
    AND un-zonelesses the actors that were inside it AND restores the
    auto-deleted edges).
-3. It has Vitest coverage for undo/redo behavior, and any validator it
-   triggers.
+3. It has passing Vitest coverage for undo/redo behavior, and any validator it
+   triggers. `npm run test:agent`
 4. It respects the current validation mode (OFF / ADVISORY / ASSISTED /
    STRICT) per `documentation/DESIGN.md` §5.5 — test at minimum that STRICT mode can
    block it and ADVISORY mode cannot.
