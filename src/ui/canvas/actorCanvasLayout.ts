@@ -1,18 +1,29 @@
 import { calculateZoneLayout } from '../../core/layout/encounterLayout';
 import type { LayoutPoint } from '../../core/layout/types';
-import { ZONELESS_ACTOR_ZONE_ID } from '../../core/encounter/types';
 import type { Actor } from '../../entities/actor/types';
 import { ACTOR_SIZE_MULTIPLIERS } from '../../entities/actor/actorVisuals';
 import type { EncounterState } from '../../core/encounter/types';
 import { getPolygonBounds, isPointInPolygon } from './zoneGeometry';
+import {
+  getFlexRadialActorPoints,
+  getSequentialRadialActorPoints
+} from './actorRadialLayout';
+import {
+  getZonelessActorRenderPlacements,
+  ZONELESS_ACTOR_EDGE_PADDING,
+  ZONELESS_ACTOR_ZONE_CLEARANCE
+} from './actorZonelessLayout';
 
 export const ACTOR_TOKEN_BASE_RADIUS = 30;
+export { ZONELESS_ACTOR_EDGE_PADDING, ZONELESS_ACTOR_ZONE_CLEARANCE };
 
 export type ActorRenderPlacement = {
   actor: Actor;
   point: LayoutPoint;
   radius: number;
 };
+
+type Bounds = ReturnType<typeof getPolygonBounds>;
 
 function getPolygonCenter(polygon: LayoutPoint[]): LayoutPoint {
   const bounds = getPolygonBounds(polygon);
@@ -21,6 +32,10 @@ function getPolygonCenter(polygon: LayoutPoint[]): LayoutPoint {
     x: bounds.x + bounds.width / 2,
     y: bounds.y + bounds.height / 2
   };
+}
+
+function getCircleZoneRadius(bounds: Bounds): number {
+  return Math.min(bounds.width, bounds.height) / 2;
 }
 
 function pullPointInsidePolygon(
@@ -147,6 +162,45 @@ export function getActorRenderPlacements(
     const topBottom = descriptor.orientation === 'TOP_BOTTOM';
 
     for (const section of descriptor.sections) {
+      const sectionActors = section.items.flatMap((item) => {
+        const actor = encounter.actors.byId[item.id];
+
+        return actor ? [actor] : [];
+      });
+      const radialLayout =
+        (zone.shape === 'circle' || zone.shape === 'hexagon') &&
+        !split &&
+        (descriptor.strategy === 'FLEX' ||
+          descriptor.strategy === 'SEQUENTIAL');
+
+      if (radialLayout) {
+        const radialActors = sectionActors.map((actor) => ({
+          actor,
+          radius: getActorRadius(actor)
+        }));
+        const radialPoints =
+          descriptor.strategy === 'FLEX'
+            ? getFlexRadialActorPoints(
+                radialActors,
+                getPolygonCenter(zone.polygon),
+                getCircleZoneRadius(zoneBounds)
+              )
+            : getSequentialRadialActorPoints(
+                radialActors,
+                getPolygonCenter(zone.polygon),
+                getCircleZoneRadius(zoneBounds)
+              );
+
+        radialActors.forEach(({ actor, radius }, index) => {
+          placements.push({
+            actor,
+            point: radialPoints[index],
+            radius
+          });
+        });
+        continue;
+      }
+
       const sectionBounds = getSectionBounds(
         section.id,
         zoneBounds,
@@ -154,17 +208,11 @@ export function getActorRenderPlacements(
         topBottom
       );
 
-      section.items.forEach((item, index) => {
-        const actor = encounter.actors.byId[item.id];
-
-        if (!actor) {
-          return;
-        }
-
+      sectionActors.forEach((actor, index) => {
         const radius = getActorRadius(actor);
         const point = getGridPoint(
           index,
-          section.items.length,
+          sectionActors.length,
           sectionBounds,
           radius
         );
@@ -178,24 +226,9 @@ export function getActorRenderPlacements(
     }
   }
 
-  const zonelessActors = encounter.actors.allIds
-    .map((actorId) => encounter.actors.byId[actorId])
-    .filter(
-      (actor): actor is Actor => actor?.currentZoneId === ZONELESS_ACTOR_ZONE_ID
-    );
-
-  zonelessActors.forEach((actor, index) => {
-    const radius = getActorRadius(actor);
-
-    placements.push({
-      actor,
-      point: {
-        x: 48 + index * 40,
-        y: 48
-      },
-      radius
-    });
-  });
+  placements.push(
+    ...getZonelessActorRenderPlacements(encounter, getActorRadius)
+  );
 
   return placements;
 }
