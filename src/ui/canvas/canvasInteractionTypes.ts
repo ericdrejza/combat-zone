@@ -44,6 +44,7 @@ export type MutableRefValue<TValue> = {
 export type CanvasInteractionState = {
   activeToolId: RootState["interaction"]["activeToolId"];
   actorDrag: ActorDragState | null;
+  actorPaintBrush: RootState["interaction"]["actorPaintBrush"];
   actorTool: RootState["interaction"]["actorTool"];
   boxSelection: LocalBoxSelectionState | null;
   dispatch: AppDispatch;

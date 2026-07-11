@@ -2,6 +2,7 @@ import type { MouseEvent } from "react";
 
 import { createEncounterActionRecord } from "../../core/history/createEncounterActionRecord";
 import {
+  clearActorPaintBrush,
   clearSelection,
   clearZonePaintBrush,
   selectEntity,
@@ -28,6 +29,7 @@ import { getPaintableZoneProperties } from "./zonePropertyTransfers";
 type ClickHandlerInput = Pick<
   CanvasInteractionState,
   | "activeToolId"
+  | "actorPaintBrush"
   | "actorTool"
   | "boxSelection"
   | "dispatch"
@@ -50,6 +52,7 @@ type ClickHandlerInput = Pick<
 export function useCanvasClickHandlers(input: ClickHandlerInput) {
   const {
     activeToolId,
+    actorPaintBrush,
     actorTool,
     boxSelection,
     dispatch,
@@ -255,6 +258,12 @@ export function useCanvasClickHandlers(input: ClickHandlerInput) {
     if (zonePaintBrush) {
       event.preventDefault();
       dispatch(clearZonePaintBrush());
+      return;
+    }
+
+    if (actorPaintBrush) {
+      event.preventDefault();
+      dispatch(clearActorPaintBrush());
       return;
     }
 

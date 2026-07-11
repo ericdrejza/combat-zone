@@ -5,6 +5,7 @@ import { createEncounterActionRecord } from "../../core/history/createEncounterA
 import { duplicateActor, deleteActor } from "../../entities/actor/actorMutations";
 import { deleteZone } from "../../entities/zone/zoneMutations";
 import {
+  clearActorPaintBrush,
   clearSelection,
   clearZonePaintBrush,
   selectEntity,
@@ -18,6 +19,7 @@ import { sortZoneIdsByPosition } from "./zoneGeometry";
 
 type UseCanvasKeyboardInput = {
   activeToolId: RootState["interaction"]["activeToolId"];
+  actorPaintBrush: RootState["interaction"]["actorPaintBrush"];
   actorTool: RootState["interaction"]["actorTool"];
   clearShapeDraft: () => void;
   clearZoneDraftPoints: () => void;
@@ -30,6 +32,7 @@ type UseCanvasKeyboardInput = {
 
 export function useCanvasKeyboard({
   activeToolId,
+  actorPaintBrush,
   actorTool,
   clearShapeDraft,
   clearZoneDraftPoints,
@@ -213,6 +216,12 @@ export function useCanvasKeyboard({
         return;
       }
 
+      if (event.key === "Escape" && actorPaintBrush) {
+        event.preventDefault();
+        dispatch(clearActorPaintBrush());
+        return;
+      }
+
       if (activeToolId !== "zone") {
         if (activeToolId === "actor") {
           if (event.key === "1") {
@@ -277,6 +286,7 @@ export function useCanvasKeyboard({
     };
   }, [
     activeToolId,
+    actorPaintBrush,
     actorTool,
     clearShapeDraft,
     clearZoneDraftPoints,

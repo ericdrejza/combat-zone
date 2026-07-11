@@ -1,4 +1,4 @@
-import { Circle, Square } from "lucide-react";
+import { Circle, Paintbrush, Square } from "lucide-react";
 import type { ComponentType, SVGProps } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
@@ -11,7 +11,8 @@ import { ACTOR_LAYOUT_GROUP_COLORS } from "../../../entities/actor/actorVisuals"
 import {
   setActorToolLayoutGroup,
   setActorToolShape,
-  setActorToolSize
+  setActorToolSize,
+  toggleActorPaintBrush
 } from "../../../interaction/interactionState";
 import type { ToolDefinition, ToolId } from "../../../interaction/tools/toolRegistry";
 import type { RootState } from "../../../store/store";
@@ -164,6 +165,9 @@ export function ActorToolButton({
 }: ActorToolButtonProps) {
   const dispatch = useDispatch();
   const actorTool = useSelector((state: RootState) => state.interaction.actorTool);
+  const actorPaintBrush = useSelector(
+    (state: RootState) => state.interaction.actorPaintBrush
+  );
 
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -238,6 +242,22 @@ export function ActorToolButton({
                 <Icon aria-hidden="true" className="h-4 w-4 fill-current" />
               </button>
             ))}
+          </div>
+          <div
+            aria-label="Actor paint"
+            className={optionGroupClassName()}
+            role="group"
+          >
+            <button
+              aria-label="Paint actors"
+              aria-pressed={actorPaintBrush}
+              className={optionButtonClassName(actorPaintBrush)}
+              onClick={() => dispatch(toggleActorPaintBrush())}
+              title="Paint"
+              type="button"
+            >
+              <Paintbrush aria-hidden="true" className="h-4 w-4" />
+            </button>
           </div>
         </>
       ) : null}

@@ -49,6 +49,7 @@ export type ActorToolState = {
 };
 
 export type InteractionState = {
+  actorPaintBrush: boolean;
   actorTool: ActorToolState;
   activeToolId: ToolId;
   selection: SelectionState;
@@ -79,6 +80,7 @@ const initialDraft: InteractionDraftState = {
 };
 
 const initialState: InteractionState = {
+  actorPaintBrush: false,
   actorTool: {
     clipboardActorId: null,
     layoutGroup: 'hero',
@@ -136,6 +138,7 @@ export const interactionSlice = createSlice({
       state.activeToolId = payload;
       state.draft = initialDraft;
       state.contextualActionRequest = null;
+      state.actorPaintBrush = false;
       state.zonePaintBrush = null;
       state.actorTool.targetZoneId = null;
 
@@ -149,6 +152,7 @@ export const interactionSlice = createSlice({
     clearInteractionDraft(state) {
       state.draft = initialDraft;
       state.contextualActionRequest = null;
+      state.actorPaintBrush = false;
       state.zonePaintBrush = null;
       state.actorTool.targetZoneId = null;
     },
@@ -182,6 +186,12 @@ export const interactionSlice = createSlice({
     },
     clearZonePaintBrush(state) {
       state.zonePaintBrush = null;
+    },
+    toggleActorPaintBrush(state) {
+      state.actorPaintBrush = !state.actorPaintBrush;
+    },
+    clearActorPaintBrush(state) {
+      state.actorPaintBrush = false;
     },
     selectEntity(state, { payload }: PayloadAction<SelectEntityPayload>) {
       if (!canSelect(state, payload.entityType)) {
@@ -273,6 +283,7 @@ export const interactionSlice = createSlice({
 });
 
 export const {
+  clearActorPaintBrush,
   setActorClipboardActor,
   setActorToolLayoutGroup,
   setActorToolShape,
@@ -290,6 +301,7 @@ export const {
   setPolygonDraftPointIds,
   setZoneShapeMode,
   toggleZonePaintBrush,
+  toggleActorPaintBrush,
   startBoxSelection,
   updateBoxSelection
 } = interactionSlice.actions;

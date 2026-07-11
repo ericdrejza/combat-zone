@@ -1,4 +1,5 @@
-import { act, fireEvent, screen } from "@testing-library/react";
+import { act, fireEvent, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 
 import { createEncounterState } from "../../core/encounter/createEncounterState";
 import { createEncounterActionRecord } from "../../core/history/createEncounterActionRecord";
@@ -6,8 +7,12 @@ import { ZONELESS_ACTOR_ZONE_ID } from "../../core/encounter/types";
 import type { EntityCollection } from "../../core/state/entityCollection";
 import type { Actor } from "../../entities/actor/types";
 import type { Zone } from "../../entities/zone/types";
-import { setActiveTool } from "../../interaction/interactionState";
-import { commitEncounterChange } from "../../store/encounterSlice";
+import { selectEntity, setActiveTool } from "../../interaction/interactionState";
+import {
+  commitEncounterChange,
+  redoEncounterChange,
+  undoEncounterChange
+} from "../../store/encounterSlice";
 import { store } from "../../store/store";
 import { getCanvas, mockCanvasBounds, renderApp } from "../../test/ui/renderApp";
 import { createRectanglePolygon } from "./zoneGeometry";
@@ -243,5 +248,91 @@ describe("CanvasShell actor selection", () => {
     });
 
     expect(screen.getByText("Aegis, Zephyr")).toBeInTheDocument();
+  });
+
+  it("paints selected actors with active actor tool settings and preserves undo", async () => {
+    const user = userEvent.setup();
+
+    renderApp();
+
+    act(() => {
+      seedEncounter([
+        {
+          ...actor("actor-1"),
+          layoutGroup: "enemy",
+          shape: "rectangle",
+          size: "large"
+        },
+        {
+          ...actor("actor-2"),
+          layoutGroup: "neutral",
+          shape: "rectangle",
+          size: "xLarge"
+        }
+      ]);
+      store.dispatch(setActiveTool("actor"));
+      store.dispatch(
+        selectEntity({
+          entityType: "actor",
+          ids: ["actor-1", "actor-2"]
+        })
+      );
+    });
+
+    await user.click(screen.getByRole("button", { name: "Paint actors" }));
+
+    await waitFor(() => {
+      const actors = store.getState().encounter.present.actors.byId;
+
+      expect(actors["actor-1"]).toMatchObject({
+        layoutGroup: "hero",
+        shape: "circle",
+        size: "medium"
+      });
+      expect(actors["actor-2"]).toMatchObject({
+        layoutGroup: "hero",
+        shape: "circle",
+        size: "medium"
+      });
+    });
+
+    act(() => {
+      store.dispatch(undoEncounterChange());
+    });
+
+    expect(store.getState().encounter.present.actors.byId["actor-1"]).toMatchObject({
+      layoutGroup: "enemy",
+      shape: "rectangle",
+      size: "large"
+    });
+
+    act(() => {
+      store.dispatch(redoEncounterChange());
+    });
+
+    expect(store.getState().encounter.present.actors.byId["actor-2"]).toMatchObject({
+      layoutGroup: "hero",
+      shape: "circle",
+      size: "medium"
+    });
+
+    await user.click(screen.getByRole("button", { name: "Neutral faction" }));
+    await user.click(screen.getByRole("button", { name: "Small actor size" }));
+    await user.click(screen.getByRole("button", { name: "Rectangle actor shape" }));
+
+    await waitFor(() => {
+      const actors = store.getState().encounter.present.actors.byId;
+
+      expect(actors["actor-1"]).toMatchObject({
+        layoutGroup: "neutral",
+        shape: "rectangle",
+        size: "small"
+      });
+      expect(actors["actor-2"]).toMatchObject({
+        layoutGroup: "neutral",
+        shape: "rectangle",
+        size: "small"
+      });
+    });
   });
 });

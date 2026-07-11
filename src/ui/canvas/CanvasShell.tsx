@@ -28,6 +28,7 @@ import type {
 import { ZoneLayer } from "./ZoneLayer";
 import { type LocalBoxSelectionState, toSvgPoint } from "./zoneGeometry";
 import { findZoneIdAtPoint } from "./actorCanvasLayout";
+import { useActorPaintBrush } from "./useActorPaintBrush";
 import { useCanvasInteractionHandlers } from "./useCanvasInteractionHandlers";
 import { useCanvasKeyboard } from "./useCanvasKeyboard";
 import {
@@ -42,6 +43,9 @@ export function CanvasShell() {
     (state: RootState) => state.interaction.activeToolId
   );
   const actorTool = useSelector((state: RootState) => state.interaction.actorTool);
+  const actorPaintBrush = useSelector(
+    (state: RootState) => state.interaction.actorPaintBrush
+  );
   const zoneShapeMode = useSelector(
     (state: RootState) => state.interaction.zoneShapeMode
   );
@@ -106,6 +110,7 @@ export function CanvasShell() {
 
   useCanvasKeyboard({
     activeToolId,
+    actorPaintBrush,
     actorTool,
     clearShapeDraft: () => setShapeDraft(null),
     clearZoneDraftPoints: () => setZoneDraftPoints([]),
@@ -114,6 +119,14 @@ export function CanvasShell() {
     encounter,
     selection,
     zonePaintBrush
+  });
+
+  useActorPaintBrush({
+    actorPaintBrush,
+    actorTool,
+    dispatch,
+    encounter,
+    selection
   });
 
   const {
@@ -129,6 +142,7 @@ export function CanvasShell() {
   } = useCanvasInteractionHandlers({
     activeToolId,
     actorDrag,
+    actorPaintBrush,
     actorTool,
     boxSelection,
     dispatch,

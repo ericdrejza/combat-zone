@@ -111,6 +111,9 @@ describe("Toolbar", () => {
     expect(screen.getByRole("group", { name: "Actor shape" })).toHaveClass(
       "rounded-full"
     );
+    expect(screen.getByRole("group", { name: "Actor paint" })).toHaveClass(
+      "rounded-full"
+    );
     expect(screen.getByRole("button", { name: "Hero faction" })).toHaveAttribute(
       "title",
       "Hero"
@@ -121,6 +124,29 @@ describe("Toolbar", () => {
     expect(
       screen.getByRole("button", { name: "Rectangle actor shape" })
     ).toHaveAttribute("title", "Rectangle");
+    expect(screen.getByRole("button", { name: "Paint actors" })).toHaveAttribute(
+      "title",
+      "Paint"
+    );
+  });
+
+  it("toggles actor paint mode from the actor toolbar", async () => {
+    const user = userEvent.setup();
+
+    renderApp();
+
+    await user.click(screen.getByRole("button", { name: "Actor" }));
+    await user.click(screen.getByRole("button", { name: "Paint actors" }));
+
+    expect(store.getState().interaction.actorPaintBrush).toBe(true);
+    expect(screen.getByRole("button", { name: "Paint actors" })).toHaveAttribute(
+      "aria-pressed",
+      "true"
+    );
+
+    await user.click(screen.getByRole("button", { name: "Paint actors" }));
+
+    expect(store.getState().interaction.actorPaintBrush).toBe(false);
   });
 
   it("opens Zone shape radios from the Zone toolbar button", async () => {
