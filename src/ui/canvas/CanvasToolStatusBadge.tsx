@@ -17,7 +17,10 @@ export function CanvasToolStatusBadge({
   const info = actorStatus ?? (activeToolId === "zone" ? `Zone shape: ${zoneShapeMode}` : null)
 
   return (
-    <div hidden={info == null} className="pointer-events-none absolute left-4 top-4 rounded-full border border-canvas-line bg-canvas-panel/90 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-canvas-muted">
+    <div hidden={info == null} className="pointer-events-none absolute left-4 
+      top-4 rounded-full border border-canvas-line bg-canvas-panel/90 
+      mr-4 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-canvas-muted"
+    >
       {info}
     </div>
   );

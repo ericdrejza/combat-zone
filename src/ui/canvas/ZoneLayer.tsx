@@ -89,7 +89,7 @@ export function ZoneLayer({
         ) : null}
         {actorTargeted ? (
           <polygon
-            className="pointer-events-none fill-none stroke-blue-500 stroke-2"
+            className="pointer-events-none fill-none stroke-white stroke-2"
             points={polygonToPoints(polygon)}
             strokeDasharray="20 15"
           >
