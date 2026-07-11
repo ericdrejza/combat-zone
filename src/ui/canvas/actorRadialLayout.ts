@@ -95,6 +95,10 @@ export function getFlexRadialActorPoints(
     return [];
   }
 
+  if (actors.length === 1) {
+    return [center];
+  }
+
   const maxActorRadius = Math.max(...actors.map((actor) => actor.radius));
   const actorSpacing = maxActorRadius * 2 + RADIAL_ACTOR_GAP;
   const outerRadius = zoneRadius - maxActorRadius - RADIAL_ACTOR_GAP;

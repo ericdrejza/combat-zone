@@ -1,15 +1,15 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from 'vitest';
 
-import type { Actor } from "../../entities/actor/types";
-import type { Edge } from "../../entities/edge/types";
-import type { Engagement } from "../../entities/engagement/types";
-import type { Zone } from "../../entities/zone/types";
-import { createEncounterState } from "../encounter/createEncounterState";
-import { ZONELESS_ACTOR_ZONE_ID } from "../encounter/types";
-import type { EncounterState } from "../encounter/types";
-import type { EntityCollection } from "../state/entityCollection";
-import { runValidationPipeline } from "./pipeline";
-import { prepareValidatedEncounterChange } from "./validatedEncounterChange";
+import type { Actor } from '../../entities/actor/types';
+import type { Edge } from '../../entities/edge/types';
+import type { Engagement } from '../../entities/engagement/types';
+import type { Zone } from '../../entities/zone/types';
+import { createEncounterState } from '../encounter/createEncounterState';
+import { ZONELESS_ACTOR_ZONE_ID } from '../encounter/types';
+import type { EncounterState } from '../encounter/types';
+import type { EntityCollection } from '../state/entityCollection';
+import { runValidationPipeline } from './pipeline';
+import { prepareValidatedEncounterChange } from './validatedEncounterChange';
 
 function collection<TEntity extends { id: string }>(
   entities: TEntity[]
@@ -21,11 +21,11 @@ function collection<TEntity extends { id: string }>(
 }
 
 const courtyardZone: Zone = {
-  colorBorder: "#9b876b",
-  colorFill: "#ffffff",
-  id: "zone-courtyard",
-  name: "Courtyard",
-  namePosition: "top-left",
+  colorBorder: '#9b876b',
+  colorFill: '#ffffff',
+  id: 'zone-courtyard',
+  name: 'Courtyard',
+  namePosition: 'top-left',
   opacity: 0.7,
   polygon: [
     { x: 0, y: 0 },
@@ -34,18 +34,18 @@ const courtyardZone: Zone = {
   ],
   showBorder: true,
   showName: false,
-  shape: "polygon",
-  layoutStrategy: "FLEX",
-  layoutOrientation: "LEFT_RIGHT",
+  shape: 'polygon',
+  layoutStrategy: 'FLEX',
+  layoutOrientation: 'LEFT_RIGHT',
   tags: []
 };
 
 const towerZone: Zone = {
-  colorBorder: "#9b876b",
-  colorFill: "#ffffff",
-  id: "zone-tower",
-  name: "Tower",
-  namePosition: "top-left",
+  colorBorder: '#9b876b',
+  colorFill: '#ffffff',
+  id: 'zone-tower',
+  name: 'Tower',
+  namePosition: 'top-left',
   opacity: 0.7,
   polygon: [
     { x: 20, y: 0 },
@@ -54,32 +54,32 @@ const towerZone: Zone = {
   ],
   showBorder: true,
   showName: false,
-  shape: "polygon",
-  layoutStrategy: "SEQUENTIAL",
-  layoutOrientation: "LEFT_RIGHT",
+  shape: 'polygon',
+  layoutStrategy: 'SEQUENTIAL',
+  layoutOrientation: 'LEFT_RIGHT',
   tags: []
 };
 
 const heroActor: Actor = {
-  id: "actor-hero",
-  name: "Hero",
-  actorType: "creature",
-  layoutGroup: "hero",
-  size: "medium",
-  shape: "circle",
-  currentZoneId: "zone-courtyard",
+  id: 'actor-hero',
+  name: 'Hero',
+  actorType: 'creature',
+  layoutGroup: 'hero',
+  size: 'medium',
+  shape: 'circle',
+  currentZoneId: 'zone-courtyard',
   statusEffects: [],
   metadata: {}
 };
 
 const enemyActor: Actor = {
-  id: "actor-enemy",
-  name: "Enemy",
-  actorType: "creature",
-  layoutGroup: "enemy",
-  size: "medium",
-  shape: "circle",
-  currentZoneId: "zone-courtyard",
+  id: 'actor-enemy',
+  name: 'Enemy',
+  actorType: 'creature',
+  layoutGroup: 'enemy',
+  size: 'medium',
+  shape: 'circle',
+  currentZoneId: 'zone-courtyard',
   statusEffects: [],
   metadata: {}
 };
@@ -87,44 +87,44 @@ const enemyActor: Actor = {
 function createValidEncounterState(): EncounterState {
   return {
     ...createEncounterState({
-      id: "encounter-validation",
-      name: "Validation Encounter"
+      id: 'encounter-validation',
+      name: 'Validation Encounter'
     }),
     zones: collection([courtyardZone, towerZone]),
     actors: collection([heroActor, enemyActor])
   };
 }
 
-describe("validation pipeline", () => {
-  it("skips validators when validation mode is OFF", () => {
+describe('validation pipeline', () => {
+  it('skips validators when validation mode is OFF', () => {
     const state: EncounterState = {
       ...createValidEncounterState(),
       validationState: {
-        mode: "OFF",
+        mode: 'OFF',
         messages: []
       }
     };
     const result = runValidationPipeline({
       state,
       action: {
-        type: "actor.move",
+        type: 'actor.move',
         payload: {
-          actorId: "actor-missing",
-          destinationZoneId: "zone-missing"
+          actorId: 'actor-missing',
+          destinationZoneId: 'zone-missing'
         }
       }
     });
 
     expect(result).toEqual({
-      mode: "OFF",
+      mode: 'OFF',
       valid: true,
       blocked: false,
       messages: []
     });
   });
 
-  it("preserves GM authority outside STRICT mode", () => {
-    for (const mode of ["ADVISORY", "ASSISTED"] as const) {
+  it('preserves GM authority outside STRICT mode', () => {
+    for (const mode of ['ADVISORY', 'ASSISTED'] as const) {
       const state: EncounterState = {
         ...createValidEncounterState(),
         validationState: {
@@ -135,10 +135,10 @@ describe("validation pipeline", () => {
       const result = runValidationPipeline({
         state,
         action: {
-          type: "actor.move",
+          type: 'actor.move',
           payload: {
-            actorId: "actor-missing",
-            destinationZoneId: "zone-missing"
+            actorId: 'actor-missing',
+            destinationZoneId: 'zone-missing'
           }
         }
       });
@@ -147,27 +147,27 @@ describe("validation pipeline", () => {
       expect(result.valid).toBe(false);
       expect(result.blocked).toBe(false);
       expect(result.messages.map((message) => message.code)).toEqual([
-        "movement.actorMissing",
-        "movement.destinationZoneMissing"
+        'movement.actorMissing',
+        'movement.destinationZoneMissing'
       ]);
     }
   });
 
-  it("blocks invalid actions only in STRICT mode", () => {
+  it('blocks invalid actions only in STRICT mode', () => {
     const state: EncounterState = {
       ...createValidEncounterState(),
       validationState: {
-        mode: "STRICT",
+        mode: 'STRICT',
         messages: []
       }
     };
     const result = runValidationPipeline({
       state,
       action: {
-        type: "actor.move",
+        type: 'actor.move',
         payload: {
-          actorId: "actor-missing",
-          destinationZoneId: "zone-missing"
+          actorId: 'actor-missing',
+          destinationZoneId: 'zone-missing'
         }
       }
     });
@@ -176,17 +176,17 @@ describe("validation pipeline", () => {
     expect(result.blocked).toBe(true);
   });
 
-  it("accepts valid actor movement, including movement to the zoneless area", () => {
+  it('accepts valid actor movement, including movement to the zoneless area', () => {
     const state = createValidEncounterState();
 
     expect(
       runValidationPipeline({
         state,
         action: {
-          type: "actor.move",
+          type: 'actor.move',
           payload: {
-            actorId: "actor-hero",
-            destinationZoneId: "zone-tower"
+            actorId: 'actor-hero',
+            destinationZoneId: 'zone-tower'
           }
         }
       })
@@ -200,9 +200,9 @@ describe("validation pipeline", () => {
       runValidationPipeline({
         state,
         action: {
-          type: "actor.move",
+          type: 'actor.move',
           payload: {
-            actorId: "actor-hero",
+            actorId: 'actor-hero',
             destinationZoneId: ZONELESS_ACTOR_ZONE_ID
           }
         }
@@ -214,76 +214,76 @@ describe("validation pipeline", () => {
     });
   });
 
-  it("validates edge creation and updates against zone graph integrity", () => {
+  it('validates edge creation and updates against zone graph integrity', () => {
     const state = createValidEncounterState();
 
     expect(
       runValidationPipeline({
         state,
         action: {
-          type: "edge.create",
+          type: 'edge.create',
           payload: {
-            fromZoneId: "zone-courtyard",
-            toZoneId: "zone-courtyard"
+            fromZoneId: 'zone-courtyard',
+            toZoneId: 'zone-courtyard'
           }
         }
       }).messages.map((message) => message.code)
-    ).toEqual(["edge.selfReference"]);
+    ).toEqual(['edge.selfReference']);
 
     expect(
       runValidationPipeline({
         state,
         action: {
-          type: "edge.update",
+          type: 'edge.update',
           payload: {
-            fromZoneId: "zone-missing",
-            toZoneId: "zone-courtyard"
+            fromZoneId: 'zone-missing',
+            toZoneId: 'zone-courtyard'
           }
         }
       }).messages.map((message) => message.code)
-    ).toEqual(["edge.fromZoneMissing"]);
+    ).toEqual(['edge.fromZoneMissing']);
   });
 
-  it("validates engagement membership and parent zone references", () => {
+  it('validates engagement membership and parent zone references', () => {
     const state = createValidEncounterState();
     const result = runValidationPipeline({
       state,
       action: {
-        type: "engagement.create",
+        type: 'engagement.create',
         payload: {
-          parentZoneId: "zone-missing",
-          participantIds: ["actor-hero", "actor-missing"]
+          parentZoneId: 'zone-missing',
+          participantIds: ['actor-hero', 'actor-missing']
         }
       }
     });
 
     expect(result.messages.map((message) => message.code)).toEqual([
-      "engagement.parentZoneMissing",
-      "engagement.participantMissing"
+      'engagement.parentZoneMissing',
+      'engagement.participantMissing'
     ]);
   });
 
-  it("reports existing encounter integrity issues regardless of action type", () => {
+  it('reports existing encounter integrity issues regardless of action type', () => {
     const brokenActor: Actor = {
       ...heroActor,
-      id: "actor-broken-zone",
-      currentZoneId: "zone-missing"
+      id: 'actor-broken-zone',
+      currentZoneId: 'zone-missing'
     };
     const brokenEdge: Edge = {
-      id: "edge-broken",
-      fromZoneId: "zone-courtyard",
-      toZoneId: "zone-missing",
-      directionality: "two-way",
-      movementRule: "free",
-      visibilityRule: "clear",
+      id: 'edge-broken',
+      fromZoneId: 'zone-courtyard',
+      toZoneId: 'zone-missing',
+      directionality: 'two-way',
+      movementRule: 'free',
+      visibilityRule: 'clear',
       interactionTags: []
     };
     const brokenEngagement: Engagement = {
-      id: "engagement-broken",
-      participantIds: ["actor-hero", "actor-missing"],
-      parentZoneId: "zone-missing",
-      layoutStrategy: "FLEX",
-      layoutOrientation: "LEFT_RIGHT"
+      id: 'engagement-broken',
+      participantIds: ['actor-hero', 'actor-missing'],
+      parentZoneId: 'zone-missing',
+      layoutStrategy: 'FLEX',
+      layoutOrientation: 'LEFT_RIGHT'
     };
     const state: EncounterState = {
       ...createValidEncounterState(),
@@ -294,37 +294,37 @@ describe("validation pipeline", () => {
     const result = runValidationPipeline({
       state,
       action: {
-        type: "encounter.rename",
+        type: 'encounter.rename',
         payload: {
-          name: "Renamed Encounter"
+          name: 'Renamed Encounter'
         }
       }
     });
 
     expect(result.messages.map((message) => message.code)).toEqual([
-      "zoneIntegrity.actorZoneMissing",
-      "zoneIntegrity.edgeToZoneMissing",
-      "zoneIntegrity.engagementParentZoneMissing",
-      "zoneIntegrity.engagementParticipantMissing"
+      'zoneIntegrity.actorZoneMissing',
+      'zoneIntegrity.edgeToZoneMissing',
+      'zoneIntegrity.engagementParentZoneMissing',
+      'zoneIntegrity.engagementParticipantMissing'
     ]);
   });
 
-  it("prepares validated changes with action metadata and panel-ready messages", () => {
+  it('prepares validated changes with action metadata and panel-ready messages', () => {
     const currentEncounter = createValidEncounterState();
     const nextEncounter: EncounterState = {
       ...currentEncounter,
-      name: "Renamed Encounter"
+      name: 'Renamed Encounter'
     };
     const prepared = prepareValidatedEncounterChange({
       currentEncounter,
       nextEncounter,
       action: {
-        id: "action-rename",
-        type: "actor.move",
+        id: 'action-rename',
+        type: 'actor.move',
         timestamp: 1,
         payload: {
-          actorId: "actor-missing",
-          destinationZoneId: "zone-missing"
+          actorId: 'actor-missing',
+          destinationZoneId: 'zone-missing'
         }
       }
     });
@@ -332,7 +332,7 @@ describe("validation pipeline", () => {
     expect(prepared.blocked).toBe(false);
     expect(prepared.action.validationResult?.valid).toBe(false);
     expect(prepared.nextEncounter.validationState).toEqual({
-      mode: "ADVISORY",
+      mode: 'ADVISORY',
       messages: prepared.validationResult.messages
     });
   });

@@ -1,9 +1,9 @@
 export type LayoutStrategyId =
-  | "FLEX"
-  | "SEQUENTIAL"
-  | "SPLIT_FLEX"
-  | "SPLIT_SEQUENTIAL";
-export type LayoutOrientation = "LEFT_RIGHT" | "TOP_BOTTOM";
+  | 'FLEX'
+  | 'SEQUENTIAL'
+  | 'SPLIT_FLEX'
+  | 'SPLIT_SEQUENTIAL';
+export type LayoutOrientation = 'LEFT_RIGHT' | 'TOP_BOTTOM';
 
 export type LayoutPoint = {
   x: number;
@@ -12,10 +12,10 @@ export type LayoutPoint = {
 
 export type LayoutEntity<TEntityId extends string = string> = {
   id: TEntityId;
-  layoutGroup?: "hero" | "enemy" | "neutral";
+  layoutGroup?: 'hero' | 'enemy' | 'neutral';
 };
 
-export type LayoutSectionId = "all" | "hero" | "neutral" | "enemy";
+export type LayoutSectionId = 'all' | 'hero' | 'neutral' | 'enemy';
 
 export type LayoutSection<TEntityId extends string = string> = {
   id: LayoutSectionId;

@@ -1,16 +1,16 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from 'vitest';
 
-import type { Actor } from "../../entities/actor/types";
-import type { Engagement } from "../../entities/engagement/types";
-import type { Zone } from "../../entities/zone/types";
-import { createEncounterState } from "../encounter/createEncounterState";
-import type { EncounterState } from "../encounter/types";
-import type { EntityCollection } from "../state/entityCollection";
+import type { Actor } from '../../entities/actor/types';
+import type { Engagement } from '../../entities/engagement/types';
+import type { Zone } from '../../entities/zone/types';
+import { createEncounterState } from '../encounter/createEncounterState';
+import type { EncounterState } from '../encounter/types';
+import type { EntityCollection } from '../state/entityCollection';
 import {
   calculateEngagementLayout,
   calculateZoneLayout
-} from "./encounterLayout";
-import { getLayoutStrategy } from "./strategies";
+} from './encounterLayout';
+import { getLayoutStrategy } from './strategies';
 
 function collection<TEntity extends { id: string }>(
   entities: TEntity[]
@@ -22,11 +22,11 @@ function collection<TEntity extends { id: string }>(
 }
 
 const battlefieldZone: Zone = {
-  colorBorder: "#9b876b",
-  colorFill: "#ffffff",
-  id: "zone-battlefield",
-  name: "Battlefield",
-  namePosition: "top-left",
+  colorBorder: '#9b876b',
+  colorFill: '#ffffff',
+  id: 'zone-battlefield',
+  name: 'Battlefield',
+  namePosition: 'top-left',
   opacity: 0.7,
   polygon: [
     { x: 0, y: 0 },
@@ -36,66 +36,66 @@ const battlefieldZone: Zone = {
   ],
   showBorder: true,
   showName: false,
-  shape: "rectangle",
-  layoutStrategy: "SPLIT_SEQUENTIAL",
-  layoutOrientation: "LEFT_RIGHT",
+  shape: 'rectangle',
+  layoutStrategy: 'SPLIT_SEQUENTIAL',
+  layoutOrientation: 'LEFT_RIGHT',
   tags: []
 };
 
 const heroActor: Actor = {
-  id: "actor-hero",
-  name: "Hero",
-  actorType: "creature",
-  layoutGroup: "hero",
-  size: "medium",
-  shape: "circle",
-  currentZoneId: "zone-battlefield",
+  id: 'actor-hero',
+  name: 'Hero',
+  actorType: 'creature',
+  layoutGroup: 'hero',
+  size: 'medium',
+  shape: 'circle',
+  currentZoneId: 'zone-battlefield',
   statusEffects: [],
   metadata: {}
 };
 
 const secondHeroActor: Actor = {
-  id: "actor-second-hero",
-  name: "Second Hero",
-  actorType: "creature",
-  layoutGroup: "hero",
-  size: "medium",
-  shape: "circle",
-  currentZoneId: "zone-battlefield",
+  id: 'actor-second-hero',
+  name: 'Second Hero',
+  actorType: 'creature',
+  layoutGroup: 'hero',
+  size: 'medium',
+  shape: 'circle',
+  currentZoneId: 'zone-battlefield',
   statusEffects: [],
   metadata: {}
 };
 
 const enemyActor: Actor = {
-  id: "actor-enemy",
-  name: "Enemy",
-  actorType: "creature",
-  layoutGroup: "enemy",
-  size: "medium",
-  shape: "circle",
-  currentZoneId: "zone-battlefield",
+  id: 'actor-enemy',
+  name: 'Enemy',
+  actorType: 'creature',
+  layoutGroup: 'enemy',
+  size: 'medium',
+  shape: 'circle',
+  currentZoneId: 'zone-battlefield',
   statusEffects: [],
   metadata: {}
 };
 
 const objectiveActor: Actor = {
-  id: "actor-objective",
-  name: "Objective",
-  actorType: "objective",
-  layoutGroup: "neutral",
-  size: "medium",
-  shape: "circle",
-  currentZoneId: "zone-battlefield",
+  id: 'actor-objective',
+  name: 'Objective',
+  actorType: 'objective',
+  layoutGroup: 'neutral',
+  size: 'medium',
+  shape: 'circle',
+  currentZoneId: 'zone-battlefield',
   statusEffects: [],
   metadata: {}
 };
 
 const engagement: Engagement = {
-  id: "engagement-melee",
-  participantIds: ["actor-hero", "actor-enemy"],
-  parentZoneId: "zone-battlefield",
-  layoutStrategy: "SEQUENTIAL",
-  layoutOrientation: "TOP_BOTTOM"
+  id: 'engagement-melee',
+  participantIds: ['actor-hero', 'actor-enemy'],
+  parentZoneId: 'zone-battlefield',
+  layoutStrategy: 'SEQUENTIAL',
+  layoutOrientation: 'TOP_BOTTOM'
 };
 
 function createLayoutEncounterState(overrides?: {
@@ -116,8 +116,8 @@ function createLayoutEncounterState(overrides?: {
 
   return {
     ...createEncounterState({
-      id: "encounter-layout",
-      name: "Layout Encounter"
+      id: 'encounter-layout',
+      name: 'Layout Encounter'
     }),
     zones: collection([zone]),
     actors: collection(actors),
@@ -130,174 +130,181 @@ function createLayoutEncounterState(overrides?: {
   };
 }
 
-describe("layout strategies", () => {
-  it("registers shared pluggable strategies", () => {
-    expect(getLayoutStrategy("FLEX").id).toBe("FLEX");
-    expect(getLayoutStrategy("SEQUENTIAL").id).toBe("SEQUENTIAL");
-    expect(getLayoutStrategy("SPLIT_FLEX").id).toBe("SPLIT_FLEX");
-    expect(getLayoutStrategy("SPLIT_SEQUENTIAL").id).toBe("SPLIT_SEQUENTIAL");
+describe('layout strategies', () => {
+  it('registers shared pluggable strategies', () => {
+    expect(getLayoutStrategy('FLEX').id).toBe('FLEX');
+    expect(getLayoutStrategy('SEQUENTIAL').id).toBe('SEQUENTIAL');
+    expect(getLayoutStrategy('SPLIT_FLEX').id).toBe('SPLIT_FLEX');
+    expect(getLayoutStrategy('SPLIT_SEQUENTIAL').id).toBe('SPLIT_SEQUENTIAL');
   });
 
-  it("describes deterministic FLEX layout without calculating actor positions", () => {
+  it('describes deterministic FLEX layout without calculating actor positions', () => {
     const state = createLayoutEncounterState({
       zone: {
-        layoutStrategy: "FLEX"
+        layoutStrategy: 'FLEX'
       },
       actors: [heroActor, enemyActor]
     });
-    const firstLayout = calculateZoneLayout(state, "zone-battlefield");
-    const secondLayout = calculateZoneLayout(state, "zone-battlefield");
+    const firstLayout = calculateZoneLayout(state, 'zone-battlefield');
+    const secondLayout = calculateZoneLayout(state, 'zone-battlefield');
 
     expect(firstLayout).toEqual(secondLayout);
     expect(firstLayout.descriptor).toEqual({
-      strategy: "FLEX",
-      orientation: "LEFT_RIGHT",
-      className: "cz-layout cz-layout-flex cz-layout-orientation-left-right",
+      strategy: 'FLEX',
+      orientation: 'LEFT_RIGHT',
+      className: 'cz-layout cz-layout-flex cz-layout-orientation-left-right',
       sections: [
         {
-          id: "all",
-          className: "cz-layout-section-all",
+          id: 'all',
+          className: 'cz-layout-section-all',
           items: [
-            { id: "actor-hero", layoutGroup: "hero" },
-            { id: "actor-enemy", layoutGroup: "enemy" },
-            { id: "engagement-melee", layoutGroup: "neutral" }
+            { id: 'actor-hero', layoutGroup: 'hero' },
+            { id: 'actor-enemy', layoutGroup: 'enemy' },
+            { id: 'engagement-melee', layoutGroup: 'neutral' }
           ]
         }
       ]
     });
-    expect(state.actors.byId["actor-hero"]).not.toHaveProperty("position");
+    expect(state.actors.byId['actor-hero']).not.toHaveProperty('position');
   });
 
-  it("uses allIds collection order for SEQUENTIAL layout items", () => {
+  it('uses allIds collection order for SEQUENTIAL layout items', () => {
     const state = createLayoutEncounterState({
       zone: {
-        layoutStrategy: "SEQUENTIAL",
-        layoutOrientation: "TOP_BOTTOM"
+        layoutStrategy: 'SEQUENTIAL',
+        layoutOrientation: 'TOP_BOTTOM'
       },
       actors: [enemyActor, heroActor, objectiveActor]
     });
 
-    expect(calculateZoneLayout(state, "zone-battlefield").descriptor).toEqual({
-      strategy: "SEQUENTIAL",
-      orientation: "TOP_BOTTOM",
-      className: "cz-layout cz-layout-sequential cz-layout-orientation-top-bottom",
+    expect(calculateZoneLayout(state, 'zone-battlefield').descriptor).toEqual({
+      strategy: 'SEQUENTIAL',
+      orientation: 'TOP_BOTTOM',
+      className:
+        'cz-layout cz-layout-sequential cz-layout-orientation-top-bottom',
       sections: [
         {
-          id: "all",
-          className: "cz-layout-section-all",
+          id: 'all',
+          className: 'cz-layout-section-all',
           items: [
-            { id: "actor-enemy", layoutGroup: "enemy" },
-            { id: "actor-hero", layoutGroup: "hero" },
-            { id: "actor-objective", layoutGroup: "neutral" },
-            { id: "engagement-melee", layoutGroup: "neutral" }
+            { id: 'actor-enemy', layoutGroup: 'enemy' },
+            { id: 'actor-hero', layoutGroup: 'hero' },
+            { id: 'actor-objective', layoutGroup: 'neutral' },
+            { id: 'engagement-melee', layoutGroup: 'neutral' }
           ]
         }
       ]
     });
   });
 
-  it("splits heroes, enemies, and neutral actors left-to-right", () => {
+  it('splits heroes, enemies, and neutral actors left-to-right', () => {
     const state = createLayoutEncounterState();
 
-    expect(calculateZoneLayout(state, "zone-battlefield").descriptor).toEqual({
-      strategy: "SPLIT_SEQUENTIAL",
-      orientation: "LEFT_RIGHT",
+    expect(calculateZoneLayout(state, 'zone-battlefield').descriptor).toEqual({
+      strategy: 'SPLIT_SEQUENTIAL',
+      orientation: 'LEFT_RIGHT',
       className:
-        "cz-layout cz-layout-split-sequential cz-layout-orientation-left-right",
+        'cz-layout cz-layout-split-sequential cz-layout-orientation-left-right',
       sections: [
         {
-          id: "hero",
-          className: "cz-layout-section-hero",
+          id: 'hero',
+          className: 'cz-layout-section-hero',
           items: [
-            { id: "actor-hero", layoutGroup: "hero" },
-            { id: "actor-second-hero", layoutGroup: "hero" }
+            { id: 'actor-hero', layoutGroup: 'hero' },
+            { id: 'actor-second-hero', layoutGroup: 'hero' }
           ]
         },
         {
-          id: "neutral",
-          className: "cz-layout-section-neutral",
+          id: 'neutral',
+          className: 'cz-layout-section-neutral',
           items: [
-            { id: "actor-objective", layoutGroup: "neutral" },
-            { id: "engagement-melee", layoutGroup: "neutral" }
+            { id: 'actor-objective', layoutGroup: 'neutral' },
+            { id: 'engagement-melee', layoutGroup: 'neutral' }
           ]
         },
         {
-          id: "enemy",
-          className: "cz-layout-section-enemy",
-          items: [{ id: "actor-enemy", layoutGroup: "enemy" }]
+          id: 'enemy',
+          className: 'cz-layout-section-enemy',
+          items: [{ id: 'actor-enemy', layoutGroup: 'enemy' }]
         }
       ]
     });
   });
 
-  it("supports split flex grouping with flex-specific strategy metadata", () => {
+  it('supports split flex grouping with flex-specific strategy metadata', () => {
     const state = createLayoutEncounterState({
       zone: {
-        layoutStrategy: "SPLIT_FLEX"
+        layoutStrategy: 'SPLIT_FLEX'
       }
     });
 
-    expect(calculateZoneLayout(state, "zone-battlefield").descriptor).toEqual({
-      strategy: "SPLIT_FLEX",
-      orientation: "LEFT_RIGHT",
-      className: "cz-layout cz-layout-split-flex cz-layout-orientation-left-right",
+    expect(calculateZoneLayout(state, 'zone-battlefield').descriptor).toEqual({
+      strategy: 'SPLIT_FLEX',
+      orientation: 'LEFT_RIGHT',
+      className:
+        'cz-layout cz-layout-split-flex cz-layout-orientation-left-right',
       sections: [
         {
-          id: "hero",
-          className: "cz-layout-section-hero",
+          id: 'hero',
+          className: 'cz-layout-section-hero cz-layout-section-flex',
           items: [
-            { id: "actor-hero", layoutGroup: "hero" },
-            { id: "actor-second-hero", layoutGroup: "hero" }
+            { id: 'actor-hero', layoutGroup: 'hero' },
+            { id: 'actor-second-hero', layoutGroup: 'hero' }
           ]
         },
         {
-          id: "neutral",
-          className: "cz-layout-section-neutral",
+          id: 'neutral',
+          className: 'cz-layout-section-neutral cz-layout-section-flex',
           items: [
-            { id: "actor-objective", layoutGroup: "neutral" },
-            { id: "engagement-melee", layoutGroup: "neutral" }
+            { id: 'actor-objective', layoutGroup: 'neutral' },
+            { id: 'engagement-melee', layoutGroup: 'neutral' }
           ]
         },
         {
-          id: "enemy",
-          className: "cz-layout-section-enemy",
-          items: [{ id: "actor-enemy", layoutGroup: "enemy" }]
+          id: 'enemy',
+          className: 'cz-layout-section-enemy cz-layout-section-flex',
+          items: [{ id: 'actor-enemy', layoutGroup: 'enemy' }]
         }
       ]
     });
   });
 
-  it("splits heroes, enemies, and neutral actors top-to-bottom", () => {
+  it('splits heroes, enemies, and neutral actors top-to-bottom', () => {
     const state = createLayoutEncounterState({
       zone: {
-        layoutOrientation: "TOP_BOTTOM"
+        layoutOrientation: 'TOP_BOTTOM'
       }
     });
 
-    expect(calculateZoneLayout(state, "zone-battlefield").descriptor).toMatchObject({
-      strategy: "SPLIT_SEQUENTIAL",
-      orientation: "TOP_BOTTOM",
+    expect(
+      calculateZoneLayout(state, 'zone-battlefield').descriptor
+    ).toMatchObject({
+      strategy: 'SPLIT_SEQUENTIAL',
+      orientation: 'TOP_BOTTOM',
       className:
-        "cz-layout cz-layout-split-sequential cz-layout-orientation-top-bottom"
+        'cz-layout cz-layout-split-sequential cz-layout-orientation-top-bottom'
     });
   });
 
-  it("calculates engagement participant layout from participant membership and actor collection order", () => {
+  it('calculates engagement participant layout from participant membership and actor collection order', () => {
     const state = createLayoutEncounterState({
       actors: [enemyActor, objectiveActor, heroActor]
     });
 
-    expect(calculateEngagementLayout(state, "engagement-melee").descriptor).toEqual({
-      strategy: "SEQUENTIAL",
-      orientation: "TOP_BOTTOM",
-      className: "cz-layout cz-layout-sequential cz-layout-orientation-top-bottom",
+    expect(
+      calculateEngagementLayout(state, 'engagement-melee').descriptor
+    ).toEqual({
+      strategy: 'SEQUENTIAL',
+      orientation: 'TOP_BOTTOM',
+      className:
+        'cz-layout cz-layout-sequential cz-layout-orientation-top-bottom',
       sections: [
         {
-          id: "all",
-          className: "cz-layout-section-all",
+          id: 'all',
+          className: 'cz-layout-section-all',
           items: [
-            { id: "actor-enemy", layoutGroup: "enemy" },
-            { id: "actor-hero", layoutGroup: "hero" }
+            { id: 'actor-enemy', layoutGroup: 'enemy' },
+            { id: 'actor-hero', layoutGroup: 'hero' }
           ]
         }
       ]

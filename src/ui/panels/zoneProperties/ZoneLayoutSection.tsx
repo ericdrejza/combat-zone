@@ -7,6 +7,11 @@ import {
 } from "./options";
 import type { CommitZoneProperties } from "./types";
 
+const orientationLabels: Record<LayoutOrientation, string> = {
+  LEFT_RIGHT: "Left -> Right",
+  TOP_BOTTOM: "Top -> Bottom"
+};
+
 type ZoneLayoutSectionProps = {
   onCommitZoneProperties: CommitZoneProperties;
   zone: Zone;
@@ -50,7 +55,7 @@ export function ZoneLayoutSection({
           >
             {zoneLayoutOrientations.map((orientation) => (
               <option key={orientation} value={orientation}>
-                {orientation}
+                {orientationLabels[orientation]}
               </option>
             ))}
           </select>

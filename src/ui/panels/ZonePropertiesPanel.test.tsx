@@ -84,9 +84,15 @@ describe("ZonePropertiesPanel", () => {
     await user.selectOptions(screen.getByLabelText("Layout strategy"), [
       "SPLIT_SEQUENTIAL"
     ]);
+    expect(
+      screen.getByRole("option", { name: "Left -> Right" })
+    ).toBeInTheDocument();
     await user.selectOptions(screen.getByLabelText("Layout orientation"), [
       "TOP_BOTTOM"
     ]);
+    expect(
+      screen.getByRole("option", { name: "Top -> Bottom" })
+    ).toBeInTheDocument();
 
     expect(
       screen.getByText("Current layout descriptor: SPLIT_SEQUENTIAL, TOP_BOTTOM, 3 sections.")

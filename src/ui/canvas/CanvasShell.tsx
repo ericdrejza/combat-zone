@@ -82,13 +82,13 @@ export function CanvasShell() {
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Alt") {
+      if (event.key === "f") {
         setAltKeyDown(true);
       }
     }
 
     function handleKeyUp(event: KeyboardEvent) {
-      if (event.key === "Alt") {
+      if (event.key === "f") {
         setAltKeyDown(false);
       }
     }
@@ -299,7 +299,7 @@ export function CanvasShell() {
                   />
                 )
               : null}
-            {layer.id === "freeFloatingActors"
+            {layer.id === "actors"
               ? (
                   <ActorLayer
                     actorDrag={actorDrag}

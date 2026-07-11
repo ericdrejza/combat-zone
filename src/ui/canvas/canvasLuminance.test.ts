@@ -1,6 +1,6 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from 'vitest';
 
-import type { Zone } from "../../entities/zone/types";
+import type { Zone } from '../../entities/zone/types';
 import {
   createDeterministicSamplePoints,
   getAverageCanvasLuminance,
@@ -8,17 +8,17 @@ import {
   getReadableTextColor,
   getTextColorForLuminance,
   usesBackgroundLuminanceForZoneName
-} from "./canvasLuminance";
+} from './canvasLuminance';
 
 function createZone(overrides: Partial<Zone> = {}): Zone {
   return {
-    colorBorder: "#9b876b",
-    colorFill: "#ffffff",
-    id: "zone-test",
-    layoutOrientation: "LEFT_RIGHT",
-    layoutStrategy: "FLEX",
-    name: "Test Zone",
-    namePosition: "top-left",
+    colorBorder: '#9b876b',
+    colorFill: '#ffffff',
+    id: 'zone-test',
+    layoutOrientation: 'LEFT_RIGHT',
+    layoutStrategy: 'FLEX',
+    name: 'Test Zone',
+    namePosition: 'top-left',
     opacity: 0.7,
     polygon: [
       { x: 10, y: 10 },
@@ -26,7 +26,7 @@ function createZone(overrides: Partial<Zone> = {}): Zone {
       { x: 110, y: 110 },
       { x: 10, y: 110 }
     ],
-    shape: "rectangle",
+    shape: 'rectangle',
     showBorder: true,
     showName: false,
     tags: [],
@@ -34,17 +34,17 @@ function createZone(overrides: Partial<Zone> = {}): Zone {
   };
 }
 
-describe("canvas luminance", () => {
-  it("calculates readable text color from hex luminance", () => {
-    expect(getHexLuminance("#ffffff")).toBe(255);
-    expect(getHexLuminance("#000000")).toBe(0);
-    expect(getTextColorForLuminance(129)).toBe("#111827");
-    expect(getTextColorForLuminance(128)).toBe("#ffffff");
-    expect(getReadableTextColor("#ffffff")).toBe("#111827");
-    expect(getReadableTextColor("#000000")).toBe("#ffffff");
+describe('canvas luminance', () => {
+  it('calculates readable text color from hex luminance', () => {
+    expect(getHexLuminance('#ffffff')).toBe(255);
+    expect(getHexLuminance('#000000')).toBe(0);
+    expect(getTextColorForLuminance(129)).toBe('#111827');
+    expect(getTextColorForLuminance(128)).toBe('#ffffff');
+    expect(getReadableTextColor('#ffffff')).toBe('#111827');
+    expect(getReadableTextColor('#000000')).toBe('#ffffff');
   });
 
-  it("samples deterministic points inside a polygon", () => {
+  it('samples deterministic points inside a polygon', () => {
     const polygon = createZone().polygon;
     const firstRun = createDeterministicSamplePoints(polygon, 5);
     const secondRun = createDeterministicSamplePoints(polygon, 5);
@@ -59,15 +59,15 @@ describe("canvas luminance", () => {
     });
   });
 
-  it("chooses background luminance for transparent and generated round zones", () => {
-    expect(usesBackgroundLuminanceForZoneName(createZone({ opacity: 0.29 }))).toBe(
-      true
-    );
+  it('chooses background luminance for transparent and generated round zones', () => {
+    expect(
+      usesBackgroundLuminanceForZoneName(createZone({ opacity: 0.29 }))
+    ).toBe(true);
     expect(
       usesBackgroundLuminanceForZoneName(
         createZone({
           opacity: 1,
-          shape: "circle"
+          shape: 'circle'
         })
       )
     ).toBe(true);
@@ -75,16 +75,16 @@ describe("canvas luminance", () => {
       usesBackgroundLuminanceForZoneName(
         createZone({
           opacity: 1,
-          shape: "hexagon"
+          shape: 'hexagon'
         })
       )
     ).toBe(true);
-    expect(usesBackgroundLuminanceForZoneName(createZone({ opacity: 0.3 }))).toBe(
-      false
-    );
+    expect(
+      usesBackgroundLuminanceForZoneName(createZone({ opacity: 0.3 }))
+    ).toBe(false);
   });
 
-  it("averages canvas pixel luminance across sample points", () => {
+  it('averages canvas pixel luminance across sample points', () => {
     const context = {
       getImageData: (x: number) => ({
         data: x < 50 ? [255, 255, 255] : [0, 0, 0]

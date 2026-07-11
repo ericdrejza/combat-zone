@@ -1,9 +1,9 @@
-import type { Actor } from "../../entities/actor/types";
-import type { Engagement } from "../../entities/engagement/types";
-import type { EncounterState } from "../encounter/types";
-import { getEntities } from "../state/entityCollection";
-import { getLayoutStrategy } from "./strategies";
-import type { LayoutDescriptor, LayoutEntity } from "./types";
+import type { Actor } from '../../entities/actor/types';
+import type { Engagement } from '../../entities/engagement/types';
+import type { EncounterState } from '../encounter/types';
+import { getEntities } from '../state/entityCollection';
+import { getLayoutStrategy } from './strategies';
+import type { LayoutDescriptor, LayoutEntity } from './types';
 
 export type ZoneLayoutResult = {
   descriptor: LayoutDescriptor;
@@ -35,9 +35,9 @@ export function calculateZoneLayout(
 
   if (!zone) {
     return {
-      descriptor: getLayoutStrategy("FLEX").describe({
+      descriptor: getLayoutStrategy('FLEX').describe({
         entities: [],
-        orientation: "LEFT_RIGHT"
+        orientation: 'LEFT_RIGHT'
       })
     };
   }
@@ -57,7 +57,7 @@ export function calculateZoneLayout(
     })),
     ...engagements.map((engagement) => ({
       id: engagement.id,
-      layoutGroup: "neutral" as const
+      layoutGroup: 'neutral' as const
     }))
   ];
 
@@ -74,13 +74,15 @@ export function calculateEngagementLayout(
   engagementId: string
 ): EngagementLayoutResult {
   const engagement = state.engagements.byId[engagementId];
-  const zone = engagement ? state.zones.byId[engagement.parentZoneId] : undefined;
+  const zone = engagement
+    ? state.zones.byId[engagement.parentZoneId]
+    : undefined;
 
   if (!engagement || !zone) {
     return {
-      descriptor: getLayoutStrategy("FLEX").describe({
+      descriptor: getLayoutStrategy('FLEX').describe({
         entities: [],
-        orientation: "LEFT_RIGHT"
+        orientation: 'LEFT_RIGHT'
       })
     };
   }
