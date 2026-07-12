@@ -6,25 +6,43 @@ covers `DESIGN.md` §15 "Must have" scope only.
 
 ## Zones (polygon draw/edit)
 
-- [ ] GM can draw a new polygonal zone with the Zone Tool via sequential
+- [x] GM can draw a new polygonal zone with the Zone Tool via sequential
       point placement, closing the shape on click-near-start or double-click.
-- [ ] Existing zone vertices can be dragged individually to reshape the
+- [x] Existing zone vertices can be dragged individually to reshape the
       polygon.
-- [ ] A zone can be assigned a layout strategy (FLEX / SEQUENTIAL /
-      SPLIT_SEQUENTIAL) via the Properties Panel, and actors inside
+- [x] A zone can be assigned a layout strategy (FLEX / SEQUENTIAL /
+      SPLIT_FLEX / SPLIT_SEQUENTIAL) via the Properties Panel, and actors inside
       re-flow immediately per the new strategy.
-- [ ] Deleting a zone: contained actors become zoneless (verified via state
+- [x] Deleting a zone: contained actors become zoneless (verified via state
       inspection, not just visually), edges connected to it are removed,
-      and the whole operation undoes as a single Command.
+      engagements parented to the deleted zone are removed to avoid dangling
+      zone references, and the whole operation undoes as a single Redux
+      history entry.
 
 ## Actors (drag/drop)
 
+- [x] Zoneless actors are represented in a collapsible bottom-center panel,
+      sorted alphabetically, with optional Hero/Neutral/Enemy grouping.
+- [x] Actors can be selected in the zoneless panel and dragged individually or
+      as a selected group into a zone; dropping outside a zone leaves them in
+      the panel without creating history.
+- [x] Actors can be dragged directly from a zone into the zoneless panel.
+- [x] The zoneless panel can be resized horizontally and vertically and has a
+      reset-size control after resizing by dragging its left, right, or top
+      edge.
+- [x] While collapsed, the zoneless panel is transparent and uses a
+      luminance-derived color for its border and controls.
+- [x] Actor name text uses the canvas luminance helpers to choose a readable
+      black or white contrast color; selected canvas actor labels use the fill
+      color of their containing zone.
+- [x] Uploaded token names omit their source file extension, while actors
+      inherit the token name when created from the library.
 - [ ] Actor can be dragged from Library Panel onto canvas into a zone.
 - [ ] Actor dragged from one zone to another updates `currentZoneId` and
       triggers layout recalculation in both the source and destination zone.
 - [ ] Actor dropped on invalid target (e.g. outside any valid drop zone for
       current tool rules) snaps back to its pre-drag position, and this
-      snap-back does **not** create a spurious Command/history entry.
+      snap-back does **not** create a spurious Redux history entry.
 - [ ] Actor dragged to empty canvas space becomes zoneless.
 
 ## Engagement groups
@@ -51,7 +69,7 @@ covers `DESIGN.md` §15 "Must have" scope only.
 - [ ] Edge visibility rule (clear / obscured / blocked / oneWay) is settable
       via Properties Panel.
 - [ ] Deleting either connected zone auto-deletes the edge as part of the
-      same Command (single undo restores both).
+      same Redux history entry (single undo restores both).
 
 ## Initiative tracker
 
@@ -71,18 +89,18 @@ covers `DESIGN.md` §15 "Must have" scope only.
 
 ## Undo/redo
 
-- [ ] Every command type listed above (zone create/delete/reshape, actor
-      move, engagement create/merge/split, edge create/delete, initiative
-      reorder) has a passing Vitest test verifying `undo()` exactly
+- [ ] Every state-changing action type listed above (zone create/delete/reshape,
+      actor move, engagement create/merge/split, edge create/delete,
+      initiative reorder) has a passing Vitest test verifying undo exactly
       restores prior state.
-- [ ] Rapid sequential actions (10+ commands in quick succession) followed
+- [ ] Rapid sequential actions (10+ commits in quick succession) followed
       by 10 undos returns to the exact original state (no drift).
 - [ ] Redo after undo re-applies the exact same state, not a re-derived
       approximation.
 
 ## Local persistence
 
-- [ ] Autosave triggers on every committed Command (or on a reasonable
+- [ ] Autosave triggers on every committed Redux history entry (or on a reasonable
       debounce) to local browser storage.
 - [ ] Manual "Save" / "Load" round-trips the full encounter state including
       all entity types without loss.

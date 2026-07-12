@@ -1,30 +1,31 @@
-## COMMAND OBJECT SCHEMA (locked)
+## REDUX HISTORY SCHEMA (locked)
 
-Every state mutation in the system must be expressed as a command matching
-the interface in `../src/core/commands/types.ts`
+Every committed EncounterState mutation must flow through Redux history using
+the serializable types in `../src/core/history/types.ts`.
 
 Rules:
 
-- `inversePayload` is captured **before** `do()` runs, not derived after —
-  this guarantees undo correctness even for destructive operations (e.g.
-  deleting a Zone must snapshot the zone + its actors' prior state before
-  removal).
-- `do` and `undo` must be pure — no side effects, no direct mutation of
-  passed-in state. This keeps Redux Toolkit's Immer-based updates and time
-  travel debugging reliable.
-- Every command flows through: **Tool Handler → Interaction Engine →
-  Validation Pipeline → Command Creation → History Store → State Update →
+- History stores `past`, `present`, and `future` EncounterState snapshots.
+  Undo restores the previous snapshot exactly; redo restores the next snapshot
+  exactly.
+- Each committed mutation includes a serializable action record containing
+  `id`, `type`, `timestamp`, `payload`, and optional `validationResult`.
+- Action records are metadata, not executable command objects. Do not store
+  functions in Redux state.
+- Destructive and cascading operations rely on snapshot history for exact
+  undo/redo restoration. Feature-specific reducers may still prepare useful
+  action payloads, but the historical truth is the stored EncounterState
+  snapshot.
+- Every committed mutation flows through: **Tool Handler → Interaction Engine
+  → Validation Pipeline → Action Record Creation → Redux History Commit →
   Layout Recalculation → Render** (per `DESIGN.md` §5, `AGENT.md` process
-  rules below). No shortcuts that bypass the History Store, even for
+  rules below). No shortcuts that bypass Redux history, even for
   "trivial" mutations — this is what makes undo/redo reliable under rapid
   interaction, per the design doc's success criteria.
-- The History Store holds an ordered list of executed `Command` objects plus
-  a cursor; undo moves the cursor back and calls `undo()`, redo moves it
-  forward and calls `do()`. Executing a new command while the cursor isn't
-  at the end truncates the redo branch (standard linear undo/redo, no
-  branching history in MVP).
+- Executing a new committed action after undo truncates the redo branch
+  (standard linear undo/redo, no branching history in MVP).
 
-If you need a command that doesn't cleanly fit this shape, ask before
+If you need history behavior that doesn't cleanly fit this shape, ask before
 inventing a variant schema.
 
 ## PROCESS RULES (from original constraints — retained, not duplicated from documentation/DESIGN.md)
@@ -34,16 +35,15 @@ inventing a variant schema.
 - **GM authority is absolute outside Strict mode.** Validation is advisory
   unless Strict mode is explicitly enabled (see `documentation/DESIGN.md` §5.5 
   for the four validation levels). Never block a GM action in non-Strict modes.
-- **Every mutation is a Command.** No direct state writes anywhere in the
-  codebase, including "internal" or "derived" updates like layout
-  recalculation after a move — if it changes `EncounterState`, it's a
-  Command.  See `documentation/ARCHITECTURE.md` if more architecture information
-  is needed.
+- **Every committed mutation goes through Redux history.** No direct
+  EncounterState writes may bypass the history reducer, including "internal"
+  or "derived" updates like layout recalculation after a move. See
+  `documentation/ARCHITECTURE.md` if more architecture information is needed.
 - **Tool-driven UI, no global mode system.** Each tool in `interaction/tools/`
   owns its own selection rules, drag behavior, click behavior, and keyboard
   shortcuts. Do not introduce a global "mode" enum that tools all branch on.
 - **Layout strategies are pluggable, not hardcoded.** FLEX / SEQUENTIAL /
-  SPLIT_SEQUENTIAL live behind a shared strategy interface in
+  SPLIT_FLEX / SPLIT_SEQUENTIAL live behind a shared strategy interface in
   `core/layout/`, used by both Zones and Engagements. Adding a new strategy
   should not require touching Zone or Engagement code.
 - **Engagements are groups, never pairwise.** No participant should ever be
