@@ -1,18 +1,27 @@
 import type { DragEvent, MouseEvent } from "react";
 import { useMemo, useState } from "react";
-import { ChevronDown, ChevronUp, UsersRound } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronUp,
+  Grip,
+  RotateCcw,
+  UsersRound
+} from "lucide-react";
 
 import { ZONELESS_ACTOR_ZONE_ID } from "../../core/encounter/types";
-import { ACTOR_LAYOUT_GROUP_COLORS, ACTOR_SIZE_MULTIPLIERS } from "../../entities/actor/actorVisuals";
 import type { Actor, ActorLayoutGroup } from "../../entities/actor/types";
 import { selectEntity } from "../../interaction/interactionState";
 import { useDispatch } from "react-redux";
 import type { RootState } from "../../store/store";
 import { ZONELESS_ACTOR_DRAG_TYPE } from "./zonelessActorDrag";
+import { useResizablePanel } from "./useResizablePanel";
+import { ZonelessActorPanelToken } from "./ZonelessActorPanelToken";
 
 type ZonelessActorPanelProps = {
   activeToolId: RootState["interaction"]["activeToolId"];
   actors: RootState["encounter"]["present"]["actors"];
+  isActorDragActive: boolean;
+  onActorDropToZoneless: () => void;
   selection: RootState["interaction"]["selection"];
 };
 
@@ -56,80 +65,23 @@ function getGroupedActors(actors: Actor[]): ActorGroup[] {
   })).filter((group) => group.actors.length > 0);
 }
 
-function actorSizeClass(actor: Actor): string {
-  const size = ACTOR_SIZE_MULTIPLIERS[actor.size ?? "medium"];
-
-  if (size >= 3) {
-    return "h-12 w-12";
-  }
-
-  if (size >= 2) {
-    return "h-10 w-10";
-  }
-
-  if (size < 1) {
-    return "h-7 w-7";
-  }
-
-  return "h-9 w-9";
-}
-
-function ActorPanelToken({
-  actor,
-  activeToolId,
-  selectedIds,
-  onSelect,
-  onDragStart
-}: {
-  actor: Actor;
-  activeToolId: ZonelessActorPanelProps["activeToolId"];
-  selectedIds: string[];
-  onSelect: (actorId: string, event: MouseEvent<HTMLButtonElement>) => void;
-  onDragStart: (actorId: string, event: DragEvent<HTMLButtonElement>) => void;
-}) {
-  const selected = selectedIds.includes(actor.id);
-  const colors = ACTOR_LAYOUT_GROUP_COLORS[actor.layoutGroup];
-
-  return (
-    <button
-      aria-label={actor.name}
-      className={`group flex min-w-16 flex-col items-center gap-1 rounded-xl px-2 py-1.5 text-xs transition hover:bg-canvas ${
-        selected ? "bg-canvas ring-2 ring-canvas-ink/30" : ""
-      }`}
-      draggable={activeToolId === "actor" || activeToolId === "select"}
-      onClick={(event) => onSelect(actor.id, event)}
-      onDragStart={(event) => onDragStart(actor.id, event)}
-      type="button"
-    >
-      <span
-        className={`flex ${actorSizeClass(actor)} items-center justify-center overflow-hidden rounded-full border-2 border-white text-[9px] font-bold text-white shadow-sm ${
-          actor.shape === "rectangle" ? "rounded-md" : ""
-        }`}
-        style={{ backgroundColor: colors.fill }}
-      >
-        {actor.image ? (
-          <img
-            alt=""
-            className="h-full w-full object-cover"
-            src={actor.image}
-          />
-        ) : (
-          actor.name.slice(0, 2).toUpperCase()
-        )}
-      </span>
-      <span className="max-w-20 truncate text-canvas-ink">{actor.name}</span>
-    </button>
-  );
-}
-
 export function ZonelessActorPanel({
   activeToolId,
   actors,
+  isActorDragActive,
+  onActorDropToZoneless,
   selection
 }: ZonelessActorPanelProps) {
   const dispatch = useDispatch();
   const [expanded, setExpanded] = useState(false);
   const [groupByFaction, setGroupByFaction] = useState(true);
+  const {
+    isResized,
+    isResizing,
+    resetSize,
+    size,
+    startResize
+  } = useResizablePanel();
   const zonelessActors = useMemo(() => getZonelessActors(actors), [actors]);
   const groupedActors = useMemo(
     () => getGroupedActors(zonelessActors),
@@ -175,14 +127,19 @@ export function ZonelessActorPanel({
     event.dataTransfer.setData(ZONELESS_ACTOR_DRAG_TYPE, actorIds.join(","));
   }
 
-  if (zonelessActors.length === 0) {
-    return null;
-  }
-
   return (
     <aside
       aria-label="Zoneless actors"
-      className="absolute bottom-3 left-1/2 z-20 w-[min(44rem,calc(100%-1.5rem))] -translate-x-1/2 rounded-2xl border border-canvas-line bg-canvas-panel/95 p-2 shadow-lg backdrop-blur"
+      className={`absolute bottom-3 left-1/2 z-20 flex -translate-x-1/2 flex-col overflow-hidden rounded-2xl border border-canvas-line bg-canvas-panel/95 p-2 shadow-lg backdrop-blur ${
+        isActorDragActive ? "border-canvas-ink ring-2 ring-canvas-ink/20" : ""
+      } ${isResizing ? "select-none" : ""}`}
+      data-drop-target="zoneless-actors"
+      onMouseUp={onActorDropToZoneless}
+      style={{
+        height: expanded ? `${size.height}px` : undefined,
+        maxWidth: "calc(100% - 1.5rem)",
+        width: `${size.width}px`
+      }}
     >
       <div className="flex items-center gap-2">
         {expanded ? (
@@ -204,6 +161,17 @@ export function ZonelessActorPanel({
             {zonelessActors.length}
           </span>
         </div>
+        {isResized ? (
+          <button
+            aria-label="Reset zoneless actors panel size"
+            className="flex h-8 w-8 flex-none items-center justify-center rounded-full border border-canvas-line bg-white text-canvas-ink transition hover:bg-canvas"
+            onClick={resetSize}
+            title="Reset panel size"
+            type="button"
+          >
+            <RotateCcw aria-hidden="true" size={15} />
+          </button>
+        ) : null}
         <button
           aria-expanded={expanded}
           aria-label={expanded ? "Collapse zoneless actors" : "Expand zoneless actors"}
@@ -215,8 +183,12 @@ export function ZonelessActorPanel({
         </button>
       </div>
       {expanded ? (
-        <div className="mt-2 max-h-48 overflow-y-auto border-t border-canvas-line pt-2">
-          {groupByFaction ? (
+        <div className="mt-2 min-h-0 flex-1 overflow-y-auto border-t border-canvas-line pt-2">
+          {zonelessActors.length === 0 ? (
+            <p className="px-2 py-4 text-center text-xs text-canvas-muted">
+              Drop actors here to remove them from the canvas.
+            </p>
+          ) : groupByFaction ? (
             <div className="flex gap-10">
               {groupedActors.map((group) => (
                 <section className="border-x" aria-label={`${group.label} zoneless actors`} key={group.id}>
@@ -225,7 +197,7 @@ export function ZonelessActorPanel({
                   </h3>
                   <div className="flex flex-row flex-wrap gap-1">
                     {group.actors.map((actor) => (
-                      <ActorPanelToken
+                      <ZonelessActorPanelToken
                         actor={actor}
                         activeToolId={activeToolId}
                         key={actor.id}
@@ -241,7 +213,7 @@ export function ZonelessActorPanel({
           ) : (
             <div className="flex flex-wrap gap-1">
               {zonelessActors.map((actor) => (
-                <ActorPanelToken
+                <ZonelessActorPanelToken
                   actor={actor}
                   activeToolId={activeToolId}
                   key={actor.id}
@@ -253,6 +225,17 @@ export function ZonelessActorPanel({
             </div>
           )}
         </div>
+      ) : null}
+      {expanded ? (
+        <button
+          aria-label="Resize zoneless actors panel"
+          className="absolute bottom-0 right-0 flex h-6 w-6 cursor-se-resize items-center justify-center rounded-tl-lg text-canvas-muted hover:bg-canvas"
+          onMouseDown={startResize}
+          title="Resize panel"
+          type="button"
+        >
+          <Grip aria-hidden="true" size={14} />
+        </button>
       ) : null}
     </aside>
   );

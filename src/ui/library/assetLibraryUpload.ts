@@ -1,5 +1,6 @@
 import type { Dispatch, UnknownAction } from "@reduxjs/toolkit";
 
+import { stripFileExtension } from "../../entities/actor/actorMutations";
 import { createFolder, uploadImage } from "../../library/librarySlice";
 import type { LibrarySectionId } from "../../library/types";
 import { readImageFile } from "../toolbar/background/readImageFile";
@@ -56,7 +57,9 @@ export async function createImageFilesInFolder({
     const asset = await readImageFile(file);
 
     dispatch(uploadImage({
-      asset,
+      asset: sectionId === "tokens"
+        ? { ...asset, name: stripFileExtension(asset.name) }
+        : asset,
       parentId,
       sectionId
     }));

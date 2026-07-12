@@ -8,6 +8,7 @@ import type { LayoutPoint } from "../../core/layout/types";
 import { RENDER_LAYERS } from "../../core/rendering/types";
 import { prepareValidatedEncounterChange } from "../../core/validation/validatedEncounterChange";
 import { createActor, moveActor } from "../../entities/actor/actorMutations";
+import { selectEntity } from "../../interaction/interactionState";
 import { resolveLibraryAsset } from "../../library/librarySlice";
 import { LIBRARY_NODE_DRAG_TYPE } from "../library/libraryDrag";
 import type { RootState } from "../../store/store";
@@ -231,6 +232,63 @@ export function CanvasShell() {
     }
   }
 
+  function handleActorDropToZoneless() {
+    if (!actorDrag) {
+      return;
+    }
+
+    if (!actorDrag.hasMoved) {
+      setActorDrag(null);
+      return;
+    }
+
+    const actorIds = actorDrag.actorIds.filter(
+      (actorId) =>
+        encounter.actors.byId[actorId]?.currentZoneId !==
+        ZONELESS_ACTOR_ZONE_ID
+    );
+
+    if (actorIds.length === 0) {
+      setActorDrag(null);
+      return;
+    }
+
+    const nextEncounter = actorIds.reduce(
+      (currentEncounter, actorId) =>
+        moveActor(currentEncounter, actorId, ZONELESS_ACTOR_ZONE_ID),
+      encounter
+    );
+    const action = createEncounterActionRecord(
+      actorIds.length > 1 ? "actor.moveMany" : "actor.move",
+      {
+        actorIds,
+        destinationZoneId: ZONELESS_ACTOR_ZONE_ID
+      }
+    );
+    const prepared = prepareValidatedEncounterChange({
+      action,
+      currentEncounter: encounter,
+      nextEncounter
+    });
+
+    if (!prepared.blocked && nextEncounter !== encounter) {
+      dispatch(
+        commitEncounterChange({
+          action: prepared.action,
+          nextEncounter: prepared.nextEncounter
+        })
+      );
+      dispatch(
+        selectEntity({
+          entityType: "actor",
+          ids: actorIds
+        })
+      );
+    }
+
+    setActorDrag(null);
+  }
+
   function handleCanvasDragOver(event: DragEvent<SVGSVGElement>) {
     if (activeToolId !== "actor" && activeToolId !== "select") {
       return;
@@ -402,6 +460,8 @@ export function CanvasShell() {
       <ZonelessActorPanel
         activeToolId={activeToolId}
         actors={encounter.actors}
+        isActorDragActive={Boolean(actorDrag?.hasMoved)}
+        onActorDropToZoneless={handleActorDropToZoneless}
         selection={selection}
       />
     </section>

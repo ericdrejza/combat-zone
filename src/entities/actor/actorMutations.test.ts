@@ -95,7 +95,7 @@ function commitState(
 }
 
 describe('actor mutations', () => {
-  it('uses image filenames without file extensions for default actor names', () => {
+  it('inherits the uploaded image name when no actor name is provided', () => {
     const nextEncounter = createActor(createActorEncounterState(), {
       currentZoneId: zoneA.id,
       id: 'actor-named-token',
@@ -107,7 +107,7 @@ describe('actor mutations', () => {
     });
 
     expect(nextEncounter.actors.byId['actor-named-token']?.name).toBe(
-      'Goblin Captain.final'
+      'Goblin Captain.final.png'
     );
     expect(
       nextEncounter.actors.byId['actor-named-token']?.metadata.sourceAssetName

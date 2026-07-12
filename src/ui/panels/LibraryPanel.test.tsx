@@ -27,7 +27,7 @@ describe("LibraryPanel", () => {
     await waitFor(() => {
       expect(
         within(screen.getByRole("dialog", { name: "Asset Library" })).getAllByText(
-          "scout-token.png"
+          "scout-token"
         ).length
       ).toBeGreaterThan(0);
     });
@@ -40,7 +40,7 @@ describe("LibraryPanel", () => {
       "Current library folder"
     );
     const assetButton = within(libraryPanel).getByRole("button", {
-        name: "scout-token.png"
+        name: "scout-token"
       });
 
     expect(currentFolder).toHaveTextContent("Tokens");
@@ -112,7 +112,7 @@ describe("LibraryPanel", () => {
     await waitFor(() => {
       expect(
         within(screen.getByRole("dialog", { name: "Asset Library" })).getAllByText(
-          "scout-token.png"
+          "scout-token"
         ).length
       ).toBeGreaterThan(0);
     });
@@ -121,7 +121,7 @@ describe("LibraryPanel", () => {
     await user.click(screen.getByRole("button", { name: "Actor" }));
 
     expect(
-      screen.getByRole("button", { name: "scout-token.png" })
+      screen.getByRole("button", { name: "scout-token" })
     ).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Select" }));

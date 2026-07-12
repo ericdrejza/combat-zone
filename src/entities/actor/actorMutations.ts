@@ -100,12 +100,12 @@ function removeActorFromEngagements(
   };
 }
 
-function stripFileExtension(fileName: string): string {
+export function stripFileExtension(fileName: string): string {
   return fileName.replace(/\.[^./\\]+$/, "");
 }
 
 function getDefaultActorName(image?: ActorImageInput): string {
-  return image ? stripFileExtension(image.name) : "New Actor";
+  return image?.name ?? "New Actor";
 }
 
 export function buildActor({

@@ -194,6 +194,12 @@
   - Actors are alphabetized and can optionally be grouped Hero, Neutral, Enemy.
   - Selected actors can be dragged into zones; invalid panel drops leave them
     zoneless without a history entry.
+  - Actors can be dragged from zones back into the panel.
+  - The panel supports horizontal and vertical resizing with a reset-size
+    control.
+  - Actor name text uses luminance-derived contrast colors.
+- [x] Strip uploaded token file extensions when creating library token names;
+  actors inherit those token names when created.
 - [x] With the actor tool selected, you may click on a zone to target it
   (looks like a throbbing selection outline); click and release (no drag) on a
   token from the Library panel adds an actor with that token to that target zone.

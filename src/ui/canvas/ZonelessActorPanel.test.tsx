@@ -172,6 +172,25 @@ describe("ZonelessActorPanel", () => {
     ).toEqual(["Hero", "Neutral", "Enemy"]);
   });
 
+  it("uses contrast text colors for actor names", async () => {
+    const user = userEvent.setup();
+
+    renderApp();
+    act(() => {
+      seedEncounter([
+        actor("actor-hero", "Aegis", "hero"),
+        actor("actor-neutral", "Boulder", "neutral")
+      ]);
+      store.dispatch(setActiveTool("actor"));
+    });
+    await user.click(
+      screen.getByRole("button", { name: "Expand zoneless actors" })
+    );
+
+    expect(screen.getByText("Aegis")).toHaveStyle("color: #ffffff");
+    expect(screen.getByText("Boulder")).toHaveStyle("color: #111827");
+  });
+
   it("moves selected panel actors into a zone and restores them with undo/redo", async () => {
     const user = userEvent.setup();
     const transfer = dataTransfer();
@@ -247,5 +266,77 @@ describe("ZonelessActorPanel", () => {
 
     expect(store.getState().encounter.present).toEqual(before.present);
     expect(store.getState().encounter.past).toHaveLength(before.past.length);
+  });
+
+  it("accepts an actor dragged from a zone into the zoneless panel", () => {
+    renderApp();
+    act(() => {
+      seedEncounter([{
+        ...actor("actor-a", "Aegis"),
+        currentZoneId: "zone-target"
+      }], [zone()]);
+      store.dispatch(setActiveTool("actor"));
+    });
+
+    const canvas = getCanvas();
+    mockCanvasBounds(canvas);
+    const canvasActor = screen.getByLabelText("Aegis");
+    const panel = screen.getByRole("complementary", {
+      name: "Zoneless actors"
+    });
+
+    fireEvent.mouseDown(canvasActor, { button: 0 });
+    fireEvent.mouseMove(canvas, { clientX: 420, clientY: 420 });
+    fireEvent.mouseUp(panel);
+
+    expect(
+      store.getState().encounter.present.actors.byId["actor-a"]?.currentZoneId
+    ).toBe(ZONELESS_ACTOR_ZONE_ID);
+
+    store.dispatch(undoEncounterChange());
+    expect(
+      store.getState().encounter.present.actors.byId["actor-a"]?.currentZoneId
+    ).toBe("zone-target");
+
+    store.dispatch(redoEncounterChange());
+    expect(
+      store.getState().encounter.present.actors.byId["actor-a"]?.currentZoneId
+    ).toBe(ZONELESS_ACTOR_ZONE_ID);
+  });
+
+  it("resizes the expanded panel and exposes a reset control", async () => {
+    const user = userEvent.setup();
+
+    renderApp();
+    act(() => {
+      seedEncounter([actor("actor-a", "Aegis")]);
+      store.dispatch(setActiveTool("actor"));
+    });
+    await user.click(
+      screen.getByRole("button", { name: "Expand zoneless actors" })
+    );
+
+    const panel = screen.getByRole("complementary", {
+      name: "Zoneless actors"
+    });
+    const resizeHandle = screen.getByRole("button", {
+      name: "Resize zoneless actors panel"
+    });
+    fireEvent.mouseDown(resizeHandle, { clientX: 0, clientY: 0 });
+    fireEvent.mouseMove(window, { clientX: 80, clientY: 40 });
+    fireEvent.mouseUp(window);
+
+    expect(
+      screen.getByRole("button", { name: "Reset zoneless actors panel size" })
+    ).toBeInTheDocument();
+    expect(panel).toHaveStyle({ height: "280px", width: "784px" });
+
+    await user.click(
+      screen.getByRole("button", { name: "Reset zoneless actors panel size" })
+    );
+    expect(
+      screen.queryByRole("button", { name: "Reset zoneless actors panel size" })
+    ).not.toBeInTheDocument();
+    expect(panel).toHaveStyle({ height: "240px", width: "704px" });
   });
 });

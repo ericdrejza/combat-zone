@@ -5,6 +5,7 @@ import { ACTOR_LAYOUT_GROUP_COLORS } from "../../entities/actor/actorVisuals";
 import type { RootState } from "../../store/store";
 import type { ActorDragState } from "./canvasInteractionTypes";
 import { getActorRenderPlacements } from "./actorCanvasLayout";
+import { getReadableTextColor } from "./canvasLuminance";
 
 type ActorLayerProps = {
   actorDrag: ActorDragState | null;
@@ -113,7 +114,7 @@ export function ActorLayer({
           <text
             className="pointer-events-none text-[10px] font-bold"
             dominantBaseline="middle"
-            fill="white"
+            fill={getReadableTextColor(colors.fill)}
             textAnchor="middle"
           >
             {actor.name.toUpperCase()}
@@ -163,11 +164,11 @@ export function ActorLayer({
         ) : null}
         {selected ? (
           <text
-          className="pointer-events-none text-[10px] font-bold"
-          dominantBaseline="middle"
-          fill="white"
-          textAnchor="middle"
-          dy={radius + 16}
+            className="pointer-events-none text-[10px] font-bold"
+            dominantBaseline="middle"
+            fill="white"/*TODO: dynamically select text color based on the whatever the pixel*/
+            textAnchor="middle"
+            dy={radius + 16}
           >
             {actor.name.toUpperCase()}
           </text>

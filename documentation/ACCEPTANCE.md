@@ -26,6 +26,13 @@ covers `DESIGN.md` §15 "Must have" scope only.
 - [x] Actors can be selected in the zoneless panel and dragged individually or
       as a selected group into a zone; dropping outside a zone leaves them in
       the panel without creating history.
+- [x] Actors can be dragged directly from a zone into the zoneless panel.
+- [x] The zoneless panel can be resized horizontally and vertically and has a
+      reset-size control after resizing.
+- [x] Actor name text uses the canvas luminance helpers to choose a readable
+      black or white contrast color.
+- [x] Uploaded token names omit their source file extension, while actors
+      inherit the token name when created from the library.
 - [ ] Actor can be dragged from Library Panel onto canvas into a zone.
 - [ ] Actor dragged from one zone to another updates `currentZoneId` and
       triggers layout recalculation in both the source and destination zone.
