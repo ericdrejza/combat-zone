@@ -94,7 +94,7 @@ export function ZonelessActorPanel({
   const selectedZonelessIds = selectedIds.filter((actorId) =>
     zonelessActors.some((actor) => actor.id === actorId)
   );
-  const collapsedColor = getTextColorForLuminance(canvasBackgroundLuminance);
+  const contrastColor = getTextColorForLuminance(canvasBackgroundLuminance);
 
   function handleSelect(
     actorId: string,
@@ -135,7 +135,7 @@ export function ZonelessActorPanel({
       aria-label="Zoneless actors"
       className={`absolute bottom-3 left-1/2 z-20 flex -translate-x-1/2 flex-col overflow-hidden border p-2 ${
         expanded
-          ? "rounded-2xl border-canvas-line bg-canvas-panel/95 shadow-lg backdrop-blur"
+          ? "rounded-2xl border-canvas-line bg-canvas-panel/10 shadow-lg backdrop-blur"
           : "rounded-lg bg-transparent"
       } ${
         isActorDragActive ? "border-canvas-ink ring-2 ring-canvas-ink/20" : ""
@@ -145,18 +145,34 @@ export function ZonelessActorPanel({
       style={{
         height: expanded ? `${size.height}px` : undefined,
         maxWidth: "calc(100% - 1.5rem)",
-        ...(expanded
-          ? {}
-          : {
-              borderColor: collapsedColor,
-              color: collapsedColor,
-            }),
+        borderColor: contrastColor,
+        color: contrastColor,
         width: `${size.width}px`
       }}
     >
       <div className="flex items-center gap-2">
-        {expanded ? (
-          <label className="flex items-center gap-2 text-xs text-canvas-muted">
+        <div className="flex min-w-0 flex-1 items-center gap-4">
+          <div className="flex items-center gap-2">
+            <UsersRound aria-hidden="true" size={16} />
+            <span className="truncate text-sm font-semibold">Zoneless</span>
+            <span
+              className={`rounded-full px-2 py-0.5 text-xs ${
+                expanded ? "bg-canvas text-canvas-muted" : ""
+              }`}
+              style={expanded 
+                ? {} 
+                : {
+                  // background: "rgba(0, 0, 0, 0.0)",
+                  color: contrastColor,
+                  outline: `1px solid ${contrastColor}`
+                }
+              }
+              >
+              {zonelessActors.length}
+            </span>
+          </div>
+          {expanded ? (
+          <label className="flex items-center gap-2 text-xs">
             <input
               aria-label="Group by faction"
               checked={groupByFaction}
@@ -167,16 +183,6 @@ export function ZonelessActorPanel({
             Group by faction
           </label>
         ) : null}
-        <div className="flex min-w-0 flex-1 items-center gap-2">
-          <UsersRound aria-hidden="true" size={16} />
-          <span className="truncate text-sm font-semibold">Zoneless</span>
-          <span
-            className={`rounded-full px-2 py-0.5 text-xs ${
-              expanded ? "bg-canvas text-canvas-muted" : ""
-            }`}
-          >
-            {zonelessActors.length}
-          </span>
         </div>
         {isResized ? (
           <button
@@ -198,14 +204,14 @@ export function ZonelessActorPanel({
               : "border-current bg-transparent text-inherit"
           }`}
           onClick={() => setExpanded((current) => !current)}
-          style={expanded ? undefined : { borderColor: collapsedColor }}
+          style={expanded ? undefined : { borderColor: contrastColor }}
           type="button"
         >
           {expanded ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
         </button>
       </div>
       {expanded ? (
-        <div className="mt-2 min-h-0 flex-1 overflow-y-auto border-t border-canvas-line pt-2">
+        <div className="mt-2 min-h-0 flex-1 overflow-y-auto border-t border-canvas-line pt-2" style={{borderColor: contrastColor}}>
           {zonelessActors.length === 0 ? (
             <p className="px-2 py-4 text-center text-xs text-canvas-muted">
               Drop actors here to remove them from the canvas.
@@ -213,8 +219,10 @@ export function ZonelessActorPanel({
           ) : groupByFaction ? (
             <div className="flex gap-10">
               {groupedActors.map((group) => (
-                <section className="border-x" aria-label={`${group.label} zoneless actors`} key={group.id}>
-                  <h3 className="px-2 text-[10px] font-semibold uppercase tracking-wide text-canvas-muted">
+                <section className="border-x" aria-label={`${group.label} zoneless actors`} key={group.id}
+                  style={{borderColor: contrastColor}}
+                >
+                  <h3 className="px-2 text-[10px] font-semibold uppercase tracking-wide">
                     {group.label}
                   </h3>
                   <div className="flex flex-row flex-wrap gap-1">
