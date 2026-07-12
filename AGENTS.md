@@ -170,3 +170,9 @@ A feature is not complete until:
 Per-feature acceptance criteria for MVP scope are tracked separately under
 in `documentation/ACCEPTANCE.md`, not in this file. Consult it alongside this
 file and `documentation/DESIGN.md` before marking any MVP feature complete.
+
+## MISC AGENT RULES
+1. When testing using `vitest`, use the `--reporter=agent` flag with the command
+to reduce output.
+2. If you see a test that is breaking due to a change that you didn't make, ask
+me what is the expected behavior and update the test accordingly.

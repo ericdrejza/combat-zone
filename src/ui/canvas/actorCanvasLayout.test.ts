@@ -9,9 +9,7 @@ import { RADIAL_ACTOR_GAP } from './actorRadialLayout';
 import {
   ACTOR_TOKEN_BASE_RADIUS,
   FLEX_ZONE_EDGE_GAP,
-  getActorRenderPlacements,
-  ZONELESS_ACTOR_EDGE_PADDING,
-  ZONELESS_ACTOR_ZONE_CLEARANCE
+  getActorRenderPlacements
 } from './actorCanvasLayout';
 import { createCirclePolygonFromBounds } from './zoneShapeGeometry';
 
@@ -290,84 +288,12 @@ describe('actor canvas layout', () => {
     expect(distanceFromCenter(10)).toBeCloseTo(innerRadius);
   });
 
-  it('places zoneless actors in top corners before bottom corners', () => {
+  it('does not include zoneless actors in canvas placements', () => {
     const encounter = {
-      ...createEncounterState({
-        id: 'encounter-zoneless-layout',
-        name: 'Zoneless Layout'
-      }),
-      actors: collection([actor('actor-zoneless')]),
-      zones: collection([zone('top-blocker', 0, 0, 960, 300)])
+      ...createEncounterState({ id: 'encounter-zoneless-layout', name: 'Zoneless Layout' }),
+      actors: collection([actor('actor-zoneless')])
     };
 
-    const placement = getActorRenderPlacements(encounter).find(
-      ({ actor: placedActor }) => placedActor.id === 'actor-zoneless'
-    );
-
-    expect(placement?.point).toEqual({
-      x: ZONELESS_ACTOR_EDGE_PADDING + 30,
-      y: 640 - ZONELESS_ACTOR_EDGE_PADDING - 30
-    });
-  });
-
-  it('keeps zoneless actors clear of zones and other zoneless actors', () => {
-    const encounter = {
-      ...createEncounterState({
-        id: 'encounter-zoneless-clearance',
-        name: 'Zoneless Clearance'
-      }),
-      actors: collection([actor('actor-one'), actor('actor-two')]),
-      zones: collection([zone('top-left-zone', 0, 0, 140, 140)])
-    };
-
-    const placements = getActorRenderPlacements(encounter).filter(
-      ({ actor: placedActor }) =>
-        placedActor.currentZoneId === ZONELESS_ACTOR_ZONE_ID
-    );
-    const first = placements.find(
-      ({ actor: placedActor }) => placedActor.id === 'actor-one'
-    );
-    const second = placements.find(
-      ({ actor: placedActor }) => placedActor.id === 'actor-two'
-    );
-
-    expect(first).toBeDefined();
-    expect(second).toBeDefined();
-    expect(first!.point.x - first!.radius).toBeGreaterThanOrEqual(
-      140 + ZONELESS_ACTOR_ZONE_CLEARANCE
-    );
-    expect(
-      Math.hypot(
-        first!.point.x - second!.point.x,
-        first!.point.y - second!.point.y
-      )
-    ).toBeGreaterThanOrEqual(first!.radius + second!.radius);
-  });
-
-  it('keeps current zoneless actor placement stable when adding another', () => {
-    const baseEncounter = {
-      ...createEncounterState({
-        id: 'encounter-zoneless-stable',
-        name: 'Zoneless Stable'
-      }),
-      actors: collection([actor('actor-current')])
-    };
-    const withNewActor = {
-      ...baseEncounter,
-      actors: collection([actor('actor-current'), actor('actor-new')])
-    };
-
-    const currentPlacement = getActorRenderPlacements(baseEncounter).find(
-      ({ actor: placedActor }) => placedActor.id === 'actor-current'
-    );
-    const nextCurrentPlacement = getActorRenderPlacements(withNewActor).find(
-      ({ actor: placedActor }) => placedActor.id === 'actor-current'
-    );
-    const newPlacement = getActorRenderPlacements(withNewActor).find(
-      ({ actor: placedActor }) => placedActor.id === 'actor-new'
-    );
-
-    expect(nextCurrentPlacement?.point).toEqual(currentPlacement?.point);
-    expect(newPlacement?.point).not.toEqual(currentPlacement?.point);
+    expect(getActorRenderPlacements(encounter)).toEqual([]);
   });
 });

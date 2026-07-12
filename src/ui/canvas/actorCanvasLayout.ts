@@ -10,15 +10,9 @@ import {
   getFlexRadialActorPoints,
   getSequentialRadialActorPoints
 } from './actorRadialLayout';
-import {
-  getZonelessActorRenderPlacements,
-  ZONELESS_ACTOR_EDGE_PADDING,
-  ZONELESS_ACTOR_ZONE_CLEARANCE
-} from './actorZonelessLayout';
 
 export const ACTOR_TOKEN_BASE_RADIUS = 30;
 export { FLEX_ZONE_EDGE_GAP };
-export { ZONELESS_ACTOR_EDGE_PADDING, ZONELESS_ACTOR_ZONE_CLEARANCE };
 
 export type ActorRenderPlacement = {
   actor: Actor;
@@ -262,10 +256,6 @@ export function getActorRenderPlacements(
       });
     }
   }
-
-  placements.push(
-    ...getZonelessActorRenderPlacements(encounter, getActorRadius)
-  );
 
   return placements;
 }

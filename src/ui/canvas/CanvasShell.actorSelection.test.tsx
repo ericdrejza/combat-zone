@@ -228,9 +228,9 @@ describe("CanvasShell actor selection", () => {
 
     act(() => {
       seedEncounter([
-        namedActor("actor-1", "Zephyr"),
-        namedActor("actor-2", "Aegis")
-      ]);
+        namedActor("actor-1", "Zephyr", "zone-1"),
+        namedActor("actor-2", "Aegis", "zone-1")
+      ], [zone("zone-1", 80, 80, 240, 180)]);
       store.dispatch(setActiveTool("actor"));
     });
 

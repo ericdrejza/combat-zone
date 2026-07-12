@@ -190,6 +190,10 @@
       attempt to place token outside zone.
   - Snap back to pre-drag position.
   - Do not create a Redux history entry for snap-back.
+- [x] Represent zoneless actors in a collapsible bottom-center panel.
+  - Actors are alphabetized and can optionally be grouped Hero, Neutral, Enemy.
+  - Selected actors can be dragged into zones; invalid panel drops leave them
+    zoneless without a history entry.
 - [x] With the actor tool selected, you may click on a zone to target it
   (looks like a throbbing selection outline); click and release (no drag) on a
   token from the Library panel adds an actor with that token to that target zone.

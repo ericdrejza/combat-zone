@@ -21,6 +21,11 @@ covers `DESIGN.md` §15 "Must have" scope only.
 
 ## Actors (drag/drop)
 
+- [x] Zoneless actors are represented in a collapsible bottom-center panel,
+      sorted alphabetically, with optional Hero/Neutral/Enemy grouping.
+- [x] Actors can be selected in the zoneless panel and dragged individually or
+      as a selected group into a zone; dropping outside a zone leaves them in
+      the panel without creating history.
 - [ ] Actor can be dragged from Library Panel onto canvas into a zone.
 - [ ] Actor dragged from one zone to another updates `currentZoneId` and
       triggers layout recalculation in both the source and destination zone.

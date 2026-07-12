@@ -7,7 +7,7 @@ import { createEncounterActionRecord } from "../../core/history/createEncounterA
 import type { LayoutPoint } from "../../core/layout/types";
 import { RENDER_LAYERS } from "../../core/rendering/types";
 import { prepareValidatedEncounterChange } from "../../core/validation/validatedEncounterChange";
-import { createActor } from "../../entities/actor/actorMutations";
+import { createActor, moveActor } from "../../entities/actor/actorMutations";
 import { resolveLibraryAsset } from "../../library/librarySlice";
 import { LIBRARY_NODE_DRAG_TYPE } from "../library/libraryDrag";
 import type { RootState } from "../../store/store";
@@ -26,6 +26,11 @@ import type {
   ZoneDragState
 } from "./canvasInteractionTypes";
 import { ZoneLayer } from "./ZoneLayer";
+import {
+  hasZonelessActorDrag,
+  readZonelessActorIds
+} from "./zonelessActorDrag";
+import { ZonelessActorPanel } from "./ZonelessActorPanel";
 import { type LocalBoxSelectionState, toSvgPoint } from "./zoneGeometry";
 import { findZoneIdAtPoint } from "./actorCanvasLayout";
 import { useActorPaintBrush } from "./useActorPaintBrush";
@@ -82,13 +87,13 @@ export function CanvasShell() {
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "f") {
+      if (event.key === "Alt") {
         setAltKeyDown(true);
       }
     }
 
     function handleKeyUp(event: KeyboardEvent) {
-      if (event.key === "f") {
+      if (event.key === "Alt") {
         setAltKeyDown(false);
       }
     }
@@ -227,18 +232,78 @@ export function CanvasShell() {
   }
 
   function handleCanvasDragOver(event: DragEvent<SVGSVGElement>) {
-    if (
-      activeToolId !== "actor" ||
-      !Array.from(event.dataTransfer.types).includes(LIBRARY_NODE_DRAG_TYPE)
-    ) {
+    if (activeToolId !== "actor" && activeToolId !== "select") {
+      return;
+    }
+
+    const libraryDrag = Array.from(event.dataTransfer.types).includes(
+      LIBRARY_NODE_DRAG_TYPE
+    );
+    const zonelessActorDrag = hasZonelessActorDrag(event);
+
+    if (!zonelessActorDrag && (activeToolId !== "actor" || !libraryDrag)) {
       return;
     }
 
     event.preventDefault();
-    event.dataTransfer.dropEffect = "copy";
+    event.dataTransfer.dropEffect =
+      libraryDrag && activeToolId === "actor" ? "copy" : "move";
   }
 
   function handleCanvasDrop(event: DragEvent<SVGSVGElement>) {
+    if (activeToolId !== "actor" && activeToolId !== "select") {
+      return;
+    }
+
+    const point = toSvgPoint(event, event.currentTarget);
+    const destinationZoneId = findZoneIdAtPoint(encounter, point);
+
+    if (hasZonelessActorDrag(event)) {
+      event.preventDefault();
+
+      if (!destinationZoneId) {
+        return;
+      }
+
+      const actorIds = readZonelessActorIds(event).filter(
+        (actorId) =>
+          encounter.actors.byId[actorId]?.currentZoneId ===
+          ZONELESS_ACTOR_ZONE_ID
+      );
+
+      if (actorIds.length === 0) {
+        return;
+      }
+
+      const nextEncounter = actorIds.reduce(
+        (currentEncounter, actorId) =>
+          moveActor(currentEncounter, actorId, destinationZoneId),
+        encounter
+      );
+      const action = createEncounterActionRecord(
+        actorIds.length > 1 ? "actor.moveMany" : "actor.move",
+        {
+          actorIds,
+          destinationZoneId
+        }
+      );
+      const prepared = prepareValidatedEncounterChange({
+        action,
+        currentEncounter: encounter,
+        nextEncounter
+      });
+
+      if (!prepared.blocked) {
+        dispatch(
+          commitEncounterChange({
+            action: prepared.action,
+            nextEncounter: prepared.nextEncounter
+          })
+        );
+      }
+      return;
+    }
+
     if (activeToolId !== "actor") {
       return;
     }
@@ -250,11 +315,10 @@ export function CanvasShell() {
     }
 
     event.preventDefault();
-    const point = toSvgPoint(event, event.currentTarget);
-    const destinationZoneId =
-      findZoneIdAtPoint(encounter, point) ?? ZONELESS_ACTOR_ZONE_ID;
-
-    commitActorFromLibraryNode(nodeId, destinationZoneId);
+    commitActorFromLibraryNode(
+      nodeId,
+      destinationZoneId ?? ZONELESS_ACTOR_ZONE_ID
+    );
   }
 
   return (
@@ -334,6 +398,11 @@ export function CanvasShell() {
         activeToolId={activeToolId}
         actorNames={statusActorNames}
         zoneShapeMode={zoneShapeMode}
+      />
+      <ZonelessActorPanel
+        activeToolId={activeToolId}
+        actors={encounter.actors}
+        selection={selection}
       />
     </section>
   );
