@@ -1,0 +1,299 @@
+import { describe, expect, it } from 'vitest';
+
+import { createEncounterState } from '../../core/encounter/createEncounterState';
+import { ZONELESS_ACTOR_ZONE_ID } from '../../core/encounter/types';
+import type { EntityCollection } from '../../core/state/entityCollection';
+import type { Actor } from '../../entities/actor/types';
+import type { Zone } from '../../entities/zone/types';
+import { RADIAL_ACTOR_GAP } from './actorRadialLayout';
+import {
+  ACTOR_TOKEN_BASE_RADIUS,
+  FLEX_ZONE_EDGE_GAP,
+  getActorRenderPlacements
+} from './actorCanvasLayout';
+import { createCirclePolygonFromBounds } from './zoneShapeGeometry';
+
+function collection<TEntity extends { id: string }>(
+  entities: TEntity[]
+): EntityCollection<TEntity> {
+  return {
+    allIds: entities.map((entity) => entity.id),
+    byId: Object.fromEntries(entities.map((entity) => [entity.id, entity]))
+  };
+}
+
+function actor(id: string): Actor {
+  return {
+    actorType: 'creature',
+    currentZoneId: ZONELESS_ACTOR_ZONE_ID,
+    id,
+    layoutGroup: 'hero',
+    metadata: {},
+    name: id,
+    shape: 'circle',
+    size: 'medium',
+    statusEffects: []
+  };
+}
+
+function zonedActor(id: string, zoneId: string): Actor {
+  return {
+    ...actor(id),
+    currentZoneId: zoneId
+  };
+}
+
+function zone(
+  id: string,
+  x: number,
+  y: number,
+  width: number,
+  height: number
+): Zone {
+  return {
+    colorBorder: '#9b876b',
+    colorFill: '#ffffff',
+    id,
+    layoutOrientation: 'LEFT_RIGHT',
+    layoutStrategy: 'FLEX',
+    name: id,
+    namePosition: 'top-left',
+    opacity: 0.7,
+    polygon: [
+      { x, y },
+      { x: x + width, y },
+      { x: x + width, y: y + height },
+      { x, y: y + height }
+    ],
+    shape: 'rectangle',
+    showBorder: true,
+    showName: false,
+    tags: []
+  };
+}
+
+function circleZone(
+  id: string,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  layoutStrategy: Zone['layoutStrategy'] = 'FLEX'
+): Zone {
+  return {
+    ...zone(id, x, y, width, height),
+    layoutStrategy,
+    polygon: createCirclePolygonFromBounds({ height, width, x, y }),
+    shape: 'circle'
+  };
+}
+
+describe('actor canvas layout', () => {
+  it('centers the only FLEX actor in a zone', () => {
+    const zoneId = 'rectangle-zone';
+    const encounter = {
+      ...createEncounterState({ id: 'encounter-flex-center', name: 'Flex' }),
+      actors: collection([zonedActor('actor-only', zoneId)]),
+      zones: collection([zone(zoneId, 100, 120, 300, 200)])
+    };
+
+    const placement = getActorRenderPlacements(encounter)[0];
+
+    expect(placement.point).toEqual({ x: 250, y: 220 });
+  });
+
+  it('uses vertex-first FLEX candidates with actor and edge separation', () => {
+    const zoneId = 'rectangle-zone';
+    const encounter = {
+      ...createEncounterState({ id: 'encounter-flex-spacing', name: 'Flex' }),
+      actors: collection([
+        zonedActor('actor-first', zoneId),
+        zonedActor('actor-second', zoneId)
+      ]),
+      zones: collection([zone(zoneId, 100, 100, 300, 300)])
+    };
+    const placements = getActorRenderPlacements(encounter);
+    const first = placements[0];
+    const second = placements[1];
+
+    expect(first.point).toEqual({ x: 146, y: 146 });
+    expect(second.point).toEqual({ x: 354, y: 354 });
+    expect(
+      Math.hypot(
+        first.point.x - second.point.x,
+        first.point.y - second.point.y
+      )
+    ).toBeGreaterThanOrEqual(first.radius + second.radius);
+    expect(first.point.x - first.radius).toBeGreaterThanOrEqual(
+      100 + FLEX_ZONE_EDGE_GAP
+    );
+    expect(first.point.y - first.radius).toBeGreaterThanOrEqual(
+      100 + FLEX_ZONE_EDGE_GAP
+    );
+  });
+
+  it('gives split FLEX sections space based on non-empty section content', () => {
+    const zoneId = 'split-zone';
+    const encounter = {
+      ...createEncounterState({ id: 'encounter-split-flex', name: 'Split Flex' }),
+      actors: collection([
+        { ...zonedActor('hero', zoneId), layoutGroup: 'hero' as const },
+        { ...zonedActor('enemy', zoneId), layoutGroup: 'enemy' as const }
+      ]),
+      zones: collection([
+        {
+          ...zone(zoneId, 100, 100, 300, 200),
+          layoutStrategy: 'SPLIT_FLEX' as const
+        }
+      ])
+    };
+
+    const placements = getActorRenderPlacements(encounter);
+
+    expect(placements.map(({ point }) => point)).toEqual([
+      { x: 175, y: 200 },
+      { x: 325, y: 200 }
+    ]);
+  });
+
+  it('lays split sections vertically for LEFT_RIGHT and horizontally for TOP_BOTTOM', () => {
+    const zoneId = 'split-zone';
+    const actors = [
+      { ...zonedActor('hero-one', zoneId), layoutGroup: 'hero' as const },
+      { ...zonedActor('hero-two', zoneId), layoutGroup: 'hero' as const },
+      { ...zonedActor('enemy', zoneId), layoutGroup: 'enemy' as const }
+    ];
+    const leftRightEncounter = {
+      ...createEncounterState({ id: 'encounter-split-left-right', name: 'Split' }),
+      actors: collection(actors),
+      zones: collection([
+        {
+          ...zone(zoneId, 100, 100, 300, 200),
+          layoutStrategy: 'SPLIT_FLEX' as const,
+          layoutOrientation: 'LEFT_RIGHT' as const
+        }
+      ])
+    };
+    const topBottomEncounter = {
+      ...leftRightEncounter,
+      zones: collection([
+        {
+          ...leftRightEncounter.zones.byId[zoneId]!,
+          layoutOrientation: 'TOP_BOTTOM' as const
+        }
+      ])
+    };
+
+    const leftRight = getActorRenderPlacements(leftRightEncounter);
+    const topBottom = getActorRenderPlacements(topBottomEncounter);
+
+    expect(leftRight[0].point).toEqual({ x: 200, y: 146 });
+    expect(leftRight[1].point).toEqual({ x: 200, y: 254 });
+    expect(leftRight[2].point).toEqual({ x: 350, y: 200 });
+    expect(topBottom[0].point.x).toBeCloseTo(146);
+    expect(topBottom[0].point.y).toBeCloseTo(166.667);
+    expect(topBottom[1].point.x).toBeCloseTo(354);
+    expect(topBottom[1].point.y).toBeCloseTo(166.667);
+    expect(topBottom[2].point.x).toBeCloseTo(250);
+    expect(topBottom[2].point.y).toBeCloseTo(266.667);
+  });
+
+  it('places FLEX actors evenly around circular zones', () => {
+    const zoneId = 'circle-zone';
+    const encounter = {
+      ...createEncounterState({
+        id: 'encounter-circle-flex',
+        name: 'Circle Flex'
+      }),
+      actors: collection([
+        zonedActor('actor-top', zoneId),
+        zonedActor('actor-right', zoneId),
+        zonedActor('actor-bottom', zoneId),
+        zonedActor('actor-left', zoneId)
+      ]),
+      zones: collection([circleZone(zoneId, 100, 100, 200, 200)])
+    };
+    const placements = getActorRenderPlacements(encounter);
+    const ringRadius = 100 - ACTOR_TOKEN_BASE_RADIUS - RADIAL_ACTOR_GAP;
+
+    expect(placements[0].point.x).toBeCloseTo(200);
+    expect(placements[0].point.y).toBeCloseTo(200 - ringRadius);
+    expect(placements[1].point.x).toBeCloseTo(200 + ringRadius);
+    expect(placements[1].point.y).toBeCloseTo(200);
+    expect(placements[2].point.x).toBeCloseTo(200);
+    expect(placements[2].point.y).toBeCloseTo(200 + ringRadius);
+    expect(placements[3].point.x).toBeCloseTo(200 - ringRadius);
+    expect(placements[3].point.y).toBeCloseTo(200);
+  });
+
+  it('places SEQUENTIAL actors clockwise next to the previous actor in circular zones', () => {
+    const zoneId = 'circle-zone';
+    const encounter = {
+      ...createEncounterState({
+        id: 'encounter-circle-sequential',
+        name: 'Circle Sequential'
+      }),
+      actors: collection([
+        zonedActor('actor-first', zoneId),
+        zonedActor('actor-second', zoneId),
+        zonedActor('actor-third', zoneId)
+      ]),
+      zones: collection([circleZone(zoneId, 100, 100, 300, 300, 'SEQUENTIAL')])
+    };
+    const placements = getActorRenderPlacements(encounter);
+    const ringRadius = 150 - ACTOR_TOKEN_BASE_RADIUS - RADIAL_ACTOR_GAP;
+    const angleStep =
+      2 *
+      Math.asin(
+        (ACTOR_TOKEN_BASE_RADIUS * 2 + RADIAL_ACTOR_GAP) / (2 * ringRadius)
+      );
+
+    expect(placements[0].point.x).toBeCloseTo(250);
+    expect(placements[0].point.y).toBeCloseTo(250 - ringRadius);
+    expect(placements[1].point.x).toBeCloseTo(
+      250 + Math.cos(-Math.PI / 2 + angleStep) * ringRadius
+    );
+    expect(placements[1].point.y).toBeCloseTo(
+      250 + Math.sin(-Math.PI / 2 + angleStep) * ringRadius
+    );
+    expect(placements[1].point.x).toBeLessThan(250 + ringRadius);
+    expect(placements[2].point.x).toBeGreaterThan(placements[1].point.x);
+  });
+
+  it('moves circular FLEX actor placement to a smaller ring when the outer ring is full', () => {
+    const zoneId = 'circle-zone';
+    const actors = Array.from({ length: 12 }, (_, index) =>
+      zonedActor(`actor-${index}`, zoneId)
+    );
+    const encounter = {
+      ...createEncounterState({
+        id: 'encounter-circle-flex-rings',
+        name: 'Circle Flex Rings'
+      }),
+      actors: collection(actors),
+      zones: collection([circleZone(zoneId, 100, 100, 300, 300)])
+    };
+    const placements = getActorRenderPlacements(encounter);
+    const outerRadius = 150 - ACTOR_TOKEN_BASE_RADIUS - RADIAL_ACTOR_GAP;
+    const innerRadius =
+      outerRadius - (ACTOR_TOKEN_BASE_RADIUS * 2 + RADIAL_ACTOR_GAP);
+    const distanceFromCenter = (index: number) =>
+      Math.hypot(
+        placements[index].point.x - 250,
+        placements[index].point.y - 250
+      );
+
+    expect(distanceFromCenter(0)).toBeCloseTo(outerRadius);
+    expect(distanceFromCenter(9)).toBeCloseTo(outerRadius);
+    expect(distanceFromCenter(10)).toBeCloseTo(innerRadius);
+  });
+
+  it('does not include zoneless actors in canvas placements', () => {
+    const encounter = {
+      ...createEncounterState({ id: 'encounter-zoneless-layout', name: 'Zoneless Layout' }),
+      actors: collection([actor('actor-zoneless')])
+    };
+
+    expect(getActorRenderPlacements(encounter)).toEqual([]);
+  });
+});
