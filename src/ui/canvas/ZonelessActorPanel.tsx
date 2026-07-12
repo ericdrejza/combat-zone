@@ -3,7 +3,6 @@ import { useMemo, useState } from "react";
 import {
   ChevronDown,
   ChevronUp,
-  Grip,
   RotateCcw,
   UsersRound
 } from "lucide-react";
@@ -13,6 +12,7 @@ import type { Actor, ActorLayoutGroup } from "../../entities/actor/types";
 import { selectEntity } from "../../interaction/interactionState";
 import { useDispatch } from "react-redux";
 import type { RootState } from "../../store/store";
+import { getTextColorForLuminance } from "./canvasLuminance";
 import { ZONELESS_ACTOR_DRAG_TYPE } from "./zonelessActorDrag";
 import { useResizablePanel } from "./useResizablePanel";
 import { ZonelessActorPanelToken } from "./ZonelessActorPanelToken";
@@ -20,6 +20,7 @@ import { ZonelessActorPanelToken } from "./ZonelessActorPanelToken";
 type ZonelessActorPanelProps = {
   activeToolId: RootState["interaction"]["activeToolId"];
   actors: RootState["encounter"]["present"]["actors"];
+  canvasBackgroundLuminance: number;
   isActorDragActive: boolean;
   onActorDropToZoneless: () => void;
   selection: RootState["interaction"]["selection"];
@@ -68,6 +69,7 @@ function getGroupedActors(actors: Actor[]): ActorGroup[] {
 export function ZonelessActorPanel({
   activeToolId,
   actors,
+  canvasBackgroundLuminance,
   isActorDragActive,
   onActorDropToZoneless,
   selection
@@ -92,6 +94,7 @@ export function ZonelessActorPanel({
   const selectedZonelessIds = selectedIds.filter((actorId) =>
     zonelessActors.some((actor) => actor.id === actorId)
   );
+  const collapsedColor = getTextColorForLuminance(canvasBackgroundLuminance);
 
   function handleSelect(
     actorId: string,
@@ -130,7 +133,11 @@ export function ZonelessActorPanel({
   return (
     <aside
       aria-label="Zoneless actors"
-      className={`absolute bottom-3 left-1/2 z-20 flex -translate-x-1/2 flex-col overflow-hidden rounded-2xl border border-canvas-line bg-canvas-panel/95 p-2 shadow-lg backdrop-blur ${
+      className={`absolute bottom-3 left-1/2 z-20 flex -translate-x-1/2 flex-col overflow-hidden border p-2 ${
+        expanded
+          ? "rounded-2xl border-canvas-line bg-canvas-panel/95 shadow-lg backdrop-blur"
+          : "rounded-lg bg-transparent"
+      } ${
         isActorDragActive ? "border-canvas-ink ring-2 ring-canvas-ink/20" : ""
       } ${isResizing ? "select-none" : ""}`}
       data-drop-target="zoneless-actors"
@@ -138,6 +145,12 @@ export function ZonelessActorPanel({
       style={{
         height: expanded ? `${size.height}px` : undefined,
         maxWidth: "calc(100% - 1.5rem)",
+        ...(expanded
+          ? {}
+          : {
+              borderColor: collapsedColor,
+              color: collapsedColor,
+            }),
         width: `${size.width}px`
       }}
     >
@@ -157,7 +170,11 @@ export function ZonelessActorPanel({
         <div className="flex min-w-0 flex-1 items-center gap-2">
           <UsersRound aria-hidden="true" size={16} />
           <span className="truncate text-sm font-semibold">Zoneless</span>
-          <span className="rounded-full bg-canvas px-2 py-0.5 text-xs text-canvas-muted">
+          <span
+            className={`rounded-full px-2 py-0.5 text-xs ${
+              expanded ? "bg-canvas text-canvas-muted" : ""
+            }`}
+          >
             {zonelessActors.length}
           </span>
         </div>
@@ -175,8 +192,13 @@ export function ZonelessActorPanel({
         <button
           aria-expanded={expanded}
           aria-label={expanded ? "Collapse zoneless actors" : "Expand zoneless actors"}
-          className="flex h-8 w-8 flex-none items-center justify-center rounded-full border border-canvas-line bg-white text-canvas-ink transition hover:bg-canvas"
+          className={`flex h-8 w-8 flex-none items-center justify-center rounded-full border transition hover:bg-canvas ${
+            expanded
+              ? "border-canvas-line bg-white text-canvas-ink"
+              : "border-current bg-transparent text-inherit"
+          }`}
           onClick={() => setExpanded((current) => !current)}
+          style={expanded ? undefined : { borderColor: collapsedColor }}
           type="button"
         >
           {expanded ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
@@ -227,15 +249,26 @@ export function ZonelessActorPanel({
         </div>
       ) : null}
       {expanded ? (
-        <button
-          aria-label="Resize zoneless actors panel"
-          className="absolute bottom-0 right-0 flex h-6 w-6 cursor-se-resize items-center justify-center rounded-tl-lg text-canvas-muted hover:bg-canvas"
-          onMouseDown={startResize}
-          title="Resize panel"
-          type="button"
-        >
-          <Grip aria-hidden="true" size={14} />
-        </button>
+        <>
+          <button
+            aria-label="Resize zoneless actors panel left edge"
+            className="absolute bottom-2 left-0 top-2 w-2 cursor-ew-resize"
+            onMouseDown={(event) => startResize(event, "left")}
+            type="button"
+          />
+          <button
+            aria-label="Resize zoneless actors panel right edge"
+            className="absolute bottom-2 right-0 top-2 w-2 cursor-ew-resize"
+            onMouseDown={(event) => startResize(event, "right")}
+            type="button"
+          />
+          <button
+            aria-label="Resize zoneless actors panel top edge"
+            className="absolute left-2 right-2 top-0 h-2 cursor-ns-resize"
+            onMouseDown={(event) => startResize(event, "top")}
+            type="button"
+          />
+        </>
       ) : null}
     </aside>
   );

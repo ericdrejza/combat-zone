@@ -28,9 +28,13 @@ covers `DESIGN.md` §15 "Must have" scope only.
       the panel without creating history.
 - [x] Actors can be dragged directly from a zone into the zoneless panel.
 - [x] The zoneless panel can be resized horizontally and vertically and has a
-      reset-size control after resizing.
+      reset-size control after resizing by dragging its left, right, or top
+      edge.
+- [x] While collapsed, the zoneless panel is transparent and uses a
+      luminance-derived color for its border and controls.
 - [x] Actor name text uses the canvas luminance helpers to choose a readable
-      black or white contrast color.
+      black or white contrast color; selected canvas actor labels use the fill
+      color of their containing zone.
 - [x] Uploaded token names omit their source file extension, while actors
       inherit the token name when created from the library.
 - [ ] Actor can be dragged from Library Panel onto canvas into a zone.

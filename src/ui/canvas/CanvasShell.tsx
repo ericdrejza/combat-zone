@@ -38,7 +38,7 @@ import { useActorPaintBrush } from "./useActorPaintBrush";
 import { useCanvasInteractionHandlers } from "./useCanvasInteractionHandlers";
 import { useCanvasKeyboard } from "./useCanvasKeyboard";
 import {
-  useBackgroundLuminanceByZoneId,
+  useCanvasBackgroundLuminance,
   usePolygonDraftBackgroundLuminance
 } from "./useCanvasLuminance";
 export function CanvasShell() {
@@ -77,7 +77,7 @@ export function CanvasShell() {
   const suppressNextCanvasClickUnconditionallyRef = useRef(false);
   const suppressNextCanvasClickPointRef = useRef<LayoutPoint | null>(null);
   const suppressNextEntityClickRef = useRef<string | null>(null);
-  const backgroundLuminanceByZoneId = useBackgroundLuminanceByZoneId(
+  const backgroundLuminance = useCanvasBackgroundLuminance(
     backgroundImage,
     encounter.zones
   );
@@ -413,7 +413,7 @@ export function CanvasShell() {
                   <ZoneLayer
                     activeToolId={activeToolId}
                     actorTargetZoneId={actorTool.targetZoneId}
-                    backgroundLuminanceByZoneId={backgroundLuminanceByZoneId}
+                    backgroundLuminanceByZoneId={backgroundLuminance.byZoneId}
                     getDisplayedPolygon={getDisplayedPolygon}
                     onResizeHandleMouseDown={handleResizeHandleMouseDown}
                     selection={selection}
@@ -460,6 +460,7 @@ export function CanvasShell() {
       <ZonelessActorPanel
         activeToolId={activeToolId}
         actors={encounter.actors}
+        canvasBackgroundLuminance={backgroundLuminance.canvas}
         isActorDragActive={Boolean(actorDrag?.hasMoved)}
         onActorDropToZoneless={handleActorDropToZoneless}
         selection={selection}

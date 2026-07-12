@@ -5,6 +5,7 @@ import { ACTOR_LAYOUT_GROUP_COLORS } from "../../entities/actor/actorVisuals";
 import type { RootState } from "../../store/store";
 import type { ActorDragState } from "./canvasInteractionTypes";
 import { getActorRenderPlacements } from "./actorCanvasLayout";
+import { CANVAS_BACKGROUND_COLOR } from "./canvasConstants";
 import { getReadableTextColor } from "./canvasLuminance";
 
 type ActorLayerProps = {
@@ -51,6 +52,10 @@ export function ActorLayer({
       selection.selectedEntityType === "actor" &&
       selection.selectedIds.includes(actor.id);
     const colors = ACTOR_LAYOUT_GROUP_COLORS[actor.layoutGroup];
+    const zoneFill = encounter.zones.byId[actor.currentZoneId]?.colorFill;
+    const selectedActorTextColor = getReadableTextColor(
+      zoneFill ?? CANVAS_BACKGROUND_COLOR
+    );
     const clipId = `${actor.id}-clip`;
     const innerRadius = Math.max(radius - 3, 1);
 
@@ -166,7 +171,7 @@ export function ActorLayer({
           <text
             className="pointer-events-none text-[10px] font-bold"
             dominantBaseline="middle"
-            fill="white"/*TODO: dynamically select text color based on the whatever the pixel*/
+            fill={selectedActorTextColor}
             textAnchor="middle"
             dy={radius + 16}
           >

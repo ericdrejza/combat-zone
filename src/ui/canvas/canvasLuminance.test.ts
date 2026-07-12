@@ -3,10 +3,12 @@ import { describe, expect, it } from 'vitest';
 import type { Zone } from '../../entities/zone/types';
 import {
   createDeterministicSamplePoints,
+  createCanvasBackgroundSamplePoints,
   getAverageCanvasLuminance,
   getHexLuminance,
   getReadableTextColor,
   getTextColorForLuminance,
+  sampleCanvasBackgroundLuminance,
   usesBackgroundLuminanceForZoneName
 } from './canvasLuminance';
 
@@ -97,5 +99,15 @@ describe('canvas luminance', () => {
         { x: 90, y: 10 }
       ])
     ).toBe(127.5);
+  });
+
+  it('samples the canvas area behind the collapsed panel', () => {
+    const points = createCanvasBackgroundSamplePoints();
+    const context = {
+      getImageData: () => ({ data: [0, 0, 0] })
+    } as unknown as CanvasRenderingContext2D;
+
+    expect(points).toHaveLength(6);
+    expect(sampleCanvasBackgroundLuminance(context)).toBe(0);
   });
 });

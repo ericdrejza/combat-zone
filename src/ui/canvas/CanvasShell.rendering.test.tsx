@@ -9,7 +9,7 @@ import type { EntityCollection } from "../../core/state/entityCollection";
 import { ACTOR_LAYOUT_GROUP_COLORS } from "../../entities/actor/actorVisuals";
 import type { Actor } from "../../entities/actor/types";
 import type { Zone } from "../../entities/zone/types";
-import { setActiveTool } from "../../interaction/interactionState";
+import { selectEntity, setActiveTool } from "../../interaction/interactionState";
 import {
   commitEncounterChange,
   resetEncounterState
@@ -166,6 +166,12 @@ describe("CanvasShell rendering", () => {
       })
     );
     store.dispatch(setActiveTool("actor"));
+    store.dispatch(
+      selectEntity({
+        entityType: "actor",
+        ids: ["actor-hero"]
+      })
+    );
 
     const { container } = render(
       <Provider store={store}>
@@ -198,5 +204,11 @@ describe("CanvasShell rendering", () => {
         `[stroke="${ACTOR_LAYOUT_GROUP_COLORS.hero.outline}"]`
       )
     ).toBeNull();
+
+    const selectedActorName = Array.from(container.querySelectorAll("text")).find(
+      (text) =>
+        text.textContent === "HERO" && text.getAttribute("dy") !== null
+    );
+    expect(selectedActorName).toHaveAttribute("fill", "#111827");
   });
 });

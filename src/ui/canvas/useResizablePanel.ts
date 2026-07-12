@@ -10,11 +10,14 @@ const MIN_PANEL_HEIGHT = 112;
 const MIN_PANEL_WIDTH = 280;
 
 type ResizeStart = {
+  edge: ResizeEdge;
   height: number;
   width: number;
   x: number;
   y: number;
 };
+
+export type ResizeEdge = "left" | "right" | "top";
 
 export function useResizablePanel() {
   const [size, setSize] = useState(DEFAULT_PANEL_SIZE);
@@ -30,8 +33,20 @@ export function useResizablePanel() {
       }
 
       setSize({
-        height: Math.max(MIN_PANEL_HEIGHT, start.height + event.clientY - start.y),
-        width: Math.max(MIN_PANEL_WIDTH, start.width + event.clientX - start.x)
+        height: Math.max(
+          MIN_PANEL_HEIGHT,
+          start.height +
+            (start.edge === "top" ? start.y - event.clientY : 0)
+        ),
+        width: Math.max(
+          MIN_PANEL_WIDTH,
+          start.width +
+            (start.edge === "left"
+              ? start.x - event.clientX
+              : start.edge === "right"
+                ? event.clientX - start.x
+                : 0)
+        )
       });
     }
 
@@ -49,9 +64,13 @@ export function useResizablePanel() {
     };
   }, []);
 
-  function startResize(event: ReactMouseEvent<HTMLButtonElement>) {
+  function startResize(
+    event: ReactMouseEvent<HTMLButtonElement>,
+    edge: ResizeEdge
+  ) {
     event.preventDefault();
     resizeStart.current = {
+      edge,
       height: size.height,
       width: size.width,
       x: event.clientX,

@@ -1,5 +1,6 @@
-import { act, fireEvent, screen, within } from "@testing-library/react";
+import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { afterEach, vi } from "vitest";
 
 import { createEncounterState } from "../../core/encounter/createEncounterState";
 import { ZONELESS_ACTOR_ZONE_ID } from "../../core/encounter/types";
@@ -20,6 +21,8 @@ import {
   renderApp
 } from "../../test/ui/renderApp";
 import { createRectanglePolygon } from "./zoneGeometry";
+import { CANVAS_BACKGROUND_COLOR } from "./canvasConstants";
+import { getReadableTextColor } from "./canvasLuminance";
 
 function collection<TEntity extends { id: string }>(
   entities: TEntity[]
@@ -66,7 +69,15 @@ function zone(): Zone {
   };
 }
 
-function seedEncounter(actors: Actor[], zones: Zone[] = []) {
+function seedEncounter(
+  actors: Actor[],
+  zones: Zone[] = [],
+  backgroundImage: {
+    dataUrl: string;
+    mediaType: string;
+    name: string;
+  } | null = null
+) {
   store.dispatch(
     commitEncounterChange({
       action: createEncounterActionRecord("test.seed"),
@@ -76,11 +87,34 @@ function seedEncounter(actors: Actor[], zones: Zone[] = []) {
           name: "Zoneless Panel"
         }),
         actors: collection(actors),
+        backgroundImage,
         zones: collection(zones)
       }
     })
   );
 }
+
+function mockBackgroundImageLuminance(pixel: [number, number, number]) {
+  class MockImage extends EventTarget {
+    naturalHeight = 1;
+    naturalWidth = 1;
+
+    set src(_value: string) {
+      queueMicrotask(() => this.dispatchEvent(new Event("load")));
+    }
+  }
+
+  vi.stubGlobal("Image", MockImage);
+  vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue({
+    drawImage: vi.fn(),
+    getImageData: () => ({ data: [...pixel, 255] })
+  } as unknown as CanvasRenderingContext2D);
+}
+
+afterEach(() => {
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+});
 
 function dataTransfer() {
   const data = new Map<string, string>();
@@ -132,6 +166,11 @@ describe("ZonelessActorPanel", () => {
       name: "Zoneless actors"
     });
     expect(panel).toHaveTextContent("3");
+    expect(panel).toHaveClass("bg-transparent");
+    expect(panel).toHaveStyle({
+      borderColor: getReadableTextColor(CANVAS_BACKGROUND_COLOR),
+      color: getReadableTextColor(CANVAS_BACKGROUND_COLOR)
+    });
     expect(screen.queryByRole("button", { name: "Aegis" })).not.toBeInTheDocument();
 
     await user.click(
@@ -162,11 +201,11 @@ describe("ZonelessActorPanel", () => {
     await user.click(
       screen.getByRole("button", { name: "Expand zoneless actors" })
     );
-    await user.click(screen.getByRole("checkbox", { name: "Group by faction" }));
 
     const panel = screen.getByRole("complementary", {
       name: "Zoneless actors"
     });
+    expect(screen.getByRole("checkbox", { name: "Group by faction" })).toBeChecked();
     expect(
       within(panel).getAllByRole("heading").map((heading) => heading.textContent)
     ).toEqual(["Hero", "Neutral", "Enemy"]);
@@ -189,6 +228,60 @@ describe("ZonelessActorPanel", () => {
 
     expect(screen.getByText("Aegis")).toHaveStyle("color: #ffffff");
     expect(screen.getByText("Boulder")).toHaveStyle("color: #111827");
+  });
+
+  it("uses the sampled background image luminance for collapsed panel colors", async () => {
+    const user = userEvent.setup();
+    let backgroundPixel: [number, number, number] = [0, 0, 0];
+    mockBackgroundImageLuminance(backgroundPixel);
+
+    renderApp();
+    act(() => {
+      seedEncounter(
+        [actor("actor-a", "Aegis")],
+        [],
+        {
+          dataUrl: "data:image/png;base64,dark",
+          mediaType: "image/png",
+          name: "dark.png"
+        }
+      );
+      store.dispatch(setActiveTool("actor"));
+    });
+
+    const panel = screen.getByRole("complementary", {
+      name: "Zoneless actors"
+    });
+    await waitFor(() => {
+      expect(panel).toHaveStyle({ color: "#ffffff" });
+    });
+
+    backgroundPixel[0] = 255;
+    backgroundPixel[1] = 255;
+    backgroundPixel[2] = 255;
+    act(() => {
+      const encounter = store.getState().encounter.present;
+      store.dispatch(
+        commitEncounterChange({
+          action: createEncounterActionRecord("test.background.replace"),
+          nextEncounter: {
+            ...encounter,
+            backgroundImage: {
+              ...encounter.backgroundImage!,
+              dataUrl: "data:image/png;base64,light"
+            }
+          }
+        })
+      );
+    });
+
+    await waitFor(() => {
+      expect(panel).toHaveStyle({ color: "#111827" });
+    });
+
+    await user.click(
+      screen.getByRole("button", { name: "Expand zoneless actors" })
+    );
   });
 
   it("moves selected panel actors into a zone and restores them with undo/redo", async () => {
@@ -319,17 +412,31 @@ describe("ZonelessActorPanel", () => {
     const panel = screen.getByRole("complementary", {
       name: "Zoneless actors"
     });
-    const resizeHandle = screen.getByRole("button", {
-      name: "Resize zoneless actors panel"
+    const rightResizeHandle = screen.getByRole("button", {
+      name: "Resize zoneless actors panel right edge"
     });
-    fireEvent.mouseDown(resizeHandle, { clientX: 0, clientY: 0 });
-    fireEvent.mouseMove(window, { clientX: 80, clientY: 40 });
+    fireEvent.mouseDown(rightResizeHandle, { clientX: 0, clientY: 0 });
+    fireEvent.mouseMove(window, { clientX: 80, clientY: 0 });
+    fireEvent.mouseUp(window);
+
+    const leftResizeHandle = screen.getByRole("button", {
+      name: "Resize zoneless actors panel left edge"
+    });
+    fireEvent.mouseDown(leftResizeHandle, { clientX: 0, clientY: 0 });
+    fireEvent.mouseMove(window, { clientX: -24, clientY: 0 });
+    fireEvent.mouseUp(window);
+
+    const topResizeHandle = screen.getByRole("button", {
+      name: "Resize zoneless actors panel top edge"
+    });
+    fireEvent.mouseDown(topResizeHandle, { clientX: 0, clientY: 0 });
+    fireEvent.mouseMove(window, { clientX: 0, clientY: -40 });
     fireEvent.mouseUp(window);
 
     expect(
       screen.getByRole("button", { name: "Reset zoneless actors panel size" })
     ).toBeInTheDocument();
-    expect(panel).toHaveStyle({ height: "280px", width: "784px" });
+    expect(panel).toHaveStyle({ height: "280px", width: "808px" });
 
     await user.click(
       screen.getByRole("button", { name: "Reset zoneless actors panel size" })

@@ -13,6 +13,7 @@ import {
   drawCanvasBackgroundImage,
   getAverageCanvasLuminance,
   getFallbackCanvasLuminance,
+  sampleCanvasBackgroundLuminance,
   sampleZoneBackgroundLuminance,
   usesBackgroundLuminanceForZoneName
 } from "./canvasLuminance";
@@ -20,12 +21,21 @@ import {
 type BackgroundImage = RootState["encounter"]["present"]["backgroundImage"];
 type ZoneCollection = RootState["encounter"]["present"]["zones"];
 
-export function useBackgroundLuminanceByZoneId(
+export type CanvasBackgroundLuminance = {
+  byZoneId: Record<string, number>;
+  canvas: number;
+};
+
+export function useCanvasBackgroundLuminance(
   backgroundImage: BackgroundImage,
   zones: ZoneCollection
-): Record<string, number> {
-  const [backgroundLuminanceByZoneId, setBackgroundLuminanceByZoneId] =
-    useState<Record<string, number>>({});
+): CanvasBackgroundLuminance {
+  const fallbackLuminance = getFallbackCanvasLuminance();
+  const [backgroundLuminance, setBackgroundLuminance] =
+    useState<CanvasBackgroundLuminance>({
+      byZoneId: {},
+      canvas: fallbackLuminance
+    });
 
   useEffect(() => {
     const backgroundTextZones = zones.allIds
@@ -35,19 +45,15 @@ export function useBackgroundLuminanceByZoneId(
           Boolean(zone) && usesBackgroundLuminanceForZoneName(zone)
       );
 
-    if (backgroundTextZones.length === 0) {
-      setBackgroundLuminanceByZoneId({});
-      return;
-    }
-
-    const fallbackLuminance = getFallbackCanvasLuminance();
+    const fallbackByZoneId = Object.fromEntries(
+      backgroundTextZones.map((zone) => [zone.id, fallbackLuminance])
+    );
 
     if (!backgroundImage) {
-      setBackgroundLuminanceByZoneId(
-        Object.fromEntries(
-          backgroundTextZones.map((zone) => [zone.id, fallbackLuminance])
-        )
-      );
+      setBackgroundLuminance({
+        byZoneId: fallbackByZoneId,
+        canvas: fallbackLuminance
+      });
       return;
     }
 
@@ -56,11 +62,10 @@ export function useBackgroundLuminanceByZoneId(
 
     image.addEventListener("error", () => {
       if (!cancelled) {
-        setBackgroundLuminanceByZoneId(
-          Object.fromEntries(
-            backgroundTextZones.map((zone) => [zone.id, fallbackLuminance])
-          )
-        );
+        setBackgroundLuminance({
+          byZoneId: fallbackByZoneId,
+          canvas: fallbackLuminance
+        });
       }
     });
 
@@ -76,6 +81,10 @@ export function useBackgroundLuminanceByZoneId(
       const context = canvas.getContext("2d", { willReadFrequently: true });
 
       if (!context) {
+        setBackgroundLuminance({
+          byZoneId: fallbackByZoneId,
+          canvas: fallbackLuminance
+        });
         return;
       }
 
@@ -89,7 +98,10 @@ export function useBackgroundLuminanceByZoneId(
       );
 
       if (!cancelled) {
-        setBackgroundLuminanceByZoneId(luminanceByZoneId);
+        setBackgroundLuminance({
+          byZoneId: luminanceByZoneId,
+          canvas: sampleCanvasBackgroundLuminance(context)
+        });
       }
     });
     image.src = backgroundImage.dataUrl;
@@ -99,7 +111,7 @@ export function useBackgroundLuminanceByZoneId(
     };
   }, [backgroundImage, zones.allIds, zones.byId]);
 
-  return backgroundLuminanceByZoneId;
+  return backgroundLuminance;
 }
 
 export function usePolygonDraftBackgroundLuminance(

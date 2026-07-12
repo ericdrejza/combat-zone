@@ -195,9 +195,12 @@
   - Selected actors can be dragged into zones; invalid panel drops leave them
     zoneless without a history entry.
   - Actors can be dragged from zones back into the panel.
-  - The panel supports horizontal and vertical resizing with a reset-size
-    control.
-  - Actor name text uses luminance-derived contrast colors.
+  - The panel supports horizontal and vertical resizing from its left, right,
+    and top edges with a reset-size control.
+  - The collapsed panel is transparent and uses luminance-derived contrast
+    colors for its border and controls.
+  - Actor name text uses luminance-derived contrast colors, including selected
+    canvas labels based on their containing zone fill.
 - [x] Strip uploaded token file extensions when creating library token names;
   actors inherit those token names when created.
 - [x] With the actor tool selected, you may click on a zone to target it

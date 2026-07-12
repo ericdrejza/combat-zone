@@ -109,6 +109,26 @@ export function sampleZoneBackgroundLuminance(
   );
 }
 
+export function createCanvasBackgroundSamplePoints(): LayoutPoint[] {
+  const xPositions = [0.25, 0.5, 0.75].map(
+    (ratio) => CANVAS_WIDTH * ratio
+  );
+  const yPositions = [CANVAS_HEIGHT - 60, CANVAS_HEIGHT - 24];
+
+  return yPositions.flatMap((y) =>
+    xPositions.map((x) => ({ x, y }))
+  );
+}
+
+export function sampleCanvasBackgroundLuminance(
+  context: CanvasRenderingContext2D
+): number {
+  return getAverageCanvasLuminance(
+    context,
+    createCanvasBackgroundSamplePoints()
+  );
+}
+
 export function getFallbackCanvasLuminance(): number {
   return getHexLuminance(CANVAS_BACKGROUND_COLOR);
 }
