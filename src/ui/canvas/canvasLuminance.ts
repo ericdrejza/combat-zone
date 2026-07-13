@@ -34,6 +34,21 @@ export function usesBackgroundLuminanceForZoneName(zone: Zone): boolean {
   );
 }
 
+/**
+ * Keeps labels associated with a zone readable against the same visual
+ * background used by the zone name itself.
+ */
+export function getZoneNameTextColor(
+  zone: Zone,
+  backgroundLuminance?: number
+): string {
+  return usesBackgroundLuminanceForZoneName(zone)
+    ? getTextColorForLuminance(
+        backgroundLuminance ?? getFallbackCanvasLuminance()
+      )
+    : getReadableTextColor(zone.colorFill);
+}
+
 export function createDeterministicSamplePoints(
   polygon: LayoutPoint[],
   sampleCount: number
