@@ -425,6 +425,8 @@ export function CanvasShell() {
               ? (
                   <ActorLayer
                     actorDrag={actorDrag}
+                    backgroundLuminanceByZoneId={backgroundLuminance.byZoneId}
+                    canvasBackgroundLuminance={backgroundLuminance.canvas}
                     encounter={encounter}
                     onActorMouseDown={handleActorMouseDown}
                     onActorMouseEnter={setHoveredActorId}
