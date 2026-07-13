@@ -133,7 +133,7 @@ export function ZonelessActorPanel({
   return (
     <aside
       aria-label="Zoneless actors"
-      className={`absolute bottom-3 left-1/2 z-20 flex -translate-x-1/2 flex-col overflow-hidden border p-2 ${
+      className={`min-w-min absolute bottom-3 left-1/2 z-20 flex -translate-x-1/2 flex-col overflow-hidden border p-2 ${
         expanded
           ? "rounded-2xl border-canvas-line bg-canvas-panel/10 shadow-lg backdrop-blur"
           : "rounded-lg bg-transparent"
@@ -162,7 +162,6 @@ export function ZonelessActorPanel({
               style={expanded 
                 ? {} 
                 : {
-                  // background: "rgba(0, 0, 0, 0.0)",
                   color: contrastColor,
                   outline: `1px solid ${contrastColor}`
                 }
@@ -217,7 +216,7 @@ export function ZonelessActorPanel({
               Drop actors here to remove them from the canvas.
             </p>
           ) : groupByFaction ? (
-            <div className="flex gap-10">
+            <div className="flex gap-4">
               {groupedActors.map((group) => (
                 <section className="border-x" aria-label={`${group.label} zoneless actors`} key={group.id}
                   style={{borderColor: contrastColor}}
@@ -225,7 +224,7 @@ export function ZonelessActorPanel({
                   <h3 className="px-2 text-[10px] font-semibold uppercase tracking-wide">
                     {group.label}
                   </h3>
-                  <div className="flex flex-row flex-wrap gap-1">
+                  <div className="flex flex-row flex-wrap p-2 gap-1">
                     {group.actors.map((actor) => (
                       <ZonelessActorPanelToken
                         actor={actor}

@@ -8,6 +8,7 @@ import {
   getHexLuminance,
   getReadableTextColor,
   getTextColorForLuminance,
+  getZoneNameTextColor,
   sampleCanvasBackgroundLuminance,
   usesBackgroundLuminanceForZoneName
 } from './canvasLuminance';
@@ -84,6 +85,18 @@ describe('canvas luminance', () => {
     expect(
       usesBackgroundLuminanceForZoneName(createZone({ opacity: 0.3 }))
     ).toBe(false);
+  });
+
+  it('uses the same contrast source for actor labels as their zone names', () => {
+    const roundZone = createZone({
+      colorFill: '#000000',
+      shape: 'circle'
+    });
+    const opaqueZone = createZone({ colorFill: '#ffffff' });
+
+    expect(getZoneNameTextColor(roundZone, 255)).toBe('#111827');
+    expect(getZoneNameTextColor(roundZone, 0)).toBe('#ffffff');
+    expect(getZoneNameTextColor(opaqueZone, 0)).toBe('#111827');
   });
 
   it('averages canvas pixel luminance across sample points', () => {

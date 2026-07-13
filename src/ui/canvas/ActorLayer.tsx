@@ -5,11 +5,16 @@ import { ACTOR_LAYOUT_GROUP_COLORS } from "../../entities/actor/actorVisuals";
 import type { RootState } from "../../store/store";
 import type { ActorDragState } from "./canvasInteractionTypes";
 import { getActorRenderPlacements } from "./actorCanvasLayout";
-import { CANVAS_BACKGROUND_COLOR } from "./canvasConstants";
-import { getReadableTextColor } from "./canvasLuminance";
+import {
+  getReadableTextColor,
+  getTextColorForLuminance,
+  getZoneNameTextColor
+} from "./canvasLuminance";
 
 type ActorLayerProps = {
   actorDrag: ActorDragState | null;
+  backgroundLuminanceByZoneId: Record<string, number>;
+  canvasBackgroundLuminance: number;
   showFactionOutlines: boolean;
   encounter: RootState["encounter"]["present"];
   onActorMouseDown: (
@@ -39,6 +44,8 @@ function getDraggedPoint(
 
 export function ActorLayer({
   actorDrag,
+  backgroundLuminanceByZoneId,
+  canvasBackgroundLuminance,
   showFactionOutlines,
   encounter,
   onActorMouseDown,
@@ -52,10 +59,13 @@ export function ActorLayer({
       selection.selectedEntityType === "actor" &&
       selection.selectedIds.includes(actor.id);
     const colors = ACTOR_LAYOUT_GROUP_COLORS[actor.layoutGroup];
-    const zoneFill = encounter.zones.byId[actor.currentZoneId]?.colorFill;
-    const selectedActorTextColor = getReadableTextColor(
-      zoneFill ?? CANVAS_BACKGROUND_COLOR
-    );
+    const actorZone = encounter.zones.byId[actor.currentZoneId];
+    const selectedActorTextColor = actorZone
+      ? getZoneNameTextColor(
+          actorZone,
+          backgroundLuminanceByZoneId[actorZone.id]
+        )
+      : getTextColorForLuminance(canvasBackgroundLuminance);
     const clipId = `${actor.id}-clip`;
     const innerRadius = Math.max(radius - 3, 1);
 
@@ -128,7 +138,8 @@ export function ActorLayer({
         {selected ? (
           actor.shape === "rectangle" ? (
             <rect
-              className="pointer-events-none fill-none stroke-canvas-ink"
+              className="pointer-events-none fill-none"
+              stroke={selectedActorTextColor}
               height={(radius + 5) * 2}
               rx="8"
               strokeDasharray="5 5"
@@ -139,7 +150,8 @@ export function ActorLayer({
             />
           ) : (
             <circle
-              className="pointer-events-none fill-none stroke-canvas-ink"
+              className="pointer-events-none fill-none"
+              stroke={selectedActorTextColor}
               r={radius + 5}
               strokeDasharray="5 5"
               strokeWidth="2"

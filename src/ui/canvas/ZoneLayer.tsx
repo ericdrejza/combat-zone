@@ -3,15 +3,7 @@ import type { MouseEvent } from "react";
 import type { LayoutPoint } from "../../core/layout/types";
 import type { Zone } from "../../entities/zone/types";
 import type { RootState } from "../../store/store";
-import {
-  CANVAS_BACKGROUND_COLOR,
-  LOW_ZONE_OPACITY_THRESHOLD
-} from "./canvasConstants";
-import {
-  getHexLuminance,
-  getReadableTextColor,
-  getTextColorForLuminance
-} from "./canvasLuminance";
+import { getZoneNameTextColor } from "./canvasLuminance";
 import {
   getZoneNamePosition,
   getZoneResizeHandles,
@@ -57,15 +49,10 @@ export function ZoneLayer({
     const actorTargeted = actorTargetZoneId === zone.id;
     const resizeHandles = getZoneResizeHandles(zone, polygon);
     const namePosition = getZoneNamePosition(zone, polygon);
-    const zoneNameTextColor =
-      zone.shape === "circle" ||
-      zone.shape === "hexagon" ||
-      zone.opacity < LOW_ZONE_OPACITY_THRESHOLD
-        ? getTextColorForLuminance(
-            backgroundLuminanceByZoneId[zone.id] ??
-              getHexLuminance(CANVAS_BACKGROUND_COLOR)
-          )
-        : getReadableTextColor(zone.colorFill);
+    const zoneNameTextColor = getZoneNameTextColor(
+      zone,
+      backgroundLuminanceByZoneId[zone.id]
+    );
 
     return (
       <g key={zone.id}>
