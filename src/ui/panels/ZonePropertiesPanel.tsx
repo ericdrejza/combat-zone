@@ -1,14 +1,14 @@
 import { useState } from "react";
 
 import { calculateZoneLayout } from "../../core/layout/encounterLayout";
-import { ZoneColorSection } from "./zoneProperties/ZoneColorSection";
-import { ZoneDeleteButton } from "./zoneProperties/ZoneDeleteButton";
-import { ZoneLayoutDescriptor } from "./zoneProperties/ZoneLayoutDescriptor";
-import { ZoneLayoutSection } from "./zoneProperties/ZoneLayoutSection";
-import { ZoneNameSection } from "./zoneProperties/ZoneNameSection";
-import { ZonePropertiesHeaderActions } from "./zoneProperties/ZonePropertiesHeaderActions";
-import { ZoneTagsSection } from "./zoneProperties/ZoneTagsSection";
-import { useZonePropertiesActions } from "./zoneProperties/useZonePropertiesActions";
+import { ZoneColorSection } from "./zone_properties/ZoneColorSection";
+import { ZoneDeleteButton } from "./zone_properties/ZoneDeleteButton";
+import { ZoneLayoutDescriptor } from "./zone_properties/ZoneLayoutDescriptor";
+import { ZoneLayoutSection } from "./zone_properties/ZoneLayoutSection";
+import { ZoneNameSection } from "./zone_properties/ZoneNameSection";
+import { ZonePropertiesHeaderActions } from "./zone_properties/ZonePropertiesHeaderActions";
+import { ZoneTagsSection } from "./zone_properties/ZoneTagsSection";
+import { useZonePropertiesActions } from "./zone_properties/useZonePropertiesActions";
 
 export { ZonePropertiesHeaderActions };
 
