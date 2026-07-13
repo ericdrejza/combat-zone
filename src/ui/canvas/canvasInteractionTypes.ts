@@ -47,6 +47,7 @@ export type CanvasInteractionState = {
   actorPaintBrush: RootState["interaction"]["actorPaintBrush"];
   actorTool: RootState["interaction"]["actorTool"];
   boxSelection: LocalBoxSelectionState | null;
+  canvasRef: MutableRefValue<SVGSVGElement | null>;
   dispatch: AppDispatch;
   encounter: RootState["encounter"]["present"];
   lastZoneOpacity: RootState["interaction"]["lastZoneOpacity"];

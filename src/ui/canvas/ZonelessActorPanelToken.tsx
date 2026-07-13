@@ -28,13 +28,15 @@ export function ZonelessActorPanelToken({
   activeToolId,
   selectedIds,
   onSelect,
-  onDragStart
+  onDragStart,
+  onDragEnd
 }: {
   actor: Actor;
   activeToolId: RootState["interaction"]["activeToolId"];
   selectedIds: string[];
   onSelect: (actorId: string, event: MouseEvent<HTMLButtonElement>) => void;
   onDragStart: (actorId: string, event: DragEvent<HTMLButtonElement>) => void;
+  onDragEnd: () => void;
 }) {
   const selected = selectedIds.includes(actor.id);
   const colors = ACTOR_LAYOUT_GROUP_COLORS[actor.layoutGroup];
@@ -47,6 +49,7 @@ export function ZonelessActorPanelToken({
       }`}
       draggable={activeToolId === "actor" || activeToolId === "select"}
       onClick={(event) => onSelect(actor.id, event)}
+      onDragEnd={onDragEnd}
       onDragStart={(event) => onDragStart(actor.id, event)}
       type="button"
     >

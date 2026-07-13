@@ -397,6 +397,39 @@ describe("ZonelessActorPanel", () => {
     ).toBe(ZONELESS_ACTOR_ZONE_ID);
   });
 
+  it("keeps tracking a canvas actor while the cursor crosses the zoneless panel", () => {
+    renderApp();
+    act(() => {
+      seedEncounter([{
+        ...actor("actor-a", "Aegis"),
+        currentZoneId: "zone-target"
+      }], [zone()]);
+      store.dispatch(setActiveTool("actor"));
+    });
+
+    const canvas = getCanvas();
+    mockCanvasBounds(canvas);
+    const canvasActor = screen.getByLabelText("Aegis");
+    const panel = screen.getByRole("complementary", {
+      name: "Zoneless actors"
+    });
+
+    fireEvent.mouseDown(canvasActor, { button: 0, clientX: 120, clientY: 120 });
+    fireEvent.mouseMove(panel, { clientX: 420, clientY: 420 });
+
+    const dragOverlay = document.querySelector('[data-drag-overlay="actor"]');
+
+    expect(dragOverlay).toHaveClass("z-30");
+    expect(
+      dragOverlay?.querySelector('[data-entity-id="actor-a"]')
+    ).toBeInTheDocument();
+    fireEvent.mouseUp(panel);
+
+    expect(
+      store.getState().encounter.present.actors.byId["actor-a"]?.currentZoneId
+    ).toBe(ZONELESS_ACTOR_ZONE_ID);
+  });
+
   it("resizes the expanded panel and exposes a reset control", async () => {
     const user = userEvent.setup();
 

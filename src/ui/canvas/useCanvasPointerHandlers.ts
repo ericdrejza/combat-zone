@@ -25,6 +25,7 @@ export function useCanvasPointerHandlers(input: PointerHandlerInput) {
     activeToolId,
     actorDrag,
     boxSelection,
+    canvasRef,
     dispatch,
     encounter,
     selection,
@@ -53,6 +54,36 @@ export function useCanvasPointerHandlers(input: PointerHandlerInput) {
       setZoneDrag(null);
     }
   }, [activeToolId, setShapeDraft, setVertexDrag, setZoneDraftPoints, setZoneDrag]);
+
+  useEffect(() => {
+    if (!actorDrag) {
+      return;
+    }
+
+    function handleWindowMouseMove(event: globalThis.MouseEvent) {
+      const svg = canvasRef.current;
+
+      if (!svg) {
+        return;
+      }
+
+      const current = toSvgPoint(event, svg);
+
+      setActorDrag((drag) =>
+        drag
+          ? {
+              ...drag,
+              current,
+              hasMoved: drag.hasMoved || distance(drag.start, current) >= 1
+            }
+          : null
+      );
+    }
+
+    window.addEventListener("mousemove", handleWindowMouseMove);
+
+    return () => window.removeEventListener("mousemove", handleWindowMouseMove);
+  }, [actorDrag, canvasRef, setActorDrag]);
 
   const getDisplayedPolygon = (zone: Zone) =>
     getDisplayedZonePolygon(zone, zoneDrag, vertexDrag);

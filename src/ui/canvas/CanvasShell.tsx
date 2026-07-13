@@ -73,6 +73,7 @@ export function CanvasShell() {
   const [boxSelection, setBoxSelection] = useState<LocalBoxSelectionState | null>(
     null
   );
+  const canvasRef = useRef<SVGSVGElement | null>(null);
   const suppressNextCanvasClickRef = useRef(false);
   const suppressNextCanvasClickUnconditionallyRef = useRef(false);
   const suppressNextCanvasClickPointRef = useRef<LayoutPoint | null>(null);
@@ -151,6 +152,7 @@ export function CanvasShell() {
     actorPaintBrush,
     actorTool,
     boxSelection,
+    canvasRef,
     dispatch,
     encounter,
     lastZoneOpacity,
@@ -227,6 +229,12 @@ export function CanvasShell() {
         commitEncounterChange({
           action: prepared.action,
           nextEncounter: prepared.nextEncounter
+        })
+      );
+      dispatch(
+        selectEntity({
+          entityType: "actor",
+          ids: [actorId]
         })
       );
     }
@@ -388,6 +396,7 @@ export function CanvasShell() {
       <svg
         aria-label="SVG encounter workspace"
         className={`h-full min-h-0 w-full bg-[${CANVAS_BACKGROUND_COLOR}]`}
+        ref={canvasRef}
         onClick={handleCanvasClick}
         onContextMenu={handleCanvasContextMenu}
         onDragOver={handleCanvasDragOver}
@@ -467,6 +476,27 @@ export function CanvasShell() {
         onActorDropToZoneless={handleActorDropToZoneless}
         selection={selection}
       />
+      {actorDrag ? (
+        <svg
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 z-30 h-full w-full"
+          data-drag-overlay="actor"
+          viewBox={`0 0 ${CANVAS_WIDTH} ${CANVAS_HEIGHT}`}
+        >
+          <ActorLayer
+            actorDrag={actorDrag}
+            backgroundLuminanceByZoneId={backgroundLuminance.byZoneId}
+            canvasBackgroundLuminance={backgroundLuminance.canvas}
+            dragOverlay
+            encounter={encounter}
+            onActorMouseDown={() => undefined}
+            onActorMouseEnter={() => undefined}
+            onActorMouseLeave={() => undefined}
+            selection={selection}
+            showFactionOutlines={showFactionOutlines}
+          />
+        </svg>
+      ) : null}
     </section>
   );
 }
