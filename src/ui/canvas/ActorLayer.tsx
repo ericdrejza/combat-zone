@@ -15,6 +15,7 @@ type ActorLayerProps = {
   actorDrag: ActorDragState | null;
   backgroundLuminanceByZoneId: Record<string, number>;
   canvasBackgroundLuminance: number;
+  dragOverlay?: boolean;
   showFactionOutlines: boolean;
   encounter: RootState["encounter"]["present"];
   onActorMouseDown: (
@@ -46,6 +47,7 @@ export function ActorLayer({
   actorDrag,
   backgroundLuminanceByZoneId,
   canvasBackgroundLuminance,
+  dragOverlay = false,
   showFactionOutlines,
   encounter,
   onActorMouseDown,
@@ -53,7 +55,11 @@ export function ActorLayer({
   onActorMouseLeave,
   selection
 }: ActorLayerProps) {
-  return getActorRenderPlacements(encounter).map(({ actor, point, radius }) => {
+  return getActorRenderPlacements(encounter)
+    .filter(({ actor }) =>
+      !dragOverlay || actorDrag?.actorIds.includes(actor.id)
+    )
+    .map(({ actor, point, radius }) => {
     const renderedPoint = getDraggedPoint(actor.id, point, actorDrag);
     const selected =
       selection.selectedEntityType === "actor" &&
@@ -66,10 +72,10 @@ export function ActorLayer({
           backgroundLuminanceByZoneId[actorZone.id]
         )
       : getTextColorForLuminance(canvasBackgroundLuminance);
-    const clipId = `${actor.id}-clip`;
+    const clipId = `${actor.id}-clip${dragOverlay ? "-drag-overlay" : ""}`;
     const innerRadius = Math.max(radius - 3, 1);
 
-    return (
+      return (
       <g
         key={actor.id}
         aria-label={actor.name}
@@ -191,6 +197,6 @@ export function ActorLayer({
           </text>
         ) : null}
       </g>
-    );
-  });
+      );
+    });
 }

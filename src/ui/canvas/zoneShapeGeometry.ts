@@ -40,9 +40,7 @@ export function distance(first: LayoutPoint, second: LayoutPoint): number {
 }
 
 export function toSvgPoint(
-  event:
-    | DragEvent<SVGSVGElement>
-    | MouseEvent<SVGSVGElement | SVGCircleElement>,
+  event: Pick<globalThis.MouseEvent, "clientX" | "clientY">,
   svg: SVGSVGElement
 ): LayoutPoint {
   const bounds = svg.getBoundingClientRect();

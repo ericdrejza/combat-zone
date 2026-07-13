@@ -1,11 +1,13 @@
 import { ChevronLeft, FileImage, Folder, Link } from "lucide-react";
 import type { DragEvent } from "react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
+import { setActorDragImage } from "../../core/rendering/actorDragPreview";
 import { createEncounterActionRecord } from "../../core/history/createEncounterActionRecord";
 import { prepareValidatedEncounterChange } from "../../core/validation/validatedEncounterChange";
 import { createActor } from "../../entities/actor/actorMutations";
+import { clearSelection } from "../../interaction/interactionState";
 import { resolveLibraryAsset } from "../../library/librarySlice";
 import type { LibraryNode, LibrarySectionId } from "../../library/types";
 import type { ToolId } from "../../interaction/tools/toolRegistry";
@@ -34,10 +36,15 @@ export function LibraryPanel() {
     (state: RootState) => state.interaction.activeToolId
   );
   const actorTool = useSelector((state: RootState) => state.interaction.actorTool);
+  const dragPreviewCleanupRef = useRef<(() => void) | null>(null);
   const sectionId = getPanelSectionId(activeToolId);
   const [currentFolderBySection, setCurrentFolderBySection] = useState<
     Partial<Record<LibrarySectionId, string>>
   >({});
+
+  useEffect(() => {
+    return () => dragPreviewCleanupRef.current?.();
+  }, []);
 
   if (!sectionId) {
     return (
@@ -91,9 +98,29 @@ export function LibraryPanel() {
       return;
     }
 
+    const asset = resolveLibraryAsset(section, node.id);
+
+    if (!asset) {
+      return;
+    }
+
+    dispatch(clearSelection());
     event.dataTransfer.effectAllowed = "copy";
     event.dataTransfer.setData(LIBRARY_NODE_DRAG_TYPE, node.id);
     event.dataTransfer.setData("text/plain", node.id);
+    dragPreviewCleanupRef.current?.();
+    dragPreviewCleanupRef.current = setActorDragImage(event.dataTransfer, {
+      image: asset.dataUrl,
+      layoutGroup: actorTool.layoutGroup,
+      name: node.name,
+      shape: actorTool.shape,
+      size: actorTool.size
+    });
+  }
+
+  function finishLibraryDrag() {
+    dragPreviewCleanupRef.current?.();
+    dragPreviewCleanupRef.current = null;
   }
 
   function createActorInTargetZone(node: LibraryNode) {
@@ -190,6 +217,7 @@ export function LibraryPanel() {
               isBackground ? applyBackground(node) : createActorInTargetZone(node)
             }
             onDragStart={(event) => startLibraryDrag(event, node)}
+            onDragEnd={finishLibraryDrag}
             type="button"
           >
             <span className="flex h-16 w-16 flex-none items-center justify-center overflow-hidden rounded-lg border border-canvas-line bg-white">
