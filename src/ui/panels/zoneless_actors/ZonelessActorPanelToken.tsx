@@ -1,9 +1,9 @@
 import type { DragEvent, MouseEvent } from "react";
 
-import { ACTOR_LAYOUT_GROUP_COLORS, ACTOR_SIZE_MULTIPLIERS } from "../../entities/actor/actorVisuals";
-import type { Actor } from "../../entities/actor/types";
-import type { RootState } from "../../store/store";
-import { getReadableTextColor } from "./canvasLuminance";
+import { ACTOR_LAYOUT_GROUP_COLORS, ACTOR_SIZE_MULTIPLIERS } from "../../../entities/actor/actorVisuals";
+import type { Actor } from "../../../entities/actor/types";
+import type { RootState } from "../../../store/store";
+import { getReadableTextColor } from "../../canvas/canvasLuminance";
 
 function actorSizeClass(actor: Actor): string {
   const size = ACTOR_SIZE_MULTIPLIERS[actor.size ?? "medium"];

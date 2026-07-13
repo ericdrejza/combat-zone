@@ -30,8 +30,8 @@ import { ZoneLayer } from "./ZoneLayer";
 import {
   hasZonelessActorDrag,
   readZonelessActorIds
-} from "./zonelessActorDrag";
-import { ZonelessActorPanel } from "./ZonelessActorPanel";
+} from "../panels/zoneless_actors/zonelessActorDrag";
+import { ZonelessActorPanel } from "../panels/zoneless_actors/ZonelessActorPanel";
 import { type LocalBoxSelectionState, toSvgPoint } from "./zoneGeometry";
 import { findZoneIdAtPoint } from "./actorCanvasLayout";
 import { useActorPaintBrush } from "./useActorPaintBrush";

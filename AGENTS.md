@@ -128,7 +128,8 @@ src/
     canvas/           # canvas shell, render-order composition (per documentation/DESIGN.md §13)
     library/          # library panel and modal UI
     panels/           # PropertiesPanel, InitiativePanel, ValidationPanel, LibraryPanel
-      zoneProperties/  # zone properties subpanels and controls
+      zone_properties/ # zone properties subpanels and controls
+      zoneless_actors/ # zoneless actors panel
     toolbar/          # top-level toolbar and tool buttons
       background/     # background tool controls and file handling
       zone/           # zone tool controls and mode switching
@@ -143,6 +144,8 @@ canvas regardless of entity (tool switching, selection modifiers) →
 `interaction/`. If it's chrome around the canvas (panels, toolbar) → `ui/`.
 
 Do not read entire directories within node_modules as that is expensive.
+
+Use snake_case when creating multi-word directory names.
 
 ## DEFINITION OF DONE (per feature)
 
