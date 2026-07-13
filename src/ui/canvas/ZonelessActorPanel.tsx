@@ -1,5 +1,5 @@
 import type { DragEvent, MouseEvent } from "react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ChevronDown,
   ChevronUp,
@@ -7,6 +7,7 @@ import {
   UsersRound
 } from "lucide-react";
 
+import { setActorDragImage } from "../../core/rendering/actorDragPreview";
 import { ZONELESS_ACTOR_ZONE_ID } from "../../core/encounter/types";
 import type { Actor, ActorLayoutGroup } from "../../entities/actor/types";
 import { selectEntity } from "../../interaction/interactionState";
@@ -77,6 +78,7 @@ export function ZonelessActorPanel({
   const dispatch = useDispatch();
   const [expanded, setExpanded] = useState(false);
   const [groupByFaction, setGroupByFaction] = useState(true);
+  const dragPreviewCleanupRef = useRef<(() => void) | null>(null);
   const {
     isResized,
     isResizing,
@@ -95,6 +97,10 @@ export function ZonelessActorPanel({
     zonelessActors.some((actor) => actor.id === actorId)
   );
   const contrastColor = getTextColorForLuminance(canvasBackgroundLuminance);
+
+  useEffect(() => {
+    return () => dragPreviewCleanupRef.current?.();
+  }, []);
 
   function handleSelect(
     actorId: string,
@@ -126,14 +132,32 @@ export function ZonelessActorPanel({
       ? selectedZonelessIds
       : [actorId];
 
+    const actor = zonelessActors.find((candidate) => candidate.id === actorId);
+
+    if (actor) {
+      dragPreviewCleanupRef.current?.();
+      dragPreviewCleanupRef.current = setActorDragImage(event.dataTransfer, {
+        image: actor.image,
+        layoutGroup: actor.layoutGroup,
+        name: actor.name,
+        shape: actor.shape,
+        size: actor.size
+      });
+    }
+
     event.dataTransfer.effectAllowed = "move";
     event.dataTransfer.setData(ZONELESS_ACTOR_DRAG_TYPE, actorIds.join(","));
+  }
+
+  function handleDragEnd() {
+    dragPreviewCleanupRef.current?.();
+    dragPreviewCleanupRef.current = null;
   }
 
   return (
     <aside
       aria-label="Zoneless actors"
-      className={`min-w-min absolute bottom-3 left-1/2 z-20 flex -translate-x-1/2 flex-col overflow-hidden border p-2 ${
+      className={`min-w-min absolute bottom-3 left-1/2 flex -translate-x-1/2 flex-col overflow-hidden border p-2 ${
         expanded
           ? "rounded-2xl border-canvas-line bg-canvas-panel/10 shadow-lg backdrop-blur"
           : "rounded-lg bg-transparent"
@@ -230,6 +254,7 @@ export function ZonelessActorPanel({
                         actor={actor}
                         activeToolId={activeToolId}
                         key={actor.id}
+                        onDragEnd={handleDragEnd}
                         onDragStart={handleDragStart}
                         onSelect={handleSelect}
                         selectedIds={selectedIds}
@@ -246,6 +271,7 @@ export function ZonelessActorPanel({
                   actor={actor}
                   activeToolId={activeToolId}
                   key={actor.id}
+                  onDragEnd={handleDragEnd}
                   onDragStart={handleDragStart}
                   onSelect={handleSelect}
                   selectedIds={selectedIds}

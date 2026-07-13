@@ -1,9 +1,114 @@
-import { fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import { renderApp } from "../../test/ui/renderApp";
+import { createEncounterState } from "../../core/encounter/createEncounterState";
+import { createEncounterActionRecord } from "../../core/history/createEncounterActionRecord";
+import { createActor } from "../../entities/actor/actorMutations";
+import { selectEntity, setActiveTool } from "../../interaction/interactionState";
+import { uploadImage } from "../../library/librarySlice";
+import { commitEncounterChange } from "../../store/encounterSlice";
+import { store } from "../../store/store";
+import { getCanvas, mockCanvasBounds, renderApp } from "../../test/ui/renderApp";
+
+function dataTransfer() {
+  const data = new Map<string, string>();
+  const types: string[] = [];
+
+  return {
+    dropEffect: "none",
+    effectAllowed: "none",
+    getData: (type: string) => data.get(type) ?? "",
+    setData: (type: string, value: string) => {
+      data.set(type, value);
+      types.push(type);
+    },
+    setDragImage: () => undefined,
+    types
+  };
+}
+
+function dropOnCanvas(
+  canvas: HTMLElement,
+  transfer: ReturnType<typeof dataTransfer>,
+  clientX: number,
+  clientY: number
+) {
+  const event = new Event("drop", { bubbles: true, cancelable: true });
+
+  Object.defineProperties(event, {
+    clientX: { value: clientX },
+    clientY: { value: clientY },
+    dataTransfer: { value: transfer }
+  });
+  canvas.dispatchEvent(event);
+}
 
 describe("LibraryPanel", () => {
+  it("deselects existing actors and selects an actor created by library drag", () => {
+    const transfer = dataTransfer();
+
+    renderApp();
+    act(() => {
+      const encounter = createActor(
+        createEncounterState({ id: "library-drag", name: "Library Drag" }),
+        {
+          currentZoneId: "zoneless",
+          id: "existing-actor",
+          name: "Existing Actor"
+        }
+      );
+
+      store.dispatch(
+        commitEncounterChange({
+          action: createEncounterActionRecord("test.seed"),
+          nextEncounter: encounter
+        })
+      );
+      store.dispatch(setActiveTool("actor"));
+      store.dispatch(
+        selectEntity({ entityType: "actor", ids: ["existing-actor"] })
+      );
+      store.dispatch(
+        uploadImage({
+          asset: {
+            dataUrl: "data:image/png;base64,scout",
+            mediaType: "image/png",
+            name: "Scout"
+          },
+          parentId: "tokens-root",
+          sectionId: "tokens"
+        })
+      );
+    });
+
+    const token = screen.getByRole("button", { name: "Scout" });
+    fireEvent.dragStart(token, { dataTransfer: transfer });
+
+    expect(store.getState().interaction.selection).toMatchObject({
+      selectedEntityType: null,
+      selectedIds: []
+    });
+
+    const canvas = getCanvas();
+    mockCanvasBounds(canvas);
+    fireEvent.dragOver(canvas, {
+      clientX: 700,
+      clientY: 500,
+      dataTransfer: transfer
+    });
+    dropOnCanvas(canvas, transfer, 700, 500);
+
+    const createdActor = Object.values(
+      store.getState().encounter.present.actors.byId
+    ).find((actor) => actor.name === "Scout");
+
+    expect(createdActor).toBeDefined();
+    expect(store.getState().interaction.selection).toMatchObject({
+      selectedEntityType: "actor",
+      selectedIds: [createdActor!.id]
+    });
+  });
+
   it("shows the current folder as the first panel body item", async () => {
     const user = userEvent.setup();
 
