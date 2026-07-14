@@ -63,7 +63,7 @@ describe("Toolbar", () => {
     expect(screen.getAllByRole("button", { name: "Background" })).toHaveLength(1);
     expect(screen.queryByRole("button", { name: "Engagement" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Delete" })).not.toBeInTheDocument();
-    expect(within(tools).getAllByRole("separator")).toHaveLength(3);
+    expect(within(tools).getAllByRole("separator")).toHaveLength(6);
   });
 
   it("opens the Asset Library modal from the Library toolbar button", async () => {
@@ -193,7 +193,7 @@ describe("Toolbar", () => {
     await user.click(screen.getByRole("button", { name: "Actor" }));
     await user.click(screen.getByRole("button", { name: "Create actor" }));
 
-    expect(screen.getByText("Drag actor to place")).toBeInTheDocument();
+    expect(screen.getByText("Drag actor to zone")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Create" })).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Cancel" }));
 
@@ -296,8 +296,8 @@ describe("Toolbar", () => {
     expect(store.getState().interaction.zoneShapeMode).toBe("circle");
     expect(screen.getByText("Zone shape: circle")).toBeInTheDocument();
     expect(
-      screen.queryByRole("radiogroup", { name: "Zone shape options" })
-    ).not.toBeInTheDocument();
+      screen.getByRole("radiogroup", { name: "Zone shape options" })
+    ).toBeInTheDocument();
   });
 
   it("adds and deletes a canvas background image from the Background toolbar menu", async () => {
@@ -350,5 +350,6 @@ describe("Toolbar", () => {
         screen.queryByLabelText("Canvas background image")
       ).not.toBeInTheDocument();
     });
+    expect(screen.getByRole("menuitem", { name: "Add" })).toBeInTheDocument();
   });
 });

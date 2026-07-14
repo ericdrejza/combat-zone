@@ -4,10 +4,16 @@ import type {
   ActorShape,
   ActorSize,
   ActorType
-} from "./types";
-import type { ActorZoneAssignment, EncounterState } from "../../core/encounter/types";
-import { ZONELESS_ACTOR_ZONE_ID } from "../../core/encounter/types";
-import type { EntityCollection, EntityId } from "../../core/state/entityCollection";
+} from './types';
+import type {
+  ActorZoneAssignment,
+  EncounterState
+} from '../../core/encounter/types';
+import { ZONELESS_ACTOR_ZONE_ID } from '../../core/encounter/types';
+import type {
+  EntityCollection,
+  EntityId
+} from '../../core/state/entityCollection';
 
 export type ActorImageInput = {
   dataUrl: string;
@@ -70,8 +76,8 @@ function removeEntity<TEntity extends { id: EntityId }>(
 function removeActorFromEngagements(
   state: EncounterState,
   actorId: EntityId
-): EncounterState["engagements"] {
-  const byId: EncounterState["engagements"]["byId"] = {};
+): EncounterState['engagements'] {
+  const byId: EncounterState['engagements']['byId'] = {};
   const allIds: EntityId[] = [];
 
   for (const engagementId of state.engagements.allIds) {
@@ -81,7 +87,9 @@ function removeActorFromEngagements(
       continue;
     }
 
-    const participantIds = engagement.participantIds.filter((id) => id !== actorId);
+    const participantIds = engagement.participantIds.filter(
+      (id) => id !== actorId
+    );
 
     if (participantIds.length < 2) {
       continue;
@@ -101,22 +109,22 @@ function removeActorFromEngagements(
 }
 
 export function stripFileExtension(fileName: string): string {
-  return fileName.replace(/\.[^./\\]+$/, "");
+  return fileName.replace(/\.[^./\\]+$/, '');
 }
 
 function getDefaultActorName(image?: ActorImageInput): string {
-  return image?.name ?? "New Actor";
+  return image?.name ?? 'Actor';
 }
 
 export function buildActor({
-  actorType = "creature",
+  actorType = 'creature',
   currentZoneId,
   id,
   image,
-  layoutGroup = "neutral",
+  layoutGroup = 'neutral',
   name,
-  shape = "circle",
-  size = "medium"
+  shape = 'circle',
+  size = 'medium'
 }: CreateActorInput): Actor {
   return {
     actorType,
