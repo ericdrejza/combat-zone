@@ -1,5 +1,6 @@
-import { Circle, Paintbrush, Square } from "lucide-react";
+import { Circle, Paintbrush, Plus, Square } from "lucide-react";
 import type { ComponentType, SVGProps } from "react";
+import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 import type {
@@ -17,6 +18,7 @@ import {
 import type { ToolDefinition, ToolId } from "../../../interaction/tools/toolRegistry";
 import type { RootState } from "../../../store/store";
 import { ToolButton } from "../ToolButton";
+import { ActorCreationModal } from "./ActorCreationModal";
 
 type ActorToolButtonProps = {
   activeToolId: ToolId;
@@ -168,6 +170,7 @@ export function ActorToolButton({
   const actorPaintBrush = useSelector(
     (state: RootState) => state.interaction.actorPaintBrush
   );
+  const [createModalOpen, setCreateModalOpen] = useState(false);
 
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -244,6 +247,21 @@ export function ActorToolButton({
             ))}
           </div>
           <div
+            aria-label="Create Actor"
+            className={optionGroupClassName()}
+            role="group"
+          >
+            <button
+              aria-label="Create actor"
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-canvas-line bg-white text-canvas-ink shadow-sm transition hover:bg-canvas"
+              onClick={() => setCreateModalOpen(true)}
+              title="Create actor"
+              type="button"
+            >
+              <Plus aria-hidden="true" className="h-4 w-4" />
+            </button>
+          </div>
+          <div
             aria-label="Actor paint"
             className={optionGroupClassName()}
             role="group"
@@ -260,6 +278,9 @@ export function ActorToolButton({
             </button>
           </div>
         </>
+      ) : null}
+      {createModalOpen ? (
+        <ActorCreationModal onClose={() => setCreateModalOpen(false)} />
       ) : null}
     </div>
   );

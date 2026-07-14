@@ -28,7 +28,21 @@ function getPanelSectionId(activeToolId: ToolId): LibrarySectionId | null {
   return null;
 }
 
-export function LibraryPanel() {
+export type LibraryPanelFocusRequest = {
+  folderId: string;
+  nodeId: string;
+  sectionId: LibrarySectionId;
+};
+
+type LibraryPanelProps = {
+  focusRequest?: LibraryPanelFocusRequest | null;
+  onFocusRequestHandled?: () => void;
+};
+
+export function LibraryPanel({
+  focusRequest,
+  onFocusRequestHandled
+}: LibraryPanelProps) {
   const dispatch = useDispatch();
   const encounter = useSelector((state: RootState) => state.encounter.present);
   const library = useSelector((state: RootState) => state.library);
@@ -41,10 +55,47 @@ export function LibraryPanel() {
   const [currentFolderBySection, setCurrentFolderBySection] = useState<
     Partial<Record<LibrarySectionId, string>>
   >({});
+  const assetButtonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
   useEffect(() => {
     return () => dragPreviewCleanupRef.current?.();
   }, []);
+
+  useEffect(() => {
+    if (!focusRequest || focusRequest.sectionId !== sectionId) {
+      return;
+    }
+
+    setCurrentFolderBySection((current) => ({
+      ...current,
+      [focusRequest.sectionId]: focusRequest.folderId
+    }));
+  }, [focusRequest, sectionId]);
+
+  useEffect(() => {
+    if (
+      !focusRequest ||
+      focusRequest.sectionId !== sectionId ||
+      currentFolderBySection[focusRequest.sectionId] !== focusRequest.folderId
+    ) {
+      return;
+    }
+
+    const button = assetButtonRefs.current[focusRequest.nodeId];
+
+    if (!button) {
+      return;
+    }
+
+    button.scrollIntoView?.({ block: "nearest" });
+    button.focus();
+    onFocusRequestHandled?.();
+  }, [
+    currentFolderBySection,
+    focusRequest,
+    onFocusRequestHandled,
+    sectionId
+  ]);
 
   if (!sectionId) {
     return (
@@ -213,6 +264,9 @@ export function LibraryPanel() {
               isBackground || isToken ? "cursor-pointer" : "cursor-default"
             }`}
             draggable={isToken}
+            ref={(button) => {
+              assetButtonRefs.current[node.id] = button;
+            }}
             onClick={() =>
               isBackground ? applyBackground(node) : createActorInTargetZone(node)
             }

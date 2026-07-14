@@ -14,6 +14,10 @@ import { LIBRARY_NODE_DRAG_TYPE } from "../library/libraryDrag";
 import type { RootState } from "../../store/store";
 import { commitEncounterChange } from "../../store/encounterSlice";
 import { closeZoneShapeMenu } from "../toolbar/events";
+import {
+  ACTOR_CREATION_DRAG_TYPE,
+  type NewActorDragData
+} from "../toolbar/actor/actorCreationDrag";
 import { ActorLayer } from "./ActorLayer";
 import { CanvasBackgroundLayer } from "./CanvasBackgroundLayer";
 import { CanvasOverlays } from "./CanvasOverlays";
@@ -240,6 +244,41 @@ export function CanvasShell() {
     }
   }
 
+  function commitActorFromCreation(
+    data: NewActorDragData,
+    destinationZoneId: string
+  ) {
+    const actorId = `actor-${Date.now()}`;
+    const nextEncounter = createActor(encounter, {
+      currentZoneId: destinationZoneId,
+      id: actorId,
+      layoutGroup: data.layoutGroup,
+      name: data.name,
+      shape: data.shape,
+      size: data.size
+    });
+    const prepared = prepareValidatedEncounterChange({
+      action: createEncounterActionRecord("actor.create", {
+        actorId,
+        destinationZoneId
+      }),
+      currentEncounter: encounter,
+      nextEncounter
+    });
+
+    if (prepared.blocked) {
+      return;
+    }
+
+    dispatch(
+      commitEncounterChange({
+        action: prepared.action,
+        nextEncounter: prepared.nextEncounter
+      })
+    );
+    dispatch(selectEntity({ entityType: "actor", ids: [actorId] }));
+  }
+
   function handleActorDropToZoneless() {
     if (!actorDrag) {
       return;
@@ -305,15 +344,23 @@ export function CanvasShell() {
     const libraryDrag = Array.from(event.dataTransfer.types).includes(
       LIBRARY_NODE_DRAG_TYPE
     );
+    const actorCreationDrag = Array.from(event.dataTransfer.types).includes(
+      ACTOR_CREATION_DRAG_TYPE
+    );
     const zonelessActorDrag = hasZonelessActorDrag(event);
 
-    if (!zonelessActorDrag && (activeToolId !== "actor" || !libraryDrag)) {
+    if (
+      !zonelessActorDrag &&
+      (activeToolId !== "actor" || (!libraryDrag && !actorCreationDrag))
+    ) {
       return;
     }
 
     event.preventDefault();
     event.dataTransfer.dropEffect =
-      libraryDrag && activeToolId === "actor" ? "copy" : "move";
+      (libraryDrag || actorCreationDrag) && activeToolId === "actor"
+        ? "copy"
+        : "move";
   }
 
   function handleCanvasDrop(event: DragEvent<SVGSVGElement>) {
@@ -375,6 +422,23 @@ export function CanvasShell() {
     }
 
     const nodeId = event.dataTransfer.getData(LIBRARY_NODE_DRAG_TYPE);
+
+    const actorCreationData = event.dataTransfer.getData(
+      ACTOR_CREATION_DRAG_TYPE
+    );
+
+    if (actorCreationData) {
+      event.preventDefault();
+      try {
+        commitActorFromCreation(
+          JSON.parse(actorCreationData) as NewActorDragData,
+          destinationZoneId ?? ZONELESS_ACTOR_ZONE_ID
+        );
+      } catch {
+        return;
+      }
+      return;
+    }
 
     if (!nodeId) {
       return;

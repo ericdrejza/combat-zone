@@ -22,6 +22,7 @@ type AssetLibraryContentsProps = {
     event: DragEvent<HTMLElement>,
     node: LibraryNode
   ) => void;
+  onDoubleClickNode: (node: LibraryNode) => void;
   onEnterFolder: (folderId: string) => void;
   onOpenContextMenu: (
     event: {
@@ -46,6 +47,7 @@ export function AssetLibraryContents({
   onDragStart,
   onDropOnContents,
   onDropOnFolder,
+  onDoubleClickNode,
   onEnterFolder,
   onOpenContextMenu,
   onSelectNode,
@@ -91,6 +93,7 @@ export function AssetLibraryContents({
                 onSelectNode(node.id);
               }}
               onContextMenu={(event) => onOpenContextMenu(event, node)}
+              onDoubleClick={() => onDoubleClickNode(node)}
               onDragEnd={onDragEnd}
               onDragStart={(event) => {
                 event.dataTransfer.effectAllowed = "move";
