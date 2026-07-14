@@ -8,14 +8,12 @@ import type {
 
 type ToolButtonProps = {
   activeToolId: ToolId;
-  onCloseMenus: () => void;
   onSelected?: () => void;
   tool: ToolDefinition;
 };
 
 export function ToolButton({
   activeToolId,
-  onCloseMenus,
   onSelected,
   tool
 }: ToolButtonProps) {
@@ -25,7 +23,7 @@ export function ToolButton({
   return (
     <button
       aria-pressed={selected}
-      className={`rounded-full border px-3 py-1.5 text-sm font-medium shadow-sm transition hover:bg-canvas ${
+      className={`shrink-0 rounded-full border px-3 py-1.5 text-sm font-medium shadow-sm transition hover:bg-canvas ${
         selected
           ? "border-canvas-ink bg-canvas-ink text-white"
           : "border-canvas-line bg-white text-canvas-ink"
@@ -33,7 +31,6 @@ export function ToolButton({
       onClick={() => {
         dispatch(setActiveTool(tool.id));
         onSelected?.();
-        onCloseMenus();
       }}
       title={tool.tooltip}
       type="button"
