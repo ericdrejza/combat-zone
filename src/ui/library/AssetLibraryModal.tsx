@@ -10,13 +10,34 @@ import {
   ConfirmFolderDeleteDialog
 } from "./AssetLibraryMenus";
 import { useAssetLibraryModalController } from "./useAssetLibraryModalController";
+import type { LibraryNode } from "../../library/types";
 
 type AssetLibraryModalProps = {
   onClose: () => void;
+  onBackgroundDoubleClick: (node: LibraryNode) => void;
+  onTokenDoubleClick: (node: LibraryNode) => void;
 };
 
-export function AssetLibraryModal({ onClose }: AssetLibraryModalProps) {
+export function AssetLibraryModal({
+  onBackgroundDoubleClick,
+  onClose,
+  onTokenDoubleClick
+}: AssetLibraryModalProps) {
   const controller = useAssetLibraryModalController();
+
+  function handleDoubleClick(node: LibraryNode) {
+    if (node.type === "folder") {
+      return;
+    }
+
+    if (controller.activeSectionId === "tokens") {
+      onTokenDoubleClick(node);
+    }
+
+    if (controller.activeSectionId === "backgrounds") {
+      onBackgroundDoubleClick(node);
+    }
+  }
 
   return (
     <div
@@ -89,6 +110,7 @@ export function AssetLibraryModal({ onClose }: AssetLibraryModalProps) {
               onDragEnd={controller.clearDragState}
               onDragOverFolder={controller.handleDragOverFolder}
               onDragStart={(_event, node) => controller.setDraggedNodeId(node.id)}
+              onDoubleClickNode={handleDoubleClick}
               onDropOnFolder={controller.handleDropOnFolder}
               onEnterFolder={controller.enterFolder}
               onOpenContextMenu={controller.openContextMenuForNode}
@@ -108,6 +130,7 @@ export function AssetLibraryModal({ onClose }: AssetLibraryModalProps) {
             onDragOverContents={controller.handleDragOverContents}
             onDragOverFolder={controller.handleDragOverFolder}
             onDragStart={(_event, node) => controller.setDraggedNodeId(node.id)}
+            onDoubleClickNode={handleDoubleClick}
             onDropOnContents={controller.handleDropOnContents}
             onDropOnFolder={controller.handleDropOnFolder}
             onEnterFolder={controller.enterFolder}

@@ -29,6 +29,7 @@ type AssetLibraryExplorerProps = {
     event: DragEvent<HTMLElement>,
     node: LibraryNode
   ) => void;
+  onDoubleClickNode: (node: LibraryNode) => void;
   onOpenContextMenu: (
     event: {
       clientX: number;
@@ -58,6 +59,7 @@ export function AssetLibraryExplorer({
   onDragOverFolder,
   onDragStart,
   onDropOnFolder,
+  onDoubleClickNode,
   onEnterFolder,
   onOpenContextMenu,
   onSearchQueryChange,
@@ -118,6 +120,11 @@ export function AssetLibraryExplorer({
             onSelectNode(node.id);
           }}
           onContextMenu={(event) => onOpenContextMenu(event, node)}
+          onDoubleClick={() => {
+            if (!isFolder) {
+              onDoubleClickNode(node);
+            }
+          }}
           onDragEnd={onDragEnd}
           onDragStart={(event) => {
             if (isRoot) {

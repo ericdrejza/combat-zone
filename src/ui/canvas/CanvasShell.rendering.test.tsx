@@ -121,6 +121,7 @@ describe("CanvasShell rendering", () => {
         actorType: "creature",
         currentZoneId: zone.id,
         id: "actor-hero",
+        image: "data:image/png;base64,hero",
         layoutGroup: "hero",
         metadata: {},
         name: "Hero",

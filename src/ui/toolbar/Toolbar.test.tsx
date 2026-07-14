@@ -2,7 +2,44 @@ import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { store } from "../../store/store";
-import { renderApp } from "../../test/ui/renderApp";
+import {
+  createRectangleZone,
+  getCanvas,
+  mockCanvasBounds,
+  renderApp
+} from "../../test/ui/renderApp";
+
+function createActorDragDataTransfer() {
+  const data = new Map<string, string>();
+  const types: string[] = [];
+
+  return {
+    dropEffect: "none",
+    effectAllowed: "none",
+    getData: (type: string) => data.get(type) ?? "",
+    setData: (type: string, value: string) => {
+      data.set(type, value);
+      types.push(type);
+    },
+    types
+  };
+}
+
+function dropOnCanvas(
+  canvas: HTMLElement,
+  transfer: ReturnType<typeof createActorDragDataTransfer>,
+  clientX: number,
+  clientY: number
+) {
+  const event = new Event("drop", { bubbles: true, cancelable: true });
+
+  Object.defineProperties(event, {
+    clientX: { value: clientX },
+    clientY: { value: clientY },
+    dataTransfer: { value: transfer }
+  });
+  canvas.dispatchEvent(event);
+}
 
 describe("Toolbar", () => {
   it("renders toolbar tools in the expected order with requested separators", () => {
@@ -147,6 +184,87 @@ describe("Toolbar", () => {
     await user.click(screen.getByRole("button", { name: "Paint actors" }));
 
     expect(store.getState().interaction.actorPaintBrush).toBe(false);
+  });
+
+  it("opens the actor creation modal with a target-aware create action and preview", async () => {
+    const user = userEvent.setup();
+
+    renderApp();
+    await user.click(screen.getByRole("button", { name: "Actor" }));
+    await user.click(screen.getByRole("button", { name: "Create actor" }));
+
+    expect(screen.getByText("Drag actor to place")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Create" })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Cancel" }));
+
+    const canvas = getCanvas();
+    mockCanvasBounds(canvas);
+    await user.click(screen.getByRole("button", { name: "Zone" }));
+    createRectangleZone(canvas);
+    await user.click(screen.getByRole("button", { name: "Actor" }));
+    fireEvent.click(screen.getByLabelText("Zone 1"));
+    await user.click(screen.getByRole("button", { name: "Create actor" }));
+
+    const input = screen.getByRole("textbox", { name: "Actor name" });
+    await user.type(input, "Goblin Scout");
+
+    expect(screen.getByRole("button", { name: "Create" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Actor preview")).toHaveTextContent("Goblin Scout");
+    await user.click(screen.getByRole("button", { name: "Create" }));
+
+    expect(screen.queryByRole("dialog", { name: "Create actor" })).not.toBeInTheDocument();
+    const targetZoneId = store.getState().encounter.present.zones.allIds[0];
+    expect(
+      Object.values(store.getState().encounter.present.actors.byId).some(
+        (actor) =>
+          actor.name === "Goblin Scout" && actor.currentZoneId === targetZoneId
+      )
+    ).toBe(true);
+    expect(store.getState().encounter.past.at(-1)?.action.type).toBe("actor.create");
+  });
+
+  it("creates the preview actor in a zone when dragged from the modal", async () => {
+    const user = userEvent.setup();
+    const transfer = createActorDragDataTransfer();
+
+    renderApp();
+    const canvas = getCanvas();
+    mockCanvasBounds(canvas);
+    await user.click(screen.getByRole("button", { name: "Zone" }));
+    createRectangleZone(canvas);
+    await user.click(screen.getByRole("button", { name: "Actor" }));
+    await user.click(screen.getByRole("button", { name: "Create actor" }));
+    await user.type(screen.getByRole("textbox", { name: "Actor name" }), "Dragged Actor");
+    fireEvent.dragStart(screen.getByLabelText("Actor preview"), {
+      dataTransfer: transfer
+    });
+
+    expect(screen.getByRole("dialog", { name: "Create actor" })).toBeInTheDocument();
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("dialog", { name: "Create actor" })
+      ).not.toBeInTheDocument();
+    });
+
+    fireEvent.dragOver(canvas, {
+      clientX: 100,
+      clientY: 100,
+      dataTransfer: transfer
+    });
+    expect(transfer.effectAllowed).toBe("copy");
+    expect(transfer.dropEffect).toBe("copy");
+    dropOnCanvas(canvas, transfer, 100, 100);
+
+    const actor = Object.values(store.getState().encounter.present.actors.byId).find(
+      (candidate) => candidate.name === "Dragged Actor"
+    );
+    const targetZoneId = store.getState().encounter.present.zones.allIds[0];
+    const actorsInTargetZone = Object.values(
+      store.getState().encounter.present.actors.byId
+    ).filter((candidate) => candidate.currentZoneId === targetZoneId);
+    expect(actorsInTargetZone).toHaveLength(1);
+    expect(actor?.currentZoneId).toBe(targetZoneId);
+    expect(store.getState().interaction.selection.selectedIds).toEqual([actor?.id]);
   });
 
   it("opens Zone shape radios from the Zone toolbar button", async () => {

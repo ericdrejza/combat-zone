@@ -185,9 +185,9 @@ export function ActorLayer({
             />
           )
         ) : null}
-        {selected ? (
+        {selected && actor.image ? (
           <text
-            className="pointer-events-none text-[10px] font-bold"
+            className="pointer-events-none text-[10px] font-bold z-10"
             dominantBaseline="middle"
             fill={selectedActorTextColor}
             textAnchor="middle"
