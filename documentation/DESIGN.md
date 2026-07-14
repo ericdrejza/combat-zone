@@ -103,7 +103,8 @@ Layout strategies:
   - Actor placement is dynamic and handled by CSS layout inside the zone
 - SEQUENTIAL
   - Actors are rendered one after the other in specific order around the zone
-  - Actor order is stable based on collection `allIds`
+  - Actor order is stable based on collection `allIds`; an actor entering a
+    different zone is appended to that collection order
 - SPLIT_FLEX
   - Zone is split into areas for heroes, enemies, and neutral actors
   - `LEFT_RIGHT` orientation renders heroes left and enemies right
@@ -116,7 +117,8 @@ Layout strategies:
   - `TOP_BOTTOM` orientation renders heroes top and enemies bottom
   - Neutral actors render along the axis splitting heroes and enemies
   - Actors are rendered one after the other in specific order in their specific area within the zone
-  - Actor order within each area is stable based on collection `allIds`
+  - Actor order within each area is stable based on collection `allIds`; an
+    actor entering a different zone is appended to that collection order
 
 **Deletion rule:** deleting a Zone does not delete or block deletion of its
 contents. Actors inside it become **zoneless**. Edges connected to it are
@@ -444,9 +446,9 @@ Layout strategies:
 Actor and engagement positions inside zones are not persisted in
 EncounterState and are not calculated as coordinates. Layout strategies derive
 CSS layout descriptors from the normalized entity collections, collection
-`allIds` ordering, each entity's layout strategy, and each entity's layout
-orientation. Zone geometry itself remains coordinate-based because zones are
-canvas objects.
+`allIds` ordering (which records the latest zone-entry order for actors), each
+entity's layout strategy, and each entity's layout orientation. Zone geometry
+itself remains coordinate-based because zones are canvas objects.
 
 Rule:
 

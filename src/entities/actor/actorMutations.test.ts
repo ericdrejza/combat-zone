@@ -198,6 +198,69 @@ describe('actor mutations', () => {
     );
   });
 
+  it('appends an actor when it leaves and re-enters a zone', () => {
+    const secondActor: Actor = {
+      ...actor,
+      id: 'actor-second-hero',
+      name: 'Second Hero'
+    };
+    const baseEncounter = {
+      ...createActorEncounterState(),
+      actors: collection([actor, secondActor])
+    };
+    const initialHistory = reducer(undefined, { type: 'test/init' });
+    let state = commitState(initialHistory, 'test.seed', baseEncounter);
+
+    const zonelessEncounter = moveActor(
+      state.present,
+      actor.id,
+      ZONELESS_ACTOR_ZONE_ID
+    );
+    state = commitState(state, 'actor.move', zonelessEncounter);
+
+    expect(state.present.actors.allIds).toEqual([
+      secondActor.id,
+      actor.id
+    ]);
+    expect(
+      calculateZoneLayout(state.present, zoneA.id).descriptor.sections[0].items
+    ).toEqual([{ id: secondActor.id, layoutGroup: 'hero' }]);
+
+    const reenteredEncounter = moveActor(
+      state.present,
+      actor.id,
+      zoneA.id
+    );
+    state = commitState(state, 'actor.move', reenteredEncounter);
+
+    expect(state.present.actors.allIds).toEqual([
+      secondActor.id,
+      actor.id
+    ]);
+    expect(
+      calculateZoneLayout(state.present, zoneA.id).descriptor.sections[0].items
+    ).toEqual([
+      { id: secondActor.id, layoutGroup: 'hero' },
+      { id: actor.id, layoutGroup: 'hero' }
+    ]);
+
+    state = reducer(state, undoEncounterChange());
+    expect(state.present.actors.allIds).toEqual([
+      secondActor.id,
+      actor.id
+    ]);
+    expect(state.present.actors.byId[actor.id]?.currentZoneId).toBe(
+      ZONELESS_ACTOR_ZONE_ID
+    );
+
+    state = reducer(state, undoEncounterChange());
+    expect(state.present).toEqual(baseEncounter);
+
+    state = reducer(state, redoEncounterChange());
+    state = reducer(state, redoEncounterChange());
+    expect(state.present).toEqual(reenteredEncounter);
+  });
+
   it('updates actor properties, duplicates actors, and deletes actors reversibly', () => {
     const initialHistory = reducer(undefined, { type: 'test/init' });
     let state = commitState(
