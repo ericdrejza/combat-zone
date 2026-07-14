@@ -73,6 +73,19 @@ function removeEntity<TEntity extends { id: EntityId }>(
   };
 }
 
+function moveEntityToCollectionEnd<TEntity extends { id: EntityId }>(
+  collection: EntityCollection<TEntity>,
+  entity: TEntity
+): EntityCollection<TEntity> {
+  return {
+    byId: {
+      ...collection.byId,
+      [entity.id]: entity
+    },
+    allIds: [...collection.allIds.filter((id) => id !== entity.id), entity.id]
+  };
+}
+
 function removeActorFromEngagements(
   state: EncounterState,
   actorId: EntityId
@@ -164,9 +177,13 @@ export function moveActor(
     return state;
   }
 
+  if (actor.currentZoneId === destinationZoneId) {
+    return state;
+  }
+
   return {
     ...state,
-    actors: upsertEntity(state.actors, {
+    actors: moveEntityToCollectionEnd(state.actors, {
       ...actor,
       currentZoneId: destinationZoneId
     })
