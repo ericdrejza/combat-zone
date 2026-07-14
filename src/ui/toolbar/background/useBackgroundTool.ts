@@ -9,10 +9,7 @@ import { readImageFile } from "./readImageFile";
 
 type BackgroundAction = "add" | "replace";
 
-export function useBackgroundTool(
-  encounter: EncounterState,
-  setBackgroundMenuOpen: (isOpen: boolean) => void
-) {
+export function useBackgroundTool(encounter: EncounterState) {
   const dispatch = useDispatch();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [pendingBackgroundAction, setPendingBackgroundAction] =
@@ -20,7 +17,6 @@ export function useBackgroundTool(
 
   function requestBackgroundUpload(action: BackgroundAction) {
     setPendingBackgroundAction(action);
-    setBackgroundMenuOpen(false);
     fileInputRef.current?.click();
   }
 
@@ -56,8 +52,6 @@ export function useBackgroundTool(
   }
 
   function deleteBackground() {
-    setBackgroundMenuOpen(false);
-
     if (!encounter.backgroundImage) {
       return;
     }

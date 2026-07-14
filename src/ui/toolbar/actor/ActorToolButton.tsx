@@ -18,11 +18,16 @@ import {
 import type { ToolDefinition, ToolId } from "../../../interaction/tools/toolRegistry";
 import type { RootState } from "../../../store/store";
 import { ToolButton } from "../ToolButton";
+import {
+  ToolbarOptionButton,
+  ToolbarOptionGroup,
+  ToolbarOptionKeybind,
+  ToolbarOptionRow
+} from "../ToolbarOption";
 import { ActorCreationModal } from "./ActorCreationModal";
 
 type ActorToolButtonProps = {
   activeToolId: ToolId;
-  onCloseMenus: () => void;
   onSelected: () => void;
   tool: ToolDefinition;
 };
@@ -31,40 +36,46 @@ type TokenSizeIconProps = SVGProps<SVGSVGElement>;
 
 const FACTION_OPTIONS: Array<{
   label: string;
+  keybind: string;
   title: string;
   value: ActorLayoutGroup;
 }> = [
-  { label: "Hero faction", title: "Hero", value: "hero" },
-  { label: "Neutral faction", title: "Neutral", value: "neutral" },
-  { label: "Enemy faction", title: "Enemy", value: "enemy" }
+  { keybind: "1", label: "Hero faction", title: "Hero", value: "hero" },
+  { keybind: "2", label: "Neutral faction", title: "Neutral", value: "neutral" },
+  { keybind: "3", label: "Enemy faction", title: "Enemy", value: "enemy" }
 ];
 
 const SIZE_OPTIONS: Array<{
   Icon: ComponentType<TokenSizeIconProps>;
+  keybind: string;
   label: string;
   title: string;
   value: ActorSize;
 }> = [
   {
     Icon: SmallTokenIcon,
+    keybind: "4",
     label: "Small actor size",
     title: "Small",
     value: "small"
   },
   {
     Icon: MediumTokenIcon,
+    keybind: "5",
     label: "Medium actor size",
     title: "Medium",
     value: "medium"
   },
   {
     Icon: LargeTokenIcon,
+    keybind: "6",
     label: "Large actor size",
     title: "Large",
     value: "large"
   },
   {
     Icon: XLargeTokenIcon,
+    keybind: "7",
     label: "X-large actor size",
     title: "Huge",
     value: "xLarge"
@@ -73,35 +84,26 @@ const SIZE_OPTIONS: Array<{
 
 const SHAPE_OPTIONS: Array<{
   Icon: typeof Circle;
+  keybind: string;
   label: string;
   title: string;
   value: ActorShape;
 }> = [
   {
     Icon: Circle,
+    keybind: "8",
     label: "Circle actor shape",
     title: "Circle",
     value: "circle"
   },
   {
     Icon: Square,
+    keybind: "9",
     label: "Rectangle actor shape",
     title: "Rectangle",
     value: "rectangle"
   }
 ];
-
-function optionGroupClassName() {
-  return "flex gap-1 rounded-full border border-canvas-line bg-white/75 p-1 shadow-sm";
-}
-
-function optionButtonClassName(active: boolean) {
-  return `flex h-8 w-8 items-center justify-center rounded-full border transition ${
-    active
-      ? "border-canvas-ink bg-canvas-ink text-white"
-      : "border-canvas-line bg-white text-canvas-muted hover:bg-canvas"
-  }`;
-}
 
 function SmallTokenIcon(props: TokenSizeIconProps) {
   return (
@@ -161,7 +163,6 @@ function XLargeTokenIcon(props: TokenSizeIconProps) {
 
 export function ActorToolButton({
   activeToolId,
-  onCloseMenus,
   onSelected,
   tool
 }: ActorToolButtonProps) {
@@ -173,28 +174,24 @@ export function ActorToolButton({
   const [createModalOpen, setCreateModalOpen] = useState(false);
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <ToolbarOptionRow>
       <ToolButton
         activeToolId={activeToolId}
-        onCloseMenus={onCloseMenus}
         onSelected={onSelected}
         tool={tool}
       />
       {activeToolId === "actor" ? (
         <>
-          <div
+          <ToolbarOptionGroup
             aria-label="Actor faction"
-            className={optionGroupClassName()}
             role="group"
           >
             {FACTION_OPTIONS.map((option) => (
-              <button
+              <ToolbarOptionButton
                 key={option.value}
                 aria-label={option.label}
                 aria-pressed={actorTool.layoutGroup === option.value}
-                className={optionButtonClassName(
-                  actorTool.layoutGroup === option.value
-                )}
+                active={actorTool.layoutGroup === option.value}
                 onClick={() => dispatch(setActorToolLayoutGroup(option.value))}
                 title={option.title}
                 type="button"
@@ -205,83 +202,88 @@ export function ActorToolButton({
                     ACTOR_LAYOUT_GROUP_COLORS[option.value].iconClassName
                   }`}
                 />
-              </button>
+                <ToolbarOptionKeybind active={actorTool.layoutGroup === option.value}>
+                  {option.keybind}
+                </ToolbarOptionKeybind>
+              </ToolbarOptionButton>
             ))}
-          </div>
-          <div
+          </ToolbarOptionGroup>
+          <ToolbarOptionGroup
             aria-label="Actor size"
-            className={optionGroupClassName()}
             role="group"
           >
-            {SIZE_OPTIONS.map(({ Icon, label, title, value }) => (
-              <button
+            {SIZE_OPTIONS.map(({ Icon, keybind, label, title, value }) => (
+              <ToolbarOptionButton
                 key={value}
                 aria-label={label}
                 aria-pressed={actorTool.size === value}
-                className={optionButtonClassName(actorTool.size === value)}
+                active={actorTool.size === value}
                 onClick={() => dispatch(setActorToolSize(value))}
                 title={title}
                 type="button"
               >
                 <Icon aria-hidden="true" className="h-4 w-4 fill-current" />
-              </button>
+                <ToolbarOptionKeybind active={actorTool.size === value}>
+                  {keybind}
+                </ToolbarOptionKeybind>
+              </ToolbarOptionButton>
             ))}
-          </div>
-          <div
+          </ToolbarOptionGroup>
+          <ToolbarOptionGroup
             aria-label="Actor shape"
-            className={optionGroupClassName()}
             role="group"
           >
-            {SHAPE_OPTIONS.map(({ Icon, label, title, value }) => (
-              <button
+            {SHAPE_OPTIONS.map(({ Icon, keybind, label, title, value }) => (
+              <ToolbarOptionButton
                 key={value}
                 aria-label={label}
                 aria-pressed={actorTool.shape === value}
-                className={optionButtonClassName(actorTool.shape === value)}
+                active={actorTool.shape === value}
                 onClick={() => dispatch(setActorToolShape(value))}
                 title={title}
                 type="button"
               >
                 <Icon aria-hidden="true" className="h-4 w-4 fill-current" />
-              </button>
+                <ToolbarOptionKeybind active={actorTool.shape === value}>
+                  {keybind}
+                </ToolbarOptionKeybind>
+              </ToolbarOptionButton>
             ))}
-          </div>
-          <div
+          </ToolbarOptionGroup>
+          <ToolbarOptionGroup
             aria-label="Create Actor"
-            className={optionGroupClassName()}
             role="group"
           >
-            <button
+            <ToolbarOptionButton
               aria-label="Create actor"
-              className="flex h-8 w-8 items-center justify-center rounded-full border border-canvas-line bg-white text-canvas-ink shadow-sm transition hover:bg-canvas"
+              className="w-8 min-w-0 px-0"
               onClick={() => setCreateModalOpen(true)}
               title="Create actor"
               type="button"
             >
               <Plus aria-hidden="true" className="h-4 w-4" />
-            </button>
-          </div>
-          <div
+            </ToolbarOptionButton>
+          </ToolbarOptionGroup>
+          <ToolbarOptionGroup
             aria-label="Actor paint"
-            className={optionGroupClassName()}
             role="group"
           >
-            <button
+            <ToolbarOptionButton
               aria-label="Paint actors"
               aria-pressed={actorPaintBrush}
-              className={optionButtonClassName(actorPaintBrush)}
+              active={actorPaintBrush}
               onClick={() => dispatch(toggleActorPaintBrush())}
               title="Paint"
               type="button"
             >
               <Paintbrush aria-hidden="true" className="h-4 w-4" />
-            </button>
-          </div>
+            </ToolbarOptionButton>
+          </ToolbarOptionGroup>
         </>
       ) : null}
       {createModalOpen ? (
         <ActorCreationModal onClose={() => setCreateModalOpen(false)} />
       ) : null}
-    </div>
+    </ToolbarOptionRow>
   );
 }

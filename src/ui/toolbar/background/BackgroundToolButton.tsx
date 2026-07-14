@@ -1,4 +1,4 @@
-import { Image, Trash2 } from "lucide-react";
+import { Image, ImagePlus, RefreshCw, Trash2 } from "lucide-react";
 import { useDispatch } from "react-redux";
 
 import type { EncounterState } from "../../../core/encounter/types";
@@ -7,23 +7,22 @@ import type {
   ToolDefinition,
   ToolId
 } from "../../../interaction/tools/toolRegistry";
+import {
+  ToolbarOptionButton,
+  ToolbarOptionGroup,
+  ToolbarOptionRow
+} from "../ToolbarOption";
 import { useBackgroundTool } from "./useBackgroundTool";
 
 type BackgroundToolButtonProps = {
   activeToolId: ToolId;
   encounter: EncounterState;
-  menuOpen: boolean;
-  onCloseZoneMenu: () => void;
-  setMenuOpen: (isOpen: boolean | ((isOpen: boolean) => boolean)) => void;
   tool: ToolDefinition;
 };
 
 export function BackgroundToolButton({
   activeToolId,
   encounter,
-  menuOpen,
-  onCloseZoneMenu,
-  setMenuOpen,
   tool
 }: BackgroundToolButtonProps) {
   const dispatch = useDispatch();
@@ -33,13 +32,13 @@ export function BackgroundToolButton({
     fileInputRef,
     handleBackgroundFileChange,
     requestBackgroundUpload
-  } = useBackgroundTool(encounter, (isOpen) => setMenuOpen(isOpen));
+  } = useBackgroundTool(encounter);
   const selected = activeToolId === "background";
 
   return (
-    <div className="relative">
+    <ToolbarOptionRow>
       <button
-        aria-expanded={menuOpen}
+        aria-expanded={selected}
         aria-haspopup="menu"
         aria-pressed={selected}
         className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium shadow-sm transition hover:bg-canvas ${
@@ -49,8 +48,6 @@ export function BackgroundToolButton({
         }`}
         onClick={() => {
           dispatch(setActiveTool("background"));
-          setMenuOpen((isMenuOpen) => !isMenuOpen);
-          onCloseZoneMenu();
         }}
         title={tool.tooltip}
         type="button"
@@ -58,43 +55,47 @@ export function BackgroundToolButton({
         <Image aria-hidden="true" className="h-4 w-4" />
         {tool.label}
       </button>
-      {menuOpen ? (
-        <div
+      {selected ? (
+        <ToolbarOptionGroup
           aria-label="Background options"
-          className="absolute left-0 top-full z-10 mt-2 min-w-36 rounded-2xl border border-canvas-line bg-canvas-panel p-2 shadow-lg"
           role="menu"
         >
           {!backgroundImage ? (
-            <button
-              className="w-full rounded-xl px-3 py-2 text-left text-sm transition hover:bg-canvas"
+            <ToolbarOptionButton
+              aria-label="Add"
+              className="w-8 min-w-0 px-0"
               onClick={() => requestBackgroundUpload("add")}
               role="menuitem"
+              title="Add"
               type="button"
             >
-              Add
-            </button>
+              <ImagePlus aria-hidden="true" className="h-4 w-4" />
+            </ToolbarOptionButton>
           ) : (
             <>
-              <button
-                className="w-full rounded-xl px-3 py-2 text-left text-sm transition hover:bg-canvas"
+              <ToolbarOptionButton
+                aria-label="Replace"
+                className="w-8 min-w-0 px-0"
                 onClick={() => requestBackgroundUpload("replace")}
                 role="menuitem"
+                title="Replace"
                 type="button"
               >
-                Replace
-              </button>
-              <button
-                className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-red-700 transition hover:bg-red-50"
+                <RefreshCw aria-hidden="true" className="h-4 w-4" />
+              </ToolbarOptionButton>
+              <ToolbarOptionButton
+                aria-label="Delete"
+                className="w-8 min-w-0 px-0 text-red-700 hover:bg-red-50"
                 onClick={deleteBackground}
                 role="menuitem"
+                title="Delete"
                 type="button"
               >
                 <Trash2 aria-hidden="true" className="h-4 w-4" />
-                Delete
-              </button>
+              </ToolbarOptionButton>
             </>
           )}
-        </div>
+        </ToolbarOptionGroup>
       ) : null}
       <input
         ref={fileInputRef}
@@ -106,6 +107,6 @@ export function BackgroundToolButton({
         }}
         type="file"
       />
-    </div>
+    </ToolbarOptionRow>
   );
 }

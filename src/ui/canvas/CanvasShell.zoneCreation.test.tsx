@@ -31,8 +31,8 @@ describe("CanvasShell zone creation", () => {
     createRectangleZone(canvas);
 
     expect(
-      screen.queryByRole("radiogroup", { name: "Zone shape options" })
-    ).not.toBeInTheDocument();
+      screen.getByRole("radiogroup", { name: "Zone shape options" })
+    ).toBeInTheDocument();
 
     const rectangleZone = await screen.findByLabelText("Zone 1");
 

@@ -31,7 +31,7 @@ export function ActorCreationModal({ onClose }: ActorCreationModalProps) {
   const targetZone = actorTool.targetZoneId
     ? encounter.zones.byId[actorTool.targetZoneId]
     : undefined;
-  const displayName = name.trim() || "New Actor";
+  const displayName = name.trim() || "Actor";
   const colors = ACTOR_LAYOUT_GROUP_COLORS[actorTool.layoutGroup];
 
   useEffect(() => {
@@ -163,7 +163,7 @@ export function ActorCreationModal({ onClose }: ActorCreationModalProps) {
           />
         </label>
         {targetZone ? null : (
-          <p className="text-center text-sm text-canvas-muted">Drag actor to place</p>
+          <p className="text-center text-sm text-canvas-muted">Drag actor to zone</p>
         )}
         <div className="flex justify-end gap-2">
           <button
