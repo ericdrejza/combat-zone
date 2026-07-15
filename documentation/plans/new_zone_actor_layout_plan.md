@@ -46,7 +46,9 @@ TypeScript polygon-footprint solver in `src/core/layout/nesting_ts.ts`.
       - rectangle actors become square polygons based on their radius
       - circle actors become configurable regular-polygon approximations
 
-  - Preserve the single-actor special case: the actor target is the polygon center.
+  - Prefer the polygon center for a single actor, but validate its complete
+    footprint before accepting it; if it does not fit, use the normal candidate
+    search to move it to a valid in-zone position.
   - For multiple actors:
       - attempt packing with the preferred border gap
       - retry with progressively smaller gaps down to the minimum
@@ -100,7 +102,8 @@ TypeScript polygon-footprint solver in `src/core/layout/nesting_ts.ts`.
 
   Add Vitest coverage for:
 
-  - one actor centered in every FLEX zone shape
+  - one actor centered when its footprint fits, and moved by the fit algorithm
+    when the center would intersect an irregular polygon boundary
   - multiple actors packed without overlap
   - rectangle and circle actor footprints
   - containment inside the zone
