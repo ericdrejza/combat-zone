@@ -145,7 +145,7 @@ function expectPackedPlacements(
 }
 
 describe('actor canvas layout', () => {
-  it('centers the only FLEX actor in a zone', () => {
+  it('centers the only FLEX actor when its footprint fits', () => {
     const zoneId = 'rectangle-zone';
     const encounter = {
       ...createEncounterState({ id: 'encounter-flex-center', name: 'Flex' }),

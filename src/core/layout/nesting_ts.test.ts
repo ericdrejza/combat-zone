@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { LayoutPoint } from './types';
+import { getFootprint, isFootprintInsideZone } from './polygonGeometry';
 import {
   packPolygonActors,
   type NestingActor
@@ -33,6 +34,37 @@ describe('polygon nesting layout', () => {
       borderSpacing: 16,
       placements: { only: { x: 150, y: 100 } }
     });
+  });
+
+  it('moves a singular actor from an invalid center to a valid polygon position', () => {
+    const polygon: LayoutPoint[] = [
+      { x: 0, y: 0 },
+      { x: 320, y: 0 },
+      { x: 320, y: 320 },
+      { x: 200, y: 320 },
+      { x: 200, y: 120 },
+      { x: 0, y: 120 }
+    ];
+    const center = { x: 160, y: 160 };
+    const result = packPolygonActors({
+      actors: [actor('only')],
+      polygon
+    });
+
+    expect(
+      isFootprintInsideZone(
+        getFootprint(actor('only'), center, 16, 16),
+        polygon
+      )
+    ).toBe(false);
+    expect(result.fits).toBe(true);
+    expect(result.placements.only).not.toEqual(center);
+    expect(
+      isFootprintInsideZone(
+        getFootprint(actor('only'), result.placements.only, 16, 16),
+        polygon
+      )
+    ).toBe(true);
   });
 
   it('packs rectangle and circle footprints without overlap', () => {

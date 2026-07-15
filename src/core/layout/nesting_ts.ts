@@ -99,6 +99,10 @@ function getTargetPoint(
   const center = getPolygonCenter(polygon);
   const bounds = getPolygonBounds(polygon);
   const largestRadius = Math.max(...actors.map((actor) => actor.radius));
+  if (count === 1) {
+    return center;
+  }
+
   if (count === 2) {
     const horizontal = bounds.maxX - bounds.minX >= bounds.maxY - bounds.minY;
     const axisRadius =
@@ -254,29 +258,6 @@ export function packPolygonActors(input: PolygonNestingInput): PolygonNestingRes
       incomingDropPoint: input.incomingDropPoint,
       reason: 'invalid-zone'
     };
-  }
-
-  if (input.actors.length === 1) {
-    const actor = input.actors[0];
-    const center = getPolygonCenter(input.polygon);
-    for (const borderSpacing of getBorderSpacings(settings)) {
-      const single = tryPack(
-        { ...input, incomingActorId: actor.id, incomingDropPoint: center },
-        settings,
-        borderSpacing
-      );
-
-      if (!single.fits) {
-        continue;
-      }
-
-      return {
-        ...single,
-        placements: { [actor.id]: center },
-        incomingDropPoint: input.incomingDropPoint,
-        incomingTargetPoint: center
-      };
-    }
   }
 
   for (const borderSpacing of getBorderSpacings(settings)) {
