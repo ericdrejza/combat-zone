@@ -32,6 +32,48 @@ function isActorMovementOrCreation(action: ValidationAction): boolean {
   );
 }
 
+function getLayoutChangeZoneIds(
+  action: ValidationAction,
+  state: EncounterState,
+  nextState: EncounterState
+): string[] {
+  if (
+    action.type !== "zone.updateProperties" &&
+    action.type !== "zone.exportProperties"
+  ) {
+    return [];
+  }
+
+  const properties = action.payload.properties;
+
+  if (!properties || typeof properties !== "object" || Array.isArray(properties)) {
+    return [];
+  }
+
+  const changesLayout =
+    typeof properties.layoutStrategy === "string" ||
+    typeof properties.layoutOrientation === "string";
+
+  if (!changesLayout) {
+    return [];
+  }
+
+  const zoneIds = [
+    action.payload.zoneId,
+    ...(Array.isArray(action.payload.targetZoneIds)
+      ? action.payload.targetZoneIds
+      : [])
+  ].filter((zoneId): zoneId is string => typeof zoneId === "string");
+
+  return zoneIds.filter(
+    (zoneId) =>
+      state.zones.byId[zoneId]?.layoutStrategy !==
+        nextState.zones.byId[zoneId]?.layoutStrategy ||
+      state.zones.byId[zoneId]?.layoutOrientation !==
+        nextState.zones.byId[zoneId]?.layoutOrientation
+  );
+}
+
 export function getPolygonFlexAffectedZoneIds(
   action: ValidationAction,
   state: EncounterState,
@@ -45,6 +87,14 @@ export function getPolygonFlexAffectedZoneIds(
     if (typeof zoneId === "string") {
       affectedZoneIds.add(zoneId);
     }
+  }
+
+  for (const zoneId of getLayoutChangeZoneIds(
+    action,
+    state,
+    nextState
+  )) {
+    affectedZoneIds.add(zoneId);
   }
 
   const actorIds = getActorIdsFromPayload(action);

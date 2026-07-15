@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import type { LayoutPoint } from './types';
-import { getFootprint, isFootprintInsideZone } from './polygonGeometry';
+import {
+  footprintsOverlap,
+  getFootprint,
+  isFootprintInsideZone
+} from './polygonGeometry';
 import {
   packPolygonActors,
   type NestingActor
@@ -15,10 +19,11 @@ const rectangle = (width: number, height: number): LayoutPoint[] => [
 
 const actor = (
   id: string,
-  shape: NestingActor['shape'] = 'circle'
+  shape: NestingActor['shape'] = 'circle',
+  radius = 30
 ): NestingActor => ({
   id,
-  radius: 30,
+  radius,
   shape
 });
 
@@ -95,6 +100,65 @@ describe('polygon nesting layout', () => {
 
     expect(result.fits).toBe(true);
     expect(result.borderSpacing).toBe(spacing);
+  });
+
+  it('reduces border spacing incrementally for sequential layouts', () => {
+    const result = packPolygonActors({
+      actors: [actor('first'), actor('second')],
+      layoutStrategy: 'SEQUENTIAL',
+      polygon: rectangle(240, 100)
+    });
+
+    expect(result.fits).toBe(true);
+    expect(result.borderSpacing).toBe(16);
+  });
+
+  it('keeps differently sized sequential actors aligned on shared rows', () => {
+    const actors = [
+      actor('small-first', 'circle', 20),
+      actor('large-first-row', 'rectangle', 50),
+      actor('small-second-row', 'circle', 20),
+      actor('small-second-row-end', 'circle', 20)
+    ];
+    const polygon = rectangle(240, 260);
+    const result = packPolygonActors({
+      actors,
+      layoutStrategy: 'SEQUENTIAL',
+      polygon
+    });
+
+    expect(result.fits).toBe(true);
+    expect(result.placements['small-first'].y).toBe(
+      result.placements['large-first-row'].y
+    );
+    expect(result.placements['small-second-row'].y).toBe(
+      result.placements['small-second-row-end'].y
+    );
+    expect(result.placements['small-second-row'].y).toBeGreaterThan(
+      result.placements['small-first'].y
+    );
+
+    for (const current of actors) {
+      expect(
+        isFootprintInsideZone(
+          getFootprint(current, result.placements[current.id], result.borderSpacing, 16),
+          polygon
+        )
+      ).toBe(true);
+
+      for (const other of actors) {
+        if (current.id >= other.id) {
+          continue;
+        }
+
+        expect(
+          footprintsOverlap(
+            getFootprint(current, result.placements[current.id], 8, 16),
+            getFootprint(other, result.placements[other.id], 8, 16)
+          )
+        ).toBe(false);
+      }
+    }
   });
 
   it('rejects a layout that cannot fit without overlap', () => {

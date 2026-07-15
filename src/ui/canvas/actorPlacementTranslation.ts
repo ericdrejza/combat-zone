@@ -1,5 +1,5 @@
 import type { LayoutPoint } from '@core/layout/types';
-import { POLYGON_FLEX_LAYOUT_SETTINGS } from '@core/layout/polygonFlexLayout';
+import { POLYGON_LAYOUT_SETTINGS } from '@core/layout/polygonFlexLayout';
 import {
   cacheActorPlacementGeometry,
   createActorPlacementCacheKey
@@ -25,7 +25,7 @@ export function cacheActorRenderPlacementsForZoneMove(
 ): void {
   const nextKey = createActorPlacementCacheKey(
     encounter,
-    POLYGON_FLEX_LAYOUT_SETTINGS,
+    POLYGON_LAYOUT_SETTINGS,
     FLEX_ZONE_EDGE_GAP
   );
   const geometry = placements.map(({ actor, point, radius }) => ({

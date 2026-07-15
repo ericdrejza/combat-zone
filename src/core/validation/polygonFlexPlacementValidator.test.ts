@@ -50,16 +50,19 @@ const existingActor: Actor = buildActor({
   id: 'existing-actor'
 });
 
-function createState(mode: EncounterState['validationState']['mode']) {
+function createState(
+  mode: EncounterState['validationState']['mode'],
+  layoutStrategy: Zone['layoutStrategy'] = 'FLEX'
+) {
   return {
     ...createEncounterState({ id: 'layout-validation', name: 'Layout' }),
     actors: collection([existingActor]),
     validationState: { mode, messages: [] },
-    zones: collection([zone])
+    zones: collection([{ ...zone, layoutStrategy }])
   };
 }
 
-describe('polygon FLEX placement validation', () => {
+describe('polygon placement validation', () => {
   it.each(['OFF', 'ADVISORY', 'ASSISTED', 'STRICT'] as const)(
     'blocks an overflowing actor creation in %s mode',
     (mode) => {
@@ -122,6 +125,36 @@ describe('polygon FLEX placement validation', () => {
 
     expect(prepared.blocked).toBe(false);
     expect(prepared.validationResult.valid).toBe(true);
+  });
+
+  it.each([
+    'FLEX',
+    'SEQUENTIAL',
+    'SPLIT_FLEX',
+    'SPLIT_SEQUENTIAL'
+  ] as const)('blocks an overflowing actor creation in %s layouts', (layoutStrategy) => {
+    const currentEncounter = createState('OFF', layoutStrategy);
+    const currentZone = currentEncounter.zones.byId[zone.id]!;
+    const nextEncounter = createActor(currentEncounter, {
+      currentZoneId: currentZone.id,
+      id: `new-${layoutStrategy}`
+    });
+    const prepared = prepareValidatedEncounterChange({
+      action: createEncounterActionRecord('actor.create', {
+        actorId: `new-${layoutStrategy}`,
+        destinationZoneId: currentZone.id
+      }),
+      currentEncounter,
+      nextEncounter
+    });
+
+    expect(prepared.blocked).toBe(true);
+    expect(prepared.validationResult.messages).toEqual([
+      expect.objectContaining({
+        code: 'layout.polygonFlexNoSpace',
+        severity: 'error'
+      })
+    ]);
   });
 
   it('does not resize or reject a fitting actor after a zoneless round trip', () => {

@@ -9,15 +9,19 @@ import {
 } from '@core/layout/actorFootprints';
 import {
   packPolygonFlexActors,
-  POLYGON_FLEX_LAYOUT_SETTINGS
+  packPolygonSequentialActors,
+  POLYGON_LAYOUT_SETTINGS
 } from '@core/layout/polygonFlexLayout';
 import { getPolygonBounds, isPointInPolygon } from './zoneGeometry';
 import { FLEX_ZONE_EDGE_GAP, getFlexActorPoints } from './actorFlexLayout';
-import { getSectionActorPoints } from './actorSectionLayout';
 import {
-  getFlexRadialActorPoints,
-  getSequentialRadialActorPoints
-} from './actorRadialLayout';
+  getSectionActorPoints,
+  getSplitSectionPolygon
+} from './actorSectionLayout';
+import {
+  getSplitSectionBounds,
+  getSplitSectionWeights
+} from './actorSplitLayout';
 import {
   createActorPlacementCacheKey,
   getCachedActorPlacementGeometry,
@@ -43,10 +47,6 @@ function getPolygonCenter(polygon: LayoutPoint[]): LayoutPoint {
     x: bounds.x + bounds.width / 2,
     y: bounds.y + bounds.height / 2
   };
-}
-
-function getCircleZoneRadius(bounds: Bounds): number {
-  return Math.min(bounds.width, bounds.height) / 2;
 }
 
 function pullPointInsidePolygon(
@@ -98,55 +98,6 @@ function getGridPoint(
   };
 }
 
-function getSplitSectionBounds(
-  sectionId: string,
-  bounds: ReturnType<typeof getPolygonBounds>,
-  sections: Array<{ id: string; weight: number }>,
-  topBottom: boolean
-) {
-  if (sectionId === 'all') {
-    return bounds;
-  }
-
-  const activeSections = sections.filter((section) => section.weight > 0);
-  const sectionIndex = activeSections.findIndex(
-    (section) => section.id === sectionId
-  );
-
-  if (sectionIndex < 0) {
-    return { ...bounds, width: 0, height: 0 };
-  }
-
-  const totalWeight = activeSections.reduce(
-    (total, section) => total + section.weight,
-    0
-  );
-  const previousWeight = activeSections
-    .slice(0, sectionIndex)
-    .reduce((total, section) => total + section.weight, 0);
-  const axisSize = topBottom ? bounds.height : bounds.width;
-  const offset = (previousWeight / totalWeight) * axisSize;
-  const size = (activeSections[sectionIndex].weight / totalWeight) * axisSize;
-
-  return topBottom
-    ? { ...bounds, y: bounds.y + offset, height: size }
-    : { ...bounds, x: bounds.x + offset, width: size };
-}
-
-function getSectionWeight(
-  section: { items: Array<{ id: string }> },
-  actors: Record<string, Actor | undefined>
-): number {
-  return section.items.reduce(
-    (weight, item) =>
-      weight +
-      (actors[item.id]
-        ? getActorRadius(actors[item.id]!) * 2 + FLEX_ZONE_EDGE_GAP
-        : ACTOR_TOKEN_BASE_RADIUS * 2 + FLEX_ZONE_EDGE_GAP),
-    0
-  );
-}
-
 function calculateActorRenderPlacementGeometry(
   encounter: EncounterState
 ): ActorPlacementGeometry[] {
@@ -165,55 +116,30 @@ function calculateActorRenderPlacementGeometry(
       descriptor.strategy === 'SPLIT_FLEX' ||
       descriptor.strategy === 'SPLIT_SEQUENTIAL';
     const topBottom = descriptor.orientation === 'TOP_BOTTOM';
-    const splitSectionWeights = descriptor.sections.map((section) => ({
-      id: section.id,
-      weight: section.items.length
-        ? getSectionWeight(section, encounter.actors.byId)
-        : 0
-    }));
+    const sectionActorsById = new Map(
+      descriptor.sections.map((section) => [
+        section.id,
+        section.items.flatMap((item) => {
+          const actor = encounter.actors.byId[item.id];
+
+          return actor ? [actor] : [];
+        })
+      ])
+    );
+    const splitSectionWeights = getSplitSectionWeights(
+      descriptor.sections,
+      sectionActorsById,
+      zone,
+      zoneBounds,
+      topBottom,
+      split && zone.shape !== 'rectangle'
+    );
 
     for (const section of descriptor.sections) {
-      const sectionActors = section.items.flatMap((item) => {
-        const actor = encounter.actors.byId[item.id];
-
-        return actor ? [actor] : [];
-      });
+      const sectionActors = sectionActorsById.get(section.id) ?? [];
       if (sectionActors.length === 0) {
         continue;
       }
-      const radialLayout =
-        (zone.shape === 'circle' || zone.shape === 'hexagon') &&
-        !split &&
-        descriptor.strategy === 'SEQUENTIAL';
-
-      if (radialLayout) {
-        const radialActors = sectionActors.map((actor) => ({
-          actor,
-          radius: getActorRadius(actor)
-        }));
-        const radialPoints =
-          descriptor.strategy === 'FLEX'
-            ? getFlexRadialActorPoints(
-                radialActors,
-                getPolygonCenter(zone.polygon),
-                getCircleZoneRadius(zoneBounds)
-              )
-            : getSequentialRadialActorPoints(
-                radialActors,
-                getPolygonCenter(zone.polygon),
-                getCircleZoneRadius(zoneBounds)
-              );
-
-        radialActors.forEach(({ actor, radius }, index) => {
-          placements.push({
-            actorId: actor.id,
-            point: radialPoints[index],
-            radius
-          });
-        });
-        continue;
-      }
-
       const sectionBounds = getSplitSectionBounds(
         section.id,
         zoneBounds,
@@ -223,52 +149,77 @@ function calculateActorRenderPlacementGeometry(
 
       const flexLayout =
         descriptor.strategy === 'FLEX' || descriptor.strategy === 'SPLIT_FLEX';
-      const splitFlexPoints = split
-        ? getSectionActorPoints(
-            sectionActors.map((actor) => ({
-              radius: getActorRadius(actor)
-            })),
-            sectionBounds,
-            !topBottom,
-            flexLayout
-          )
-        : [];
-      const polygonFlexPoints =
-        !split && descriptor.strategy === 'FLEX'
+      const polygonLayout =
+        !split &&
+        (descriptor.strategy === 'FLEX' || descriptor.strategy === 'SEQUENTIAL');
+      const splitPolygonResult =
+        split && zone.shape !== 'rectangle'
           ? packPolygonFlexActors({
               actors: sectionActors.map(toNestingActor),
-              polygon: zone.polygon
+              polygon: getSplitSectionPolygon(zone.polygon, sectionBounds)
             })
           : null;
-      const flexPoints = !split && flexLayout
-        ? polygonFlexPoints?.fits
+      const splitPoints = split
+        ? splitPolygonResult?.fits
           ? sectionActors.map(
-              (actor) => polygonFlexPoints.placements[actor.id]
+              (actor) => splitPolygonResult.placements[actor.id]
             )
-          : getFlexActorPoints(
+          : getSectionActorPoints(
               sectionActors.map((actor) => ({
-                actor,
                 radius: getActorRadius(actor)
               })),
-              zone.polygon,
-              {
-                x: sectionBounds.x + sectionBounds.width / 2,
-                y: sectionBounds.y + sectionBounds.height / 2
-              }
+              sectionBounds,
+              !topBottom
             )
+        : [];
+      const polygonLayoutResult =
+        polygonLayout
+          ? (descriptor.strategy === 'FLEX'
+            ? packPolygonFlexActors({
+                actors: sectionActors.map(toNestingActor),
+                polygon: zone.polygon
+              })
+            : packPolygonSequentialActors({
+              actors: sectionActors.map(toNestingActor),
+              polygon: zone.polygon
+            }))
+          : null;
+      const polygonPoints = polygonLayout
+        ? polygonLayoutResult?.fits
+          ? sectionActors.map(
+              (actor) => polygonLayoutResult.placements[actor.id]
+            )
+          : flexLayout
+            ? getFlexActorPoints(
+                sectionActors.map((actor) => ({
+                  actor,
+                  radius: getActorRadius(actor)
+                })),
+                zone.polygon,
+                {
+                  x: sectionBounds.x + sectionBounds.width / 2,
+                  y: sectionBounds.y + sectionBounds.height / 2
+                }
+              )
+            : sectionActors.map((actor, index) =>
+                getGridPoint(index, sectionActors.length, sectionBounds, getActorRadius(actor))
+              )
         : [];
 
       sectionActors.forEach((actor, index) => {
         const radius = getActorRadius(actor);
         const point = split
-          ? splitFlexPoints[index]
-          : flexLayout
-            ? flexPoints[index]
+          ? splitPoints[index]
+          : polygonLayout
+            ? polygonPoints[index]
             : getGridPoint(index, sectionActors.length, sectionBounds, radius);
 
         placements.push({
           actorId: actor.id,
-          point: pullPointInsidePolygon(point, zone.polygon, radius),
+          point:
+            split && zone.shape !== 'rectangle'
+              ? point
+              : pullPointInsidePolygon(point, zone.polygon, radius),
           radius
         });
       });
@@ -283,7 +234,7 @@ export function getActorRenderPlacements(
 ): ActorRenderPlacement[] {
   const cacheKey = createActorPlacementCacheKey(
     encounter,
-    POLYGON_FLEX_LAYOUT_SETTINGS,
+    POLYGON_LAYOUT_SETTINGS,
     FLEX_ZONE_EDGE_GAP
   );
   const geometry = getCachedActorPlacementGeometry(cacheKey, () =>
