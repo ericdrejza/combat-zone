@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { ENCOUNTER_SCHEMA_VERSION } from "../core/encounter/types";
-import type { EncounterActionRecord } from "../core/history/types";
+import { ENCOUNTER_SCHEMA_VERSION } from "@core/encounter/types";
+import type { EncounterActionRecord } from "@core/history/types";
 import {
   canRedoEncounterHistory,
   canUndoEncounterHistory
-} from "../core/history/types";
+} from "@core/history/types";
 import reducer, {
   clearEncounterHistory,
   commitEncounterChange,

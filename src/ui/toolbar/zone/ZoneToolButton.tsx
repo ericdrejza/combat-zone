@@ -1,14 +1,14 @@
 import { useDispatch } from "react-redux";
 
-import type { ZoneShape } from "../../../entities/zone/types";
+import type { ZoneShape } from "@entities/zone/types";
 import {
   setActiveTool,
   setZoneShapeMode
-} from "../../../interaction/interactionState";
+} from "@interaction/interactionState";
 import type {
   ToolDefinition,
   ToolId
-} from "../../../interaction/tools/toolRegistry";
+} from "@interaction/tools/toolRegistry";
 import {
   ToolbarOptionButton,
   ToolbarOptionGroup,

@@ -1,9 +1,9 @@
 import { useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
-import type { LayoutPoint } from "../../core/layout/types";
-import { useAltKey } from "../../hooks/useAltKey";
-import type { RootState } from "../../store/store";
+import type { LayoutPoint } from "@core/layout/types";
+import { useAltKey } from "@hooks/useAltKey";
+import type { RootState } from "@store/store";
 import { ZonelessActorPanel } from "../panels/zoneless_actors/ZonelessActorPanel";
 import { closeZoneShapeMenu } from "../toolbar/events";
 import { CanvasDragOverlay } from "./CanvasDragOverlay";

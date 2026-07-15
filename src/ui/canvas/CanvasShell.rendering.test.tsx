@@ -2,19 +2,19 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Provider } from "react-redux";
 
-import { createEncounterState } from "../../core/encounter/createEncounterState";
-import { createEncounterActionRecord } from "../../core/history/createEncounterActionRecord";
-import { RENDER_LAYERS } from "../../core/rendering/types";
-import type { EntityCollection } from "../../core/state/entityCollection";
-import { ACTOR_LAYOUT_GROUP_COLORS } from "../../entities/actor/actorVisuals";
-import type { Actor } from "../../entities/actor/types";
-import type { Zone } from "../../entities/zone/types";
-import { selectEntity, setActiveTool } from "../../interaction/interactionState";
+import { createEncounterState } from "@core/encounter/createEncounterState";
+import { createEncounterActionRecord } from "@core/history/createEncounterActionRecord";
+import { RENDER_LAYERS } from "@core/rendering/types";
+import type { EntityCollection } from "@core/state/entityCollection";
+import { ACTOR_LAYOUT_GROUP_COLORS } from "@entities/actor/actorVisuals";
+import type { Actor } from "@entities/actor/types";
+import type { Zone } from "@entities/zone/types";
+import { selectEntity, setActiveTool } from "@interaction/interactionState";
 import {
   commitEncounterChange,
   resetEncounterState
-} from "../../store/encounterSlice";
-import { store } from "../../store/store";
+} from "@store/encounterSlice";
+import { store } from "@store/store";
 import {
   createCircleZone,
   createRectangleZone,
@@ -23,7 +23,7 @@ import {
   renderApp,
   selectZoneTool,
   startPolygonMode
-} from "../../test/ui/renderApp";
+} from "@test/ui/renderApp";
 import { App } from "../App";
 
 function collection<TEntity extends { id: string }>(

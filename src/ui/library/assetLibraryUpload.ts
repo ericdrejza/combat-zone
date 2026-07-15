@@ -1,8 +1,8 @@
 import type { Dispatch, UnknownAction } from "@reduxjs/toolkit";
 
-import { stripFileExtension } from "../../entities/actor/actorMutations";
-import { createFolder, uploadImage } from "../../library/librarySlice";
-import type { LibrarySectionId } from "../../library/types";
+import { stripFileExtension } from "@entities/actor/actorMutations";
+import { createFolder, uploadImage } from "@library/librarySlice";
+import type { LibrarySectionId } from "@library/types";
 import { readImageFile } from "../toolbar/background/readImageFile";
 import type { DroppedImageFile } from "./libraryFileDrop";
 

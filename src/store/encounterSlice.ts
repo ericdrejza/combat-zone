@@ -1,10 +1,10 @@
 import type { PayloadAction } from "@reduxjs/toolkit";
 import { createSlice } from "@reduxjs/toolkit";
 
-import { createEncounterState } from "../core/encounter/createEncounterState";
-import type { EncounterState } from "../core/encounter/types";
-import type { EncounterActionRecord } from "../core/history/types";
-import { createEncounterHistoryState } from "../core/history/types";
+import { createEncounterState } from "@core/encounter/createEncounterState";
+import type { EncounterState } from "@core/encounter/types";
+import type { EncounterActionRecord } from "@core/history/types";
+import { createEncounterHistoryState } from "@core/history/types";
 
 export type CommitEncounterChangePayload = {
   action: EncounterActionRecord;

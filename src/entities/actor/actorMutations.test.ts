@@ -1,16 +1,16 @@
 import { describe, expect, it } from 'vitest';
 
-import { createEncounterState } from '../../core/encounter/createEncounterState';
-import { ZONELESS_ACTOR_ZONE_ID } from '../../core/encounter/types';
-import { createEncounterActionRecord } from '../../core/history/createEncounterActionRecord';
-import { calculateZoneLayout } from '../../core/layout/encounterLayout';
-import type { EntityCollection } from '../../core/state/entityCollection';
-import { prepareValidatedEncounterChange } from '../../core/validation/validatedEncounterChange';
+import { createEncounterState } from '@core/encounter/createEncounterState';
+import { ZONELESS_ACTOR_ZONE_ID } from '@core/encounter/types';
+import { createEncounterActionRecord } from '@core/history/createEncounterActionRecord';
+import { calculateZoneLayout } from '@core/layout/encounterLayout';
+import type { EntityCollection } from '@core/state/entityCollection';
+import { prepareValidatedEncounterChange } from '@core/validation/validatedEncounterChange';
 import reducer, {
   commitEncounterChange,
   redoEncounterChange,
   undoEncounterChange
-} from '../../store/encounterSlice';
+} from '@store/encounterSlice';
 import type { Zone } from '../zone/types';
 import type { Actor } from './types';
 import {

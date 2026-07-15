@@ -2,11 +2,11 @@ import type {
   ActorLayoutGroup,
   ActorShape,
   ActorSize
-} from '../../entities/actor/types';
+} from '@entities/actor/types';
 import {
   ACTOR_LAYOUT_GROUP_COLORS,
   ACTOR_SIZE_MULTIPLIERS
-} from '../../entities/actor/actorVisuals';
+} from '@entities/actor/actorVisuals';
 
 type ActorDragPreviewInput = {
   image?: string;

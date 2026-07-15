@@ -6,9 +6,9 @@ import {
   type LucideIcon
 } from 'lucide-react';
 
-import type { LayoutOrientation } from '../../../core/layout/types';
-import type { Zone, ZoneNamePosition } from '../../../entities/zone/types';
-import type { UpdateZonePropertiesInput } from '../../../entities/zone/zoneMutations';
+import type { LayoutOrientation } from '@core/layout/types';
+import type { Zone, ZoneNamePosition } from '@entities/zone/types';
+import type { UpdateZonePropertiesInput } from '@entities/zone/zoneMutations';
 
 export const zoneLayoutStrategies: Zone['layoutStrategy'][] = [
   'FLEX',

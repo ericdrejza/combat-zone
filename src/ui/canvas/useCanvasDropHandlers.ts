@@ -1,8 +1,8 @@
 import type { DragEvent } from "react";
 
-import { ZONELESS_ACTOR_ZONE_ID } from "../../core/encounter/types";
-import type { AppDispatch } from "../../store/store";
-import type { RootState } from "../../store/store";
+import { ZONELESS_ACTOR_ZONE_ID } from "@core/encounter/types";
+import type { AppDispatch } from "@store/store";
+import type { RootState } from "@store/store";
 import {
   ACTOR_CREATION_DRAG_TYPE,
   type NewActorDragData

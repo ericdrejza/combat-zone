@@ -1,5 +1,5 @@
-import type { LayoutPoint } from '../../core/layout/types';
-import type { Actor } from '../../entities/actor/types';
+import type { LayoutPoint } from '@core/layout/types';
+import type { Actor } from '@entities/actor/types';
 
 export const RADIAL_ACTOR_GAP = 8;
 export const RADIAL_START_ANGLE = -Math.PI / 2;

@@ -1,4 +1,4 @@
-import type { EncounterBackgroundImage } from '../../../core/encounter/types';
+import type { EncounterBackgroundImage } from '@core/encounter/types';
 
 /** Returns the first image file carried by a native drag-and-drop payload. */
 export function getDroppedImageFile(

@@ -4,10 +4,10 @@ import type {
   MouseEventHandler
 } from "react";
 
-import type { LayoutPoint } from "../../core/layout/types";
-import type { Zone } from "../../entities/zone/types";
-import { RENDER_LAYERS } from "../../core/rendering/types";
-import type { RootState } from "../../store/store";
+import type { LayoutPoint } from "@core/layout/types";
+import type { Zone } from "@entities/zone/types";
+import { RENDER_LAYERS } from "@core/rendering/types";
+import type { RootState } from "@store/store";
 import type {
   ActorDragState,
   ShapeDraftState

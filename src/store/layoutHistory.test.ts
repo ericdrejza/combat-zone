@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import type { Zone } from '../entities/zone/types';
-import type { EntityCollection } from '../core/state/entityCollection';
-import { calculateZoneLayout } from '../core/layout/encounterLayout';
+import type { Zone } from '@entities/zone/types';
+import type { EntityCollection } from '@core/state/entityCollection';
+import { calculateZoneLayout } from '@core/layout/encounterLayout';
 import reducer, {
   commitEncounterChange,
   undoEncounterChange

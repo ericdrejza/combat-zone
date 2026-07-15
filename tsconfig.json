@@ -11,6 +11,16 @@
     "forceConsistentCasingInFileNames": true,
     "module": "ESNext",
     "moduleResolution": "Bundler",
+    "paths": {
+      "@core/*": ["./src/core/*"],
+      "@entities/*": ["./src/entities/*"],
+      "@hooks/*": ["./src/hooks/*"],
+      "@interaction/*": ["./src/interaction/*"],
+      "@library/*": ["./src/library/*"],
+      "@store/*": ["./src/store/*"],
+      "@test/*": ["./src/test/*"],
+      "@ui/*": ["./src/ui/*"]
+    },
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,

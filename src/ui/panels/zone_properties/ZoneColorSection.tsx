@@ -1,7 +1,7 @@
 import { ChevronDown, ChevronRight, Paintbrush } from "lucide-react";
 
-import type { Zone } from "../../../entities/zone/types";
-import type { ZonePaintBrushState } from "../../../interaction/interactionState";
+import type { Zone } from "@entities/zone/types";
+import type { ZonePaintBrushState } from "@interaction/interactionState";
 import { ColorPalette } from "./ColorPalette";
 import type { CommitZoneProperties } from "./types";
 

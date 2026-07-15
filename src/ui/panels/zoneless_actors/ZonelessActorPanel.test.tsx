@@ -2,24 +2,24 @@ import { act, fireEvent, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event";
 import { afterEach, vi } from "vitest";
 
-import { createEncounterState } from "../../../core/encounter/createEncounterState";
-import { ZONELESS_ACTOR_ZONE_ID } from "../../../core/encounter/types";
-import { createEncounterActionRecord } from "../../../core/history/createEncounterActionRecord";
-import type { EntityCollection } from "../../../core/state/entityCollection";
-import type { Actor } from "../../../entities/actor/types";
-import type { Zone } from "../../../entities/zone/types";
-import { setActiveTool } from "../../../interaction/interactionState";
+import { createEncounterState } from "@core/encounter/createEncounterState";
+import { ZONELESS_ACTOR_ZONE_ID } from "@core/encounter/types";
+import { createEncounterActionRecord } from "@core/history/createEncounterActionRecord";
+import type { EntityCollection } from "@core/state/entityCollection";
+import type { Actor } from "@entities/actor/types";
+import type { Zone } from "@entities/zone/types";
+import { setActiveTool } from "@interaction/interactionState";
 import {
   commitEncounterChange,
   redoEncounterChange,
   undoEncounterChange
-} from "../../../store/encounterSlice";
-import { store } from "../../../store/store";
+} from "@store/encounterSlice";
+import { store } from "@store/store";
 import {
   getCanvas,
   mockCanvasBounds,
   renderApp
-} from "../../../test/ui/renderApp";
+} from "@test/ui/renderApp";
 import { createRectanglePolygon } from "../../canvas/zoneGeometry";
 import { CANVAS_BACKGROUND_COLOR } from "../../canvas/canvasConstants";
 import { getReadableTextColor } from "../../canvas/canvasLuminance";

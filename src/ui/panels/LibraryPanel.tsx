@@ -3,16 +3,16 @@ import type { DragEvent } from "react";
 import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
-import { setActorDragImage } from "../../core/rendering/actorDragPreview";
-import { createEncounterActionRecord } from "../../core/history/createEncounterActionRecord";
-import { prepareValidatedEncounterChange } from "../../core/validation/validatedEncounterChange";
-import { createActor } from "../../entities/actor/actorMutations";
-import { clearSelection } from "../../interaction/interactionState";
-import { resolveLibraryAsset } from "../../library/librarySlice";
-import type { LibraryNode, LibrarySectionId } from "../../library/types";
-import type { ToolId } from "../../interaction/tools/toolRegistry";
-import { commitEncounterChange } from "../../store/encounterSlice";
-import type { RootState } from "../../store/store";
+import { setActorDragImage } from "@core/rendering/actorDragPreview";
+import { createEncounterActionRecord } from "@core/history/createEncounterActionRecord";
+import { prepareValidatedEncounterChange } from "@core/validation/validatedEncounterChange";
+import { createActor } from "@entities/actor/actorMutations";
+import { clearSelection } from "@interaction/interactionState";
+import { resolveLibraryAsset } from "@library/librarySlice";
+import type { LibraryNode, LibrarySectionId } from "@library/types";
+import type { ToolId } from "@interaction/tools/toolRegistry";
+import { commitEncounterChange } from "@store/encounterSlice";
+import type { RootState } from "@store/store";
 import { LIBRARY_NODE_DRAG_TYPE } from "../library/libraryDrag";
 import { getFoldersFirstChildren } from "../library/libraryUi";
 

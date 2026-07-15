@@ -1,20 +1,20 @@
 import { act, fireEvent, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import { createEncounterState } from "../../core/encounter/createEncounterState";
-import { createEncounterActionRecord } from "../../core/history/createEncounterActionRecord";
-import { ZONELESS_ACTOR_ZONE_ID } from "../../core/encounter/types";
-import type { EntityCollection } from "../../core/state/entityCollection";
-import type { Actor } from "../../entities/actor/types";
-import type { Zone } from "../../entities/zone/types";
-import { selectEntity, setActiveTool } from "../../interaction/interactionState";
+import { createEncounterState } from "@core/encounter/createEncounterState";
+import { createEncounterActionRecord } from "@core/history/createEncounterActionRecord";
+import { ZONELESS_ACTOR_ZONE_ID } from "@core/encounter/types";
+import type { EntityCollection } from "@core/state/entityCollection";
+import type { Actor } from "@entities/actor/types";
+import type { Zone } from "@entities/zone/types";
+import { selectEntity, setActiveTool } from "@interaction/interactionState";
 import {
   commitEncounterChange,
   redoEncounterChange,
   undoEncounterChange
-} from "../../store/encounterSlice";
-import { store } from "../../store/store";
-import { getCanvas, mockCanvasBounds, renderApp } from "../../test/ui/renderApp";
+} from "@store/encounterSlice";
+import { store } from "@store/store";
+import { getCanvas, mockCanvasBounds, renderApp } from "@test/ui/renderApp";
 import { createRectanglePolygon } from "./zoneGeometry";
 
 function collection<TEntity extends { id: string }>(

@@ -1,9 +1,9 @@
 import { useRef, useState } from "react";
 import { useSelector } from "react-redux";
 
-import type { LibrarySectionId } from "../../library/types";
-import { LIBRARY_SECTION_IDS } from "../../library/types";
-import type { RootState } from "../../store/store";
+import type { LibrarySectionId } from "@library/types";
+import { LIBRARY_SECTION_IDS } from "@library/types";
+import type { RootState } from "@store/store";
 import type { ContextMenuState } from "./AssetLibraryMenus";
 import { getImageNodes } from "./libraryUi";
 

@@ -1,4 +1,4 @@
-import type { LayoutDescriptor } from "../../../core/layout/types";
+import type { LayoutDescriptor } from "@core/layout/types";
 
 type ZoneLayoutDescriptorProps = {
   descriptor: LayoutDescriptor;

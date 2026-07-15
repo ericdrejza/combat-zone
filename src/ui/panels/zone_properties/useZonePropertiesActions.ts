@@ -1,19 +1,19 @@
 import { useDispatch, useSelector } from "react-redux";
 
-import { createEncounterActionRecord } from "../../../core/history/createEncounterActionRecord";
-import type { Zone } from "../../../entities/zone/types";
+import { createEncounterActionRecord } from "@core/history/createEncounterActionRecord";
+import type { Zone } from "@entities/zone/types";
 import {
   deleteZone,
   type UpdateZonePropertiesInput,
   updateZoneProperties
-} from "../../../entities/zone/zoneMutations";
+} from "@entities/zone/zoneMutations";
 import {
   clearSelection,
   setLastZoneOpacity,
   toggleZonePaintBrush
-} from "../../../interaction/interactionState";
-import { commitEncounterChange } from "../../../store/encounterSlice";
-import type { RootState } from "../../../store/store";
+} from "@interaction/interactionState";
+import { commitEncounterChange } from "@store/encounterSlice";
+import type { RootState } from "@store/store";
 import { getExportableZoneProperties } from "./options";
 
 function toZonePropertiesInput(

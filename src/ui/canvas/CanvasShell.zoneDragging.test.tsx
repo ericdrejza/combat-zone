@@ -1,14 +1,14 @@
 import { fireEvent, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import { store } from "../../store/store";
+import { store } from "@store/store";
 import {
   createRectangleZone,
   getCanvas,
   mockCanvasBounds,
   renderApp,
   selectZoneTool
-} from "../../test/ui/renderApp";
+} from "@test/ui/renderApp";
 
 describe("CanvasShell zone dragging", () => {
   it("selects and drags an existing zone in Zone mode instead of drawing over it", async () => {

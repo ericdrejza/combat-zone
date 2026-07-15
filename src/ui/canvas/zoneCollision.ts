@@ -1,5 +1,5 @@
-import type { LayoutPoint } from "../../core/layout/types";
-import type { RootState } from "../../store/store";
+import type { LayoutPoint } from "@core/layout/types";
+import type { RootState } from "@store/store";
 import { CANVAS_HEIGHT, CANVAS_WIDTH } from "./canvasConstants";
 import type { Bounds } from "./zoneShapeGeometry";
 import { getPolygonBounds } from "./zoneShapeGeometry";

@@ -1,12 +1,12 @@
 import { useEffect } from 'react';
 import type { Dispatch } from 'redux';
 
-import { createEncounterActionRecord } from '../../core/history/createEncounterActionRecord';
+import { createEncounterActionRecord } from '@core/history/createEncounterActionRecord';
 import {
   duplicateActor,
   deleteActor
-} from '../../entities/actor/actorMutations';
-import { deleteZone } from '../../entities/zone/zoneMutations';
+} from '@entities/actor/actorMutations';
+import { deleteZone } from '@entities/zone/zoneMutations';
 import {
   clearActorPaintBrush,
   clearSelection,
@@ -15,9 +15,9 @@ import {
   setActorClipboardActor,
   setActorToolLayoutGroup,
   setZoneShapeMode
-} from '../../interaction/interactionState';
-import { commitEncounterChange } from '../../store/encounterSlice';
-import type { RootState } from '../../store/store';
+} from '@interaction/interactionState';
+import { commitEncounterChange } from '@store/encounterSlice';
+import type { RootState } from '@store/store';
 import { sortZoneIdsByPosition } from './zoneGeometry';
 
 type UseCanvasKeyboardInput = {

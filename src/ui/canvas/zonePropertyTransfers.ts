@@ -1,8 +1,8 @@
-import type { Zone } from "../../entities/zone/types";
+import type { Zone } from "@entities/zone/types";
 import type {
   CreateZoneInput,
   UpdateZonePropertiesInput
-} from "../../entities/zone/zoneMutations";
+} from "@entities/zone/zoneMutations";
 
 export function getPaintableZoneProperties(
   zone: Zone

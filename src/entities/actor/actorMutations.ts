@@ -8,12 +8,12 @@ import type {
 import type {
   ActorZoneAssignment,
   EncounterState
-} from '../../core/encounter/types';
-import { ZONELESS_ACTOR_ZONE_ID } from '../../core/encounter/types';
+} from '@core/encounter/types';
+import { ZONELESS_ACTOR_ZONE_ID } from '@core/encounter/types';
 import type {
   EntityCollection,
   EntityId
-} from '../../core/state/entityCollection';
+} from '@core/state/entityCollection';
 
 export type ActorImageInput = {
   dataUrl: string;

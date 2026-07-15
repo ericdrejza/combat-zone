@@ -1,5 +1,5 @@
-import type { LayoutPoint } from "../../core/layout/types";
-import type { Zone } from "../../entities/zone/types";
+import type { LayoutPoint } from "@core/layout/types";
+import type { Zone } from "@entities/zone/types";
 import {
   BACKGROUND_SAMPLE_COUNT,
   CANVAS_BACKGROUND_COLOR,

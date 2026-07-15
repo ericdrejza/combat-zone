@@ -1,4 +1,4 @@
-import type { ActorZoneAssignment } from "../../core/encounter/types";
+import type { ActorZoneAssignment } from "@core/encounter/types";
 
 export type ActorType =
   | "creature"

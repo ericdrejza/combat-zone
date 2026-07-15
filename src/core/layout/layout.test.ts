@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import type { Actor } from '../../entities/actor/types';
-import type { Engagement } from '../../entities/engagement/types';
-import type { Zone } from '../../entities/zone/types';
+import type { Actor } from '@entities/actor/types';
+import type { Engagement } from '@entities/engagement/types';
+import type { Zone } from '@entities/zone/types';
 import { createEncounterState } from '../encounter/createEncounterState';
 import type { EncounterState } from '../encounter/types';
 import type { EntityCollection } from '../state/entityCollection';

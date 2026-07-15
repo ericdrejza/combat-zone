@@ -7,7 +7,7 @@ import {
   renderApp,
   selectZoneTool,
   startPolygonMode
-} from "../../test/ui/renderApp";
+} from "@test/ui/renderApp";
 
 describe("CanvasShell polygon draft", () => {
   it("clears polygon draft points with Escape", async () => {

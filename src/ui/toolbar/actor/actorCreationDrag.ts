@@ -1,4 +1,4 @@
-import type { ActorLayoutGroup, ActorShape, ActorSize } from "../../../entities/actor/types";
+import type { ActorLayoutGroup, ActorShape, ActorSize } from "@entities/actor/types";
 
 export const ACTOR_CREATION_DRAG_TYPE = "combat-zone/new-actor";
 

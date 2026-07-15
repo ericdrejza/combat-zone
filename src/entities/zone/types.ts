@@ -2,7 +2,7 @@ import type {
   LayoutOrientation,
   LayoutPoint,
   LayoutStrategyId
-} from "../../core/layout/types";
+} from "@core/layout/types";
 
 export type ZoneShape = "rectangle" | "circle" | "hexagon" | "polygon";
 export type ZoneNamePosition =

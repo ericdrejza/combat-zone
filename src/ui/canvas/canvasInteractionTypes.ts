@@ -1,9 +1,9 @@
 import type { Dispatch, SetStateAction } from "react";
 
-import type { LayoutPoint } from "../../core/layout/types";
-import type { ZoneShape } from "../../entities/zone/types";
-import type { AppDispatch } from "../../store/store";
-import type { RootState } from "../../store/store";
+import type { LayoutPoint } from "@core/layout/types";
+import type { ZoneShape } from "@entities/zone/types";
+import type { AppDispatch } from "@store/store";
+import type { RootState } from "@store/store";
 import type { LocalBoxSelectionState } from "./zoneGeometry";
 
 export type VertexDragState = {
