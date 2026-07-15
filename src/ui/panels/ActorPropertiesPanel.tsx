@@ -6,10 +6,12 @@ import type {
   ActorSize,
   ActorType
 } from "@entities/actor/types";
+import { prepareValidatedEncounterChange } from "@core/validation/validatedEncounterChange";
 import { updateActorProperties } from "@entities/actor/actorMutations";
 import { createEncounterActionRecord } from "@core/history/createEncounterActionRecord";
 import { commitEncounterChange } from "@store/encounterSlice";
 import type { RootState } from "@store/store";
+import { useZoneResizeApproval } from "../zoneResizeApproval";
 
 const ACTOR_TYPES: ActorType[] = [
   "creature",
@@ -23,6 +25,7 @@ const ACTOR_SIZES: ActorSize[] = ["small", "medium", "large", "xLarge"];
 
 export function ActorPropertiesPanel() {
   const dispatch = useDispatch();
+  const { requestApproval } = useZoneResizeApproval();
   const encounter = useSelector((state: RootState) => state.encounter.present);
   const selection = useSelector((state: RootState) => state.interaction.selection);
   const selectedActorId =
@@ -54,15 +57,34 @@ export function ActorPropertiesPanel() {
       return;
     }
 
-    dispatch(
-      commitEncounterChange({
-        action: createEncounterActionRecord("actor.updateProperties", {
-          actorId: actor.id,
-          properties
-        }),
-        nextEncounter
-      })
-    );
+    const prepared = prepareValidatedEncounterChange({
+      action: createEncounterActionRecord("actor.updateProperties", {
+        actorId: actor.id,
+        properties
+      }),
+      currentEncounter: encounter,
+      nextEncounter
+    });
+
+    const commitPreparedChange = () => {
+      dispatch(
+        commitEncounterChange({
+          action: prepared.action,
+          nextEncounter: prepared.nextEncounter
+        })
+      );
+    };
+
+    if (prepared.requiresConfirmation) {
+      requestApproval({ onApprove: commitPreparedChange });
+      return;
+    }
+
+    if (prepared.blocked) {
+      return;
+    }
+
+    commitPreparedChange();
   }
 
   return (

@@ -10,6 +10,7 @@ import { MVP_VALIDATORS } from "./validators";
 
 export type RunValidationPipelineInput = {
   state: EncounterState;
+  nextState?: EncounterState;
   action: ValidationAction;
   mode?: ValidationMode;
   validators?: Validator<EncounterState>[];
@@ -17,28 +18,27 @@ export type RunValidationPipelineInput = {
 
 export function runValidationPipeline({
   state,
+  nextState,
   action,
   mode = state.validationState.mode,
   validators = MVP_VALIDATORS
 }: RunValidationPipelineInput): ValidationPipelineResult {
-  if (mode === "OFF") {
-    return {
-      mode,
-      valid: true,
-      blocked: false,
-      messages: []
-    };
-  }
-
-  const messages = validators.flatMap(
-    (validator) => validator.validate(action, { state, mode }).messages
+  const activeValidators =
+    mode === "OFF"
+      ? validators.filter((validator) => validator.runsInOffMode)
+      : validators;
+  const validationResults = activeValidators.map((validator) =>
+    validator.validate(action, { state, mode, nextState })
   );
+  const messages = validationResults.flatMap((result) => result.messages);
   const result = createValidationResult(messages);
 
   return {
     ...result,
     mode,
-    blocked: mode === "STRICT" && !result.valid
+    blocked:
+      validationResults.some((validationResult) => validationResult.blocked) ||
+      (mode === "STRICT" && !result.valid)
   };
 }
 

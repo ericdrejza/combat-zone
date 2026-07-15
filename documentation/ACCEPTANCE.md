@@ -45,6 +45,22 @@ covers `DESIGN.md` §15 "Must have" scope only.
       snap-back does **not** create a spurious Redux history entry.
 - [ ] Actor dragged to empty canvas space becomes zoneless.
 
+## Rectangular FLEX actor packing (logic phase)
+
+- [x] A singular actor targets the center of a rectangular FLEX zone.
+- [x] Multiple rectangular FLEX actors use rendered rectangle/circle
+      footprints, deterministic collection order, and polygon packing without
+      overlap.
+- [x] Preferred 16px border spacing adaptively falls back to 12px, 8px, and
+      4px when the actor set needs more room.
+- [x] Actor creation or movement is rejected when no valid non-overlapping
+      packing exists, including OFF, ADVISORY, ASSISTED, and STRICT modes.
+- [x] The pure placement result preserves an incoming drop point and returns
+      the packed target for the later animation phase.
+- [ ] Canvas actor rendering uses the incoming drop point and packed targets
+      for animated transitions (requires explicit approval for the animation
+      phase).
+
 ## Native image drops
 
 - [x] With the Background Tool selected, dropping an external image onto the

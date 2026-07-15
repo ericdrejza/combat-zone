@@ -9,6 +9,18 @@ To reference completed items, see `ROADMAP_COMPLETE.md`.
 
 After completing a numbered section (## X.), move the completed section to the end of `ROADMAP_COMPLETE.md`
 
+## 9. Rectangular FLEX actor packing
+
+- [x] Implement deterministic polygon-footprint packing behind a project-owned
+  rectangular FLEX adapter.
+- [x] Support configurable preferred/minimum border spacing, actor gaps,
+  rendered rectangle/circle footprints, stable ordering, incoming drop-point
+  metadata, and fit rejection.
+- [x] Enforce no-overlap packing failures in every validation mode for actor
+  movement and creation.
+- [ ] Apply the adapter to additional zone shapes after explicit review.
+- [ ] Add the approved canvas animation phase with Framer Motion.
+
 ## 10. Engagement Groups
 
 - [ ] Implement Engagement entity creation through drag/drop.

@@ -4,6 +4,7 @@ import type { LayoutPoint } from "@core/layout/types";
 import type { ZoneShape } from "@entities/zone/types";
 import type { AppDispatch } from "@store/store";
 import type { RootState } from "@store/store";
+import type { ActorRenderPlacement } from "./actorCanvasLayout";
 import type { LocalBoxSelectionState } from "./zoneGeometry";
 
 export type VertexDragState = {
@@ -44,6 +45,7 @@ export type MutableRefValue<TValue> = {
 export type CanvasInteractionState = {
   activeToolId: RootState["interaction"]["activeToolId"];
   actorDrag: ActorDragState | null;
+  actorRenderPlacements: ActorRenderPlacement[];
   actorPaintBrush: RootState["interaction"]["actorPaintBrush"];
   actorTool: RootState["interaction"]["actorTool"];
   boxSelection: LocalBoxSelectionState | null;

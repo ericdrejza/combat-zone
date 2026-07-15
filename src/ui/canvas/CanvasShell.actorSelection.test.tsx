@@ -69,7 +69,11 @@ function zone(id: string, x: number, y: number, width: number, height: number): 
   };
 }
 
-function seedEncounter(actors: Actor[], zones: Zone[] = []) {
+function seedEncounter(
+  actors: Actor[],
+  zones: Zone[] = [],
+  validationMode: "OFF" | "ADVISORY" | "ASSISTED" | "STRICT" = "ADVISORY"
+) {
   store.dispatch(
     commitEncounterChange({
       action: createEncounterActionRecord("test.seed"),
@@ -79,6 +83,10 @@ function seedEncounter(actors: Actor[], zones: Zone[] = []) {
           name: "Actor Selection Encounter"
         }),
         actors: collection(actors),
+        validationState: {
+          messages: [],
+          mode: validationMode
+        },
         zones: collection(zones)
       }
     })
@@ -130,11 +138,11 @@ describe("CanvasShell actor selection", () => {
 
     fireEvent.mouseDown(canvas, {
       button: 0,
-      clientX: 140,
+      clientX: 210,
       clientY: 170,
       shiftKey: true
     });
-    fireEvent.mouseMove(canvas, { clientX: 190, clientY: 230 });
+    fireEvent.mouseMove(canvas, { clientX: 290, clientY: 230 });
     fireEvent.mouseUp(canvas);
 
     expect(store.getState().interaction.selection).toMatchObject({
@@ -144,11 +152,11 @@ describe("CanvasShell actor selection", () => {
 
     fireEvent.mouseDown(canvas, {
       button: 0,
-      clientX: 210,
+      clientX: 110,
       clientY: 170,
       shiftKey: true
     });
-    fireEvent.mouseMove(canvas, { clientX: 260, clientY: 230 });
+    fireEvent.mouseMove(canvas, { clientX: 190, clientY: 230 });
     fireEvent.mouseUp(canvas);
 
     expect(store.getState().interaction.selection).toMatchObject({
@@ -334,5 +342,42 @@ describe("CanvasShell actor selection", () => {
         size: "small"
       });
     });
+  });
+
+  it("asks before resizing a zone for an assisted actor resize", async () => {
+    const user = userEvent.setup();
+
+    renderApp();
+
+    act(() => {
+      seedEncounter(
+        [actor("actor-1", "zone-1")],
+        [zone("zone-1", 100, 100, 100, 100)],
+        "ASSISTED"
+      );
+      store.dispatch(setActiveTool("actor"));
+      store.dispatch(
+        selectEntity({
+          entityType: "actor",
+          ids: ["actor-1"]
+        })
+      );
+    });
+
+    await user.selectOptions(screen.getByRole("combobox", { name: "Size" }), "xLarge");
+
+    expect(screen.getByRole("dialog", { name: "Resize zone approval" })).toBeInTheDocument();
+    expect(store.getState().encounter.present.actors.byId["actor-1"]?.size).toBe(
+      "medium"
+    );
+
+    await user.click(screen.getByRole("button", { name: "Resize" }));
+
+    expect(store.getState().encounter.present.actors.byId["actor-1"]?.size).toBe(
+      "xLarge"
+    );
+    expect(
+      store.getState().encounter.present.zones.byId["zone-1"]?.polygon
+    ).not.toEqual(zone("zone-1", 100, 100, 100, 100).polygon);
   });
 });

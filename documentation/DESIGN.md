@@ -100,7 +100,9 @@ Layout strategies:
 
 - FLEX (default)
   - Actors are rendered evenly spread out as symmetrically as possible around the zone
-  - Actor placement is dynamic and handled by CSS layout inside the zone
+  - Rectangular zones use deterministic polygon-footprint packing for actor
+    targets; other shapes retain their existing derived layout behavior until
+    they explicitly opt into the polygon packer
 - SEQUENTIAL
   - Actors are rendered one after the other in specific order around the zone
   - Actor order is stable based on collection `allIds`; an actor entering a
@@ -282,6 +284,19 @@ Validation modes:
 - ASSISTED (soft blocking + prompt)
 - STRICT (hard validation blocks invalid moves)
 
+Geometric fit is a universal invariant across all validation modes: an actor
+move or creation that would place overlapping actors, or would place an actor
+outside the available zone footprint, is rejected in OFF, ADVISORY, ASSISTED,
+and STRICT modes. Other validation messages retain the mode behavior above.
+
+When a rectangular FLEX zone is resized below the minimum size needed for its
+actors, the attempted rectangle is uniformly enlarged to the smallest size
+that supports every actor without overlap. The resulting rectangle preserves
+the aspect ratio of the attempted resize. If an actor footprint resize would
+require this automatic zone enlargement, STRICT rejects the actor resize,
+ADVISORY and OFF apply it with a validation note, and ASSISTED asks for
+confirmation before applying both changes.
+
 ## 6. Layout System
 
 ### 6.1 Zone Layout Strategies
@@ -444,15 +459,24 @@ Layout strategies:
     engagements will be created in the zone.
 
 Actor and engagement positions inside zones are not persisted in
-EncounterState and are not calculated as coordinates. Layout strategies derive
-CSS layout descriptors from the normalized entity collections, collection
-`allIds` ordering (which records the latest zone-entry order for actors), each
-entity's layout strategy, and each entity's layout orientation. Zone geometry
-itself remains coordinate-based because zones are canvas objects.
+EncounterState. Layout strategies derive render targets from the normalized
+entity collections, collection `allIds` ordering (which records the latest
+zone-entry order for actors), each entity's layout strategy, and each entity's
+layout orientation. Rectangular FLEX derives deterministic polygon-footprint
+coordinates using configurable preferred/minimum border spacing and rendered
+actor shapes. Zone geometry itself remains coordinate-based because zones are
+canvas objects.
 
 Rule:
 
 - Actors dropped within zone outside engagement return to original position if invalid drop
+- Actor movement or creation is rejected when rectangular FLEX cannot fit the
+  resulting actor footprints without overlap; this rejection applies in every
+  validation mode.
+- Rectangular FLEX zone resizing enlarges an undersized target to the smallest
+  same-aspect-ratio rectangle that fits its actors.
+- Actor footprint resizing follows the validation-mode policy in §5.5 when
+  enlarging its zone is required.
 
 ## 15. MVP Scope
 
