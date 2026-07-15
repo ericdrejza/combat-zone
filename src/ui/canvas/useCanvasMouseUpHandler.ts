@@ -9,7 +9,11 @@ import {
   selectEntity
 } from "@interaction/interactionState";
 import { commitEncounterChange } from "@store/encounterSlice";
-import { findZoneIdAtPoint, getActorRenderPlacements } from "./actorCanvasLayout";
+import {
+  findZoneIdAtPoint,
+  getActorRenderPlacements
+} from "./actorCanvasLayout";
+import { cacheActorRenderPlacementsForZoneMove } from "./actorPlacementTranslation";
 import { MIN_SHAPE_SIZE } from "./canvasConstants";
 import type { CanvasInteractionState } from "./canvasInteractionTypes";
 import { commitZoneCreate } from "./zoneCreationActions";
@@ -166,6 +170,15 @@ export function useCanvasMouseUpHandler(input: MouseUpHandlerInput) {
           zoneDrag.zoneId,
           nextPolygon
         );
+        cacheActorRenderPlacementsForZoneMove(
+          nextEncounter,
+          input.actorRenderPlacements,
+          zoneDrag.zoneId,
+          {
+            x: zoneDrag.current.x - zoneDrag.start.x,
+            y: zoneDrag.current.y - zoneDrag.start.y
+          }
+        );
 
         dispatch(
           commitEncounterChange({
@@ -223,14 +236,42 @@ export function useCanvasMouseUpHandler(input: MouseUpHandlerInput) {
       vertexDrag.zoneId,
       vertexDrag.polygon
     );
+    const prepared = prepareValidatedEncounterChange({
+      action: createEncounterActionRecord("zone.reshape", {
+        polygon: vertexDrag.polygon,
+        zoneId: vertexDrag.zoneId
+      }),
+      currentEncounter: encounter,
+      nextEncounter
+    });
+
+    const committedPolygon =
+      prepared.nextEncounter.zones.byId[vertexDrag.zoneId]?.polygon ??
+      vertexDrag.polygon;
+
+    if (
+      prepared.blocked ||
+      !canCommitZonePolygonForCollection(
+        committedPolygon,
+        encounter.zones,
+        vertexDrag.zoneId
+      )
+    ) {
+      setVertexDrag(null);
+      return;
+    }
 
     dispatch(
       commitEncounterChange({
-        action: createEncounterActionRecord("zone.reshape", {
-          polygon: vertexDrag.polygon,
-          zoneId: vertexDrag.zoneId
-        }),
-        nextEncounter
+        action: {
+          ...prepared.action,
+          payload: {
+            ...prepared.action.payload,
+            polygon: committedPolygon,
+            requestedPolygon: vertexDrag.polygon
+          }
+        },
+        nextEncounter: prepared.nextEncounter
       })
     );
     dispatch(

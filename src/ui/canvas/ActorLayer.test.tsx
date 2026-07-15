@@ -6,6 +6,7 @@ import type { Actor } from '@entities/actor/types';
 import type { Zone } from '@entities/zone/types';
 import type { SelectionState } from '@interaction/selection/types';
 import { ActorLayer } from './ActorLayer';
+import { getActorRenderPlacements } from './actorCanvasLayout';
 
 function collection<TEntity extends { id: string }>(
   entities: TEntity[]
@@ -71,6 +72,7 @@ describe('ActorLayer', () => {
           backgroundLuminanceByZoneId={{ [zone.id]: 0 }}
           canvasBackgroundLuminance={255}
           encounter={encounter}
+          placements={getActorRenderPlacements(encounter)}
           onActorMouseDown={() => undefined}
           onActorMouseEnter={() => undefined}
           onActorMouseLeave={() => undefined}
@@ -112,6 +114,7 @@ describe('ActorLayer', () => {
           backgroundLuminanceByZoneId={{ [zone.id]: 0 }}
           canvasBackgroundLuminance={255}
           encounter={encounter}
+          placements={getActorRenderPlacements(encounter)}
           onActorMouseDown={() => undefined}
           onActorMouseEnter={() => undefined}
           onActorMouseLeave={() => undefined}
@@ -124,6 +127,47 @@ describe('ActorLayer', () => {
     expect(container.querySelector('text[dy="46"]')).toHaveAttribute(
       'fill',
       '#ffffff'
+    );
+  });
+
+  it('translates actors with a moving zone without changing their layout', () => {
+    const zone = createZone();
+    const actor = createActor(zone.id);
+    const encounter = {
+      ...createEncounterState({ id: 'encounter-zone-translation', name: 'Test' }),
+      actors: collection([actor]),
+      zones: collection([zone])
+    };
+    const placement = getActorRenderPlacements(encounter)[0];
+
+    const { container } = render(
+      <svg>
+        <ActorLayer
+          actorDrag={null}
+          backgroundLuminanceByZoneId={{ [zone.id]: 0 }}
+          canvasBackgroundLuminance={255}
+          encounter={encounter}
+          placements={[placement]}
+          zoneActorTranslation={{
+            offset: { x: 40, y: -25 },
+            zoneId: zone.id
+          }}
+          onActorMouseDown={() => undefined}
+          onActorMouseEnter={() => undefined}
+          onActorMouseLeave={() => undefined}
+          selection={{
+            overlayTargets: [],
+            selectedEntityType: null,
+            selectedIds: []
+          }}
+          showFactionOutlines={false}
+        />
+      </svg>
+    );
+
+    expect(container.querySelector('[data-entity-id="actor-1"]')).toHaveAttribute(
+      'transform',
+      `translate(${placement.point.x + 40} ${placement.point.y - 25})`
     );
   });
 });

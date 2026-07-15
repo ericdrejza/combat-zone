@@ -11,6 +11,7 @@ import {
   FLEX_ZONE_EDGE_GAP,
   getActorRenderPlacements
 } from './actorCanvasLayout';
+import { cacheActorRenderPlacementsForZoneMove } from './actorPlacementTranslation';
 import { createCirclePolygonFromBounds } from './zoneShapeGeometry';
 
 function collection<TEntity extends { id: string }>(
@@ -102,7 +103,7 @@ describe('actor canvas layout', () => {
     expect(placement.point).toEqual({ x: 250, y: 220 });
   });
 
-  it('uses vertex-first FLEX candidates with actor and edge separation', () => {
+  it('uses polygon packing for rectangular FLEX actors with actor and edge separation', () => {
     const zoneId = 'rectangle-zone';
     const encounter = {
       ...createEncounterState({ id: 'encounter-flex-spacing', name: 'Flex' }),
@@ -116,16 +117,16 @@ describe('actor canvas layout', () => {
     const first = placements[0];
     const second = placements[1];
 
-    expect(first.point).toEqual({ x: 146, y: 146 });
-    expect(second.point).toEqual({ x: 354, y: 354 });
+    expect(first.point).toEqual({ x: 354, y: 250 });
+    expect(second.point).toEqual({ x: 146, y: 250 });
     expect(
       Math.hypot(
         first.point.x - second.point.x,
         first.point.y - second.point.y
       )
     ).toBeGreaterThanOrEqual(first.radius + second.radius);
-    expect(first.point.x - first.radius).toBeGreaterThanOrEqual(
-      100 + FLEX_ZONE_EDGE_GAP
+    expect(first.point.x + first.radius).toBeLessThanOrEqual(
+      400 - FLEX_ZONE_EDGE_GAP
     );
     expect(first.point.y - first.radius).toBeGreaterThanOrEqual(
       100 + FLEX_ZONE_EDGE_GAP
@@ -295,5 +296,62 @@ describe('actor canvas layout', () => {
     };
 
     expect(getActorRenderPlacements(encounter)).toEqual([]);
+  });
+
+  it('reuses geometry for visual-only actor edits while rendering the latest actor', () => {
+    const zoneId = 'rectangle-zone';
+    const encounter = {
+      ...createEncounterState({ id: 'encounter-cache', name: 'Cache' }),
+      actors: collection([zonedActor('actor-cache', zoneId)]),
+      zones: collection([zone(zoneId, 100, 100, 300, 300)])
+    };
+    const initialPlacement = getActorRenderPlacements(encounter)[0];
+    const updatedActor = {
+      ...encounter.actors.byId['actor-cache']!,
+      image: 'data:image/png;base64,updated',
+      name: 'Updated actor'
+    };
+    const updatedEncounter = {
+      ...encounter,
+      actors: collection([updatedActor])
+    };
+
+    const updatedPlacement = getActorRenderPlacements(updatedEncounter)[0];
+
+    expect(updatedPlacement.actor).toBe(updatedActor);
+    expect(updatedPlacement.point).toEqual(initialPlacement.point);
+  });
+
+  it('reuses translated geometry when a zone moves', () => {
+    const zoneId = 'translated-zone';
+    const encounter = {
+      ...createEncounterState({ id: 'encounter-zone-move-cache', name: 'Cache' }),
+      actors: collection([
+        zonedActor('actor-one', zoneId),
+        zonedActor('actor-two', zoneId)
+      ]),
+      zones: collection([zone(zoneId, 100, 100, 300, 300)])
+    };
+    const placements = getActorRenderPlacements(encounter);
+    const offset = { x: 75, y: -30 };
+    const movedZone = zone(zoneId, 175, 70, 300, 300);
+    const movedEncounter = {
+      ...encounter,
+      zones: collection([movedZone])
+    };
+
+    cacheActorRenderPlacementsForZoneMove(
+      movedEncounter,
+      placements,
+      zoneId,
+      offset
+    );
+
+    expect(getActorRenderPlacements(movedEncounter).map(({ point }) => point)).toEqual(
+      placements.map(({ point }) => ({
+        x: point.x + offset.x,
+        y: point.y + offset.y
+      }))
+    );
   });
 });

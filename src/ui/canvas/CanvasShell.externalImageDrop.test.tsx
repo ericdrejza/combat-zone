@@ -90,7 +90,7 @@ describe("CanvasShell external image drops", () => {
     const canvas = getCanvas();
     mockCanvasBounds(canvas);
     await selectZoneTool(user);
-    createRectangleZone(canvas);
+    createRectangleZone(canvas, { x: 80, y: 80 }, { x: 280, y: 280 });
     await user.click(screen.getByRole("button", { name: "Actor" }));
     await user.click(screen.getByRole("button", { name: "Enemy faction" }));
     await user.click(screen.getByRole("button", { name: "Large actor size" }));
