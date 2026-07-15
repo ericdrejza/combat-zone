@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 
-import type { LayoutPoint } from "../../core/layout/types";
-import type { Zone } from "../../entities/zone/types";
-import type { RootState } from "../../store/store";
+import type { LayoutPoint } from "@core/layout/types";
+import type { Zone } from "@entities/zone/types";
+import type { RootState } from "@store/store";
 import {
   BACKGROUND_SAMPLE_COUNT,
   CANVAS_HEIGHT,

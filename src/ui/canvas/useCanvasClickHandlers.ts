@@ -1,6 +1,6 @@
 import type { MouseEvent } from "react";
 
-import { createEncounterActionRecord } from "../../core/history/createEncounterActionRecord";
+import { createEncounterActionRecord } from "@core/history/createEncounterActionRecord";
 import {
   clearActorPaintBrush,
   clearSelection,
@@ -8,9 +8,9 @@ import {
   selectEntity,
   setActorToolTargetZone,
   setLastZoneOpacity
-} from "../../interaction/interactionState";
-import type { SelectableEntityType } from "../../interaction/selection/types";
-import { commitEncounterChange } from "../../store/encounterSlice";
+} from "@interaction/interactionState";
+import type { SelectableEntityType } from "@interaction/selection/types";
+import { commitEncounterChange } from "@store/encounterSlice";
 import { closeZoneShapeMenu } from "../toolbar/events";
 import { CLOSE_DISTANCE } from "./canvasConstants";
 import type { CanvasInteractionState } from "./canvasInteractionTypes";
@@ -23,7 +23,7 @@ import {
   isPolygonWithinCanvas,
   toSvgPoint
 } from "./zoneGeometry";
-import { updateZoneProperties } from "../../entities/zone/zoneMutations";
+import { updateZoneProperties } from "@entities/zone/zoneMutations";
 import { getPaintableZoneProperties } from "./zonePropertyTransfers";
 
 type ClickHandlerInput = Pick<

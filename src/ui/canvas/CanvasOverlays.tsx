@@ -1,5 +1,5 @@
-import type { LayoutPoint } from "../../core/layout/types";
-import type { ZoneShape } from "../../entities/zone/types";
+import type { LayoutPoint } from "@core/layout/types";
+import type { ZoneShape } from "@entities/zone/types";
 import type { ShapeDraftState } from "./canvasInteractionTypes";
 import {
   createShapePolygon,

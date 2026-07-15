@@ -1,9 +1,9 @@
-import { createEncounterActionRecord } from "../../core/history/createEncounterActionRecord";
-import type { LayoutPoint } from "../../core/layout/types";
-import type { ZoneShape } from "../../entities/zone/types";
-import { createZone } from "../../entities/zone/zoneMutations";
-import { selectEntity } from "../../interaction/interactionState";
-import { commitEncounterChange } from "../../store/encounterSlice";
+import { createEncounterActionRecord } from "@core/history/createEncounterActionRecord";
+import type { LayoutPoint } from "@core/layout/types";
+import type { ZoneShape } from "@entities/zone/types";
+import { createZone } from "@entities/zone/zoneMutations";
+import { selectEntity } from "@interaction/interactionState";
+import { commitEncounterChange } from "@store/encounterSlice";
 import type { CanvasInteractionState } from "./canvasInteractionTypes";
 import { canCommitZonePolygon as canCommitZonePolygonForCollection } from "./zoneGeometry";
 import { getCloneableZoneProperties } from "./zonePropertyTransfers";

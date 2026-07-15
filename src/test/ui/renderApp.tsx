@@ -3,11 +3,11 @@ import type { RenderResult } from "@testing-library/react";
 import type userEvent from "@testing-library/user-event";
 import { Provider } from "react-redux";
 
-import { resetInteractionState } from "../../interaction/interactionState";
-import { resetLibraryState } from "../../library/librarySlice";
-import { resetEncounterState } from "../../store/encounterSlice";
-import { store } from "../../store/store";
-import { App } from "../../ui/App";
+import { resetInteractionState } from "@interaction/interactionState";
+import { resetLibraryState } from "@library/librarySlice";
+import { resetEncounterState } from "@store/encounterSlice";
+import { store } from "@store/store";
+import { App } from "@ui/App";
 
 export function resetAppStore() {
   store.dispatch(resetEncounterState());

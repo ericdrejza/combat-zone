@@ -2,7 +2,7 @@ import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { renderApp } from "../../test/ui/renderApp";
+import { renderApp } from "@test/ui/renderApp";
 
 async function openBackgroundLibrary() {
   const user = userEvent.setup();

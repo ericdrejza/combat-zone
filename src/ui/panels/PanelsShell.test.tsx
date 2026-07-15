@@ -1,7 +1,7 @@
 import { fireEvent, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import { renderApp } from "../../test/ui/renderApp";
+import { renderApp } from "@test/ui/renderApp";
 import { movePanel } from "./panelLayout";
 
 describe("PanelsShell", () => {

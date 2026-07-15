@@ -8,8 +8,8 @@ import {
   deleteNode,
   moveNode,
   renameNode
-} from "../../library/librarySlice";
-import type { LibraryNode } from "../../library/types";
+} from "@library/librarySlice";
+import type { LibraryNode } from "@library/types";
 import { createImageFilesInFolder } from "./assetLibraryUpload";
 import {
   hasExternalFiles,

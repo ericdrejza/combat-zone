@@ -1,13 +1,13 @@
 import type { MouseEvent } from "react";
 import { useEffect } from "react";
 
-import type { LayoutPoint } from "../../core/layout/types";
-import type { Zone } from "../../entities/zone/types";
+import type { LayoutPoint } from "@core/layout/types";
+import type { Zone } from "@entities/zone/types";
 import {
   clearSelection,
   selectEntity
-} from "../../interaction/interactionState";
-import type { SelectableEntityType } from "../../interaction/selection/types";
+} from "@interaction/interactionState";
+import type { SelectableEntityType } from "@interaction/selection/types";
 import { closeZoneShapeMenu } from "../toolbar/events";
 import type { CanvasInteractionState } from "./canvasInteractionTypes";
 import { useCanvasMouseUpHandler } from "./useCanvasMouseUpHandler";

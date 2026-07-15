@@ -1,10 +1,10 @@
 import { useRef, useState } from "react";
 import { useDispatch } from "react-redux";
 
-import type { EncounterState } from "../../../core/encounter/types";
-import { createEncounterActionRecord } from "../../../core/history/createEncounterActionRecord";
-import { setActiveTool } from "../../../interaction/interactionState";
-import { commitEncounterChange } from "../../../store/encounterSlice";
+import type { EncounterState } from "@core/encounter/types";
+import { createEncounterActionRecord } from "@core/history/createEncounterActionRecord";
+import { setActiveTool } from "@interaction/interactionState";
+import { commitEncounterChange } from "@store/encounterSlice";
 import { readImageFile } from "./readImageFile";
 
 type BackgroundAction = "add" | "replace";

@@ -1,7 +1,7 @@
 import { fireEvent, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import { store } from "../../store/store";
+import { store } from "@store/store";
 import {
   createCircleZone,
   createHexagonZone,
@@ -10,7 +10,7 @@ import {
   mockCanvasBounds,
   renderApp,
   selectZoneTool
-} from "../../test/ui/renderApp";
+} from "@test/ui/renderApp";
 
 describe("CanvasShell zone resizing", () => {
   it("resizes rectangle zones with connected corners instead of moving one vertex", async () => {

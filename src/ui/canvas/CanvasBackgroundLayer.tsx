@@ -1,4 +1,4 @@
-import type { RootState } from "../../store/store";
+import type { RootState } from "@store/store";
 import {
   CANVAS_BACKGROUND_COLOR,
   CANVAS_HEIGHT,

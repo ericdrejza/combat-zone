@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { Zone } from '../../entities/zone/types';
+import type { Zone } from '@entities/zone/types';
 import {
   createDeterministicSamplePoints,
   createCanvasBackgroundSamplePoints,

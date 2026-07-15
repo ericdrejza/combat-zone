@@ -5,14 +5,14 @@ import type {
   ActorLayoutGroup,
   ActorShape,
   ActorSize
-} from '../entities/actor/types';
+} from '@entities/actor/types';
 import type {
   EntitySelection,
   SelectableEntityType,
   SelectionState
 } from './selection/types';
 import { canToolSelectEntityType, type ToolId } from './tools/toolRegistry';
-import type { ZoneShape } from '../entities/zone/types';
+import type { ZoneShape } from '@entities/zone/types';
 
 export type BoxSelection = {
   start: {

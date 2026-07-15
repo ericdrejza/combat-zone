@@ -1,7 +1,7 @@
 import { FileImage, Trash2, X } from "lucide-react";
 import type { RefObject } from "react";
 
-import type { LibraryNode } from "../../library/types";
+import type { LibraryNode } from "@library/types";
 
 export type ContextMenuState = {
   nodeId: string;

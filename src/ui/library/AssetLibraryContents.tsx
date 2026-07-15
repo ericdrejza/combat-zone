@@ -1,7 +1,7 @@
 import { FileImage, Folder, Link } from "lucide-react";
 import type { DragEvent } from "react";
 
-import type { LibraryNode, LibrarySection } from "../../library/types";
+import type { LibraryNode, LibrarySection } from "@library/types";
 import { LIBRARY_NODE_DRAG_TYPE } from "./libraryDrag";
 import { getAlphabetizedChildren } from "./libraryUi";
 

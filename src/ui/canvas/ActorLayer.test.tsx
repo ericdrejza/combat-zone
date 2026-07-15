@@ -1,10 +1,10 @@
 import { render } from '@testing-library/react';
 
-import { createEncounterState } from '../../core/encounter/createEncounterState';
-import type { EntityCollection } from '../../core/state/entityCollection';
-import type { Actor } from '../../entities/actor/types';
-import type { Zone } from '../../entities/zone/types';
-import type { SelectionState } from '../../interaction/selection/types';
+import { createEncounterState } from '@core/encounter/createEncounterState';
+import type { EntityCollection } from '@core/state/entityCollection';
+import type { Actor } from '@entities/actor/types';
+import type { Zone } from '@entities/zone/types';
+import type { SelectionState } from '@interaction/selection/types';
 import { ActorLayer } from './ActorLayer';
 
 function collection<TEntity extends { id: string }>(

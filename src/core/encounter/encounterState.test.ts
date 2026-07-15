@@ -1,8 +1,8 @@
-import type { Actor } from '../../entities/actor/types';
-import type { Annotation } from '../../entities/annotation/types';
-import type { Edge } from '../../entities/edge/types';
-import type { Engagement } from '../../entities/engagement/types';
-import type { Zone } from '../../entities/zone/types';
+import type { Actor } from '@entities/actor/types';
+import type { Annotation } from '@entities/annotation/types';
+import type { Edge } from '@entities/edge/types';
+import type { Engagement } from '@entities/engagement/types';
+import type { Zone } from '@entities/zone/types';
 import type { EntityCollection } from '../state/entityCollection';
 import { getEntities, getEntityById } from '../state/entityCollection';
 import { createEncounterState } from './createEncounterState';

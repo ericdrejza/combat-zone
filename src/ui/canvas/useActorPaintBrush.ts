@@ -1,9 +1,9 @@
 import { useEffect, useRef } from "react";
 
-import { createEncounterActionRecord } from "../../core/history/createEncounterActionRecord";
-import { updateActorProperties } from "../../entities/actor/actorMutations";
-import { commitEncounterChange } from "../../store/encounterSlice";
-import type { AppDispatch, RootState } from "../../store/store";
+import { createEncounterActionRecord } from "@core/history/createEncounterActionRecord";
+import { updateActorProperties } from "@entities/actor/actorMutations";
+import { commitEncounterChange } from "@store/encounterSlice";
+import type { AppDispatch, RootState } from "@store/store";
 
 type UseActorPaintBrushInput = {
   actorPaintBrush: boolean;

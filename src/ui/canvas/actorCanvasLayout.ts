@@ -1,8 +1,8 @@
-import { calculateZoneLayout } from '../../core/layout/encounterLayout';
-import type { LayoutPoint } from '../../core/layout/types';
-import type { Actor } from '../../entities/actor/types';
-import { ACTOR_SIZE_MULTIPLIERS } from '../../entities/actor/actorVisuals';
-import type { EncounterState } from '../../core/encounter/types';
+import { calculateZoneLayout } from '@core/layout/encounterLayout';
+import type { LayoutPoint } from '@core/layout/types';
+import type { Actor } from '@entities/actor/types';
+import { ACTOR_SIZE_MULTIPLIERS } from '@entities/actor/actorVisuals';
+import type { EncounterState } from '@core/encounter/types';
 import { getPolygonBounds, isPointInPolygon } from './zoneGeometry';
 import { FLEX_ZONE_EDGE_GAP, getFlexActorPoints } from './actorFlexLayout';
 import { getSectionActorPoints } from './actorSectionLayout';

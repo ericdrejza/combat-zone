@@ -2,14 +2,14 @@ import { useEffect, useRef, useState } from "react";
 import type { DragEvent } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
-import { createEncounterActionRecord } from "../../../core/history/createEncounterActionRecord";
-import { prepareValidatedEncounterChange } from "../../../core/validation/validatedEncounterChange";
-import { setActorDragImage } from "../../../core/rendering/actorDragPreview";
-import { createActor } from "../../../entities/actor/actorMutations";
-import { ACTOR_LAYOUT_GROUP_COLORS } from "../../../entities/actor/actorVisuals";
-import { selectEntity } from "../../../interaction/interactionState";
-import { commitEncounterChange } from "../../../store/encounterSlice";
-import type { RootState } from "../../../store/store";
+import { createEncounterActionRecord } from "@core/history/createEncounterActionRecord";
+import { prepareValidatedEncounterChange } from "@core/validation/validatedEncounterChange";
+import { setActorDragImage } from "@core/rendering/actorDragPreview";
+import { createActor } from "@entities/actor/actorMutations";
+import { ACTOR_LAYOUT_GROUP_COLORS } from "@entities/actor/actorVisuals";
+import { selectEntity } from "@interaction/interactionState";
+import { commitEncounterChange } from "@store/encounterSlice";
+import type { RootState } from "@store/store";
 import { getReadableTextColor } from "../../canvas/canvasLuminance";
 import {
   ACTOR_CREATION_DRAG_TYPE,

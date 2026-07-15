@@ -1,6 +1,6 @@
 import { useSelector } from "react-redux";
 
-import type { RootState } from "../../store/store";
+import type { RootState } from "@store/store";
 import { ActorToolButton } from "./actor/ActorToolButton";
 import { BackgroundToolButton } from "./background/BackgroundToolButton";
 import { LibraryToolbarButton } from "./LibraryToolbarButton";

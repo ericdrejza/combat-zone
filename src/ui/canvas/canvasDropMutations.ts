@@ -1,15 +1,15 @@
-import { ZONELESS_ACTOR_ZONE_ID } from "../../core/encounter/types";
-import { createEncounterActionRecord } from "../../core/history/createEncounterActionRecord";
-import { prepareValidatedEncounterChange } from "../../core/validation/validatedEncounterChange";
+import { ZONELESS_ACTOR_ZONE_ID } from "@core/encounter/types";
+import { createEncounterActionRecord } from "@core/history/createEncounterActionRecord";
+import { prepareValidatedEncounterChange } from "@core/validation/validatedEncounterChange";
 import {
   createActor,
   moveActor,
   stripFileExtension
-} from "../../entities/actor/actorMutations";
-import { selectEntity, setActiveTool } from "../../interaction/interactionState";
-import { resolveLibraryAsset } from "../../library/librarySlice";
-import { commitEncounterChange } from "../../store/encounterSlice";
-import type { AppDispatch, RootState } from "../../store/store";
+} from "@entities/actor/actorMutations";
+import { selectEntity, setActiveTool } from "@interaction/interactionState";
+import { resolveLibraryAsset } from "@library/librarySlice";
+import { commitEncounterChange } from "@store/encounterSlice";
+import type { AppDispatch, RootState } from "@store/store";
 import type { NewActorDragData } from "../toolbar/actor/actorCreationDrag";
 import { readImageFile } from "../toolbar/background/readImageFile";
 

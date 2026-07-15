@@ -1,10 +1,10 @@
 import type { Actor } from "../actor/types";
 import type { Edge } from "../edge/types";
 import type { Engagement } from "../engagement/types";
-import type { EncounterState } from "../../core/encounter/types";
-import { ZONELESS_ACTOR_ZONE_ID } from "../../core/encounter/types";
-import type { EntityCollection, EntityId } from "../../core/state/entityCollection";
-import type { LayoutOrientation, LayoutPoint } from "../../core/layout/types";
+import type { EncounterState } from "@core/encounter/types";
+import { ZONELESS_ACTOR_ZONE_ID } from "@core/encounter/types";
+import type { EntityCollection, EntityId } from "@core/state/entityCollection";
+import type { LayoutOrientation, LayoutPoint } from "@core/layout/types";
 import type { Zone, ZoneNamePosition, ZoneShape } from "./types";
 
 export type CreateZoneInput = {

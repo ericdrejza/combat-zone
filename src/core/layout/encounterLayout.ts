@@ -1,5 +1,5 @@
-import type { Actor } from '../../entities/actor/types';
-import type { Engagement } from '../../entities/engagement/types';
+import type { Actor } from '@entities/actor/types';
+import type { Engagement } from '@entities/engagement/types';
 import type { EncounterState } from '../encounter/types';
 import { getEntities } from '../state/entityCollection';
 import { getLayoutStrategy } from './strategies';

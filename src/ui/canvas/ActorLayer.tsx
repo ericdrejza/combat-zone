@@ -1,8 +1,8 @@
 import type { MouseEvent } from "react";
 
-import type { LayoutPoint } from "../../core/layout/types";
-import { ACTOR_LAYOUT_GROUP_COLORS } from "../../entities/actor/actorVisuals";
-import type { RootState } from "../../store/store";
+import type { LayoutPoint } from "@core/layout/types";
+import { ACTOR_LAYOUT_GROUP_COLORS } from "@entities/actor/actorVisuals";
+import type { RootState } from "@store/store";
 import type { ActorDragState } from "./canvasInteractionTypes";
 import { getActorRenderPlacements } from "./actorCanvasLayout";
 import {

@@ -1,12 +1,12 @@
 import { Image, ImagePlus, RefreshCw, Trash2 } from "lucide-react";
 import { useDispatch } from "react-redux";
 
-import type { EncounterState } from "../../../core/encounter/types";
-import { setActiveTool } from "../../../interaction/interactionState";
+import type { EncounterState } from "@core/encounter/types";
+import { setActiveTool } from "@interaction/interactionState";
 import type {
   ToolDefinition,
   ToolId
-} from "../../../interaction/tools/toolRegistry";
+} from "@interaction/tools/toolRegistry";
 import {
   ToolbarOptionButton,
   ToolbarOptionGroup,

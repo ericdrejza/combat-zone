@@ -1,4 +1,4 @@
-import type { LayoutPoint } from '../../core/layout/types';
+import type { LayoutPoint } from '@core/layout/types';
 
 type SectionBounds = {
   height: number;

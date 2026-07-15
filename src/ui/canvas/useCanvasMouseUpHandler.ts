@@ -1,14 +1,14 @@
-import { createEncounterActionRecord } from "../../core/history/createEncounterActionRecord";
-import { ZONELESS_ACTOR_ZONE_ID } from "../../core/encounter/types";
-import { prepareValidatedEncounterChange } from "../../core/validation/validatedEncounterChange";
-import { moveActor } from "../../entities/actor/actorMutations";
-import type { Zone } from "../../entities/zone/types";
-import { updateZonePolygon } from "../../entities/zone/zoneMutations";
+import { createEncounterActionRecord } from "@core/history/createEncounterActionRecord";
+import { ZONELESS_ACTOR_ZONE_ID } from "@core/encounter/types";
+import { prepareValidatedEncounterChange } from "@core/validation/validatedEncounterChange";
+import { moveActor } from "@entities/actor/actorMutations";
+import type { Zone } from "@entities/zone/types";
+import { updateZonePolygon } from "@entities/zone/zoneMutations";
 import {
   finishBoxSelection,
   selectEntity
-} from "../../interaction/interactionState";
-import { commitEncounterChange } from "../../store/encounterSlice";
+} from "@interaction/interactionState";
+import { commitEncounterChange } from "@store/encounterSlice";
 import { findZoneIdAtPoint, getActorRenderPlacements } from "./actorCanvasLayout";
 import { MIN_SHAPE_SIZE } from "./canvasConstants";
 import type { CanvasInteractionState } from "./canvasInteractionTypes";

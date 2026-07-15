@@ -1,13 +1,13 @@
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import { store } from "../../store/store";
+import { store } from "@store/store";
 import {
   createRectangleZone,
   getCanvas,
   mockCanvasBounds,
   renderApp
-} from "../../test/ui/renderApp";
+} from "@test/ui/renderApp";
 
 function createActorDragDataTransfer() {
   const data = new Map<string, string>();
