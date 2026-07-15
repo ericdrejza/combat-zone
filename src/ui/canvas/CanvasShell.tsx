@@ -1,35 +1,14 @@
-import type { DragEvent } from "react";
-import { useEffect, useRef, useState } from "react";
-import { useDispatch } from "react-redux";
-import { useSelector } from "react-redux";
-import { ZONELESS_ACTOR_ZONE_ID } from "../../core/encounter/types";
-import { createEncounterActionRecord } from "../../core/history/createEncounterActionRecord";
+import { useRef, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+
 import type { LayoutPoint } from "../../core/layout/types";
-import { RENDER_LAYERS } from "../../core/rendering/types";
-import { prepareValidatedEncounterChange } from "../../core/validation/validatedEncounterChange";
-import { createActor, moveActor } from "../../entities/actor/actorMutations";
-import { selectEntity, setActiveTool } from "../../interaction/interactionState";
-import { resolveLibraryAsset } from "../../library/librarySlice";
-import {
-  hasExternalFiles,
-  LIBRARY_NODE_DRAG_TYPE
-} from "../library/libraryDrag";
+import { useAltKey } from "../../hooks/useAltKey";
 import type { RootState } from "../../store/store";
-import { commitEncounterChange } from "../../store/encounterSlice";
+import { ZonelessActorPanel } from "../panels/zoneless_actors/ZonelessActorPanel";
 import { closeZoneShapeMenu } from "../toolbar/events";
-import {
-  ACTOR_CREATION_DRAG_TYPE,
-  type NewActorDragData
-} from "../toolbar/actor/actorCreationDrag";
-import {
-  getDroppedImageFile,
-  readImageFile
-} from "../toolbar/background/readImageFile";
-import { ActorLayer } from "./ActorLayer";
-import { CanvasBackgroundLayer } from "./CanvasBackgroundLayer";
-import { CanvasOverlays } from "./CanvasOverlays";
+import { CanvasDragOverlay } from "./CanvasDragOverlay";
 import { CanvasToolStatusBadge } from "./CanvasToolStatusBadge";
-import { CANVAS_BACKGROUND_COLOR, CANVAS_HEIGHT, CANVAS_WIDTH } from "./canvasConstants";
+import { CanvasWorkspace } from "./CanvasWorkspace";
 import { getTextColorForLuminance } from "./canvasLuminance";
 import type {
   ActorDragState,
@@ -37,22 +16,15 @@ import type {
   VertexDragState,
   ZoneDragState
 } from "./canvasInteractionTypes";
-import { ZoneLayer } from "./ZoneLayer";
-import {
-  hasZonelessActorDrag,
-  readZonelessActorIds
-} from "../panels/zoneless_actors/zonelessActorDrag";
-import { ZonelessActorPanel } from "../panels/zoneless_actors/ZonelessActorPanel";
-import { type LocalBoxSelectionState, toSvgPoint } from "./zoneGeometry";
-import { findZoneIdAtPoint } from "./actorCanvasLayout";
+import { type LocalBoxSelectionState } from "./zoneGeometry";
 import { useActorPaintBrush } from "./useActorPaintBrush";
+import { useCanvasDropHandlers } from "./useCanvasDropHandlers";
 import { useCanvasInteractionHandlers } from "./useCanvasInteractionHandlers";
 import { useCanvasKeyboard } from "./useCanvasKeyboard";
 import {
   useCanvasBackgroundLuminance,
   usePolygonDraftBackgroundLuminance
 } from "./useCanvasLuminance";
-import { stripFileExtension } from '../../entities/actor/actorMutations';
 
 export function CanvasShell() {
   const dispatch = useDispatch();
@@ -75,10 +47,8 @@ export function CanvasShell() {
     (state: RootState) => state.interaction.lastZoneOpacity
   );
   const selection = useSelector((state: RootState) => state.interaction.selection);
-  const backgroundImage = encounter.backgroundImage;
   const [actorDrag, setActorDrag] = useState<ActorDragState | null>(null);
   const [hoveredActorId, setHoveredActorId] = useState<string | null>(null);
-  const [altKeyDown, setAltKeyDown] = useState(false);
   const [zoneDraftPoints, setZoneDraftPoints] = useState<LayoutPoint[]>([]);
   const [shapeDraft, setShapeDraft] = useState<ShapeDraftState | null>(null);
   const [vertexDrag, setVertexDrag] = useState<VertexDragState | null>(null);
@@ -91,6 +61,8 @@ export function CanvasShell() {
   const suppressNextCanvasClickUnconditionallyRef = useRef(false);
   const suppressNextCanvasClickPointRef = useRef<LayoutPoint | null>(null);
   const suppressNextEntityClickRef = useRef<string | null>(null);
+  const altKeyDown = useAltKey();
+  const backgroundImage = encounter.backgroundImage;
   const backgroundLuminance = useCanvasBackgroundLuminance(
     backgroundImage,
     encounter.zones
@@ -99,34 +71,6 @@ export function CanvasShell() {
     backgroundImage,
     zoneDraftPoints
   );
-
-  useEffect(() => {
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Alt") {
-        setAltKeyDown(true);
-      }
-    }
-
-    function handleKeyUp(event: KeyboardEvent) {
-      if (event.key === "Alt") {
-        setAltKeyDown(false);
-      }
-    }
-
-    function handleWindowBlur() {
-      setAltKeyDown(false);
-    }
-
-    window.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("keyup", handleKeyUp);
-    window.addEventListener("blur", handleWindowBlur);
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("keyup", handleKeyUp);
-      window.removeEventListener("blur", handleWindowBlur);
-    };
-  }, []);
 
   useCanvasKeyboard({
     activeToolId,
@@ -188,6 +132,20 @@ export function CanvasShell() {
     zoneShapeMode
   });
 
+  const {
+    handleActorDropToZoneless,
+    handleCanvasDragOver,
+    handleCanvasDrop
+  } = useCanvasDropHandlers({
+    activeToolId,
+    actorDrag,
+    actorTool,
+    dispatch,
+    encounter,
+    library,
+    setActorDrag
+  });
+
   const polygonDraftColor = getTextColorForLuminance(
     polygonDraftBackgroundLuminance
   );
@@ -210,422 +168,46 @@ export function CanvasShell() {
         ? [hoveredActorName]
         : [];
 
-  function commitActorFromLibraryNode(nodeId: string, destinationZoneId: string) {
-    const tokens = library.sections.tokens;
-    const asset = resolveLibraryAsset(tokens, nodeId);
-
-    if (!asset) {
-      return;
-    }
-
-    const actorId = `actor-${Date.now()}`;
-    const nextEncounter = createActor(encounter, {
-      currentZoneId: destinationZoneId,
-      id: actorId,
-      image: asset,
-      layoutGroup: actorTool.layoutGroup,
-      shape: actorTool.shape,
-      size: actorTool.size
-    });
-    const action = createEncounterActionRecord("actor.create", {
-      actorId,
-      destinationZoneId
-    });
-    const prepared = prepareValidatedEncounterChange({
-      action,
-      currentEncounter: encounter,
-      nextEncounter
-    });
-
-    if (!prepared.blocked) {
-      dispatch(
-        commitEncounterChange({
-          action: prepared.action,
-          nextEncounter: prepared.nextEncounter
-        })
-      );
-      dispatch(
-        selectEntity({
-          entityType: "actor",
-          ids: [actorId]
-        })
-      );
-    }
-  }
-
-  function commitActorFromCreation(
-    data: NewActorDragData,
-    destinationZoneId: string
-  ) {
-    const actorId = `actor-${Date.now()}`;
-    const nextEncounter = createActor(encounter, {
-      currentZoneId: destinationZoneId,
-      id: actorId,
-      layoutGroup: data.layoutGroup,
-      name: data.name,
-      shape: data.shape,
-      size: data.size
-    });
-    const prepared = prepareValidatedEncounterChange({
-      action: createEncounterActionRecord("actor.create", {
-        actorId,
-        destinationZoneId
-      }),
-      currentEncounter: encounter,
-      nextEncounter
-    });
-
-    if (prepared.blocked) {
-      return;
-    }
-
-    dispatch(
-      commitEncounterChange({
-        action: prepared.action,
-        nextEncounter: prepared.nextEncounter
-      })
-    );
-    dispatch(selectEntity({ entityType: "actor", ids: [actorId] }));
-  }
-
-  async function commitBackgroundFromFile(file: File) {
-    const nextBackgroundImage = await readImageFile(file);
-    const actionType = encounter.backgroundImage
-      ? "background.replace"
-      : "background.add";
-
-    dispatch(
-      commitEncounterChange({
-        action: createEncounterActionRecord(actionType, {
-          backgroundImage: nextBackgroundImage
-        }),
-        nextEncounter: {
-          ...encounter,
-          backgroundImage: nextBackgroundImage
-        }
-      })
-    );
-    dispatch(setActiveTool("zone"));
-  }
-
-  async function commitActorFromImage(
-    file: File,
-    destinationZoneId: string
-  ) {
-    const image = await readImageFile(file);
-    const actorId = `actor-${Date.now()}`;
-    const nextEncounter = createActor(encounter, {
-      currentZoneId: destinationZoneId,
-      id: actorId,
-      image,
-      layoutGroup: actorTool.layoutGroup,
-      name: stripFileExtension(image.name),
-      shape: actorTool.shape,
-      size: actorTool.size
-    });
-    const prepared = prepareValidatedEncounterChange({
-      action: createEncounterActionRecord("actor.create", {
-        actorId,
-        destinationZoneId
-      }),
-      currentEncounter: encounter,
-      nextEncounter
-    });
-
-    if (prepared.blocked) {
-      return;
-    }
-
-    dispatch(
-      commitEncounterChange({
-        action: prepared.action,
-        nextEncounter: prepared.nextEncounter
-      })
-    );
-    dispatch(selectEntity({ entityType: "actor", ids: [actorId] }));
-  }
-
-  function handleActorDropToZoneless() {
-    if (!actorDrag) {
-      return;
-    }
-
-    if (!actorDrag.hasMoved) {
-      setActorDrag(null);
-      return;
-    }
-
-    const actorIds = actorDrag.actorIds.filter(
-      (actorId) =>
-        encounter.actors.byId[actorId]?.currentZoneId !==
-        ZONELESS_ACTOR_ZONE_ID
-    );
-
-    if (actorIds.length === 0) {
-      setActorDrag(null);
-      return;
-    }
-
-    const nextEncounter = actorIds.reduce(
-      (currentEncounter, actorId) =>
-        moveActor(currentEncounter, actorId, ZONELESS_ACTOR_ZONE_ID),
-      encounter
-    );
-    const action = createEncounterActionRecord(
-      actorIds.length > 1 ? "actor.moveMany" : "actor.move",
-      {
-        actorIds,
-        destinationZoneId: ZONELESS_ACTOR_ZONE_ID
-      }
-    );
-    const prepared = prepareValidatedEncounterChange({
-      action,
-      currentEncounter: encounter,
-      nextEncounter
-    });
-
-    if (!prepared.blocked && nextEncounter !== encounter) {
-      dispatch(
-        commitEncounterChange({
-          action: prepared.action,
-          nextEncounter: prepared.nextEncounter
-        })
-      );
-      dispatch(
-        selectEntity({
-          entityType: "actor",
-          ids: actorIds
-        })
-      );
-    }
-
-    setActorDrag(null);
-  }
-
-  function handleCanvasDragOver(event: DragEvent<SVGSVGElement>) {
-    const externalFiles = hasExternalFiles(event);
-
-    if (
-      externalFiles &&
-      (activeToolId === "background" || activeToolId === "actor")
-    ) {
-      event.preventDefault();
-      event.dataTransfer.dropEffect = "copy";
-      return;
-    }
-
-    if (activeToolId !== "actor" && activeToolId !== "select") {
-      return;
-    }
-
-    const libraryDrag = Array.from(event.dataTransfer.types).includes(
-      LIBRARY_NODE_DRAG_TYPE
-    );
-    const actorCreationDrag = Array.from(event.dataTransfer.types).includes(
-      ACTOR_CREATION_DRAG_TYPE
-    );
-    const zonelessActorDrag = hasZonelessActorDrag(event);
-
-    if (
-      !zonelessActorDrag &&
-      (activeToolId !== "actor" || (!libraryDrag && !actorCreationDrag))
-    ) {
-      return;
-    }
-
-    event.preventDefault();
-    event.dataTransfer.dropEffect =
-      (libraryDrag || actorCreationDrag) && activeToolId === "actor"
-        ? "copy"
-        : "move";
-  }
-
-  function handleCanvasDrop(event: DragEvent<SVGSVGElement>) {
-    const externalFiles = hasExternalFiles(event);
-    const droppedImageFile = getDroppedImageFile(event.dataTransfer);
-
-    if (activeToolId === "background" && externalFiles) {
-      event.preventDefault();
-      if (droppedImageFile) {
-        void commitBackgroundFromFile(droppedImageFile);
-      }
-      return;
-    }
-
-    if (activeToolId !== "actor" && activeToolId !== "select") {
-      return;
-    }
-
-    const point = toSvgPoint(event, event.currentTarget);
-    const destinationZoneId = findZoneIdAtPoint(encounter, point);
-
-    if (hasZonelessActorDrag(event)) {
-      event.preventDefault();
-
-      if (!destinationZoneId) {
-        return;
-      }
-
-      const actorIds = readZonelessActorIds(event).filter(
-        (actorId) =>
-          encounter.actors.byId[actorId]?.currentZoneId ===
-          ZONELESS_ACTOR_ZONE_ID
-      );
-
-      if (actorIds.length === 0) {
-        return;
-      }
-
-      const nextEncounter = actorIds.reduce(
-        (currentEncounter, actorId) =>
-          moveActor(currentEncounter, actorId, destinationZoneId),
-        encounter
-      );
-      const action = createEncounterActionRecord(
-        actorIds.length > 1 ? "actor.moveMany" : "actor.move",
-        {
-          actorIds,
-          destinationZoneId
-        }
-      );
-      const prepared = prepareValidatedEncounterChange({
-        action,
-        currentEncounter: encounter,
-        nextEncounter
-      });
-
-      if (!prepared.blocked) {
-        dispatch(
-          commitEncounterChange({
-            action: prepared.action,
-            nextEncounter: prepared.nextEncounter
-          })
-        );
-      }
-      return;
-    }
-
-    if (activeToolId !== "actor") {
-      return;
-    }
-
-    if (externalFiles) {
-      event.preventDefault();
-      if (droppedImageFile) {
-        void commitActorFromImage(
-          droppedImageFile,
-          destinationZoneId ?? ZONELESS_ACTOR_ZONE_ID
-        );
-      }
-      return;
-    }
-
-    const nodeId = event.dataTransfer.getData(LIBRARY_NODE_DRAG_TYPE);
-
-    const actorCreationData = event.dataTransfer.getData(
-      ACTOR_CREATION_DRAG_TYPE
-    );
-
-    if (actorCreationData) {
-      event.preventDefault();
-      try {
-        commitActorFromCreation(
-          JSON.parse(actorCreationData) as NewActorDragData,
-          destinationZoneId ?? ZONELESS_ACTOR_ZONE_ID
-        );
-      } catch {
-        return;
-      }
-      return;
-    }
-
-    if (!nodeId) {
-      return;
-    }
-
-    event.preventDefault();
-    commitActorFromLibraryNode(
-      nodeId,
-      destinationZoneId ?? ZONELESS_ACTOR_ZONE_ID
-    );
-  }
-
   return (
     <section
       aria-label="Encounter canvas"
       className="relative min-h-0 overflow-hidden rounded-3xl border border-canvas-line bg-canvas-panel shadow-sm"
       role="main"
     >
-      <svg
-        aria-label="SVG encounter workspace"
-        className={`h-full min-h-0 w-full bg-[${CANVAS_BACKGROUND_COLOR}]`}
-        ref={canvasRef}
-        onClick={handleCanvasClick}
-        onContextMenu={handleCanvasContextMenu}
-        onDragOver={handleCanvasDragOver}
-        onDrop={handleCanvasDrop}
-        onDoubleClick={handleCanvasDoubleClick}
-        onMouseDown={handleCanvasMouseDown}
-        onMouseMove={handleCanvasMouseMove}
-        onMouseUp={handleCanvasMouseUp}
-        role="img"
-        viewBox={`0 0 ${CANVAS_WIDTH} ${CANVAS_HEIGHT}`}
-      >
-        {RENDER_LAYERS.map((layer) => (
-          <g
-            key={layer.id}
-            aria-label={`${layer.label} layer`}
-            data-layer={layer.id}
-          >
-            {layer.id === "background" ? (
-              <CanvasBackgroundLayer backgroundImage={backgroundImage} />
-            ) : null}
-            {layer.id === "zones"
-              ? (
-                  <ZoneLayer
-                    activeToolId={activeToolId}
-                    actorTargetZoneId={actorTool.targetZoneId}
-                    backgroundLuminanceByZoneId={backgroundLuminance.byZoneId}
-                    getDisplayedPolygon={getDisplayedPolygon}
-                    onResizeHandleMouseDown={handleResizeHandleMouseDown}
-                    selection={selection}
-                    zones={encounter.zones}
-                  />
-                )
-              : null}
-            {layer.id === "actors"
-              ? (
-                  <ActorLayer
-                    actorDrag={actorDrag}
-                    backgroundLuminanceByZoneId={backgroundLuminance.byZoneId}
-                    canvasBackgroundLuminance={backgroundLuminance.canvas}
-                    encounter={encounter}
-                    onActorMouseDown={handleActorMouseDown}
-                    onActorMouseEnter={setHoveredActorId}
-                    onActorMouseLeave={(actorId) =>
-                      setHoveredActorId((current) =>
-                        current === actorId ? null : current
-                      )
-                    }
-                    selection={selection}
-                    showFactionOutlines={showFactionOutlines}
-                  />
-                )
-              : null}
-            {layer.id === "uiOverlays"
-              ? (
-                  <CanvasOverlays
-                    boxSelection={boxSelection}
-                    polygonDraftColor={polygonDraftColor}
-                    shapeDraft={shapeDraft}
-                    zoneDraftPoints={zoneDraftPoints}
-                    zoneShapeMode={zoneShapeMode}
-                  />
-                )
-              : null}
-          </g>
-        ))}
-      </svg>
+      <CanvasWorkspace
+        activeToolId={activeToolId}
+        actorDrag={actorDrag}
+        actorTargetZoneId={actorTool.targetZoneId}
+        backgroundImage={backgroundImage}
+        backgroundLuminanceByZoneId={backgroundLuminance.byZoneId}
+        boxSelection={boxSelection}
+        canvasBackgroundLuminance={backgroundLuminance.canvas}
+        canvasRef={canvasRef}
+        encounter={encounter}
+        getDisplayedPolygon={getDisplayedPolygon}
+        handleActorMouseDown={handleActorMouseDown}
+        handleCanvasClick={handleCanvasClick}
+        handleCanvasContextMenu={handleCanvasContextMenu}
+        handleCanvasDoubleClick={handleCanvasDoubleClick}
+        handleCanvasDragOver={handleCanvasDragOver}
+        handleCanvasDrop={handleCanvasDrop}
+        handleCanvasMouseDown={handleCanvasMouseDown}
+        handleCanvasMouseMove={handleCanvasMouseMove}
+        handleCanvasMouseUp={handleCanvasMouseUp}
+        handleResizeHandleMouseDown={handleResizeHandleMouseDown}
+        onActorMouseEnter={setHoveredActorId}
+        onActorMouseLeave={(actorId) =>
+          setHoveredActorId((current) =>
+            current === actorId ? null : current
+          )
+        }
+        polygonDraftColor={polygonDraftColor}
+        selection={selection}
+        shapeDraft={shapeDraft}
+        showFactionOutlines={showFactionOutlines}
+        zoneDraftPoints={zoneDraftPoints}
+        zoneShapeMode={zoneShapeMode}
+      />
       <CanvasToolStatusBadge
         activeToolId={activeToolId}
         actorNames={statusActorNames}
@@ -640,25 +222,14 @@ export function CanvasShell() {
         selection={selection}
       />
       {actorDrag ? (
-        <svg
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 z-30 h-full w-full"
-          data-drag-overlay="actor"
-          viewBox={`0 0 ${CANVAS_WIDTH} ${CANVAS_HEIGHT}`}
-        >
-          <ActorLayer
-            actorDrag={actorDrag}
-            backgroundLuminanceByZoneId={backgroundLuminance.byZoneId}
-            canvasBackgroundLuminance={backgroundLuminance.canvas}
-            dragOverlay
-            encounter={encounter}
-            onActorMouseDown={() => undefined}
-            onActorMouseEnter={() => undefined}
-            onActorMouseLeave={() => undefined}
-            selection={selection}
-            showFactionOutlines={showFactionOutlines}
-          />
-        </svg>
+        <CanvasDragOverlay
+          actorDrag={actorDrag}
+          backgroundLuminanceByZoneId={backgroundLuminance.byZoneId}
+          canvasBackgroundLuminance={backgroundLuminance.canvas}
+          encounter={encounter}
+          selection={selection}
+          showFactionOutlines={showFactionOutlines}
+        />
       ) : null}
     </section>
   );
