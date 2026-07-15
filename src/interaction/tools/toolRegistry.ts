@@ -84,7 +84,7 @@ export const MVP_TOOLS: ToolDefinition[] = [
     tooltip: "Add, replace, or delete the canvas background image.",
     contract: {
       selectableEntityTypes: [],
-      dragBehavior: "No canvas drag behavior; background changes come from file upload.",
+      dragBehavior: "Accept native image drops to add or replace the canvas background.",
       clickBehavior: "Open background image actions.",
       keyboardShortcut: "b"
     }

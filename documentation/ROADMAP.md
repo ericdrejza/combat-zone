@@ -86,6 +86,8 @@ After completing a numbered section (## X.), move the completed section to the e
 
 ## 15. MVP Acceptance Hardening
 
+- [x] Verify native image drops for the Background and Actor tools, including
+  Redux history undo/redo coverage.
 - [ ] Create an acceptance test matrix covering every item in
   `ACCEPTANCE.md`.
 - [ ] Verify every state-changing action type has an undo test.

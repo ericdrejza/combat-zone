@@ -84,8 +84,9 @@ first — this table is a locked decision, not a suggestion.
 - Use clear, concise comments for classes, exported functions, hooks, reducers,
   selectors, and complex logic when the intent or invariant is not obvious
   from the code itself.
-- Comments should explain why behavior exists, important constraints, or
-  non-obvious edge cases. Avoid comments that merely restate the code.
+- Comments on classes, interfaces, functions, etc., should explain why behavior
+  exists, important constraints, or non-obvious edge cases. Avoid comments that
+  merely restate the code.
 
 ## UI IMPLEMENTATION RULES
 
