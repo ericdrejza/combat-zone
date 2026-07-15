@@ -7,7 +7,7 @@ import {
   type PolygonNestingSettings
 } from './nesting_ts';
 
-export type RectangularFlexLayoutInput = {
+export type PolygonFlexLayoutInput = {
   polygon: LayoutPoint[];
   actors: NestingActor[];
   incomingActorId?: string;
@@ -15,15 +15,16 @@ export type RectangularFlexLayoutInput = {
   settings?: Partial<PolygonNestingSettings>;
 };
 
-export const RECTANGULAR_FLEX_LAYOUT_SETTINGS =
+export const POLYGON_FLEX_LAYOUT_SETTINGS =
   DEFAULT_POLYGON_NESTING_SETTINGS;
 
 /**
- * Adapter boundary for the rectangular FLEX strategy. Other zone shapes can
- * opt into the same polygon contract without changing validation callers.
+ * Application boundary for polygon-footprint FLEX placement. Every zone shape
+ * is represented by a polygon, so the same strategy works for rectangles,
+ * circles, hexagons, and user-drawn polygons.
  */
-export function packRectangularFlexActors(
-  input: RectangularFlexLayoutInput
+export function packPolygonFlexActors(
+  input: PolygonFlexLayoutInput
 ): PolygonNestingResult {
   return packPolygonActors(input);
 }

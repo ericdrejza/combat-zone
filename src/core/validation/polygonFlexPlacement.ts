@@ -1,7 +1,7 @@
 import { ZONELESS_ACTOR_ZONE_ID } from "../encounter/types";
 import type { EncounterState } from "../encounter/types";
 import { toNestingActor } from "../layout/actorFootprints";
-import { findSmallestRectangularFlexZoneFit } from "../layout/rectangularFlexZoneFit";
+import { findSmallestPolygonFlexZoneFit } from "../layout/polygonFlexZoneFit";
 import type { LayoutPoint } from "../layout/types";
 import type { ValidationAction } from "./types";
 
@@ -32,7 +32,7 @@ function isActorMovementOrCreation(action: ValidationAction): boolean {
   );
 }
 
-export function getRectangularFlexAffectedZoneIds(
+export function getPolygonFlexAffectedZoneIds(
   action: ValidationAction,
   state: EncounterState,
   nextState: EncounterState
@@ -117,21 +117,21 @@ function replaceZonePolygon(
   };
 }
 
-export type RectangularFlexPlacementAdjustment = {
+export type PolygonFlexPlacementAdjustment = {
   nextEncounter: EncounterState;
   resizedZoneIds: string[];
 };
 
 /**
- * Expands affected rectangular FLEX zones only when a polygon reshape or
+ * Expands affected polygon FLEX zones only when a polygon reshape or
  * actor footprint change cannot fit. Actor entry and movement remain hard fit
  * checks; they must not trigger an expensive automatic zone resize.
  */
-export function adjustRectangularFlexZonesToFit(
+export function adjustPolygonFlexZonesToFit(
   action: ValidationAction,
   state: EncounterState,
   nextEncounter: EncounterState
-): RectangularFlexPlacementAdjustment {
+): PolygonFlexPlacementAdjustment {
   const canResizeZone =
     action.type === "zone.reshape" || isActorFootprintChange(action);
 
@@ -142,14 +142,14 @@ export function adjustRectangularFlexZonesToFit(
   let adjustedEncounter = nextEncounter;
   const resizedZoneIds: string[] = [];
 
-  for (const zoneId of getRectangularFlexAffectedZoneIds(
+  for (const zoneId of getPolygonFlexAffectedZoneIds(
     action,
     state,
     nextEncounter
   )) {
     const zone = adjustedEncounter.zones.byId[zoneId];
 
-    if (!zone || zone.shape !== "rectangle" || zone.layoutStrategy !== "FLEX") {
+    if (!zone || zone.layoutStrategy !== "FLEX") {
       continue;
     }
 
@@ -158,7 +158,7 @@ export function adjustRectangularFlexZonesToFit(
 
       return actor && actor.currentZoneId === zoneId ? [toNestingActor(actor)] : [];
     });
-    const fit = findSmallestRectangularFlexZoneFit(zone.polygon, actors);
+    const fit = findSmallestPolygonFlexZoneFit(zone.polygon, actors);
 
     if (fit?.resized) {
       adjustedEncounter = replaceZonePolygon(

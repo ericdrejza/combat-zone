@@ -1,10 +1,10 @@
 import type { EncounterState } from "../encounter/types";
 import { toNestingActor } from "../layout/actorFootprints";
-import { packRectangularFlexActors } from "../layout/rectangularFlexLayout";
+import { packPolygonFlexActors } from "../layout/polygonFlexLayout";
 import {
-  getRectangularFlexAffectedZoneIds,
+  getPolygonFlexAffectedZoneIds,
   polygonsEqual
-} from "./rectangularFlexPlacement";
+} from "./polygonFlexPlacement";
 import type {
   ValidationAction,
   ValidationMessage,
@@ -20,19 +20,19 @@ function result(messages: ValidationMessage[]): ValidationResult {
 }
 
 /**
- * Layout is a hard geometric invariant. It runs in OFF mode because allowing
+ * Polygon FLEX layout is a hard geometric invariant. It runs in OFF mode because allowing
  * an overlapping actor would make the derived canvas placement ambiguous.
  * Reshaping a zone or changing an actor footprint uses the same fit check.
  */
-export const RectangularFlexPlacementValidator: Validator<EncounterState> = {
-  id: "RectangularFlexPlacementValidator",
+export const PolygonFlexPlacementValidator: Validator<EncounterState> = {
+  id: "PolygonFlexPlacementValidator",
   runsInOffMode: true,
   validate(action, { state, nextState }) {
     if (!nextState) {
       return result([]);
     }
 
-    const affectedZoneIds = getRectangularFlexAffectedZoneIds(
+    const affectedZoneIds = getPolygonFlexAffectedZoneIds(
       action,
       state,
       nextState
@@ -43,7 +43,7 @@ export const RectangularFlexPlacementValidator: Validator<EncounterState> = {
     for (const zoneId of affectedZoneIds) {
       const zone = nextState.zones.byId[zoneId];
 
-      if (!zone || zone.shape !== "rectangle" || zone.layoutStrategy !== "FLEX") {
+      if (!zone || zone.layoutStrategy !== "FLEX") {
         continue;
       }
 
@@ -65,7 +65,7 @@ export const RectangularFlexPlacementValidator: Validator<EncounterState> = {
 
       if (zoneWasAutomaticallyResized || actorChangeResizedZone) {
         messages.push({
-          code: "layout.rectangularFlexZoneResized",
+          code: "layout.polygonFlexZoneResized",
           message:
             action.type === "zone.reshape"
               ? `Zone ${zone.name} was enlarged to fit its actors.`
@@ -79,15 +79,15 @@ export const RectangularFlexPlacementValidator: Validator<EncounterState> = {
 
         return actor && actor.currentZoneId === zoneId ? [toNestingActor(actor)] : [];
       });
-      const packing = packRectangularFlexActors({
+      const packing = packPolygonFlexActors({
         actors,
         polygon: zone.polygon
       });
 
       if (!packing.fits) {
         messages.push({
-          code: "layout.rectangularFlexNoSpace",
-          message: `Actors cannot fit in rectangular FLEX zone ${zone.name} without overlap.`,
+          code: "layout.polygonFlexNoSpace",
+          message: `Actors cannot fit in polygon FLEX zone ${zone.name} without overlap.`,
           severity: "error"
         });
       }

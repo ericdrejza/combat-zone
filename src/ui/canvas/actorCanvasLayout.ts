@@ -8,9 +8,9 @@ import {
   toNestingActor
 } from '@core/layout/actorFootprints';
 import {
-  packRectangularFlexActors,
-  RECTANGULAR_FLEX_LAYOUT_SETTINGS
-} from '@core/layout/rectangularFlexLayout';
+  packPolygonFlexActors,
+  POLYGON_FLEX_LAYOUT_SETTINGS
+} from '@core/layout/polygonFlexLayout';
 import { getPolygonBounds, isPointInPolygon } from './zoneGeometry';
 import { FLEX_ZONE_EDGE_GAP, getFlexActorPoints } from './actorFlexLayout';
 import { getSectionActorPoints } from './actorSectionLayout';
@@ -184,8 +184,7 @@ function calculateActorRenderPlacementGeometry(
       const radialLayout =
         (zone.shape === 'circle' || zone.shape === 'hexagon') &&
         !split &&
-        (descriptor.strategy === 'FLEX' ||
-          descriptor.strategy === 'SEQUENTIAL');
+        descriptor.strategy === 'SEQUENTIAL';
 
       if (radialLayout) {
         const radialActors = sectionActors.map((actor) => ({
@@ -234,17 +233,17 @@ function calculateActorRenderPlacementGeometry(
             flexLayout
           )
         : [];
-      const rectangularFlexPoints =
-        zone.shape === 'rectangle' && descriptor.strategy === 'FLEX'
-          ? packRectangularFlexActors({
+      const polygonFlexPoints =
+        !split && descriptor.strategy === 'FLEX'
+          ? packPolygonFlexActors({
               actors: sectionActors.map(toNestingActor),
               polygon: zone.polygon
             })
           : null;
       const flexPoints = !split && flexLayout
-        ? rectangularFlexPoints?.fits
+        ? polygonFlexPoints?.fits
           ? sectionActors.map(
-              (actor) => rectangularFlexPoints.placements[actor.id]
+              (actor) => polygonFlexPoints.placements[actor.id]
             )
           : getFlexActorPoints(
               sectionActors.map((actor) => ({
@@ -284,7 +283,7 @@ export function getActorRenderPlacements(
 ): ActorRenderPlacement[] {
   const cacheKey = createActorPlacementCacheKey(
     encounter,
-    RECTANGULAR_FLEX_LAYOUT_SETTINGS,
+    POLYGON_FLEX_LAYOUT_SETTINGS,
     FLEX_ZONE_EDGE_GAP
   );
   const geometry = getCachedActorPlacementGeometry(cacheKey, () =>

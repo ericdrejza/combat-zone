@@ -1,12 +1,12 @@
 import type { LayoutPoint } from "./types";
 import { getPolygonBounds, getPolygonCenter } from "./polygonGeometry";
 import {
-  packRectangularFlexActors,
-  type RectangularFlexLayoutInput
-} from "./rectangularFlexLayout";
+  packPolygonFlexActors,
+  type PolygonFlexLayoutInput
+} from "./polygonFlexLayout";
 import type { NestingActor } from "./nesting_ts";
 
-export type RectangularFlexZoneFit = {
+export type PolygonFlexZoneFit = {
   polygon: LayoutPoint[];
   resized: boolean;
 };
@@ -23,22 +23,22 @@ function scalePolygon(
 }
 
 function fits(
-  input: Omit<RectangularFlexLayoutInput, "polygon">,
+  input: Omit<PolygonFlexLayoutInput, "polygon">,
   polygon: LayoutPoint[]
 ): boolean {
-  return packRectangularFlexActors({ ...input, polygon }).fits;
+  return packPolygonFlexActors({ ...input, polygon }).fits;
 }
 
 /**
- * Finds the minimum uniform scale of a rectangular FLEX polygon that can fit
- * all actor footprints. Scaling around the polygon center preserves its
- * aspect ratio and keeps the result deterministic for every resize path.
+ * Finds the minimum uniform scale of a polygon FLEX zone that can fit all
+ * actor footprints. Scaling around the polygon center preserves the shape's
+ * proportions and keeps the result deterministic for every resize path.
  */
-export function findSmallestRectangularFlexZoneFit(
+export function findSmallestPolygonFlexZoneFit(
   polygon: LayoutPoint[],
   actors: NestingActor[],
-  settings?: RectangularFlexLayoutInput["settings"]
-): RectangularFlexZoneFit | null {
+  settings?: PolygonFlexLayoutInput["settings"]
+): PolygonFlexZoneFit | null {
   if (polygon.length < 3 || actors.length === 0) {
     return { polygon, resized: false };
   }
