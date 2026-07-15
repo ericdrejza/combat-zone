@@ -1,4 +1,4 @@
-# Rectangular FLEX Polygon-Packing Layout
+# Polygon FLEX Actor Layout
 
 ## Implementation status
 
@@ -14,8 +14,9 @@ TypeScript polygon-footprint solver in `src/core/layout/nesting_ts.ts`.
   - Add framer-motion as a deferred animation dependency.
   - Keep the unavailable @itecgo/nesting integration behind a replaceable
     adapter boundary; the current adapter is project-owned TypeScript logic.
-  - Replace only rectangular-zone FLEX placement with a polygon-packing adapter.
-  - Keep all other shapes and strategies on their current algorithms.
+  - Apply polygon-packing placement to FLEX zones of every shape because all
+    zone shapes expose polygon geometry under the hood.
+  - Keep SEQUENTIAL and split strategies on their existing algorithms.
   - Do not modify ActorLayer, CanvasShell, drag previews, or animation behavior yet.
   - Preserve the no-coordinate-persistence rule.
   - Reject any move or creation that cannot fit without overlap, in every validation mode.
@@ -52,18 +53,17 @@ TypeScript polygon-footprint solver in `src/core/layout/nesting_ts.ts`.
       - post-validate containment, border clearance, and pairwise non-overlap
       - return fits: false if no valid packing exists
 
-  - Adapt the existing rectangular FLEX branch to use the new packer.
+  - Adapt the existing FLEX branch to use the new packer for every zone
+    polygon shape.
   - Keep these paths unchanged:
-      - rectangular SEQUENTIAL
-      - circle and hexagon FLEX
-      - polygon FLEX
+      - SEQUENTIAL
       - all split strategies
 
   - Accept an optional incoming drop point in the pure placement API and return it alongside the packed target. This prepares the later
     animation phase without persisting coordinates or changing the canvas now.
 
   - Add a placement validator that evaluates the candidate nextEncounter:
-      - actor moves and actor creation into rectangular FLEX zones are checked
+      - actor moves and actor creation into FLEX zones of every shape are checked
       - multi-actor moves are atomic
       - universal packing failures block the action in OFF, ADVISORY, ASSISTED, and STRICT
       - existing mode behavior remains unchanged for unrelated validation errors
@@ -76,9 +76,9 @@ TypeScript polygon-footprint solver in `src/core/layout/nesting_ts.ts`.
   - `src/core/layout/nesting_ts.ts` packs square and regular-polygon actor
     footprints with deterministic candidates, adaptive border spacing, and
     explicit fit failure.
-  - `src/core/layout/rectangularFlexLayout.ts` provides the shape-specific
-    adapter boundary.
-  - `src/core/validation/rectangularFlexPlacementValidator.ts` evaluates the
+  - `src/core/layout/polygonFlexLayout.ts` provides the shared FLEX strategy
+    boundary.
+  - `src/core/validation/polygonFlexPlacementValidator.ts` evaluates the
     candidate next encounter and blocks invalid actor moves/creations in all
     validation modes.
   - No actor coordinates were added to persisted state, and no canvas or
@@ -93,14 +93,14 @@ TypeScript polygon-footprint solver in `src/core/layout/nesting_ts.ts`.
   Also update:
 
   - documentation/DESIGN.md to document universal no-overlap blocking and adaptive border spacing.
-  - documentation/ACCEPTANCE.md with rectangular FLEX packing and rejection criteria.
+  - documentation/ACCEPTANCE.md with polygon FLEX packing and rejection criteria.
   - documentation/ROADMAP.md with the corresponding feature checkbox, checked only after tests pass.
 
   ## Tests
 
   Add Vitest coverage for:
 
-  - one actor centered in a rectangular FLEX zone
+  - one actor centered in every FLEX zone shape
   - multiple actors packed without overlap
   - rectangle and circle actor footprints
   - containment inside the zone
@@ -109,7 +109,8 @@ TypeScript polygon-footprint solver in `src/core/layout/nesting_ts.ts`.
   - rejection when no valid packing exists
   - incoming drop-point preservation in the pure placement result
   - deterministic actor ordering and stable placement output
-  - rectangular FLEX using the new packer
+  - FLEX packing using the new packer for rectangle, circle, hexagon, and
+    user-drawn polygon zones
   - actor creation rejection in every validation mode
   - rejected actions producing no history entry
   - accepted moves preserving normal undo/redo behavior

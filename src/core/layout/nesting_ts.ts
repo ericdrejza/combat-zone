@@ -242,7 +242,7 @@ function tryPack(
   };
 }
 
-/** Deterministic polygon-footprint packing used by rectangular FLEX for now. */
+/** Deterministic polygon-footprint packing used by polygon FLEX zones. */
 export function packPolygonActors(input: PolygonNestingInput): PolygonNestingResult {
   const settings = mergeSettings(input.settings);
 

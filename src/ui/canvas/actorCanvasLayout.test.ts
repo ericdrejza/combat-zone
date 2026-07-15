@@ -12,7 +12,16 @@ import {
   getActorRenderPlacements
 } from './actorCanvasLayout';
 import { cacheActorRenderPlacementsForZoneMove } from './actorPlacementTranslation';
-import { createCirclePolygonFromBounds } from './zoneShapeGeometry';
+import {
+  createCirclePolygonFromBounds,
+  createHexagonPolygonFromBounds
+} from './zoneShapeGeometry';
+import {
+  footprintsOverlap,
+  getFootprint,
+  isFootprintInsideZone
+} from '@core/layout/polygonGeometry';
+import { toNestingActor } from '@core/layout/actorFootprints';
 
 function collection<TEntity extends { id: string }>(
   entities: TEntity[]
@@ -89,6 +98,52 @@ function circleZone(
   };
 }
 
+function polygonZone(
+  id: string,
+  polygon: Zone['polygon'],
+  shape: Zone['shape']
+): Zone {
+  return {
+    ...zone(id, 0, 0, 1, 1),
+    polygon,
+    shape
+  };
+}
+
+function expectPackedPlacements(
+  placements: ReturnType<typeof getActorRenderPlacements>,
+  polygon: Zone['polygon']
+) {
+  const edgeClearanceFootprints = placements.map(({ actor, point }) =>
+    getFootprint(toNestingActor(actor), point, FLEX_ZONE_EDGE_GAP, 16)
+  );
+
+  expect(edgeClearanceFootprints.every((footprint) =>
+    isFootprintInsideZone(footprint, polygon)
+  )).toBe(true);
+
+  for (let first = 0; first < placements.length; first += 1) {
+    for (let second = first + 1; second < placements.length; second += 1) {
+      expect(
+        footprintsOverlap(
+          getFootprint(
+            toNestingActor(placements[first].actor),
+            placements[first].point,
+            8,
+            16
+          ),
+          getFootprint(
+            toNestingActor(placements[second].actor),
+            placements[second].point,
+            8,
+            16
+          )
+        )
+      ).toBe(false);
+    }
+  }
+}
+
 describe('actor canvas layout', () => {
   it('centers the only FLEX actor in a zone', () => {
     const zoneId = 'rectangle-zone';
@@ -103,7 +158,7 @@ describe('actor canvas layout', () => {
     expect(placement.point).toEqual({ x: 250, y: 220 });
   });
 
-  it('uses polygon packing for rectangular FLEX actors with actor and edge separation', () => {
+  it('uses polygon packing for FLEX actors with actor and edge separation', () => {
     const zoneId = 'rectangle-zone';
     const encounter = {
       ...createEncounterState({ id: 'encounter-flex-spacing', name: 'Flex' }),
@@ -199,7 +254,7 @@ describe('actor canvas layout', () => {
     expect(topBottom[2].point.y).toBeCloseTo(266.667);
   });
 
-  it('places FLEX actors evenly around circular zones', () => {
+  it('uses polygon packing for FLEX actors in circular zones', () => {
     const zoneId = 'circle-zone';
     const encounter = {
       ...createEncounterState({
@@ -215,16 +270,7 @@ describe('actor canvas layout', () => {
       zones: collection([circleZone(zoneId, 100, 100, 200, 200)])
     };
     const placements = getActorRenderPlacements(encounter);
-    const ringRadius = 100 - ACTOR_TOKEN_BASE_RADIUS - RADIAL_ACTOR_GAP;
-
-    expect(placements[0].point.x).toBeCloseTo(200);
-    expect(placements[0].point.y).toBeCloseTo(200 - ringRadius);
-    expect(placements[1].point.x).toBeCloseTo(200 + ringRadius);
-    expect(placements[1].point.y).toBeCloseTo(200);
-    expect(placements[2].point.x).toBeCloseTo(200);
-    expect(placements[2].point.y).toBeCloseTo(200 + ringRadius);
-    expect(placements[3].point.x).toBeCloseTo(200 - ringRadius);
-    expect(placements[3].point.y).toBeCloseTo(200);
+    expectPackedPlacements(placements, encounter.zones.byId[zoneId]!.polygon);
   });
 
   it('places SEQUENTIAL actors clockwise next to the previous actor in circular zones', () => {
@@ -261,32 +307,41 @@ describe('actor canvas layout', () => {
     expect(placements[2].point.x).toBeGreaterThan(placements[1].point.x);
   });
 
-  it('moves circular FLEX actor placement to a smaller ring when the outer ring is full', () => {
-    const zoneId = 'circle-zone';
-    const actors = Array.from({ length: 12 }, (_, index) =>
-      zonedActor(`actor-${index}`, zoneId)
-    );
+  it.each([
+    ['circle', (id: string) => circleZone(id, 100, 100, 300, 300)],
+    ['hexagon', (id: string) => polygonZone(
+      id,
+      createHexagonPolygonFromBounds({ height: 300, width: 300, x: 100, y: 100 }),
+      'hexagon'
+    )],
+    ['polygon', (id: string) => polygonZone(
+      id,
+      [
+        { x: 100, y: 100 },
+        { x: 400, y: 130 },
+        { x: 350, y: 400 },
+        { x: 150, y: 350 }
+      ],
+      'polygon'
+    )]
+  ])('uses the same FLEX packer for %s zones', (_shape, createZone) => {
+    const zoneId = `${_shape}-flex-zone`;
+    const actors = [
+      zonedActor('actor-one', zoneId),
+      zonedActor('actor-two', zoneId),
+      zonedActor('actor-three', zoneId)
+    ];
+    const selectedZone = createZone(zoneId);
     const encounter = {
-      ...createEncounterState({
-        id: 'encounter-circle-flex-rings',
-        name: 'Circle Flex Rings'
-      }),
+      ...createEncounterState({ id: `encounter-${_shape}-flex`, name: 'Flex' }),
       actors: collection(actors),
-      zones: collection([circleZone(zoneId, 100, 100, 300, 300)])
+      zones: collection([selectedZone])
     };
-    const placements = getActorRenderPlacements(encounter);
-    const outerRadius = 150 - ACTOR_TOKEN_BASE_RADIUS - RADIAL_ACTOR_GAP;
-    const innerRadius =
-      outerRadius - (ACTOR_TOKEN_BASE_RADIUS * 2 + RADIAL_ACTOR_GAP);
-    const distanceFromCenter = (index: number) =>
-      Math.hypot(
-        placements[index].point.x - 250,
-        placements[index].point.y - 250
-      );
 
-    expect(distanceFromCenter(0)).toBeCloseTo(outerRadius);
-    expect(distanceFromCenter(9)).toBeCloseTo(outerRadius);
-    expect(distanceFromCenter(10)).toBeCloseTo(innerRadius);
+    const placements = getActorRenderPlacements(encounter);
+
+    expect(placements).toHaveLength(actors.length);
+    expectPackedPlacements(placements, selectedZone.polygon);
   });
 
   it('does not include zoneless actors in canvas placements', () => {
