@@ -4,7 +4,8 @@ import type { LayoutPoint } from "@core/layout/types";
 import { ACTOR_LAYOUT_GROUP_COLORS } from "@entities/actor/actorVisuals";
 import type { RootState } from "@store/store";
 import type { ActorDragState } from "./canvasInteractionTypes";
-import { getActorRenderPlacements } from "./actorCanvasLayout";
+import type { ActorRenderPlacement } from "./actorCanvasLayout";
+import type { ActorPlacementTranslation } from "./actorPlacementTranslation";
 import {
   getReadableTextColor,
   getTextColorForLuminance,
@@ -18,6 +19,8 @@ type ActorLayerProps = {
   dragOverlay?: boolean;
   showFactionOutlines: boolean;
   encounter: RootState["encounter"]["present"];
+  placements: ActorRenderPlacement[];
+  zoneActorTranslation?: ActorPlacementTranslation | null;
   onActorMouseDown: (
     actorId: string,
     point: LayoutPoint,
@@ -43,6 +46,21 @@ function getDraggedPoint(
   };
 }
 
+function getZoneMovedPoint(
+  actorZoneId: string,
+  point: LayoutPoint,
+  translation: ActorPlacementTranslation | null
+): LayoutPoint {
+  if (!translation || actorZoneId !== translation.zoneId) {
+    return point;
+  }
+
+  return {
+    x: point.x + translation.offset.x,
+    y: point.y + translation.offset.y
+  };
+}
+
 export function ActorLayer({
   actorDrag,
   backgroundLuminanceByZoneId,
@@ -50,17 +68,24 @@ export function ActorLayer({
   dragOverlay = false,
   showFactionOutlines,
   encounter,
+  placements,
+  zoneActorTranslation = null,
   onActorMouseDown,
   onActorMouseEnter,
   onActorMouseLeave,
   selection
 }: ActorLayerProps) {
-  return getActorRenderPlacements(encounter)
+  return placements
     .filter(({ actor }) =>
       !dragOverlay || actorDrag?.actorIds.includes(actor.id)
     )
     .map(({ actor, point, radius }) => {
-    const renderedPoint = getDraggedPoint(actor.id, point, actorDrag);
+    const zoneMovedPoint = getZoneMovedPoint(
+      actor.currentZoneId,
+      point,
+      zoneActorTranslation
+    );
+    const renderedPoint = getDraggedPoint(actor.id, zoneMovedPoint, actorDrag);
     const selected =
       selection.selectedEntityType === "actor" &&
       selection.selectedIds.includes(actor.id);

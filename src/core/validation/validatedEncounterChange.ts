@@ -1,5 +1,6 @@
 import type { EncounterState } from "../encounter/types";
 import type { EncounterActionRecord } from "../history/types";
+import { adjustRectangularFlexZonesToFit } from "./rectangularFlexPlacement";
 import { runValidationPipeline } from "./pipeline";
 import type {
   ValidationAction,
@@ -18,8 +19,16 @@ export type PreparedValidatedEncounterChange = {
   blocked: boolean;
   action: EncounterActionRecord;
   nextEncounter: EncounterState;
+  requiresConfirmation: boolean;
   validationResult: ValidationPipelineResult;
 };
+
+function isActorFootprintChange(action: EncounterActionRecord): boolean {
+  return (
+    action.type === "actor.updateProperties" ||
+    action.type === "actor.paint"
+  );
+}
 
 export function prepareValidatedEncounterChange({
   currentEncounter,
@@ -31,8 +40,32 @@ export function prepareValidatedEncounterChange({
     type: action.type,
     payload: action.payload
   };
+  const shouldConsiderZoneResize =
+    action.type === "zone.reshape" ||
+    (isActorFootprintChange(action) &&
+      currentEncounter.validationState.mode !== "STRICT");
+  const adjustment = shouldConsiderZoneResize
+    ? adjustRectangularFlexZonesToFit(
+        validationAction,
+        currentEncounter,
+        nextEncounter
+      )
+    : { nextEncounter, resizedZoneIds: [] };
+  const shouldAutoResize =
+    action.type === "zone.reshape" ||
+    (isActorFootprintChange(action) &&
+      currentEncounter.validationState.mode !== "STRICT" &&
+      currentEncounter.validationState.mode !== "ASSISTED");
+  const requiresConfirmation =
+    isActorFootprintChange(action) &&
+    currentEncounter.validationState.mode === "ASSISTED" &&
+    adjustment.resizedZoneIds.length > 0;
+  const effectiveNextEncounter = shouldAutoResize || requiresConfirmation
+    ? adjustment.nextEncounter
+    : nextEncounter;
   const validationResult = runValidationPipeline({
     state: currentEncounter,
+    nextState: effectiveNextEncounter,
     action: validationAction,
     validators
   });
@@ -45,16 +78,17 @@ export function prepareValidatedEncounterChange({
   };
 
   return {
-    blocked: validationResult.blocked,
+    blocked: validationResult.blocked || requiresConfirmation,
     action: actionWithValidation,
     nextEncounter: {
-      ...nextEncounter,
+      ...effectiveNextEncounter,
       validationState: {
-        ...nextEncounter.validationState,
+        ...effectiveNextEncounter.validationState,
         mode: currentEncounter.validationState.mode,
         messages: validationResult.messages
       }
     },
+    requiresConfirmation,
     validationResult
   };
 }

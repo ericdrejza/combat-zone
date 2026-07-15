@@ -22,6 +22,10 @@ import {
 } from "./canvasConstants";
 import type { LocalBoxSelectionState } from "./zoneGeometry";
 import { ZoneLayer } from "./ZoneLayer";
+import type {
+  ActorRenderPlacement
+} from "./actorCanvasLayout";
+import type { ActorPlacementTranslation } from "./actorPlacementTranslation";
 
 type CanvasWorkspaceProps = {
   activeToolId: RootState["interaction"]["activeToolId"];
@@ -33,6 +37,8 @@ type CanvasWorkspaceProps = {
   canvasBackgroundLuminance: number;
   canvasRef: { current: SVGSVGElement | null };
   encounter: RootState["encounter"]["present"];
+  actorRenderPlacements: ActorRenderPlacement[];
+  zoneActorTranslation: ActorPlacementTranslation | null;
   getDisplayedPolygon: (zone: Zone) => LayoutPoint[];
   handleActorMouseDown: (
     actorId: string,
@@ -67,6 +73,7 @@ type CanvasWorkspaceProps = {
 export function CanvasWorkspace({
   activeToolId,
   actorDrag,
+  actorRenderPlacements,
   actorTargetZoneId,
   backgroundImage,
   backgroundLuminanceByZoneId,
@@ -92,7 +99,8 @@ export function CanvasWorkspace({
   shapeDraft,
   showFactionOutlines,
   zoneDraftPoints,
-  zoneShapeMode
+  zoneShapeMode,
+  zoneActorTranslation
 }: CanvasWorkspaceProps) {
   return (
     <svg
@@ -135,6 +143,8 @@ export function CanvasWorkspace({
           {layer.id === "actors" ? (
             <ActorLayer
               actorDrag={actorDrag}
+              placements={actorRenderPlacements}
+              zoneActorTranslation={zoneActorTranslation}
               backgroundLuminanceByZoneId={backgroundLuminanceByZoneId}
               canvasBackgroundLuminance={canvasBackgroundLuminance}
               encounter={encounter}

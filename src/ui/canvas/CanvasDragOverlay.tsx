@@ -2,9 +2,11 @@ import type { RootState } from "@store/store";
 import type { ActorDragState } from "./canvasInteractionTypes";
 import { ActorLayer } from "./ActorLayer";
 import { CANVAS_HEIGHT, CANVAS_WIDTH } from "./canvasConstants";
+import type { ActorRenderPlacement } from "./actorCanvasLayout";
 
 type CanvasDragOverlayProps = {
   actorDrag: ActorDragState;
+  actorRenderPlacements: ActorRenderPlacement[];
   backgroundLuminanceByZoneId: Record<string, number>;
   canvasBackgroundLuminance: number;
   encounter: RootState["encounter"]["present"];
@@ -14,6 +16,7 @@ type CanvasDragOverlayProps = {
 
 export function CanvasDragOverlay({
   actorDrag,
+  actorRenderPlacements,
   backgroundLuminanceByZoneId,
   canvasBackgroundLuminance,
   encounter,
@@ -29,6 +32,8 @@ export function CanvasDragOverlay({
     >
       <ActorLayer
         actorDrag={actorDrag}
+        placements={actorRenderPlacements}
+        zoneActorTranslation={null}
         backgroundLuminanceByZoneId={backgroundLuminanceByZoneId}
         canvasBackgroundLuminance={canvasBackgroundLuminance}
         dragOverlay

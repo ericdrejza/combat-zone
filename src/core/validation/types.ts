@@ -12,6 +12,7 @@ export type ValidationMessage = {
 export type ValidationResult = {
   valid: boolean;
   messages: ValidationMessage[];
+  blocked?: boolean;
 };
 
 export type ValidationAction<TPayload extends JsonObject = JsonObject> = {
@@ -22,6 +23,7 @@ export type ValidationAction<TPayload extends JsonObject = JsonObject> = {
 export type ValidationContext<TState> = {
   state: TState;
   mode: ValidationMode;
+  nextState?: TState;
 };
 
 export type Validator<TState> = {
@@ -30,6 +32,7 @@ export type Validator<TState> = {
     action: ValidationAction,
     context: ValidationContext<TState>
   ): ValidationResult;
+  runsInOffMode?: boolean;
 };
 
 export type ValidationPipelineResult = ValidationResult & {

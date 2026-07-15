@@ -24,6 +24,7 @@ import { createEncounterActionRecord } from "@core/history/createEncounterAction
 import { resolveLibraryAsset } from "@library/librarySlice";
 import type { LibraryNode } from "@library/types";
 import { ActorRenameModal } from "./toolbar/actor/ActorRenameModal";
+import { ZoneResizeApprovalProvider } from "./zoneResizeApproval";
 
 type SidebarCollapsedState = Record<DockSide, boolean>;
 
@@ -263,7 +264,8 @@ export function App() {
   }
 
   return (
-    <div className="flex h-screen max-h-screen w-screen max-w-screen flex-col overflow-hidden bg-canvas text-canvas-ink">
+    <ZoneResizeApprovalProvider>
+      <div className="flex h-screen max-h-screen w-screen max-w-screen flex-col overflow-hidden bg-canvas text-canvas-ink">
       <Toolbar
         onActorToolSelected={expandAutoCollapsedLibraryPanel}
         onOpenLibrary={() => setLibraryModalOpen(true)}
@@ -342,6 +344,7 @@ export function App() {
       {renameModalOpen ? (
         <ActorRenameModal onClose={() => setRenameModalOpen(false)} />
       ) : null}
-    </div>
+      </div>
+    </ZoneResizeApprovalProvider>
   );
 }

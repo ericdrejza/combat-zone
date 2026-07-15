@@ -32,9 +32,11 @@ inventing a variant schema.
 
 - **No simulation logic.** Represent state and relationships only. Do not
   implement RPG rules engines, dice systems, or narrative generation.
-- **GM authority is absolute outside Strict mode.** Validation is advisory
-  unless Strict mode is explicitly enabled (see `documentation/DESIGN.md` §5.5 
-  for the four validation levels). Never block a GM action in non-Strict modes.
+- **GM authority is absolute outside Strict mode except geometric fit.**
+  Validation is advisory unless Strict mode is explicitly enabled (see
+  `documentation/DESIGN.md` §5.5 for the four validation levels). The
+  universal no-overlap and in-zone footprint invariant is the explicit
+  exception and blocks invalid actor movement/creation in every mode.
 - **Every committed mutation goes through Redux history.** No direct
   EncounterState writes may bypass the history reducer, including "internal"
   or "derived" updates like layout recalculation after a move. See

@@ -1,8 +1,16 @@
 import { calculateZoneLayout } from '@core/layout/encounterLayout';
 import type { LayoutPoint } from '@core/layout/types';
 import type { Actor } from '@entities/actor/types';
-import { ACTOR_SIZE_MULTIPLIERS } from '@entities/actor/actorVisuals';
 import type { EncounterState } from '@core/encounter/types';
+import {
+  ACTOR_TOKEN_BASE_RADIUS,
+  getActorRadius,
+  toNestingActor
+} from '@core/layout/actorFootprints';
+import {
+  packRectangularFlexActors,
+  RECTANGULAR_FLEX_LAYOUT_SETTINGS
+} from '@core/layout/rectangularFlexLayout';
 import { getPolygonBounds, isPointInPolygon } from './zoneGeometry';
 import { FLEX_ZONE_EDGE_GAP, getFlexActorPoints } from './actorFlexLayout';
 import { getSectionActorPoints } from './actorSectionLayout';
@@ -10,9 +18,15 @@ import {
   getFlexRadialActorPoints,
   getSequentialRadialActorPoints
 } from './actorRadialLayout';
+import {
+  createActorPlacementCacheKey,
+  getCachedActorPlacementGeometry,
+  type ActorPlacementGeometry
+} from './actorPlacementCache';
 
-export const ACTOR_TOKEN_BASE_RADIUS = 30;
-export { FLEX_ZONE_EDGE_GAP };
+export { findZoneIdAtPoint } from './zoneHitTesting';
+
+export { ACTOR_TOKEN_BASE_RADIUS, FLEX_ZONE_EDGE_GAP };
 
 export type ActorRenderPlacement = {
   actor: Actor;
@@ -133,16 +147,10 @@ function getSectionWeight(
   );
 }
 
-function getActorRadius(actor: Actor): number {
-  return (
-    ACTOR_TOKEN_BASE_RADIUS * ACTOR_SIZE_MULTIPLIERS[actor.size ?? 'medium']
-  );
-}
-
-export function getActorRenderPlacements(
+function calculateActorRenderPlacementGeometry(
   encounter: EncounterState
-): ActorRenderPlacement[] {
-  const placements: ActorRenderPlacement[] = [];
+): ActorPlacementGeometry[] {
+  const placements: ActorPlacementGeometry[] = [];
 
   for (const zoneId of encounter.zones.allIds) {
     const zone = encounter.zones.byId[zoneId];
@@ -199,7 +207,7 @@ export function getActorRenderPlacements(
 
         radialActors.forEach(({ actor, radius }, index) => {
           placements.push({
-            actor,
+            actorId: actor.id,
             point: radialPoints[index],
             radius
           });
@@ -226,18 +234,29 @@ export function getActorRenderPlacements(
             flexLayout
           )
         : [];
+      const rectangularFlexPoints =
+        zone.shape === 'rectangle' && descriptor.strategy === 'FLEX'
+          ? packRectangularFlexActors({
+              actors: sectionActors.map(toNestingActor),
+              polygon: zone.polygon
+            })
+          : null;
       const flexPoints = !split && flexLayout
-        ? getFlexActorPoints(
-            sectionActors.map((actor) => ({
-              actor,
-              radius: getActorRadius(actor)
-            })),
-            zone.polygon,
-            {
-              x: sectionBounds.x + sectionBounds.width / 2,
-              y: sectionBounds.y + sectionBounds.height / 2
-            }
-          )
+        ? rectangularFlexPoints?.fits
+          ? sectionActors.map(
+              (actor) => rectangularFlexPoints.placements[actor.id]
+            )
+          : getFlexActorPoints(
+              sectionActors.map((actor) => ({
+                actor,
+                radius: getActorRadius(actor)
+              })),
+              zone.polygon,
+              {
+                x: sectionBounds.x + sectionBounds.width / 2,
+                y: sectionBounds.y + sectionBounds.height / 2
+              }
+            )
         : [];
 
       sectionActors.forEach((actor, index) => {
@@ -249,7 +268,7 @@ export function getActorRenderPlacements(
             : getGridPoint(index, sectionActors.length, sectionBounds, radius);
 
         placements.push({
-          actor,
+          actorId: actor.id,
           point: pullPointInsidePolygon(point, zone.polygon, radius),
           radius
         });
@@ -260,13 +279,21 @@ export function getActorRenderPlacements(
   return placements;
 }
 
-export function findZoneIdAtPoint(
-  encounter: EncounterState,
-  point: LayoutPoint
-): string | undefined {
-  return [...encounter.zones.allIds].reverse().find((zoneId) => {
-    const zone = encounter.zones.byId[zoneId];
+export function getActorRenderPlacements(
+  encounter: EncounterState
+): ActorRenderPlacement[] {
+  const cacheKey = createActorPlacementCacheKey(
+    encounter,
+    RECTANGULAR_FLEX_LAYOUT_SETTINGS,
+    FLEX_ZONE_EDGE_GAP
+  );
+  const geometry = getCachedActorPlacementGeometry(cacheKey, () =>
+    calculateActorRenderPlacementGeometry(encounter)
+  );
 
-    return zone ? isPointInPolygon(point, zone.polygon) : false;
+  return geometry.flatMap(({ actorId, point, radius }) => {
+    const actor = encounter.actors.byId[actorId];
+
+    return actor ? [{ actor, point, radius }] : [];
   });
 }

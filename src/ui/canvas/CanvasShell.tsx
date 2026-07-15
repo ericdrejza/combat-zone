@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 import type { LayoutPoint } from "@core/layout/types";
@@ -10,6 +10,10 @@ import { CanvasDragOverlay } from "./CanvasDragOverlay";
 import { CanvasToolStatusBadge } from "./CanvasToolStatusBadge";
 import { CanvasWorkspace } from "./CanvasWorkspace";
 import { getTextColorForLuminance } from "./canvasLuminance";
+import {
+  getActorRenderPlacements
+} from "./actorCanvasLayout";
+import type { ActorPlacementTranslation } from "./actorPlacementTranslation";
 import type {
   ActorDragState,
   ShapeDraftState,
@@ -63,6 +67,31 @@ export function CanvasShell() {
   const suppressNextEntityClickRef = useRef<string | null>(null);
   const altKeyDown = useAltKey();
   const backgroundImage = encounter.backgroundImage;
+  const actorRenderPlacements = useMemo(
+    () => getActorRenderPlacements(encounter),
+    [encounter]
+  );
+  const zoneActorTranslation = useMemo<ActorPlacementTranslation | null>(() => {
+    if (!zoneDrag) {
+      return null;
+    }
+
+    const zone = encounter.zones.byId[zoneDrag.zoneId];
+
+    // Once the mutation commits, the polygon is no longer the original drag
+    // polygon. The cached geometry already contains the translated positions.
+    if (!zone || zone.polygon !== zoneDrag.originalPolygon) {
+      return null;
+    }
+
+    return {
+      offset: {
+        x: zoneDrag.current.x - zoneDrag.start.x,
+        y: zoneDrag.current.y - zoneDrag.start.y
+      },
+      zoneId: zoneDrag.zoneId
+    };
+  }, [encounter, zoneDrag]);
   const backgroundLuminance = useCanvasBackgroundLuminance(
     backgroundImage,
     encounter.zones
@@ -106,6 +135,7 @@ export function CanvasShell() {
   } = useCanvasInteractionHandlers({
     activeToolId,
     actorDrag,
+    actorRenderPlacements,
     actorPaintBrush,
     actorTool,
     boxSelection,
@@ -177,6 +207,8 @@ export function CanvasShell() {
       <CanvasWorkspace
         activeToolId={activeToolId}
         actorDrag={actorDrag}
+        actorRenderPlacements={actorRenderPlacements}
+        zoneActorTranslation={zoneActorTranslation}
         actorTargetZoneId={actorTool.targetZoneId}
         backgroundImage={backgroundImage}
         backgroundLuminanceByZoneId={backgroundLuminance.byZoneId}
@@ -224,6 +256,7 @@ export function CanvasShell() {
       {actorDrag ? (
         <CanvasDragOverlay
           actorDrag={actorDrag}
+          actorRenderPlacements={actorRenderPlacements}
           backgroundLuminanceByZoneId={backgroundLuminance.byZoneId}
           canvasBackgroundLuminance={backgroundLuminance.canvas}
           encounter={encounter}
