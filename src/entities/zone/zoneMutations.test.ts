@@ -3,16 +3,16 @@ import { describe, expect, it } from 'vitest';
 import type { Actor } from '../actor/types';
 import type { Edge } from '../edge/types';
 import type { Engagement } from '../engagement/types';
-import { createEncounterState } from '../../core/encounter/createEncounterState';
-import { ZONELESS_ACTOR_ZONE_ID } from '../../core/encounter/types';
-import { createEncounterActionRecord } from '../../core/history/createEncounterActionRecord';
-import { calculateZoneLayout } from '../../core/layout/encounterLayout';
-import type { EntityCollection } from '../../core/state/entityCollection';
+import { createEncounterState } from '@core/encounter/createEncounterState';
+import { ZONELESS_ACTOR_ZONE_ID } from '@core/encounter/types';
+import { createEncounterActionRecord } from '@core/history/createEncounterActionRecord';
+import { calculateZoneLayout } from '@core/layout/encounterLayout';
+import type { EntityCollection } from '@core/state/entityCollection';
 import reducer, {
   commitEncounterChange,
   redoEncounterChange,
   undoEncounterChange
-} from '../../store/encounterSlice';
+} from '@store/encounterSlice';
 import type { Zone } from './types';
 import {
   createZone,

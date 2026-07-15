@@ -1,4 +1,4 @@
-import type { LibraryNode, LibrarySection } from "../../library/types";
+import type { LibraryNode, LibrarySection } from "@library/types";
 
 export function getNodeChildren(
   section: LibrarySection,

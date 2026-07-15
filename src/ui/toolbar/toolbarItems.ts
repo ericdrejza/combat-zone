@@ -1,10 +1,10 @@
 import { Circle, Hexagon, Pentagon, Square } from 'lucide-react';
 
-import type { ZoneShape } from '../../entities/zone/types';
+import type { ZoneShape } from '@entities/zone/types';
 import {
   TOOL_DEFINITIONS_BY_ID,
   type ToolDefinition
-} from '../../interaction/tools/toolRegistry';
+} from '@interaction/tools/toolRegistry';
 
 export type ZoneShapeOption = {
   icon: typeof Square;

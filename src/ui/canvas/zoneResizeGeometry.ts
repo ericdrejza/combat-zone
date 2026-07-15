@@ -1,6 +1,6 @@
-import type { LayoutPoint } from "../../core/layout/types";
-import type { Zone } from "../../entities/zone/types";
-import type { ZoneShape } from "../../entities/zone/types";
+import type { LayoutPoint } from "@core/layout/types";
+import type { Zone } from "@entities/zone/types";
+import type { ZoneShape } from "@entities/zone/types";
 import { MIN_SHAPE_SIZE } from "./canvasConstants";
 import {
   createCirclePolygonFromBounds,

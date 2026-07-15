@@ -1,13 +1,13 @@
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import { createEncounterState } from "../core/encounter/createEncounterState";
-import { createEncounterActionRecord } from "../core/history/createEncounterActionRecord";
-import { createActor } from "../entities/actor/actorMutations";
-import { selectEntity, setActiveTool } from "../interaction/interactionState";
-import { commitEncounterChange } from "../store/encounterSlice";
-import { store } from "../store/store";
-import { renderApp } from "../test/ui/renderApp";
+import { createEncounterState } from "@core/encounter/createEncounterState";
+import { createEncounterActionRecord } from "@core/history/createEncounterActionRecord";
+import { createActor } from "@entities/actor/actorMutations";
+import { selectEntity, setActiveTool } from "@interaction/interactionState";
+import { commitEncounterChange } from "@store/encounterSlice";
+import { store } from "@store/store";
+import { renderApp } from "@test/ui/renderApp";
 
 describe("App", () => {
   it("renders the workspace frame", () => {

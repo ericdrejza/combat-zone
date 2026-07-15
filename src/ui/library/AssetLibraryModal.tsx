@@ -1,6 +1,6 @@
 import { X } from "lucide-react";
 
-import { LIBRARY_SECTION_IDS, LIBRARY_SECTION_LABELS } from "../../library/types";
+import { LIBRARY_SECTION_IDS, LIBRARY_SECTION_LABELS } from "@library/types";
 import { AssetLibraryAddMenu } from "./AssetLibraryAddMenu";
 import { AssetLibraryContents } from "./AssetLibraryContents";
 import { AssetLibraryExplorer } from "./AssetLibraryExplorer";
@@ -10,7 +10,7 @@ import {
   ConfirmFolderDeleteDialog
 } from "./AssetLibraryMenus";
 import { useAssetLibraryModalController } from "./useAssetLibraryModalController";
-import type { LibraryNode } from "../../library/types";
+import type { LibraryNode } from "@library/types";
 
 type AssetLibraryModalProps = {
   onClose: () => void;

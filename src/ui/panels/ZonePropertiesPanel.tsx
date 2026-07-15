@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { calculateZoneLayout } from "../../core/layout/encounterLayout";
+import { calculateZoneLayout } from "@core/layout/encounterLayout";
 import { ZoneColorSection } from "./zone_properties/ZoneColorSection";
 import { ZoneDeleteButton } from "./zone_properties/ZoneDeleteButton";
 import { ZoneLayoutDescriptor } from "./zone_properties/ZoneLayoutDescriptor";

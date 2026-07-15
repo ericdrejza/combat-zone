@@ -1,4 +1,4 @@
-import type { LayoutOrientation, LayoutStrategyId } from "../../core/layout/types";
+import type { LayoutOrientation, LayoutStrategyId } from "@core/layout/types";
 
 export type Engagement = {
   id: string;

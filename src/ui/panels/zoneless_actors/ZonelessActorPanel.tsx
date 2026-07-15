@@ -7,12 +7,12 @@ import {
   UsersRound
 } from "lucide-react";
 
-import { setActorDragImage } from "../../../core/rendering/actorDragPreview";
-import { ZONELESS_ACTOR_ZONE_ID } from "../../../core/encounter/types";
-import type { Actor, ActorLayoutGroup } from "../../../entities/actor/types";
-import { selectEntity } from "../../../interaction/interactionState";
+import { setActorDragImage } from "@core/rendering/actorDragPreview";
+import { ZONELESS_ACTOR_ZONE_ID } from "@core/encounter/types";
+import type { Actor, ActorLayoutGroup } from "@entities/actor/types";
+import { selectEntity } from "@interaction/interactionState";
 import { useDispatch } from "react-redux";
-import type { RootState } from "../../../store/store";
+import type { RootState } from "@store/store";
 import { getTextColorForLuminance } from "../../canvas/canvasLuminance";
 import { ZONELESS_ACTOR_DRAG_TYPE } from "./zonelessActorDrag";
 import { useResizablePanel } from "../../canvas/useResizablePanel";

@@ -4,15 +4,15 @@ import userEvent from "@testing-library/user-event";
 import {
   redoEncounterChange,
   undoEncounterChange
-} from "../../store/encounterSlice";
-import { store } from "../../store/store";
+} from "@store/encounterSlice";
+import { store } from "@store/store";
 import {
   createRectangleZone,
   getCanvas,
   mockCanvasBounds,
   renderApp,
   selectZoneTool
-} from "../../test/ui/renderApp";
+} from "@test/ui/renderApp";
 
 function createExternalImageTransfer(file?: File) {
   return {

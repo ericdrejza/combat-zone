@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { createEncounterState } from '../../core/encounter/createEncounterState';
-import { ZONELESS_ACTOR_ZONE_ID } from '../../core/encounter/types';
-import type { EntityCollection } from '../../core/state/entityCollection';
-import type { Actor } from '../../entities/actor/types';
-import type { Zone } from '../../entities/zone/types';
+import { createEncounterState } from '@core/encounter/createEncounterState';
+import { ZONELESS_ACTOR_ZONE_ID } from '@core/encounter/types';
+import type { EntityCollection } from '@core/state/entityCollection';
+import type { Actor } from '@entities/actor/types';
+import type { Zone } from '@entities/zone/types';
 import { RADIAL_ACTOR_GAP } from './actorRadialLayout';
 import {
   ACTOR_TOKEN_BASE_RADIUS,

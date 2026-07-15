@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
-import { createEncounterActionRecord } from "../../../core/history/createEncounterActionRecord";
-import { updateActorProperties } from "../../../entities/actor/actorMutations";
-import { commitEncounterChange } from "../../../store/encounterSlice";
-import type { RootState } from "../../../store/store";
+import { createEncounterActionRecord } from "@core/history/createEncounterActionRecord";
+import { updateActorProperties } from "@entities/actor/actorMutations";
+import { commitEncounterChange } from "@store/encounterSlice";
+import type { RootState } from "@store/store";
 
 type ActorRenameModalProps = {
   onClose: () => void;

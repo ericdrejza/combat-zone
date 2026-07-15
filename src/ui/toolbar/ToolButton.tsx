@@ -1,10 +1,10 @@
 import { useDispatch } from "react-redux";
 
-import { setActiveTool } from "../../interaction/interactionState";
+import { setActiveTool } from "@interaction/interactionState";
 import type {
   ToolDefinition,
   ToolId
-} from "../../interaction/tools/toolRegistry";
+} from "@interaction/tools/toolRegistry";
 
 type ToolButtonProps = {
   activeToolId: ToolId;

@@ -1,6 +1,6 @@
 import { useSelector } from "react-redux";
 
-import type { RootState } from "../../store/store";
+import type { RootState } from "@store/store";
 import { ActorPropertiesPanel } from "./ActorPropertiesPanel";
 import { ZonePropertiesPanel } from "./ZonePropertiesPanel";
 

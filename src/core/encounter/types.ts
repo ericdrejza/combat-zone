@@ -1,10 +1,10 @@
 import type { ValidationMode, ValidationMessage } from "../validation/types";
 import type { EntityCollection, EntityId } from "../state/entityCollection";
-import type { Actor } from "../../entities/actor/types";
-import type { Annotation } from "../../entities/annotation/types";
-import type { Edge } from "../../entities/edge/types";
-import type { Engagement } from "../../entities/engagement/types";
-import type { Zone } from "../../entities/zone/types";
+import type { Actor } from "@entities/actor/types";
+import type { Annotation } from "@entities/annotation/types";
+import type { Edge } from "@entities/edge/types";
+import type { Engagement } from "@entities/engagement/types";
+import type { Zone } from "@entities/zone/types";
 
 export const ENCOUNTER_SCHEMA_VERSION = 1;
 export const ZONELESS_ACTOR_ZONE_ID = "zoneless";

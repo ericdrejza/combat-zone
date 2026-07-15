@@ -1,5 +1,5 @@
-import type { LayoutPoint } from '../../core/layout/types';
-import type { Actor } from '../../entities/actor/types';
+import type { LayoutPoint } from '@core/layout/types';
+import type { Actor } from '@entities/actor/types';
 import { isPointInPolygon } from './zoneGeometry';
 
 export const FLEX_ZONE_EDGE_GAP = 16;

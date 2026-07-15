@@ -1,14 +1,14 @@
 import { fireEvent, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import { store } from "../../store/store";
+import { store } from "@store/store";
 import {
   createRectangleZone,
   getCanvas,
   mockCanvasBounds,
   renderApp,
   selectZoneTool
-} from "../../test/ui/renderApp";
+} from "@test/ui/renderApp";
 
 describe("CanvasShell paint mode", () => {
   it("paints live zone color properties onto another zone without changing selection", async () => {

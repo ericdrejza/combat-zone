@@ -1,8 +1,8 @@
 import type { MouseEvent } from "react";
 
-import type { LayoutPoint } from "../../core/layout/types";
-import type { Zone } from "../../entities/zone/types";
-import type { RootState } from "../../store/store";
+import type { LayoutPoint } from "@core/layout/types";
+import type { Zone } from "@entities/zone/types";
+import type { RootState } from "@store/store";
 import { getZoneNameTextColor } from "./canvasLuminance";
 import {
   getZoneNamePosition,

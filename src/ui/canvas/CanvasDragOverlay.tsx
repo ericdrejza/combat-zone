@@ -1,4 +1,4 @@
-import type { RootState } from "../../store/store";
+import type { RootState } from "@store/store";
 import type { ActorDragState } from "./canvasInteractionTypes";
 import { ActorLayer } from "./ActorLayer";
 import { CANVAS_HEIGHT, CANVAS_WIDTH } from "./canvasConstants";

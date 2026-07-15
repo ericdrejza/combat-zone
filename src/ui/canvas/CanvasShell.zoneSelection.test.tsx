@@ -1,15 +1,15 @@
 import { act, fireEvent, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import { clearSelection, setActiveTool } from "../../interaction/interactionState";
-import { store } from "../../store/store";
+import { clearSelection, setActiveTool } from "@interaction/interactionState";
+import { store } from "@store/store";
 import {
   createRectangleZone,
   getCanvas,
   mockCanvasBounds,
   renderApp,
   selectZoneTool
-} from "../../test/ui/renderApp";
+} from "@test/ui/renderApp";
 
 describe("CanvasShell zone selection", () => {
   it("selects canvas entities through the active tool interaction contract", async () => {

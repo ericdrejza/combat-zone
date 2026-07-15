@@ -7,16 +7,16 @@ import type {
   ActorLayoutGroup,
   ActorShape,
   ActorSize
-} from "../../../entities/actor/types";
-import { ACTOR_LAYOUT_GROUP_COLORS } from "../../../entities/actor/actorVisuals";
+} from "@entities/actor/types";
+import { ACTOR_LAYOUT_GROUP_COLORS } from "@entities/actor/actorVisuals";
 import {
   setActorToolLayoutGroup,
   setActorToolShape,
   setActorToolSize,
   toggleActorPaintBrush
-} from "../../../interaction/interactionState";
-import type { ToolDefinition, ToolId } from "../../../interaction/tools/toolRegistry";
-import type { RootState } from "../../../store/store";
+} from "@interaction/interactionState";
+import type { ToolDefinition, ToolId } from "@interaction/tools/toolRegistry";
+import type { RootState } from "@store/store";
 import { ToolButton } from "../ToolButton";
 import {
   ToolbarOptionButton,

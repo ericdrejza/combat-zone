@@ -1,7 +1,7 @@
 import { fireEvent, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import { store } from "../../store/store";
+import { store } from "@store/store";
 import {
   createCircleZone,
   createHexagonZone,
@@ -11,7 +11,7 @@ import {
   renderApp,
   selectZoneTool,
   startPolygonMode
-} from "../../test/ui/renderApp";
+} from "@test/ui/renderApp";
 
 describe("CanvasShell zone creation", () => {
   it("creates rectangle zones by default, circle zones with keybind 2, and hexagon zones with keybind 3", async () => {

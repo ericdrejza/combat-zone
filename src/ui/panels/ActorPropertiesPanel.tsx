@@ -5,11 +5,11 @@ import type {
   ActorShape,
   ActorSize,
   ActorType
-} from "../../entities/actor/types";
-import { updateActorProperties } from "../../entities/actor/actorMutations";
-import { createEncounterActionRecord } from "../../core/history/createEncounterActionRecord";
-import { commitEncounterChange } from "../../store/encounterSlice";
-import type { RootState } from "../../store/store";
+} from "@entities/actor/types";
+import { updateActorProperties } from "@entities/actor/actorMutations";
+import { createEncounterActionRecord } from "@core/history/createEncounterActionRecord";
+import { commitEncounterChange } from "@store/encounterSlice";
+import type { RootState } from "@store/store";
 
 const ACTOR_TYPES: ActorType[] = [
   "creature",
