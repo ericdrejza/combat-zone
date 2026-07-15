@@ -47,7 +47,9 @@ covers `DESIGN.md` §15 "Must have" scope only.
 
 ## Polygon FLEX actor packing (logic phase)
 
-- [x] A singular actor targets the center of every FLEX zone shape.
+- [x] A singular actor targets the center of every FLEX zone shape when its
+      footprint fits there; otherwise the polygon fit algorithm moves it to a
+      valid in-zone position without intersecting the zone border.
 - [x] Multiple FLEX actors in rectangle, circle, hexagon, and user-drawn
       polygon zones use rendered rectangle/circle
       footprints, deterministic collection order, and polygon packing without

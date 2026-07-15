@@ -47,7 +47,9 @@ FLEX uses a candidate-placement solver in src/ui/canvas/actorFlexLayout.ts:125:
 3. Prefer candidates at least radius + 16px from the zone edge.
 4. Reject candidates overlapping previously placed actors.
 5. Choose the candidate maximizing distance from already placed actors.
-6. For a single actor, use the zone center.
+6. For a single actor, target the zone center, then use the same footprint
+   containment check and candidate search to move it inward when the centered
+   footprint does not fit the zone.
 
 The public entry point is src/ui/canvas/actorFlexLayout.ts:229.
 
