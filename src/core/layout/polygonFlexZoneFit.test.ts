@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { findSmallestRectangularFlexZoneFit } from "./rectangularFlexZoneFit";
-import { packRectangularFlexActors } from "./rectangularFlexLayout";
+import { findSmallestPolygonFlexZoneFit } from "./polygonFlexZoneFit";
+import { packPolygonFlexActors } from "./polygonFlexLayout";
 
-describe("rectangular FLEX zone fitting", () => {
+describe("polygon FLEX zone fitting", () => {
   it("finds a fitting uniform scale while preserving aspect ratio", () => {
     const polygon = [
       { x: 0, y: 0 },
@@ -16,7 +16,7 @@ describe("rectangular FLEX zone fitting", () => {
       { id: "actor-2", radius: 30, shape: "circle" as const }
     ];
 
-    const fit = findSmallestRectangularFlexZoneFit(polygon, actors);
+    const fit = findSmallestPolygonFlexZoneFit(polygon, actors);
 
     expect(fit?.resized).toBe(true);
     expect(fit?.polygon).toBeDefined();
@@ -26,7 +26,7 @@ describe("rectangular FLEX zone fitting", () => {
     const fittedHeight = fittedPolygon[2].y - fittedPolygon[1].y;
     expect(fittedWidth / fittedHeight).toBeCloseTo(2);
     expect(
-      packRectangularFlexActors({ polygon: fittedPolygon, actors }).fits
+      packPolygonFlexActors({ polygon: fittedPolygon, actors }).fits
     ).toBe(true);
   });
 });

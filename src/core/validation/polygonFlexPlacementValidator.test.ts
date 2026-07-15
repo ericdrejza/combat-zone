@@ -59,7 +59,7 @@ function createState(mode: EncounterState['validationState']['mode']) {
   };
 }
 
-describe('rectangular FLEX placement validation', () => {
+describe('polygon FLEX placement validation', () => {
   it.each(['OFF', 'ADVISORY', 'ASSISTED', 'STRICT'] as const)(
     'blocks an overflowing actor creation in %s mode',
     (mode) => {
@@ -83,7 +83,7 @@ describe('rectangular FLEX placement validation', () => {
       );
       expect(prepared.validationResult.messages).toEqual([
         expect.objectContaining({
-          code: 'layout.rectangularFlexNoSpace',
+          code: 'layout.polygonFlexNoSpace',
           severity: 'error'
         })
       ]);
@@ -195,7 +195,7 @@ describe('rectangular FLEX placement validation', () => {
       expect(prepared.requiresConfirmation).toBe(false);
       expect(prepared.validationResult.messages).toEqual([
         expect.objectContaining({
-          code: 'layout.rectangularFlexZoneResized',
+          code: 'layout.polygonFlexZoneResized',
           severity: 'warning'
         })
       ]);
@@ -225,7 +225,7 @@ describe('rectangular FLEX placement validation', () => {
     expect(prepared.requiresConfirmation).toBe(true);
     expect(prepared.validationResult.messages).toEqual([
       expect.objectContaining({
-        code: 'layout.rectangularFlexZoneResized',
+        code: 'layout.polygonFlexZoneResized',
         severity: 'warning'
       })
     ]);
@@ -254,7 +254,7 @@ describe('rectangular FLEX placement validation', () => {
     expect(prepared.requiresConfirmation).toBe(false);
     expect(prepared.validationResult.messages).toEqual([
       expect.objectContaining({
-        code: 'layout.rectangularFlexNoSpace',
+        code: 'layout.polygonFlexNoSpace',
         severity: 'error'
       })
     ]);
@@ -302,7 +302,7 @@ describe('rectangular FLEX placement validation', () => {
       expect(prepared.requiresConfirmation).toBe(false);
       expect(prepared.validationResult.messages).toEqual([
         expect.objectContaining({
-          code: 'layout.rectangularFlexZoneResized',
+          code: 'layout.polygonFlexZoneResized',
           severity: 'warning'
         })
       ]);

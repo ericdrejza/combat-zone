@@ -1,7 +1,7 @@
 import { ZONELESS_ACTOR_ZONE_ID } from "../encounter/types";
 import type { EncounterState } from "../encounter/types";
 import type { JsonObject } from "../history/types";
-import { RectangularFlexPlacementValidator } from "./rectangularFlexPlacementValidator";
+import { PolygonFlexPlacementValidator } from "./polygonFlexPlacementValidator";
 import type {
   ValidationAction,
   ValidationMessage,
@@ -247,7 +247,7 @@ export const ZoneIntegrityValidator: Validator<EncounterState> = {
 
 export const MVP_VALIDATORS: Validator<EncounterState>[] = [
   MovementValidator,
-  RectangularFlexPlacementValidator,
+  PolygonFlexPlacementValidator,
   EdgeValidator,
   EngagementValidator,
   ZoneIntegrityValidator

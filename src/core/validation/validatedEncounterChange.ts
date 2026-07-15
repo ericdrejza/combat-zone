@@ -1,6 +1,6 @@
 import type { EncounterState } from "../encounter/types";
 import type { EncounterActionRecord } from "../history/types";
-import { adjustRectangularFlexZonesToFit } from "./rectangularFlexPlacement";
+import { adjustPolygonFlexZonesToFit } from "./polygonFlexPlacement";
 import { runValidationPipeline } from "./pipeline";
 import type {
   ValidationAction,
@@ -45,7 +45,7 @@ export function prepareValidatedEncounterChange({
     (isActorFootprintChange(action) &&
       currentEncounter.validationState.mode !== "STRICT");
   const adjustment = shouldConsiderZoneResize
-    ? adjustRectangularFlexZonesToFit(
+    ? adjustPolygonFlexZonesToFit(
         validationAction,
         currentEncounter,
         nextEncounter
