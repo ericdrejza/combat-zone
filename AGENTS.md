@@ -108,6 +108,7 @@ duplicating shared engines (layout, validation) per entity.
 ```
 src/
   library/           # asset library state, UI, and upload helpers
+  hooks/             # shared React hooks
   core/
     encounter/       # encounter state shape, creation, and inspectors
     history/          # Redux history types and undo/redo helpers
@@ -147,6 +148,13 @@ canvas regardless of entity (tool switching, selection modifiers) →
 Do not read entire directories within node_modules as that is expensive.
 
 Use snake_case when creating multi-word directory names.
+
+### CanvasShell boundary
+
+Keep `src/ui/canvas/CanvasShell.tsx` as a composition/orchestration component. Move
+canvas-specific workflows (such as drag/drop mutations), global input listeners,
+and SVG layer composition into focused hooks, helpers, or presentational
+components so the shell remains small and easy to reason about.
 
 ## DEFINITION OF DONE (per feature)
 
