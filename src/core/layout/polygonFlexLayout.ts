@@ -2,6 +2,7 @@ import type { LayoutPoint } from './types';
 import {
   DEFAULT_POLYGON_NESTING_SETTINGS,
   packPolygonActors,
+  type PolygonNestingStrategy,
   type NestingActor,
   type PolygonNestingResult,
   type PolygonNestingSettings
@@ -15,8 +16,11 @@ export type PolygonFlexLayoutInput = {
   settings?: Partial<PolygonNestingSettings>;
 };
 
+export type PolygonLayoutInput = PolygonFlexLayoutInput;
+
 export const POLYGON_FLEX_LAYOUT_SETTINGS =
   DEFAULT_POLYGON_NESTING_SETTINGS;
+export const POLYGON_LAYOUT_SETTINGS = POLYGON_FLEX_LAYOUT_SETTINGS;
 
 /**
  * Application boundary for polygon-footprint FLEX placement. Every zone shape
@@ -26,5 +30,14 @@ export const POLYGON_FLEX_LAYOUT_SETTINGS =
 export function packPolygonFlexActors(
   input: PolygonFlexLayoutInput
 ): PolygonNestingResult {
-  return packPolygonActors(input);
+  return packPolygonActors({ ...input, layoutStrategy: 'FLEX' });
+}
+
+/** Uses the same polygon packer while preserving collection order as a clockwise sequence. */
+export function packPolygonSequentialActors(
+  input: PolygonLayoutInput
+): PolygonNestingResult {
+  const layoutStrategy: PolygonNestingStrategy = 'SEQUENTIAL';
+
+  return packPolygonActors({ ...input, layoutStrategy });
 }

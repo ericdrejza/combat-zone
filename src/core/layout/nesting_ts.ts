@@ -15,6 +15,8 @@ export type NestingActor = {
   shape: 'circle' | 'rectangle';
 };
 
+export type PolygonNestingStrategy = 'FLEX' | 'SEQUENTIAL';
+
 export type PolygonNestingSettings = {
   preferredBorderSpacing: number;
   minimumBorderSpacing: number;
@@ -36,6 +38,7 @@ export const DEFAULT_POLYGON_NESTING_SETTINGS: PolygonNestingSettings = {
 export type PolygonNestingInput = {
   polygon: LayoutPoint[];
   actors: NestingActor[];
+  layoutStrategy?: PolygonNestingStrategy;
   incomingActorId?: string;
   incomingDropPoint?: LayoutPoint;
   settings?: Partial<PolygonNestingSettings>;
@@ -94,13 +97,50 @@ function getTargetPoint(
   count: number,
   polygon: LayoutPoint[],
   actors: NestingActor[],
-  borderSpacing: number
+  borderSpacing: number,
+  layoutStrategy: PolygonNestingStrategy,
+  actorGap: number
 ): LayoutPoint {
   const center = getPolygonCenter(polygon);
   const bounds = getPolygonBounds(polygon);
   const largestRadius = Math.max(...actors.map((actor) => actor.radius));
   if (count === 1) {
     return center;
+  }
+
+  if (layoutStrategy === 'SEQUENTIAL' && isAxisAlignedRectangle(polygon)) {
+    return getSequentialRectangleTargets(
+      actors,
+      bounds,
+      borderSpacing,
+      actorGap
+    )[index] ?? center;
+  }
+
+  if (layoutStrategy === 'SEQUENTIAL') {
+    const outerRadius = Math.max(
+      0,
+      Math.min(bounds.maxX - bounds.minX, bounds.maxY - bounds.minY) / 2 -
+        largestRadius -
+        borderSpacing
+    );
+    const actorSpacing = largestRadius * 2 + actorGap;
+    const angleStep =
+      outerRadius <= 0
+        ? Math.PI * 2
+        : Math.max(
+            2 *
+              Math.asin(
+                Math.min(1, actorSpacing / (2 * outerRadius))
+              ),
+            Math.PI / 24
+          );
+    const angle = -Math.PI / 2 + index * angleStep;
+
+    return {
+      x: center.x + Math.cos(angle) * outerRadius,
+      y: center.y + Math.sin(angle) * outerRadius
+    };
   }
 
   if (count === 2) {
@@ -130,6 +170,108 @@ function getTargetPoint(
   };
 }
 
+type SequentialRectangleRow = {
+  actors: NestingActor[];
+  width: number;
+  maxRadius: number;
+};
+
+/**
+ * Creates row-major targets from the collection order. Each row is an
+ * independent horizontal line, so different actor sizes cannot cause the
+ * candidate search to move one actor off the row occupied by its neighbors.
+ */
+function getSequentialRectangleTargets(
+  actors: NestingActor[],
+  bounds: ReturnType<typeof getPolygonBounds>,
+  borderSpacing: number,
+  actorGap: number
+): LayoutPoint[] {
+  const usableWidth = bounds.maxX - bounds.minX - borderSpacing * 2;
+  const rows: SequentialRectangleRow[] = [];
+
+  for (const actor of actors) {
+    const actorWidth = actor.radius * 2;
+    const currentRow = rows[rows.length - 1];
+    const widthWithActor = currentRow
+      ? currentRow.width + actorGap + actorWidth
+      : actorWidth;
+
+    if (currentRow && widthWithActor > usableWidth) {
+      rows.push({
+        actors: [actor],
+        width: actorWidth,
+        maxRadius: actor.radius
+      });
+      continue;
+    }
+
+    if (currentRow) {
+      currentRow.actors.push(actor);
+      currentRow.width = widthWithActor;
+      currentRow.maxRadius = Math.max(currentRow.maxRadius, actor.radius);
+      continue;
+    }
+
+    rows.push({
+      actors: [actor],
+      width: actorWidth,
+      maxRadius: actor.radius
+    });
+  }
+
+  const usableHeight = bounds.maxY - bounds.minY - borderSpacing * 2;
+  const totalHeight = rows.reduce(
+    (height, row) => height + row.maxRadius * 2,
+    0
+  ) + Math.max(0, rows.length - 1) * actorGap;
+  let rowTop =
+    bounds.minY +
+    borderSpacing +
+    Math.max(0, (usableHeight - totalHeight) / 2);
+  const targets: LayoutPoint[] = [];
+
+  for (const row of rows) {
+    let actorLeft =
+      bounds.minX +
+      borderSpacing +
+      Math.max(0, (usableWidth - row.width) / 2);
+    const rowCenterY = rowTop + row.maxRadius;
+
+    for (const actor of row.actors) {
+      targets.push({
+        x: actorLeft + actor.radius,
+        y: rowCenterY
+      });
+      actorLeft += actor.radius * 2 + actorGap;
+    }
+
+    rowTop += row.maxRadius * 2 + actorGap;
+  }
+
+  return targets;
+}
+
+function isAxisAlignedRectangle(polygon: LayoutPoint[]): boolean {
+  if (polygon.length !== 4) {
+    return false;
+  }
+
+  const bounds = getPolygonBounds(polygon);
+  const uniqueX = new Set(polygon.map((point) => point.x));
+  const uniqueY = new Set(polygon.map((point) => point.y));
+
+  return (
+    uniqueX.size === 2 &&
+    uniqueY.size === 2 &&
+    polygon.every(
+      (point) =>
+        (point.x === bounds.minX || point.x === bounds.maxX) &&
+        (point.y === bounds.minY || point.y === bounds.maxY)
+    )
+  );
+}
+
 function getBorderSpacings(settings: PolygonNestingSettings): number[] {
   const maximum = Math.max(settings.preferredBorderSpacing, settings.minimumBorderSpacing);
   const values: number[] = [];
@@ -150,6 +292,7 @@ function tryPack(
   settings: PolygonNestingSettings,
   borderSpacing: number
 ): PolygonNestingResult {
+  const layoutStrategy = input.layoutStrategy ?? 'FLEX';
   const actorIndexes = new Map(
     input.actors.map((actor, index) => [actor.id, index])
   );
@@ -170,10 +313,12 @@ function tryPack(
         : getTargetPoint(
             actorIndex,
             input.actors.length,
-            input.polygon,
-            input.actors,
-            borderSpacing
-          );
+          input.polygon,
+          input.actors,
+          borderSpacing,
+          layoutStrategy,
+          settings.actorGap
+        );
     let candidate: LayoutPoint | undefined;
     let candidateDistance = Number.POSITIVE_INFINITY;
 

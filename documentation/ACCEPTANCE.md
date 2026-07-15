@@ -54,6 +54,17 @@ covers `DESIGN.md` §15 "Must have" scope only.
       polygon zones use rendered rectangle/circle
       footprints, deterministic collection order, and polygon packing without
       overlap.
+- [x] Non-split SEQUENTIAL actors use the shared polygon packer in collection
+      order, with clockwise targets and the same incremental border-spacing
+      fallback used by FLEX.
+- [x] Rectangular SEQUENTIAL actors use an aligned left-to-right,
+      top-to-bottom row-major layout based on each actor's footprint, moving
+      row baselines as needed to preserve the no-overlap rule.
+- [x] SPLIT_FLEX and SPLIT_SEQUENTIAL allocate only the section size required
+      by each faction, distribute actors without overlap, and clip curved
+      sections to circle/hexagon zone boundaries before validating footprints.
+- [x] The hard polygon no-overlap fit check applies to FLEX, SEQUENTIAL,
+      SPLIT_FLEX, and SPLIT_SEQUENTIAL zone layouts in every validation mode.
 - [x] Preferred 16px border spacing adaptively falls back to 12px, 8px, and
       4px when the actor set needs more room.
 - [x] Actor creation or movement is rejected when no valid non-overlapping

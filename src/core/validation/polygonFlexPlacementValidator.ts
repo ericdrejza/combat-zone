@@ -1,6 +1,6 @@
 import type { EncounterState } from "../encounter/types";
 import { toNestingActor } from "../layout/actorFootprints";
-import { packPolygonFlexActors } from "../layout/polygonFlexLayout";
+import { packPolygonActors } from "../layout/nesting_ts";
 import {
   getPolygonFlexAffectedZoneIds,
   polygonsEqual
@@ -20,12 +20,13 @@ function result(messages: ValidationMessage[]): ValidationResult {
 }
 
 /**
- * Polygon FLEX layout is a hard geometric invariant. It runs in OFF mode because allowing
- * an overlapping actor would make the derived canvas placement ambiguous.
- * Reshaping a zone or changing an actor footprint uses the same fit check.
+ * Polygon layouts share a hard geometric invariant. This runs in OFF mode
+ * because allowing an overlapping actor would make the derived canvas
+ * placement ambiguous. Reshaping a zone or changing an actor footprint uses
+ * the same fit check.
  */
-export const PolygonFlexPlacementValidator: Validator<EncounterState> = {
-  id: "PolygonFlexPlacementValidator",
+export const PolygonPlacementValidator: Validator<EncounterState> = {
+  id: "PolygonPlacementValidator",
   runsInOffMode: true,
   validate(action, { state, nextState }) {
     if (!nextState) {
@@ -43,7 +44,7 @@ export const PolygonFlexPlacementValidator: Validator<EncounterState> = {
     for (const zoneId of affectedZoneIds) {
       const zone = nextState.zones.byId[zoneId];
 
-      if (!zone || zone.layoutStrategy !== "FLEX") {
+      if (!zone) {
         continue;
       }
 
@@ -79,15 +80,21 @@ export const PolygonFlexPlacementValidator: Validator<EncounterState> = {
 
         return actor && actor.currentZoneId === zoneId ? [toNestingActor(actor)] : [];
       });
-      const packing = packPolygonFlexActors({
+      // Split layouts retain their section semantics in the renderer. The
+      // shared packer is used as the hard feasibility gate for the full
+      // polygon so every layout strategy rejects an actor set that cannot fit
+      // without overlap.
+      const packing = packPolygonActors({
         actors,
+        layoutStrategy:
+          zone.layoutStrategy === "SEQUENTIAL" ? "SEQUENTIAL" : "FLEX",
         polygon: zone.polygon
       });
 
       if (!packing.fits) {
         messages.push({
           code: "layout.polygonFlexNoSpace",
-          message: `Actors cannot fit in polygon FLEX zone ${zone.name} without overlap.`,
+          message: `Actors cannot fit in polygon ${zone.layoutStrategy} zone ${zone.name} without overlap.`,
           severity: "error"
         });
       }
@@ -99,3 +106,6 @@ export const PolygonFlexPlacementValidator: Validator<EncounterState> = {
     };
   }
 };
+
+/** @deprecated Use PolygonPlacementValidator. */
+export const PolygonFlexPlacementValidator = PolygonPlacementValidator;
