@@ -45,6 +45,16 @@ covers `DESIGN.md` §15 "Must have" scope only.
       snap-back does **not** create a spurious Redux history entry.
 - [ ] Actor dragged to empty canvas space becomes zoneless.
 
+## Native image drops
+
+- [x] With the Background Tool selected, dropping an external image onto the
+      canvas sets or replaces the canvas background.
+- [x] With the Actor Tool selected, dropping an external image onto the canvas
+      creates an actor using the active actor toolbar configuration and the
+      dropped image.
+- [x] Native image-drop creation and background changes are undoable and
+      redoable as single Redux history entries.
+
 ## Engagement groups
 
 - [ ] Dragging Actor A onto Actor B creates a new Engagement containing

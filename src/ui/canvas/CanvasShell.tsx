@@ -8,9 +8,12 @@ import type { LayoutPoint } from "../../core/layout/types";
 import { RENDER_LAYERS } from "../../core/rendering/types";
 import { prepareValidatedEncounterChange } from "../../core/validation/validatedEncounterChange";
 import { createActor, moveActor } from "../../entities/actor/actorMutations";
-import { selectEntity } from "../../interaction/interactionState";
+import { selectEntity, setActiveTool } from "../../interaction/interactionState";
 import { resolveLibraryAsset } from "../../library/librarySlice";
-import { LIBRARY_NODE_DRAG_TYPE } from "../library/libraryDrag";
+import {
+  hasExternalFiles,
+  LIBRARY_NODE_DRAG_TYPE
+} from "../library/libraryDrag";
 import type { RootState } from "../../store/store";
 import { commitEncounterChange } from "../../store/encounterSlice";
 import { closeZoneShapeMenu } from "../toolbar/events";
@@ -18,6 +21,10 @@ import {
   ACTOR_CREATION_DRAG_TYPE,
   type NewActorDragData
 } from "../toolbar/actor/actorCreationDrag";
+import {
+  getDroppedImageFile,
+  readImageFile
+} from "../toolbar/background/readImageFile";
 import { ActorLayer } from "./ActorLayer";
 import { CanvasBackgroundLayer } from "./CanvasBackgroundLayer";
 import { CanvasOverlays } from "./CanvasOverlays";
@@ -45,6 +52,8 @@ import {
   useCanvasBackgroundLuminance,
   usePolygonDraftBackgroundLuminance
 } from "./useCanvasLuminance";
+import { stripFileExtension } from '../../entities/actor/actorMutations';
+
 export function CanvasShell() {
   const dispatch = useDispatch();
   const encounter = useSelector((state: RootState) => state.encounter.present);
@@ -279,6 +288,63 @@ export function CanvasShell() {
     dispatch(selectEntity({ entityType: "actor", ids: [actorId] }));
   }
 
+  async function commitBackgroundFromFile(file: File) {
+    const nextBackgroundImage = await readImageFile(file);
+    const actionType = encounter.backgroundImage
+      ? "background.replace"
+      : "background.add";
+
+    dispatch(
+      commitEncounterChange({
+        action: createEncounterActionRecord(actionType, {
+          backgroundImage: nextBackgroundImage
+        }),
+        nextEncounter: {
+          ...encounter,
+          backgroundImage: nextBackgroundImage
+        }
+      })
+    );
+    dispatch(setActiveTool("zone"));
+  }
+
+  async function commitActorFromImage(
+    file: File,
+    destinationZoneId: string
+  ) {
+    const image = await readImageFile(file);
+    const actorId = `actor-${Date.now()}`;
+    const nextEncounter = createActor(encounter, {
+      currentZoneId: destinationZoneId,
+      id: actorId,
+      image,
+      layoutGroup: actorTool.layoutGroup,
+      name: stripFileExtension(image.name),
+      shape: actorTool.shape,
+      size: actorTool.size
+    });
+    const prepared = prepareValidatedEncounterChange({
+      action: createEncounterActionRecord("actor.create", {
+        actorId,
+        destinationZoneId
+      }),
+      currentEncounter: encounter,
+      nextEncounter
+    });
+
+    if (prepared.blocked) {
+      return;
+    }
+
+    dispatch(
+      commitEncounterChange({
+        action: prepared.action,
+        nextEncounter: prepared.nextEncounter
+      })
+    );
+    dispatch(selectEntity({ entityType: "actor", ids: [actorId] }));
+  }
+
   function handleActorDropToZoneless() {
     if (!actorDrag) {
       return;
@@ -337,6 +403,17 @@ export function CanvasShell() {
   }
 
   function handleCanvasDragOver(event: DragEvent<SVGSVGElement>) {
+    const externalFiles = hasExternalFiles(event);
+
+    if (
+      externalFiles &&
+      (activeToolId === "background" || activeToolId === "actor")
+    ) {
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "copy";
+      return;
+    }
+
     if (activeToolId !== "actor" && activeToolId !== "select") {
       return;
     }
@@ -364,6 +441,17 @@ export function CanvasShell() {
   }
 
   function handleCanvasDrop(event: DragEvent<SVGSVGElement>) {
+    const externalFiles = hasExternalFiles(event);
+    const droppedImageFile = getDroppedImageFile(event.dataTransfer);
+
+    if (activeToolId === "background" && externalFiles) {
+      event.preventDefault();
+      if (droppedImageFile) {
+        void commitBackgroundFromFile(droppedImageFile);
+      }
+      return;
+    }
+
     if (activeToolId !== "actor" && activeToolId !== "select") {
       return;
     }
@@ -418,6 +506,17 @@ export function CanvasShell() {
     }
 
     if (activeToolId !== "actor") {
+      return;
+    }
+
+    if (externalFiles) {
+      event.preventDefault();
+      if (droppedImageFile) {
+        void commitActorFromImage(
+          droppedImageFile,
+          destinationZoneId ?? ZONELESS_ACTOR_ZONE_ID
+        );
+      }
       return;
     }
 
