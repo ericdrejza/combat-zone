@@ -14,6 +14,7 @@ import {
   getActorRenderPlacements
 } from "./actorCanvasLayout";
 import { cacheActorRenderPlacementsForZoneMove } from "./actorPlacementTranslation";
+import { setOptimisticActorPlacement } from "./actorPlacementOptimisticState";
 import { MIN_SHAPE_SIZE } from "./canvasConstants";
 import type { CanvasInteractionState } from "./canvasInteractionTypes";
 import { commitZoneCreate } from "./zoneCreationActions";
@@ -75,6 +76,22 @@ export function useCanvasMouseUpHandler(input: MouseUpHandlerInput) {
         });
 
         if (!prepared.blocked && nextEncounter !== encounter) {
+          if (destinationZoneId !== ZONELESS_ACTOR_ZONE_ID) {
+            const offset = {
+              x: actorDrag.current.x - actorDrag.start.x,
+              y: actorDrag.current.y - actorDrag.start.y
+            };
+
+            input.actorRenderPlacements
+              .filter(({ actor }) => actorDrag.actorIds.includes(actor.id))
+              .forEach(({ actor, point }) => {
+                setOptimisticActorPlacement(actor.id, {
+                  x: point.x + offset.x,
+                  y: point.y + offset.y
+                });
+              });
+          }
+
           dispatch(
             commitEncounterChange({
               action: prepared.action,

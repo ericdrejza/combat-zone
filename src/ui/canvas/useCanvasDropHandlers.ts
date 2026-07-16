@@ -153,7 +153,13 @@ export function useCanvasDropHandlers({
       );
 
       if (actorIds.length > 0) {
-        moveActorsToZone(mutationContext, actorIds, destinationZoneId);
+        moveActorsToZone(
+          mutationContext,
+          actorIds,
+          destinationZoneId,
+          false,
+          point
+        );
       }
       return;
     }
@@ -168,7 +174,8 @@ export function useCanvasDropHandlers({
         void commitActorFromImage(
           mutationContext,
           droppedImageFile,
-          destinationZoneId ?? ZONELESS_ACTOR_ZONE_ID
+          destinationZoneId ?? ZONELESS_ACTOR_ZONE_ID,
+          point
         );
       }
       return;
@@ -185,7 +192,8 @@ export function useCanvasDropHandlers({
         commitActorFromCreation(
           mutationContext,
           JSON.parse(actorCreationData) as NewActorDragData,
-          destination
+          destination,
+          point
         );
       } catch {
         return;
@@ -199,7 +207,7 @@ export function useCanvasDropHandlers({
     }
 
     event.preventDefault();
-    commitActorFromLibraryNode(mutationContext, nodeId, destination);
+    commitActorFromLibraryNode(mutationContext, nodeId, destination, point);
   }
 
   return {

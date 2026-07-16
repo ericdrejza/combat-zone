@@ -12,6 +12,8 @@ import { commitEncounterChange } from "@store/encounterSlice";
 import type { AppDispatch, RootState } from "@store/store";
 import type { NewActorDragData } from "../toolbar/actor/actorCreationDrag";
 import { readImageFile } from "../toolbar/background/readImageFile";
+import type { LayoutPoint } from "@core/layout/types";
+import { setOptimisticActorPlacement } from "./actorPlacementOptimisticState";
 
 type CanvasDropContext = {
   actorTool: RootState["interaction"]["actorTool"];
@@ -20,27 +22,11 @@ type CanvasDropContext = {
   library: RootState["library"];
 };
 
-function commitPreparedChange(
-  dispatch: AppDispatch,
-  prepared: ReturnType<typeof prepareValidatedEncounterChange>
-): boolean {
-  if (prepared.blocked) {
-    return false;
-  }
-
-  dispatch(
-    commitEncounterChange({
-      action: prepared.action,
-      nextEncounter: prepared.nextEncounter
-    })
-  );
-  return true;
-}
-
 function commitCreatedActor(
   context: CanvasDropContext,
   input: Parameters<typeof createActor>[1],
-  destinationZoneId: string
+  destinationZoneId: string,
+  dropPoint?: LayoutPoint
 ) {
   const actorId = input.id;
   const nextEncounter = createActor(context.encounter, input);
@@ -53,7 +39,17 @@ function commitCreatedActor(
     nextEncounter
   });
 
-  if (commitPreparedChange(context.dispatch, prepared)) {
+  if (!prepared.blocked) {
+    if (dropPoint && destinationZoneId !== ZONELESS_ACTOR_ZONE_ID) {
+      setOptimisticActorPlacement(actorId, dropPoint);
+    }
+
+    context.dispatch(
+      commitEncounterChange({
+        action: prepared.action,
+        nextEncounter: prepared.nextEncounter
+      })
+    );
     context.dispatch(selectEntity({ entityType: "actor", ids: [actorId] }));
   }
 }
@@ -61,7 +57,8 @@ function commitCreatedActor(
 export function commitActorFromLibraryNode(
   context: CanvasDropContext,
   nodeId: string,
-  destinationZoneId: string
+  destinationZoneId: string,
+  dropPoint?: LayoutPoint
 ) {
   const asset = resolveLibraryAsset(context.library.sections.tokens, nodeId);
 
@@ -80,14 +77,16 @@ export function commitActorFromLibraryNode(
       shape: context.actorTool.shape,
       size: context.actorTool.size
     },
-    destinationZoneId
+    destinationZoneId,
+    dropPoint
   );
 }
 
 export function commitActorFromCreation(
   context: CanvasDropContext,
   data: NewActorDragData,
-  destinationZoneId: string
+  destinationZoneId: string,
+  dropPoint?: LayoutPoint
 ) {
   const actorId = `actor-${Date.now()}`;
   commitCreatedActor(
@@ -100,14 +99,16 @@ export function commitActorFromCreation(
       shape: data.shape,
       size: data.size
     },
-    destinationZoneId
+    destinationZoneId,
+    dropPoint
   );
 }
 
 export async function commitActorFromImage(
   context: CanvasDropContext,
   file: File,
-  destinationZoneId: string
+  destinationZoneId: string,
+  dropPoint?: LayoutPoint
 ) {
   const image = await readImageFile(file);
   const actorId = `actor-${Date.now()}`;
@@ -122,7 +123,8 @@ export async function commitActorFromImage(
       shape: context.actorTool.shape,
       size: context.actorTool.size
     },
-    destinationZoneId
+    destinationZoneId,
+    dropPoint
   );
 }
 
@@ -153,7 +155,8 @@ export function moveActorsToZone(
   context: Pick<CanvasDropContext, "dispatch" | "encounter">,
   actorIds: string[],
   destinationZoneId: string,
-  selectActors = false
+  selectActors = false,
+  dropPoint?: LayoutPoint
 ) {
   const nextEncounter = actorIds.reduce(
     (currentEncounter, actorId) =>
@@ -174,6 +177,12 @@ export function moveActorsToZone(
   });
 
   if (!prepared.blocked && nextEncounter !== context.encounter) {
+    if (dropPoint && destinationZoneId !== ZONELESS_ACTOR_ZONE_ID) {
+      actorIds.forEach((actorId) =>
+        setOptimisticActorPlacement(actorId, dropPoint)
+      );
+    }
+
     context.dispatch(
       commitEncounterChange({
         action: prepared.action,

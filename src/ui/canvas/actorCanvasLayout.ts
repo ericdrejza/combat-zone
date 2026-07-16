@@ -1,32 +1,42 @@
-import { calculateZoneLayout } from '@core/layout/encounterLayout';
-import type { LayoutPoint } from '@core/layout/types';
 import type { Actor } from '@entities/actor/types';
 import type { EncounterState } from '@core/encounter/types';
+import type {
+  LayoutComputationStrategy,
+  LayoutPoint
+} from '@core/layout/types';
 import {
   ACTOR_TOKEN_BASE_RADIUS,
-  getActorRadius,
-  toNestingActor
-} from '@core/layout/actorFootprints';
-import {
-  packPolygonFlexActors,
-  packPolygonSequentialActors,
-  POLYGON_LAYOUT_SETTINGS
-} from '@core/layout/polygonFlexLayout';
-import { getPolygonBounds, isPointInPolygon } from './zoneGeometry';
-import { FLEX_ZONE_EDGE_GAP, getFlexActorPoints } from './actorFlexLayout';
-import {
-  getSectionActorPoints,
-  getSplitSectionPolygon
-} from './actorSectionLayout';
-import {
-  getSplitSectionBounds,
-  getSplitSectionWeights
-} from './actorSplitLayout';
+  FLEX_ZONE_EDGE_GAP
+} from './actorPlacementGeometryCalculator';
+import { getActorRadius } from '@core/layout/actorFootprints';
 import {
   createActorPlacementCacheKey,
-  getCachedActorPlacementGeometry,
-  type ActorPlacementGeometry
+  getCachedActorPlacementGeometry
 } from './actorPlacementCache';
+import {
+  getProactiveActorPlacementGeometry,
+  DEFAULT_LAYOUT_COMPUTATION_STRATEGY
+} from './proactiveActorPlacementCache';
+import {
+  hasActorPlacementWorker,
+  requestActorPlacementComputation,
+  getLastActorPlacementGeometry
+} from './actorPlacementWorkerClient';
+import { POLYGON_LAYOUT_SETTINGS } from '@core/layout/polygonFlexLayout';
+import { ZONELESS_ACTOR_ZONE_ID } from '@core/encounter/types';
+import {
+  clearOptimisticActorPlacement,
+  getOptimisticActorPlacement
+} from './actorPlacementOptimisticState';
+
+export type { ActorPlacementGeometry } from './actorPlacementCache';
+
+/*
+ * Keep the computation policy separate from FLEX/SEQUENTIAL. Proactive plans
+ * remain limited to non-split polygon packing as defined by the feature scope.
+ */
+export const ACTOR_LAYOUT_COMPUTATION_STRATEGY: LayoutComputationStrategy =
+  DEFAULT_LAYOUT_COMPUTATION_STRATEGY;
 
 export { findZoneIdAtPoint } from './zoneHitTesting';
 
@@ -38,212 +48,152 @@ export type ActorRenderPlacement = {
   radius: number;
 };
 
-type Bounds = ReturnType<typeof getPolygonBounds>;
-
-function getPolygonCenter(polygon: LayoutPoint[]): LayoutPoint {
-  const bounds = getPolygonBounds(polygon);
-
-  return {
-    x: bounds.x + bounds.width / 2,
-    y: bounds.y + bounds.height / 2
-  };
-}
-
-function pullPointInsidePolygon(
-  point: LayoutPoint,
-  polygon: LayoutPoint[],
-  radius: number
-): LayoutPoint {
-  const center = getPolygonCenter(polygon);
-  let candidate = point;
-
-  for (let step = 0; step < 12; step += 1) {
-    const samplePoints = [
-      candidate,
-      { x: candidate.x - radius, y: candidate.y },
-      { x: candidate.x + radius, y: candidate.y },
-      { x: candidate.x, y: candidate.y - radius },
-      { x: candidate.x, y: candidate.y + radius }
-    ];
-
-    if (samplePoints.every((sample) => isPointInPolygon(sample, polygon))) {
-      return candidate;
-    }
-
-    candidate = {
-      x: candidate.x + (center.x - candidate.x) * 0.3,
-      y: candidate.y + (center.y - candidate.y) * 0.3
-    };
-  }
-
-  return center;
-}
-
-function getGridPoint(
-  index: number,
-  count: number,
-  bounds: ReturnType<typeof getPolygonBounds>,
-  radius: number
-): LayoutPoint {
-  const columns = Math.max(1, Math.ceil(Math.sqrt(count)));
-  const rows = Math.max(1, Math.ceil(count / columns));
-  const column = index % columns;
-  const row = Math.floor(index / columns);
-  const usableWidth = Math.max(bounds.width - radius * 2, 1);
-  const usableHeight = Math.max(bounds.height - radius * 2, 1);
-
-  return {
-    x: bounds.x + radius + ((column + 0.5) / columns) * usableWidth,
-    y: bounds.y + radius + ((row + 0.5) / rows) * usableHeight
-  };
-}
-
-function calculateActorRenderPlacementGeometry(
-  encounter: EncounterState
-): ActorPlacementGeometry[] {
-  const placements: ActorPlacementGeometry[] = [];
-
-  for (const zoneId of encounter.zones.allIds) {
-    const zone = encounter.zones.byId[zoneId];
-
-    if (!zone) {
-      continue;
-    }
-
-    const descriptor = calculateZoneLayout(encounter, zoneId).descriptor;
-    const zoneBounds = getPolygonBounds(zone.polygon);
-    const split =
-      descriptor.strategy === 'SPLIT_FLEX' ||
-      descriptor.strategy === 'SPLIT_SEQUENTIAL';
-    const topBottom = descriptor.orientation === 'TOP_BOTTOM';
-    const sectionActorsById = new Map(
-      descriptor.sections.map((section) => [
-        section.id,
-        section.items.flatMap((item) => {
-          const actor = encounter.actors.byId[item.id];
-
-          return actor ? [actor] : [];
-        })
-      ])
-    );
-    const splitSectionWeights = getSplitSectionWeights(
-      descriptor.sections,
-      sectionActorsById,
-      zone,
-      zoneBounds,
-      topBottom,
-      split && zone.shape !== 'rectangle'
-    );
-
-    for (const section of descriptor.sections) {
-      const sectionActors = sectionActorsById.get(section.id) ?? [];
-      if (sectionActors.length === 0) {
-        continue;
-      }
-      const sectionBounds = getSplitSectionBounds(
-        section.id,
-        zoneBounds,
-        splitSectionWeights,
-        topBottom
-      );
-
-      const flexLayout =
-        descriptor.strategy === 'FLEX' || descriptor.strategy === 'SPLIT_FLEX';
-      const polygonLayout =
-        !split &&
-        (descriptor.strategy === 'FLEX' || descriptor.strategy === 'SEQUENTIAL');
-      const splitPolygonResult =
-        split && zone.shape !== 'rectangle'
-          ? packPolygonFlexActors({
-              actors: sectionActors.map(toNestingActor),
-              polygon: getSplitSectionPolygon(zone.polygon, sectionBounds)
-            })
-          : null;
-      const splitPoints = split
-        ? splitPolygonResult?.fits
-          ? sectionActors.map(
-              (actor) => splitPolygonResult.placements[actor.id]
-            )
-          : getSectionActorPoints(
-              sectionActors.map((actor) => ({
-                radius: getActorRadius(actor)
-              })),
-              sectionBounds,
-              !topBottom
-            )
-        : [];
-      const polygonLayoutResult =
-        polygonLayout
-          ? (descriptor.strategy === 'FLEX'
-            ? packPolygonFlexActors({
-                actors: sectionActors.map(toNestingActor),
-                polygon: zone.polygon
-              })
-            : packPolygonSequentialActors({
-              actors: sectionActors.map(toNestingActor),
-              polygon: zone.polygon
-            }))
-          : null;
-      const polygonPoints = polygonLayout
-        ? polygonLayoutResult?.fits
-          ? sectionActors.map(
-              (actor) => polygonLayoutResult.placements[actor.id]
-            )
-          : flexLayout
-            ? getFlexActorPoints(
-                sectionActors.map((actor) => ({
-                  actor,
-                  radius: getActorRadius(actor)
-                })),
-                zone.polygon,
-                {
-                  x: sectionBounds.x + sectionBounds.width / 2,
-                  y: sectionBounds.y + sectionBounds.height / 2
-                }
-              )
-            : sectionActors.map((actor, index) =>
-                getGridPoint(index, sectionActors.length, sectionBounds, getActorRadius(actor))
-              )
-        : [];
-
-      sectionActors.forEach((actor, index) => {
-        const radius = getActorRadius(actor);
-        const point = split
-          ? splitPoints[index]
-          : polygonLayout
-            ? polygonPoints[index]
-            : getGridPoint(index, sectionActors.length, sectionBounds, radius);
-
-        placements.push({
-          actorId: actor.id,
-          point:
-            split && zone.shape !== 'rectangle'
-              ? point
-              : pullPointInsidePolygon(point, zone.polygon, radius),
-          radius
-        });
-      });
-    }
-  }
-
-  return placements;
-}
-
 export function getActorRenderPlacements(
-  encounter: EncounterState
+  encounter: EncounterState,
+  computationStrategy: LayoutComputationStrategy =
+    ACTOR_LAYOUT_COMPUTATION_STRATEGY
 ): ActorRenderPlacement[] {
   const cacheKey = createActorPlacementCacheKey(
     encounter,
     POLYGON_LAYOUT_SETTINGS,
     FLEX_ZONE_EDGE_GAP
   );
-  const geometry = getCachedActorPlacementGeometry(cacheKey, () =>
-    calculateActorRenderPlacementGeometry(encounter)
-  );
+  const geometry = getCachedActorPlacementGeometry(cacheKey);
 
-  return geometry.flatMap(({ actorId, point, radius }) => {
+  const renderGeometry =
+    geometry ?? getLastActorPlacementGeometry(encounter) ?? [];
+  const currentGeometry = renderGeometry.filter(({ actorId }) => {
+    const actor = encounter.actors.byId[actorId];
+
+    return Boolean(
+      actor &&
+        actor.currentZoneId !== ZONELESS_ACTOR_ZONE_ID &&
+        encounter.zones.byId[actor.currentZoneId] &&
+        (geometry || !getOptimisticActorPlacement(actorId))
+    );
+  });
+  const positionedActorIds = new Set(
+    currentGeometry.map(({ actorId }) => actorId)
+  );
+  if (geometry) {
+    positionedActorIds.forEach(clearOptimisticActorPlacement);
+  }
+
+  encounter.actors.allIds.forEach((actorId) => {
+    const actor = encounter.actors.byId[actorId];
+
+    if (
+      !actor ||
+      actor.currentZoneId === ZONELESS_ACTOR_ZONE_ID ||
+      !encounter.zones.byId[actor.currentZoneId]
+    ) {
+      clearOptimisticActorPlacement(actorId);
+    }
+  });
+
+  const geometryWithOptimisticPlacements = [
+    ...currentGeometry,
+    ...encounter.actors.allIds.flatMap((actorId) => {
+      if (positionedActorIds.has(actorId)) {
+        return [];
+      }
+
+      const actor = encounter.actors.byId[actorId];
+      const point = actor ? getOptimisticActorPlacement(actorId) : undefined;
+
+      return actor && point
+        ? [{ actorId, point, radius: getActorRadius(actor) }]
+        : [];
+    })
+  ];
+  const proactiveGeometry =
+    computationStrategy === 'PROACTIVE'
+      ? geometryWithOptimisticPlacements.map((placement) => ({ ...placement }))
+      : geometryWithOptimisticPlacements;
+  const plannedZoneIds = new Set<string>();
+  const knownGeometry = [] as typeof geometryWithOptimisticPlacements;
+
+  if (computationStrategy === 'PROACTIVE') {
+    for (const zoneId of encounter.zones.allIds) {
+      const zone = encounter.zones.byId[zoneId];
+
+      if (!zone) {
+        continue;
+      }
+
+      const zoneActors = encounter.actors.allIds.flatMap((actorId) => {
+        const actor = encounter.actors.byId[actorId];
+
+        return actor?.currentZoneId === zoneId ? [actor] : [];
+      });
+      const plannedZoneGeometry = getProactiveActorPlacementGeometry(
+        zone,
+        zoneActors,
+        POLYGON_LAYOUT_SETTINGS
+      );
+
+      if (!plannedZoneGeometry) {
+        continue;
+      }
+
+      const plannedByActorId = new Map(
+        plannedZoneGeometry.map((placement) => [placement.actorId, placement])
+      );
+      const planCoversZone = zoneActors.every((actor) =>
+        plannedByActorId.has(actor.id)
+      );
+
+      if (!planCoversZone) {
+        continue;
+      }
+
+      plannedZoneIds.add(zoneId);
+      knownGeometry.push(...plannedZoneGeometry);
+      proactiveGeometry.forEach((placement, index) => {
+        const actor = encounter.actors.byId[placement.actorId];
+
+        if (actor?.currentZoneId !== zoneId) {
+          return;
+        }
+
+        const planned = plannedByActorId.get(placement.actorId);
+
+        if (planned) {
+          proactiveGeometry[index] = planned;
+        }
+      });
+    }
+  }
+
+  if (!geometry) {
+    const authoritativeZoneIds = encounter.zones.allIds.filter((zoneId) => {
+      if (plannedZoneIds.has(zoneId)) {
+        return false;
+      }
+
+      return encounter.actors.allIds.some((actorId) => {
+        const actor = encounter.actors.byId[actorId];
+
+        return actor?.currentZoneId === zoneId;
+      });
+    });
+
+    requestActorPlacementComputation(encounter, POLYGON_LAYOUT_SETTINGS, {
+      authoritativeZoneIds,
+      computationStrategy,
+      knownGeometry
+    });
+
+    if (!hasActorPlacementWorker()) {
+      return getActorRenderPlacements(encounter, computationStrategy);
+    }
+  }
+
+  return proactiveGeometry.flatMap(({ actorId, point, radius }) => {
     const actor = encounter.actors.byId[actorId];
 
     return actor ? [{ actor, point, radius }] : [];
   });
 }
+
+export { getProactiveActorPlacementGeometry };
