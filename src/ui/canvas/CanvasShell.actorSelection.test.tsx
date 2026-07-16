@@ -1,4 +1,5 @@
 import { act, fireEvent, screen, waitFor } from "@testing-library/react";
+import { vi } from "vitest";
 import userEvent from "@testing-library/user-event";
 
 import { createEncounterState } from "@core/encounter/createEncounterState";
@@ -16,6 +17,7 @@ import {
 import { store } from "@store/store";
 import { getCanvas, mockCanvasBounds, renderApp } from "@test/ui/renderApp";
 import { createRectanglePolygon } from "./zoneGeometry";
+import * as validationPipeline from "@core/validation/pipeline";
 
 function collection<TEntity extends { id: string }>(
   entities: TEntity[]
@@ -94,6 +96,41 @@ function seedEncounter(
 }
 
 describe("CanvasShell actor selection", () => {
+  it("keeps the existing placement when an actor is dropped in the same zone", async () => {
+    renderApp();
+    const canvas = getCanvas();
+    mockCanvasBounds(canvas);
+
+    act(() => {
+      seedEncounter(
+        [actor("actor-1", "zone-1")],
+        [zone("zone-1", 100, 100, 200, 200)]
+      );
+      store.dispatch(setActiveTool("actor"));
+    });
+
+    const actorElement = await screen.findByLabelText("actor-1");
+    const originalTransform = actorElement.getAttribute("transform");
+    const originalPastLength = store.getState().encounter.past.length;
+    const validationSpy = vi.spyOn(
+      validationPipeline,
+      "runValidationPipeline"
+    );
+
+    fireEvent.mouseDown(actorElement, {
+      button: 0,
+      clientX: 200,
+      clientY: 200
+    });
+    fireEvent.mouseMove(canvas, { clientX: 210, clientY: 210 });
+    fireEvent.mouseUp(canvas);
+
+    expect(actorElement.getAttribute("transform")).toBe(originalTransform);
+    expect(store.getState().encounter.past).toHaveLength(originalPastLength);
+    expect(validationSpy).not.toHaveBeenCalled();
+    validationSpy.mockRestore();
+  });
+
   it("selects all actors with ctrl-a on Actor and Select tools", () => {
     renderApp();
 
