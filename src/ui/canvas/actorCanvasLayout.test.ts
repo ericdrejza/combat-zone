@@ -9,6 +9,7 @@ import {
   FLEX_ZONE_EDGE_GAP,
   getActorRenderPlacements
 } from './actorCanvasLayout';
+import { calculateActorPlacementGeometry } from './actorPlacementGeometryCalculator';
 import { cacheActorRenderPlacementsForZoneMove } from './actorPlacementTranslation';
 import {
   createCirclePolygonFromBounds,
@@ -119,7 +120,8 @@ function polygonZone(
 
 function expectPackedPlacements(
   placements: ReturnType<typeof getActorRenderPlacements>,
-  polygon: Zone['polygon']
+  polygon: Zone['polygon'],
+  actorGap = POLYGON_LAYOUT_SETTINGS.actorGap
 ) {
   const edgeClearanceFootprints = placements.map(({ actor, point }) =>
     getFootprint(toNestingActor(actor), point, FLEX_ZONE_EDGE_GAP, 16)
@@ -136,13 +138,13 @@ function expectPackedPlacements(
           getFootprint(
             toNestingActor(placements[first].actor),
             placements[first].point,
-            8,
+            actorGap / 2,
             16
           ),
           getFootprint(
             toNestingActor(placements[second].actor),
             placements[second].point,
-            8,
+            actorGap / 2,
             16
           )
         )
@@ -195,7 +197,7 @@ describe('actor canvas layout', () => {
     );
   });
 
-  it('gives split FLEX sections space based on non-empty section content', () => {
+  it('uses full-zone FLEX spacing while ordering split factions', () => {
     const zoneId = 'split-zone';
     const encounter = {
       ...createEncounterState({ id: 'encounter-split-flex', name: 'Split Flex' }),
@@ -211,18 +213,106 @@ describe('actor canvas layout', () => {
       ])
     };
 
-    const placements = getActorRenderPlacements(encounter);
+    const placements = calculateActorPlacementGeometry(encounter).map(
+      ({ actorId, point, radius }) => ({
+        actor: encounter.actors.byId[actorId]!,
+        point,
+        radius
+      })
+    );
 
     expect(placements.map(({ point }) => point)).toEqual([
-      { x: 146, y: 200 },
-      { x: 354, y: 200 }
+      { x: 183, y: 200 },
+      { x: 317, y: 200 }
     ]);
+  });
+
+  it('keeps multi-row split FLEX factions ordered without overlap', () => {
+    const zoneId = 'split-capacity-zone';
+    const encounter = {
+      ...createEncounterState({ id: 'encounter-split-capacity', name: 'Split' }),
+      actors: collection([
+        { ...zonedActor('hero-one', zoneId), layoutGroup: 'hero' as const },
+        { ...zonedActor('hero-two', zoneId), layoutGroup: 'hero' as const },
+        { ...zonedActor('hero-three', zoneId), layoutGroup: 'hero' as const },
+        { ...zonedActor('neutral', zoneId), layoutGroup: 'neutral' as const },
+        { ...zonedActor('enemy', zoneId), layoutGroup: 'enemy' as const },
+        { ...zonedActor('hero-four', zoneId), layoutGroup: 'hero' as const }
+      ]),
+      zones: collection([
+        {
+          ...zone(zoneId, 100, 100, 400, 200),
+          layoutStrategy: 'SPLIT_FLEX' as const
+        }
+      ])
+    };
+
+    const placements = calculateActorPlacementGeometry(encounter).map(
+      ({ actorId, point, radius }) => ({
+        actor: encounter.actors.byId[actorId]!,
+        point,
+        radius
+      })
+    );
+    const heroPlacements = placements.filter(
+      ({ actor: current }) => current.layoutGroup === 'hero'
+    );
+    const neutralPlacement = placements.find(
+      ({ actor: current }) => current.id === 'neutral'
+    )!;
+    const enemyPlacement = placements.find(
+      ({ actor: current }) => current.id === 'enemy'
+    )!;
+
+    expect(placements).toHaveLength(6);
+    const polygon = encounter.zones.byId[zoneId]!.polygon;
+
+    for (const placement of placements) {
+      expect(
+        isFootprintInsideZone(
+          getFootprint(
+            toNestingActor(placement.actor),
+            placement.point,
+            4,
+            POLYGON_LAYOUT_SETTINGS.circleSegments
+          ),
+          polygon
+        )
+      ).toBe(true);
+    }
+
+    for (let first = 0; first < placements.length; first += 1) {
+      for (let second = first + 1; second < placements.length; second += 1) {
+        expect(
+          footprintsOverlap(
+            getFootprint(
+              toNestingActor(placements[first].actor),
+              placements[first].point,
+              1,
+              16
+            ),
+            getFootprint(
+              toNestingActor(placements[second].actor),
+              placements[second].point,
+              1,
+              16
+            )
+          )
+        ).toBe(false);
+      }
+    }
+    expect(
+      Math.max(...heroPlacements.map(({ point, radius }) => point.x + radius))
+    ).toBeLessThanOrEqual(neutralPlacement.point.x - neutralPlacement.radius);
+    expect(neutralPlacement.point.x + neutralPlacement.radius).toBeLessThanOrEqual(
+      enemyPlacement.point.x - enemyPlacement.radius
+    );
   });
 
   it.each([
     ['circle', 'SPLIT_FLEX' as const, (id: string, strategy: Zone['layoutStrategy']) =>
       circleZone(id, 100, 100, 300, 300, strategy)],
-    ['hexagon', 'SPLIT_SEQUENTIAL' as const, (id: string, strategy: Zone['layoutStrategy']) => ({
+    ['hexagon', 'SPLIT_FLEX' as const, (id: string, strategy: Zone['layoutStrategy']) => ({
       ...polygonZone(
         id,
         createHexagonPolygonFromBounds({ height: 300, width: 300, x: 100, y: 100 }),
@@ -246,7 +336,7 @@ describe('actor canvas layout', () => {
 
     const placements = getActorRenderPlacements(encounter);
     console.log(placements.map(({ actor, point }) => [actor.id, point]));
-    expectPackedPlacements(placements, selectedZone.polygon);
+    expectPackedPlacements(placements, selectedZone.polygon, 2);
   });
 
   it('lays split sections vertically for LEFT_RIGHT and horizontally for TOP_BOTTOM', () => {
@@ -279,13 +369,60 @@ describe('actor canvas layout', () => {
 
     const leftRight = getActorRenderPlacements(leftRightEncounter);
     const topBottom = getActorRenderPlacements(topBottomEncounter);
+    expect(leftRight[0].point.x).toBeLessThan(leftRight[2].point.x);
+    expect(leftRight[1].point.x).toBeLessThan(leftRight[2].point.x);
+    expect(topBottom[0].point.y).toBeLessThan(topBottom[2].point.y);
+    expect(topBottom[1].point.y).toBeLessThan(topBottom[2].point.y);
+    expectPackedPlacements(leftRight, leftRightEncounter.zones.byId[zoneId]!.polygon, 2);
+    expectPackedPlacements(topBottom, topBottomEncounter.zones.byId[zoneId]!.polygon, 2);
+  });
 
-    expect(leftRight[0].point).toEqual({ x: 146, y: 146 });
-    expect(leftRight[1].point).toEqual({ x: 146, y: 254 });
-    expect(leftRight[2].point).toEqual({ x: 354, y: 200 });
-    expect(topBottom[0].point).toEqual({ x: 146, y: 146 });
-    expect(topBottom[1].point).toEqual({ x: 354, y: 146 });
-    expect(topBottom[2].point).toEqual({ x: 250, y: 254 });
+  it('centers SPLIT_SEQUENTIAL faction rows on the orientation cross-axis', () => {
+    const zoneId = 'split-sequential-circle';
+    const actors = [
+      { ...zonedActor('hero-one', zoneId), layoutGroup: 'hero' as const },
+      { ...zonedActor('hero-two', zoneId), layoutGroup: 'hero' as const },
+      { ...zonedActor('enemy-one', zoneId), layoutGroup: 'enemy' as const },
+      { ...zonedActor('enemy-two', zoneId), layoutGroup: 'enemy' as const }
+    ];
+    const leftRightZone = circleZone(
+      zoneId,
+      100,
+      100,
+      300,
+      300,
+      'SPLIT_SEQUENTIAL'
+    );
+    const leftRightEncounter = {
+      ...createEncounterState({ id: 'encounter-split-sequential-axis', name: 'Split Sequential' }),
+      actors: collection(actors),
+      zones: collection([leftRightZone])
+    };
+    const topBottomEncounter = {
+      ...leftRightEncounter,
+      zones: collection([
+        {
+          ...leftRightZone,
+          layoutOrientation: 'TOP_BOTTOM' as const
+        }
+      ])
+    };
+
+    const leftRight = getActorRenderPlacements(leftRightEncounter);
+    const topBottom = getActorRenderPlacements(topBottomEncounter);
+    const leftRightHeroes = leftRight.filter(({ actor }) => actor.layoutGroup === 'hero');
+    const topBottomHeroes = topBottom.filter(({ actor }) => actor.layoutGroup === 'hero');
+
+    expect(
+      leftRightHeroes.reduce((total, { point }) => total + point.y, 0) /
+        leftRightHeroes.length
+    ).toBeCloseTo(250, 5);
+    expect(
+      topBottomHeroes.reduce((total, { point }) => total + point.x, 0) /
+        topBottomHeroes.length
+    ).toBeCloseTo(250, 5);
+    expectPackedPlacements(leftRight, leftRightZone.polygon);
+    expectPackedPlacements(topBottom, leftRightZone.polygon);
   });
 
   it('uses polygon packing for FLEX actors in circular zones', () => {

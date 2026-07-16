@@ -8,6 +8,7 @@ import {
 } from '@core/layout/actorFootprints';
 import {
   packPolygonFlexActors,
+  packPolygonSplitFlexActors,
   packPolygonSequentialActors
 } from '@core/layout/polygonFlexLayout';
 import type { Actor } from '@entities/actor/types';
@@ -18,6 +19,7 @@ import {
   getSplitSectionPolygon
 } from './actorSectionLayout';
 import {
+  centerSplitSequentialPoints,
   getSplitSectionBounds,
   getSplitSectionWeights
 } from './actorSplitLayout';
@@ -111,9 +113,33 @@ export function calculateActorPlacementGeometry(
     });
     const descriptor = calculateZoneLayout(encounter, zoneId).descriptor;
     const zoneBounds = getPolygonBounds(zone.polygon);
-    const split =
-      descriptor.strategy === 'SPLIT_FLEX' ||
-      descriptor.strategy === 'SPLIT_SEQUENTIAL';
+    if (descriptor.strategy === 'SPLIT_FLEX') {
+      const packing = packPolygonSplitFlexActors({
+        actors: zoneActors.map(toNestingActor),
+        layoutOrientation: descriptor.orientation,
+        polygon: zone.polygon
+      });
+
+      if (packing.fits) {
+        zoneActors.forEach((actor) => {
+          const point = packing.placements[actor.id];
+
+          if (point) {
+            placements.push({
+              actorId: actor.id,
+              point,
+              radius: getActorRadius(actor)
+            });
+          }
+        });
+
+        continue;
+      }
+    }
+
+    // SPLIT_SEQUENTIAL retains its faction section geometry and uses the
+    // polygon packer only where a curved boundary needs containment help.
+    const split = descriptor.strategy === 'SPLIT_SEQUENTIAL';
     const topBottom = descriptor.orientation === 'TOP_BOTTOM';
     const sectionActorsById = new Map(
       descriptor.sections.map((section) => [
@@ -147,6 +173,24 @@ export function calculateActorPlacementGeometry(
         splitSectionWeights,
         topBottom
       );
+      const splitSectionPoints = split
+        ? getSectionActorPoints(
+            sectionActors.map((actor) => ({
+              radius: getActorRadius(actor)
+            })),
+            sectionBounds,
+            !topBottom
+          )
+        : [];
+      const splitSequentialTargets =
+        split && zone.shape !== 'rectangle'
+          ? Object.fromEntries(
+              splitSectionPoints.map((point, index) => [
+                sectionActors[index].id,
+                point
+              ])
+            )
+          : undefined;
       const flexLayout =
         descriptor.strategy === 'FLEX' || descriptor.strategy === 'SPLIT_FLEX';
       const polygonLayout =
@@ -157,21 +201,22 @@ export function calculateActorPlacementGeometry(
         split && zone.shape !== 'rectangle'
           ? packPolygonFlexActors({
               actors: sectionActors.map(toNestingActor),
-              polygon: getSplitSectionPolygon(zone.polygon, sectionBounds)
+              polygon: getSplitSectionPolygon(zone.polygon, sectionBounds),
+              targetPoints: splitSequentialTargets
             })
           : null;
       const splitPoints = split
         ? splitPolygonResult?.fits
-          ? sectionActors.map(
-              (actor) => splitPolygonResult.placements[actor.id]
+          ? centerSplitSequentialPoints(
+              sectionActors,
+              sectionActors.map(
+                (actor) => splitPolygonResult.placements[actor.id]
+              ),
+              zone.polygon,
+              zoneBounds,
+              topBottom
             )
-          : getSectionActorPoints(
-              sectionActors.map((actor) => ({
-                radius: getActorRadius(actor)
-              })),
-              sectionBounds,
-              !topBottom
-            )
+          : splitSectionPoints
         : [];
       const polygonLayoutResult = polygonLayout
         ? descriptor.strategy === 'FLEX'
