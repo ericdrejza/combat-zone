@@ -20,4 +20,5 @@ export type ActorPlacementWorkerResponse = {
   cacheKey: string;
   geometry: ActorPlacementGeometry[];
   proactivePlans: Record<string, ActorPlacementGeometry[]>;
+  proactiveAcceleration?: 'WEBGPU' | 'CPU';
 };
