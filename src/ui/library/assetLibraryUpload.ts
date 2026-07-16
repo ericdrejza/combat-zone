@@ -1,10 +1,10 @@
-import type { Dispatch, UnknownAction } from "@reduxjs/toolkit";
+import path from 'path';
+import type { Dispatch, UnknownAction } from '@reduxjs/toolkit';
 
-import { stripFileExtension } from "@entities/actor/actorMutations";
-import { createFolder, uploadImage } from "@library/librarySlice";
-import type { LibrarySectionId } from "@library/types";
-import { readImageFile } from "../toolbar/background/readImageFile";
-import type { DroppedImageFile } from "./libraryFileDrop";
+import { createFolder, uploadImage } from '@library/librarySlice';
+import type { LibrarySectionId } from '@library/types';
+import { readImageFile } from '../toolbar/background/readImageFile';
+import type { DroppedImageFile } from './libraryFileDrop';
 
 type CreateImageFilesOptions = {
   dispatch: Dispatch<UnknownAction>;
@@ -22,14 +22,14 @@ export async function createImageFilesInFolder({
   const folderIdsByPath = new Map<string, string>();
 
   for (const { file, relativePath } of files) {
-    if (!file.type.startsWith("image/")) {
+    if (!file.type.startsWith('image/')) {
       continue;
     }
 
-    const pathParts = relativePath ? relativePath.split("/") : [file.name];
+    const pathParts = relativePath ? relativePath.split('/') : [file.name];
     const folderParts = pathParts.slice(0, -1).filter(Boolean);
     let parentId = rootParentId;
-    let accumulatedPath = "";
+    let accumulatedPath = '';
 
     for (const folderName of folderParts) {
       accumulatedPath = accumulatedPath
@@ -56,12 +56,12 @@ export async function createImageFilesInFolder({
 
     const asset = await readImageFile(file);
 
-    dispatch(uploadImage({
-      asset: sectionId === "tokens"
-        ? { ...asset, name: stripFileExtension(asset.name) }
-        : asset,
-      parentId,
-      sectionId
-    }));
+    dispatch(
+      uploadImage({
+        asset: { ...asset, name: path.parse(asset.name).name },
+        parentId,
+        sectionId
+      })
+    );
   }
 }

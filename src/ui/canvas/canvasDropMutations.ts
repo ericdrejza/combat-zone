@@ -1,25 +1,23 @@
-import { ZONELESS_ACTOR_ZONE_ID } from "@core/encounter/types";
-import { createEncounterActionRecord } from "@core/history/createEncounterActionRecord";
-import { prepareValidatedEncounterChange } from "@core/validation/validatedEncounterChange";
-import {
-  createActor,
-  moveActor,
-  stripFileExtension
-} from "@entities/actor/actorMutations";
-import { selectEntity, setActiveTool } from "@interaction/interactionState";
-import { resolveLibraryAsset } from "@library/librarySlice";
-import { commitEncounterChange } from "@store/encounterSlice";
-import type { AppDispatch, RootState } from "@store/store";
-import type { NewActorDragData } from "../toolbar/actor/actorCreationDrag";
-import { readImageFile } from "../toolbar/background/readImageFile";
-import type { LayoutPoint } from "@core/layout/types";
-import { setOptimisticActorPlacement } from "./actorPlacementOptimisticState";
+import path from 'path';
+
+import { ZONELESS_ACTOR_ZONE_ID } from '@core/encounter/types';
+import { createEncounterActionRecord } from '@core/history/createEncounterActionRecord';
+import { prepareValidatedEncounterChange } from '@core/validation/validatedEncounterChange';
+import { createActor, moveActor } from '@entities/actor/actorMutations';
+import { selectEntity, setActiveTool } from '@interaction/interactionState';
+import { resolveLibraryAsset } from '@library/librarySlice';
+import { commitEncounterChange } from '@store/encounterSlice';
+import type { AppDispatch, RootState } from '@store/store';
+import type { NewActorDragData } from '../toolbar/actor/actorCreationDrag';
+import { readImageFile } from '../toolbar/background/readImageFile';
+import type { LayoutPoint } from '@core/layout/types';
+import { setOptimisticActorPlacement } from './actorPlacementOptimisticState';
 
 type CanvasDropContext = {
-  actorTool: RootState["interaction"]["actorTool"];
+  actorTool: RootState['interaction']['actorTool'];
   dispatch: AppDispatch;
-  encounter: RootState["encounter"]["present"];
-  library: RootState["library"];
+  encounter: RootState['encounter']['present'];
+  library: RootState['library'];
 };
 
 function commitCreatedActor(
@@ -31,7 +29,7 @@ function commitCreatedActor(
   const actorId = input.id;
   const nextEncounter = createActor(context.encounter, input);
   const prepared = prepareValidatedEncounterChange({
-    action: createEncounterActionRecord("actor.create", {
+    action: createEncounterActionRecord('actor.create', {
       actorId,
       destinationZoneId
     }),
@@ -50,7 +48,7 @@ function commitCreatedActor(
         nextEncounter: prepared.nextEncounter
       })
     );
-    context.dispatch(selectEntity({ entityType: "actor", ids: [actorId] }));
+    context.dispatch(selectEntity({ entityType: 'actor', ids: [actorId] }));
   }
 }
 
@@ -119,7 +117,7 @@ export async function commitActorFromImage(
       id: actorId,
       image,
       layoutGroup: context.actorTool.layoutGroup,
-      name: stripFileExtension(image.name),
+      name: path.parse(image.name).name,
       shape: context.actorTool.shape,
       size: context.actorTool.size
     },
@@ -129,13 +127,13 @@ export async function commitActorFromImage(
 }
 
 export async function commitBackgroundFromFile(
-  context: Pick<CanvasDropContext, "dispatch" | "encounter">,
+  context: Pick<CanvasDropContext, 'dispatch' | 'encounter'>,
   file: File
 ) {
   const nextBackgroundImage = await readImageFile(file);
   const actionType = context.encounter.backgroundImage
-    ? "background.replace"
-    : "background.add";
+    ? 'background.replace'
+    : 'background.add';
 
   context.dispatch(
     commitEncounterChange({
@@ -148,11 +146,11 @@ export async function commitBackgroundFromFile(
       }
     })
   );
-  context.dispatch(setActiveTool("zone"));
+  context.dispatch(setActiveTool('zone'));
 }
 
 export function moveActorsToZone(
-  context: Pick<CanvasDropContext, "dispatch" | "encounter">,
+  context: Pick<CanvasDropContext, 'dispatch' | 'encounter'>,
   actorIds: string[],
   destinationZoneId: string,
   selectActors = false,
@@ -164,7 +162,7 @@ export function moveActorsToZone(
     context.encounter
   );
   const action = createEncounterActionRecord(
-    actorIds.length > 1 ? "actor.moveMany" : "actor.move",
+    actorIds.length > 1 ? 'actor.moveMany' : 'actor.move',
     {
       actorIds,
       destinationZoneId
@@ -191,13 +189,13 @@ export function moveActorsToZone(
     );
 
     if (selectActors) {
-      context.dispatch(selectEntity({ entityType: "actor", ids: actorIds }));
+      context.dispatch(selectEntity({ entityType: 'actor', ids: actorIds }));
     }
   }
 }
 
 export function getMovableActorIds(
-  encounter: RootState["encounter"]["present"],
+  encounter: RootState['encounter']['present'],
   actorIds: string[],
   destinationZoneId: string
 ) {
