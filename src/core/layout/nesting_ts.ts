@@ -104,6 +104,7 @@ function getTargetPoint(
   const center = getPolygonCenter(polygon);
   const bounds = getPolygonBounds(polygon);
   const largestRadius = Math.max(...actors.map((actor) => actor.radius));
+  const requiredActorSpacing = largestRadius * 2 + actorGap;
   if (count === 1) {
     return center;
   }
@@ -145,28 +146,49 @@ function getTargetPoint(
 
   if (count === 2) {
     const horizontal = bounds.maxX - bounds.minX >= bounds.maxY - bounds.minY;
-    const axisRadius =
+    const axisRadius = Math.max(
+      0,
       (horizontal ? bounds.maxX - bounds.minX : bounds.maxY - bounds.minY) / 2 -
-      largestRadius -
-      borderSpacing;
-    const offset = Math.max(0, axisRadius);
+        largestRadius -
+        borderSpacing
+    );
+    // Put the pair where the free space at the edge and between the actors
+    // are comparable. Using the maximum radius here gives smaller actors the
+    // same stable distribution target while the final footprint check still
+    // accounts for their actual sizes.
+    const offset = Math.min(
+      axisRadius,
+      (axisRadius + requiredActorSpacing) / 3
+    );
 
     return horizontal
       ? { x: center.x + (index === 0 ? offset : -offset), y: center.y }
       : { x: center.x, y: center.y + (index === 0 ? offset : -offset) };
   }
 
-  const ringRadius = Math.max(
+  const maximumXRadius = Math.max(
     0,
-    Math.min(bounds.maxX - bounds.minX, bounds.maxY - bounds.minY) / 2 -
-      largestRadius -
-      borderSpacing
+    (bounds.maxX - bounds.minX) / 2 - largestRadius - borderSpacing
   );
+  const maximumYRadius = Math.max(
+    0,
+    (bounds.maxY - bounds.minY) / 2 - largestRadius - borderSpacing
+  );
+  const limitingRadius = Math.min(maximumXRadius, maximumYRadius);
+  const chordFactor = 2 * Math.sin(Math.PI / count);
+  const balancedLimitingRadius = Math.min(
+    limitingRadius,
+    (limitingRadius + requiredActorSpacing) / (1 + chordFactor)
+  );
+  const radialScale =
+    limitingRadius > 0 ? balancedLimitingRadius / limitingRadius : 0;
+  const ringRadiusX = maximumXRadius * radialScale;
+  const ringRadiusY = maximumYRadius * radialScale;
   const angle = -Math.PI / 2 + (index / count) * Math.PI * 2;
 
   return {
-    x: center.x + Math.cos(angle) * ringRadius,
-    y: center.y + Math.sin(angle) * ringRadius
+    x: center.x + Math.cos(angle) * ringRadiusX,
+    y: center.y + Math.sin(angle) * ringRadiusY
   };
 }
 
