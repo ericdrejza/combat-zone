@@ -186,6 +186,8 @@ export function CanvasShell() {
   });
 
   const {
+    handleActorCreationDragOverZoneless,
+    handleActorCreationDropToZoneless,
     handleActorDropToZoneless,
     handleCanvasDragOver,
     handleCanvasDrop
@@ -273,6 +275,8 @@ export function CanvasShell() {
         actors={encounter.actors}
         canvasBackgroundLuminance={backgroundLuminance.canvas}
         isActorDragActive={Boolean(actorDrag?.hasMoved)}
+        onActorCreationDragOver={handleActorCreationDragOverZoneless}
+        onActorCreationDrop={handleActorCreationDropToZoneless}
         onActorDropToZoneless={handleActorDropToZoneless}
         selection={selection}
       />

@@ -23,6 +23,8 @@ type ZonelessActorPanelProps = {
   actors: RootState["encounter"]["present"]["actors"];
   canvasBackgroundLuminance: number;
   isActorDragActive: boolean;
+  onActorCreationDragOver: (event: DragEvent<HTMLElement>) => void;
+  onActorCreationDrop: (event: DragEvent<HTMLElement>) => void;
   onActorDropToZoneless: () => void;
   selection: RootState["interaction"]["selection"];
 };
@@ -72,6 +74,8 @@ export function ZonelessActorPanel({
   actors,
   canvasBackgroundLuminance,
   isActorDragActive,
+  onActorCreationDragOver,
+  onActorCreationDrop,
   onActorDropToZoneless,
   selection
 }: ZonelessActorPanelProps) {
@@ -165,6 +169,8 @@ export function ZonelessActorPanel({
         isActorDragActive ? "border-canvas-ink ring-2 ring-canvas-ink/20" : ""
       } ${isResizing ? "select-none" : ""}`}
       data-drop-target="zoneless-actors"
+      onDragOver={onActorCreationDragOver}
+      onDrop={onActorCreationDrop}
       onMouseUp={onActorDropToZoneless}
       style={{
         height: expanded ? `${size.height}px` : undefined,

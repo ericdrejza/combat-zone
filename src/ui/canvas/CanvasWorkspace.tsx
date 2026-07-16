@@ -141,19 +141,22 @@ export function CanvasWorkspace({
             />
           ) : null}
           {layer.id === "actors" ? (
-            <ActorLayer
-              actorDrag={actorDrag}
-              placements={actorRenderPlacements}
-              zoneActorTranslation={zoneActorTranslation}
-              backgroundLuminanceByZoneId={backgroundLuminanceByZoneId}
-              canvasBackgroundLuminance={canvasBackgroundLuminance}
-              encounter={encounter}
-              onActorMouseDown={handleActorMouseDown}
-              onActorMouseEnter={onActorMouseEnter}
-              onActorMouseLeave={onActorMouseLeave}
-              selection={selection}
-              showFactionOutlines={showFactionOutlines}
-            />
+            <g className={activeToolId === "zone" ? "pointer-events-none" : undefined}>
+              <ActorLayer
+                activeToolId={activeToolId}
+                actorDrag={actorDrag}
+                placements={actorRenderPlacements}
+                zoneActorTranslation={zoneActorTranslation}
+                backgroundLuminanceByZoneId={backgroundLuminanceByZoneId}
+                canvasBackgroundLuminance={canvasBackgroundLuminance}
+                encounter={encounter}
+                onActorMouseDown={handleActorMouseDown}
+                onActorMouseEnter={onActorMouseEnter}
+                onActorMouseLeave={onActorMouseLeave}
+                selection={selection}
+                showFactionOutlines={showFactionOutlines}
+              />
+            </g>
           ) : null}
           {layer.id === "uiOverlays" ? (
             <CanvasOverlays

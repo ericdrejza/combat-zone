@@ -13,6 +13,7 @@ import {
 } from "./canvasLuminance";
 
 type ActorLayerProps = {
+  activeToolId?: RootState["interaction"]["activeToolId"];
   actorDrag: ActorDragState | null;
   backgroundLuminanceByZoneId: Record<string, number>;
   canvasBackgroundLuminance: number;
@@ -62,6 +63,7 @@ function getZoneMovedPoint(
 }
 
 export function ActorLayer({
+  activeToolId = "actor",
   actorDrag,
   backgroundLuminanceByZoneId,
   canvasBackgroundLuminance,
@@ -108,8 +110,12 @@ export function ActorLayer({
         data-entity-id={actor.id}
         data-entity-type="actor"
         onMouseDown={(event) => onActorMouseDown(actor.id, renderedPoint, event)}
-        onMouseEnter={() => onActorMouseEnter(actor.id)}
-        onMouseLeave={() => onActorMouseLeave(actor.id)}
+        onMouseEnter={
+          activeToolId === "zone" ? undefined : () => onActorMouseEnter(actor.id)
+        }
+        onMouseLeave={
+          activeToolId === "zone" ? undefined : () => onActorMouseLeave(actor.id)
+        }
         transform={`translate(${renderedPoint.x} ${renderedPoint.y})`}
       >
         {actor.shape === "rectangle" ? (
