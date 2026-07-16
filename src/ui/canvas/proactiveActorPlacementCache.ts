@@ -27,7 +27,7 @@ import {
 } from './proactiveActorPlacementKeys';
 
 export const DEFAULT_LAYOUT_COMPUTATION_STRATEGY: LayoutComputationStrategy =
-  'LAZY';
+  'PROACTIVE';
 
 const PROACTIVE_ACTOR_SIZES: ActorSize[] = [
   'small',
