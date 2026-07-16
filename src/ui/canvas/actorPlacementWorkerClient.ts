@@ -29,6 +29,7 @@ const pendingRequests = new Set<string>();
 let worker: Worker | undefined;
 let nextRequestId = 1;
 let latestRequestId = 0;
+let proactiveAcceleration: 'WEBGPU' | 'CPU' = 'CPU';
 
 function notifyListeners(): void {
   listeners.forEach((listener) => listener());
@@ -67,6 +68,8 @@ function handleWorkerResponse(response: ActorPlacementWorkerResponse): void {
     notifyListeners();
     return;
   }
+
+  proactiveAcceleration = response.proactiveAcceleration ?? 'CPU';
 
   Object.entries(response.proactivePlans).forEach(([key, geometry]) => {
     setProactivePlan(key, geometry);
@@ -221,6 +224,7 @@ export function getWorkerProactiveActorPlacementGeometry(
 export function clearActorPlacementWorkerCache(): void {
   proactivePlans.clear();
   pendingRequests.clear();
+  proactiveAcceleration = 'CPU';
   nextRequestId += 1;
   latestRequestId = nextRequestId;
   notifyListeners();
@@ -228,6 +232,11 @@ export function clearActorPlacementWorkerCache(): void {
 
 export function getActorPlacementWorkerPlanCount(): number {
   return proactivePlans.size;
+}
+
+/** Reports which worker-side candidate ranking path is active for diagnostics. */
+export function getProactivePlacementAcceleration(): 'WEBGPU' | 'CPU' {
+  return proactiveAcceleration;
 }
 
 export { getPlanKey };

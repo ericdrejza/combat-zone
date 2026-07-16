@@ -2,7 +2,12 @@ import { getActorRadius } from '@core/layout/actorFootprints';
 import type { ActorSize, ActorShape } from '@entities/actor/types';
 import { createActorPlacementCacheKey } from './actorPlacementCache';
 import { calculateActorPlacementGeometry } from './actorPlacementGeometryCalculator';
-import { calculateNonSplitZonePlacementGeometry } from './actorNonSplitLayout';
+import {
+  calculateNonSplitZonePlacementGeometry,
+  calculateNonSplitZonePlacementGeometryAsync
+} from './actorNonSplitLayout';
+import { createProactivePlacementGpuAccelerator } from './proactivePlacementGpu';
+import type { NestingCandidateRanker } from '@core/layout/nestingPackingAsync';
 import {
   getPlanKey,
   PROACTIVE_ACTOR_ID
@@ -111,16 +116,17 @@ const workerScope = self as unknown as {
 
 let activeProactiveGeneration = 0;
 
-function runProactiveJobs(
+async function runProactiveJobs(
   request: ActorPlacementWorkerRequest,
   cacheKey: string,
   jobs: ProactiveJob[],
   generation: number,
   plans: Record<string, ActorPlacementGeometry[]> = {},
-  index = 0
-): void {
+  index = 0,
+  rankCandidates?: NestingCandidateRanker
+): Promise<void> {
   if (generation !== activeProactiveGeneration) {
-    return;
+    return Promise.resolve();
   }
 
   if (index >= jobs.length) {
@@ -128,6 +134,7 @@ function runProactiveJobs(
       cacheKey,
       geometry: [],
       phase: 'proactive',
+      proactiveAcceleration: rankCandidates ? 'WEBGPU' : 'CPU',
       proactivePlans: plans,
       requestId: request.requestId,
       type: 'calculated'
@@ -136,10 +143,26 @@ function runProactiveJobs(
   }
 
   const job = jobs[index];
-  const geometry = calculateNonSplitZonePlacementGeometry(
-    job.zone,
-    toNestingActors(job.actors, job.incomingSize, job.incomingShape)
+  const nestingActors = toNestingActors(
+    job.actors,
+    job.incomingSize,
+    job.incomingShape
   );
+  let geometry: ActorPlacementGeometry[] | undefined;
+
+  if (rankCandidates) {
+    try {
+      geometry = await calculateNonSplitZonePlacementGeometryAsync(
+        job.zone,
+        nestingActors,
+        rankCandidates
+      );
+    } catch {
+      rankCandidates = undefined;
+    }
+  }
+
+  geometry ??= calculateNonSplitZonePlacementGeometry(job.zone, nestingActors);
 
   if (geometry) {
     plans[
@@ -161,7 +184,8 @@ function runProactiveJobs(
         jobs,
         generation,
         plans,
-        index + 1
+        index + 1,
+        rankCandidates
       ),
     0
   );
@@ -189,6 +213,7 @@ workerScope.addEventListener('message', (event) => {
       )
     ],
     phase: 'geometry',
+    proactiveAcceleration: 'CPU',
     proactivePlans: {},
     requestId: request.requestId,
     type: 'calculated'
@@ -204,8 +229,19 @@ workerScope.addEventListener('message', (event) => {
   const generation = activeProactiveGeneration;
   const jobs = getProactiveJobs(request.encounter, request.nestingSettings);
 
-  setTimeout(
-    () => runProactiveJobs(request, cacheKey, jobs, generation),
-    0
-  );
+  setTimeout(() => {
+    void createProactivePlacementGpuAccelerator()
+      .catch(() => undefined)
+      .then((accelerator) =>
+        runProactiveJobs(
+          request,
+          cacheKey,
+          jobs,
+          generation,
+          {},
+          0,
+          accelerator?.rankCandidates
+        )
+      );
+  }, 0);
 });
