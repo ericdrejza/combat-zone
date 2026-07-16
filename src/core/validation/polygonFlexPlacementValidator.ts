@@ -80,14 +80,15 @@ export const PolygonPlacementValidator: Validator<EncounterState> = {
 
         return actor && actor.currentZoneId === zoneId ? [toNestingActor(actor)] : [];
       });
-      // Split layouts retain their section semantics in the renderer. The
-      // shared packer is used as the hard feasibility gate for the full
-      // polygon so every layout strategy rejects an actor set that cannot fit
-      // without overlap.
+      const splitFlex = zone.layoutStrategy === 'SPLIT_FLEX';
       const packing = packPolygonActors({
         actors,
-        layoutStrategy:
-          zone.layoutStrategy === "SEQUENTIAL" ? "SEQUENTIAL" : "FLEX",
+        layoutOrientation: zone.layoutOrientation,
+        layoutStrategy: splitFlex
+          ? 'SPLIT_FLEX'
+          : zone.layoutStrategy === 'SEQUENTIAL'
+            ? 'SEQUENTIAL'
+            : 'FLEX',
         polygon: zone.polygon
       });
 

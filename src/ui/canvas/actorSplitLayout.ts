@@ -11,6 +11,7 @@ import {
   getSplitSectionPolygon,
   type SectionBounds
 } from './actorSectionLayout';
+import type { LayoutPoint } from '@core/layout/types';
 import { getPolygonBounds } from './zoneGeometry';
 import { FLEX_ZONE_EDGE_GAP } from './actorFlexLayout';
 
@@ -105,6 +106,78 @@ export function getSplitSectionBounds(
   return topBottom
     ? { ...bounds, y: bounds.y + offset, height: size }
     : { ...bounds, x: bounds.x + offset, width: size };
+}
+
+/**
+ * Keeps a curved split-sequential group centered on the orientation's
+ * cross-axis. A common translation preserves actor spacing and ordering; the
+ * bounded search only gives up as much of that translation as the polygon
+ * boundary requires.
+ */
+export function centerSplitSequentialPoints(
+  actors: Actor[],
+  points: LayoutPoint[],
+  polygon: Zone['polygon'],
+  zoneBounds: Bounds,
+  topBottom: boolean
+): LayoutPoint[] {
+  if (points.length < 2 || points.length !== actors.length) {
+    return points;
+  }
+
+  const coordinate = (point: LayoutPoint) => (topBottom ? point.x : point.y);
+  const target = topBottom
+    ? zoneBounds.x + zoneBounds.width / 2
+    : zoneBounds.y + zoneBounds.height / 2;
+  const current =
+    points.reduce((total, point) => total + coordinate(point), 0) /
+    points.length;
+  const delta = target - current;
+
+  if (Math.abs(delta) < 0.0001) {
+    return points;
+  }
+
+  const isValid = (scale: number): boolean =>
+    actors.every((actor, index) => {
+      const point = points[index];
+      const shifted = topBottom
+        ? { x: point.x + delta * scale, y: point.y }
+        : { x: point.x, y: point.y + delta * scale };
+
+      return isFootprintInsideZone(
+        getFootprint(
+          toNestingActor(actor),
+          shifted,
+          FLEX_ZONE_EDGE_GAP,
+          POLYGON_LAYOUT_SETTINGS.circleSegments
+        ),
+        polygon
+      );
+    });
+
+  if (!isValid(0)) {
+    return points;
+  }
+
+  let low = 0;
+  let high = 1;
+
+  for (let iteration = 0; iteration < 20; iteration += 1) {
+    const middle = (low + high) / 2;
+
+    if (isValid(middle)) {
+      low = middle;
+    } else {
+      high = middle;
+    }
+  }
+
+  return points.map((point) =>
+    topBottom
+      ? { x: point.x + delta * low, y: point.y }
+      : { x: point.x, y: point.y + delta * low }
+  );
 }
 
 function getSectionBoundsForSize(

@@ -1,4 +1,4 @@
-import type { LayoutPoint } from './types';
+import type { LayoutOrientation, LayoutPoint } from './types';
 import {
   DEFAULT_POLYGON_NESTING_SETTINGS,
   packPolygonActors,
@@ -11,6 +11,8 @@ import {
 export type PolygonFlexLayoutInput = {
   polygon: LayoutPoint[];
   actors: NestingActor[];
+  layoutOrientation?: LayoutOrientation;
+  targetPoints?: Readonly<Record<string, LayoutPoint>>;
   incomingActorId?: string;
   incomingDropPoint?: LayoutPoint;
   settings?: Partial<PolygonNestingSettings>;
@@ -31,6 +33,13 @@ export function packPolygonFlexActors(
   input: PolygonFlexLayoutInput
 ): PolygonNestingResult {
   return packPolygonActors({ ...input, layoutStrategy: 'FLEX' });
+}
+
+/** Packs one full zone while preserving FLEX distribution and faction order. */
+export function packPolygonSplitFlexActors(
+  input: PolygonFlexLayoutInput
+): PolygonNestingResult {
+  return packPolygonActors({ ...input, layoutStrategy: 'SPLIT_FLEX' });
 }
 
 /** Uses the same polygon packer while preserving collection order as a clockwise sequence. */
