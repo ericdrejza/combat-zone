@@ -82,6 +82,48 @@ export function useCanvasDropHandlers({
     setActorDrag(null);
   }
 
+  function handleActorCreationDropToZoneless(
+    event: DragEvent<HTMLElement>
+  ) {
+    if (activeToolId !== "actor") {
+      return;
+    }
+
+    const actorCreationData = event.dataTransfer.getData(
+      ACTOR_CREATION_DRAG_TYPE
+    );
+
+    if (!actorCreationData) {
+      return;
+    }
+
+    event.preventDefault();
+
+    try {
+      commitActorFromCreation(
+        mutationContext,
+        JSON.parse(actorCreationData) as NewActorDragData,
+        ZONELESS_ACTOR_ZONE_ID
+      );
+    } catch {
+      // Ignore malformed external drag payloads.
+    }
+  }
+
+  function handleActorCreationDragOverZoneless(
+    event: DragEvent<HTMLElement>
+  ) {
+    if (
+      activeToolId !== "actor" ||
+      !Array.from(event.dataTransfer.types).includes(ACTOR_CREATION_DRAG_TYPE)
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "copy";
+  }
+
   function handleCanvasDragOver(event: DragEvent<SVGSVGElement>) {
     const externalFiles = hasExternalFiles(event);
 
@@ -211,6 +253,8 @@ export function useCanvasDropHandlers({
   }
 
   return {
+    handleActorCreationDragOverZoneless,
+    handleActorCreationDropToZoneless,
     handleActorDropToZoneless,
     handleCanvasDragOver,
     handleCanvasDrop

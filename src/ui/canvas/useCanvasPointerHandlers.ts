@@ -17,6 +17,7 @@ import {
   resizeZonePolygon,
   toSvgPoint
 } from "./zoneGeometry";
+import { findZoneIdAtPoint } from "./zoneHitTesting";
 
 type PointerHandlerInput = CanvasInteractionState;
 
@@ -243,10 +244,46 @@ export function useCanvasPointerHandlers(input: PointerHandlerInput) {
     point: LayoutPoint,
     event: MouseEvent<SVGGElement>
   ) {
-    if (
-      event.button !== 0 ||
-      (activeToolId !== "actor" && activeToolId !== "select")
-    ) {
+    if (event.button !== 0) {
+      return;
+    }
+
+    if (activeToolId === "zone") {
+      const zoneId = findZoneIdAtPoint(encounter, point);
+      const zone = zoneId ? encounter.zones.byId[zoneId] : undefined;
+
+      if (!zone) {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+      closeZoneShapeMenu();
+      dispatch(
+        selectEntity({
+          entityType: "zone",
+          ids: [zone.id],
+          toggle: event.shiftKey || event.ctrlKey || event.metaKey
+        })
+      );
+      suppressNextCanvasClickRef.current = true;
+      suppressNextCanvasClickUnconditionallyRef.current = true;
+      suppressNextEntityClickRef.current = zone.id;
+
+      if (!(event.ctrlKey || event.metaKey)) {
+        setZoneDraftPoints([]);
+        setZoneDrag({
+          current: point,
+          hasMoved: false,
+          originalPolygon: zone.polygon,
+          start: point,
+          zoneId: zone.id
+        });
+      }
+      return;
+    }
+
+    if (activeToolId !== "actor" && activeToolId !== "select") {
       return;
     }
 
