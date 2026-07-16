@@ -88,6 +88,30 @@ describe('polygon nesting layout', () => {
     );
   });
 
+  it('balances FLEX actor spacing between neighboring actors and the zone boundary', () => {
+    const result = packPolygonActors({
+      actors: [actor('first'), actor('second')],
+      polygon: rectangle(300, 200)
+    });
+    const first = result.placements.first;
+    const second = result.placements.second;
+    const actorBoundaryClearance = Math.min(
+      first.x - 30,
+      300 - first.x - 30,
+      first.y - 30,
+      200 - first.y - 30
+    );
+    const neighboringActorClearance =
+      Math.hypot(first.x - second.x, first.y - second.y) - 60;
+
+    expect(result.fits).toBe(true);
+    expect(first).toEqual({ x: 210, y: 100 });
+    expect(second).toEqual({ x: 90, y: 100 });
+    expect(
+      Math.abs(actorBoundaryClearance - neighboringActorClearance)
+    ).toBeLessThanOrEqual(1);
+  });
+
   it.each([
     [160, 12],
     [152, 8],

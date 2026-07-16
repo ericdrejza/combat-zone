@@ -179,8 +179,8 @@ describe('actor canvas layout', () => {
     const first = placements[0];
     const second = placements[1];
 
-    expect(first.point).toEqual({ x: 354, y: 250 });
-    expect(second.point).toEqual({ x: 146, y: 250 });
+    expect(first.point).toEqual({ x: 310, y: 250 });
+    expect(second.point).toEqual({ x: 190, y: 250 });
     expect(
       Math.hypot(
         first.point.x - second.point.x,
