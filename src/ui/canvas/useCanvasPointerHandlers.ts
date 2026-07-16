@@ -10,6 +10,7 @@ import {
 import type { SelectableEntityType } from "@interaction/selection/types";
 import { closeZoneShapeMenu } from "../toolbar/events";
 import type { CanvasInteractionState } from "./canvasInteractionTypes";
+import type { ActorDragStartEvent } from "./canvasInteractionTypes";
 import { useCanvasMouseUpHandler } from "./useCanvasMouseUpHandler";
 import {
   distance,
@@ -57,7 +58,7 @@ export function useCanvasPointerHandlers(input: PointerHandlerInput) {
   }, [activeToolId, setShapeDraft, setVertexDrag, setZoneDraftPoints, setZoneDrag]);
 
   useEffect(() => {
-    if (!actorDrag) {
+    if (!actorDrag || actorDrag.usesMotion) {
       return;
     }
 
@@ -239,12 +240,13 @@ export function useCanvasPointerHandlers(input: PointerHandlerInput) {
     }
   }
 
-  function handleActorMouseDown(
+  function handleActorDragStart(
     actorId: string,
     point: LayoutPoint,
-    event: MouseEvent<SVGGElement>
+    event: ActorDragStartEvent,
+    usesMotion = false
   ) {
-    if (event.button !== 0) {
+    if (event.button !== undefined && event.button !== 0) {
       return;
     }
 
@@ -320,8 +322,30 @@ export function useCanvasPointerHandlers(input: PointerHandlerInput) {
       actorIds: dragActorIds,
       current: point,
       hasMoved: false,
-      start: point
+      start: point,
+      usesMotion
     });
+  }
+
+  function handleActorDrag(point: LayoutPoint) {
+    if (!actorDrag) {
+      return;
+    }
+
+    setActorDrag((drag) =>
+      drag
+        ? {
+            ...drag,
+            current: point,
+            hasMoved: drag.hasMoved || distance(drag.start, point) >= 1
+          }
+        : null
+    );
+  }
+
+  function handleActorDragEnd(event: { stopPropagation: () => void }) {
+    event.stopPropagation();
+    handleCanvasMouseUp();
   }
 
   function handleResizeHandleMouseDown(
@@ -346,7 +370,9 @@ export function useCanvasPointerHandlers(input: PointerHandlerInput) {
 
   return {
     getDisplayedPolygon,
-    handleActorMouseDown,
+    handleActorDrag,
+    handleActorDragEnd,
+    handleActorDragStart,
     handleCanvasMouseDown,
     handleCanvasMouseMove,
     handleCanvasMouseUp,

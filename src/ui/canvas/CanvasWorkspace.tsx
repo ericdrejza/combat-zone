@@ -3,12 +3,15 @@ import type {
   MouseEvent,
   MouseEventHandler
 } from "react";
+import { MotionConfig, motion, transformViewBoxPoint } from "motion/react";
 
 import type { LayoutPoint } from "@core/layout/types";
 import type { Zone } from "@entities/zone/types";
 import { RENDER_LAYERS } from "@core/rendering/types";
 import type { RootState } from "@store/store";
 import type {
+  ActorDragEndEvent,
+  ActorDragStartEvent,
   ActorDragState,
   ShapeDraftState
 } from "./canvasInteractionTypes";
@@ -22,9 +25,7 @@ import {
 } from "./canvasConstants";
 import type { LocalBoxSelectionState } from "./zoneGeometry";
 import { ZoneLayer } from "./ZoneLayer";
-import type {
-  ActorRenderPlacement
-} from "./actorCanvasLayout";
+import type { ActorRenderPlacement } from "./actorCanvasLayout";
 import type { ActorPlacementTranslation } from "./actorPlacementTranslation";
 
 type CanvasWorkspaceProps = {
@@ -40,10 +41,19 @@ type CanvasWorkspaceProps = {
   actorRenderPlacements: ActorRenderPlacement[];
   zoneActorTranslation: ActorPlacementTranslation | null;
   getDisplayedPolygon: (zone: Zone) => LayoutPoint[];
-  handleActorMouseDown: (
+  onActorDragStart: (
     actorId: string,
     point: LayoutPoint,
-    event: MouseEvent<SVGGElement>
+    event: ActorDragStartEvent,
+    usesMotion?: boolean
+  ) => void;
+  onActorDrag: (point: LayoutPoint) => void;
+  onActorDragEnd: (event: ActorDragEndEvent) => void;
+  onActorMouseDown: (
+    actorId: string,
+    point: LayoutPoint,
+    event: ActorDragStartEvent,
+    usesMotion?: boolean
   ) => void;
   handleCanvasClick: MouseEventHandler<SVGSVGElement>;
   handleCanvasContextMenu: MouseEventHandler<SVGSVGElement>;
@@ -82,7 +92,10 @@ export function CanvasWorkspace({
   canvasRef,
   encounter,
   getDisplayedPolygon,
-  handleActorMouseDown,
+  onActorDrag,
+  onActorDragEnd,
+  onActorDragStart,
+  onActorMouseDown,
   handleCanvasClick,
   handleCanvasContextMenu,
   handleCanvasDoubleClick,
@@ -103,72 +116,81 @@ export function CanvasWorkspace({
   zoneActorTranslation
 }: CanvasWorkspaceProps) {
   return (
-    <svg
-      aria-label="SVG encounter workspace"
-      className={`h-full min-h-0 w-full bg-[${CANVAS_BACKGROUND_COLOR}]`}
-      ref={(svg) => {
-        canvasRef.current = svg;
-      }}
-      onClick={handleCanvasClick}
-      onContextMenu={handleCanvasContextMenu}
-      onDragOver={handleCanvasDragOver}
-      onDrop={handleCanvasDrop}
-      onDoubleClick={handleCanvasDoubleClick}
-      onMouseDown={handleCanvasMouseDown}
-      onMouseMove={handleCanvasMouseMove}
-      onMouseUp={handleCanvasMouseUp}
-      role="img"
-      viewBox={`0 0 ${CANVAS_WIDTH} ${CANVAS_HEIGHT}`}
-    >
-      {RENDER_LAYERS.map((layer) => (
-        <g
-          key={layer.id}
-          aria-label={`${layer.label} layer`}
-          data-layer={layer.id}
-        >
-          {layer.id === "background" ? (
-            <CanvasBackgroundLayer backgroundImage={backgroundImage} />
-          ) : null}
-          {layer.id === "zones" ? (
-            <ZoneLayer
-              activeToolId={activeToolId}
-              actorTargetZoneId={actorTargetZoneId}
-              backgroundLuminanceByZoneId={backgroundLuminanceByZoneId}
-              getDisplayedPolygon={getDisplayedPolygon}
-              onResizeHandleMouseDown={handleResizeHandleMouseDown}
-              selection={selection}
-              zones={encounter.zones}
-            />
-          ) : null}
-          {layer.id === "actors" ? (
-            <g className={activeToolId === "zone" ? "pointer-events-none" : undefined}>
-              <ActorLayer
+    <MotionConfig transformPagePoint={transformViewBoxPoint(canvasRef)}>
+      <motion.svg
+        aria-label="SVG encounter workspace"
+        className={`h-full min-h-0 w-full bg-[${CANVAS_BACKGROUND_COLOR}]`}
+        ref={(svg) => {
+          canvasRef.current = svg;
+        }}
+        onClick={handleCanvasClick}
+        onContextMenu={handleCanvasContextMenu}
+        onDragOver={handleCanvasDragOver}
+        onDrop={handleCanvasDrop}
+        onDoubleClick={handleCanvasDoubleClick}
+        onMouseDown={handleCanvasMouseDown}
+        onMouseMove={handleCanvasMouseMove}
+        onMouseUp={handleCanvasMouseUp}
+        role="img"
+        viewBox={`0 0 ${CANVAS_WIDTH} ${CANVAS_HEIGHT}`}
+      >
+        {RENDER_LAYERS.map((layer) => (
+          <g
+            key={layer.id}
+            aria-label={`${layer.label} layer`}
+            data-layer={layer.id}
+          >
+            {layer.id === "background" ? (
+              <CanvasBackgroundLayer backgroundImage={backgroundImage} />
+            ) : null}
+            {layer.id === "zones" ? (
+              <ZoneLayer
                 activeToolId={activeToolId}
-                actorDrag={actorDrag}
-                placements={actorRenderPlacements}
-                zoneActorTranslation={zoneActorTranslation}
+                actorTargetZoneId={actorTargetZoneId}
                 backgroundLuminanceByZoneId={backgroundLuminanceByZoneId}
-                canvasBackgroundLuminance={canvasBackgroundLuminance}
-                encounter={encounter}
-                onActorMouseDown={handleActorMouseDown}
-                onActorMouseEnter={onActorMouseEnter}
-                onActorMouseLeave={onActorMouseLeave}
+                getDisplayedPolygon={getDisplayedPolygon}
+                onResizeHandleMouseDown={handleResizeHandleMouseDown}
                 selection={selection}
-                showFactionOutlines={showFactionOutlines}
+                zones={encounter.zones}
               />
-            </g>
-          ) : null}
-          {layer.id === "uiOverlays" ? (
-            <CanvasOverlays
-              boxSelection={boxSelection}
-              polygonDraftColor={polygonDraftColor}
-              shapeDraft={shapeDraft}
-              zoneDraftPoints={zoneDraftPoints}
-              zoneShapeMode={zoneShapeMode}
-            />
-          ) : null}
-        </g>
-      ))}
-    </svg>
+            ) : null}
+            {layer.id === "actors" ? (
+              <g
+                className={
+                  activeToolId === "zone" ? "pointer-events-none" : undefined
+                }
+              >
+                <ActorLayer
+                  activeToolId={activeToolId}
+                  actorDrag={actorDrag}
+                  placements={actorRenderPlacements}
+                  zoneActorTranslation={zoneActorTranslation}
+                  backgroundLuminanceByZoneId={backgroundLuminanceByZoneId}
+                  canvasBackgroundLuminance={canvasBackgroundLuminance}
+                  encounter={encounter}
+                  onActorDrag={onActorDrag}
+                  onActorDragEnd={onActorDragEnd}
+                  onActorDragStart={onActorDragStart}
+                  onActorMouseDown={onActorMouseDown}
+                  onActorMouseEnter={onActorMouseEnter}
+                  onActorMouseLeave={onActorMouseLeave}
+                  selection={selection}
+                  showFactionOutlines={showFactionOutlines}
+                />
+              </g>
+            ) : null}
+            {layer.id === "uiOverlays" ? (
+              <CanvasOverlays
+                boxSelection={boxSelection}
+                polygonDraftColor={polygonDraftColor}
+                shapeDraft={shapeDraft}
+                zoneDraftPoints={zoneDraftPoints}
+                zoneShapeMode={zoneShapeMode}
+              />
+            ) : null}
+          </g>
+        ))}
+      </motion.svg>
+    </MotionConfig>
   );
 }

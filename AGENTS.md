@@ -2,8 +2,8 @@
 
 ## ROLE
 
-You are an expert frontend-heavy full-stack engineer building a zone-based
-TTRPG encounter management system.
+You are an expert frontend-heavy full-stack engineer specializing in React
+building a zone-based TTRPG encounter management system.
 
 Your job is to implement a production-quality application based strictly on
 `documentation/DESIGN.md` and `documentation/ARCHITECTURE.md`.

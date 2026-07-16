@@ -44,6 +44,8 @@ export { ACTOR_TOKEN_BASE_RADIUS, FLEX_ZONE_EDGE_GAP };
 
 export type ActorRenderPlacement = {
   actor: Actor;
+  /** Transient drop location used as the start of the placement animation. */
+  incomingPoint?: LayoutPoint;
   point: LayoutPoint;
   radius: number;
 };
@@ -75,10 +77,6 @@ export function getActorRenderPlacements(
   const positionedActorIds = new Set(
     currentGeometry.map(({ actorId }) => actorId)
   );
-  if (geometry) {
-    positionedActorIds.forEach(clearOptimisticActorPlacement);
-  }
-
   encounter.actors.allIds.forEach((actorId) => {
     const actor = encounter.actors.byId[actorId];
 
@@ -191,8 +189,24 @@ export function getActorRenderPlacements(
 
   return proactiveGeometry.flatMap(({ actorId, point, radius }) => {
     const actor = encounter.actors.byId[actorId];
+    const incomingPoint = getOptimisticActorPlacement(actorId);
+    const hasMovedFromIncomingPoint = Boolean(
+      incomingPoint &&
+        (incomingPoint.x !== point.x || incomingPoint.y !== point.y)
+    );
 
-    return actor ? [{ actor, point, radius }] : [];
+    if (geometry || hasMovedFromIncomingPoint) {
+      clearOptimisticActorPlacement(actorId);
+    }
+
+    return actor
+      ? [{
+          actor,
+          ...(hasMovedFromIncomingPoint ? { incomingPoint } : {}),
+          point,
+          radius
+        }]
+      : [];
   });
 }
 

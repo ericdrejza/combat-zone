@@ -153,7 +153,9 @@ export function CanvasShell() {
     handleCanvasMouseDown,
     handleCanvasMouseMove,
     handleCanvasMouseUp,
-    handleActorMouseDown,
+    handleActorDrag,
+    handleActorDragEnd,
+    handleActorDragStart,
     handleResizeHandleMouseDown
   } = useCanvasInteractionHandlers({
     activeToolId,
@@ -242,7 +244,10 @@ export function CanvasShell() {
         canvasRef={canvasRef}
         encounter={encounter}
         getDisplayedPolygon={getDisplayedPolygon}
-        handleActorMouseDown={handleActorMouseDown}
+        onActorDrag={handleActorDrag}
+        onActorDragEnd={handleActorDragEnd}
+        onActorDragStart={handleActorDragStart}
+        onActorMouseDown={handleActorDragStart}
         handleCanvasClick={handleCanvasClick}
         handleCanvasContextMenu={handleCanvasContextMenu}
         handleCanvasDoubleClick={handleCanvasDoubleClick}
