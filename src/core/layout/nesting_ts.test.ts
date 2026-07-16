@@ -195,4 +195,25 @@ describe('polygon nesting layout', () => {
 
     expect(packPolygonActors(input)).toEqual(packPolygonActors(input));
   });
+
+  it('does not let placeholder actor IDs change a proactive layout', () => {
+    const polygon = rectangle(400, 300);
+    const lazyResult = packPolygonActors({
+      actors: [actor('existing'), actor('incoming')],
+      polygon
+    });
+    const proactiveResult = packPolygonActors({
+      actors: [actor('existing'), actor('__proactive_actor__')],
+      polygon
+    });
+
+    expect(lazyResult.fits).toBe(true);
+    expect(proactiveResult.fits).toBe(true);
+    expect(lazyResult.placements.existing).toEqual(
+      proactiveResult.placements.existing
+    );
+    expect(lazyResult.placements.incoming).toEqual(
+      proactiveResult.placements.__proactive_actor__
+    );
+  });
 });

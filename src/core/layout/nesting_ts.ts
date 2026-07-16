@@ -296,11 +296,13 @@ function tryPack(
   const actorIndexes = new Map(
     input.actors.map((actor, index) => [actor.id, index])
   );
-  // Place larger footprints first so feasibility does not depend on an actor
-  // being appended to the collection after leaving and re-entering a zone.
+  // Place larger footprints first, preserving collection order for equal-sized
+  // actors. The stable tie-break is important because proactive planning uses
+  // a placeholder ID for the future actor; IDs must not change its geometry.
   const actors = [...input.actors].sort(
     (first, second) =>
-      second.radius - first.radius || first.id.localeCompare(second.id)
+      second.radius - first.radius ||
+      (actorIndexes.get(first.id) ?? 0) - (actorIndexes.get(second.id) ?? 0)
   );
   const placements: Record<string, LayoutPoint> = {};
   const placedFootprints: LayoutPoint[][] = [];

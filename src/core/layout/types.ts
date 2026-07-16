@@ -3,6 +3,7 @@ export type LayoutStrategyId =
   | 'SEQUENTIAL'
   | 'SPLIT_FLEX'
   | 'SPLIT_SEQUENTIAL';
+export type LayoutComputationStrategy = 'LAZY' | 'PROACTIVE';
 export type LayoutOrientation = 'LEFT_RIGHT' | 'TOP_BOTTOM';
 
 export type LayoutPoint = {

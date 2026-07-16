@@ -9,6 +9,24 @@ linked GitHub repository is unavailable as well, so the project uses the
 package-independent adapter contract described below with a deterministic
 TypeScript polygon-footprint solver in `src/core/layout/nesting_ts.ts`.
 
+## Layout computation strategies
+
+The non-split polygon layouts (`FLEX` and `SEQUENTIAL`) now support two
+computation policies through `LayoutComputationStrategy`:
+
+- `LAZY` performs the existing synchronous calculation when a rendered layout
+  is needed.
+- `PROACTIVE` queues one calculation at a time after the encounter changes.
+  It precomputes the current zone state plus each supported actor size and
+  shape, stores successful configurations in a bounded in-memory cache, and
+  uses the lazy path when a matching plan is not ready yet.
+
+The application currently selects `PROACTIVE` in
+`src/ui/canvas/actorCanvasLayout.ts`. Split layouts intentionally remain on
+their existing path until separately approved. The scheduler invalidates stale
+work when a newer encounter state arrives, and the precomputed plans are not
+persisted in `EncounterState`.
+
   ## Summary
 
   - Add framer-motion as a deferred animation dependency.
@@ -85,6 +103,11 @@ TypeScript polygon-footprint solver in `src/core/layout/nesting_ts.ts`.
     validation modes.
   - No actor coordinates were added to persisted state, and no canvas or
     animation code was changed.
+  - Proactive and on-demand layout calculations now run in a dedicated Vite
+    web worker. The canvas uses cached or last-known geometry while a current
+    snapshot is being packed, then rerenders when the worker responds. The
+    jsdom-only synchronous fallback exists solely so the pure layout tests can
+    run without a browser Worker implementation.
 
   ## Documentation
 

@@ -12,6 +12,7 @@ export type ActorPlacementGeometry = {
 
 const MAX_CACHE_ENTRIES = 12;
 const placementCache = new Map<string, ActorPlacementGeometry[]>();
+let latestPlacementGeometry: ActorPlacementGeometry[] | undefined;
 
 function getZoneCacheValue(encounter: EncounterState, zoneId: string) {
   const zone = encounter.zones.byId[zoneId];
@@ -105,12 +106,16 @@ export function createActorPlacementCacheKey(
 
 export function getCachedActorPlacementGeometry(
   key: string,
-  calculate: () => ActorPlacementGeometry[]
-): ActorPlacementGeometry[] {
+  calculate?: () => ActorPlacementGeometry[]
+): ActorPlacementGeometry[] | undefined {
   const cached = placementCache.get(key);
 
   if (cached) {
     return cached;
+  }
+
+  if (!calculate) {
+    return undefined;
   }
 
   const geometry = calculate();
@@ -124,6 +129,7 @@ export function getCachedActorPlacementGeometry(
   }
 
   placementCache.set(key, geometry);
+  latestPlacementGeometry = geometry;
   return geometry;
 }
 
@@ -144,4 +150,11 @@ export function cacheActorPlacementGeometry(
   }
 
   placementCache.set(key, geometry);
+  latestPlacementGeometry = geometry;
+}
+
+export function getLatestActorPlacementGeometry():
+  | ActorPlacementGeometry[]
+  | undefined {
+  return latestPlacementGeometry;
 }

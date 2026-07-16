@@ -1,7 +1,8 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 import type { LayoutPoint } from "@core/layout/types";
+import { POLYGON_LAYOUT_SETTINGS } from "@core/layout/polygonFlexLayout";
 import { useAltKey } from "@hooks/useAltKey";
 import type { RootState } from "@store/store";
 import { ZonelessActorPanel } from "../panels/zoneless_actors/ZonelessActorPanel";
@@ -11,8 +12,14 @@ import { CanvasToolStatusBadge } from "./CanvasToolStatusBadge";
 import { CanvasWorkspace } from "./CanvasWorkspace";
 import { getTextColorForLuminance } from "./canvasLuminance";
 import {
+  ACTOR_LAYOUT_COMPUTATION_STRATEGY,
   getActorRenderPlacements
 } from "./actorCanvasLayout";
+import { calculateNonSplitZonePlacementGeometry } from "./actorNonSplitLayout";
+import {
+  scheduleProactiveActorPlacementComputations
+} from "./proactiveActorPlacementCache";
+import { subscribeToActorPlacementWorker } from "./actorPlacementWorkerClient";
 import type { ActorPlacementTranslation } from "./actorPlacementTranslation";
 import type {
   ActorDragState,
@@ -57,6 +64,7 @@ export function CanvasShell() {
   const [shapeDraft, setShapeDraft] = useState<ShapeDraftState | null>(null);
   const [vertexDrag, setVertexDrag] = useState<VertexDragState | null>(null);
   const [zoneDrag, setZoneDrag] = useState<ZoneDragState | null>(null);
+  const [placementRevision, setPlacementRevision] = useState(0);
   const [boxSelection, setBoxSelection] = useState<LocalBoxSelectionState | null>(
     null
   );
@@ -67,10 +75,25 @@ export function CanvasShell() {
   const suppressNextEntityClickRef = useRef<string | null>(null);
   const altKeyDown = useAltKey();
   const backgroundImage = encounter.backgroundImage;
-  const actorRenderPlacements = useMemo(
-    () => getActorRenderPlacements(encounter),
-    [encounter]
+  useEffect(
+    () => subscribeToActorPlacementWorker(() => setPlacementRevision((value) => value + 1)),
+    []
   );
+  const actorRenderPlacements = useMemo(
+    () => getActorRenderPlacements(encounter, ACTOR_LAYOUT_COMPUTATION_STRATEGY),
+    [encounter, placementRevision]
+  );
+  useEffect(() => {
+    if (ACTOR_LAYOUT_COMPUTATION_STRATEGY !== "PROACTIVE") {
+      return;
+    }
+
+    scheduleProactiveActorPlacementComputations(
+      encounter,
+      POLYGON_LAYOUT_SETTINGS,
+      calculateNonSplitZonePlacementGeometry
+    );
+  }, [encounter]);
   const zoneActorTranslation = useMemo<ActorPlacementTranslation | null>(() => {
     if (!zoneDrag) {
       return null;
