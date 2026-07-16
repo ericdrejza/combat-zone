@@ -57,6 +57,19 @@ export function useCanvasMouseUpHandler(input: MouseUpHandlerInput) {
       if (actorDrag.hasMoved) {
         const destinationZoneId =
           findZoneIdAtPoint(encounter, actorDrag.current) ?? ZONELESS_ACTOR_ZONE_ID;
+        const changesZone = actorDrag.actorIds.some(
+          (actorId) =>
+            encounter.actors.byId[actorId]?.currentZoneId !== destinationZoneId
+        );
+
+        // Picking an actor up and dropping it back into its current zone does
+        // not change encounter state. Skip mutation construction and
+        // validation so the existing geometry remains authoritative.
+        if (!changesZone) {
+          setActorDrag(null);
+          return;
+        }
+
         const nextEncounter = actorDrag.actorIds.reduce(
           (currentEncounter, actorId) =>
             moveActor(currentEncounter, actorId, destinationZoneId),
