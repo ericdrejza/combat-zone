@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { createEncounterState } from "@core/encounter/createEncounterState";
@@ -64,16 +64,18 @@ describe("App", () => {
         }),
       createEncounterState({ id: "rename-test", name: "Rename test" })
     );
-    store.dispatch(
-      commitEncounterChange({
-        action: createEncounterActionRecord("test.seed"),
-        nextEncounter: seeded
-      })
-    );
-    store.dispatch(setActiveTool("actor"));
-    store.dispatch(
-      selectEntity({ entityType: "actor", ids: ["actor-a", "actor-b"] })
-    );
+    act(() => {
+      store.dispatch(
+        commitEncounterChange({
+          action: createEncounterActionRecord("test.seed"),
+          nextEncounter: seeded
+        })
+      );
+      store.dispatch(setActiveTool("actor"));
+      store.dispatch(
+        selectEntity({ entityType: "actor", ids: ["actor-a", "actor-b"] })
+      );
+    });
 
     await waitFor(() => {
       expect(screen.getByRole("button", { name: "Actor" })).toHaveAttribute(
@@ -106,14 +108,16 @@ describe("App", () => {
       createEncounterState({ id: "rename-escape", name: "Rename escape" }),
       { currentZoneId: "zoneless", id: "actor-a", name: "Original" }
     );
-    store.dispatch(
-      commitEncounterChange({
-        action: createEncounterActionRecord("test.seed"),
-        nextEncounter: seeded
-      })
-    );
-    store.dispatch(setActiveTool("actor"));
-    store.dispatch(selectEntity({ entityType: "actor", ids: ["actor-a"] }));
+    act(() => {
+      store.dispatch(
+        commitEncounterChange({
+          action: createEncounterActionRecord("test.seed"),
+          nextEncounter: seeded
+        })
+      );
+      store.dispatch(setActiveTool("actor"));
+      store.dispatch(selectEntity({ entityType: "actor", ids: ["actor-a"] }));
+    });
 
     await waitFor(() => {
       expect(screen.getByRole("button", { name: "Actor" })).toHaveAttribute(

@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { store } from "@store/store";
@@ -38,7 +38,9 @@ function dropOnCanvas(
     clientY: { value: clientY },
     dataTransfer: { value: transfer }
   });
-  canvas.dispatchEvent(event);
+  act(() => {
+    canvas.dispatchEvent(event);
+  });
 }
 
 describe("Toolbar", () => {

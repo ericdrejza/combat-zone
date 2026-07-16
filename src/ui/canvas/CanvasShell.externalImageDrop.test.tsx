@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import {
@@ -38,7 +38,9 @@ function dropOnCanvas(
     clientY: { value: clientY },
     dataTransfer: { value: dataTransfer }
   });
-  canvas.dispatchEvent(event);
+  act(() => {
+    canvas.dispatchEvent(event);
+  });
 }
 
 describe("CanvasShell external image drops", () => {
@@ -72,10 +74,14 @@ describe("CanvasShell external image drops", () => {
       "background.add"
     );
 
-    store.dispatch(undoEncounterChange());
+    act(() => {
+      store.dispatch(undoEncounterChange());
+    });
     expect(store.getState().encounter.present.backgroundImage).toBeNull();
 
-    store.dispatch(redoEncounterChange());
+    act(() => {
+      store.dispatch(redoEncounterChange());
+    });
     expect(store.getState().encounter.present.backgroundImage).toEqual(
       backgroundImage
     );
@@ -124,10 +130,14 @@ describe("CanvasShell external image drops", () => {
     );
 
     const actorAfterCreate = actor;
-    store.dispatch(undoEncounterChange());
+    act(() => {
+      store.dispatch(undoEncounterChange());
+    });
     expect(store.getState().encounter.present.actors.byId[actorId!]).toBeUndefined();
 
-    store.dispatch(redoEncounterChange());
+    act(() => {
+      store.dispatch(redoEncounterChange());
+    });
     expect(store.getState().encounter.present.actors.byId[actorId!]).toEqual(
       actorAfterCreate
     );

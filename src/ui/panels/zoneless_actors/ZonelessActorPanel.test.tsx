@@ -146,7 +146,9 @@ function dropOnCanvas(
     clientY: { value: clientY },
     dataTransfer: { value: transfer }
   });
-  canvas.dispatchEvent(event);
+  act(() => {
+    canvas.dispatchEvent(event);
+  });
 }
 
 describe("ZonelessActorPanel", () => {
@@ -187,14 +189,18 @@ describe("ZonelessActorPanel", () => {
       "actor.create"
     );
 
-    store.dispatch(undoEncounterChange());
+    act(() => {
+      store.dispatch(undoEncounterChange());
+    });
     expect(
       Object.values(store.getState().encounter.present.actors.byId).some(
         (candidate) => candidate.name === "Dropped Actor"
       )
     ).toBe(false);
 
-    store.dispatch(redoEncounterChange());
+    act(() => {
+      store.dispatch(redoEncounterChange());
+    });
     expect(
       Object.values(store.getState().encounter.present.actors.byId).some(
         (candidate) =>
@@ -379,7 +385,9 @@ describe("ZonelessActorPanel", () => {
       "zone-target"
     );
 
-    store.dispatch(undoEncounterChange());
+    act(() => {
+      store.dispatch(undoEncounterChange());
+    });
     expect(store.getState().encounter.present.actors.byId["actor-a"]?.currentZoneId).toBe(
       ZONELESS_ACTOR_ZONE_ID
     );
@@ -387,7 +395,9 @@ describe("ZonelessActorPanel", () => {
       ZONELESS_ACTOR_ZONE_ID
     );
 
-    store.dispatch(redoEncounterChange());
+    act(() => {
+      store.dispatch(redoEncounterChange());
+    });
     expect(store.getState().encounter.present.actors.byId["actor-a"]?.currentZoneId).toBe(
       "zone-target"
     );
@@ -443,12 +453,16 @@ describe("ZonelessActorPanel", () => {
       store.getState().encounter.present.actors.byId["actor-a"]?.currentZoneId
     ).toBe(ZONELESS_ACTOR_ZONE_ID);
 
-    store.dispatch(undoEncounterChange());
+    act(() => {
+      store.dispatch(undoEncounterChange());
+    });
     expect(
       store.getState().encounter.present.actors.byId["actor-a"]?.currentZoneId
     ).toBe("zone-target");
 
-    store.dispatch(redoEncounterChange());
+    act(() => {
+      store.dispatch(redoEncounterChange());
+    });
     expect(
       store.getState().encounter.present.actors.byId["actor-a"]?.currentZoneId
     ).toBe(ZONELESS_ACTOR_ZONE_ID);
