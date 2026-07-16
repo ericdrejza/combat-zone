@@ -88,15 +88,23 @@ function mergeSettings(
   };
 }
 
-/** Deterministic polygon-footprint packing used by polygon layouts. */
-export function packPolygonActors(input: PolygonNestingInput): PolygonNestingResult {
+/** Resolves strategy-specific defaults for both synchronous and worker packing. */
+export function resolvePolygonNestingSettings(
+  input: Pick<PolygonNestingInput, 'layoutStrategy' | 'settings'>
+): PolygonNestingSettings {
   const layoutStrategy = input.layoutStrategy ?? 'FLEX';
-  const settings = mergeSettings(
+
+  return mergeSettings(
     input.settings,
     layoutStrategy === 'SPLIT_FLEX'
       ? DEFAULT_SPLIT_FLEX_ACTOR_GAP
       : DEFAULT_POLYGON_NESTING_SETTINGS.actorGap
   );
+}
+
+/** Deterministic polygon-footprint packing used by polygon layouts. */
+export function packPolygonActors(input: PolygonNestingInput): PolygonNestingResult {
+  const settings = resolvePolygonNestingSettings(input);
 
   if (input.polygon.length < 3) {
     return {
