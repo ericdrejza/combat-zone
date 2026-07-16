@@ -108,11 +108,13 @@ Layout strategies:
   - Actor order is stable based on collection `allIds`; an actor entering a
     different zone is appended to that collection order
 - SPLIT_FLEX
-  - Zone is split into areas for heroes, enemies, and neutral actors
+  - Uses the full zone polygon with FLEX distribution and faction-ordering
+    constraints; it does not create rectangular or curved faction sections
   - `LEFT_RIGHT` orientation renders heroes left and enemies right
   - `TOP_BOTTOM` orientation renders heroes top and enemies bottom
   - Neutral actors render along the axis splitting heroes and enemies
-  - Actors are flex-distributed inside their specific area
+  - Each faction boundary is the nearest neighboring actor footprint from the
+    adjacent faction, so actor footprints cannot cross faction boundaries
 - SPLIT_SEQUENTIAL
   - Zone is split into areas for heroes, enemies, and neutral actors
   - `LEFT_RIGHT` orientation renders heroes left and enemies right
@@ -451,7 +453,8 @@ Layout strategies:
   - For circles, start populating inside the circle at the top and work clockwise
 - SPLIT (SPLIT is not a layout strategy, but rather a category of layout strategies)
   - SPLIT_FLEX
-    - Tokens are spread evenly within their section within the zone.
+    - Tokens use FLEX distribution across the full zone while preserving the
+      faction ordering constraint for the selected orientation.
   - SPLIT_SEQUENTIAL
     - Tokens are placed in a predictable order within their section in a zone.
       - options: left -> right, top -> bottom

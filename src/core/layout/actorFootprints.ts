@@ -12,6 +12,7 @@ export function toNestingActor(actor: Actor): NestingActor {
   return {
     id: actor.id,
     radius: getActorRadius(actor),
-    shape: actor.shape
+    shape: actor.shape,
+    layoutGroup: actor.layoutGroup
   };
 }

@@ -7,6 +7,7 @@ import {
 } from './polygonGeometry';
 import {
   packPolygonActors,
+  DEFAULT_SPLIT_FLEX_ACTOR_GAP,
   type NestingActor
 } from './nesting_ts';
 
@@ -239,5 +240,235 @@ describe('polygon nesting layout', () => {
     expect(lazyResult.placements.incoming).toEqual(
       proactiveResult.placements.__proactive_actor__
     );
+  });
+
+  it('orders SPLIT_FLEX factions without creating section geometry', () => {
+    const actors = [
+      { ...actor('hero-one'), layoutGroup: 'hero' as const },
+      { ...actor('hero-two'), layoutGroup: 'hero' as const },
+      { ...actor('neutral'), layoutGroup: 'neutral' as const },
+      { ...actor('enemy'), layoutGroup: 'enemy' as const }
+    ];
+    const result = packPolygonActors({
+      actors,
+      layoutOrientation: 'LEFT_RIGHT',
+      layoutStrategy: 'SPLIT_FLEX',
+      polygon: rectangle(500, 300)
+    });
+
+    expect(result.fits).toBe(true);
+    const rightmostHero = Math.max(
+      ...actors
+        .filter((current) => current.layoutGroup === 'hero')
+        .map((current) => result.placements[current.id].x + current.radius)
+    );
+    const leftmostNeutral = result.placements.neutral.x - 30;
+    const rightmostNeutral = result.placements.neutral.x + 30;
+    const leftmostEnemy = result.placements.enemy.x - 30;
+
+    expect(rightmostHero).toBeLessThanOrEqual(leftmostNeutral);
+    expect(rightmostNeutral).toBeLessThanOrEqual(leftmostEnemy);
+  });
+
+  it('uses a 2px default gap for SPLIT_FLEX actors', () => {
+    const result = packPolygonActors({
+      actors: [
+        { ...actor('hero-one'), layoutGroup: 'hero' as const },
+        { ...actor('hero-two'), layoutGroup: 'hero' as const }
+      ],
+      layoutOrientation: 'LEFT_RIGHT',
+      layoutStrategy: 'SPLIT_FLEX',
+      polygon: rectangle(300, 200)
+    });
+    const legacyGapResult = packPolygonActors({
+      actors: [
+        { ...actor('hero-one'), layoutGroup: 'hero' as const },
+        { ...actor('hero-two'), layoutGroup: 'hero' as const }
+      ],
+      layoutOrientation: 'LEFT_RIGHT',
+      layoutStrategy: 'SPLIT_FLEX',
+      polygon: rectangle(300, 200),
+      settings: { actorGap: 16 }
+    });
+    const first = result.placements['hero-one'];
+    const second = result.placements['hero-two'];
+    const legacyFirst = legacyGapResult.placements['hero-one'];
+    const legacySecond = legacyGapResult.placements['hero-two'];
+
+    expect(result.fits).toBe(true);
+    expect(legacyGapResult.fits).toBe(true);
+    expect(Math.hypot(first.x - second.x, first.y - second.y)).toBeGreaterThanOrEqual(
+      actor('hero-one').radius * 2 + DEFAULT_SPLIT_FLEX_ACTOR_GAP
+    );
+    expect(Math.hypot(first.x - second.x, first.y - second.y)).toBeLessThan(
+      Math.hypot(legacyFirst.x - legacySecond.x, legacyFirst.y - legacySecond.y)
+    );
+  });
+
+  it('keeps actors from the same SPLIT_FLEX faction visually grouped', () => {
+    const actors = [
+      { ...actor('hero-one'), layoutGroup: 'hero' as const },
+      { ...actor('hero-two'), layoutGroup: 'hero' as const },
+      { ...actor('hero-three'), layoutGroup: 'hero' as const },
+      { ...actor('hero-four'), layoutGroup: 'hero' as const },
+      { ...actor('neutral'), layoutGroup: 'neutral' as const },
+      { ...actor('enemy'), layoutGroup: 'enemy' as const }
+    ];
+    const result = packPolygonActors({
+      actors,
+      layoutOrientation: 'LEFT_RIGHT',
+      layoutStrategy: 'SPLIT_FLEX',
+      polygon: rectangle(500, 300)
+    });
+    const heroAxisValues = actors
+      .filter((current) => current.layoutGroup === 'hero')
+      .map((current) => result.placements[current.id].x);
+
+    expect(result.fits).toBe(true);
+    expect(Math.max(...heroAxisValues) - Math.min(...heroAxisValues)).toBeLessThanOrEqual(
+      100
+    );
+  });
+
+  it.each([400, 500, 600])(
+    'packs multiple hero rows before the neutral and enemy factions in a %ipx rectangle',
+    (width) => {
+      const actors = [
+        { ...actor('hero-one'), layoutGroup: 'hero' as const },
+        { ...actor('hero-two'), layoutGroup: 'hero' as const },
+        { ...actor('hero-three'), layoutGroup: 'hero' as const },
+        { ...actor('neutral'), layoutGroup: 'neutral' as const },
+        { ...actor('enemy'), layoutGroup: 'enemy' as const },
+        { ...actor('hero-four'), layoutGroup: 'hero' as const }
+      ];
+      const polygon = rectangle(width, 200);
+
+      for (let count = 1; count <= actors.length; count += 1) {
+        expect(
+          packPolygonActors({
+            actors: actors.slice(0, count),
+            layoutOrientation: 'LEFT_RIGHT',
+            layoutStrategy: 'SPLIT_FLEX',
+            polygon
+          }).fits
+        ).toBe(true);
+      }
+
+      const result = packPolygonActors({
+        actors,
+        layoutOrientation: 'LEFT_RIGHT',
+        layoutStrategy: 'SPLIT_FLEX',
+        polygon
+      });
+
+      expect(result.fits).toBe(true);
+
+      for (const current of actors) {
+        expect(
+          isFootprintInsideZone(
+            getFootprint(
+              current,
+              result.placements[current.id],
+              result.borderSpacing,
+              16
+            ),
+            polygon
+          )
+        ).toBe(true);
+
+        for (const other of actors) {
+          if (current.id >= other.id) {
+            continue;
+          }
+
+          expect(
+            footprintsOverlap(
+              getFootprint(current, result.placements[current.id], 1, 16),
+              getFootprint(other, result.placements[other.id], 1, 16)
+            )
+          ).toBe(false);
+        }
+      }
+
+      const heroes = actors.filter((current) => current.layoutGroup === 'hero');
+      const rightmostHero = Math.max(
+        ...heroes.map(
+          (current) => result.placements[current.id].x + current.radius
+        )
+      );
+      expect(rightmostHero).toBeLessThanOrEqual(
+        result.placements.neutral.x - 30
+      );
+      expect(result.placements.neutral.x + 30).toBeLessThanOrEqual(
+        result.placements.enemy.x - 30
+      );
+
+    }
+  );
+
+  it('repositions earlier factions when an incoming actor closes a split boundary', () => {
+    const actors = [
+      { ...actor('hero-one', 'circle', 24), layoutGroup: 'hero' as const },
+      { ...actor('hero-two', 'circle', 32), layoutGroup: 'hero' as const },
+      { ...actor('hero-three', 'circle', 28), layoutGroup: 'hero' as const },
+      { ...actor('neutral', 'circle', 38), layoutGroup: 'neutral' as const },
+      { ...actor('enemy', 'circle', 26), layoutGroup: 'enemy' as const },
+      {
+        ...actor('incoming-hero', 'circle', 30),
+        layoutGroup: 'hero' as const
+      }
+    ];
+    const polygon = rectangle(420, 200);
+    const result = packPolygonActors({
+      actors,
+      incomingActorId: 'incoming-hero',
+      incomingDropPoint: { x: 245, y: 100 },
+      layoutOrientation: 'LEFT_RIGHT',
+      layoutStrategy: 'SPLIT_FLEX',
+      polygon
+    });
+
+    expect(result.fits).toBe(true);
+
+    for (const current of actors) {
+      expect(
+        isFootprintInsideZone(
+          getFootprint(
+            current,
+            result.placements[current.id],
+            result.borderSpacing,
+            16
+          ),
+          polygon
+        )
+      ).toBe(true);
+
+      for (const other of actors) {
+        if (current.id >= other.id) {
+          continue;
+        }
+
+        expect(
+          footprintsOverlap(
+            getFootprint(current, result.placements[current.id], 1, 16),
+            getFootprint(other, result.placements[other.id], 1, 16)
+          )
+        ).toBe(false);
+      }
+    }
+
+    const heroExtent = Math.max(
+      ...actors
+        .filter((current) => current.layoutGroup === 'hero')
+        .map(
+          (current) =>
+            result.placements[current.id].x + current.radius
+        )
+    );
+    const neutralExtent = result.placements.neutral.x - 38;
+    const enemyExtent = result.placements.enemy.x - 26;
+
+    expect(heroExtent).toBeLessThanOrEqual(neutralExtent);
+    expect(result.placements.neutral.x + 38).toBeLessThanOrEqual(enemyExtent);
   });
 });
