@@ -9,6 +9,7 @@ import type { EntityCollection } from "@core/state/entityCollection";
 import type { Actor } from "@entities/actor/types";
 import type { Zone } from "@entities/zone/types";
 import { setActiveTool } from "@interaction/interactionState";
+import { ACTOR_CREATION_DRAG_TYPE } from "@ui/toolbar/actor/actorCreationDrag";
 import {
   commitEncounterChange,
   redoEncounterChange,
@@ -149,6 +150,62 @@ function dropOnCanvas(
 }
 
 describe("ZonelessActorPanel", () => {
+  it("creates a new actor when the actor preview is dropped into the panel", async () => {
+    const user = userEvent.setup();
+    const transfer = dataTransfer();
+
+    renderApp();
+    act(() => {
+      store.dispatch(setActiveTool("actor"));
+    });
+    await user.click(screen.getByRole("button", { name: "Create actor" }));
+    await user.type(
+      screen.getByRole("textbox", { name: "Actor name" }),
+      "Dropped Actor"
+    );
+
+    fireEvent.dragStart(screen.getByLabelText("Actor preview"), {
+      dataTransfer: transfer
+    });
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("dialog", { name: "Create actor" })
+      ).not.toBeInTheDocument();
+    });
+
+    const panel = screen.getByRole("complementary", {
+      name: "Zoneless actors"
+    });
+    fireEvent.dragOver(panel, { dataTransfer: transfer });
+    fireEvent.drop(panel, { dataTransfer: transfer });
+
+    const createdActor = Object.values(
+      store.getState().encounter.present.actors.byId
+    ).find((candidate) => candidate.name === "Dropped Actor");
+    expect(createdActor?.currentZoneId).toBe(ZONELESS_ACTOR_ZONE_ID);
+    expect(store.getState().encounter.past.at(-1)?.action.type).toBe(
+      "actor.create"
+    );
+
+    store.dispatch(undoEncounterChange());
+    expect(
+      Object.values(store.getState().encounter.present.actors.byId).some(
+        (candidate) => candidate.name === "Dropped Actor"
+      )
+    ).toBe(false);
+
+    store.dispatch(redoEncounterChange());
+    expect(
+      Object.values(store.getState().encounter.present.actors.byId).some(
+        (candidate) =>
+          candidate.name === "Dropped Actor" &&
+          candidate.currentZoneId === ZONELESS_ACTOR_ZONE_ID
+      )
+    ).toBe(true);
+    expect(transfer.dropEffect).toBe("copy");
+    expect(transfer.types).toContain(ACTOR_CREATION_DRAG_TYPE);
+  });
+
   it("is collapsed initially, exposes a count, and sorts actors alphabetically", async () => {
     const user = userEvent.setup();
 

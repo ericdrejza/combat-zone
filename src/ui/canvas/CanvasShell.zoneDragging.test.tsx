@@ -1,6 +1,10 @@
-import { fireEvent, screen } from "@testing-library/react";
+import { act, fireEvent, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
+import { createEncounterActionRecord } from "@core/history/createEncounterActionRecord";
+import { createActor } from "@entities/actor/actorMutations";
+import { setActiveTool } from "@interaction/interactionState";
+import { commitEncounterChange } from "@store/encounterSlice";
 import { store } from "@store/store";
 import {
   createRectangleZone,
@@ -11,6 +15,55 @@ import {
 } from "@test/ui/renderApp";
 
 describe("CanvasShell zone dragging", () => {
+  it("gives the zone pointer track priority over actors in Zone mode", async () => {
+    const user = userEvent.setup();
+
+    renderApp();
+    const canvas = getCanvas();
+    mockCanvasBounds(canvas);
+
+    await selectZoneTool(user);
+    createRectangleZone(canvas, { x: 120, y: 120 }, { x: 220, y: 220 });
+    const zone = await screen.findByLabelText("Zone 1");
+    const zoneId = zone.getAttribute("data-entity-id") ?? "";
+
+    act(() => {
+      const encounter = store.getState().encounter.present;
+      store.dispatch(
+        commitEncounterChange({
+          action: createEncounterActionRecord("test.seedActor"),
+          nextEncounter: createActor(encounter, {
+            currentZoneId: zoneId,
+            id: "actor-in-zone",
+            name: "Actor in zone"
+          })
+        })
+      );
+      store.dispatch(setActiveTool("zone"));
+    });
+
+    const actorElement = await screen.findByLabelText("Actor in zone");
+    expect(actorElement.parentElement).toHaveClass("pointer-events-none");
+
+    fireEvent.mouseEnter(actorElement);
+    expect(screen.getByText("Zone shape: rectangle")).toBeInTheDocument();
+
+    const beforePoints = zone.getAttribute("points");
+    fireEvent.mouseDown(actorElement, {
+      button: 0,
+      clientX: 170,
+      clientY: 170
+    });
+    fireEvent.mouseMove(canvas, { clientX: 190, clientY: 190 });
+    fireEvent.mouseUp(canvas);
+
+    expect(zone.getAttribute("points")).not.toEqual(beforePoints);
+    expect(store.getState().interaction.selection).toMatchObject({
+      selectedEntityType: "zone",
+      selectedIds: [zoneId]
+    });
+  });
+
   it("selects and drags an existing zone in Zone mode instead of drawing over it", async () => {
     const user = userEvent.setup();
 
