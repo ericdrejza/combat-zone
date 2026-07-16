@@ -73,7 +73,6 @@ describe('ActorLayer', () => {
           canvasBackgroundLuminance={255}
           encounter={encounter}
           placements={getActorRenderPlacements(encounter)}
-          onActorMouseDown={() => undefined}
           onActorMouseEnter={() => undefined}
           onActorMouseLeave={() => undefined}
           selection={{
@@ -115,7 +114,6 @@ describe('ActorLayer', () => {
           canvasBackgroundLuminance={255}
           encounter={encounter}
           placements={getActorRenderPlacements(encounter)}
-          onActorMouseDown={() => undefined}
           onActorMouseEnter={() => undefined}
           onActorMouseLeave={() => undefined}
           selection={selection}
@@ -152,7 +150,6 @@ describe('ActorLayer', () => {
             offset: { x: 40, y: -25 },
             zoneId: zone.id
           }}
-          onActorMouseDown={() => undefined}
           onActorMouseEnter={() => undefined}
           onActorMouseLeave={() => undefined}
           selection={{
@@ -165,9 +162,48 @@ describe('ActorLayer', () => {
       </svg>
     );
 
-    expect(container.querySelector('[data-entity-id="actor-1"]')).toHaveAttribute(
-      'transform',
-      `translate(${placement.point.x + 40} ${placement.point.y - 25})`
+    expect(container.querySelector('[data-entity-id="actor-1"]')).toHaveStyle({
+      transform: `translateX(${placement.point.x + 40}px) translateY(${placement.point.y - 25}px)`
+    });
+  });
+
+  it('starts a packed placement at its incoming drop point', () => {
+    const zone = createZone();
+    const actor = createActor(zone.id);
+    const encounter = {
+      ...createEncounterState({ id: 'encounter-placement-animation', name: 'Test' }),
+      actors: collection([actor]),
+      zones: collection([zone])
+    };
+    const { container } = render(
+      <svg>
+        <ActorLayer
+          actorDrag={null}
+          backgroundLuminanceByZoneId={{ [zone.id]: 0 }}
+          canvasBackgroundLuminance={255}
+          encounter={encounter}
+          placements={[{
+            actor,
+            incomingPoint: { x: 140, y: 160 },
+            point: { x: 220, y: 240 },
+            radius: 30
+          }]}
+          onActorMouseEnter={() => undefined}
+          onActorMouseLeave={() => undefined}
+          selection={{
+            overlayTargets: [],
+            selectedEntityType: null,
+            selectedIds: []
+          }}
+          showFactionOutlines={false}
+        />
+      </svg>
     );
+
+    const actorNode = container.querySelector('[data-entity-id="actor-1"]');
+
+    expect(actorNode).toHaveStyle({
+      transform: 'translateX(140px) translateY(160px)'
+    });
   });
 });

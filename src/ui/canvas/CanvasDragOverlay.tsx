@@ -37,8 +37,9 @@ export function CanvasDragOverlay({
         backgroundLuminanceByZoneId={backgroundLuminanceByZoneId}
         canvasBackgroundLuminance={canvasBackgroundLuminance}
         dragOverlay
-        encounter={encounter}
+        excludeActorId={actorDrag.usesMotion ? actorDrag.actorId : undefined}
         onActorMouseDown={() => undefined}
+        encounter={encounter}
         onActorMouseEnter={() => undefined}
         onActorMouseLeave={() => undefined}
         selection={selection}

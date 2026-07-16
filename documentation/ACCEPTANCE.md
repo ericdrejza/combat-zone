@@ -72,7 +72,7 @@ covers `DESIGN.md` §15 "Must have" scope only.
       and STRICT modes.
 - [x] The pure placement result preserves an incoming drop point and returns
       the packed target for the later animation phase.
-- [ ] Canvas actor rendering uses the incoming drop point and packed targets
+- [x] Canvas actor rendering uses the incoming drop point and packed targets
       for animated transitions (requires explicit approval for the animation
       phase).
 
