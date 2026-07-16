@@ -1,4 +1,4 @@
-import { fireEvent, screen } from "@testing-library/react";
+import { act, fireEvent, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { store } from "@store/store";
@@ -44,8 +44,10 @@ describe("ZonePropertiesPanel", () => {
 
     await user.click(screen.getByRole("button", { name: "Color" }));
     await user.click(screen.getByRole("button", { name: "Fill color #365314" }));
-    fireEvent.change(screen.getByLabelText("Zone opacity"), {
-      target: { value: "0" }
+    act(() => {
+      fireEvent.change(screen.getByLabelText("Zone opacity"), {
+        target: { value: "0" }
+      });
     });
     await user.click(screen.getByRole("checkbox", { name: /Show border/ }));
     await user.click(screen.getByRole("checkbox", { name: /Show name/ }));
@@ -118,13 +120,15 @@ describe("ZonePropertiesPanel", () => {
     const secondZoneId = secondZone.getAttribute("data-entity-id") ?? "";
     const thirdZoneId = thirdZone.getAttribute("data-entity-id") ?? "";
 
-    fireEvent.click(firstZone, { clientX: 60, clientY: 60 });
-    fireEvent.click(secondZone, {
-      clientX: 180,
-      clientY: 60,
-      ctrlKey: true
+    act(() => {
+      fireEvent.click(firstZone, { clientX: 60, clientY: 60 });
+      fireEvent.click(secondZone, {
+        clientX: 180,
+        clientY: 60,
+        ctrlKey: true
+      });
+      fireEvent.keyDown(window, { ctrlKey: true, key: "a" });
     });
-    fireEvent.keyDown(window, { ctrlKey: true, key: "a" });
 
     expect(store.getState().interaction.selection.selectedIds).toEqual([
       firstZoneId,
@@ -136,21 +140,25 @@ describe("ZonePropertiesPanel", () => {
     ).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Fill color #bfdbfe" }));
-    fireEvent.change(screen.getByLabelText("Zone opacity"), {
-      target: { value: "0.4" }
+    act(() => {
+      fireEvent.change(screen.getByLabelText("Zone opacity"), {
+        target: { value: "0.4" }
+      });
     });
     await user.click(screen.getByRole("checkbox", { name: /Show name/ }));
     await user.click(screen.getByRole("radio", { name: "Bottom right" }));
     await user.selectOptions(screen.getByLabelText("Layout strategy"), [
       "SPLIT_FLEX"
     ]);
-    fireEvent.change(screen.getByLabelText("Layout orientation"), {
-      target: { value: "TOP_BOTTOM" }
+    act(() => {
+      fireEvent.change(screen.getByLabelText("Layout orientation"), {
+        target: { value: "TOP_BOTTOM" }
+      });
+      fireEvent.change(screen.getByLabelText("Tags"), {
+        target: { value: "hazard, elevated" }
+      });
+      fireEvent.blur(screen.getByLabelText("Tags"));
     });
-    fireEvent.change(screen.getByLabelText("Tags"), {
-      target: { value: "hazard, elevated" }
-    });
-    fireEvent.blur(screen.getByLabelText("Tags"));
 
     await user.click(
       screen.getByRole("button", { name: "Export first selected zone properties" })
@@ -216,8 +224,10 @@ describe("ZonePropertiesPanel", () => {
 
     expect(firstZone).toHaveAttribute("fill-opacity", "0");
 
-    fireEvent.change(screen.getByLabelText("Zone opacity"), {
-      target: { value: "0.35" }
+    act(() => {
+      fireEvent.change(screen.getByLabelText("Zone opacity"), {
+        target: { value: "0.35" }
+      });
     });
 
     createRectangleZone(canvas, { x: 260, y: 80 }, { x: 360, y: 160 });

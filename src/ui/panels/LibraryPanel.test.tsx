@@ -40,7 +40,9 @@ function dropOnCanvas(
     clientY: { value: clientY },
     dataTransfer: { value: transfer }
   });
-  canvas.dispatchEvent(event);
+  act(() => {
+    canvas.dispatchEvent(event);
+  });
 }
 
 describe("LibraryPanel", () => {
