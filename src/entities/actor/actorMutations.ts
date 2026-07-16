@@ -1,3 +1,4 @@
+import path from 'path';
 import type {
   Actor,
   ActorLayoutGroup,
@@ -10,10 +11,7 @@ import type {
   EncounterState
 } from '@core/encounter/types';
 import { ZONELESS_ACTOR_ZONE_ID } from '@core/encounter/types';
-import type {
-  EntityCollection,
-  EntityId
-} from '@core/state/entityCollection';
+import type { EntityCollection, EntityId } from '@core/state/entityCollection';
 
 export type ActorImageInput = {
   dataUrl: string;
@@ -119,10 +117,6 @@ function removeActorFromEngagements(
     byId,
     allIds
   };
-}
-
-export function stripFileExtension(fileName: string): string {
-  return fileName.replace(/\.[^./\\]+$/, '');
 }
 
 function getDefaultActorName(image?: ActorImageInput): string {

@@ -44,6 +44,59 @@ function dropOnCanvas(
 }
 
 describe("LibraryPanel", () => {
+  it("toggles between list and two-column grid views", async () => {
+    const user = userEvent.setup();
+
+    renderApp();
+    act(() => {
+      store.dispatch(setActiveTool("actor"));
+      store.dispatch(
+        uploadImage({
+          asset: {
+            dataUrl: "data:image/png;base64,scout",
+            mediaType: "image/png",
+            name: "Scout"
+          },
+          parentId: "tokens-root",
+          sectionId: "tokens"
+        })
+      );
+    });
+
+    const libraryPanel = screen.getByRole("region", { name: "Library panel" });
+    const toggle = within(libraryPanel).getByRole("button", {
+      name: "Switch Library to grid view"
+    });
+    const reorder = within(libraryPanel).getByRole("button", {
+      name: "Reorder Library panel"
+    });
+
+    expect(
+      toggle.compareDocumentPosition(reorder) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+
+    await user.click(toggle);
+
+    const asset = within(libraryPanel).getByRole("button", { name: "Scout" });
+    expect(
+      asset.parentElement
+    ).toHaveClass("grid-cols-2");
+    expect(asset).toHaveClass("flex-col");
+    expect(
+      within(libraryPanel).getByRole("button", {
+        name: "Switch Library to list view"
+      })
+    ).toBeInTheDocument();
+
+    await user.click(
+      within(libraryPanel).getByRole("button", {
+        name: "Switch Library to list view"
+      })
+    );
+
+    expect(asset).not.toHaveClass("flex-col");
+  });
+
   it("deselects existing actors and selects an actor created by library drag", () => {
     const transfer = dataTransfer();
 
@@ -178,14 +231,14 @@ describe("LibraryPanel", () => {
     await waitFor(() => {
       expect(
         within(screen.getByRole("dialog", { name: "Asset Library" })).getAllByText(
-          "battle-map.png"
+          "battle-map"
         ).length
       ).toBeGreaterThan(0);
     });
 
     await user.click(screen.getByRole("button", { name: "Close Asset Library" }));
     await user.click(screen.getByRole("button", { name: "Background" }));
-    await user.click(screen.getByRole("button", { name: "battle-map.png" }));
+    await user.click(screen.getByRole("button", { name: "battle-map" }));
 
     await waitFor(() => {
       expect(
