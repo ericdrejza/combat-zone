@@ -18,7 +18,7 @@ After completing a numbered section (## X.), move the completed section to the e
   metadata, and fit rejection.
 - [x] Enforce no-overlap packing failures in every validation mode for actor
   movement and creation.
-- [ ] Add the approved canvas animation phase with Framer Motion.
+- [x] Add the approved canvas animation phase with Motion for React.
 
 ## 10. Engagement Groups
 

@@ -1,9 +1,13 @@
-import type { MouseEvent } from "react";
+import { motion } from "motion/react";
 
 import type { LayoutPoint } from "@core/layout/types";
 import { ACTOR_LAYOUT_GROUP_COLORS } from "@entities/actor/actorVisuals";
 import type { RootState } from "@store/store";
-import type { ActorDragState } from "./canvasInteractionTypes";
+import type {
+  ActorDragEndEvent,
+  ActorDragStartEvent,
+  ActorDragState
+} from "./canvasInteractionTypes";
 import type { ActorRenderPlacement } from "./actorCanvasLayout";
 import type { ActorPlacementTranslation } from "./actorPlacementTranslation";
 import {
@@ -22,14 +26,24 @@ type ActorLayerProps = {
   encounter: RootState["encounter"]["present"];
   placements: ActorRenderPlacement[];
   zoneActorTranslation?: ActorPlacementTranslation | null;
-  onActorMouseDown: (
-    actorId: string,
-    point: LayoutPoint,
-    event: MouseEvent<SVGGElement>
-  ) => void;
   onActorMouseEnter: (actorId: string) => void;
   onActorMouseLeave: (actorId: string) => void;
+  onActorDragStart?: (
+    actorId: string,
+    point: LayoutPoint,
+    event: ActorDragStartEvent,
+    usesMotion?: boolean
+  ) => void;
+  onActorDrag?: (point: LayoutPoint) => void;
+  onActorDragEnd?: (event: ActorDragEndEvent) => void;
+  onActorMouseDown?: (
+    actorId: string,
+    point: LayoutPoint,
+    event: ActorDragStartEvent,
+    usesMotion?: boolean
+  ) => void;
   selection: RootState["interaction"]["selection"];
+  excludeActorId?: string;
 };
 
 function getDraggedPoint(
@@ -72,22 +86,56 @@ export function ActorLayer({
   encounter,
   placements,
   zoneActorTranslation = null,
-  onActorMouseDown,
   onActorMouseEnter,
   onActorMouseLeave,
-  selection
+  selection,
+  onActorDragStart,
+  onActorDrag,
+  onActorDragEnd,
+  onActorMouseDown,
+  excludeActorId
 }: ActorLayerProps) {
   return placements
-    .filter(({ actor }) =>
-      !dragOverlay || actorDrag?.actorIds.includes(actor.id)
-    )
-    .map(({ actor, point, radius }) => {
+    .filter(({ actor }) => {
+      if (actor.id === excludeActorId) {
+        return false;
+      }
+
+      if (dragOverlay) {
+        return Boolean(actorDrag?.actorIds.includes(actor.id));
+      }
+
+      if (actorDrag?.actorIds.includes(actor.id)) {
+        return actor.id === actorDrag.actorId && actorDrag.usesMotion;
+      }
+
+      return true;
+    })
+    .map(({ actor, incomingPoint: placementIncomingPoint, point, radius }) => {
     const zoneMovedPoint = getZoneMovedPoint(
       actor.currentZoneId,
       point,
       zoneActorTranslation
     );
-    const renderedPoint = getDraggedPoint(actor.id, zoneMovedPoint, actorDrag);
+    const isMotionDraggedActor =
+      !dragOverlay &&
+      actorDrag?.usesMotion === true &&
+      actorDrag.actorId === actor.id;
+    const renderedPoint = isMotionDraggedActor
+      ? zoneMovedPoint
+      : getDraggedPoint(actor.id, zoneMovedPoint, actorDrag);
+    const incomingPoint = placementIncomingPoint
+      ? getDraggedPoint(
+          actor.id,
+          getZoneMovedPoint(
+            actor.currentZoneId,
+            placementIncomingPoint,
+            zoneActorTranslation
+          ),
+          actorDrag
+        )
+      : undefined;
+    const isDirectManipulation = Boolean(actorDrag || zoneActorTranslation);
     const selected =
       selection.selectedEntityType === "actor" &&
       selection.selectedIds.includes(actor.id);
@@ -103,20 +151,52 @@ export function ActorLayer({
     const innerRadius = Math.max(radius - 3, 1);
 
       return (
-      <g
+      <motion.g
         key={actor.id}
         aria-label={actor.name}
         className="cursor-grab active:cursor-grabbing"
         data-entity-id={actor.id}
         data-entity-type="actor"
-        onMouseDown={(event) => onActorMouseDown(actor.id, renderedPoint, event)}
         onMouseEnter={
           activeToolId === "zone" ? undefined : () => onActorMouseEnter(actor.id)
         }
         onMouseLeave={
           activeToolId === "zone" ? undefined : () => onActorMouseLeave(actor.id)
         }
-        transform={`translate(${renderedPoint.x} ${renderedPoint.y})`}
+        onMouseDown={(event) =>
+          onActorMouseDown?.(
+            actor.id,
+            renderedPoint,
+            event as unknown as ActorDragStartEvent,
+            false
+          )
+        }
+        drag={!dragOverlay && activeToolId !== "zone"}
+        dragMomentum={false}
+        dragElastic={0}
+        onDragStart={(event) =>
+          onActorDragStart?.(
+            actor.id,
+            renderedPoint,
+            event as unknown as ActorDragStartEvent,
+            true
+          )
+        }
+        onDrag={(_, info) => onActorDrag?.(info.point)}
+        onDragEnd={(event) =>
+          onActorDragEnd?.(event as unknown as ActorDragEndEvent)
+        }
+        initial={
+          !dragOverlay && !actorDrag && incomingPoint
+            ? { x: incomingPoint.x, y: incomingPoint.y }
+            : false
+        }
+        animate={isMotionDraggedActor ? undefined : { x: renderedPoint.x, y: renderedPoint.y }}
+        transition={
+          isDirectManipulation
+            ? { duration: 0 }
+            : { damping: 30, mass: 0.55, stiffness: 420, type: "spring" }
+        }
       >
         {actor.shape === "rectangle" ? (
           <rect
@@ -227,7 +307,7 @@ export function ActorLayer({
             {actor.name.toUpperCase()}
           </text>
         ) : null}
-      </g>
+      </motion.g>
       );
     });
 }

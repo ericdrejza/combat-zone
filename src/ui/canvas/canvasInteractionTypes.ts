@@ -36,6 +36,20 @@ export type ActorDragState = {
   current: LayoutPoint;
   hasMoved: boolean;
   start: LayoutPoint;
+  usesMotion: boolean;
+};
+
+export type ActorDragStartEvent = {
+  button?: number;
+  ctrlKey: boolean;
+  metaKey: boolean;
+  preventDefault: () => void;
+  shiftKey: boolean;
+  stopPropagation: () => void;
+};
+
+export type ActorDragEndEvent = {
+  stopPropagation: () => void;
 };
 
 export type MutableRefValue<TValue> = {
