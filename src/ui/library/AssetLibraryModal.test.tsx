@@ -69,8 +69,8 @@ describe("AssetLibraryModal", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText("map-a.png")).toBeInTheDocument();
-      expect(screen.getByText("map-b.png")).toBeInTheDocument();
+      expect(screen.getByText("map-a")).toBeInTheDocument();
+      expect(screen.getByText("map-b")).toBeInTheDocument();
     });
     expect(
       within(screen.getByRole("dialog", { name: "Asset Library" })).getAllByText(
@@ -91,15 +91,15 @@ describe("AssetLibraryModal", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: "base-map.png" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "base-map" })).toBeInTheDocument();
     });
 
-    await user.click(screen.getByRole("button", { name: "base-map.png" }));
+    await user.click(screen.getByRole("button", { name: "base-map" }));
     vi.spyOn(window, "prompt").mockReturnValueOnce("Siblings");
     await user.click(screen.getByRole("button", { name: "Add to Backgrounds" }));
     await user.click(screen.getByRole("menuitem", { name: "Create new folder" }));
 
-    expect(screen.getByRole("button", { name: "base-map.png" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "base-map" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Siblings" })).toBeInTheDocument();
   });
 
@@ -136,7 +136,7 @@ describe("AssetLibraryModal", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText("nested-map.png")).toBeInTheDocument();
+      expect(screen.getByText("nested-map")).toBeInTheDocument();
     });
 
     await user.click(screen.getByRole("button", { name: "Open Maps actions" }));
@@ -191,14 +191,14 @@ describe("AssetLibraryModal", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: "card-map.png" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "card-map" })).toBeInTheDocument();
     });
 
-    fireEvent.contextMenu(screen.getByRole("button", { name: "card-map.png" }));
+    fireEvent.contextMenu(screen.getByRole("button", { name: "card-map" }));
     await user.click(screen.getByRole("menuitem", { name: "Delete" }));
 
     expect(
-      screen.queryByRole("button", { name: "card-map.png" })
+      screen.queryByRole("button", { name: "card-map" })
     ).not.toBeInTheDocument();
   });
 
@@ -221,7 +221,7 @@ describe("AssetLibraryModal", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByRole("button", { name: "dropped-map.png" })
+        screen.getByRole("button", { name: "dropped-map" })
       ).toBeInTheDocument();
     });
   });
@@ -241,13 +241,13 @@ describe("AssetLibraryModal", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText("ice-cavern.png")).toBeInTheDocument();
+      expect(screen.getByText("ice-cavern")).toBeInTheDocument();
     });
 
     await user.type(screen.getByLabelText("Search asset library"), "ICE");
 
     expect(screen.getAllByText("Maps").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("ice-cavern.png").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("ice-cavern").length).toBeGreaterThan(0);
     expect(screen.queryByText("Archive")).not.toBeInTheDocument();
   });
 
@@ -268,8 +268,8 @@ describe("AssetLibraryModal", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: "m-map.png" })).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: "b-map.png" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "m-map" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "b-map" })).toBeInTheDocument();
     });
 
     const contentButtons = within(
@@ -278,8 +278,8 @@ describe("AssetLibraryModal", () => {
 
     expect(contentButtons.map((button) => button.textContent)).toEqual([
       "A-folder",
-      "b-map.png",
-      "m-map.png",
+      "b-map",
+      "m-map",
       "z-folder"
     ]);
   });
@@ -297,12 +297,12 @@ describe("AssetLibraryModal", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: "move-map.png" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "move-map" })).toBeInTheDocument();
     });
 
     const dataTransfer = createDragDataTransfer();
 
-    fireEvent.dragStart(screen.getByRole("button", { name: "move-map.png" }), {
+    fireEvent.dragStart(screen.getByRole("button", { name: "move-map" }), {
       dataTransfer
     });
     fireEvent.drop(screen.getByRole("button", { name: "Maps" }), {
@@ -314,13 +314,13 @@ describe("AssetLibraryModal", () => {
     });
 
     expect(
-      within(contents).queryByRole("button", { name: "move-map.png" })
+      within(contents).queryByRole("button", { name: "move-map" })
     ).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Maps" }));
 
     expect(
-      within(contents).getByRole("button", { name: "move-map.png" })
+      within(contents).getByRole("button", { name: "move-map" })
     ).toBeInTheDocument();
   });
 

@@ -9,8 +9,11 @@ import type { ToolId } from "@interaction/tools/toolRegistry";
 import { CanvasShell } from "./canvas/CanvasShell";
 import { AssetLibraryModal } from "./library/AssetLibraryModal";
 import type { DockPanelDefinition, DockSide, DropTarget } from "./panels/PanelsShell";
-import { LibraryPanel } from "./panels/LibraryPanel";
-import type { LibraryPanelFocusRequest } from "./panels/LibraryPanel";
+import { LibraryPanel, LibraryPanelViewToggle } from "./panels/LibraryPanel";
+import type {
+  LibraryPanelFocusRequest,
+  LibraryViewMode
+} from "./panels/LibraryPanel";
 import { movePanel } from "./panels/panelLayout";
 import type { PanelLayout } from "./panels/panelLayout";
 import { PanelsShell } from "./panels/PanelsShell";
@@ -83,6 +86,8 @@ export function App() {
   const [libraryModalOpen, setLibraryModalOpen] = useState(false);
   const [libraryFocusRequest, setLibraryFocusRequest] =
     useState<LibraryPanelFocusRequest | null>(null);
+  const [libraryViewMode, setLibraryViewMode] =
+    useState<LibraryViewMode>("list");
   const [renameModalOpen, setRenameModalOpen] = useState(false);
   const workspaceColumns = `${
     sidebarCollapsed.left ? "3.25rem" : "18rem"
@@ -244,6 +249,7 @@ export function App() {
         <LibraryPanel
           focusRequest={libraryFocusRequest}
           onFocusRequestHandled={() => setLibraryFocusRequest(null)}
+          viewMode={libraryViewMode}
         />
       );
     }
@@ -256,6 +262,17 @@ export function App() {
   }
 
   function renderPanelHeaderActions(panel: DockPanelDefinition) {
+    if (panel.id === "library") {
+      return (
+        <LibraryPanelViewToggle
+          onToggle={() =>
+            setLibraryViewMode((mode) => (mode === "list" ? "grid" : "list"))
+          }
+          viewMode={libraryViewMode}
+        />
+      );
+    }
+
     if (panel.id === "properties") {
       return <ZonePropertiesHeaderActions />;
     }

@@ -1,4 +1,9 @@
-import { ChevronLeft, FileImage, Folder, Link } from "lucide-react";
+import {
+  ChevronLeft,
+  Folder,
+  Grid2X2,
+  List
+} from "lucide-react";
 import type { DragEvent } from "react";
 import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -15,6 +20,7 @@ import { commitEncounterChange } from "@store/encounterSlice";
 import type { RootState } from "@store/store";
 import { LIBRARY_NODE_DRAG_TYPE } from "../library/libraryDrag";
 import { getFoldersFirstChildren } from "../library/libraryUi";
+import { LibraryPanelNode } from "./LibraryPanelNode";
 
 function getPanelSectionId(activeToolId: ToolId): LibrarySectionId | null {
   if (activeToolId === "actor") {
@@ -28,6 +34,8 @@ function getPanelSectionId(activeToolId: ToolId): LibrarySectionId | null {
   return null;
 }
 
+export type LibraryViewMode = "list" | "grid";
+
 export type LibraryPanelFocusRequest = {
   folderId: string;
   nodeId: string;
@@ -37,11 +45,46 @@ export type LibraryPanelFocusRequest = {
 type LibraryPanelProps = {
   focusRequest?: LibraryPanelFocusRequest | null;
   onFocusRequestHandled?: () => void;
+  viewMode: LibraryViewMode;
 };
+
+type LibraryPanelViewToggleProps = {
+  onToggle: () => void;
+  viewMode: LibraryViewMode;
+};
+
+/** Keeps the library layout preference next to the library-specific panel UI. */
+export function LibraryPanelViewToggle({
+  onToggle,
+  viewMode
+}: LibraryPanelViewToggleProps) {
+  const showingGrid = viewMode === "grid";
+
+  return (
+    <button
+      aria-label={
+        showingGrid
+          ? "Switch Library to list view"
+          : "Switch Library to grid view"
+      }
+      aria-pressed={showingGrid}
+      className="flex h-8 w-8 items-center justify-center rounded-full border border-canvas-line bg-white text-canvas-muted transition hover:bg-canvas"
+      onClick={onToggle}
+      type="button"
+    >
+      {showingGrid ? (
+        <List aria-hidden="true" className="h-4 w-4" />
+      ) : (
+        <Grid2X2 aria-hidden="true" className="h-4 w-4" />
+      )}
+    </button>
+  );
+}
 
 export function LibraryPanel({
   focusRequest,
-  onFocusRequestHandled
+  onFocusRequestHandled,
+  viewMode
 }: LibraryPanelProps) {
   const dispatch = useDispatch();
   const encounter = useSelector((state: RootState) => state.encounter.present);
@@ -238,59 +281,35 @@ export function LibraryPanel({
           No {section.name.toLowerCase()} yet.
         </p>
       ) : null}
-      {children.map((node) => {
-        if (node.type === "folder") {
-          return (
-            <button
-              key={node.id}
-              className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm transition hover:bg-canvas"
-              onClick={() => navigateTo(node.id)}
-              type="button"
-            >
-              <Folder aria-hidden="true" className="h-4 w-4" />
-              <span className="min-w-0 flex-1 truncate">{node.name}</span>
-            </button>
-          );
+      <div
+        className={
+          viewMode === "grid" ? "grid grid-cols-2 gap-2" : "space-y-2"
         }
-
-        const asset = resolveLibraryAsset(section, node.id);
-        const isBackground = activeSectionId === "backgrounds";
-        const isToken = activeSectionId === "tokens";
-
-        return (
-          <button
-            key={node.id}
-            className={`group flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm transition hover:bg-canvas ${
-              isBackground || isToken ? "cursor-pointer" : "cursor-default"
-            }`}
-            draggable={isToken}
-            ref={(button) => {
-              assetButtonRefs.current[node.id] = button;
-            }}
-            onClick={() =>
-              isBackground ? applyBackground(node) : createActorInTargetZone(node)
-            }
-            onDragStart={(event) => startLibraryDrag(event, node)}
-            onDragEnd={finishLibraryDrag}
-            type="button"
-          >
-            <span className="flex h-16 w-16 flex-none items-center justify-center overflow-hidden rounded-lg border border-canvas-line bg-white">
-              {asset ? (
-                <img
-                  alt=""
-                  className="h-full w-full object-cover transition duration-150 ease-out group-hover:scale-[1.2]"
-                  src={asset.dataUrl}
-                />
-              ) : node.type === "link" ? (
-                <Link aria-hidden="true" className="h-4 w-4" />
-              ) : (
-                <FileImage aria-hidden="true" className="h-4 w-4" />
-              )}
-            </span>
-            <span className="min-w-0 flex-1 truncate">{node.name}</span>
-          </button>
-        );
-      })}
+      >
+        {children.map((node) => {
+          return (
+            <LibraryPanelNode
+              key={node.id}
+              asset={resolveLibraryAsset(section, node.id)}
+              buttonRef={(button) => {
+                assetButtonRefs.current[node.id] = button;
+              }}
+              isBackground={activeSectionId === "backgrounds"}
+              isToken={activeSectionId === "tokens"}
+              node={node}
+              onClick={() =>
+                activeSectionId === "backgrounds"
+                  ? applyBackground(node)
+                  : createActorInTargetZone(node)
+              }
+              onDragEnd={finishLibraryDrag}
+              onDragStart={(event) => startLibraryDrag(event, node)}
+              onNavigate={() => navigateTo(node.id)}
+              viewMode={viewMode}
+            />
+          );
+        })}
+      </div>
     </div>
   );
 }
