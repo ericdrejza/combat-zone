@@ -134,8 +134,11 @@ export function CanvasWorkspace({
         }}
         onClick={handleCanvasClick}
         onContextMenu={handleCanvasContextMenu}
-        onDragOver={handleCanvasDragOver}
-        onDrop={handleCanvasDrop}
+        // SVG zones and Motion-managed children can intercept native drag
+        // events. Capture keeps the canvas the authoritative drop surface.
+        onDragEnterCapture={handleCanvasDragOver}
+        onDragOverCapture={handleCanvasDragOver}
+        onDropCapture={handleCanvasDrop}
         onDoubleClick={handleCanvasDoubleClick}
         onMouseDown={handleCanvasMouseDown}
         onMouseMove={handleCanvasMouseMove}
