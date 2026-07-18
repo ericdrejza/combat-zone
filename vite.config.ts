@@ -13,7 +13,7 @@ export default defineConfig({
       "@interaction": fileURLToPath(new URL("./src/interaction", import.meta.url)),
       "@library": fileURLToPath(new URL("./src/library", import.meta.url)),
       "@store": fileURLToPath(new URL("./src/store", import.meta.url)),
-      "@test": fileURLToPath(new URL("./src/test", import.meta.url)),
+      "@tests": fileURLToPath(new URL("./tests", import.meta.url)),
       "@ui": fileURLToPath(new URL("./src/ui", import.meta.url))
     }
   },

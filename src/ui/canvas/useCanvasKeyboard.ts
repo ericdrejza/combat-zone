@@ -2,10 +2,7 @@ import { useEffect } from 'react';
 import type { Dispatch } from 'redux';
 
 import { createEncounterActionRecord } from '@core/history/createEncounterActionRecord';
-import {
-  duplicateActor,
-  deleteActor
-} from '@entities/actor/actorMutations';
+import { duplicateActor, deleteActor } from '@entities/actor/actorMutations';
 import { deleteZone } from '@entities/zone/zoneMutations';
 import {
   clearActorPaintBrush,
@@ -18,7 +15,7 @@ import {
 } from '@interaction/interactionState';
 import { commitEncounterChange } from '@store/encounterSlice';
 import type { RootState } from '@store/store';
-import { sortZoneIdsByPosition } from './zoneGeometry';
+import { sortZoneIdsByPosition } from './zones/zoneGeometry';
 
 type UseCanvasKeyboardInput = {
   activeToolId: RootState['interaction']['activeToolId'];

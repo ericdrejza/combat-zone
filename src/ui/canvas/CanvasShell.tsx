@@ -14,23 +14,23 @@ import { getTextColorForLuminance } from "./canvasLuminance";
 import {
   ACTOR_LAYOUT_COMPUTATION_STRATEGY,
   getActorRenderPlacements
-} from "./actorCanvasLayout";
-import { calculateNonSplitZonePlacementGeometry } from "./actorNonSplitLayout";
+} from "./actors/actorCanvasLayout";
+import { calculateNonSplitZonePlacementGeometry } from "./actors/actorNonSplitLayout";
 import {
   scheduleProactiveActorPlacementComputations
-} from "./proactiveActorPlacementCache";
-import { subscribeToActorPlacementWorker } from "./actorPlacementWorkerClient";
-import type { ActorPlacementTranslation } from "./actorPlacementTranslation";
+} from "./actors/proactiveActorPlacementCache";
+import { subscribeToActorPlacementWorker } from "./actors/actorPlacementWorkerClient";
+import type { ActorPlacementTranslation } from "./actors/actorPlacementTranslation";
 import type {
   ActorDragState,
   ShapeDraftState,
   VertexDragState,
   ZoneDragState
 } from "./canvasInteractionTypes";
-import { type LocalBoxSelectionState } from "./zoneGeometry";
-import { useActorPaintBrush } from "./useActorPaintBrush";
-import { useCanvasDropHandlers } from "./useCanvasDropHandlers";
-import { useCanvasInteractionHandlers } from "./useCanvasInteractionHandlers";
+import { type LocalBoxSelectionState } from "./zones/zoneGeometry";
+import { useActorPaintBrush } from "./actors/useActorPaintBrush";
+import { useCanvasDropHandlers } from "./handlers/useCanvasDropHandlers";
+import { useCanvasInteractionHandlers } from "./handlers/useCanvasInteractionHandlers";
 import { useCanvasKeyboard } from "./useCanvasKeyboard";
 import {
   useCanvasBackgroundLuminance,

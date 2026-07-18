@@ -16,18 +16,18 @@ import type {
   ShapeDraftState,
   ZoneDragState
 } from "./canvasInteractionTypes";
-import { ActorLayer } from "./ActorLayer";
-import { CanvasBackgroundLayer } from "./CanvasBackgroundLayer";
+import { ActorLayer } from "./actors/ActorLayer";
+import { CanvasBackgroundLayer } from "./background/CanvasBackgroundLayer";
 import { CanvasOverlays } from "./CanvasOverlays";
 import {
   CANVAS_BACKGROUND_COLOR,
   CANVAS_HEIGHT,
   CANVAS_WIDTH
 } from "./canvasConstants";
-import type { LocalBoxSelectionState } from "./zoneGeometry";
-import { ZoneLayer } from "./ZoneLayer";
-import type { ActorRenderPlacement } from "./actorCanvasLayout";
-import type { ActorPlacementTranslation } from "./actorPlacementTranslation";
+import type { LocalBoxSelectionState } from "./zones/zoneGeometry";
+import { ZoneLayer } from "./zones/ZoneLayer";
+import type { ActorRenderPlacement } from "./actors/actorCanvasLayout";
+import type { ActorPlacementTranslation } from "./actors/actorPlacementTranslation";
 
 type CanvasWorkspaceProps = {
   activeToolId: RootState["interaction"]["activeToolId"];
