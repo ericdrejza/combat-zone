@@ -13,7 +13,8 @@ import type {
   ActorDragEndEvent,
   ActorDragStartEvent,
   ActorDragState,
-  ShapeDraftState
+  ShapeDraftState,
+  ZoneDragState
 } from "./canvasInteractionTypes";
 import { ActorLayer } from "./ActorLayer";
 import { CanvasBackgroundLayer } from "./CanvasBackgroundLayer";
@@ -37,6 +38,7 @@ type CanvasWorkspaceProps = {
   boxSelection: LocalBoxSelectionState | null;
   canvasBackgroundLuminance: number;
   canvasRef: { current: SVGSVGElement | null };
+  directManipulationZoneId: string | null;
   encounter: RootState["encounter"]["present"];
   actorRenderPlacements: ActorRenderPlacement[];
   zoneActorTranslation: ActorPlacementTranslation | null;
@@ -44,17 +46,11 @@ type CanvasWorkspaceProps = {
   onActorDragStart: (
     actorId: string,
     point: LayoutPoint,
-    event: ActorDragStartEvent,
-    usesMotion?: boolean
+    event: ActorDragStartEvent
   ) => void;
   onActorDrag: (point: LayoutPoint) => void;
   onActorDragEnd: (event: ActorDragEndEvent) => void;
-  onActorMouseDown: (
-    actorId: string,
-    point: LayoutPoint,
-    event: ActorDragStartEvent,
-    usesMotion?: boolean
-  ) => void;
+  onActorReturnComplete: () => void;
   handleCanvasClick: MouseEventHandler<SVGSVGElement>;
   handleCanvasContextMenu: MouseEventHandler<SVGSVGElement>;
   handleCanvasDoubleClick: MouseEventHandler<SVGSVGElement>;
@@ -70,6 +66,11 @@ type CanvasWorkspaceProps = {
     vertexIndex: number,
     event: MouseEvent<SVGCircleElement>
   ) => void;
+  onResizeHandleDrag: (point: LayoutPoint) => void;
+  onResizeHandleDragEnd: (event: ActorDragEndEvent) => void;
+  onZoneDrag: (point: LayoutPoint) => void;
+  onZoneDragEnd: (event: ActorDragEndEvent) => void;
+  onZoneMotionComplete: () => void;
   polygonDraftColor: string;
   selection: RootState["interaction"]["selection"];
   shapeDraft: ShapeDraftState | null;
@@ -78,6 +79,7 @@ type CanvasWorkspaceProps = {
   onActorMouseLeave: (actorId: string) => void;
   zoneDraftPoints: LayoutPoint[];
   zoneShapeMode: RootState["interaction"]["zoneShapeMode"];
+  zoneDrag: ZoneDragState | null;
 };
 
 export function CanvasWorkspace({
@@ -90,12 +92,13 @@ export function CanvasWorkspace({
   boxSelection,
   canvasBackgroundLuminance,
   canvasRef,
+  directManipulationZoneId,
   encounter,
   getDisplayedPolygon,
   onActorDrag,
   onActorDragEnd,
   onActorDragStart,
-  onActorMouseDown,
+  onActorReturnComplete,
   handleCanvasClick,
   handleCanvasContextMenu,
   handleCanvasDoubleClick,
@@ -105,6 +108,8 @@ export function CanvasWorkspace({
   handleCanvasMouseMove,
   handleCanvasMouseUp,
   handleResizeHandleMouseDown,
+  onResizeHandleDrag,
+  onResizeHandleDragEnd,
   onActorMouseEnter,
   onActorMouseLeave,
   polygonDraftColor,
@@ -113,7 +118,11 @@ export function CanvasWorkspace({
   showFactionOutlines,
   zoneDraftPoints,
   zoneShapeMode,
-  zoneActorTranslation
+  zoneActorTranslation,
+  zoneDrag,
+  onZoneDrag,
+  onZoneDragEnd,
+  onZoneMotionComplete
 }: CanvasWorkspaceProps) {
   return (
     <MotionConfig transformPagePoint={transformViewBoxPoint(canvasRef)}>
@@ -148,9 +157,16 @@ export function CanvasWorkspace({
                 activeToolId={activeToolId}
                 actorTargetZoneId={actorTargetZoneId}
                 backgroundLuminanceByZoneId={backgroundLuminanceByZoneId}
+                directManipulationZoneId={directManipulationZoneId}
                 getDisplayedPolygon={getDisplayedPolygon}
                 onResizeHandleMouseDown={handleResizeHandleMouseDown}
+                onResizeHandleDrag={onResizeHandleDrag}
+                onResizeHandleDragEnd={onResizeHandleDragEnd}
+                onZoneDrag={onZoneDrag}
+                onZoneDragEnd={onZoneDragEnd}
+                onZoneMotionComplete={onZoneMotionComplete}
                 selection={selection}
+                zoneDrag={zoneDrag}
                 zones={encounter.zones}
               />
             ) : null}
@@ -171,7 +187,7 @@ export function CanvasWorkspace({
                   onActorDrag={onActorDrag}
                   onActorDragEnd={onActorDragEnd}
                   onActorDragStart={onActorDragStart}
-                  onActorMouseDown={onActorMouseDown}
+                  onActorReturnComplete={onActorReturnComplete}
                   onActorMouseEnter={onActorMouseEnter}
                   onActorMouseLeave={onActorMouseLeave}
                   selection={selection}

@@ -7,6 +7,7 @@ import { LibraryToolbarButton } from "./LibraryToolbarButton";
 import { ToolButton } from "./ToolButton";
 import { TOOLBAR_ITEMS } from "./toolbarItems";
 import { ZoneToolButton } from "./zone/ZoneToolButton";
+import { MotionPreferenceWarning } from "./MotionPreferenceWarning";
 
 type ToolbarProps = {
   onActorToolSelected: () => void;
@@ -98,6 +99,7 @@ export function Toolbar({ onActorToolSelected, onOpenLibrary }: ToolbarProps) {
           />
           {TOOLBAR_ITEMS.map(renderTool)}
         </nav>
+        <MotionPreferenceWarning />
       </div>
     </header>
   );
