@@ -11,7 +11,7 @@ import type { AppDispatch, RootState } from '@store/store';
 import type { NewActorDragData } from '../toolbar/actor/actorCreationDrag';
 import { readImageFile } from '../toolbar/background/readImageFile';
 import type { LayoutPoint } from '@core/layout/types';
-import { setOptimisticActorPlacement } from './actorPlacementOptimisticState';
+import { setOptimisticActorPlacement } from './actors/actorPlacementOptimisticState';
 
 type CanvasDropContext = {
   actorTool: RootState['interaction']['actorTool'];

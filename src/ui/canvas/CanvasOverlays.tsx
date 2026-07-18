@@ -8,7 +8,7 @@ import {
   getBoxSelectionBounds,
   type LocalBoxSelectionState,
   polygonToPoints
-} from "./zoneGeometry";
+} from "./zones/zoneGeometry";
 import { DIRECT_MANIPULATION_TRANSITION } from "./canvasMotion";
 
 type CanvasOverlaysProps = {

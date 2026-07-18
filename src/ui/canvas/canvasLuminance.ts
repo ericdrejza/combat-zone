@@ -1,24 +1,24 @@
-import type { LayoutPoint } from "@core/layout/types";
-import type { Zone } from "@entities/zone/types";
+import type { LayoutPoint } from '@core/layout/types';
+import type { Zone } from '@entities/zone/types';
 import {
   BACKGROUND_SAMPLE_COUNT,
   CANVAS_BACKGROUND_COLOR,
   CANVAS_HEIGHT,
   CANVAS_WIDTH,
   LOW_ZONE_OPACITY_THRESHOLD
-} from "./canvasConstants";
-import { getPolygonBounds, isPointInPolygon } from "./zoneGeometry";
+} from './canvasConstants';
+import { getPolygonBounds, isPointInPolygon } from './zones/zoneGeometry';
 
 export function getReadableTextColor(backgroundColor: string): string {
   return getTextColorForLuminance(getHexLuminance(backgroundColor));
 }
 
 export function getTextColorForLuminance(luminance: number): string {
-  return luminance > 128 ? "#111827" : "#ffffff";
+  return luminance > 128 ? '#111827' : '#ffffff';
 }
 
 export function getHexLuminance(backgroundColor: string): number {
-  const normalizedColor = backgroundColor.replace("#", "");
+  const normalizedColor = backgroundColor.replace('#', '');
   const red = Number.parseInt(normalizedColor.slice(0, 2), 16);
   const green = Number.parseInt(normalizedColor.slice(2, 4), 16);
   const blue = Number.parseInt(normalizedColor.slice(4, 6), 16);
@@ -29,8 +29,8 @@ export function getHexLuminance(backgroundColor: string): number {
 export function usesBackgroundLuminanceForZoneName(zone: Zone): boolean {
   return (
     zone.opacity < LOW_ZONE_OPACITY_THRESHOLD ||
-    zone.shape === "circle" ||
-    zone.shape === "hexagon"
+    zone.shape === 'circle' ||
+    zone.shape === 'hexagon'
   );
 }
 
@@ -87,7 +87,10 @@ export function drawCanvasBackgroundImage(
 ) {
   const imageWidth = image.naturalWidth || image.width || CANVAS_WIDTH;
   const imageHeight = image.naturalHeight || image.height || CANVAS_HEIGHT;
-  const scale = Math.max(CANVAS_WIDTH / imageWidth, CANVAS_HEIGHT / imageHeight);
+  const scale = Math.max(
+    CANVAS_WIDTH / imageWidth,
+    CANVAS_HEIGHT / imageHeight
+  );
   const renderedWidth = imageWidth * scale;
   const renderedHeight = imageHeight * scale;
   const x = (CANVAS_WIDTH - renderedWidth) / 2;
@@ -125,14 +128,10 @@ export function sampleZoneBackgroundLuminance(
 }
 
 export function createCanvasBackgroundSamplePoints(): LayoutPoint[] {
-  const xPositions = [0.25, 0.5, 0.75].map(
-    (ratio) => CANVAS_WIDTH * ratio
-  );
+  const xPositions = [0.25, 0.5, 0.75].map((ratio) => CANVAS_WIDTH * ratio);
   const yPositions = [CANVAS_HEIGHT - 60, CANVAS_HEIGHT - 24];
 
-  return yPositions.flatMap((y) =>
-    xPositions.map((x) => ({ x, y }))
-  );
+  return yPositions.flatMap((y) => xPositions.map((x) => ({ x, y })));
 }
 
 export function sampleCanvasBackgroundLuminance(
