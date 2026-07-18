@@ -18,7 +18,6 @@ import {
   resizeZonePolygon,
   toSvgPoint
 } from "./zoneGeometry";
-import { findZoneIdAtPoint } from "./zoneHitTesting";
 
 type PointerHandlerInput = CanvasInteractionState;
 
@@ -57,52 +56,15 @@ export function useCanvasPointerHandlers(input: PointerHandlerInput) {
     }
   }, [activeToolId, setShapeDraft, setVertexDrag, setZoneDraftPoints, setZoneDrag]);
 
-  useEffect(() => {
-    if (!actorDrag || actorDrag.usesMotion) {
-      return;
-    }
-
-    function handleWindowMouseMove(event: globalThis.MouseEvent) {
-      const svg = canvasRef.current;
-
-      if (!svg) {
-        return;
-      }
-
-      const current = toSvgPoint(event, svg);
-
-      setActorDrag((drag) =>
-        drag
-          ? {
-              ...drag,
-              current,
-              hasMoved: drag.hasMoved || distance(drag.start, current) >= 1
-            }
-          : null
-      );
-    }
-
-    window.addEventListener("mousemove", handleWindowMouseMove);
-
-    return () => window.removeEventListener("mousemove", handleWindowMouseMove);
-  }, [actorDrag, canvasRef, setActorDrag]);
-
   const getDisplayedPolygon = (zone: Zone) =>
     getDisplayedZonePolygon(zone, zoneDrag, vertexDrag);
-  const handleCanvasMouseUp = useCanvasMouseUpHandler({
+  const finishCanvasInteraction = useCanvasMouseUpHandler({
     ...input,
     getDisplayedPolygon
   });
 
   function handleCanvasMouseMove(event: MouseEvent<SVGSVGElement>) {
     if (actorDrag) {
-      const current = toSvgPoint(event, event.currentTarget);
-
-      setActorDrag({
-        ...actorDrag,
-        current,
-        hasMoved: actorDrag.hasMoved || distance(actorDrag.start, current) >= 1
-      });
       return;
     }
 
@@ -123,40 +85,12 @@ export function useCanvasPointerHandlers(input: PointerHandlerInput) {
     }
 
     if (zoneDrag) {
-      const current = toSvgPoint(event, event.currentTarget);
-
-      setZoneDrag({
-        ...zoneDrag,
-        current,
-        hasMoved: zoneDrag.hasMoved || distance(zoneDrag.start, current) >= 1
-      });
       return;
     }
 
-    if (!vertexDrag) {
+    if (vertexDrag) {
       return;
     }
-
-    const point = toSvgPoint(event, event.currentTarget);
-    const zone = encounter.zones.byId[vertexDrag.zoneId];
-
-    if (!zone) {
-      setVertexDrag(null);
-      return;
-    }
-
-    const polygon = resizeZonePolygon(
-      zone,
-      vertexDrag.polygon,
-      vertexDrag.vertexIndex,
-      point
-    );
-
-    setVertexDrag({
-      ...vertexDrag,
-      hasMoved: vertexDrag.hasMoved || distance(vertexDrag.handleStart, point) >= 1,
-      polygon
-    });
   }
 
   function handleCanvasMouseDown(event: MouseEvent<SVGSVGElement>) {
@@ -215,6 +149,7 @@ export function useCanvasPointerHandlers(input: PointerHandlerInput) {
         current: point,
         hasMoved: false,
         originalPolygon: encounter.zones.byId[entityId].polygon,
+        phase: "dragging",
         start: point,
         zoneId: entityId
       });
@@ -243,54 +178,12 @@ export function useCanvasPointerHandlers(input: PointerHandlerInput) {
   function handleActorDragStart(
     actorId: string,
     point: LayoutPoint,
-    event: ActorDragStartEvent,
-    usesMotion = false
+    event: ActorDragStartEvent
   ) {
-    if (event.button !== undefined && event.button !== 0) {
-      return;
-    }
-
-    if (activeToolId === "zone") {
-      const zoneId = findZoneIdAtPoint(encounter, point);
-      const zone = zoneId ? encounter.zones.byId[zoneId] : undefined;
-
-      if (!zone) {
-        return;
-      }
-
-      event.preventDefault();
-      event.stopPropagation();
-      closeZoneShapeMenu();
-      dispatch(
-        selectEntity({
-          entityType: "zone",
-          ids: [zone.id],
-          toggle: event.shiftKey || event.ctrlKey || event.metaKey
-        })
-      );
-      suppressNextCanvasClickRef.current = true;
-      suppressNextCanvasClickUnconditionallyRef.current = true;
-      suppressNextEntityClickRef.current = zone.id;
-
-      if (!(event.ctrlKey || event.metaKey)) {
-        setZoneDraftPoints([]);
-        setZoneDrag({
-          current: point,
-          hasMoved: false,
-          originalPolygon: zone.polygon,
-          start: point,
-          zoneId: zone.id
-        });
-      }
-      return;
-    }
-
     if (activeToolId !== "actor" && activeToolId !== "select") {
       return;
     }
 
-    event.preventDefault();
-    event.stopPropagation();
     closeZoneShapeMenu();
     const dragActorIds =
       selection.selectedEntityType === "actor" &&
@@ -322,8 +215,8 @@ export function useCanvasPointerHandlers(input: PointerHandlerInput) {
       actorIds: dragActorIds,
       current: point,
       hasMoved: false,
+      phase: "dragging",
       start: point,
-      usesMotion
     });
   }
 
@@ -343,9 +236,37 @@ export function useCanvasPointerHandlers(input: PointerHandlerInput) {
     );
   }
 
+  function handleZoneDrag(offset: LayoutPoint) {
+    setZoneDrag((drag) =>
+      drag?.phase === "dragging"
+        ? {
+            ...drag,
+            current: {
+              x: drag.start.x + offset.x,
+              y: drag.start.y + offset.y
+            },
+            hasMoved: drag.hasMoved || distance({ x: 0, y: 0 }, offset) >= 1
+          }
+        : drag
+    );
+  }
+
+  function handleZoneDragEnd(event: { stopPropagation: () => void }) {
+    event.stopPropagation();
+    finishCanvasInteraction();
+  }
+
   function handleActorDragEnd(event: { stopPropagation: () => void }) {
     event.stopPropagation();
-    handleCanvasMouseUp();
+    finishCanvasInteraction();
+  }
+
+  function handleCanvasMouseUp() {
+    if (actorDrag?.hasMoved || zoneDrag?.hasMoved || vertexDrag?.hasMoved) {
+      return;
+    }
+
+    finishCanvasInteraction();
   }
 
   function handleResizeHandleMouseDown(
@@ -368,14 +289,54 @@ export function useCanvasPointerHandlers(input: PointerHandlerInput) {
     });
   }
 
+  function handleResizeHandleDrag(offset: LayoutPoint) {
+    if (!vertexDrag) {
+      return;
+    }
+
+    const zone = encounter.zones.byId[vertexDrag.zoneId];
+
+    if (!zone) {
+      setVertexDrag(null);
+      return;
+    }
+
+    setVertexDrag({
+      ...vertexDrag,
+      hasMoved:
+        vertexDrag.hasMoved ||
+        distance({ x: 0, y: 0 }, offset) >= 1,
+      polygon: resizeZonePolygon(
+        zone,
+        vertexDrag.polygon,
+        vertexDrag.vertexIndex,
+        {
+          x: vertexDrag.handleStart.x + offset.x,
+          y: vertexDrag.handleStart.y + offset.y
+        }
+      )
+    });
+  }
+
+  function handleResizeHandleDragEnd(event: {
+    stopPropagation: () => void;
+  }) {
+    event.stopPropagation();
+    finishCanvasInteraction();
+  }
+
   return {
     getDisplayedPolygon,
     handleActorDrag,
     handleActorDragEnd,
     handleActorDragStart,
+    handleResizeHandleDrag,
+    handleResizeHandleDragEnd,
     handleCanvasMouseDown,
     handleCanvasMouseMove,
     handleCanvasMouseUp,
-    handleResizeHandleMouseDown
+    handleResizeHandleMouseDown,
+    handleZoneDrag,
+    handleZoneDragEnd
   };
 }

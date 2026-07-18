@@ -38,6 +38,48 @@ describe("CanvasShell zone resizing", () => {
     });
   });
 
+  it("can resize repeatedly from the same selected-zone vertex", async () => {
+    const user = userEvent.setup();
+
+    renderApp();
+    const canvas = getCanvas();
+    mockCanvasBounds(canvas);
+
+    await selectZoneTool(user);
+    createRectangleZone(canvas);
+
+    const zone = await screen.findByLabelText("Zone 1");
+
+    fireEvent.mouseDown(screen.getByLabelText("Zone 1 vertex 2"), {
+      button: 0,
+      clientX: 180,
+      clientY: 80
+    });
+    fireEvent.mouseMove(window, { clientX: 220, clientY: 60 });
+    fireEvent.mouseUp(window, { clientX: 220, clientY: 60 });
+
+    const sameVertex = screen.getByLabelText("Zone 1 vertex 2");
+
+    expect(sameVertex).toHaveAttribute("data-drag-snap-to-origin", "true");
+
+    fireEvent.mouseDown(sameVertex, {
+      button: 0,
+      clientX: 220,
+      clientY: 60
+    });
+    fireEvent.mouseMove(window, { clientX: 250, clientY: 50 });
+    fireEvent.mouseUp(window, { clientX: 250, clientY: 50 });
+
+    expect(zone).toHaveAttribute(
+      "points",
+      "80,50 250,50 250,160 80,160"
+    );
+    expect(store.getState().interaction.selection).toMatchObject({
+      selectedEntityType: "zone",
+      selectedIds: [zone.getAttribute("data-entity-id")]
+    });
+  });
+
   it("rejects zone resizes that would drop vertices off screen", async () => {
     const user = userEvent.setup();
 

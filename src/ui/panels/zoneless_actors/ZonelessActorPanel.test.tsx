@@ -384,6 +384,19 @@ describe("ZonelessActorPanel", () => {
     expect(store.getState().encounter.present.actors.byId["actor-b"]?.currentZoneId).toBe(
       "zone-target"
     );
+    const movedAegis = await screen.findByLabelText("Aegis");
+    const movedBorin = await screen.findByLabelText("Borin");
+
+    [movedAegis, movedBorin].forEach((actorElement) => {
+      const path = JSON.parse(
+        actorElement.getAttribute("data-motion-path") ?? "{}"
+      ) as { x?: number[]; y?: number[] };
+
+      expect(path.x?.[0]).toBe(120);
+      expect(path.y?.[0]).toBe(120);
+      expect(path.x?.length).toBe(2);
+      expect(path.y?.length).toBe(2);
+    });
 
     act(() => {
       store.dispatch(undoEncounterChange());

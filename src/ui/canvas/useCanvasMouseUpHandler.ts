@@ -66,7 +66,11 @@ export function useCanvasMouseUpHandler(input: MouseUpHandlerInput) {
         // not change encounter state. Skip mutation construction and
         // validation so the existing geometry remains authoritative.
         if (!changesZone) {
-          setActorDrag(null);
+          setActorDrag({
+            ...actorDrag,
+            current: actorDrag.start,
+            phase: "returning"
+          });
           return;
         }
 
@@ -117,7 +121,16 @@ export function useCanvasMouseUpHandler(input: MouseUpHandlerInput) {
               ids: actorDrag.actorIds
             })
           );
+          setActorDrag(null);
+          return;
         }
+
+        setActorDrag({
+          ...actorDrag,
+          current: actorDrag.start,
+          phase: "returning"
+        });
+        return;
       }
 
       setActorDrag(null);
@@ -227,7 +240,14 @@ export function useCanvasMouseUpHandler(input: MouseUpHandlerInput) {
         );
       }
 
-      setZoneDrag(null);
+      setZoneDrag(
+        zoneDrag.hasMoved
+          ? {
+              ...zoneDrag,
+              phase: "committed"
+            }
+          : null
+      );
       return;
     }
 

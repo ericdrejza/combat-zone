@@ -8,6 +8,7 @@ import {
   mockCanvasBounds,
   renderApp
 } from "@test/ui/renderApp";
+import { MOTION_OVERRIDE_STORAGE_KEY } from "../motion_preferences/MotionPreferenceProvider";
 
 function createActorDragDataTransfer() {
   const data = new Map<string, string>();
@@ -44,6 +45,54 @@ function dropOnCanvas(
 }
 
 describe("Toolbar", () => {
+  it("warns about reduced motion and persists an app animation override", async () => {
+    const user = userEvent.setup();
+    const originalMatchMedia = globalThis.matchMedia;
+
+    localStorage.removeItem(MOTION_OVERRIDE_STORAGE_KEY);
+    globalThis.matchMedia = vi.fn().mockReturnValue({
+      addEventListener: vi.fn(),
+      matches: true,
+      media: "(prefers-reduced-motion: reduce)",
+      onchange: null,
+      removeEventListener: vi.fn()
+    });
+
+    try {
+      const { unmount } = renderApp();
+
+      const warning = screen.getByRole("button", {
+        name: "Animations are disabled. Enable animations"
+      });
+
+      expect(warning).toHaveAttribute(
+        "title",
+        "Your system preference disables animation effects. Click to enable animations in Combat Zone."
+      );
+
+      await user.click(warning);
+
+      expect(
+        screen.queryByRole("button", {
+          name: "Animations are disabled. Enable animations"
+        })
+      ).not.toBeInTheDocument();
+      expect(localStorage.getItem(MOTION_OVERRIDE_STORAGE_KEY)).toBe("true");
+
+      unmount();
+      renderApp();
+
+      expect(
+        screen.queryByRole("button", {
+          name: "Animations are disabled. Enable animations"
+        })
+      ).not.toBeInTheDocument();
+    } finally {
+      localStorage.removeItem(MOTION_OVERRIDE_STORAGE_KEY);
+      globalThis.matchMedia = originalMatchMedia;
+    }
+  });
+
   it("renders toolbar tools in the expected order with requested separators", () => {
     renderApp();
     const tools = screen.getByRole("navigation", { name: "Tools" });
@@ -225,6 +274,45 @@ describe("Toolbar", () => {
     expect(store.getState().encounter.past.at(-1)?.action.type).toBe("actor.create");
   });
 
+  it("animates existing actors when user-created actors change zone composition", async () => {
+    const user = userEvent.setup();
+
+    renderApp();
+    const canvas = getCanvas();
+    mockCanvasBounds(canvas);
+
+    await user.click(screen.getByRole("button", { name: "Zone" }));
+    createRectangleZone(canvas, { x: 80, y: 80 }, { x: 420, y: 400 });
+    await user.click(screen.getByRole("button", { name: "Actor" }));
+    fireEvent.click(screen.getByLabelText("Zone 1"));
+
+    await user.click(screen.getByRole("button", { name: "Create actor" }));
+    await user.type(screen.getByRole("textbox", { name: "Actor name" }), "First");
+    await user.click(screen.getByRole("button", { name: "Create" }));
+
+    const firstActor = await screen.findByLabelText("First");
+
+    await user.click(screen.getByRole("button", { name: "Create actor" }));
+    await user.type(screen.getByRole("textbox", { name: "Actor name" }), "Second");
+    await user.click(screen.getByRole("button", { name: "Create" }));
+
+    await screen.findByLabelText("Second");
+    await waitFor(() => {
+      expect(firstActor).toHaveAttribute("data-motion-path");
+    });
+
+    const path = JSON.parse(
+      firstActor.getAttribute("data-motion-path") ?? "{}"
+    ) as { x?: number[]; y?: number[] };
+
+    expect(path.x?.length).toBe(2);
+    expect(path.y?.length).toBe(2);
+    expect(
+      path.x?.[0] !== path.x?.[1] || path.y?.[0] !== path.y?.[1]
+    ).toBe(true);
+    expect(screen.getByLabelText("First")).toBe(firstActor);
+  });
+
   it("creates the preview actor in a zone when dragged from the modal", async () => {
     const user = userEvent.setup();
     const transfer = createActorDragDataTransfer();
@@ -267,6 +355,16 @@ describe("Toolbar", () => {
     expect(actorsInTargetZone).toHaveLength(1);
     expect(actor?.currentZoneId).toBe(targetZoneId);
     expect(store.getState().interaction.selection.selectedIds).toEqual([actor?.id]);
+
+    const actorElement = await screen.findByLabelText("Dragged Actor");
+    const path = JSON.parse(
+      actorElement.getAttribute("data-motion-path") ?? "{}"
+    ) as { x?: number[]; y?: number[] };
+
+    expect(path.x?.[0]).toBe(100);
+    expect(path.y?.[0]).toBe(100);
+    expect(path.x?.length).toBe(2);
+    expect(path.y?.length).toBe(2);
   });
 
   it("opens Zone shape radios from the Zone toolbar button", async () => {
