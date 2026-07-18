@@ -110,9 +110,16 @@ export function useCanvasDropHandlers({
       ACTOR_CREATION_DRAG_TYPE
     );
     const zonelessActorDrag = hasZonelessActorDrag(event);
+    // Some browsers expose the standard drag type during dragover but keep
+    // its value protected until drop. Treat it as a provisional canvas drag
+    // target; the drop handler still validates the namespaced actor payload.
+    const standardTextDrag = Array.from(event.dataTransfer.types).includes(
+      'text/plain'
+    );
 
     if (
       !zonelessActorDrag &&
+      !standardTextDrag &&
       (activeToolId !== 'actor' || (!libraryDrag && !actorCreationDrag))
     ) {
       return;

@@ -24,6 +24,7 @@ import {
 import { createRectanglePolygon } from "@ui/canvas/zones/zoneGeometry";
 import { CANVAS_BACKGROUND_COLOR } from "@ui/canvas/canvasConstants";
 import { getReadableTextColor } from "@ui/canvas/canvasLuminance";
+import { getZonelessActorTextPayload } from "@ui/panels/zoneless_actors/zonelessActorDrag";
 
 function collection<TEntity extends { id: string }>(
   entities: TEntity[]
@@ -372,6 +373,9 @@ describe("ZonelessActorPanel", () => {
     expect(transfer.getData("application/x-combat-zone-zoneless-actors")).toBe(
       "actor-a,actor-b"
     );
+    expect(transfer.getData("text/plain")).toBe(
+      getZonelessActorTextPayload(["actor-a", "actor-b"])
+    );
 
     const canvas = getCanvas();
     mockCanvasBounds(canvas);
@@ -414,6 +418,74 @@ describe("ZonelessActorPanel", () => {
     expect(store.getState().encounter.present.actors.byId["actor-a"]?.currentZoneId).toBe(
       "zone-target"
     );
+  });
+
+  it("accepts a panel drop when the nested SVG zone target stops bubbling", async () => {
+    const user = userEvent.setup();
+    const transfer = dataTransfer();
+
+    renderApp();
+    act(() => {
+      seedEncounter([actor("actor-a", "Aegis")], [zone()]);
+      store.dispatch(setActiveTool("actor"));
+    });
+
+    await user.click(
+      screen.getByRole("button", { name: "Expand zoneless actors" })
+    );
+
+    const actorButton = screen.getByRole("button", { name: "Aegis" });
+    fireEvent.dragStart(actorButton, { dataTransfer: transfer });
+
+    const zoneElement = screen.getByLabelText("Target");
+    zoneElement.addEventListener("dragover", (event) => event.stopPropagation());
+    zoneElement.addEventListener("drop", (event) => event.stopPropagation());
+
+    fireEvent.dragOver(zoneElement, {
+      clientX: 120,
+      clientY: 120,
+      dataTransfer: transfer
+    });
+    dropOnCanvas(zoneElement, transfer, 120, 120);
+
+    expect(
+      store.getState().encounter.present.actors.byId["actor-a"]?.currentZoneId
+    ).toBe("zone-target");
+  });
+
+  it("accepts a panel drop when only the standard text drag payload is available", async () => {
+    const dragOverTransfer = {
+      dropEffect: "none",
+      effectAllowed: "move",
+      getData: () => "",
+      types: ["text/plain"]
+    };
+    const dropTransfer = dataTransfer();
+
+    renderApp();
+    act(() => {
+      seedEncounter([actor("actor-a", "Aegis")], [zone()]);
+      store.dispatch(setActiveTool("actor"));
+    });
+
+    dropTransfer.setData(
+      "text/plain",
+      getZonelessActorTextPayload(["actor-a"])
+    );
+
+    const canvas = getCanvas();
+    mockCanvasBounds(canvas);
+    fireEvent.dragOver(canvas, {
+      clientX: 120,
+      clientY: 120,
+      dataTransfer: dragOverTransfer
+    });
+    expect(dragOverTransfer.dropEffect).toBe("move");
+    dropOnCanvas(canvas, dropTransfer, 120, 120);
+
+    expect(
+      store.getState().encounter.present.actors.byId["actor-a"]?.currentZoneId
+    ).toBe("zone-target");
   });
 
   it("does not create history when a panel actor is dropped outside a zone", async () => {

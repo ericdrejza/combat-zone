@@ -14,7 +14,10 @@ import { selectEntity } from "@interaction/interactionState";
 import { useDispatch } from "react-redux";
 import type { RootState } from "@store/store";
 import { getTextColorForLuminance } from "../../canvas/canvasLuminance";
-import { ZONELESS_ACTOR_DRAG_TYPE } from "./zonelessActorDrag";
+import {
+  getZonelessActorTextPayload,
+  ZONELESS_ACTOR_DRAG_TYPE
+} from "./zonelessActorDrag";
 import { useResizablePanel } from "../../canvas/useResizablePanel";
 import { ZonelessActorPanelToken } from "./ZonelessActorPanelToken";
 
@@ -149,6 +152,12 @@ export function ZonelessActorPanel({
 
     event.dataTransfer.effectAllowed = "move";
     event.dataTransfer.setData(ZONELESS_ACTOR_DRAG_TYPE, actorIds.join(","));
+    // Keep a standard fallback for browsers that omit custom MIME types while
+    // exposing the drag over the canvas.
+    event.dataTransfer.setData(
+      "text/plain",
+      getZonelessActorTextPayload(actorIds)
+    );
   }
 
   function handleDragEnd() {
