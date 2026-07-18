@@ -1,8 +1,8 @@
 import type { RootState } from "@store/store";
 import type { ActorDragState } from "./canvasInteractionTypes";
-import { ActorLayer } from "./ActorLayer";
+import { ActorLayer } from "./actors/ActorLayer";
 import { CANVAS_HEIGHT, CANVAS_WIDTH } from "./canvasConstants";
-import type { ActorRenderPlacement } from "./actorCanvasLayout";
+import type { ActorRenderPlacement } from "./actors/actorCanvasLayout";
 
 type CanvasDragOverlayProps = {
   actorDrag: ActorDragState;

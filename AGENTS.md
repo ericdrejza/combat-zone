@@ -87,6 +87,8 @@ first — this table is a locked decision, not a suggestion.
 - Comments on classes, interfaces, functions, etc., should explain why behavior
   exists, important constraints, or non-obvious edge cases. Avoid comments that
   merely restate the code.
+- Use path aliases for imports from files that do not share a directory or 
+  belong to a subfolder from this file's directory downwards. 
 
 ## UI IMPLEMENTATION RULES
 
@@ -96,6 +98,8 @@ first — this table is a locked decision, not a suggestion.
 - Use established icon sets for common controls such as drag handles,
   reorder affordances, chevrons, close buttons, and disclosure controls; do
   not hand-author bespoke SVGs for standard icons.
+- Use Motion package for any and all movmement, animations, etc..
+  - Refer to documentation only if absolutely necessary `https://motion.dev/docs/react`
 
 ## FOLDER STRUCTURE (locked)
 
@@ -135,6 +139,7 @@ src/
     toolbar/          # top-level toolbar and tool buttons
       background/     # background tool controls and file handling
       zone/           # zone tool controls and mode switching
+tests/               # All tests live here
 ```
 
 **Rule of thumb for where new code goes:** if it's a strategy/engine used by

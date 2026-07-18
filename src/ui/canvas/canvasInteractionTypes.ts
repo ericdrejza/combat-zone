@@ -1,11 +1,11 @@
-import type { Dispatch, SetStateAction } from "react";
+import type { Dispatch, SetStateAction } from 'react';
 
-import type { LayoutPoint } from "@core/layout/types";
-import type { ZoneShape } from "@entities/zone/types";
-import type { AppDispatch } from "@store/store";
-import type { RootState } from "@store/store";
-import type { ActorRenderPlacement } from "./actorCanvasLayout";
-import type { LocalBoxSelectionState } from "./zoneGeometry";
+import type { LayoutPoint } from '@core/layout/types';
+import type { ZoneShape } from '@entities/zone/types';
+import type { AppDispatch } from '@store/store';
+import type { RootState } from '@store/store';
+import type { ActorRenderPlacement } from './actors/actorCanvasLayout';
+import type { LocalBoxSelectionState } from './zones/zoneGeometry';
 
 export type VertexDragState = {
   hasMoved: boolean;
@@ -18,7 +18,7 @@ export type VertexDragState = {
 export type ShapeDraftState = {
   cloneSourceZoneId?: string;
   current: LayoutPoint;
-  shape: Extract<ZoneShape, "rectangle" | "circle" | "hexagon">;
+  shape: Extract<ZoneShape, 'rectangle' | 'circle' | 'hexagon'>;
   start: LayoutPoint;
 };
 
@@ -26,7 +26,7 @@ export type ZoneDragState = {
   current: LayoutPoint;
   hasMoved: boolean;
   originalPolygon: LayoutPoint[];
-  phase: "dragging" | "committed";
+  phase: 'dragging' | 'committed';
   start: LayoutPoint;
   zoneId: string;
 };
@@ -36,7 +36,7 @@ export type ActorDragState = {
   actorIds: string[];
   current: LayoutPoint;
   hasMoved: boolean;
-  phase: "dragging" | "returning";
+  phase: 'dragging' | 'returning';
   start: LayoutPoint;
 };
 
@@ -55,17 +55,17 @@ export type MutableRefValue<TValue> = {
 };
 
 export type CanvasInteractionState = {
-  activeToolId: RootState["interaction"]["activeToolId"];
+  activeToolId: RootState['interaction']['activeToolId'];
   actorDrag: ActorDragState | null;
   actorRenderPlacements: ActorRenderPlacement[];
-  actorPaintBrush: RootState["interaction"]["actorPaintBrush"];
-  actorTool: RootState["interaction"]["actorTool"];
+  actorPaintBrush: RootState['interaction']['actorPaintBrush'];
+  actorTool: RootState['interaction']['actorTool'];
   boxSelection: LocalBoxSelectionState | null;
   canvasRef: MutableRefValue<SVGSVGElement | null>;
   dispatch: AppDispatch;
-  encounter: RootState["encounter"]["present"];
-  lastZoneOpacity: RootState["interaction"]["lastZoneOpacity"];
-  selection: RootState["interaction"]["selection"];
+  encounter: RootState['encounter']['present'];
+  lastZoneOpacity: RootState['interaction']['lastZoneOpacity'];
+  selection: RootState['interaction']['selection'];
   setActorDrag: Dispatch<SetStateAction<ActorDragState | null>>;
   setBoxSelection: Dispatch<SetStateAction<LocalBoxSelectionState | null>>;
   setShapeDraft: Dispatch<SetStateAction<ShapeDraftState | null>>;
@@ -80,6 +80,6 @@ export type CanvasInteractionState = {
   vertexDrag: VertexDragState | null;
   zoneDraftPoints: LayoutPoint[];
   zoneDrag: ZoneDragState | null;
-  zonePaintBrush: RootState["interaction"]["zonePaintBrush"];
-  zoneShapeMode: RootState["interaction"]["zoneShapeMode"];
+  zonePaintBrush: RootState['interaction']['zonePaintBrush'];
+  zoneShapeMode: RootState['interaction']['zoneShapeMode'];
 };
