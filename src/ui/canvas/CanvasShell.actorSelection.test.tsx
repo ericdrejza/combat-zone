@@ -262,9 +262,102 @@ describe("CanvasShell actor selection", () => {
 
     expect(actors["actor-1"]?.currentZoneId).toBe("zone-2");
     expect(actors["actor-2"]?.currentZoneId).toBe("zone-2");
+    expect(
+      document.querySelector(
+        '[data-layer="actors"] [data-entity-id="actor-2"]'
+      )
+    ).toBe(secondActor);
     expect(store.getState().interaction.selection).toMatchObject({
       selectedEntityType: "actor",
       selectedIds: ["actor-1", "actor-2"]
+    });
+  });
+
+  it("drops an existing actor at its visible canvas position when the canvas is offset", async () => {
+    renderApp();
+    const canvas = getCanvas();
+    mockCanvasBounds(canvas, {
+      left: 300,
+      right: 1260,
+      x: 300
+    });
+
+    act(() => {
+      seedEncounter(
+        [actor("actor-1", "zone-1")],
+        [
+          zone("zone-1", 100, 100, 200, 200),
+          zone("zone-2", 400, 100, 200, 200)
+        ]
+      );
+      store.dispatch(setActiveTool("actor"));
+    });
+
+    const actorElement = await screen.findByLabelText("actor-1");
+
+    fireEvent.mouseDown(actorElement, {
+      button: 0,
+      clientX: 465,
+      clientY: 200
+    });
+    fireEvent.mouseMove(canvas, { clientX: 750, clientY: 200 });
+    fireEvent.mouseUp(canvas);
+
+    expect(
+      store.getState().encounter.present.actors.byId["actor-1"]?.currentZoneId
+    ).toBe("zone-2");
+  });
+
+  it("animates every affected actor when moving an actor between zones", async () => {
+    renderApp();
+    const canvas = getCanvas();
+    mockCanvasBounds(canvas);
+
+    act(() => {
+      seedEncounter(
+        [
+          actor("dragged", "zone-1"),
+          actor("source-neighbor", "zone-1"),
+          actor("destination-neighbor", "zone-2")
+        ],
+        [
+          zone("zone-1", 80, 80, 260, 240),
+          zone("zone-2", 420, 80, 260, 240)
+        ]
+      );
+      store.dispatch(setActiveTool("actor"));
+    });
+
+    const dragged = await screen.findByLabelText("dragged");
+    const sourceNeighbor = screen.getByLabelText("source-neighbor");
+    const destinationNeighbor = screen.getByLabelText("destination-neighbor");
+
+    fireEvent.mouseDown(dragged, {
+      button: 0,
+      clientX: 165,
+      clientY: 200
+    });
+    fireEvent.mouseMove(canvas, { clientX: 520, clientY: 200 });
+    fireEvent.mouseUp(canvas);
+
+    expect(
+      store.getState().encounter.present.actors.byId.dragged?.currentZoneId
+    ).toBe("zone-2");
+    expect(screen.getByLabelText("source-neighbor")).toBe(sourceNeighbor);
+    expect(screen.getByLabelText("destination-neighbor")).toBe(
+      destinationNeighbor
+    );
+
+    [dragged, sourceNeighbor, destinationNeighbor].forEach((actorElement) => {
+      const path = JSON.parse(
+        actorElement.getAttribute("data-motion-path") ?? "{}"
+      ) as { x?: number[]; y?: number[] };
+
+      expect(path.x?.length).toBe(2);
+      expect(path.y?.length).toBe(2);
+      expect(
+        path.x?.[0] !== path.x?.[1] || path.y?.[0] !== path.y?.[1]
+      ).toBe(true);
     });
   });
 

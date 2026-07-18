@@ -156,7 +156,11 @@ export function CanvasShell() {
     handleActorDrag,
     handleActorDragEnd,
     handleActorDragStart,
-    handleResizeHandleMouseDown
+    handleResizeHandleDrag,
+    handleResizeHandleDragEnd,
+    handleResizeHandleMouseDown,
+    handleZoneDrag,
+    handleZoneDragEnd
   } = useCanvasInteractionHandlers({
     activeToolId,
     actorDrag,
@@ -190,17 +194,14 @@ export function CanvasShell() {
   const {
     handleActorCreationDragOverZoneless,
     handleActorCreationDropToZoneless,
-    handleActorDropToZoneless,
     handleCanvasDragOver,
     handleCanvasDrop
   } = useCanvasDropHandlers({
     activeToolId,
-    actorDrag,
     actorTool,
     dispatch,
     encounter,
-    library,
-    setActorDrag
+    library
   });
 
   const polygonDraftColor = getTextColorForLuminance(
@@ -224,11 +225,18 @@ export function CanvasShell() {
       : hoveredActorName
         ? [hoveredActorName]
         : [];
+  const isDraggingCanvasEntity = Boolean(
+    actorDrag?.phase === "dragging" ||
+      zoneDrag?.phase === "dragging" ||
+      vertexDrag
+  );
 
   return (
     <section
       aria-label="Encounter canvas"
-      className="relative min-h-0 overflow-hidden rounded-3xl border border-canvas-line bg-canvas-panel shadow-sm"
+      className={`relative min-h-0 overflow-hidden rounded-3xl border border-canvas-line bg-canvas-panel shadow-sm ${
+        isDraggingCanvasEntity ? "select-none" : ""
+      }`}
       role="main"
     >
       <CanvasWorkspace
@@ -242,12 +250,15 @@ export function CanvasShell() {
         boxSelection={boxSelection}
         canvasBackgroundLuminance={backgroundLuminance.canvas}
         canvasRef={canvasRef}
+        directManipulationZoneId={
+          vertexDrag?.zoneId ?? zoneDrag?.zoneId ?? null
+        }
         encounter={encounter}
         getDisplayedPolygon={getDisplayedPolygon}
         onActorDrag={handleActorDrag}
         onActorDragEnd={handleActorDragEnd}
         onActorDragStart={handleActorDragStart}
-        onActorMouseDown={handleActorDragStart}
+        onActorReturnComplete={() => setActorDrag(null)}
         handleCanvasClick={handleCanvasClick}
         handleCanvasContextMenu={handleCanvasContextMenu}
         handleCanvasDoubleClick={handleCanvasDoubleClick}
@@ -257,6 +268,11 @@ export function CanvasShell() {
         handleCanvasMouseMove={handleCanvasMouseMove}
         handleCanvasMouseUp={handleCanvasMouseUp}
         handleResizeHandleMouseDown={handleResizeHandleMouseDown}
+        onResizeHandleDrag={handleResizeHandleDrag}
+        onResizeHandleDragEnd={handleResizeHandleDragEnd}
+        onZoneDrag={handleZoneDrag}
+        onZoneDragEnd={handleZoneDragEnd}
+        onZoneMotionComplete={() => setZoneDrag(null)}
         onActorMouseEnter={setHoveredActorId}
         onActorMouseLeave={(actorId) =>
           setHoveredActorId((current) =>
@@ -269,6 +285,7 @@ export function CanvasShell() {
         showFactionOutlines={showFactionOutlines}
         zoneDraftPoints={zoneDraftPoints}
         zoneShapeMode={zoneShapeMode}
+        zoneDrag={zoneDrag}
       />
       <CanvasToolStatusBadge
         activeToolId={activeToolId}
@@ -282,7 +299,6 @@ export function CanvasShell() {
         isActorDragActive={Boolean(actorDrag?.hasMoved)}
         onActorCreationDragOver={handleActorCreationDragOverZoneless}
         onActorCreationDrop={handleActorCreationDropToZoneless}
-        onActorDropToZoneless={handleActorDropToZoneless}
         selection={selection}
       />
       {actorDrag ? (

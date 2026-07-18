@@ -26,6 +26,7 @@ export type ZoneDragState = {
   current: LayoutPoint;
   hasMoved: boolean;
   originalPolygon: LayoutPoint[];
+  phase: "dragging" | "committed";
   start: LayoutPoint;
   zoneId: string;
 };
@@ -35,17 +36,14 @@ export type ActorDragState = {
   actorIds: string[];
   current: LayoutPoint;
   hasMoved: boolean;
+  phase: "dragging" | "returning";
   start: LayoutPoint;
-  usesMotion: boolean;
 };
 
 export type ActorDragStartEvent = {
-  button?: number;
   ctrlKey: boolean;
   metaKey: boolean;
-  preventDefault: () => void;
   shiftKey: boolean;
-  stopPropagation: () => void;
 };
 
 export type ActorDragEndEvent = {

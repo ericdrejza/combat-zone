@@ -14,6 +14,17 @@ import {
   selectZoneTool
 } from "@test/ui/renderApp";
 
+function getTranslate(element: HTMLElement): { x: number; y: number } {
+  const match = element.style.transform.match(
+    /translateX\(([-\d.]+)px\) translateY\(([-\d.]+)px\)/
+  );
+
+  return {
+    x: Number(match?.[1] ?? 0),
+    y: Number(match?.[2] ?? 0)
+  };
+}
+
 describe("CanvasShell zone dragging", () => {
   it("gives the zone pointer track priority over actors in Zone mode", async () => {
     const user = userEvent.setup();
@@ -49,7 +60,7 @@ describe("CanvasShell zone dragging", () => {
     expect(screen.getByText("Zone shape: rectangle")).toBeInTheDocument();
 
     const beforePoints = zone.getAttribute("points");
-    fireEvent.mouseDown(actorElement, {
+    fireEvent.mouseDown(zone, {
       button: 0,
       clientX: 170,
       clientY: 170
@@ -87,6 +98,73 @@ describe("CanvasShell zone dragging", () => {
     });
     expect(zone.getAttribute("points")).not.toEqual(beforePoints);
     expect(screen.queryByLabelText("rectangle zone draft")).not.toBeInTheDocument();
+  });
+
+  it("commits the visible zone vector and moves its actors by that same vector", async () => {
+    const user = userEvent.setup();
+
+    renderApp();
+    const canvas = getCanvas();
+    mockCanvasBounds(canvas, {
+      left: 300,
+      right: 1260,
+      x: 300
+    });
+
+    await selectZoneTool(user);
+    createRectangleZone(canvas, { x: 420, y: 120 }, { x: 520, y: 220 });
+    const zone = await screen.findByLabelText("Zone 1");
+    const zoneId = zone.getAttribute("data-entity-id") ?? "";
+
+    act(() => {
+      const encounter = store.getState().encounter.present;
+      store.dispatch(
+        commitEncounterChange({
+          action: createEncounterActionRecord("test.seedActor"),
+          nextEncounter: createActor(encounter, {
+            currentZoneId: zoneId,
+            id: "actor-in-moving-zone",
+            name: "Actor in moving zone"
+          })
+        })
+      );
+      store.dispatch(setActiveTool("zone"));
+    });
+
+    const actorElement = await screen.findByLabelText("Actor in moving zone");
+    const actorStart = getTranslate(actorElement);
+    const originalPolygon =
+      store.getState().encounter.present.zones.byId[zoneId]?.polygon ?? [];
+
+    fireEvent.mouseDown(zone, {
+      button: 0,
+      clientX: 450,
+      clientY: 150
+    });
+    expect(
+      screen.getByRole("main", { name: "Encounter canvas" })
+    ).toHaveClass("select-none");
+    fireEvent.mouseMove(canvas, { clientX: 490, clientY: 175 });
+
+    const actorDuringDrag = getTranslate(actorElement);
+    expect(actorDuringDrag).toEqual({
+      x: actorStart.x + 40,
+      y: actorStart.y + 25
+    });
+
+    fireEvent.mouseUp(canvas);
+    expect(
+      screen.getByRole("main", { name: "Encounter canvas" })
+    ).not.toHaveClass("select-none");
+
+    expect(
+      store.getState().encounter.present.zones.byId[zoneId]?.polygon
+    ).toEqual(
+      originalPolygon.map((point) => ({
+        x: point.x + 40,
+        y: point.y + 25
+      }))
+    );
   });
 
   it("rejects zone moves that would drop vertices off screen", async () => {

@@ -190,19 +190,11 @@ export function getActorRenderPlacements(
   return proactiveGeometry.flatMap(({ actorId, point, radius }) => {
     const actor = encounter.actors.byId[actorId];
     const incomingPoint = getOptimisticActorPlacement(actorId);
-    const hasMovedFromIncomingPoint = Boolean(
-      incomingPoint &&
-        (incomingPoint.x !== point.x || incomingPoint.y !== point.y)
-    );
-
-    if (geometry || hasMovedFromIncomingPoint) {
-      clearOptimisticActorPlacement(actorId);
-    }
 
     return actor
       ? [{
           actor,
-          ...(hasMovedFromIncomingPoint ? { incomingPoint } : {}),
+          ...(incomingPoint ? { incomingPoint } : {}),
           point,
           radius
         }]

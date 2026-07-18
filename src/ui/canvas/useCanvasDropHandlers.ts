@@ -21,7 +21,6 @@ import {
   getMovableActorIds,
   moveActorsToZone
 } from "./canvasDropMutations";
-import type { ActorDragState } from "./canvasInteractionTypes";
 import {
   hasZonelessActorDrag,
   readZonelessActorIds
@@ -30,22 +29,18 @@ import { toSvgPoint } from "./zoneGeometry";
 
 type UseCanvasDropHandlersInput = {
   activeToolId: RootState["interaction"]["activeToolId"];
-  actorDrag: ActorDragState | null;
   actorTool: RootState["interaction"]["actorTool"];
   dispatch: AppDispatch;
   encounter: RootState["encounter"]["present"];
   library: RootState["library"];
-  setActorDrag: (value: null) => void;
 };
 
 export function useCanvasDropHandlers({
   activeToolId,
-  actorDrag,
   actorTool,
   dispatch,
   encounter,
-  library,
-  setActorDrag
+  library
 }: UseCanvasDropHandlersInput) {
   const mutationContext = {
     actorTool,
@@ -53,34 +48,6 @@ export function useCanvasDropHandlers({
     encounter,
     library
   };
-
-  function handleActorDropToZoneless() {
-    if (!actorDrag) {
-      return;
-    }
-
-    if (!actorDrag.hasMoved) {
-      setActorDrag(null);
-      return;
-    }
-
-    const actorIds = getMovableActorIds(
-      encounter,
-      actorDrag.actorIds,
-      ZONELESS_ACTOR_ZONE_ID
-    );
-
-    if (actorIds.length > 0) {
-      moveActorsToZone(
-        mutationContext,
-        actorIds,
-        ZONELESS_ACTOR_ZONE_ID,
-        true
-      );
-    }
-
-    setActorDrag(null);
-  }
 
   function handleActorCreationDropToZoneless(
     event: DragEvent<HTMLElement>
@@ -255,7 +222,6 @@ export function useCanvasDropHandlers({
   return {
     handleActorCreationDragOverZoneless,
     handleActorCreationDropToZoneless,
-    handleActorDropToZoneless,
     handleCanvasDragOver,
     handleCanvasDrop
   };

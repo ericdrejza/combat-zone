@@ -11,10 +11,14 @@ import type {
 import type { ActorRenderPlacement } from "./actorCanvasLayout";
 import type { ActorPlacementTranslation } from "./actorPlacementTranslation";
 import {
-  getReadableTextColor,
   getTextColorForLuminance,
   getZoneNameTextColor
 } from "./canvasLuminance";
+import { ActorVisual } from "./ActorVisual";
+import { ActorMotionTrack } from "./ActorMotionTrack";
+import { getCanvasTransition } from "./canvasMotion";
+import { useMotionPreference } from "../motion_preferences/MotionPreferenceProvider";
+import { clearOptimisticActorPlacement } from "./actorPlacementOptimisticState";
 
 type ActorLayerProps = {
   activeToolId?: RootState["interaction"]["activeToolId"];
@@ -31,19 +35,12 @@ type ActorLayerProps = {
   onActorDragStart?: (
     actorId: string,
     point: LayoutPoint,
-    event: ActorDragStartEvent,
-    usesMotion?: boolean
+    event: ActorDragStartEvent
   ) => void;
   onActorDrag?: (point: LayoutPoint) => void;
   onActorDragEnd?: (event: ActorDragEndEvent) => void;
-  onActorMouseDown?: (
-    actorId: string,
-    point: LayoutPoint,
-    event: ActorDragStartEvent,
-    usesMotion?: boolean
-  ) => void;
+  onActorReturnComplete?: () => void;
   selection: RootState["interaction"]["selection"];
-  excludeActorId?: string;
 };
 
 function getDraggedPoint(
@@ -92,222 +89,139 @@ export function ActorLayer({
   onActorDragStart,
   onActorDrag,
   onActorDragEnd,
-  onActorMouseDown,
-  excludeActorId
+  onActorReturnComplete
 }: ActorLayerProps) {
+  const { animationsDisabled } = useMotionPreference();
+
   return placements
     .filter(({ actor }) => {
-      if (actor.id === excludeActorId) {
-        return false;
-      }
-
       if (dragOverlay) {
         return Boolean(actorDrag?.actorIds.includes(actor.id));
-      }
-
-      if (actorDrag?.actorIds.includes(actor.id)) {
-        return actor.id === actorDrag.actorId && actorDrag.usesMotion;
       }
 
       return true;
     })
     .map(({ actor, incomingPoint: placementIncomingPoint, point, radius }) => {
-    const zoneMovedPoint = getZoneMovedPoint(
-      actor.currentZoneId,
-      point,
-      zoneActorTranslation
-    );
-    const isMotionDraggedActor =
-      !dragOverlay &&
-      actorDrag?.usesMotion === true &&
-      actorDrag.actorId === actor.id;
-    const renderedPoint = isMotionDraggedActor
-      ? zoneMovedPoint
-      : getDraggedPoint(actor.id, zoneMovedPoint, actorDrag);
-    const incomingPoint = placementIncomingPoint
-      ? getDraggedPoint(
-          actor.id,
-          getZoneMovedPoint(
-            actor.currentZoneId,
-            placementIncomingPoint,
-            zoneActorTranslation
-          ),
-          actorDrag
-        )
-      : undefined;
-    const isDirectManipulation = Boolean(actorDrag || zoneActorTranslation);
-    const selected =
-      selection.selectedEntityType === "actor" &&
-      selection.selectedIds.includes(actor.id);
-    const colors = ACTOR_LAYOUT_GROUP_COLORS[actor.layoutGroup];
-    const actorZone = encounter.zones.byId[actor.currentZoneId];
-    const selectedActorTextColor = actorZone
-      ? getZoneNameTextColor(
-          actorZone,
-          backgroundLuminanceByZoneId[actorZone.id]
-        )
-      : getTextColorForLuminance(canvasBackgroundLuminance);
-    const clipId = `${actor.id}-clip${dragOverlay ? "-drag-overlay" : ""}`;
-    const innerRadius = Math.max(radius - 3, 1);
-
+      const zoneMovedPoint = getZoneMovedPoint(
+        actor.currentZoneId,
+        point,
+        zoneActorTranslation
+      );
+      const isMotionDraggedActor =
+        !dragOverlay &&
+        actorDrag?.phase === "dragging" &&
+        actorDrag.actorId === actor.id;
+      const renderedPoint = isMotionDraggedActor
+        ? zoneMovedPoint
+        : getDraggedPoint(actor.id, zoneMovedPoint, actorDrag);
+      const incomingPoint = placementIncomingPoint
+        ? getDraggedPoint(
+            actor.id,
+            getZoneMovedPoint(
+              actor.currentZoneId,
+              placementIncomingPoint,
+              zoneActorTranslation
+            ),
+            actorDrag
+          )
+        : undefined;
+      const isDirectManipulation = Boolean(
+        (actorDrag?.phase === "dragging" &&
+          actorDrag.actorIds.includes(actor.id)) ||
+          (zoneActorTranslation &&
+            actor.currentZoneId === zoneActorTranslation.zoneId)
+      );
+      const selected =
+        selection.selectedEntityType === "actor" &&
+        selection.selectedIds.includes(actor.id);
+      const colors = ACTOR_LAYOUT_GROUP_COLORS[actor.layoutGroup];
+      const actorZone = encounter.zones.byId[actor.currentZoneId];
+      const selectedActorTextColor = actorZone
+        ? getZoneNameTextColor(
+            actorZone,
+            backgroundLuminanceByZoneId[actorZone.id]
+          )
+        : getTextColorForLuminance(canvasBackgroundLuminance);
+      const clipId = `${actor.id}-clip${dragOverlay ? "-drag-overlay" : ""}`;
+      const actorTransition = getCanvasTransition(
+        isDirectManipulation,
+        animationsDisabled
+      );
       return (
-      <motion.g
-        key={actor.id}
-        aria-label={actor.name}
-        className="cursor-grab active:cursor-grabbing"
-        data-entity-id={actor.id}
-        data-entity-type="actor"
-        onMouseEnter={
-          activeToolId === "zone" ? undefined : () => onActorMouseEnter(actor.id)
-        }
-        onMouseLeave={
-          activeToolId === "zone" ? undefined : () => onActorMouseLeave(actor.id)
-        }
-        onMouseDown={(event) =>
-          onActorMouseDown?.(
-            actor.id,
-            renderedPoint,
-            event as unknown as ActorDragStartEvent,
-            false
-          )
-        }
-        drag={!dragOverlay && activeToolId !== "zone"}
-        dragMomentum={false}
-        dragElastic={0}
-        onDragStart={(event) =>
-          onActorDragStart?.(
-            actor.id,
-            renderedPoint,
-            event as unknown as ActorDragStartEvent,
-            true
-          )
-        }
-        onDrag={(_, info) => onActorDrag?.(info.point)}
-        onDragEnd={(event) =>
-          onActorDragEnd?.(event as unknown as ActorDragEndEvent)
-        }
-        initial={
-          !dragOverlay && !actorDrag && incomingPoint
-            ? { x: incomingPoint.x, y: incomingPoint.y }
-            : false
-        }
-        animate={isMotionDraggedActor ? undefined : { x: renderedPoint.x, y: renderedPoint.y }}
-        transition={
-          isDirectManipulation
-            ? { duration: 0 }
-            : { damping: 30, mass: 0.55, stiffness: 420, type: "spring" }
-        }
-      >
-        {actor.shape === "rectangle" ? (
-          <rect
-            className="stroke-white"
-            fill={colors.fill}
-            height={radius * 2}
-            rx="6"
-            strokeWidth={selected ? 4 : 2}
-            width={radius * 2}
-            x={-radius}
-            y={-radius}
-          />
-        ) : (
-          <circle
-            className="stroke-white"
-            fill={colors.fill}
-            r={radius}
-            strokeWidth={selected ? 4 : 2}
-          />
-        )}
-        {actor.image ? (
-          <>
-            <clipPath id={clipId}>
-              {actor.shape === "rectangle" ? (
-                <rect
-                  height={innerRadius * 2}
-                  rx="4"
-                  width={innerRadius * 2}
-                  x={-innerRadius}
-                  y={-innerRadius}
-                />
-              ) : (
-                <circle r={innerRadius} />
-              )}
-            </clipPath>
-            <image
-              clipPath={`url(#${clipId})`}
-              height={innerRadius * 2}
-              href={actor.image}
-              preserveAspectRatio="xMidYMid slice"
-              width={innerRadius * 2}
-              x={-innerRadius}
-              y={-innerRadius}
-            />
-          </>
-        ) : (
-          <text
-            className="pointer-events-none text-[10px] font-bold"
-            dominantBaseline="middle"
-            fill={getReadableTextColor(colors.fill)}
-            textAnchor="middle"
-          >
-            {actor.name.toUpperCase()}
-          </text>
-        )}
-        {selected ? (
-          actor.shape === "rectangle" ? (
-            <rect
-              className="pointer-events-none fill-none"
-              stroke={selectedActorTextColor}
-              height={(radius + 5) * 2}
-              rx="8"
-              strokeDasharray="5 5"
-              strokeWidth="2"
-              width={(radius + 5) * 2}
-              x={-(radius + 5)}
-              y={-(radius + 5)}
-            />
-          ) : (
-            <circle
-              className="pointer-events-none fill-none"
-              stroke={selectedActorTextColor}
-              r={radius + 5}
-              strokeDasharray="5 5"
-              strokeWidth="2"
-            />
-          )
-        ) : null}
-        {showFactionOutlines ? (
-          actor.shape === "rectangle" ? (
-            <rect
-              className="pointer-events-none fill-none"
-              height={(radius + 9) * 2}
-              rx="10"
-              stroke={colors.outline}
-              strokeWidth="4"
-              width={(radius + 9) * 2}
-              x={-(radius + 9)}
-              y={-(radius + 9)}
-            />
-          ) : (
-            <circle
-              className="pointer-events-none fill-none"
-              r={radius + 9}
-              stroke={colors.outline}
-              strokeWidth="4"
-            />
-          )
-        ) : null}
-        {selected && actor.image ? (
-          <text
-            className="pointer-events-none text-[10px] font-bold z-10"
-            dominantBaseline="middle"
-            fill={selectedActorTextColor}
-            textAnchor="middle"
-            dy={radius + 16}
-          >
-            {actor.name.toUpperCase()}
-          </text>
-        ) : null}
-      </motion.g>
+        <ActorMotionTrack
+          key={actor.id}
+          direct={isDirectManipulation}
+          incomingPoint={incomingPoint}
+          onIncomingPointCommitted={() =>
+            clearOptimisticActorPlacement(actor.id)
+          }
+          target={renderedPoint}
+        >
+          {(animatePoint, completeTrack) => (
+            <motion.g
+              aria-label={actor.name}
+              className="cursor-grab select-none active:cursor-grabbing"
+              data-entity-id={actor.id}
+              data-entity-type="actor"
+              style={{
+                opacity:
+                  !dragOverlay && actorDrag?.actorIds.includes(actor.id) ? 0 : 1
+              }}
+              onMouseEnter={
+                activeToolId === "zone"
+                  ? undefined
+                  : () => onActorMouseEnter(actor.id)
+              }
+              onMouseLeave={
+                activeToolId === "zone"
+                  ? undefined
+                  : () => onActorMouseLeave(actor.id)
+              }
+              drag={
+                !dragOverlay &&
+                (activeToolId === "actor" || activeToolId === "select")
+              }
+              dragMomentum={false}
+              dragElastic={0}
+              onDragStart={(event) =>
+                onActorDragStart?.(actor.id, zoneMovedPoint, event)
+              }
+              onDrag={(_, info) =>
+                onActorDrag?.({
+                  x: zoneMovedPoint.x + info.offset.x,
+                  y: zoneMovedPoint.y + info.offset.y
+                })
+              }
+              onDragEnd={(event) => onActorDragEnd?.(event)}
+              initial={false}
+              animate={isMotionDraggedActor ? undefined : animatePoint}
+              transition={actorTransition}
+              onAnimationComplete={() => {
+                completeTrack();
+
+                if (
+                  !dragOverlay &&
+                  actorDrag?.phase === "returning" &&
+                  actorDrag.actorId === actor.id
+                ) {
+                  onActorReturnComplete?.();
+                }
+              }}
+            >
+              <ActorVisual
+                actor={actor}
+                clipId={clipId}
+                fillColor={colors.fill}
+                outlineColor={colors.outline}
+                radius={radius}
+                selected={selected}
+                selectedTextColor={selectedActorTextColor}
+                showFactionOutline={showFactionOutlines}
+                transition={actorTransition}
+              />
+            </motion.g>
+          )}
+        </ActorMotionTrack>
       );
     });
 }
