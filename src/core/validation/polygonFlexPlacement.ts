@@ -167,6 +167,18 @@ function replaceZonePolygon(
   };
 }
 
+function getResizeAnchor(action: ValidationAction): LayoutPoint | undefined {
+  const anchor = action.payload.resizeAnchor;
+
+  return anchor &&
+    typeof anchor === "object" &&
+    !Array.isArray(anchor) &&
+    typeof anchor.x === "number" &&
+    typeof anchor.y === "number"
+    ? { x: anchor.x, y: anchor.y }
+    : undefined;
+}
+
 export type PolygonFlexPlacementAdjustment = {
   nextEncounter: EncounterState;
   resizedZoneIds: string[];
@@ -199,16 +211,28 @@ export function adjustPolygonFlexZonesToFit(
   )) {
     const zone = adjustedEncounter.zones.byId[zoneId];
 
-    if (!zone || zone.layoutStrategy !== "FLEX") {
+    if (!zone) {
       continue;
     }
 
-    const actors = adjustedEncounter.actors.allIds.flatMap((actorId) => {
-      const actor = adjustedEncounter.actors.byId[actorId];
+    const actors =
+      zone.layoutStrategy === "FLEX"
+        ? adjustedEncounter.actors.allIds.flatMap((actorId) => {
+            const actor = adjustedEncounter.actors.byId[actorId];
 
-      return actor && actor.currentZoneId === zoneId ? [toNestingActor(actor)] : [];
-    });
-    const fit = findSmallestPolygonFlexZoneFit(zone.polygon, actors);
+            return actor && actor.currentZoneId === zoneId
+              ? [toNestingActor(actor)]
+              : [];
+          })
+        : [];
+    const fit = findSmallestPolygonFlexZoneFit(
+      zone.polygon,
+      actors,
+      undefined,
+      action.type === "zone.reshape"
+        ? { anchor: getResizeAnchor(action) }
+        : undefined
+    );
 
     if (fit?.resized) {
       adjustedEncounter = replaceZonePolygon(

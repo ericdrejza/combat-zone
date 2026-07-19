@@ -1,6 +1,7 @@
 import { motion } from "motion/react";
 
 import type { LayoutPoint } from "@core/layout/types";
+import { isZonePolygonSizeValid } from "@core/validation/zoneSize";
 import type { ZoneShape } from "@entities/zone/types";
 import type { ShapeDraftState } from "./canvasInteractionTypes";
 import {
@@ -38,6 +39,11 @@ export function CanvasOverlays({
   const boxSelectionBounds = boxSelection
     ? getBoxSelectionBounds(boxSelection)
     : null;
+  const shapeDraftSizeIsValid = shapeDraft
+    ? isZonePolygonSizeValid(
+        createShapePolygon(shapeDraft.shape, shapeDraft.start, shapeDraft.current)
+      )
+    : true;
 
   return [
     zoneDraftPoints.length > 0 ? (
@@ -77,7 +83,9 @@ export function CanvasOverlays({
           strokeDasharray: "8 8",
           strokeWidth: 2
         }}
-        className="fill-green-200/40 stroke-canvas-ink stroke-2"
+        className={`${
+          shapeDraftSizeIsValid ? "fill-green-200/40" : "fill-red-200/60"
+        } stroke-canvas-ink stroke-2`}
         initial={false}
         transition={DIRECT_MANIPULATION_TRANSITION}
       />

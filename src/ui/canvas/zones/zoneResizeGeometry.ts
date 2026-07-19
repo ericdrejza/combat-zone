@@ -125,6 +125,25 @@ export function getZoneResizeHandles(
   return polygon;
 }
 
+/** Returns the fixed resize anchor opposite the active handle. */
+export function getZoneResizeAnchor(
+  zone: Zone,
+  polygon: LayoutPoint[],
+  vertexIndex: number
+): LayoutPoint | undefined {
+  if (zone.shape === 'circle' || zone.shape === 'hexagon') {
+    const handles = getZoneResizeHandles(zone, polygon);
+
+    return handles[(vertexIndex + 4) % handles.length];
+  }
+
+  if (polygon.length < 3) {
+    return undefined;
+  }
+
+  return polygon[(vertexIndex + Math.floor(polygon.length / 2)) % polygon.length];
+}
+
 export function resizeZonePolygon(
   zone: Zone,
   polygon: LayoutPoint[],
