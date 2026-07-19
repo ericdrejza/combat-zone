@@ -101,6 +101,38 @@ describe("CanvasShell zone resizing", () => {
     expect(zone).toHaveAttribute("points", originalPoints ?? "");
   });
 
+  it("corrects a resize that makes either zone dimension smaller than a small actor", async () => {
+    const user = userEvent.setup();
+
+    renderApp();
+    const canvas = getCanvas();
+    mockCanvasBounds(canvas);
+
+    await selectZoneTool(user);
+    createRectangleZone(canvas);
+
+    const zone = await screen.findByLabelText("Zone 1");
+    const originalPoints = zone.getAttribute("points");
+    const topRightHandle = screen.getByLabelText("Zone 1 vertex 2");
+
+    fireEvent.mouseDown(topRightHandle, {
+      button: 0,
+      clientX: 180,
+      clientY: 80
+    });
+    fireEvent.mouseMove(canvas, { clientX: 110, clientY: 120 });
+
+    expect(zone).toHaveAttribute("fill", "#fecaca");
+
+    fireEvent.mouseUp(canvas);
+
+    expect(zone).toHaveAttribute(
+      "points",
+      "80,80 140,80 140,160 80,160"
+    );
+    expect(zone.getAttribute("points")).not.toBe(originalPoints);
+  });
+
   it("shows eight circle resize handles while storing the circle as polygon geometry", async () => {
     const user = userEvent.setup();
 

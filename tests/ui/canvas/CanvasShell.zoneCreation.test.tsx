@@ -113,6 +113,31 @@ describe("CanvasShell zone creation", () => {
     expect(store.getState().encounter.present.zones.allIds).toHaveLength(1);
   });
 
+  it("shows an undersized shape draft in red and does not create it", async () => {
+    const user = userEvent.setup();
+
+    renderApp();
+    const canvas = getCanvas();
+    mockCanvasBounds(canvas);
+
+    await selectZoneTool(user);
+    fireEvent.mouseDown(canvas, {
+      button: 0,
+      clientX: 100,
+      clientY: 100
+    });
+    fireEvent.mouseMove(canvas, { clientX: 140, clientY: 140 });
+
+    expect(screen.getByLabelText("rectangle zone draft")).toHaveClass(
+      "fill-red-200/60"
+    );
+
+    fireEvent.mouseUp(canvas);
+
+    expect(screen.queryByLabelText("Zone 1")).not.toBeInTheDocument();
+    expect(store.getState().encounter.present.zones.allIds).toHaveLength(0);
+  });
+
   it("maps zone creation points correctly when the SVG viewport is letterboxed", async () => {
     const user = userEvent.setup();
 

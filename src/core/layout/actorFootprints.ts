@@ -8,6 +8,11 @@ export function getActorRadius(actor: Actor): number {
   return ACTOR_TOKEN_BASE_RADIUS * ACTOR_SIZE_MULTIPLIERS[actor.size];
 }
 
+/** Returns the radius used when calculating the minimum zone footprint. */
+export function getMinimumActorRadius(): number {
+  return ACTOR_TOKEN_BASE_RADIUS * ACTOR_SIZE_MULTIPLIERS.medium;
+}
+
 export function toNestingActor(actor: Actor): NestingActor {
   return {
     id: actor.id,

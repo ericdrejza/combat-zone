@@ -25,6 +25,7 @@ import {
   doBoundsOverlap,
   getBoxSelectionBounds,
   getPolygonBounds,
+  getZoneResizeAnchor,
   getZoneResizeHandles
 } from '../zones/zoneGeometry';
 
@@ -292,6 +293,15 @@ export function useCanvasMouseUpHandler(input: MouseUpHandlerInput) {
     const prepared = prepareValidatedEncounterChange({
       action: createEncounterActionRecord('zone.reshape', {
         polygon: vertexDrag.polygon,
+        ...(resizedZone
+          ? {
+              resizeAnchor: getZoneResizeAnchor(
+                resizedZone,
+                vertexDrag.polygon,
+                vertexDrag.vertexIndex
+              )
+            }
+          : {}),
         zoneId: vertexDrag.zoneId
       }),
       currentEncounter: encounter,
