@@ -20,7 +20,6 @@ export function ZoneLayoutSection({
     <section className="space-y-4 rounded-2xl border border-canvas-line bg-white p-3">
       <h3 className="font-semibold text-canvas-ink">Layout</h3>
       <div className="space-y-2">
-        <span className="font-semibold text-canvas-ink">Strategy</span>
         <div
           aria-label="Layout strategy"
           className="grid grid-cols-4 overflow-hidden rounded-xl border border-canvas-line"
