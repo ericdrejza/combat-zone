@@ -2,6 +2,7 @@ import { ZONELESS_ACTOR_ZONE_ID } from "../encounter/types";
 import type { EncounterState } from "../encounter/types";
 import type { JsonObject } from "../history/types";
 import { PolygonPlacementValidator } from "./polygonFlexPlacementValidator";
+import { ZoneOverlapValidator } from './zoneOverlapValidator';
 import {
   isZonePolygonSizeValid,
   ZONE_MINIMUM_SIZE_VALIDATION_CODE
@@ -317,6 +318,7 @@ export const ZoneIntegrityValidator: Validator<EncounterState> = {
 export const MVP_VALIDATORS: Validator<EncounterState>[] = [
   MovementValidator,
   ZoneSizeValidator,
+  ZoneOverlapValidator,
   PolygonPlacementValidator,
   EdgeValidator,
   EngagementValidator,

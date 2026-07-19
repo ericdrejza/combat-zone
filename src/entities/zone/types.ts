@@ -27,5 +27,6 @@ export type Zone = {
     "FLEX" | "SEQUENTIAL" | "SPLIT_FLEX" | "SPLIT_SEQUENTIAL"
   >;
   layoutOrientation: LayoutOrientation;
+  autoResize?: boolean;
   tags: string[];
 };

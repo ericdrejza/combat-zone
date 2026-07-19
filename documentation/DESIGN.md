@@ -90,6 +90,7 @@ Properties:
 - polygon
 - layoutStrategy
 - layoutOrientation
+- autoResize
 - tags
 
 Zone contents are derived from actor `currentZoneId` values and engagement
@@ -155,6 +156,18 @@ Properties:
 
 Engagement membership is owned by Engagement `participants[]`; Actors do not
 store a duplicate engagement reference.
+
+When `autoResize` is enabled, adding an actor to a FLEX zone automatically
+enlarges the zone to the smallest size that fits all of its actors. Expansion
+moves every available vertex away from the zone origin. If a vertex would
+overlap another zone, it stops at the nearest non-overlapping position while
+other vertices continue expanding. The original aspect ratio is preserved when
+all vertices can expand; rectangles remain rectangles when only some sides can
+expand. When it is disabled, the normal geometric fit validation rejects an
+actor addition that cannot fit.
+
+Zone polygons may not overlap. This is a hard geometric validation invariant
+for zone creation, reshaping, and automatic resizing.
 
 Actors may be:
 
