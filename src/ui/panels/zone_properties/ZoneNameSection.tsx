@@ -15,7 +15,30 @@ export function ZoneNameSection({
 }: ZoneNameSectionProps) {
   return (
     <section className="space-y-3 rounded-2xl border border-canvas-line bg-white p-3">
-      <h3 className="font-semibold text-canvas-ink">Name</h3>
+      <div className="flex justify-between">
+        <h3 className="font-semibold text-canvas-ink">Name</h3>
+        <div className="flex">
+            <button
+              aria-label={zone.showName ? "Hide zone name" : "Show zone name"}
+              aria-pressed={zone.showName}
+              className={`inline-flex h-8 w-8 items-center justify-center rounded-full border border-canvas-line text-canvas-ink hover:bg-canvas-subtle
+                ${zone.showName
+                    ? "bg-canvas-ink text-white"
+                    : "text-canvas-muted hover:bg-canvas-subtle"
+                }`
+              }
+              onClick={() => onCommitZoneProperties({ showName: !zone.showName })}
+              title={zone.showName ? "Hide zone name" : "Show zone name"}
+              type="button"
+            >
+              {zone.showName ? (
+                <Eye aria-hidden="true" className="h-4 w-4" />
+              ) : (
+                <EyeOff aria-hidden="true" className="h-4 w-4" />
+              )}
+            </button>
+          </div>
+      </div>
       <label className="block space-y-1">
         <input
           className="w-full rounded-xl border border-canvas-line bg-white px-3 py-2"
@@ -35,28 +58,7 @@ export function ZoneNameSection({
           type="text"
         />
       </label>
-      <div className="flex justify-between">
-        <div className="flex">
-          <button
-            aria-label={zone.showName ? "Hide zone name" : "Show zone name"}
-            aria-pressed={zone.showName}
-            className={`inline-flex h-8 w-8 items-center justify-center rounded-full border border-canvas-line text-canvas-ink hover:bg-canvas-subtle
-              ${zone.showName
-                  ? "bg-canvas-ink text-white"
-                  : "text-canvas-muted hover:bg-canvas-subtle"
-              }`
-            }
-            onClick={() => onCommitZoneProperties({ showName: !zone.showName })}
-            title={zone.showName ? "Hide zone name" : "Show zone name"}
-            type="button"
-          >
-            {zone.showName ? (
-              <Eye aria-hidden="true" className="h-4 w-4" />
-            ) : (
-              <EyeOff aria-hidden="true" className="h-4 w-4" />
-            )}
-          </button>
-        </div>
+      <div className="">
         {zone.showName ? (
           <div
             aria-label="Zone name position"
@@ -72,7 +74,7 @@ export function ZoneNameSection({
                   key={position.id}
                   aria-checked={selected}
                   aria-label={position.label}
-                  className={`border-canvas-line p-2 odd:border-r [&:nth-child(-n+2)]:border-b ${
+                  className={`flex justify-center items-center border-canvas-line p-2 odd:border-r [&:nth-child(-n+2)]:border-b ${
                     selected
                       ? "bg-canvas-ink text-white"
                       : "text-canvas-muted hover:bg-canvas-subtle"

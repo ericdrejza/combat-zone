@@ -4,6 +4,8 @@ import {
   ArrowUpLeft,
   ArrowUpRight,
   Ellipsis,
+  Grid,
+  Grip,
   Logs,
   Minus,
   MoveHorizontal,
@@ -23,12 +25,8 @@ export const zoneLayoutStrategies: Array<{
 }> = [
   { icon: Ellipsis, id: 'FLEX', label: 'FLEX' },
   { icon: Minus, id: 'SEQUENTIAL', label: 'SEQUENTIAL' },
-  { icon: Logs, id: 'SPLIT_FLEX', label: 'SPLIT_FLEX' },
-  {
-    icon: TextAlignJustify,
-    id: 'SPLIT_SEQUENTIAL',
-    label: 'SPLIT_SEQUENTIAL'
-  }
+  { icon: Grip, id: 'SPLIT_FLEX', label: 'SPLIT_FLEX' },
+  { icon: TextAlignJustify, id: 'SPLIT_SEQUENTIAL', label: 'SPLIT_SEQUENTIAL' }
 ];
 
 export const zoneLayoutOrientations: Array<{
