@@ -5,3 +5,4 @@ export * from "./polygonFlexLayout";
 export * from "./polygonFlexZoneFit";
 export * from "./strategies";
 export * from "./types";
+export * from "./zoneSize";

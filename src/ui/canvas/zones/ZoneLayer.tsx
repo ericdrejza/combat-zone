@@ -2,6 +2,7 @@ import type { MouseEvent } from "react";
 import { motion } from "motion/react";
 
 import type { LayoutPoint } from "@core/layout/types";
+import { isZonePolygonSizeValid } from "@core/validation/zoneSize";
 import type { Zone } from "@entities/zone/types";
 import type { RootState } from "@store/store";
 import type {
@@ -89,6 +90,9 @@ export function ZoneLayer({
       backgroundLuminanceByZoneId[zone.id]
     );
     const polygonPoints = polygonToPoints(polygon);
+    const invalidResizePreview =
+      directManipulationZoneId === zone.id &&
+      !isZonePolygonSizeValid(polygon);
 
     return (
       <motion.g
@@ -114,7 +118,7 @@ export function ZoneLayer({
         <motion.polygon
           aria-label={zone.name}
           animate={{
-            fill: zone.colorFill,
+            fill: invalidResizePreview ? "#fecaca" : zone.colorFill,
             fillOpacity: zone.opacity,
             points: polygonPoints,
             strokeWidth: zone.showBorder ? 2 : 0

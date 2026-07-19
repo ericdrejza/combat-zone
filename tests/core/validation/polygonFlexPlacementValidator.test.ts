@@ -325,6 +325,7 @@ describe('polygon placement validation', () => {
       const prepared = prepareValidatedEncounterChange({
         action: createEncounterActionRecord('zone.reshape', {
           polygon: zone.polygon,
+          resizeAnchor: { x: 100, y: 100 },
           zoneId: roomyZone.id
         }),
         currentEncounter,
@@ -342,6 +343,10 @@ describe('polygon placement validation', () => {
       expect(prepared.nextEncounter.zones.byId[roomyZone.id]?.polygon).not.toEqual(
         zone.polygon
       );
+      expect(prepared.nextEncounter.zones.byId[roomyZone.id]?.polygon).toContainEqual({
+        x: 100,
+        y: 100
+      });
     }
   );
 });

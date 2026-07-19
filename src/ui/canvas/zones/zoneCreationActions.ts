@@ -1,5 +1,6 @@
 import { createEncounterActionRecord } from '@core/history/createEncounterActionRecord';
 import type { LayoutPoint } from '@core/layout/types';
+import { prepareValidatedEncounterChange } from '@core/validation/validatedEncounterChange';
 import type { ZoneShape } from '@entities/zone/types';
 import { createZone } from '@entities/zone/zoneMutations';
 import { selectEntity } from '@interaction/interactionState';
@@ -52,15 +53,26 @@ export function commitZoneCreate(
     shape
   });
 
+  const prepared = prepareValidatedEncounterChange({
+    action: createEncounterActionRecord('zone.create', {
+      ...(cloneSourceZoneId ? { cloneSourceZoneId } : {}),
+      zoneId,
+      polygon,
+      shape
+    }),
+    currentEncounter: encounter,
+    nextEncounter
+  });
+
+  if (prepared.blocked) {
+    setZoneDraftPoints([]);
+    return;
+  }
+
   dispatch(
     commitEncounterChange({
-      action: createEncounterActionRecord('zone.create', {
-        ...(cloneSourceZoneId ? { cloneSourceZoneId } : {}),
-        zoneId,
-        polygon,
-        shape
-      }),
-      nextEncounter
+      action: prepared.action,
+      nextEncounter: prepared.nextEncounter
     })
   );
   dispatch(
