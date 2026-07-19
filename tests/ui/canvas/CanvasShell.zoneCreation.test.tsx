@@ -44,11 +44,11 @@ describe("CanvasShell zone creation", () => {
     expect(rectangleZone.getAttribute("points")?.split(" ")).toHaveLength(4);
 
     createCircleZone(canvas);
-    expect(screen.getByText("Zone shape: circle")).toBeInTheDocument();
+    expect(screen.getByText("Zone 2")).toBeInTheDocument();
     expect((await screen.findByLabelText("Zone 2")).getAttribute("points")?.split(" ")).toHaveLength(60);
 
     createHexagonZone(canvas, { x: 420, y: 100 }, { x: 520, y: 200 });
-    expect(screen.getByText("Zone shape: hexagon")).toBeInTheDocument();
+    expect(screen.getByText("Zone 3")).toBeInTheDocument();
     expect((await screen.findByLabelText("Zone 3")).getAttribute("points")?.split(" ")).toHaveLength(6);
   });
 
@@ -172,14 +172,10 @@ describe("CanvasShell zone creation", () => {
     fireEvent.change(screen.getByLabelText("Zone opacity"), {
       target: { value: "0.45" }
     });
-    await user.click(screen.getByRole("checkbox", { name: /Show name/ }));
+    await user.click(screen.getByRole("button", { name: "Show zone name" }));
     await user.click(screen.getByRole("radio", { name: "Bottom right" }));
-    await user.selectOptions(screen.getByLabelText("Layout strategy"), [
-      "SPLIT_FLEX"
-    ]);
-    fireEvent.change(screen.getByLabelText("Layout orientation"), {
-      target: { value: "TOP_BOTTOM" }
-    });
+    await user.click(screen.getByRole("radio", { name: "SPLIT_FLEX" }));
+    await user.click(screen.getByRole("radio", { name: "Top to bottom" }));
     fireEvent.change(screen.getByLabelText("Tags"), {
       target: { value: "hazard, upper" }
     });
