@@ -1,20 +1,30 @@
 type CanvasToolStatusBadgeProps = {
   actorNames: string[];
   activeToolId: string;
+  zoneStatuses: string[];
   zoneShapeMode: string;
 };
 
 export function CanvasToolStatusBadge({
   actorNames,
   activeToolId,
+  zoneStatuses,
   zoneShapeMode
 }: CanvasToolStatusBadgeProps) {
   const actorStatus =
     (activeToolId === "actor" || activeToolId === "select") && actorNames.length > 0
       ? actorNames.join(", ")
       : null;
+  const zoneStatus =
+    (activeToolId === "zone" || activeToolId === "select") &&
+    zoneStatuses.length > 0
+      ? zoneStatuses.join("; ")
+      : null;
 
-  const info = actorStatus ?? (activeToolId === "zone" ? `Zone shape: ${zoneShapeMode}` : null)
+  const info =
+    actorStatus ??
+    zoneStatus ??
+    (activeToolId === "zone" ? `Zone shape: ${zoneShapeMode}` : null);
 
   return (
     <div hidden={info == null} className="pointer-events-none absolute left-4 

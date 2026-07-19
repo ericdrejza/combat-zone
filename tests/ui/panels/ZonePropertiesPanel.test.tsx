@@ -25,7 +25,7 @@ describe("ZonePropertiesPanel", () => {
 
     expect(zone).toHaveAttribute("fill", "#ffffff");
     expect(zone).toHaveAttribute("fill-opacity", "0");
-    expect(screen.queryByText("Zone 1")).not.toBeInTheDocument();
+    expect(screen.getByText("Zone 1")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Name" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Color" })).toHaveAttribute(
       "aria-expanded",
@@ -50,14 +50,17 @@ describe("ZonePropertiesPanel", () => {
       });
     });
     await user.click(screen.getByRole("checkbox", { name: /Show border/ }));
-    await user.click(screen.getByRole("checkbox", { name: /Show name/ }));
+    await user.click(screen.getByRole("button", { name: "Show zone name" }));
     await user.click(screen.getByRole("radio", { name: "Bottom right" }));
 
     expect(zone).toHaveAttribute("fill", "#365314");
     expect(zone).toHaveAttribute("fill-opacity", "0");
     expect(zone).toHaveAttribute("stroke", "transparent");
     expect(zone).toHaveAttribute("stroke-width", "0");
-    expect(screen.getByText("Zone 1")).toHaveAttribute("fill", "#111827");
+    expect(screen.getByText("Zone 1", { selector: "text" })).toHaveAttribute(
+      "fill",
+      "#111827"
+    );
     expect(store.getState().encounter.present.zones.byId[
       zone.getAttribute("data-entity-id") ?? ""
     ]).toMatchObject({
@@ -81,19 +84,15 @@ describe("ZonePropertiesPanel", () => {
 
     expect(await screen.findByLabelText("Zone 1")).toBeInTheDocument();
     expect(screen.queryByLabelText("Layout orientation")).not.toBeInTheDocument();
-    expect(screen.getByRole("option", { name: "SPLIT_FLEX" })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "SPLIT_FLEX" })).toBeInTheDocument();
 
-    await user.selectOptions(screen.getByLabelText("Layout strategy"), [
-      "SPLIT_SEQUENTIAL"
-    ]);
+    await user.click(screen.getByRole("radio", { name: "SPLIT_SEQUENTIAL" }));
     expect(
-      screen.getByRole("option", { name: "Left -> Right" })
+      screen.getByRole("radio", { name: "Left to right" })
     ).toBeInTheDocument();
-    await user.selectOptions(screen.getByLabelText("Layout orientation"), [
-      "TOP_BOTTOM"
-    ]);
+    await user.click(screen.getByRole("radio", { name: "Top to bottom" }));
     expect(
-      screen.getByRole("option", { name: "Top -> Bottom" })
+      screen.getByRole("radio", { name: "Top to bottom" })
     ).toBeInTheDocument();
 
     expect(
@@ -145,15 +144,11 @@ describe("ZonePropertiesPanel", () => {
         target: { value: "0.4" }
       });
     });
-    await user.click(screen.getByRole("checkbox", { name: /Show name/ }));
+    await user.click(screen.getByRole("button", { name: "Show zone name" }));
     await user.click(screen.getByRole("radio", { name: "Bottom right" }));
-    await user.selectOptions(screen.getByLabelText("Layout strategy"), [
-      "SPLIT_FLEX"
-    ]);
+    await user.click(screen.getByRole("radio", { name: "SPLIT_FLEX" }));
     act(() => {
-      fireEvent.change(screen.getByLabelText("Layout orientation"), {
-        target: { value: "TOP_BOTTOM" }
-      });
+      fireEvent.click(screen.getByRole("radio", { name: "Top to bottom" }));
       fireEvent.change(screen.getByLabelText("Tags"), {
         target: { value: "hazard, elevated" }
       });

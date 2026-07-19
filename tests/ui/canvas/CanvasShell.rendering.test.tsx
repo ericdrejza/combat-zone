@@ -63,7 +63,7 @@ describe("CanvasShell rendering", () => {
     fireEvent.change(screen.getByLabelText("Zone opacity"), {
       target: { value: "1" }
     });
-    await user.click(screen.getByRole("checkbox", { name: /Show name/ }));
+    await user.click(screen.getByRole("button", { name: "Show zone name" }));
 
     await waitFor(() => {
       const zoneNameText = Array.from(canvas.querySelectorAll("text")).find(
