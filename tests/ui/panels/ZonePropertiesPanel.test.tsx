@@ -27,6 +27,9 @@ describe("ZonePropertiesPanel", () => {
     expect(zone).toHaveAttribute("fill-opacity", "0");
     expect(screen.getByText("Zone 1")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Name" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Enable automatic zone resizing" })
+    ).toHaveAttribute("aria-pressed", "false");
     expect(screen.getByRole("button", { name: "Color" })).toHaveAttribute(
       "aria-expanded",
       "true"
@@ -51,6 +54,9 @@ describe("ZonePropertiesPanel", () => {
     });
     await user.click(screen.getByRole("checkbox", { name: /Show border/ }));
     await user.click(screen.getByRole("button", { name: "Show zone name" }));
+    await user.click(
+      screen.getByRole("button", { name: "Enable automatic zone resizing" })
+    );
     await user.click(screen.getByRole("radio", { name: "Bottom right" }));
 
     expect(zone).toHaveAttribute("fill", "#365314");
@@ -68,7 +74,8 @@ describe("ZonePropertiesPanel", () => {
       namePosition: "bottom-right",
       opacity: 0,
       showBorder: false,
-      showName: true
+      showName: true,
+      autoResize: true
     });
   });
 

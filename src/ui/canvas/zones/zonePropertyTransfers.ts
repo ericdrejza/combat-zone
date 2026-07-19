@@ -17,6 +17,7 @@ export function getPaintableZoneProperties(
 
 export function getCloneableZoneProperties(zone: Zone): Pick<
   CreateZoneInput,
+  | "autoResize"
   | "colorBorder"
   | "colorFill"
   | "layoutOrientation"
@@ -28,6 +29,7 @@ export function getCloneableZoneProperties(zone: Zone): Pick<
   | "tags"
 > {
   return {
+    autoResize: zone.autoResize,
     colorBorder: zone.colorBorder,
     colorFill: zone.colorFill,
     layoutOrientation: zone.layoutOrientation,

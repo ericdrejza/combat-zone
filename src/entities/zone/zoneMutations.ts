@@ -8,6 +8,7 @@ import type { LayoutOrientation, LayoutPoint } from "@core/layout/types";
 import type { Zone, ZoneNamePosition, ZoneShape } from "./types";
 
 export type CreateZoneInput = {
+  autoResize?: boolean;
   colorBorder?: string;
   colorFill?: string;
   id: EntityId;
@@ -24,6 +25,7 @@ export type CreateZoneInput = {
 };
 
 export type UpdateZonePropertiesInput = {
+  autoResize?: boolean;
   colorBorder?: string;
   colorFill?: string;
   layoutOrientation?: LayoutOrientation;
@@ -88,6 +90,7 @@ function updateEntities<TEntity extends { id: EntityId }>(
 }
 
 export function buildZone({
+  autoResize = false,
   colorBorder = "#9b876b",
   colorFill = "#ffffff",
   id,
@@ -103,6 +106,7 @@ export function buildZone({
   tags = []
 }: CreateZoneInput): Zone {
   return {
+    autoResize,
     colorBorder,
     colorFill,
     id,

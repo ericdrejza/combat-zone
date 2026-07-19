@@ -43,7 +43,10 @@ export function prepareValidatedEncounterChange({
   const shouldConsiderZoneResize =
     action.type === "zone.reshape" ||
     (isActorFootprintChange(action) &&
-      currentEncounter.validationState.mode !== "STRICT");
+      currentEncounter.validationState.mode !== "STRICT") ||
+    action.type === "actor.create" ||
+    action.type === "actor.move" ||
+    action.type === "actor.moveMany";
   const adjustment = shouldConsiderZoneResize
     ? adjustPolygonFlexZonesToFit(
         validationAction,
@@ -55,7 +58,10 @@ export function prepareValidatedEncounterChange({
     action.type === "zone.reshape" ||
     (isActorFootprintChange(action) &&
       currentEncounter.validationState.mode !== "STRICT" &&
-      currentEncounter.validationState.mode !== "ASSISTED");
+      currentEncounter.validationState.mode !== "ASSISTED") ||
+    action.type === "actor.create" ||
+    action.type === "actor.move" ||
+    action.type === "actor.moveMany";
   const requiresConfirmation =
     isActorFootprintChange(action) &&
     currentEncounter.validationState.mode === "ASSISTED" &&

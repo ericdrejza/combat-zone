@@ -17,6 +17,7 @@ export type PolygonFlexZoneFit = {
 
 export type PolygonFlexZoneFitOptions = {
   anchor?: LayoutPoint;
+  isPolygonAllowed?: (polygon: LayoutPoint[]) => boolean;
 };
 
 function scalePolygon(
@@ -32,9 +33,13 @@ function scalePolygon(
 
 function fits(
   input: Omit<PolygonFlexLayoutInput, "polygon">,
-  polygon: LayoutPoint[]
+  polygon: LayoutPoint[],
+  isPolygonAllowed?: (polygon: LayoutPoint[]) => boolean
 ): boolean {
-  return packPolygonFlexActors({ ...input, polygon }).fits;
+  return (
+    packPolygonFlexActors({ ...input, polygon }).fits &&
+    (isPolygonAllowed?.(polygon) ?? true)
+  );
 }
 
 /**
@@ -69,7 +74,7 @@ export function findSmallestPolygonFlexZoneFit(
   );
   const minimumPolygon = scalePolygon(polygon, scaleOrigin, minimumScale);
 
-  if (actors.length === 0 || fits(input, minimumPolygon)) {
+  if (fits(input, minimumPolygon, options.isPolygonAllowed)) {
     return {
       polygon: minimumPolygon,
       resized: minimumScale > 1
@@ -81,7 +86,13 @@ export function findSmallestPolygonFlexZoneFit(
   let upperScaleFits = false;
 
   for (let attempt = 0; attempt < 20; attempt += 1) {
-    if (fits(input, scalePolygon(polygon, scaleOrigin, upperScale))) {
+    if (
+      fits(
+        input,
+        scalePolygon(polygon, scaleOrigin, upperScale),
+        options.isPolygonAllowed
+      )
+    ) {
       upperScaleFits = true;
       break;
     }
@@ -96,7 +107,13 @@ export function findSmallestPolygonFlexZoneFit(
   for (let attempt = 0; attempt < 20; attempt += 1) {
     const middleScale = (lowerScale + upperScale) / 2;
 
-    if (fits(input, scalePolygon(polygon, scaleOrigin, middleScale))) {
+    if (
+      fits(
+        input,
+        scalePolygon(polygon, scaleOrigin, middleScale),
+        options.isPolygonAllowed
+      )
+    ) {
       upperScale = middleScale;
     } else {
       lowerScale = middleScale;

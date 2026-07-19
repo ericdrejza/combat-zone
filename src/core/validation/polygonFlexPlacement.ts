@@ -1,8 +1,11 @@
 import { ZONELESS_ACTOR_ZONE_ID } from "../encounter/types";
 import type { EncounterState } from "../encounter/types";
-import { toNestingActor } from "../layout/actorFootprints";
-import { findSmallestPolygonFlexZoneFit } from "../layout/polygonFlexZoneFit";
 import type { LayoutPoint } from "../layout/types";
+import {
+  findPolygonFlexZoneFit,
+  getNestingActorsInZone,
+  isAutoResizeActorAddition
+} from "./polygonFlexZoneAdjustment";
 import type { ValidationAction } from "./types";
 
 function getActorIdsFromPayload(action: ValidationAction): string[] {
@@ -167,35 +170,30 @@ function replaceZonePolygon(
   };
 }
 
-function getResizeAnchor(action: ValidationAction): LayoutPoint | undefined {
-  const anchor = action.payload.resizeAnchor;
-
-  return anchor &&
-    typeof anchor === "object" &&
-    !Array.isArray(anchor) &&
-    typeof anchor.x === "number" &&
-    typeof anchor.y === "number"
-    ? { x: anchor.x, y: anchor.y }
-    : undefined;
-}
-
 export type PolygonFlexPlacementAdjustment = {
   nextEncounter: EncounterState;
   resizedZoneIds: string[];
 };
 
 /**
- * Expands affected polygon FLEX zones only when a polygon reshape or
- * actor footprint change cannot fit. Actor entry and movement remain hard fit
- * checks; they must not trigger an expensive automatic zone resize.
+ * Expands affected polygon FLEX zones when a polygon reshape or actor
+ * footprint change cannot fit. Actor entry and movement can opt into the same
+ * correction through the destination zone's autoResize setting.
  */
 export function adjustPolygonFlexZonesToFit(
   action: ValidationAction,
   state: EncounterState,
   nextEncounter: EncounterState
 ): PolygonFlexPlacementAdjustment {
+  const affectedZoneIds = getPolygonFlexAffectedZoneIds(
+    action,
+    state,
+    nextEncounter
+  );
   const canResizeZone =
-    action.type === "zone.reshape" || isActorFootprintChange(action);
+    action.type === "zone.reshape" ||
+    isActorFootprintChange(action) ||
+    isAutoResizeActorAddition(action);
 
   if (!canResizeZone) {
     return { nextEncounter, resizedZoneIds: [] };
@@ -204,34 +202,28 @@ export function adjustPolygonFlexZonesToFit(
   let adjustedEncounter = nextEncounter;
   const resizedZoneIds: string[] = [];
 
-  for (const zoneId of getPolygonFlexAffectedZoneIds(
-    action,
-    state,
-    nextEncounter
-  )) {
+  for (const zoneId of affectedZoneIds) {
     const zone = adjustedEncounter.zones.byId[zoneId];
 
     if (!zone) {
       continue;
     }
 
-    const actors =
-      zone.layoutStrategy === "FLEX"
-        ? adjustedEncounter.actors.allIds.flatMap((actorId) => {
-            const actor = adjustedEncounter.actors.byId[actorId];
+    if (isAutoResizeActorAddition(action) && !zone.autoResize) {
+      continue;
+    }
 
-            return actor && actor.currentZoneId === zoneId
-              ? [toNestingActor(actor)]
-              : [];
-          })
-        : [];
-    const fit = findSmallestPolygonFlexZoneFit(
+    const actors = getNestingActorsInZone(
+      adjustedEncounter,
+      zoneId,
+      zone.layoutStrategy
+    );
+    const fit = findPolygonFlexZoneFit(
+      action,
+      adjustedEncounter,
+      zoneId,
       zone.polygon,
-      actors,
-      undefined,
-      action.type === "zone.reshape"
-        ? { anchor: getResizeAnchor(action) }
-        : undefined
+      actors
     );
 
     if (fit?.resized) {
