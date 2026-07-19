@@ -20,6 +20,9 @@ function toZonePropertiesInput(
   properties: Partial<Zone>
 ): UpdateZonePropertiesInput {
   return {
+    ...(properties.autoResize !== undefined
+      ? { autoResize: properties.autoResize }
+      : {}),
     ...(properties.layoutOrientation !== undefined
       ? { layoutOrientation: properties.layoutOrientation }
       : {}),

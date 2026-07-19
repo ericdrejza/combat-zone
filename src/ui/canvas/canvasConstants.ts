@@ -1,5 +1,7 @@
-export const CANVAS_WIDTH = 960;
-export const CANVAS_HEIGHT = 640;
+export {
+  CANVAS_HEIGHT,
+  CANVAS_WIDTH
+} from '@core/layout/polygonCanvasBounds';
 export const CLOSE_DISTANCE = 16;
 export const MIN_SHAPE_SIZE = 8;
 export const CIRCLE_SEGMENTS = 60;

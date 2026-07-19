@@ -18,6 +18,10 @@ covers `DESIGN.md` §15 "Must have" scope only.
       engagements parented to the deleted zone are removed to avoid dangling
       zone references, and the whole operation undoes as a single Redux
       history entry.
+- [x] A zone with automatic resizing enabled expands to the minimum
+      actor-fitting size when an added actor would not fit, preserving aspect
+      ratio when possible, keeping rectangles rectangular, and rejecting
+      expansions that overlap another zone.
 
 ## Actors (drag/drop)
 

@@ -1,5 +1,6 @@
 import type { LayoutOrientation } from "@core/layout/types";
 import type { Zone } from "@entities/zone/types";
+import { Zap, ZapOff } from "lucide-react";
 import {
   isSplitLayoutStrategy,
   zoneLayoutOrientations,
@@ -18,7 +19,37 @@ export function ZoneLayoutSection({
 }: ZoneLayoutSectionProps) {
   return (
     <section className="space-y-4 rounded-2xl border border-canvas-line bg-white p-3">
-      <h3 className="font-semibold text-canvas-ink">Layout</h3>
+      <div className="flex items-center justify-between">
+        <h3 className="font-semibold text-canvas-ink">Layout</h3>
+        <button
+          aria-label={
+            zone.autoResize
+              ? "Disable automatic zone resizing"
+              : "Enable automatic zone resizing"
+          }
+          aria-pressed={zone.autoResize ?? false}
+          className={`inline-flex h-8 w-8 items-center justify-center rounded-full border border-canvas-line text-canvas-ink hover:bg-canvas-subtle ${
+            zone.autoResize
+              ? "bg-canvas-ink text-white"
+              : "text-canvas-muted hover:bg-canvas-subtle"
+          }`}
+          onClick={() =>
+            onCommitZoneProperties({ autoResize: !zone.autoResize })
+          }
+          title={
+            zone.autoResize
+              ? "Disable automatic zone resizing"
+              : "Enable automatic zone resizing"
+          }
+          type="button"
+        >
+          {zone.autoResize ? (
+            <Zap aria-hidden="true" className="h-4 w-4" />
+          ) : (
+            <ZapOff aria-hidden="true" className="h-4 w-4" />
+          )}
+        </button>
+      </div>
       <div className="space-y-2">
         <div
           aria-label="Layout strategy"

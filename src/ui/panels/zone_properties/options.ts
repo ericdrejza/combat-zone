@@ -83,6 +83,7 @@ export function getExportableZoneProperties(
   zone: Zone
 ): UpdateZonePropertiesInput {
   return {
+    autoResize: zone.autoResize,
     colorBorder: zone.colorBorder,
     colorFill: zone.colorFill,
     layoutOrientation: zone.layoutOrientation,
