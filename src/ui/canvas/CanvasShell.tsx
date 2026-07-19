@@ -225,6 +225,17 @@ export function CanvasShell() {
       : hoveredActorName
         ? [hoveredActorName]
         : [];
+  const selectedZoneStatuses =
+    selection.selectedEntityType === "zone"
+      ? selection.selectedIds
+          .map((zoneId) => encounter.zones.byId[zoneId])
+          .filter((zone): zone is NonNullable<typeof zone> => Boolean(zone))
+          .map((zone) =>
+            zone.tags.length > 0
+              ? `${zone.name}: ${zone.tags.join(", ")}`
+              : zone.name
+          )
+      : [];
   const isDraggingCanvasEntity = Boolean(
     actorDrag?.phase === "dragging" ||
       zoneDrag?.phase === "dragging" ||
@@ -290,6 +301,7 @@ export function CanvasShell() {
       <CanvasToolStatusBadge
         activeToolId={activeToolId}
         actorNames={statusActorNames}
+        zoneStatuses={selectedZoneStatuses}
         zoneShapeMode={zoneShapeMode}
       />
       <ZonelessActorPanel

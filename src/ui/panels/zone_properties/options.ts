@@ -3,6 +3,12 @@ import {
   ArrowDownRight,
   ArrowUpLeft,
   ArrowUpRight,
+  Ellipsis,
+  Logs,
+  Minus,
+  MoveHorizontal,
+  MoveVertical,
+  TextAlignJustify,
   type LucideIcon
 } from 'lucide-react';
 
@@ -10,16 +16,28 @@ import type { LayoutOrientation } from '@core/layout/types';
 import type { Zone, ZoneNamePosition } from '@entities/zone/types';
 import type { UpdateZonePropertiesInput } from '@entities/zone/zoneMutations';
 
-export const zoneLayoutStrategies: Zone['layoutStrategy'][] = [
-  'FLEX',
-  'SEQUENTIAL',
-  'SPLIT_FLEX',
-  'SPLIT_SEQUENTIAL'
+export const zoneLayoutStrategies: Array<{
+  icon: LucideIcon;
+  id: Zone['layoutStrategy'];
+  label: string;
+}> = [
+  { icon: Ellipsis, id: 'FLEX', label: 'FLEX' },
+  { icon: Minus, id: 'SEQUENTIAL', label: 'SEQUENTIAL' },
+  { icon: Logs, id: 'SPLIT_FLEX', label: 'SPLIT_FLEX' },
+  {
+    icon: TextAlignJustify,
+    id: 'SPLIT_SEQUENTIAL',
+    label: 'SPLIT_SEQUENTIAL'
+  }
 ];
 
-export const zoneLayoutOrientations: LayoutOrientation[] = [
-  'LEFT_RIGHT',
-  'TOP_BOTTOM'
+export const zoneLayoutOrientations: Array<{
+  icon: LucideIcon;
+  id: LayoutOrientation;
+  label: string;
+}> = [
+  { icon: MoveHorizontal, id: 'LEFT_RIGHT', label: 'Left to right' },
+  { icon: MoveVertical, id: 'TOP_BOTTOM', label: 'Top to bottom' }
 ];
 
 export const zoneColorOptions = [
@@ -50,9 +68,9 @@ export const zoneNamePositions: Array<{
   id: ZoneNamePosition;
   label: string;
 }> = [
+  { icon: ArrowDownLeft, id: 'bottom-left', label: 'Bottom left' },
   { icon: ArrowUpLeft, id: 'top-left', label: 'Top left' },
   { icon: ArrowUpRight, id: 'top-right', label: 'Top right' },
-  { icon: ArrowDownLeft, id: 'bottom-left', label: 'Bottom left' },
   { icon: ArrowDownRight, id: 'bottom-right', label: 'Bottom right' }
 ];
 

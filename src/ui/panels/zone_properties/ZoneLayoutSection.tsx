@@ -7,11 +7,6 @@ import {
 } from "./options";
 import type { CommitZoneProperties } from "./types";
 
-const orientationLabels: Record<LayoutOrientation, string> = {
-  LEFT_RIGHT: "Left -> Right",
-  TOP_BOTTOM: "Top -> Bottom"
-};
-
 type ZoneLayoutSectionProps = {
   onCommitZoneProperties: CommitZoneProperties;
   zone: Zone;
@@ -22,45 +17,76 @@ export function ZoneLayoutSection({
   zone
 }: ZoneLayoutSectionProps) {
   return (
-    <>
-      <label className="block space-y-1">
-        <span className="font-semibold text-canvas-ink">Layout strategy</span>
-        <select
-          className="w-full rounded-xl border border-canvas-line bg-white px-3 py-2"
-          onChange={(event) =>
-            onCommitZoneProperties({
-              layoutStrategy: event.currentTarget.value as Zone["layoutStrategy"]
-            })
-          }
-          value={zone.layoutStrategy}
+    <section className="space-y-4 rounded-2xl border border-canvas-line bg-white p-3">
+      <h3 className="font-semibold text-canvas-ink">Layout</h3>
+      <div className="space-y-2">
+        <span className="font-semibold text-canvas-ink">Strategy</span>
+        <div
+          aria-label="Layout strategy"
+          className="grid grid-cols-4 overflow-hidden rounded-xl border border-canvas-line"
+          role="radiogroup"
         >
-          {zoneLayoutStrategies.map((strategy) => (
-            <option key={strategy} value={strategy}>
-              {strategy}
-            </option>
-          ))}
-        </select>
-      </label>
+          {zoneLayoutStrategies.map(({ icon: Icon, id, label }) => {
+            const selected = zone.layoutStrategy === id;
+
+            return (
+              <button
+                key={id}
+                aria-checked={selected}
+                aria-label={label}
+                className={`flex min-h-10 items-center justify-center border-canvas-line p-2 last:border-r-0 [&:not(:last-child)]:border-r ${
+                  selected
+                    ? "bg-canvas-ink text-white"
+                    : "text-canvas-muted hover:bg-canvas-subtle"
+                }`}
+                onClick={() => onCommitZoneProperties({ layoutStrategy: id })}
+                role="radio"
+                title={label}
+                type="button"
+              >
+                <Icon aria-hidden="true" className="h-5 w-5" />
+              </button>
+            );
+          })}
+        </div>
+      </div>
       {isSplitLayoutStrategy(zone.layoutStrategy) ? (
-        <label className="block space-y-1">
-          <span className="font-semibold text-canvas-ink">Layout orientation</span>
-          <select
-            className="w-full rounded-xl border border-canvas-line bg-white px-3 py-2"
-            onChange={(event) =>
-              onCommitZoneProperties({
-                layoutOrientation: event.currentTarget.value as LayoutOrientation
-              })
-            }
-            value={zone.layoutOrientation}
+        <div className="space-y-2">
+          <span className="font-semibold text-canvas-ink">Orientation</span>
+          <div
+            aria-label="Layout orientation"
+            className="grid grid-cols-2 overflow-hidden rounded-xl border border-canvas-line"
+            role="radiogroup"
           >
-            {zoneLayoutOrientations.map((orientation) => (
-              <option key={orientation} value={orientation}>
-                {orientationLabels[orientation]}
-              </option>
-            ))}
-          </select>
-        </label>
+            {zoneLayoutOrientations.map(({ icon: Icon, id, label }) => {
+              const selected = zone.layoutOrientation === id;
+
+              return (
+                <button
+                  key={id}
+                  aria-checked={selected}
+                  aria-label={label}
+                  className={`flex min-h-10 items-center justify-center border-canvas-line p-2 first:border-r ${
+                    selected
+                      ? "bg-canvas-ink text-white"
+                      : "text-canvas-muted hover:bg-canvas-subtle"
+                  }`}
+                  onClick={() =>
+                    onCommitZoneProperties({
+                      layoutOrientation: id as LayoutOrientation
+                    })
+                  }
+                  role="radio"
+                  title={label}
+                  type="button"
+                >
+                  <Icon aria-hidden="true" className="h-5 w-5" />
+                </button>
+              );
+            })}
+          </div>
+        </div>
       ) : null}
-    </>
+    </section>
   );
 }

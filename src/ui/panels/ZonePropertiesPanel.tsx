@@ -39,6 +39,10 @@ export function ZonePropertiesPanel() {
         onCommitZoneProperties={commitZoneProperties}
         zone={selectedZone}
       />
+      <ZoneLayoutSection
+        onCommitZoneProperties={commitZoneProperties}
+        zone={selectedZone}
+      />
       <ZoneColorSection
         colorSectionOpen={colorSectionOpen}
         onActivateZonePaintBrush={activateZonePaintBrush}
@@ -46,10 +50,6 @@ export function ZonePropertiesPanel() {
         onToggleColorSection={() => setColorSectionOpen((isOpen) => !isOpen)}
         zone={selectedZone}
         zonePaintBrush={zonePaintBrush}
-      />
-      <ZoneLayoutSection
-        onCommitZoneProperties={commitZoneProperties}
-        zone={selectedZone}
       />
       <ZoneTagsSection
         onCommitZoneProperties={commitZoneProperties}

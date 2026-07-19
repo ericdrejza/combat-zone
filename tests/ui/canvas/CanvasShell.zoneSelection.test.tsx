@@ -66,6 +66,41 @@ describe("CanvasShell zone selection", () => {
     expect(screen.getByRole("button", { name: "Delete zone" })).toBeInTheDocument();
   });
 
+  it("shows selected zone names and tags in the canvas status badge", async () => {
+    const user = userEvent.setup();
+
+    renderApp();
+    const canvas = getCanvas();
+    mockCanvasBounds(canvas);
+
+    await selectZoneTool(user);
+    createRectangleZone(canvas, { x: 40, y: 40 }, { x: 140, y: 140 });
+
+    fireEvent.change(screen.getByLabelText("Tags"), {
+      target: { value: "hazard, upper" }
+    });
+    fireEvent.blur(screen.getByLabelText("Tags"));
+
+    createRectangleZone(canvas, { x: 220, y: 40 }, { x: 320, y: 140 });
+    fireEvent.change(screen.getByLabelText("Tags"), {
+      target: { value: "cover" }
+    });
+    fireEvent.blur(screen.getByLabelText("Tags"));
+
+    const firstZone = await screen.findByLabelText("Zone 1");
+    const secondZone = await screen.findByLabelText("Zone 2");
+
+    fireEvent.click(firstZone, {
+      clientX: 80,
+      clientY: 80,
+      ctrlKey: true
+    });
+
+    expect(
+      screen.getByText("Zone 2: cover; Zone 1: hazard, upper")
+    ).toBeInTheDocument();
+  });
+
   it("unselects selected entities when clicking blank canvas", async () => {
     const user = userEvent.setup();
 

@@ -1,3 +1,5 @@
+import { Eye, EyeOff } from "lucide-react";
+
 import type { Zone } from "@entities/zone/types";
 import { zoneNamePositions } from "./options";
 import type { CommitZoneProperties } from "./types";
@@ -15,7 +17,6 @@ export function ZoneNameSection({
     <section className="space-y-3 rounded-2xl border border-canvas-line bg-white p-3">
       <h3 className="font-semibold text-canvas-ink">Name</h3>
       <label className="block space-y-1">
-        <span className="font-semibold text-canvas-ink">Zone name</span>
         <input
           className="w-full rounded-xl border border-canvas-line bg-white px-3 py-2"
           defaultValue={zone.name}
@@ -34,25 +35,32 @@ export function ZoneNameSection({
           type="text"
         />
       </label>
-      <label className="flex items-center justify-between gap-3 rounded-2xl border border-canvas-line bg-white px-3 py-2">
-        <span>
-          <span className="block font-semibold text-canvas-ink">Show name</span>
-        </span>
-        <input
-          checked={zone.showName}
-          className="h-5 w-5 accent-canvas-ink"
-          onChange={(event) =>
-            onCommitZoneProperties({ showName: event.currentTarget.checked })
-          }
-          type="checkbox"
-        />
-      </label>
-      {zone.showName ? (
-        <div className="flex items-center justify-between gap-3">
-          <span className="font-semibold text-canvas-ink">Position</span>
+      <div className="flex justify-between">
+        <div className="flex">
+          <button
+            aria-label={zone.showName ? "Hide zone name" : "Show zone name"}
+            aria-pressed={zone.showName}
+            className={`inline-flex h-8 w-8 items-center justify-center rounded-full border border-canvas-line text-canvas-ink hover:bg-canvas-subtle
+              ${zone.showName
+                  ? "bg-canvas-ink text-white"
+                  : "text-canvas-muted hover:bg-canvas-subtle"
+              }`
+            }
+            onClick={() => onCommitZoneProperties({ showName: !zone.showName })}
+            title={zone.showName ? "Hide zone name" : "Show zone name"}
+            type="button"
+          >
+            {zone.showName ? (
+              <Eye aria-hidden="true" className="h-4 w-4" />
+            ) : (
+              <EyeOff aria-hidden="true" className="h-4 w-4" />
+            )}
+          </button>
+        </div>
+        {zone.showName ? (
           <div
             aria-label="Zone name position"
-            className="grid grid-cols-2 overflow-hidden rounded-xl border border-canvas-line bg-white"
+            className="grid grid-cols-4 overflow-hidden rounded-xl border border-canvas-line bg-white"
             role="radiogroup"
           >
             {zoneNamePositions.map((position) => {
@@ -80,8 +88,8 @@ export function ZoneNameSection({
               );
             })}
           </div>
-        </div>
-      ) : null}
+        ) : null}
+      </div>
     </section>
   );
 }
