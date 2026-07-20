@@ -8,7 +8,7 @@ import { createEncounterState } from '@core/encounter/createEncounterState';
 import { ZONELESS_ACTOR_ZONE_ID } from '@core/encounter/types';
 import type { EncounterState } from '@core/encounter/types';
 import type { EntityCollection } from '@core/state/entityCollection';
-import { runValidationPipeline } from '@core/validation/pipeline';
+import { runValidationPipelineSync } from '@core/validation/pipeline';
 import { prepareValidatedEncounterChange } from '@core/validation/validatedEncounterChange';
 
 function collection<TEntity extends { id: string }>(
@@ -104,7 +104,7 @@ describe('validation pipeline', () => {
         messages: []
       }
     };
-    const result = runValidationPipeline({
+    const result = runValidationPipelineSync({
       state,
       action: {
         type: 'actor.move',
@@ -132,7 +132,7 @@ describe('validation pipeline', () => {
           messages: []
         }
       };
-      const result = runValidationPipeline({
+      const result = runValidationPipelineSync({
         state,
         action: {
           type: 'actor.move',
@@ -161,7 +161,7 @@ describe('validation pipeline', () => {
         messages: []
       }
     };
-    const result = runValidationPipeline({
+    const result = runValidationPipelineSync({
       state,
       action: {
         type: 'actor.move',
@@ -180,7 +180,7 @@ describe('validation pipeline', () => {
     const state = createValidEncounterState();
 
     expect(
-      runValidationPipeline({
+      runValidationPipelineSync({
         state,
         action: {
           type: 'actor.move',
@@ -197,7 +197,7 @@ describe('validation pipeline', () => {
     });
 
     expect(
-      runValidationPipeline({
+      runValidationPipelineSync({
         state,
         action: {
           type: 'actor.move',
@@ -218,7 +218,7 @@ describe('validation pipeline', () => {
     const state = createValidEncounterState();
 
     expect(
-      runValidationPipeline({
+      runValidationPipelineSync({
         state,
         action: {
           type: 'edge.create',
@@ -231,7 +231,7 @@ describe('validation pipeline', () => {
     ).toEqual(['edge.selfReference']);
 
     expect(
-      runValidationPipeline({
+      runValidationPipelineSync({
         state,
         action: {
           type: 'edge.update',
@@ -246,7 +246,7 @@ describe('validation pipeline', () => {
 
   it('validates engagement membership and parent zone references', () => {
     const state = createValidEncounterState();
-    const result = runValidationPipeline({
+    const result = runValidationPipelineSync({
       state,
       action: {
         type: 'engagement.create',
@@ -291,7 +291,7 @@ describe('validation pipeline', () => {
       edges: collection([brokenEdge]),
       engagements: collection([brokenEngagement])
     };
-    const result = runValidationPipeline({
+    const result = runValidationPipelineSync({
       state,
       action: {
         type: 'encounter.rename',

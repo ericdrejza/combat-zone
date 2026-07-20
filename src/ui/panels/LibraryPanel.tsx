@@ -10,7 +10,7 @@ import { useDispatch, useSelector } from "react-redux";
 
 import { setActorDragImage } from "@core/rendering/actorDragPreview";
 import { createEncounterActionRecord } from "@core/history/createEncounterActionRecord";
-import { prepareValidatedEncounterChange } from "@core/validation/validatedEncounterChange";
+import { prepareValidatedEncounterChangeForRuntime } from "@core/validation/validatedEncounterChange";
 import { createActor } from "@entities/actor/actorMutations";
 import { clearSelection } from "@interaction/interactionState";
 import { resolveLibraryAsset } from "@library/librarySlice";
@@ -241,19 +241,29 @@ export function LibraryPanel({
       actorId,
       destinationZoneId: actorTool.targetZoneId
     });
-    const prepared = prepareValidatedEncounterChange({
+    const prepared = prepareValidatedEncounterChangeForRuntime({
       action,
       currentEncounter: encounter,
       nextEncounter
     });
 
-    if (!prepared.blocked) {
+    const commitPrepared = (resolved: Awaited<typeof prepared>) => {
+      if (resolved.blocked) {
+        return;
+      }
+
       dispatch(
         commitEncounterChange({
-          action: prepared.action,
-          nextEncounter: prepared.nextEncounter
+          action: resolved.action,
+          nextEncounter: resolved.nextEncounter
         })
       );
+    };
+
+    if (prepared instanceof Promise) {
+      void prepared.then(commitPrepared);
+    } else {
+      commitPrepared(prepared);
     }
   }
 
@@ -300,7 +310,7 @@ export function LibraryPanel({
               onClick={() =>
                 activeSectionId === "backgrounds"
                   ? applyBackground(node)
-                  : createActorInTargetZone(node)
+                  : void createActorInTargetZone(node)
               }
               onDragEnd={finishLibraryDrag}
               onDragStart={(event) => startLibraryDrag(event, node)}

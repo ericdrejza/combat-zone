@@ -257,12 +257,12 @@ export function useCanvasPointerHandlers(input: PointerHandlerInput) {
 
   function handleZoneDragEnd(event: { stopPropagation: () => void }) {
     event.stopPropagation();
-    finishCanvasInteraction();
+    void finishCanvasInteraction();
   }
 
   function handleActorDragEnd(event: { stopPropagation: () => void }) {
     event.stopPropagation();
-    finishCanvasInteraction();
+    void finishCanvasInteraction();
   }
 
   function handleCanvasMouseUp() {
@@ -270,7 +270,7 @@ export function useCanvasPointerHandlers(input: PointerHandlerInput) {
       return;
     }
 
-    finishCanvasInteraction();
+    void finishCanvasInteraction();
   }
 
   function handleResizeHandleMouseDown(
@@ -322,7 +322,7 @@ export function useCanvasPointerHandlers(input: PointerHandlerInput) {
 
   function handleResizeHandleDragEnd(event: { stopPropagation: () => void }) {
     event.stopPropagation();
-    finishCanvasInteraction();
+    void finishCanvasInteraction();
   }
 
   return {

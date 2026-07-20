@@ -2,7 +2,7 @@ import path from 'path';
 
 import { ZONELESS_ACTOR_ZONE_ID } from '@core/encounter/types';
 import { createEncounterActionRecord } from '@core/history/createEncounterActionRecord';
-import { prepareValidatedEncounterChange } from '@core/validation/validatedEncounterChange';
+import { prepareValidatedEncounterChangeForRuntime } from '@core/validation/validatedEncounterChange';
 import { createActor, moveActor } from '@entities/actor/actorMutations';
 import { selectEntity, setActiveTool } from '@interaction/interactionState';
 import { resolveLibraryAsset } from '@library/librarySlice';
@@ -25,10 +25,10 @@ function commitCreatedActor(
   input: Parameters<typeof createActor>[1],
   destinationZoneId: string,
   dropPoint?: LayoutPoint
-) {
+): void {
   const actorId = input.id;
   const nextEncounter = createActor(context.encounter, input);
-  const prepared = prepareValidatedEncounterChange({
+  const prepared = prepareValidatedEncounterChangeForRuntime({
     action: createEncounterActionRecord('actor.create', {
       actorId,
       destinationZoneId
@@ -37,18 +37,28 @@ function commitCreatedActor(
     nextEncounter
   });
 
-  if (!prepared.blocked) {
+  const commitPrepared = (resolved: Awaited<typeof prepared>) => {
+    if (resolved.blocked) {
+      return;
+    }
+
     if (dropPoint && destinationZoneId !== ZONELESS_ACTOR_ZONE_ID) {
       setOptimisticActorPlacement(actorId, dropPoint);
     }
 
     context.dispatch(
       commitEncounterChange({
-        action: prepared.action,
-        nextEncounter: prepared.nextEncounter
+        action: resolved.action,
+        nextEncounter: resolved.nextEncounter
       })
     );
     context.dispatch(selectEntity({ entityType: 'actor', ids: [actorId] }));
+  };
+
+  if (prepared instanceof Promise) {
+    void prepared.then(commitPrepared);
+  } else {
+    commitPrepared(prepared);
   }
 }
 
@@ -57,7 +67,7 @@ export function commitActorFromLibraryNode(
   nodeId: string,
   destinationZoneId: string,
   dropPoint?: LayoutPoint
-) {
+): void {
   const asset = resolveLibraryAsset(context.library.sections.tokens, nodeId);
 
   if (!asset) {
@@ -85,7 +95,7 @@ export function commitActorFromCreation(
   data: NewActorDragData,
   destinationZoneId: string,
   dropPoint?: LayoutPoint
-) {
+): void {
   const actorId = `actor-${Date.now()}`;
   commitCreatedActor(
     context,
@@ -155,7 +165,7 @@ export function moveActorsToZone(
   destinationZoneId: string,
   selectActors = false,
   dropPoint?: LayoutPoint
-) {
+): void {
   const nextEncounter = actorIds.reduce(
     (currentEncounter, actorId) =>
       moveActor(currentEncounter, actorId, destinationZoneId),
@@ -168,13 +178,17 @@ export function moveActorsToZone(
       destinationZoneId
     }
   );
-  const prepared = prepareValidatedEncounterChange({
+  const prepared = prepareValidatedEncounterChangeForRuntime({
     action,
     currentEncounter: context.encounter,
     nextEncounter
   });
 
-  if (!prepared.blocked && nextEncounter !== context.encounter) {
+  const commitPrepared = (resolved: Awaited<typeof prepared>) => {
+    if (resolved.blocked || nextEncounter === context.encounter) {
+      return;
+    }
+
     if (dropPoint && destinationZoneId !== ZONELESS_ACTOR_ZONE_ID) {
       actorIds.forEach((actorId) =>
         setOptimisticActorPlacement(actorId, dropPoint)
@@ -183,14 +197,20 @@ export function moveActorsToZone(
 
     context.dispatch(
       commitEncounterChange({
-        action: prepared.action,
-        nextEncounter: prepared.nextEncounter
+        action: resolved.action,
+        nextEncounter: resolved.nextEncounter
       })
     );
 
     if (selectActors) {
       context.dispatch(selectEntity({ entityType: 'actor', ids: actorIds }));
     }
+  };
+
+  if (prepared instanceof Promise) {
+    void prepared.then(commitPrepared);
+  } else {
+    commitPrepared(prepared);
   }
 }
 

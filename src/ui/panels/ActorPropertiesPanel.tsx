@@ -6,7 +6,7 @@ import type {
   ActorSize,
   ActorType
 } from "@entities/actor/types";
-import { prepareValidatedEncounterChange } from "@core/validation/validatedEncounterChange";
+import { prepareValidatedEncounterChangeForRuntime } from "@core/validation/validatedEncounterChange";
 import { updateActorProperties } from "@entities/actor/actorMutations";
 import { createEncounterActionRecord } from "@core/history/createEncounterActionRecord";
 import { commitEncounterChange } from "@store/encounterSlice";
@@ -57,7 +57,7 @@ export function ActorPropertiesPanel() {
       return;
     }
 
-    const prepared = prepareValidatedEncounterChange({
+    const prepared = prepareValidatedEncounterChangeForRuntime({
       action: createEncounterActionRecord("actor.updateProperties", {
         actorId: actor.id,
         properties
@@ -66,25 +66,31 @@ export function ActorPropertiesPanel() {
       nextEncounter
     });
 
-    const commitPreparedChange = () => {
+    const commitPreparedChange = (resolved: Awaited<typeof prepared>) => {
       dispatch(
         commitEncounterChange({
-          action: prepared.action,
-          nextEncounter: prepared.nextEncounter
+          action: resolved.action,
+          nextEncounter: resolved.nextEncounter
         })
       );
     };
 
-    if (prepared.requiresConfirmation) {
-      requestApproval({ onApprove: commitPreparedChange });
-      return;
-    }
+    const handlePrepared = (resolved: Awaited<typeof prepared>) => {
+      if (resolved.requiresConfirmation) {
+        requestApproval({ onApprove: () => commitPreparedChange(resolved) });
+        return;
+      }
 
-    if (prepared.blocked) {
-      return;
-    }
+      if (!resolved.blocked) {
+        commitPreparedChange(resolved);
+      }
+    };
 
-    commitPreparedChange();
+    if (prepared instanceof Promise) {
+      void prepared.then(handlePrepared);
+    } else {
+      handlePrepared(prepared);
+    }
   }
 
   return (
