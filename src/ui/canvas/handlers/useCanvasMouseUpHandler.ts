@@ -1,6 +1,6 @@
 import { createEncounterActionRecord } from '@core/history/createEncounterActionRecord';
 import { ZONELESS_ACTOR_ZONE_ID } from '@core/encounter/types';
-import { prepareValidatedEncounterChange } from '@core/validation/validatedEncounterChange';
+import { prepareValidatedEncounterChangeForRuntime } from '@core/validation/validatedEncounterChange';
 import { moveActor } from '@entities/actor/actorMutations';
 import type { Zone } from '@entities/zone/types';
 import { updateZonePolygon } from '@entities/zone/zoneMutations';
@@ -88,50 +88,58 @@ export function useCanvasMouseUpHandler(input: MouseUpHandlerInput) {
             destinationZoneId
           }
         );
-        const prepared = prepareValidatedEncounterChange({
+        const prepared = prepareValidatedEncounterChangeForRuntime({
           action,
           currentEncounter: encounter,
           nextEncounter
         });
 
-        if (!prepared.blocked && nextEncounter !== encounter) {
-          if (destinationZoneId !== ZONELESS_ACTOR_ZONE_ID) {
-            const offset = {
-              x: actorDrag.current.x - actorDrag.start.x,
-              y: actorDrag.current.y - actorDrag.start.y
-            };
+        const commitPrepared = (resolved: Awaited<typeof prepared>) => {
+          if (!resolved.blocked && nextEncounter !== encounter) {
+            if (destinationZoneId !== ZONELESS_ACTOR_ZONE_ID) {
+              const offset = {
+                x: actorDrag.current.x - actorDrag.start.x,
+                y: actorDrag.current.y - actorDrag.start.y
+              };
 
-            input.actorRenderPlacements
-              .filter(({ actor }) => actorDrag.actorIds.includes(actor.id))
-              .forEach(({ actor, point }) => {
-                setOptimisticActorPlacement(actor.id, {
-                  x: point.x + offset.x,
-                  y: point.y + offset.y
+              input.actorRenderPlacements
+                .filter(({ actor }) => actorDrag.actorIds.includes(actor.id))
+                .forEach(({ actor, point }) => {
+                  setOptimisticActorPlacement(actor.id, {
+                    x: point.x + offset.x,
+                    y: point.y + offset.y
+                  });
                 });
-              });
+            }
+
+            dispatch(
+              commitEncounterChange({
+                action: resolved.action,
+                nextEncounter: resolved.nextEncounter
+              })
+            );
+            dispatch(
+              selectEntity({
+                entityType: 'actor',
+                ids: actorDrag.actorIds
+              })
+            );
+            setActorDrag(null);
+            return;
           }
 
-          dispatch(
-            commitEncounterChange({
-              action: prepared.action,
-              nextEncounter: prepared.nextEncounter
-            })
-          );
-          dispatch(
-            selectEntity({
-              entityType: 'actor',
-              ids: actorDrag.actorIds
-            })
-          );
-          setActorDrag(null);
-          return;
-        }
+          setActorDrag({
+            ...actorDrag,
+            current: actorDrag.start,
+            phase: 'returning'
+          });
+        };
 
-        setActorDrag({
-          ...actorDrag,
-          current: actorDrag.start,
-          phase: 'returning'
-        });
+        if (prepared instanceof Promise) {
+          void prepared.then(commitPrepared);
+        } else {
+          commitPrepared(prepared);
+        }
         return;
       }
 
@@ -290,7 +298,7 @@ export function useCanvasMouseUpHandler(input: MouseUpHandlerInput) {
       vertexDrag.zoneId,
       vertexDrag.polygon
     );
-    const prepared = prepareValidatedEncounterChange({
+    const prepared = prepareValidatedEncounterChangeForRuntime({
       action: createEncounterActionRecord('zone.reshape', {
         polygon: vertexDrag.polygon,
         ...(resizedZone
@@ -308,42 +316,50 @@ export function useCanvasMouseUpHandler(input: MouseUpHandlerInput) {
       nextEncounter
     });
 
-    const committedPolygon =
-      prepared.nextEncounter.zones.byId[vertexDrag.zoneId]?.polygon ??
-      vertexDrag.polygon;
+    const commitPrepared = (resolved: Awaited<typeof prepared>) => {
+      const committedPolygon =
+        resolved.nextEncounter.zones.byId[vertexDrag.zoneId]?.polygon ??
+        vertexDrag.polygon;
 
-    if (
-      prepared.blocked ||
-      !canCommitZonePolygonForCollection(
-        committedPolygon,
-        encounter.zones,
-        vertexDrag.zoneId
-      )
-    ) {
+      if (
+        resolved.blocked ||
+        !canCommitZonePolygonForCollection(
+          committedPolygon,
+          encounter.zones,
+          vertexDrag.zoneId
+        )
+      ) {
+        setVertexDrag(null);
+        return;
+      }
+
+      dispatch(
+        commitEncounterChange({
+          action: {
+            ...resolved.action,
+            payload: {
+              ...resolved.action.payload,
+              polygon: committedPolygon,
+              requestedPolygon: vertexDrag.polygon
+            }
+          },
+          nextEncounter: resolved.nextEncounter
+        })
+      );
+      dispatch(
+        selectEntity({
+          entityType: 'zone',
+          ids: [vertexDrag.zoneId]
+        })
+      );
       setVertexDrag(null);
-      return;
-    }
+    };
 
-    dispatch(
-      commitEncounterChange({
-        action: {
-          ...prepared.action,
-          payload: {
-            ...prepared.action.payload,
-            polygon: committedPolygon,
-            requestedPolygon: vertexDrag.polygon
-          }
-        },
-        nextEncounter: prepared.nextEncounter
-      })
-    );
-    dispatch(
-      selectEntity({
-        entityType: 'zone',
-        ids: [vertexDrag.zoneId]
-      })
-    );
-    setVertexDrag(null);
+    if (prepared instanceof Promise) {
+      void prepared.then(commitPrepared);
+    } else {
+      commitPrepared(prepared);
+    }
   }
 
   return handleCanvasMouseUp;

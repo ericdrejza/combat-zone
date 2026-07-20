@@ -1,4 +1,5 @@
 import type { EncounterState } from '@core/encounter/types';
+import type { ComputationResource } from '@core/computationResource';
 import type { LayoutComputationStrategy } from '@core/layout/types';
 import type { PolygonNestingSettings } from '@core/layout/nesting_ts';
 import type { ActorPlacementGeometry } from './actorPlacementCache';
@@ -20,5 +21,5 @@ export type ActorPlacementWorkerResponse = {
   cacheKey: string;
   geometry: ActorPlacementGeometry[];
   proactivePlans: Record<string, ActorPlacementGeometry[]>;
-  proactiveAcceleration?: 'WEBGPU' | 'CPU';
+  computationResource?: ComputationResource;
 };

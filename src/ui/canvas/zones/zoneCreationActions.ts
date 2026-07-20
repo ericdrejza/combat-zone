@@ -1,6 +1,6 @@
 import { createEncounterActionRecord } from '@core/history/createEncounterActionRecord';
 import type { LayoutPoint } from '@core/layout/types';
-import { prepareValidatedEncounterChange } from '@core/validation/validatedEncounterChange';
+import { prepareValidatedEncounterChangeForRuntime } from '@core/validation/validatedEncounterChange';
 import type { ZoneShape } from '@entities/zone/types';
 import { createZone } from '@entities/zone/zoneMutations';
 import { selectEntity } from '@interaction/interactionState';
@@ -25,7 +25,7 @@ export function commitZoneCreate(
   shape: ZoneShape,
   suppressClickPoint?: LayoutPoint,
   cloneSourceZoneId?: string
-) {
+): void {
   const {
     dispatch,
     encounter,
@@ -53,7 +53,7 @@ export function commitZoneCreate(
     shape
   });
 
-  const prepared = prepareValidatedEncounterChange({
+  const prepared = prepareValidatedEncounterChangeForRuntime({
     action: createEncounterActionRecord('zone.create', {
       ...(cloneSourceZoneId ? { cloneSourceZoneId } : {}),
       zoneId,
@@ -64,25 +64,33 @@ export function commitZoneCreate(
     nextEncounter
   });
 
-  if (prepared.blocked) {
-    setZoneDraftPoints([]);
-    return;
-  }
+  const commitPrepared = (resolved: Awaited<typeof prepared>) => {
+    if (resolved.blocked) {
+      setZoneDraftPoints([]);
+      return;
+    }
 
-  dispatch(
-    commitEncounterChange({
-      action: prepared.action,
-      nextEncounter: prepared.nextEncounter
-    })
-  );
-  dispatch(
-    selectEntity({
-      entityType: 'zone',
-      ids: [zoneId]
-    })
-  );
-  suppressNextCanvasClickRef.current = true;
-  suppressNextCanvasClickPointRef.current =
-    suppressClickPoint ?? polygon[polygon.length - 1] ?? null;
-  setZoneDraftPoints([]);
+    dispatch(
+      commitEncounterChange({
+        action: resolved.action,
+        nextEncounter: resolved.nextEncounter
+      })
+    );
+    dispatch(
+      selectEntity({
+        entityType: 'zone',
+        ids: [zoneId]
+      })
+    );
+    suppressNextCanvasClickRef.current = true;
+    suppressNextCanvasClickPointRef.current =
+      suppressClickPoint ?? polygon[polygon.length - 1] ?? null;
+    setZoneDraftPoints([]);
+  };
+
+  if (prepared instanceof Promise) {
+    void prepared.then(commitPrepared);
+  } else {
+    commitPrepared(prepared);
+  }
 }

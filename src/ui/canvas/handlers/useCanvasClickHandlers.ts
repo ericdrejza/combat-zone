@@ -184,7 +184,7 @@ export function useCanvasClickHandlers(input: ClickHandlerInput) {
         zoneDraftPoints.length >= 3 &&
         distance(startPoint, nextPoint) <= CLOSE_DISTANCE
       ) {
-        commitZoneCreate(input, zoneDraftPoints, 'polygon');
+        void commitZoneCreate(input, zoneDraftPoints, 'polygon');
         return;
       }
 
@@ -253,7 +253,7 @@ export function useCanvasClickHandlers(input: ClickHandlerInput) {
       polygon.length >= 3 &&
       canCommitZonePolygonForCollection(polygon, encounter.zones)
     ) {
-      commitZoneCreate(input, polygon, 'polygon');
+        void commitZoneCreate(input, polygon, 'polygon');
     }
   }
 
