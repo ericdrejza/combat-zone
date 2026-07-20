@@ -16,6 +16,10 @@ import {
   PROACTIVE_ACTOR_ID
 } from './proactiveActorPlacementKeys';
 import type { ActorPlacementGeometry } from './actorPlacementCache';
+import {
+  getComputationResource,
+  setComputationResource
+} from '@core/computationResource';
 import { FLEX_ZONE_EDGE_GAP } from './actorFlexLayout';
 import type {
   ActorPlacementWorkerRequest,
@@ -29,7 +33,6 @@ const pendingRequests = new Set<string>();
 let worker: Worker | undefined;
 let nextRequestId = 1;
 let latestRequestId = 0;
-let proactiveAcceleration: 'WEBGPU' | 'CPU' = 'CPU';
 
 function notifyListeners(): void {
   listeners.forEach((listener) => listener());
@@ -63,13 +66,14 @@ function handleWorkerResponse(response: ActorPlacementWorkerResponse): void {
   }
 
   if (response.phase === 'geometry') {
+    setComputationResource(response.computationResource ?? 'CPU');
     pendingRequests.delete(response.cacheKey);
     cacheActorPlacementGeometry(response.cacheKey, response.geometry);
     notifyListeners();
     return;
   }
 
-  proactiveAcceleration = response.proactiveAcceleration ?? 'CPU';
+  setComputationResource(response.computationResource ?? 'CPU');
 
   Object.entries(response.proactivePlans).forEach(([key, geometry]) => {
     setProactivePlan(key, geometry);
@@ -217,7 +221,7 @@ export function getWorkerProactiveActorPlacementGeometry(
 export function clearActorPlacementWorkerCache(): void {
   proactivePlans.clear();
   pendingRequests.clear();
-  proactiveAcceleration = 'CPU';
+  setComputationResource('CPU');
   nextRequestId += 1;
   latestRequestId = nextRequestId;
   notifyListeners();
@@ -229,7 +233,7 @@ export function getActorPlacementWorkerPlanCount(): number {
 
 /** Reports which worker-side candidate ranking path is active for diagnostics. */
 export function getProactivePlacementAcceleration(): 'WEBGPU' | 'CPU' {
-  return proactiveAcceleration;
+  return getComputationResource();
 }
 
 export { getPlanKey };

@@ -3,7 +3,7 @@ import type { DragEvent } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 import { createEncounterActionRecord } from "@core/history/createEncounterActionRecord";
-import { prepareValidatedEncounterChange } from "@core/validation/validatedEncounterChange";
+import { prepareValidatedEncounterChangeForRuntime } from "@core/validation/validatedEncounterChange";
 import { setActorDragImage } from "@core/rendering/actorDragPreview";
 import { createActor } from "@entities/actor/actorMutations";
 import { ACTOR_LAYOUT_GROUP_COLORS } from "@entities/actor/actorVisuals";
@@ -65,7 +65,7 @@ export function ActorCreationModal({ onClose }: ActorCreationModalProps) {
       shape: actorTool.shape,
       size: actorTool.size
     });
-    const prepared = prepareValidatedEncounterChange({
+    const prepared = prepareValidatedEncounterChangeForRuntime({
       action: createEncounterActionRecord("actor.create", {
         actorId,
         destinationZoneId: targetZone.id
@@ -74,18 +74,26 @@ export function ActorCreationModal({ onClose }: ActorCreationModalProps) {
       nextEncounter
     });
 
-    if (prepared.blocked) {
-      return;
-    }
+    const commitPrepared = (resolved: Awaited<typeof prepared>) => {
+      if (resolved.blocked) {
+        return;
+      }
 
-    dispatch(
-      commitEncounterChange({
-        action: prepared.action,
-        nextEncounter: prepared.nextEncounter
-      })
-    );
-    dispatch(selectEntity({ entityType: "actor", ids: [actorId] }));
-    onClose();
+      dispatch(
+        commitEncounterChange({
+          action: resolved.action,
+          nextEncounter: resolved.nextEncounter
+        })
+      );
+      dispatch(selectEntity({ entityType: "actor", ids: [actorId] }));
+      onClose();
+    };
+
+    if (prepared instanceof Promise) {
+      void prepared.then(commitPrepared);
+    } else {
+      commitPrepared(prepared);
+    }
   }
 
   function startDrag(event: DragEvent<HTMLSpanElement>) {
@@ -129,7 +137,7 @@ export function ActorCreationModal({ onClose }: ActorCreationModalProps) {
         className="w-[min(22rem,calc(100vw-2rem))] space-y-4 rounded-2xl border border-canvas-line bg-canvas-panel p-5 shadow-2xl"
         onSubmit={(event) => {
           event.preventDefault();
-          create();
+          void create();
         }}
       >
         <h2 className="font-display text-lg font-semibold">Create actor</h2>

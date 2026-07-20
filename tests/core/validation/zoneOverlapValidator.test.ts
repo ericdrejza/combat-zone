@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { createEncounterState } from '@core/encounter/createEncounterState';
 import type { EncounterState } from '@core/encounter/types';
-import { runValidationPipeline } from '@core/validation/pipeline';
+import { runValidationPipelineSync } from '@core/validation/pipeline';
 import { ZoneOverlapValidator } from '@core/validation/zoneOverlapValidator';
 import type { EntityCollection } from '@core/state/entityCollection';
 import type { Zone } from '@entities/zone/types';
@@ -74,7 +74,7 @@ describe('ZoneOverlapValidator', () => {
         secondZone
       ])
     };
-    const result = runValidationPipeline({
+    const result = runValidationPipelineSync({
       action: {
         type: 'actor.create',
         payload: {

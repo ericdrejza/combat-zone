@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 
 import { createEncounterActionRecord } from '@core/history/createEncounterActionRecord';
-import { prepareValidatedEncounterChange } from '@core/validation/validatedEncounterChange';
+import { prepareValidatedEncounterChangeForRuntime } from '@core/validation/validatedEncounterChange';
 import { updateActorProperties } from '@entities/actor/actorMutations';
 import { commitEncounterChange } from '@store/encounterSlice';
 import type { AppDispatch, RootState } from '@store/store';
@@ -75,7 +75,7 @@ export function useActorPaintBrush({
       encounter
     );
 
-    const prepared = prepareValidatedEncounterChange({
+    const prepared = prepareValidatedEncounterChangeForRuntime({
       action: createEncounterActionRecord('actor.paint', {
         actorIds: actorIdsToPaint,
         properties
@@ -83,26 +83,31 @@ export function useActorPaintBrush({
       currentEncounter: encounter,
       nextEncounter
     });
+    const handlePrepared = (resolved: Awaited<typeof prepared>) => {
+      const commitPreparedChange = () => {
+        dispatch(
+          commitEncounterChange({
+            action: resolved.action,
+            nextEncounter: resolved.nextEncounter
+          })
+        );
+      };
 
-    const commitPreparedChange = () => {
-      dispatch(
-        commitEncounterChange({
-          action: prepared.action,
-          nextEncounter: prepared.nextEncounter
-        })
-      );
+      if (resolved.requiresConfirmation) {
+        requestApproval({ onApprove: commitPreparedChange });
+        return;
+      }
+
+      if (!resolved.blocked) {
+        commitPreparedChange();
+      }
     };
 
-    if (prepared.requiresConfirmation) {
-      requestApproval({ onApprove: commitPreparedChange });
-      return;
+    if (prepared instanceof Promise) {
+      void prepared.then(handlePrepared);
+    } else {
+      handlePrepared(prepared);
     }
-
-    if (prepared.blocked) {
-      return;
-    }
-
-    commitPreparedChange();
   }, [
     actorPaintBrush,
     actorTool.layoutGroup,

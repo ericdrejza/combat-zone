@@ -133,7 +133,7 @@ async function runProactiveJobs(
       cacheKey,
       geometry: [],
       phase: 'proactive',
-      proactiveAcceleration: rankCandidates ? 'WEBGPU' : 'CPU',
+      computationResource: rankCandidates ? 'WEBGPU' : 'CPU',
       proactivePlans: plans,
       requestId: request.requestId,
       type: 'calculated'
@@ -212,7 +212,7 @@ workerScope.addEventListener('message', (event) => {
       )
     ],
     phase: 'geometry',
-    proactiveAcceleration: 'CPU',
+    computationResource: 'CPU',
     proactivePlans: {},
     requestId: request.requestId,
     type: 'calculated'
