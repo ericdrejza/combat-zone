@@ -91,12 +91,23 @@ describe("ZonePropertiesPanel", () => {
 
     expect(await screen.findByLabelText("Zone 1")).toBeInTheDocument();
     expect(screen.queryByLabelText("Layout orientation")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Show section dividers" })
+    ).not.toBeInTheDocument();
     expect(screen.getByRole("radio", { name: "SPLIT_FLEX" })).toBeInTheDocument();
 
     await user.click(screen.getByRole("radio", { name: "SPLIT_SEQUENTIAL" }));
     expect(
       screen.getByRole("radio", { name: "Left to right" })
     ).toBeInTheDocument();
+    const dividerToggle = screen.getByRole("button", {
+      name: "Show section dividers"
+    });
+    expect(dividerToggle).toHaveAttribute("aria-pressed", "false");
+    await user.click(dividerToggle);
+    expect(
+      screen.getByRole("button", { name: "Hide section dividers" })
+    ).toHaveAttribute("aria-pressed", "true");
     await user.click(screen.getByRole("radio", { name: "Top to bottom" }));
     expect(
       screen.getByRole("radio", { name: "Top to bottom" })
@@ -105,6 +116,16 @@ describe("ZonePropertiesPanel", () => {
     expect(
       screen.getByText("Current layout descriptor: SPLIT_SEQUENTIAL, TOP_BOTTOM, 3 sections.")
     ).toBeInTheDocument();
+    expect(
+      store.getState().encounter.present.zones.byId[
+        store.getState().interaction.selection.selectedIds[0]
+      ]?.showSectionDividers
+    ).toBe(true);
+
+    await user.click(screen.getByRole("radio", { name: "FLEX" }));
+    expect(
+      screen.queryByRole("button", { name: "Hide section dividers" })
+    ).not.toBeInTheDocument();
   });
 
   it("exports first selected zone properties to the rest of a multi-selection", async () => {

@@ -4,7 +4,8 @@ import type { LayoutPoint } from "../layout/types";
 import {
   findPolygonFlexZoneFit,
   getNestingActorsInZone,
-  isAutoResizeActorAddition
+  isAutoResizeActorAddition,
+  isZoneLayoutChange
 } from "./polygonFlexZoneAdjustment";
 import type { ValidationAction } from "./types";
 
@@ -193,7 +194,8 @@ export function adjustPolygonFlexZonesToFit(
   const canResizeZone =
     action.type === "zone.reshape" ||
     isActorFootprintChange(action) ||
-    isAutoResizeActorAddition(action);
+    isAutoResizeActorAddition(action) ||
+    isZoneLayoutChange(action);
 
   if (!canResizeZone) {
     return { nextEncounter, resizedZoneIds: [] };
@@ -209,7 +211,10 @@ export function adjustPolygonFlexZonesToFit(
       continue;
     }
 
-    if (isAutoResizeActorAddition(action) && !zone.autoResize) {
+    if (
+      (isAutoResizeActorAddition(action) || isZoneLayoutChange(action)) &&
+      !zone.autoResize
+    ) {
       continue;
     }
 

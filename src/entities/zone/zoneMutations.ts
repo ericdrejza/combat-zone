@@ -18,6 +18,7 @@ export type CreateZoneInput = {
   polygon: LayoutPoint[];
   showBorder?: boolean;
   showName?: boolean;
+  showSectionDividers?: boolean;
   shape?: ZoneShape;
   layoutOrientation?: LayoutOrientation;
   layoutStrategy?: Zone["layoutStrategy"];
@@ -35,6 +36,7 @@ export type UpdateZonePropertiesInput = {
   opacity?: number;
   showBorder?: boolean;
   showName?: boolean;
+  showSectionDividers?: boolean;
   tags?: string[];
 };
 
@@ -102,6 +104,7 @@ export function buildZone({
   polygon,
   showBorder = true,
   showName = false,
+  showSectionDividers = false,
   shape = "polygon",
   tags = []
 }: CreateZoneInput): Zone {
@@ -116,6 +119,7 @@ export function buildZone({
     polygon,
     showBorder,
     showName,
+    showSectionDividers,
     shape,
     layoutStrategy,
     layoutOrientation,

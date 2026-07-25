@@ -9,6 +9,7 @@ import {
 } from '../layout/polygonFlexZoneFit';
 import type { NestingActor } from '../layout/nesting_ts';
 import type { LayoutPoint } from '../layout/types';
+import type { Zone } from '@entities/zone/types';
 import type { ValidationAction } from './types';
 
 export function isAutoResizeActorAddition(action: ValidationAction): boolean {
@@ -17,6 +18,37 @@ export function isAutoResizeActorAddition(action: ValidationAction): boolean {
     action.type === 'actor.move' ||
     action.type === 'actor.moveMany'
   );
+}
+
+export function isZoneLayoutChange(action: ValidationAction): boolean {
+  if (
+    action.type !== 'zone.updateProperties' &&
+    action.type !== 'zone.exportProperties'
+  ) {
+    return false;
+  }
+
+  const properties = action.payload.properties;
+
+  return Boolean(
+    properties &&
+      typeof properties === 'object' &&
+      !Array.isArray(properties) &&
+      (typeof properties.layoutStrategy === 'string' ||
+        typeof properties.layoutOrientation === 'string')
+  );
+}
+
+function getPolygonNestingStrategy(
+  strategy: Zone['layoutStrategy']
+): 'FLEX' | 'SEQUENTIAL' | 'SPLIT_FLEX' | 'SPLIT_SEQUENTIAL' {
+  return strategy === 'SPLIT_FLEX'
+    ? 'SPLIT_FLEX'
+    : strategy === 'SPLIT_SEQUENTIAL'
+      ? 'SPLIT_SEQUENTIAL'
+      : strategy === 'SEQUENTIAL'
+        ? 'SEQUENTIAL'
+        : 'FLEX';
 }
 
 function getResizeAnchor(action: ValidationAction): LayoutPoint | undefined {
@@ -66,7 +98,11 @@ export function findPolygonFlexZoneFit(
   if (requestedAnchor) {
     return findSmallestPolygonFlexZoneFit(polygon, actors, undefined, {
       anchor: requestedAnchor,
-      isPolygonAllowed
+      isPolygonAllowed,
+      layoutOrientation: encounter.zones.byId[zoneId]?.layoutOrientation,
+      layoutStrategy: getPolygonNestingStrategy(
+        encounter.zones.byId[zoneId]?.layoutStrategy ?? 'FLEX'
+      )
     });
   }
 
@@ -74,6 +110,8 @@ export function findPolygonFlexZoneFit(
 
   return findSmallestPolygonFlexZoneExpansion(polygon, actors, {
     isPolygonAllowed,
+    layoutOrientation: zone?.layoutOrientation,
+    layoutStrategy: getPolygonNestingStrategy(zone?.layoutStrategy ?? 'FLEX'),
     preserveRectangle: zone?.shape === 'rectangle'
   });
 }
@@ -81,15 +119,11 @@ export function findPolygonFlexZoneFit(
 export function getNestingActorsInZone(
   encounter: EncounterState,
   zoneId: string,
-  strategy: string
+  _strategy: string
 ): NestingActor[] {
-  return strategy === 'FLEX'
-    ? encounter.actors.allIds.flatMap((actorId) => {
-        const actor = encounter.actors.byId[actorId];
+  return encounter.actors.allIds.flatMap((actorId) => {
+    const actor = encounter.actors.byId[actorId];
 
-        return actor && actor.currentZoneId === zoneId
-          ? [toNestingActor(actor)]
-          : [];
-      })
-    : [];
+    return actor && actor.currentZoneId === zoneId ? [toNestingActor(actor)] : [];
+  });
 }

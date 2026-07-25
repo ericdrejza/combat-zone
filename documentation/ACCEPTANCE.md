@@ -58,6 +58,9 @@ covers `DESIGN.md` §15 "Must have" scope only.
       polygon zones use rendered rectangle/circle
       footprints, deterministic collection order, and polygon packing without
       overlap.
+- [x] FLEX actor footprints retain at least 2px clearance in dense layouts and
+      distribute spare room around actors in two dimensions instead of
+      unnecessarily pushing actors toward zone borders.
 - [x] Non-split SEQUENTIAL actors use the shared polygon packer in collection
       order, with clockwise targets and the same incremental border-spacing
       fallback used by FLEX.
@@ -65,8 +68,20 @@ covers `DESIGN.md` §15 "Must have" scope only.
       top-to-bottom row-major layout based on each actor's footprint, moving
       row baselines as needed to preserve the no-overlap rule.
 - [x] SPLIT_FLEX and SPLIT_SEQUENTIAL allocate only the section size required
-      by each faction, distribute actors without overlap, and clip curved
-      sections to circle/hexagon zone boundaries before validating footprints.
+      by each faction, distribute remaining space by faction actor-footprint
+      area, and clip curved sections to circle/hexagon zone boundaries before
+      validating footprints.
+- [x] Split section boundaries move during zone resizing when an internal
+      layout needs a different row/column shape, borrowing spare room across
+      adjacent sections before actor-area weighting is applied.
+- [x] SPLIT_FLEX lays out each faction independently with section-scoped FLEX
+      space-around distribution; actors in another section do not affect its
+      internal shape or spacing.
+- [x] SPLIT_SEQUENTIAL centers collection-ordered actors on aligned lines
+      inside each faction section and wraps to a new line when full.
+- [x] Split layouts expose a persisted section-divider visibility control
+      beside Orientation; enabled dividers are clipped to the zone and render
+      dashed in its border color at 70% opacity.
 - [x] The hard polygon no-overlap fit check applies to FLEX, SEQUENTIAL,
       SPLIT_FLEX, and SPLIT_SEQUENTIAL zone layouts in every validation mode.
 - [x] Preferred 16px border spacing adaptively falls back to 12px, 8px, and

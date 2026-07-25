@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
+    "benchmark:performance:browser": "vite --host 127.0.0.1",
     "preview": "vite preview",
     "test": "vitest run",
     "test:agent": "vitest run --reporter=agent",

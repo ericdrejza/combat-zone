@@ -7,6 +7,7 @@ import { createEncounterState } from '@core/encounter/createEncounterState';
 import { ZONELESS_ACTOR_ZONE_ID } from '@core/encounter/types';
 import { createEncounterActionRecord } from '@core/history/createEncounterActionRecord';
 import { calculateZoneLayout } from '@core/layout/encounterLayout';
+import { prepareValidatedEncounterChange } from '@core/validation/validatedEncounterChange';
 import type { EntityCollection } from '@core/state/entityCollection';
 import reducer, {
   commitEncounterChange,
@@ -190,6 +191,7 @@ describe('zone mutations', () => {
       layoutOrientation: 'TOP_BOTTOM',
       layoutStrategy: 'SPLIT_SEQUENTIAL',
       name: 'Updated Room',
+      showSectionDividers: true,
       tags: ['difficult', 'lit']
     });
 
@@ -199,6 +201,7 @@ describe('zone mutations', () => {
       layoutOrientation: 'TOP_BOTTOM',
       layoutStrategy: 'SPLIT_SEQUENTIAL',
       name: 'Updated Room',
+      showSectionDividers: true,
       tags: ['difficult', 'lit']
     });
     expect(
@@ -223,7 +226,51 @@ describe('zone mutations', () => {
       orientation: 'LEFT_RIGHT',
       strategy: 'FLEX'
     });
+    expect(
+      state.present.zones.byId[zone.id]?.showSectionDividers
+    ).toBeUndefined();
+
+    state = reducer(state, redoEncounterChange());
+    expect(
+      state.present.zones.byId[zone.id]?.showSectionDividers
+    ).toBe(true);
   });
+
+  it.each(['ADVISORY', 'STRICT'] as const)(
+    'allows divider visibility changes in %s validation mode',
+    (mode) => {
+      const emptyEncounter = createEncounterState({
+        id: 'encounter-divider-validation',
+        name: 'Divider validation'
+      });
+      const currentEncounter = {
+        ...emptyEncounter,
+        zones: collection([zone]),
+        validationState: {
+          ...emptyEncounter.validationState,
+          mode
+        }
+      };
+      const nextEncounter = updateZoneProperties(
+        currentEncounter,
+        zone.id,
+        { showSectionDividers: true }
+      );
+      const result = prepareValidatedEncounterChange({
+        action: createEncounterActionRecord('zone.updateProperties', {
+          properties: { showSectionDividers: true },
+          zoneId: zone.id
+        }),
+        currentEncounter,
+        nextEncounter
+      });
+
+      expect(result.blocked).toBe(false);
+      expect(
+        result.nextEncounter.zones.byId[zone.id]?.showSectionDividers
+      ).toBe(true);
+    }
+  );
 
   it('deletes a zone as one reversible history entry with actor, edge, and engagement cascades', () => {
     const initialState = reducer(undefined, { type: 'test/init' });

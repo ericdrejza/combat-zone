@@ -92,6 +92,7 @@ export function getExportableZoneProperties(
     opacity: zone.opacity,
     showBorder: zone.showBorder,
     showName: zone.showName,
+    showSectionDividers: zone.showSectionDividers,
     tags: zone.tags
   };
 }
