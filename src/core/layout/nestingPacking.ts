@@ -1,18 +1,12 @@
 import {
-  distance,
-  footprintsOverlap,
   getFootprint,
   isFootprintInsideZone
 } from './polygonGeometry';
 import { getNestingCandidatePoints } from './nestingCandidates';
-import { getTargetPoint } from './nestingTargets';
-import {
-  getSplitFlexTargetPoints,
-  getSplitGroupRank,
-  hasValidSplitOrdering,
-  respectsSplitOrdering
-} from './nestingSplitFlex';
-import { findSplitFlexPlacements } from './nestingSplitFlexSearch';
+import { getTargetPoints } from './nestingTargets';
+import { NestingSpatialIndex } from './nestingSpatialIndex';
+import { getCollisionActorGap } from './nestingSpacing';
+import { getDenseRectangleSpacings } from './nestingRectangleCapacity';
 import type {
   NestingActor,
   PolygonNestingInput,
@@ -42,48 +36,76 @@ export function getBorderSpacings(settings: PolygonNestingSettings): number[] {
   return values;
 }
 
+/** Tries comfortable edge clearance before progressively denser packing. */
+export function getBorderSpacingsForInput(
+  input: Pick<PolygonNestingInput, 'actors' | 'layoutStrategy' | 'polygon'>,
+  settings: PolygonNestingSettings
+): number[] {
+  const spacings = getBorderSpacings(settings);
+
+  return (
+    getDenseRectangleSpacings(
+      input,
+      spacings,
+      settings.minimumBorderSpacing
+    ) ?? spacings
+  );
+}
+
 export function tryPack(
   input: PolygonNestingInput,
   settings: PolygonNestingSettings,
   borderSpacing: number
 ): PolygonNestingResult {
   const layoutStrategy = input.layoutStrategy ?? 'FLEX';
-  const splitFlex = layoutStrategy === 'SPLIT_FLEX';
+  const collisionGap = getCollisionActorGap(
+    input.layoutStrategy,
+    settings.actorGap,
+    input.actors.length
+  );
   const actorIndexes = new Map(
     input.actors.map((actor, index) => [actor.id, index])
   );
-  const splitTargets = splitFlex
-    ? getSplitFlexTargetPoints(input, borderSpacing, settings.actorGap)
-    : undefined;
   const actors = [...input.actors].sort(
     (first, second) =>
-      (splitFlex
-        ? getSplitGroupRank(first) - getSplitGroupRank(second)
-        : 0) ||
       second.radius - first.radius ||
       (actorIndexes.get(first.id) ?? 0) - (actorIndexes.get(second.id) ?? 0)
   );
-  const placements: Record<string, { x: number; y: number }> = {};
-  const placedFootprints: Array<Array<{ x: number; y: number }>> = [];
+  const targets = getTargetPoints(
+    input.actors,
+    input.polygon,
+    borderSpacing,
+    layoutStrategy,
+    settings.actorGap
+  );
 
-  for (const actor of actors) {
+  if (
+    targets.length !== input.actors.length &&
+    !input.actors.every((actor) => input.targetPoints?.[actor.id])
+  ) {
+    return {
+      fits: false,
+      placements: {},
+      borderSpacing,
+      incomingDropPoint: input.incomingDropPoint,
+      reason: 'no-space'
+    };
+  }
+  const placements: Record<string, { x: number; y: number }> = {};
+  const maximumRadius = Math.max(1, ...actors.map((actor) => actor.radius));
+  const spatialIndex = new NestingSpatialIndex(
+    maximumRadius * 2 + collisionGap,
+    settings.circleSegments
+  );
+
+  for (let placedActorCount = 0; placedActorCount < actors.length; placedActorCount += 1) {
+    const actor = actors[placedActorCount];
     const actorIndex = actorIndexes.get(actor.id) ?? 0;
     const target =
       actor.id === input.incomingActorId && input.incomingDropPoint
         ? input.incomingDropPoint
-        : input.targetPoints?.[actor.id]
-        ?? splitTargets?.get(actor.id)
-        ?? getTargetPoint(
-          actorIndex,
-          input.actors.length,
-          input.polygon,
-          input.actors,
-          borderSpacing,
-          layoutStrategy,
-          settings.actorGap
-        );
+        : input.targetPoints?.[actor.id] ?? targets[actorIndex];
     let candidate: { x: number; y: number } | undefined;
-    let candidateDistance = Number.POSITIVE_INFINITY;
 
     for (const point of getNestingCandidatePoints(
       input.polygon,
@@ -98,66 +120,24 @@ export function tryPack(
         borderSpacing,
         settings.circleSegments
       );
-      const collisionFootprint = getFootprint(
+      const collisionFootprint = spatialIndex.createFootprint(
         actor,
         point,
-        settings.actorGap / 2,
-        settings.circleSegments
+        collisionGap / 2
       );
       const valid =
         isFootprintInsideZone(footprint, input.polygon) &&
-        placedFootprints.every(
-          (placed) => !footprintsOverlap(collisionFootprint, placed)
-        ) &&
-        (!splitFlex ||
-          respectsSplitOrdering(
-            actor,
-            point,
-            actors.slice(0, actors.indexOf(actor)),
-            placements,
-            input.layoutOrientation
-          ));
+        !spatialIndex.overlaps(collisionFootprint);
 
       if (!valid) {
         continue;
       }
 
-      const pointDistance = distance(point, target);
-
-      if (pointDistance < candidateDistance) {
-        candidate = point;
-        candidateDistance = pointDistance;
-
-        if (candidateDistance === 0) {
-          break;
-        }
-      }
+      candidate = point;
+      break;
     }
 
     if (!candidate) {
-      if (splitFlex) {
-        const splitPlacements = findSplitFlexPlacements(
-          input,
-          settings,
-          borderSpacing,
-          actors,
-          actorIndexes,
-          splitTargets ?? new Map()
-        );
-
-        if (splitPlacements) {
-          return {
-            fits: true,
-            placements: splitPlacements,
-            borderSpacing,
-            incomingDropPoint: input.incomingDropPoint,
-            incomingTargetPoint: input.incomingActorId
-              ? splitPlacements[input.incomingActorId]
-              : undefined
-          };
-        }
-      }
-
       return {
         fits: false,
         placements,
@@ -168,27 +148,9 @@ export function tryPack(
     }
 
     placements[actor.id] = candidate;
-    placedFootprints.push(
-      getFootprint(
-        actor,
-        candidate,
-        settings.actorGap / 2,
-        settings.circleSegments
-      )
+    spatialIndex.insert(
+      spatialIndex.createFootprint(actor, candidate, collisionGap / 2)
     );
-  }
-
-  if (
-    splitFlex &&
-    !hasValidSplitOrdering(input.actors, placements, input.layoutOrientation)
-  ) {
-    return {
-      fits: false,
-      placements: {},
-      borderSpacing,
-      incomingDropPoint: input.incomingDropPoint,
-      reason: 'no-space'
-    };
   }
 
   return {

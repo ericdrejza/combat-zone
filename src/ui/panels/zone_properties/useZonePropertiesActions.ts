@@ -1,6 +1,7 @@
 import { useDispatch, useSelector } from "react-redux";
 
 import { createEncounterActionRecord } from "@core/history/createEncounterActionRecord";
+import { prepareValidatedEncounterChangeForRuntime } from "@core/validation/validatedEncounterChange";
 import type { Zone } from "@entities/zone/types";
 import {
   deleteZone,
@@ -46,6 +47,9 @@ function toZonePropertiesInput(
     ...(properties.showName !== undefined
       ? { showName: properties.showName }
       : {}),
+    ...(properties.showSectionDividers !== undefined
+      ? { showSectionDividers: properties.showSectionDividers }
+      : {}),
     ...(properties.tags !== undefined ? { tags: properties.tags } : {})
   };
 }
@@ -77,18 +81,35 @@ export function useZonePropertiesActions() {
       return;
     }
 
-    dispatch(
-      commitEncounterChange({
-        action: createEncounterActionRecord("zone.updateProperties", {
-          zoneId: selectedZone.id,
-          properties: zonePatch
-        }),
-        nextEncounter
-      })
-    );
+    const prepared = prepareValidatedEncounterChangeForRuntime({
+      action: createEncounterActionRecord("zone.updateProperties", {
+        properties: zonePatch,
+        zoneId: selectedZone.id
+      }),
+      currentEncounter: encounter,
+      nextEncounter
+    });
+    const commitPrepared = (resolved: Awaited<typeof prepared>) => {
+      if (resolved.blocked) {
+        return;
+      }
 
-    if (properties.opacity !== undefined) {
-      dispatch(setLastZoneOpacity(properties.opacity));
+      dispatch(
+        commitEncounterChange({
+          action: resolved.action,
+          nextEncounter: resolved.nextEncounter
+        })
+      );
+
+      if (properties.opacity !== undefined) {
+        dispatch(setLastZoneOpacity(properties.opacity));
+      }
+    };
+
+    if (prepared instanceof Promise) {
+      void prepared.then(commitPrepared);
+    } else {
+      commitPrepared(prepared);
     }
   }
 
@@ -153,17 +174,34 @@ export function useZonePropertiesActions() {
       return;
     }
 
-    dispatch(
-      commitEncounterChange({
-        action: createEncounterActionRecord("zone.exportProperties", {
-          properties: exportableProperties,
-          sourceZoneId: selectedZone.id,
-          targetZoneIds: selectedZoneIds.slice(1)
-        }),
-        nextEncounter
-      })
-    );
-    dispatch(setLastZoneOpacity(selectedZone.opacity));
+    const prepared = prepareValidatedEncounterChangeForRuntime({
+      action: createEncounterActionRecord("zone.exportProperties", {
+        properties: exportableProperties,
+        sourceZoneId: selectedZone.id,
+        targetZoneIds: selectedZoneIds.slice(1)
+      }),
+      currentEncounter: encounter,
+      nextEncounter
+    });
+    const commitPrepared = (resolved: Awaited<typeof prepared>) => {
+      if (resolved.blocked) {
+        return;
+      }
+
+      dispatch(
+        commitEncounterChange({
+          action: resolved.action,
+          nextEncounter: resolved.nextEncounter
+        })
+      );
+      dispatch(setLastZoneOpacity(selectedZone.opacity));
+    };
+
+    if (prepared instanceof Promise) {
+      void prepared.then(commitPrepared);
+    } else {
+      commitPrepared(prepared);
+    }
   }
 
   return {

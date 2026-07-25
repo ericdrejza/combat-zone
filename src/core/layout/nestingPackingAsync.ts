@@ -4,8 +4,9 @@ import {
   getFootprint,
   isFootprintInsideZone
 } from './polygonGeometry';
-import { getTargetPoint } from './nestingTargets';
-import { getBorderSpacings } from './nestingPacking';
+import { getTargetPoints } from './nestingTargets';
+import { getBorderSpacingsForInput } from './nestingPacking';
+import { getCollisionActorGap } from './nestingSpacing';
 import type { LayoutPoint } from './types';
 import {
   resolvePolygonNestingSettings,
@@ -33,7 +34,10 @@ export async function packPolygonActorsWithCandidateRanker(
   input: PolygonNestingInput,
   rankCandidates: NestingCandidateRanker
 ): Promise<PolygonNestingResult> {
-  if (input.layoutStrategy === 'SPLIT_FLEX') {
+  if (
+    input.layoutStrategy === 'SPLIT_FLEX' ||
+    input.layoutStrategy === 'SPLIT_SEQUENTIAL'
+  ) {
     return packPolygonActors(input);
   }
 
@@ -49,7 +53,7 @@ export async function packPolygonActorsWithCandidateRanker(
     };
   }
 
-  for (const borderSpacing of getBorderSpacings(settings)) {
+  for (const borderSpacing of getBorderSpacingsForInput(input, settings)) {
     const result = await tryPackWithRanker(
       input,
       settings,
@@ -85,6 +89,31 @@ async function tryPackWithRanker(
       second.radius - first.radius ||
       (actorIndexes.get(first.id) ?? 0) - (actorIndexes.get(second.id) ?? 0)
   );
+  const collisionGap = getCollisionActorGap(
+    input.layoutStrategy,
+    settings.actorGap,
+    input.actors.length
+  );
+  const targets = getTargetPoints(
+    input.actors,
+    input.polygon,
+    borderSpacing,
+    input.layoutStrategy ?? 'FLEX',
+    settings.actorGap
+  );
+
+  if (
+    targets.length !== input.actors.length &&
+    !input.actors.every((actor) => input.targetPoints?.[actor.id])
+  ) {
+    return {
+      fits: false,
+      placements: {},
+      borderSpacing,
+      incomingDropPoint: input.incomingDropPoint,
+      reason: 'no-space'
+    };
+  }
   const placements: Record<string, LayoutPoint> = {};
   const placedFootprints: LayoutPoint[][] = [];
 
@@ -94,15 +123,7 @@ async function tryPackWithRanker(
       actor.id === input.incomingActorId && input.incomingDropPoint
         ? input.incomingDropPoint
         : input.targetPoints?.[actor.id] ??
-          getTargetPoint(
-            actorIndex,
-            input.actors.length,
-            input.polygon,
-            input.actors,
-            borderSpacing,
-            input.layoutStrategy ?? 'FLEX',
-            settings.actorGap
-          );
+          targets[actorIndex];
     const candidates = Array.from(
       getNestingCandidatePoints(
         input.polygon,
@@ -125,7 +146,7 @@ async function tryPackWithRanker(
       const collisionFootprint = getFootprint(
         actor,
         point,
-        settings.actorGap / 2,
+        collisionGap / 2,
         settings.circleSegments
       );
 
@@ -155,7 +176,7 @@ async function tryPackWithRanker(
       getFootprint(
         actor,
         candidate,
-        settings.actorGap / 2,
+        collisionGap / 2,
         settings.circleSegments
       )
     );

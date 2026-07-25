@@ -1,5 +1,6 @@
 import type { Actor } from '@entities/actor/types';
 import type { Engagement } from '@entities/engagement/types';
+import type { Zone } from '@entities/zone/types';
 import type { EncounterState } from '../encounter/types';
 import { getEntities } from '../state/entityCollection';
 import { getLayoutStrategy } from './strategies';
@@ -50,6 +51,15 @@ export function calculateZoneLayout(
     state,
     (engagement) => engagement.parentZoneId === zoneId
   );
+  return calculateZoneLayoutFromEntities(zone, actors, engagements);
+}
+
+/** Describes a zone from caller-grouped entities to avoid collection rescans. */
+export function calculateZoneLayoutFromEntities(
+  zone: Zone,
+  actors: Actor[],
+  engagements: Engagement[]
+): ZoneLayoutResult {
   const renderables: LayoutEntity[] = [
     ...actors.map((actor) => ({
       id: actor.id,

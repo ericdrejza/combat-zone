@@ -90,6 +90,7 @@ Properties:
 - polygon
 - layoutStrategy
 - layoutOrientation
+- showSectionDividers
 - autoResize
 - tags
 
@@ -101,6 +102,11 @@ Layout strategies:
 
 - FLEX (default)
   - Actors are rendered evenly spread out as symmetrically as possible around the zone
+  - Spare room is distributed around actors in two dimensions, keeping actors
+    away from zone borders when the available space does not require compact
+    packing
+  - Actor footprints retain at least 2px of clearance in dense packing;
+    layouts use the larger preferred clearance when space permits
   - All zone shapes use deterministic polygon-footprint packing for actor
     targets; the stored polygon is the common geometry contract for rectangles,
     circles, hexagons, and user-drawn polygons
@@ -109,21 +115,32 @@ Layout strategies:
   - Actor order is stable based on collection `allIds`; an actor entering a
     different zone is appended to that collection order
 - SPLIT_FLEX
-  - Uses the full zone polygon with FLEX distribution and faction-ordering
-    constraints; it does not create rectangular or curved faction sections
+  - Zone is split into isolated mini-zone sections for heroes, neutral actors,
+    and enemies
   - `LEFT_RIGHT` orientation renders heroes left and enemies right
   - `TOP_BOTTOM` orientation renders heroes top and enemies bottom
   - Neutral actors render along the axis splitting heroes and enemies
-  - Each faction boundary is the nearest neighboring actor footprint from the
-    adjacent faction, so actor footprints cannot cross faction boundaries
+  - Each section is sized from only its own actors, first reserving the space
+    required to fit them and then receiving a share of remaining space
+    proportional to their rendered footprint area
+  - Section boundaries are malleable during zone resizing and layout. Actual
+    actor fit takes priority: boundaries borrow unused room from adjacent
+    sections before remaining room is distributed by actor footprint area
+  - Actors use an independent FLEX layout scoped to their section, with
+    space-around distribution that does not use actors in other sections when
+    deriving its shape or spacing
 - SPLIT_SEQUENTIAL
-  - Zone is split into areas for heroes, enemies, and neutral actors
+  - Uses the same isolated, area-weighted mini-zone sections as SPLIT_FLEX
   - `LEFT_RIGHT` orientation renders heroes left and enemies right
   - `TOP_BOTTOM` orientation renders heroes top and enemies bottom
   - Neutral actors render along the axis splitting heroes and enemies
-  - Actors are rendered one after the other in specific order in their specific area within the zone
+  - Actors are centered in aligned lines within their section; a new line is
+    created when the current line is full
   - Actor order within each area is stable based on collection `allIds`; an
     actor entering a different zone is appended to that collection order
+- `showSectionDividers` is exposed beside the Orientation property only for
+  split layouts. When enabled, each active section boundary renders inside the
+  zone as a dashed line in the zone border color at 70% opacity.
 
 **Deletion rule:** deleting a Zone does not delete or block deletion of its
 contents. Actors inside it become **zoneless**. Edges connected to it are
@@ -466,10 +483,11 @@ Layout strategies:
   - For circles, start populating inside the circle at the top and work clockwise
 - SPLIT (SPLIT is not a layout strategy, but rather a category of layout strategies)
   - SPLIT_FLEX
-    - Tokens use FLEX distribution across the full zone while preserving the
-      faction ordering constraint for the selected orientation.
+    - Each faction is an isolated section whose tokens use section-scoped FLEX
+      space-around distribution.
   - SPLIT_SEQUENTIAL
-    - Tokens are placed in a predictable order within their section in a zone.
+    - Tokens are centered in predictable, aligned, wrapping lines within their
+      isolated section in a zone.
       - options: left -> right, top -> bottom
   - For if one or more engagements exist in a split zone, a new section for
     engagements will be created in the zone.

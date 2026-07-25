@@ -80,15 +80,10 @@ export const PolygonPlacementValidator: Validator<EncounterState> = {
 
         return actor && actor.currentZoneId === zoneId ? [toNestingActor(actor)] : [];
       });
-      const splitFlex = zone.layoutStrategy === 'SPLIT_FLEX';
       const packing = packPolygonActors({
         actors,
         layoutOrientation: zone.layoutOrientation,
-        layoutStrategy: splitFlex
-          ? 'SPLIT_FLEX'
-          : zone.layoutStrategy === 'SEQUENTIAL'
-            ? 'SEQUENTIAL'
-            : 'FLEX',
+        layoutStrategy: zone.layoutStrategy,
         polygon: zone.polygon
       });
 

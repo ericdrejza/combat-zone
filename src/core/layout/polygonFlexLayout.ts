@@ -35,7 +35,7 @@ export function packPolygonFlexActors(
   return packPolygonActors({ ...input, layoutStrategy: 'FLEX' });
 }
 
-/** Packs one full zone while preserving FLEX distribution and faction order. */
+/** Packs independent faction sections with section-scoped FLEX distribution. */
 export function packPolygonSplitFlexActors(
   input: PolygonFlexLayoutInput
 ): PolygonNestingResult {
@@ -49,4 +49,11 @@ export function packPolygonSequentialActors(
   const layoutStrategy: PolygonNestingStrategy = 'SEQUENTIAL';
 
   return packPolygonActors({ ...input, layoutStrategy });
+}
+
+/** Packs stable actor order inside area-weighted faction sections. */
+export function packPolygonSplitSequentialActors(
+  input: PolygonLayoutInput
+): PolygonNestingResult {
+  return packPolygonActors({ ...input, layoutStrategy: 'SPLIT_SEQUENTIAL' });
 }

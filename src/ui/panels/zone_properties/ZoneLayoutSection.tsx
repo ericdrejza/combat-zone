@@ -1,6 +1,6 @@
 import type { LayoutOrientation } from "@core/layout/types";
 import type { Zone } from "@entities/zone/types";
-import { Zap, ZapOff } from "lucide-react";
+import { Eye, EyeOff, Zap, ZapOff } from "lucide-react";
 import {
   isSplitLayoutStrategy,
   zoneLayoutOrientations,
@@ -82,7 +82,39 @@ export function ZoneLayoutSection({
       </div>
       {isSplitLayoutStrategy(zone.layoutStrategy) ? (
         <div className="space-y-2">
-          <span className="font-semibold text-canvas-ink">Orientation</span>
+          <div className="flex items-center justify-between">
+            <span className="font-semibold text-canvas-ink">Orientation</span>
+            <button
+              aria-label={
+                zone.showSectionDividers
+                  ? "Hide section dividers"
+                  : "Show section dividers"
+              }
+              aria-pressed={zone.showSectionDividers ?? false}
+              className={`inline-flex h-8 w-8 items-center justify-center rounded-full border border-canvas-line hover:bg-canvas-subtle ${
+                zone.showSectionDividers
+                  ? "bg-canvas-ink text-white"
+                  : "text-canvas-muted"
+              }`}
+              onClick={() =>
+                onCommitZoneProperties({
+                  showSectionDividers: !zone.showSectionDividers
+                })
+              }
+              title={
+                zone.showSectionDividers
+                  ? "Hide section dividers"
+                  : "Show section dividers"
+              }
+              type="button"
+            >
+              {zone.showSectionDividers ? (
+                <Eye aria-hidden="true" className="h-4 w-4" />
+              ) : (
+                <EyeOff aria-hidden="true" className="h-4 w-4" />
+              )}
+            </button>
+          </div>
           <div
             aria-label="Layout orientation"
             className="grid grid-cols-2 overflow-hidden rounded-xl border border-canvas-line"

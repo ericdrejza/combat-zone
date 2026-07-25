@@ -94,6 +94,77 @@ describe("CanvasShell rendering", () => {
     expect(container.querySelector("foreignObject")).toBeNull();
   });
 
+  it("renders split section dividers from shared section geometry", () => {
+    store.dispatch(resetEncounterState());
+    const zone: Zone = {
+      colorBorder: "#365314",
+      colorFill: "#ffffff",
+      id: "zone-dividers",
+      layoutOrientation: "LEFT_RIGHT",
+      layoutStrategy: "SPLIT_FLEX",
+      name: "Divider Zone",
+      namePosition: "top-left",
+      opacity: 0.7,
+      polygon: [
+        { x: 40, y: 40 },
+        { x: 400, y: 40 },
+        { x: 400, y: 220 },
+        { x: 40, y: 220 }
+      ],
+      shape: "rectangle",
+      showBorder: true,
+      showName: false,
+      showSectionDividers: true,
+      tags: []
+    };
+    const actors: Actor[] = (["hero", "neutral", "enemy"] as const).map(
+      (layoutGroup) => ({
+        actorType: "creature",
+        currentZoneId: zone.id,
+        id: `actor-${layoutGroup}`,
+        layoutGroup,
+        metadata: {},
+        name: layoutGroup,
+        shape: "circle",
+        size: "medium",
+        statusEffects: []
+      })
+    );
+
+    store.dispatch(
+      commitEncounterChange({
+        action: createEncounterActionRecord("test.seed"),
+        nextEncounter: {
+          ...createEncounterState({
+            id: "encounter-dividers",
+            name: "Divider Encounter"
+          }),
+          actors: collection(actors),
+          zones: collection([zone])
+        }
+      })
+    );
+
+    const { container } = render(
+      <Provider store={store}>
+        <App />
+      </Provider>
+    );
+    const dividers = container.querySelectorAll(
+      "[data-zone-section-divider]"
+    );
+
+    expect(dividers).toHaveLength(2);
+    for (const divider of dividers) {
+      expect(divider).toHaveAttribute("stroke", zone.colorBorder);
+      expect(divider).toHaveAttribute("stroke-dasharray", "8 8");
+      expect(divider).toHaveAttribute("stroke-opacity", "0.7");
+    }
+    expect(
+      container.querySelector("[data-zone-section-dividers]")
+    ).toHaveAttribute("clip-path", "url(#zone-section-clip-zone-dividers)");
+  });
+
   it("outlines all actors by faction color while Alt is held in Actor or Select tool", () => {
     store.dispatch(resetEncounterState());
     const zone: Zone = {

@@ -158,6 +158,7 @@ export function CanvasWorkspace({
             {layer.id === "zones" ? (
               <ZoneLayer
                 activeToolId={activeToolId}
+                actors={encounter.actors}
                 actorTargetZoneId={actorTargetZoneId}
                 backgroundLuminanceByZoneId={backgroundLuminanceByZoneId}
                 directManipulationZoneId={directManipulationZoneId}

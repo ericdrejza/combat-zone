@@ -143,15 +143,6 @@ export function requestActorPlacementComputation(
     return;
   }
 
-  if (worker && pendingRequests.size > 0) {
-    // A crowded snapshot can still be inside a synchronous pack operation.
-    // Terminating that worker lets the newest drop start immediately instead
-    // of waiting behind a result that is already obsolete.
-    worker.terminate();
-    worker = undefined;
-    pendingRequests.clear();
-  }
-
   const placementWorker = getWorker();
 
   if (!placementWorker) {

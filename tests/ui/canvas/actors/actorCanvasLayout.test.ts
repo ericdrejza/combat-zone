@@ -196,7 +196,7 @@ describe('actor canvas layout', () => {
     );
   });
 
-  it('uses full-zone FLEX spacing while ordering split factions', () => {
+  it('uses independent FLEX spacing inside each split faction section', () => {
     const zoneId = 'split-zone';
     const encounter = {
       ...createEncounterState({
@@ -224,8 +224,8 @@ describe('actor canvas layout', () => {
     );
 
     expect(placements.map(({ point }) => point)).toEqual([
-      { x: 183, y: 200 },
-      { x: 317, y: 200 }
+      { x: 175, y: 200 },
+      { x: 325, y: 200 }
     ]);
   });
 
