@@ -1,6 +1,8 @@
 import type { MouseEvent } from "react";
 import { motion } from "motion/react";
 
+import { toNestingActor } from "@core/layout/actorFootprints";
+import { getFittingSplitSectionDividers } from "@core/layout/splitSectionDividers";
 import type { LayoutPoint } from "@core/layout/types";
 import { isZonePolygonSizeValid } from "@core/validation/zoneSize";
 import type { Zone } from "@entities/zone/types";
@@ -23,6 +25,7 @@ import { useMotionPreference } from "../../motion_preferences/MotionPreferencePr
 
 type ZoneLayerProps = {
   activeToolId: string;
+  actors: RootState["encounter"]["present"]["actors"];
   actorTargetZoneId: string | null;
   backgroundLuminanceByZoneId: Record<string, number>;
   directManipulationZoneId: string | null;
@@ -46,6 +49,7 @@ type ZoneLayerProps = {
 
 export function ZoneLayer({
   activeToolId,
+  actors,
   actorTargetZoneId,
   backgroundLuminanceByZoneId,
   directManipulationZoneId,
@@ -90,6 +94,29 @@ export function ZoneLayer({
       backgroundLuminanceByZoneId[zone.id]
     );
     const polygonPoints = polygonToPoints(polygon);
+    const isSplitLayout =
+      zone.layoutStrategy === "SPLIT_FLEX" ||
+      zone.layoutStrategy === "SPLIT_SEQUENTIAL";
+    const sectionActors =
+      zone.showSectionDividers && isSplitLayout
+        ? actors.allIds.flatMap((actorId) => {
+            const actor = actors.byId[actorId];
+
+            return actor?.currentZoneId === zone.id
+              ? [toNestingActor(actor)]
+              : [];
+          })
+        : [];
+    const sectionDividers =
+      zone.showSectionDividers && isSplitLayout
+        ? getFittingSplitSectionDividers({
+            actors: sectionActors,
+            layoutOrientation: zone.layoutOrientation,
+            layoutStrategy: zone.layoutStrategy,
+            polygon
+          })
+        : [];
+    const sectionClipId = `zone-section-clip-${zone.id}`;
     const invalidResizePreview =
       directManipulationZoneId === zone.id &&
       !isZonePolygonSizeValid(polygon);
@@ -130,6 +157,44 @@ export function ZoneLayer({
           stroke={zone.showBorder ? zone.colorBorder : "transparent"}
           transition={zoneGeometryTransition}
         />
+        {sectionDividers.length > 0 ? (
+          <>
+            <defs>
+              <clipPath id={sectionClipId}>
+                <motion.polygon
+                  animate={{ points: polygonPoints }}
+                  initial={false}
+                  transition={zoneGeometryTransition}
+                />
+              </clipPath>
+            </defs>
+            <g
+              aria-label={`${zone.name} section dividers`}
+              clipPath={`url(#${sectionClipId})`}
+              data-zone-section-dividers={zone.id}
+            >
+              {sectionDividers.map((divider, index) => (
+                <motion.line
+                  key={`${zone.id}-section-divider-${index}`}
+                  animate={{
+                    x1: divider.start.x,
+                    x2: divider.end.x,
+                    y1: divider.start.y,
+                    y2: divider.end.y
+                  }}
+                  className="pointer-events-none"
+                  data-zone-section-divider={index}
+                  initial={false}
+                  stroke={zone.colorBorder}
+                  strokeDasharray="8 8"
+                  strokeOpacity={0.7}
+                  strokeWidth={2}
+                  transition={zoneGeometryTransition}
+                />
+              ))}
+            </g>
+          </>
+        ) : null}
         {selected ? (
           <motion.polygon
             animate={{

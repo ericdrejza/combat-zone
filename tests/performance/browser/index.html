@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Combat Zone placement benchmark</title>
+    <style>
+      body { font: 16px/1.5 system-ui, sans-serif; margin: 2rem; max-width: 70rem; }
+      button { font: inherit; padding: 0.6rem 1rem; }
+      pre { background: #111827; color: #e5e7eb; overflow: auto; padding: 1rem; }
+    </style>
+  </head>
+  <body>
+    <h1>Actor placement CPU/WebGPU benchmark</h1>
+    <p>
+      This runs the same deterministic FLEX fixtures through the optimized CPU
+      packer and the optional WebGPU candidate ranker. Close other busy tabs
+      before measuring.
+    </p>
+    <button id="run" type="button">Run benchmark</button>
+    <pre id="output">Ready.</pre>
+    <script type="module" src="./placementBenchmark.ts"></script>
+  </body>
+</html>

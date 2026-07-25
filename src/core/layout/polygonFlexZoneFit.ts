@@ -4,11 +4,12 @@ import {
   getMinimumZoneHeight,
   getMinimumZoneWidth
 } from "./zoneSize";
+import type { PolygonFlexLayoutInput } from "./polygonFlexLayout";
 import {
-  packPolygonFlexActors,
-  type PolygonFlexLayoutInput
-} from "./polygonFlexLayout";
-import type { NestingActor } from "./nesting_ts";
+  packPolygonActors,
+  type NestingActor,
+  type PolygonNestingStrategy
+} from "./nesting_ts";
 
 export type PolygonFlexZoneFit = {
   polygon: LayoutPoint[];
@@ -18,7 +19,13 @@ export type PolygonFlexZoneFit = {
 export type PolygonFlexZoneFitOptions = {
   anchor?: LayoutPoint;
   isPolygonAllowed?: (polygon: LayoutPoint[]) => boolean;
+  layoutOrientation?: PolygonFlexLayoutInput["layoutOrientation"];
+  layoutStrategy?: PolygonNestingStrategy;
 };
+
+const MAX_GROWTH_ATTEMPTS = 6;
+const MAX_REFINEMENT_ATTEMPTS = 6;
+const RESIZE_TOLERANCE_PX = 0.5;
 
 function scalePolygon(
   polygon: LayoutPoint[],
@@ -34,12 +41,51 @@ function scalePolygon(
 function fits(
   input: Omit<PolygonFlexLayoutInput, "polygon">,
   polygon: LayoutPoint[],
-  isPolygonAllowed?: (polygon: LayoutPoint[]) => boolean
+  options: PolygonFlexZoneFitOptions
 ): boolean {
   return (
-    packPolygonFlexActors({ ...input, polygon }).fits &&
-    (isPolygonAllowed?.(polygon) ?? true)
+    (options.isPolygonAllowed?.(polygon) ?? true) &&
+    packPolygonActors({
+      ...input,
+      layoutOrientation: options.layoutOrientation,
+      layoutStrategy: options.layoutStrategy ?? "FLEX",
+      polygon
+    }).fits
   );
+}
+
+function findLargestAllowedScale(
+  polygon: LayoutPoint[],
+  origin: LayoutPoint,
+  lowerScale: number,
+  upperScale: number,
+  isPolygonAllowed: (polygon: LayoutPoint[]) => boolean
+): number {
+  for (let attempt = 0; attempt < 12; attempt += 1) {
+    const middleScale = (lowerScale + upperScale) / 2;
+
+    if (isPolygonAllowed(scalePolygon(polygon, origin, middleScale))) {
+      lowerScale = middleScale;
+    } else {
+      upperScale = middleScale;
+    }
+  }
+
+  return lowerScale;
+}
+
+function isWithinPixelTolerance(
+  polygon: LayoutPoint[],
+  lowerScale: number,
+  upperScale: number
+): boolean {
+  const bounds = getPolygonBounds(polygon);
+  const largestDimension = Math.max(
+    bounds.maxX - bounds.minX,
+    bounds.maxY - bounds.minY
+  );
+
+  return (upperScale - lowerScale) * largestDimension <= RESIZE_TOLERANCE_PX;
 }
 
 /**
@@ -74,7 +120,7 @@ export function findSmallestPolygonFlexZoneFit(
   );
   const minimumPolygon = scalePolygon(polygon, scaleOrigin, minimumScale);
 
-  if (fits(input, minimumPolygon, options.isPolygonAllowed)) {
+  if (fits(input, minimumPolygon, options)) {
     return {
       polygon: minimumPolygon,
       resized: minimumScale > 1
@@ -85,15 +131,33 @@ export function findSmallestPolygonFlexZoneFit(
   let upperScale = Math.max(2, minimumScale * 2);
   let upperScaleFits = false;
 
-  for (let attempt = 0; attempt < 20; attempt += 1) {
-    if (
-      fits(
-        input,
-        scalePolygon(polygon, scaleOrigin, upperScale),
-        options.isPolygonAllowed
-      )
-    ) {
+  for (let attempt = 0; attempt < MAX_GROWTH_ATTEMPTS; attempt += 1) {
+    const upperPolygon = scalePolygon(polygon, scaleOrigin, upperScale);
+
+    if (fits(input, upperPolygon, options)) {
       upperScaleFits = true;
+      break;
+    }
+
+    if (
+      options.isPolygonAllowed &&
+      !options.isPolygonAllowed(upperPolygon)
+    ) {
+      const largestAllowedScale = findLargestAllowedScale(
+        polygon,
+        scaleOrigin,
+        lowerScale,
+        upperScale,
+        options.isPolygonAllowed
+      );
+
+      if (
+        largestAllowedScale > lowerScale &&
+        fits(input, scalePolygon(polygon, scaleOrigin, largestAllowedScale), options)
+      ) {
+        upperScale = largestAllowedScale;
+        upperScaleFits = true;
+      }
       break;
     }
 
@@ -104,15 +168,16 @@ export function findSmallestPolygonFlexZoneFit(
     return null;
   }
 
-  for (let attempt = 0; attempt < 20; attempt += 1) {
+  for (
+    let attempt = 0;
+    attempt < MAX_REFINEMENT_ATTEMPTS &&
+    !isWithinPixelTolerance(polygon, lowerScale, upperScale);
+    attempt += 1
+  ) {
     const middleScale = (lowerScale + upperScale) / 2;
 
     if (
-      fits(
-        input,
-        scalePolygon(polygon, scaleOrigin, middleScale),
-        options.isPolygonAllowed
-      )
+      fits(input, scalePolygon(polygon, scaleOrigin, middleScale), options)
     ) {
       upperScale = middleScale;
     } else {

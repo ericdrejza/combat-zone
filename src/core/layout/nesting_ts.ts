@@ -1,5 +1,7 @@
 import type { LayoutOrientation, LayoutPoint } from './types';
-import { getBorderSpacings, tryPack } from './nestingPacking';
+import { getBorderSpacingsForInput, tryPack } from './nestingPacking';
+import { getCollisionActorGap } from './nestingSpacing';
+import { tryPackSplitSections } from './splitSectionPacking';
 
 export type NestingActor = {
   id: string;
@@ -8,7 +10,11 @@ export type NestingActor = {
   layoutGroup?: 'hero' | 'enemy' | 'neutral';
 };
 
-export type PolygonNestingStrategy = 'FLEX' | 'SEQUENTIAL' | 'SPLIT_FLEX';
+export type PolygonNestingStrategy =
+  | 'FLEX'
+  | 'SEQUENTIAL'
+  | 'SPLIT_FLEX'
+  | 'SPLIT_SEQUENTIAL';
 
 export type PolygonNestingSettings = {
   preferredBorderSpacing: number;
@@ -50,6 +56,40 @@ export type PolygonNestingResult = {
   incomingTargetPoint?: LayoutPoint;
   reason?: 'invalid-zone' | 'no-space';
 };
+
+function getPolygonArea(polygon: LayoutPoint[]): number {
+  let doubledArea = 0;
+
+  for (let index = 0; index < polygon.length; index += 1) {
+    const point = polygon[index];
+    const next = polygon[(index + 1) % polygon.length];
+    doubledArea += point.x * next.y - next.x * point.y;
+  }
+
+  return Math.abs(doubledArea) / 2;
+}
+
+function getRequiredFootprintArea(
+  actors: NestingActor[],
+  settings: PolygonNestingSettings,
+  collisionGap: number
+): number {
+  const circleAreaFactor =
+    (settings.circleSegments *
+      Math.sin((Math.PI * 2) / settings.circleSegments)) /
+    2;
+
+  return actors.reduce((total, actor) => {
+    const radius = actor.radius + collisionGap / 2;
+
+    return (
+      total +
+      (actor.shape === 'rectangle'
+        ? (radius * 2) ** 2
+        : circleAreaFactor * radius ** 2)
+    );
+  }, 0);
+}
 
 function mergeSettings(
   settings: Partial<PolygonNestingSettings> | undefined,
@@ -105,6 +145,11 @@ export function resolvePolygonNestingSettings(
 /** Deterministic polygon-footprint packing used by polygon layouts. */
 export function packPolygonActors(input: PolygonNestingInput): PolygonNestingResult {
   const settings = resolvePolygonNestingSettings(input);
+  const collisionGap = getCollisionActorGap(
+    input.layoutStrategy,
+    settings.actorGap,
+    input.actors.length
+  );
 
   if (input.polygon.length < 3) {
     return {
@@ -116,8 +161,29 @@ export function packPolygonActors(input: PolygonNestingInput): PolygonNestingRes
     };
   }
 
-  for (const borderSpacing of getBorderSpacings(settings)) {
-    const result = tryPack(input, settings, borderSpacing);
+  // Non-overlapping collision footprints cannot fit when their combined area
+  // already exceeds the zone. This prevents exhaustive candidate scans for
+  // obviously undersized polygons during automatic-resize searches.
+  if (
+    getRequiredFootprintArea(input.actors, settings, collisionGap) >
+    getPolygonArea(input.polygon)
+  ) {
+    return {
+      fits: false,
+      placements: {},
+      borderSpacing: settings.minimumBorderSpacing,
+      incomingDropPoint: input.incomingDropPoint,
+      reason: 'no-space'
+    };
+  }
+
+  for (const borderSpacing of getBorderSpacingsForInput(input, settings)) {
+    const result =
+      input.layoutStrategy === 'SPLIT_FLEX'
+        ? tryPackSplitSections(input, settings, borderSpacing, 'FLEX')
+        : input.layoutStrategy === 'SPLIT_SEQUENTIAL'
+          ? tryPackSplitSections(input, settings, borderSpacing, 'SEQUENTIAL')
+        : tryPack(input, settings, borderSpacing);
 
     if (result.fits) {
       return result;

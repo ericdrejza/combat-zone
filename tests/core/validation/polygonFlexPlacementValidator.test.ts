@@ -10,7 +10,10 @@ import {
   moveActor
 } from '@entities/actor/actorMutations';
 import { updateActorProperties } from '@entities/actor/actorMutations';
-import { updateZonePolygon } from '@entities/zone/zoneMutations';
+import {
+  updateZonePolygon,
+  updateZoneProperties
+} from '@entities/zone/zoneMutations';
 import { doPolygonsOverlap } from '@core/layout/polygonCollision';
 import type { Actor } from '@entities/actor/types';
 import type { Zone } from '@entities/zone/types';
@@ -64,6 +67,149 @@ function createState(
 }
 
 describe('polygon placement validation', () => {
+  it.each(['OFF', 'ADVISORY', 'STRICT'] as const)(
+    'rejects an orientation change that cannot pack the new split layout in %s mode',
+    (mode) => {
+      const splitZone = {
+        ...zone,
+        layoutStrategy: 'SPLIT_FLEX' as const,
+        polygon: [
+          { x: 0, y: 0 },
+          { x: 300, y: 0 },
+          { x: 300, y: 100 },
+          { x: 0, y: 100 }
+        ]
+      };
+      const splitActors = [
+        { ...existingActor, id: 'hero-one', layoutGroup: 'hero' as const },
+        { ...existingActor, id: 'hero-two', layoutGroup: 'hero' as const },
+        { ...existingActor, id: 'enemy-one', layoutGroup: 'enemy' as const }
+      ];
+      const currentEncounter = {
+        ...createState(mode, 'SPLIT_FLEX'),
+        actors: collection(splitActors),
+        zones: collection([splitZone])
+      };
+      const nextEncounter = updateZoneProperties(
+        currentEncounter,
+        splitZone.id,
+        { layoutOrientation: 'TOP_BOTTOM' }
+      );
+      const prepared = prepareValidatedEncounterChange({
+        action: createEncounterActionRecord('zone.updateProperties', {
+          properties: { layoutOrientation: 'TOP_BOTTOM' },
+          zoneId: splitZone.id
+        }),
+        currentEncounter,
+        nextEncounter
+      });
+
+      expect(prepared.blocked).toBe(true);
+      expect(prepared.validationResult.messages).toContainEqual(
+        expect.objectContaining({
+          code: 'layout.polygonFlexNoSpace',
+          severity: 'error'
+        })
+      );
+      expect(currentEncounter.zones.byId[splitZone.id]).toEqual(splitZone);
+    }
+  );
+
+  it('expands an auto-resizing zone before accepting a new split orientation', () => {
+    const splitZone = {
+      ...zone,
+      autoResize: true,
+      layoutStrategy: 'SPLIT_FLEX' as const,
+      polygon: [
+        { x: 0, y: 0 },
+        { x: 300, y: 0 },
+        { x: 300, y: 100 },
+        { x: 0, y: 100 }
+      ]
+    };
+    const splitActors = [
+      { ...existingActor, id: 'hero-one', layoutGroup: 'hero' as const },
+      { ...existingActor, id: 'hero-two', layoutGroup: 'hero' as const },
+      { ...existingActor, id: 'enemy-one', layoutGroup: 'enemy' as const }
+    ];
+    const currentEncounter = {
+      ...createState('OFF', 'SPLIT_FLEX'),
+      actors: collection(splitActors),
+      zones: collection([splitZone])
+    };
+    const nextEncounter = updateZoneProperties(
+      currentEncounter,
+      splitZone.id,
+      { layoutOrientation: 'TOP_BOTTOM' }
+    );
+    const prepared = prepareValidatedEncounterChange({
+      action: createEncounterActionRecord('zone.updateProperties', {
+        properties: { layoutOrientation: 'TOP_BOTTOM' },
+        zoneId: splitZone.id
+      }),
+      currentEncounter,
+      nextEncounter
+    });
+    const resizedPolygon = prepared.nextEncounter.zones.byId[splitZone.id]
+      ?.polygon;
+
+    expect(prepared.blocked).toBe(false);
+    expect(resizedPolygon).toBeDefined();
+    expect(resizedPolygon![2].y - resizedPolygon![0].y).toBeGreaterThan(100);
+    expect(prepared.validationResult.messages).toContainEqual(
+      expect.objectContaining({
+        code: 'layout.polygonFlexZoneResized',
+        severity: 'warning'
+      })
+    );
+  });
+
+  it('blocks a compact dense FLEX resize that would make actors touch', () => {
+    const roomyZone = {
+      ...zone,
+      polygon: [
+        { x: 0, y: 0 },
+        { x: 400, y: 0 },
+        { x: 400, y: 220 },
+        { x: 0, y: 220 }
+      ]
+    };
+    const denseActors = Array.from({ length: 8 }, (_, index) => ({
+      ...existingActor,
+      id: `dense-${index}`
+    }));
+    const currentEncounter = {
+      ...createState('STRICT'),
+      actors: collection(denseActors),
+      zones: collection([roomyZone])
+    };
+    const compactPolygon = [
+      { x: 0, y: 0 },
+      { x: 250, y: 0 },
+      { x: 250, y: 130 },
+      { x: 0, y: 130 }
+    ];
+    const nextEncounter = updateZonePolygon(
+      currentEncounter,
+      roomyZone.id,
+      compactPolygon
+    );
+    const prepared = prepareValidatedEncounterChange({
+      action: createEncounterActionRecord('zone.reshape', {
+        polygon: compactPolygon,
+        resizeAnchor: { x: 400, y: 220 },
+        zoneId: roomyZone.id
+      }),
+      currentEncounter,
+      nextEncounter
+    });
+
+    expect(prepared.blocked).toBe(true);
+    expect(prepared.nextEncounter.zones.byId[roomyZone.id]?.polygon).toEqual(
+      compactPolygon
+    );
+  });
+
   it('stops a blocked rectangle side while continuing expansion on other sides', () => {
     const autoResizeZone = {
       ...zone,

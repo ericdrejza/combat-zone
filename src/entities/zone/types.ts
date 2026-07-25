@@ -20,6 +20,7 @@ export type Zone = {
   polygon: LayoutPoint[];
   showBorder: boolean;
   showName: boolean;
+  showSectionDividers?: boolean;
   namePosition: ZoneNamePosition;
   shape: ZoneShape;
   layoutStrategy: Extract<

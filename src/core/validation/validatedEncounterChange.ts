@@ -1,6 +1,9 @@
 import type { EncounterState } from "../encounter/types";
 import type { EncounterActionRecord } from "../history/types";
-import { adjustPolygonFlexZonesToFit } from "./polygonFlexPlacement";
+import {
+  adjustPolygonFlexZonesToFit
+} from "./polygonFlexPlacement";
+import { isZoneLayoutChange } from "./polygonFlexZoneAdjustment";
 import {
   runValidationPipeline,
   runValidationPipelineSync
@@ -10,6 +13,7 @@ import type {
   ValidationPipelineResult,
   Validator
 } from "./types";
+import { prepareEncounterChangeInWorker } from "./validationWorkerClient";
 
 export type PrepareValidatedEncounterChangeInput = {
   currentEncounter: EncounterState;
@@ -57,7 +61,8 @@ export function prepareValidatedEncounterChange({
       currentEncounter.validationState.mode !== "STRICT") ||
     action.type === "actor.create" ||
     action.type === "actor.move" ||
-    action.type === "actor.moveMany";
+    action.type === "actor.moveMany" ||
+    isZoneLayoutChange(action);
   const adjustment = shouldConsiderZoneResize
     ? adjustPolygonFlexZonesToFit(
         validationAction,
@@ -72,7 +77,8 @@ export function prepareValidatedEncounterChange({
       currentEncounter.validationState.mode !== "ASSISTED") ||
     action.type === "actor.create" ||
     action.type === "actor.move" ||
-    action.type === "actor.moveMany";
+    action.type === "actor.moveMany" ||
+    isZoneLayoutChange(action);
   const requiresConfirmation =
     isActorFootprintChange(action) &&
     currentEncounter.validationState.mode === "ASSISTED" &&
@@ -117,6 +123,17 @@ export async function prepareValidatedEncounterChangeAsync({
   action,
   validators
 }: PrepareValidatedEncounterChangeInput): Promise<PreparedValidatedEncounterChange> {
+  const workerPreparation = prepareEncounterChangeInWorker({
+    currentEncounter,
+    nextEncounter,
+    action,
+    validators
+  });
+
+  if (workerPreparation) {
+    return workerPreparation;
+  }
+
   const validationAction: ValidationAction = {
     type: action.type,
     payload: action.payload
@@ -127,7 +144,8 @@ export async function prepareValidatedEncounterChangeAsync({
       currentEncounter.validationState.mode !== "STRICT") ||
     action.type === "actor.create" ||
     action.type === "actor.move" ||
-    action.type === "actor.moveMany";
+    action.type === "actor.moveMany" ||
+    isZoneLayoutChange(action);
   const adjustment = shouldConsiderZoneResize
     ? adjustPolygonFlexZonesToFit(
         validationAction,
@@ -142,7 +160,8 @@ export async function prepareValidatedEncounterChangeAsync({
       currentEncounter.validationState.mode !== "ASSISTED") ||
     action.type === "actor.create" ||
     action.type === "actor.move" ||
-    action.type === "actor.moveMany";
+    action.type === "actor.moveMany" ||
+    isZoneLayoutChange(action);
   const requiresConfirmation =
     isActorFootprintChange(action) &&
     currentEncounter.validationState.mode === "ASSISTED" &&
