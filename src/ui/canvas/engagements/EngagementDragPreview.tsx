@@ -3,10 +3,17 @@ import { motion } from 'motion/react';
 import type { EncounterState } from '@core/encounter/types';
 import type { ActorDragState } from '../canvasInteractionTypes';
 import type { ActorRenderPlacement } from '../actors/actorCanvasLayout';
-import { getEngagementTokenPoint } from './engagementGeometry';
+import type { LayoutPoint } from '@core/layout/types';
 import { isWithinEngagementTether } from './engagementDragRules';
 
-/** Shows the 30px tether before an engaged actor visually disconnects. */
+type PartialEngagementPreview = {
+  actorId: string;
+  color: string;
+  draggedPoint: LayoutPoint;
+  token: LayoutPoint;
+};
+
+/** Retracts every connector belonging to a dragged proper subset. */
 export function EngagementDragPreview({
   actorDrag,
   encounter,
@@ -16,43 +23,80 @@ export function EngagementDragPreview({
   encounter: EncounterState;
   placements: ActorRenderPlacement[];
 }) {
-  const actor = encounter.actors.byId[actorDrag.actorId];
-  const engagement = encounter.engagements.allIds
-    .map((id) => encounter.engagements.byId[id])
-    .find((candidate) => candidate?.participantIds.includes(actorDrag.actorId));
-  const zone = engagement ? encounter.zones.byId[engagement.parentZoneId] : undefined;
-  const source = placements.find((placement) => placement.actor.id === actorDrag.actorId);
-  if (!actor || !engagement || !zone || !source) return null;
-  const byActorId = new Map(placements.map((placement) => [placement.actor.id, placement]));
-  const participants = engagement.participantIds.flatMap((actorId) => {
-    const placement = byActorId.get(actorId);
-    return placement ? [{ actorId, point: placement.point, radius: placement.radius }] : [];
-  });
-  if (participants.length < 2) return null;
-  const sectionPolygon = byActorId.get(
-    engagement.participantIds[0]
-  )?.sectionPolygon;
-  const token = getEngagementTokenPoint(
-    participants,
-    sectionPolygon ?? zone.polygon
+  const byActorId = new Map(
+    placements.map((placement) => [placement.actor.id, placement])
   );
-  const dragged = {
-    x: source.point.x + actorDrag.current.x - actorDrag.start.x,
-    y: source.point.y + actorDrag.current.y - actorDrag.start.y
+  const draggedIds = new Set(actorDrag.actorIds);
+  const offset = {
+    x: actorDrag.current.x - actorDrag.start.x,
+    y: actorDrag.current.y - actorDrag.start.y
   };
+  const previews = encounter.engagements.allIds.flatMap(
+    (engagementId): PartialEngagementPreview[] => {
+      const engagement = encounter.engagements.byId[engagementId];
+      const zone = engagement
+        ? encounter.zones.byId[engagement.parentZoneId]
+        : undefined;
+      const draggedParticipants =
+        engagement?.participantIds.filter((actorId) =>
+          draggedIds.has(actorId)
+        ) ?? [];
+      if (
+        !engagement ||
+        !zone ||
+        draggedParticipants.length === 0 ||
+        draggedParticipants.length === engagement.participantIds.length
+      ) {
+        return [];
+      }
+      const token = byActorId.get(
+        engagement.participantIds[0]
+      )?.engagementTokenPoint;
+      if (!token) return [];
+
+      return draggedParticipants.flatMap((actorId) => {
+        const source = byActorId.get(actorId);
+        return source
+          ? [{
+              actorId,
+              color: zone.colorBorder,
+              draggedPoint: {
+                x: source.point.x + offset.x,
+                y: source.point.y + offset.y
+              },
+              token
+            }]
+          : [];
+      });
+    }
+  );
   const tethered = isWithinEngagementTether(
     actorDrag.start,
     actorDrag.current
   );
-  const endpoint = tethered ? dragged : token;
+
   return (
-    <motion.line
-      initial={false}
-      animate={{ x1: token.x, x2: endpoint.x, y1: token.y, y2: endpoint.y }}
-      stroke={zone.colorBorder}
-      strokeLinecap="round"
-      strokeWidth="2"
-      transition={{ duration: 0.15 }}
-    />
+    <>
+      {previews.map(({ actorId, color, draggedPoint, token }) => {
+        const endpoint = tethered ? draggedPoint : token;
+        return (
+          <motion.line
+            key={actorId}
+            animate={{
+              x1: token.x,
+              x2: endpoint.x,
+              y1: token.y,
+              y2: endpoint.y
+            }}
+            data-engagement-drag-preview={actorId}
+            initial={false}
+            stroke={color}
+            strokeLinecap="round"
+            strokeWidth="2"
+            transition={{ duration: 0.15 }}
+          />
+        );
+      })}
+    </>
   );
 }

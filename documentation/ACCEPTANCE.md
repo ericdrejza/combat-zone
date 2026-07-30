@@ -119,6 +119,11 @@ covers `DESIGN.md` §15 "Must have" scope only.
       containing all participants from both.
 - [x] Dragging multiple selected actors moves every dragged actor, including
       across zones, with the defined actor/group move semantics.
+- [x] Dragging a proper subset of an Engagement retracts every connector
+      branch touching those actors with the single-actor tether behavior.
+      Dragging the complete participant set translates its token and complete
+      connector network by exactly the actors' transient drag vector, without
+      duplicate overlay tethers.
 - [x] Dragging every participant of an Engagement to another zone before
       engagement intent matures preserves its ID and membership while updating
       its parent zone and the participants' actor zone IDs; a matured intent
@@ -141,7 +146,7 @@ covers `DESIGN.md` §15 "Must have" scope only.
 - [x] In settled layouts, engagement participants form non-overlapping,
       comfortably spaced clusters around their token with a 10px preferred and
       2px hard-minimum participant gap. Actor-to-actor connector branches use
-      at least a 6px edge-to-edge gap so the line remains visible. Connectors
+      at least a 10px edge-to-edge gap so the line remains visible. Connectors
       avoid actor footprints and other connector lines. Direct connectors
       share only their own token endpoint; bounded routing falls back to a same-style
       actor-to-connected-actor tree whose branches may meet only at their
@@ -188,6 +193,9 @@ covers `DESIGN.md` §15 "Must have" scope only.
       sections; its participants and 24px token fit inside that section.
 - [x] Spacious FLEX engagement clusters try wider participant clearance, while
       dense layouts retain the 10px preferred and 2px minimum fallback.
+      Multiple Engagements in an ordinary FLEX Zone prefer distant Zone-local
+      candidate regions before compact fallback; mixed small/medium groups
+      continue to fit beside a larger Engagement and a loose large actor.
       Engagement size has no numeric cap; multi-ring packing and exact-center
       candidates allow at least 20 medium participants in a fitting 500×360
       FLEX Zone in every validation mode. When multiple radial clusters do not
