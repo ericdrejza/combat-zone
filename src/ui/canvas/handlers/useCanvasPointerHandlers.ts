@@ -9,6 +9,7 @@ import { closeZoneShapeMenu } from '../../toolbar/events';
 import type { CanvasInteractionState } from '../canvasInteractionTypes';
 import type { ActorDragStartEvent } from '../canvasInteractionTypes';
 import { useCanvasMouseUpHandler } from './useCanvasMouseUpHandler';
+import { useEngagementHoverIntent } from '../engagements/useEngagementHoverIntent';
 import {
   distance,
   getDisplayedZonePolygon,
@@ -43,6 +44,11 @@ export function useCanvasPointerHandlers(input: PointerHandlerInput) {
     zonePaintBrush,
     zoneShapeMode
   } = input;
+  const { updateIntent } = useEngagementHoverIntent(
+    encounter,
+    input.actorRenderPlacements,
+    setActorDrag
+  );
 
   useEffect(() => {
     if (activeToolId !== 'zone') {
@@ -58,6 +64,7 @@ export function useCanvasPointerHandlers(input: PointerHandlerInput) {
     setZoneDraftPoints,
     setZoneDrag
   ]);
+
 
   const getDisplayedPolygon = (zone: Zone) =>
     getDisplayedZonePolygon(zone, zoneDrag, vertexDrag);
@@ -229,15 +236,20 @@ export function useCanvasPointerHandlers(input: PointerHandlerInput) {
       return;
     }
 
-    setActorDrag((drag) =>
-      drag
-        ? {
-            ...drag,
-            current: point,
-            hasMoved: drag.hasMoved || distance(drag.start, point) >= 1
-          }
-        : null
-    );
+    const target = updateIntent(actorDrag, point);
+    setActorDrag((drag) => drag ? {
+      ...drag,
+      current: point,
+      engagementIntentActorId:
+        target.actorId === drag.engagementIntentActorId
+          ? drag.engagementIntentActorId
+          : undefined,
+      engagementIntentEngagementId:
+        target.engagementId === drag.engagementIntentEngagementId
+          ? drag.engagementIntentEngagementId
+          : undefined,
+      hasMoved: drag.hasMoved || distance(drag.start, point) >= 1
+    } : null);
   }
 
   function handleZoneDrag(offset: LayoutPoint) {

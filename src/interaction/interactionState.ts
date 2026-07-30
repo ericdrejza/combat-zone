@@ -52,6 +52,7 @@ export type InteractionState = {
   actorPaintBrush: boolean;
   actorTool: ActorToolState;
   activeToolId: ToolId;
+  dragActionPreview: 'engage' | 'disengage' | null;
   selection: SelectionState;
   draft: InteractionDraftState;
   contextualActionRequest: ContextualActionRequest | null;
@@ -89,6 +90,7 @@ const initialState: InteractionState = {
     targetZoneId: null
   },
   activeToolId: 'zone',
+  dragActionPreview: null,
   selection: initialSelection,
   draft: initialDraft,
   contextualActionRequest: null,
@@ -136,6 +138,7 @@ export const interactionSlice = createSlice({
   reducers: {
     setActiveTool(state, { payload }: PayloadAction<ToolId>) {
       state.activeToolId = payload;
+      state.dragActionPreview = null;
       state.draft = initialDraft;
       state.contextualActionRequest = null;
       state.actorPaintBrush = false;
@@ -151,6 +154,7 @@ export const interactionSlice = createSlice({
     },
     clearInteractionDraft(state) {
       state.draft = initialDraft;
+      state.dragActionPreview = null;
       state.contextualActionRequest = null;
       state.actorPaintBrush = false;
       state.zonePaintBrush = null;
@@ -227,6 +231,12 @@ export const interactionSlice = createSlice({
       state.selection = initialSelection;
       state.contextualActionRequest = null;
     },
+    setDragActionPreview(
+      state,
+      { payload }: PayloadAction<InteractionState['dragActionPreview']>
+    ) {
+      state.dragActionPreview = payload;
+    },
     requestContextualAction(
       state,
       {
@@ -297,6 +307,7 @@ export const {
   resetInteractionState,
   selectEntity,
   setActiveTool,
+  setDragActionPreview,
   setLastZoneOpacity,
   setPolygonDraftPointIds,
   setZoneShapeMode,

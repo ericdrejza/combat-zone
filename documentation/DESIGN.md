@@ -210,11 +210,19 @@ Rules:
 - Transitive membership
 - Participants are not pair-linked; they belong to a group
 - Actors can move between engagements via drag/drop
+- Engagement layout strategies are `FLEX` and `SEQUENTIAL`; their orientation
+  is `LEFT_RIGHT` or `TOP_BOTTOM`.
 - **Auto-dissolution:** an Engagement automatically dissolves (is deleted)
   the moment its participant count drops below 2. An Engagement with 0 or 1
   participants must never persist as a visible entity — this happens
   automatically as part of whatever action caused the drop (participant
   leaving, actor deleted, split, etc.), not as a separate manual step.
+- An Engagement renders as a 24px-diameter circular token using
+  `src/assets/images/crossed-swords.svg`. Its fill and border use its parent
+  Zone's border color; the swords use the existing luminance-derived readable
+  black-or-white text color for that fill.
+- Participant, token, connector, and cluster positions are derived render
+  targets, not persisted EncounterState facts.
 
 ### 4.5 Edge
 
@@ -262,6 +270,20 @@ Tools define interaction behavior:
 - Annotation Tool
 - Actor Tool
 - Select
+- Engage action
+- Disengage action
+
+The non-toggle Engage action appears immediately to the right of Select. It
+groups the currently selected actors independently per zone: a zone with fewer
+than two selected actors is a no-op; otherwise those actors are removed from
+their old Engagements, unselected old members remain, and the selected actors
+become one Engagement. Any resulting group with fewer than two members
+dissolves. The complete operation is one history-tracked action.
+
+The non-toggle icon-only Disengage action appears beside Engage and uses the
+Lucide `Unlink2` icon. It is enabled when any selected actor belongs to an
+Engagement and removes only the selected engaged actors; any undersized group
+auto-dissolves in the same history-tracked action.
 
 Panning is handled by right-click drag rather than a dedicated toolbar tool.
 
@@ -295,10 +317,37 @@ Each tool defines:
 | ----------------------- | ----------------- |
 | Actor → Zone            | Move actor        |
 | Actor → Actor           | Create engagement |
-| Actor → Engagement      | Join engagement   |
+| Actor → Engagement      | Join after intent |
 | Actor → empty zone      | Leave engagement  |
 | Engagement → Engagement | Merge engagements |
 | Actor → Zoneless        | Remove from zone  |
+
+Dragging multiple selected actors moves all dragged actors. Cross-zone drops
+are allowed and preserve the established actor/group move semantics.
+Dragging a Zone translates its derived actor placements, Engagement tokens,
+and Engagement connectors by the same transient vector as the Zone polygon.
+The move does not repack Zone contents during the drag.
+
+Hovering an unengaged target actor, an existing Engagement participant, or an
+Engagement token for 500ms during an Actor drag shows an engagement-intent
+symbol. Dropping after that delay creates or joins the intended Engagement;
+dropping before it moves the dragged actors to the target zone without joining
+or creating the target Engagement. When every member of an Engagement is
+dragged to another zone before intent matures, that Engagement and its
+membership are preserved and its `parentZoneId` and each participant's
+`currentZoneId` change to the destination zone. A partial-group quick drop
+retains the established behavior: moved actors leave their old Engagement and
+unengaged actors remain unengaged.
+
+Once an actor's 500ms engagement intent over an actor or Engagement target has
+matured, or while an Engagement token is over another Engagement token, the
+Engage toolbar action uses its active color. The matured actor intent marker is
+a circular badge containing the crossed-swords Engagement icon. An Engagement
+token targeted by a token merge drag is outlined with the same readable color
+as its Zone name. When an engaged actor moves beyond its 30px tether without a
+matured engagement target, the Disengage toolbar action uses its active color.
+These previews are transient interaction state and do not create history
+entries.
 
 ### 5.4 Engagement Interaction
 
@@ -306,6 +355,18 @@ Each tool defines:
 - Transitive by definition
 - Supports merge/split via drag interactions
 - Objects (Actors) can participate (not just combatants)
+- An Engagement token is draggable in the Actor and Select tools.
+- Clicking an Engagement token selects all of its participant actors.
+- Token drag previews use MotionValues so pointer movement does not cause
+  canvas-wide re-renders. If a token is not dropped onto another token to
+  merge, it slides from its released point back to its derived settled position
+  without a domain mutation; connector token endpoints follow the preview.
+- Dragging an engaged actor keeps its connector visible until it has moved 30px
+  from its settled position, then recoils it to the Engagement token center in
+  approximately 150ms using Motion. If the actor returns within that same 30px
+  tether distance before drop, the actor remains in its Engagement and returns
+  to its settled position without a domain mutation. The settled layout, rather
+  than this drag transition, owns connector-routing guarantees.
 
 ### 5.5 Edge Interaction Toggle
 
@@ -317,9 +378,10 @@ Validation modes:
 - STRICT (hard validation blocks invalid moves)
 
 Geometric fit is a universal invariant across all validation modes: an actor
-move or creation that would place overlapping actors, or would place an actor
-outside the available zone footprint, is rejected in OFF, ADVISORY, ASSISTED,
-and STRICT modes. Other validation messages retain the mode behavior above.
+move or creation, or an engagement change, that would place overlapping actors
+or would leave no valid in-zone footprint is rejected in OFF, ADVISORY,
+ASSISTED, and STRICT modes. Other validation messages retain the mode behavior
+above.
 
 When a FLEX zone is resized below the minimum size needed for its actors, the
 attempted polygon is uniformly enlarged to the smallest size that supports
@@ -354,7 +416,7 @@ for confirmation before applying both changes.
 
 ### 6.2 Engagement Layout Strategies
 
-Same system as zones:
+Engagement-internal layouts use:
 
 - FLEX
 - SEQUENTIAL
@@ -464,10 +526,25 @@ Render order:
 1. Background
 2. Zones
 3. Edges
-4. Actors (free-floating)
-5. Engagement overlays
+4. Engagement layer (connectors and tokens)
+5. Actors (free-floating and engagement participants)
 6. Annotations
 7. UI overlays
+
+The Engagement layer is after Edges and before Actors. Its connectors and
+tokens therefore render behind actor tokens. Direct connectors may share only
+their own Engagement-token endpoint; a fallback tree may meet at its connected
+participant endpoint, but otherwise connectors do not intersect. In a zone
+with multiple Engagements, other Engagement tokens and accepted connectors are
+routing obstacles. Engagement clusters are separated by token ownership:
+every participant center must remain closer to its own Engagement token than
+to another Engagement token. One Engagement therefore cannot wrap around or
+occupy the interior of another, while elongated chains do not reserve an
+unnecessarily large circular area.
+The token coordinate accepted by packing is the single derived coordinate
+used by rendering, connector routing, drag/drop hit-testing, and Zone-move
+cache translation. Those consumers must not independently recompute a settled
+token from participant centers.
 
 ## 14. Actor Placement System
 
@@ -489,8 +566,10 @@ Layout strategies:
     - Tokens are centered in predictable, aligned, wrapping lines within their
       isolated section in a zone.
       - options: left -> right, top -> bottom
-  - For if one or more engagements exist in a split zone, a new section for
-    engagements will be created in the zone.
+  - Engaged actors are excluded from faction sections. Each active Engagement
+    dynamically receives one isolated section, ordered by `engagements.allIds`,
+    between the hero and neutral sections. Its participants and 24px token fit
+    within that section. Unengaged actors remain in their faction sections.
 
 Actor and engagement positions inside zones are not persisted in
 EncounterState. Layout strategies derive render targets from the normalized
@@ -501,9 +580,55 @@ using configurable preferred/minimum border spacing and rendered actor shapes
 for every zone shape. Zone geometry itself remains coordinate-based because
 zones are canvas objects.
 
+Engagement clusters keep participant tokens comfortably close to their
+Engagement token without overlap. Participant spacing prefers a 10px gap and
+uses 2px as the hard minimum in dense layouts unless two actors are joined by
+an actor-to-actor connector. Anchored actors retain at least 6px of visible
+edge-to-edge space so the 2px connector remains legible. Settled connectors
+avoid actor footprints and other connector lines. Routing uses bounded
+best-effort direct paths; when a direct path is unavailable, it falls back to
+a same-style actor-to-connected-actor network/tree. Direct routes may share
+their own Engagement-token endpoint. A fallback tree may instead meet at a
+connected participant endpoint, but otherwise preserves those avoidance rules.
+Every participant must have exactly one routed connector either from the
+Engagement token or from an already connected actor. A derived layout with an
+unreachable participant is invalid and is blocked in every validation mode.
+Collision checks use complete rendered shapes rather than center-distance
+proxies: circle/circle, axis-aligned rectangle/rectangle, and
+circle/rectangle pairs must retain the minimum gap. Tokens are circular
+footprints. Connectors avoid complete circle and rectangle areas, and
+independent 2px connector strokes retain enough center-line separation that
+their painted areas do not overlap; only the already-defined shared token or
+participant endpoints are exempt.
+Engagement membership has no numeric layout cap: FLEX first tries multiple
+concentric participant rings. If radial candidates cannot fit all groups, the
+complete Zone is repacked with token-anchored serpentine chain candidates,
+from elongated to compact and from the Zone boundary inward. Capacity is
+limited only by whether all actor and token footprints fit the Zone with valid
+connectors.
+Every settled Engagement actor and token retains at least 2px between its
+outer footprint and the Zone boundary. Curved and sloped Zone edges use the
+shortest center-to-polygon-edge distance for this check rather than sampling
+only cardinal footprint points.
+In a FLEX Zone with sufficient room, engagement participants first try a
+slightly more open 22px or 16px clearance before falling back to the standard
+10px preferred and 2px minimum clearances. In split layouts, Engagement
+participants first align in a line along the visible section-divider axis:
+LEFT_RIGHT splits use a vertical line and TOP_BOTTOM splits use a horizontal
+line. If that line cannot fit a larger group, participants wrap into parallel
+lines within the same section. Obstructed token spokes use the same
+actor-to-actor connector chaining described above.
+
 Rule:
 
 - Actors dropped within zone outside engagement return to original position if invalid drop
+- Engagement changes and actor/zone layout changes are rejected when any
+  Engagement participant cannot receive a token-to-actor or actor-to-actor
+  connector; this applies in every validation mode.
+- After packing, a separate hard validator audits every actor/actor,
+  actor/token, and token/token pair. Any intersecting rendered area blocks the
+  state change in every validation mode, independently of the candidate
+  packer's internal checks.
 - Actor movement or creation is rejected when FLEX cannot fit the
   resulting actor footprints without overlap; this rejection applies in every
   validation mode.

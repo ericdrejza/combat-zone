@@ -16,7 +16,7 @@ export type LayoutEntity<TEntityId extends string = string> = {
   layoutGroup?: 'hero' | 'enemy' | 'neutral';
 };
 
-export type LayoutSectionId = 'all' | 'hero' | 'neutral' | 'enemy';
+export type LayoutSectionId = string;
 
 export type LayoutSection<TEntityId extends string = string> = {
   id: LayoutSectionId;

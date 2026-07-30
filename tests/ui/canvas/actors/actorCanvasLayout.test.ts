@@ -643,6 +643,13 @@ describe('actor canvas layout', () => {
         zonedActor('actor-one', zoneId),
         zonedActor('actor-two', zoneId)
       ]),
+      engagements: collection([{
+        id: 'translated-engagement',
+        layoutOrientation: 'LEFT_RIGHT' as const,
+        layoutStrategy: 'FLEX' as const,
+        parentZoneId: zoneId,
+        participantIds: ['actor-one', 'actor-two']
+      }]),
       zones: collection([zone(zoneId, 100, 100, 300, 300)])
     };
     const placements = getActorRenderPlacements(encounter);
@@ -660,14 +667,18 @@ describe('actor canvas layout', () => {
       offset
     );
 
-    expect(
-      getActorRenderPlacements(movedEncounter).map(({ point }) => point)
-    ).toEqual(
+    const movedPlacements = getActorRenderPlacements(movedEncounter);
+
+    expect(movedPlacements.map(({ point }) => point)).toEqual(
       placements.map(({ point }) => ({
         x: point.x + offset.x,
         y: point.y + offset.y
       }))
     );
+    expect(movedPlacements[0].engagementTokenPoint).toEqual({
+      x: placements[0].engagementTokenPoint!.x + offset.x,
+      y: placements[0].engagementTokenPoint!.y + offset.y
+    });
   });
 
   it('uses an asynchronously precomputed non-split configuration for a new actor', async () => {

@@ -13,6 +13,7 @@ import type {
   ActorDragEndEvent,
   ActorDragStartEvent,
   ActorDragState,
+  EngagementDragState,
   ShapeDraftState,
   ZoneDragState
 } from "./canvasInteractionTypes";
@@ -26,6 +27,7 @@ import {
 } from "./canvasConstants";
 import type { LocalBoxSelectionState } from "./zones/zoneGeometry";
 import { ZoneLayer } from "./zones/ZoneLayer";
+import { EngagementLayer } from './engagements/EngagementLayer';
 import type { ActorRenderPlacement } from "./actors/actorCanvasLayout";
 import type { ActorPlacementTranslation } from "./actors/actorPlacementTranslation";
 
@@ -33,6 +35,7 @@ type CanvasWorkspaceProps = {
   activeToolId: RootState["interaction"]["activeToolId"];
   actorDrag: ActorDragState | null;
   actorTargetZoneId: string | null;
+  engagementDrag: EngagementDragState | null;
   backgroundImage: RootState["encounter"]["present"]["backgroundImage"];
   backgroundLuminanceByZoneId: Record<string, number>;
   boxSelection: LocalBoxSelectionState | null;
@@ -51,6 +54,11 @@ type CanvasWorkspaceProps = {
   onActorDrag: (point: LayoutPoint) => void;
   onActorDragEnd: (event: ActorDragEndEvent) => void;
   onActorReturnComplete: () => void;
+  onEngagementDrag: (point: LayoutPoint) => void;
+  onEngagementDragEnd: () => void;
+  onEngagementDragReturnComplete: () => void;
+  onEngagementDragStart: (engagementId: string, point: LayoutPoint) => void;
+  onEngagementSelect: (engagementId: string, toggle?: boolean) => void;
   handleCanvasClick: MouseEventHandler<SVGSVGElement>;
   handleCanvasContextMenu: MouseEventHandler<SVGSVGElement>;
   handleCanvasDoubleClick: MouseEventHandler<SVGSVGElement>;
@@ -87,6 +95,7 @@ export function CanvasWorkspace({
   actorDrag,
   actorRenderPlacements,
   actorTargetZoneId,
+  engagementDrag,
   backgroundImage,
   backgroundLuminanceByZoneId,
   boxSelection,
@@ -99,6 +108,11 @@ export function CanvasWorkspace({
   onActorDragEnd,
   onActorDragStart,
   onActorReturnComplete,
+  onEngagementDrag,
+  onEngagementDragEnd,
+  onEngagementDragReturnComplete,
+  onEngagementDragStart,
+  onEngagementSelect,
   handleCanvasClick,
   handleCanvasContextMenu,
   handleCanvasDoubleClick,
@@ -158,10 +172,10 @@ export function CanvasWorkspace({
             {layer.id === "zones" ? (
               <ZoneLayer
                 activeToolId={activeToolId}
-                actors={encounter.actors}
                 actorTargetZoneId={actorTargetZoneId}
                 backgroundLuminanceByZoneId={backgroundLuminanceByZoneId}
                 directManipulationZoneId={directManipulationZoneId}
+                encounter={encounter}
                 getDisplayedPolygon={getDisplayedPolygon}
                 onResizeHandleMouseDown={handleResizeHandleMouseDown}
                 onResizeHandleDrag={onResizeHandleDrag}
@@ -171,8 +185,10 @@ export function CanvasWorkspace({
                 onZoneMotionComplete={onZoneMotionComplete}
                 selection={selection}
                 zoneDrag={zoneDrag}
-                zones={encounter.zones}
               />
+            ) : null}
+            {layer.id === 'engagements' ? (
+              <EngagementLayer activeToolId={activeToolId} actorDrag={actorDrag} backgroundLuminanceByZoneId={backgroundLuminanceByZoneId} encounter={encounter} engagementDrag={engagementDrag} onEngagementDrag={onEngagementDrag} onEngagementDragEnd={onEngagementDragEnd} onEngagementDragReturnComplete={onEngagementDragReturnComplete} onEngagementDragStart={onEngagementDragStart} onEngagementSelect={onEngagementSelect} placements={actorRenderPlacements} selection={selection} zoneActorTranslation={zoneActorTranslation} />
             ) : null}
             {layer.id === "actors" ? (
               <g

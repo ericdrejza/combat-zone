@@ -9,6 +9,10 @@ import {
   createActor,
   moveActor
 } from '@entities/actor/actorMutations';
+import {
+  createEngagement,
+  joinEngagement
+} from '@entities/engagement/engagementMutations';
 import { updateActorProperties } from '@entities/actor/actorMutations';
 import {
   updateZonePolygon,
@@ -67,6 +71,458 @@ function createState(
 }
 
 describe('polygon placement validation', () => {
+  it.each(['OFF', 'ADVISORY', 'ASSISTED', 'STRICT'] as const)(
+    'allows a large engagement whenever all participants and its token fit in %s mode',
+    (mode) => {
+      const spaciousZone = {
+        ...zone,
+        polygon: [
+          { x: 0, y: 0 },
+          { x: 500, y: 0 },
+          { x: 500, y: 360 },
+          { x: 0, y: 360 }
+        ]
+      };
+      const actors = Array.from({ length: 20 }, (_, index) => ({
+        ...existingActor,
+        id: `large-engagement-${index}`
+      }));
+      const currentEncounter = {
+        ...createState(mode),
+        actors: collection(actors),
+        zones: collection([spaciousZone])
+      };
+      const participantIds = actors.map(({ id }) => id);
+      const nextEncounter = createEngagement(currentEncounter, {
+        id: 'large-melee',
+        parentZoneId: spaciousZone.id,
+        participantIds
+      });
+      const prepared = prepareValidatedEncounterChange({
+        action: createEncounterActionRecord('engagement.create', {
+          parentZoneId: spaciousZone.id,
+          participantIds
+        }),
+        currentEncounter,
+        nextEncounter
+      });
+
+      expect(prepared.validationResult.messages).toEqual([]);
+      expect(prepared.blocked).toBe(false);
+      expect(prepared.validationResult.messages).not.toContainEqual(
+        expect.objectContaining({
+          code: expect.stringMatching(/^layout\.engagement/)
+        })
+      );
+    }
+  );
+
+  it.each(['ADVISORY', 'STRICT'] as const)(
+    'blocks a second engagement that could fit only by nesting inside the first in %s mode',
+    (mode) => {
+      const nestingZone = {
+        ...zone,
+        polygon: [
+          { x: 0, y: 0 },
+          { x: 270, y: 0 },
+          { x: 270, y: 270 },
+          { x: 0, y: 270 }
+        ]
+      };
+      const actors = Array.from({ length: 10 }, (_, index) => ({
+        ...existingActor,
+        id: `nested-${index}`
+      }));
+      const baseEncounter = {
+        ...createState(mode),
+        actors: collection(actors),
+        zones: collection([nestingZone])
+      };
+      const currentEncounter = createEngagement(baseEncounter, {
+        id: 'large',
+        parentZoneId: nestingZone.id,
+        participantIds: actors.slice(0, 8).map(({ id }) => id)
+      });
+      const nextEncounter = createEngagement(currentEncounter, {
+        id: 'small',
+        parentZoneId: nestingZone.id,
+        participantIds: actors.slice(8).map(({ id }) => id)
+      });
+      const prepared = prepareValidatedEncounterChange({
+        action: createEncounterActionRecord('engagement.create', {
+          parentZoneId: nestingZone.id,
+          participantIds: actors.slice(8).map(({ id }) => id)
+        }),
+        currentEncounter,
+        nextEncounter
+      });
+
+      expect(prepared.blocked).toBe(true);
+      expect(prepared.validationResult.messages).toContainEqual(
+        expect.objectContaining({
+          code: 'layout.engagementNoSpace',
+          severity: 'error'
+        })
+      );
+    }
+  );
+
+  it.each(['ADVISORY', 'STRICT'] as const)(
+    'allows actors to join the smaller of two separated engagements in %s mode',
+    (mode) => {
+      const spaciousZone = {
+        ...zone,
+        polygon: [
+          { x: 0, y: 0 },
+          { x: 900, y: 0 },
+          { x: 900, y: 500 },
+          { x: 0, y: 500 }
+        ]
+      };
+      const actors = Array.from({ length: 12 }, (_, index) => ({
+        ...existingActor,
+        id: `growing-${index}`
+      }));
+      const baseEncounter = {
+        ...createState(mode),
+        actors: collection(actors),
+        zones: collection([spaciousZone])
+      };
+      const withLarge = createEngagement(baseEncounter, {
+        id: 'large',
+        parentZoneId: spaciousZone.id,
+        participantIds: actors.slice(0, 8).map(({ id }) => id)
+      });
+      const currentEncounter = createEngagement(withLarge, {
+        id: 'small',
+        parentZoneId: spaciousZone.id,
+        participantIds: actors.slice(8, 10).map(({ id }) => id)
+      });
+      const joiningIds = actors.slice(10).map(({ id }) => id);
+      const nextEncounter = joinEngagement(
+        currentEncounter,
+        'small',
+        joiningIds
+      );
+      const prepared = prepareValidatedEncounterChange({
+        action: createEncounterActionRecord('engagement.join', {
+          actorIds: joiningIds,
+          engagementId: 'small'
+        }),
+        currentEncounter,
+        nextEncounter
+      });
+
+      expect(prepared.blocked).toBe(false);
+      expect(
+        prepared.nextEncounter.engagements.byId.small?.participantIds
+      ).toHaveLength(4);
+    }
+  );
+
+  it.each(['OFF', 'ADVISORY', 'ASSISTED', 'STRICT'] as const)(
+    'rearranges two large engagements into chains when growing one in %s mode',
+    (mode) => {
+      const chainZone = {
+        ...zone,
+        polygon: [
+          { x: 0, y: 0 },
+          { x: 500, y: 0 },
+          { x: 500, y: 360 },
+          { x: 0, y: 360 }
+        ]
+      };
+      const actors = Array.from({ length: 20 }, (_, index) => ({
+        ...existingActor,
+        id: `chain-growth-${index}`
+      }));
+      const baseEncounter = {
+        ...createState(mode),
+        actors: collection(actors),
+        zones: collection([chainZone])
+      };
+      const withLarge = createEngagement(baseEncounter, {
+        id: 'nine',
+        parentZoneId: chainZone.id,
+        participantIds: actors.slice(0, 9).map(({ id }) => id)
+      });
+      const currentEncounter = createEngagement(withLarge, {
+        id: 'eight',
+        parentZoneId: chainZone.id,
+        participantIds: actors.slice(9, 17).map(({ id }) => id)
+      });
+      const joiningIds = actors.slice(17).map(({ id }) => id);
+      const nextEncounter = joinEngagement(
+        currentEncounter,
+        'eight',
+        joiningIds
+      );
+      const prepared = prepareValidatedEncounterChange({
+        action: createEncounterActionRecord('engagement.join', {
+          actorIds: joiningIds,
+          engagementId: 'eight'
+        }),
+        currentEncounter,
+        nextEncounter
+      });
+
+      expect(prepared.validationResult.messages).toEqual([]);
+      expect(prepared.blocked).toBe(false);
+      expect(
+        prepared.nextEncounter.engagements.byId.eight?.participantIds
+      ).toHaveLength(11);
+    }
+  );
+
+  it.each(['ADVISORY', 'STRICT'] as const)(
+    'repacks a multi-actor zone move around an existing engagement in %s mode',
+    (mode) => {
+      const destination = {
+        ...zone,
+        id: 'destination',
+        polygon: [
+          { x: 0, y: 0 },
+          { x: 600, y: 0 },
+          { x: 600, y: 450 },
+          { x: 0, y: 450 }
+        ]
+      };
+      const source = {
+        ...zone,
+        id: 'source',
+        polygon: [
+          { x: 700, y: 0 },
+          { x: 1300, y: 0 },
+          { x: 1300, y: 450 },
+          { x: 700, y: 450 }
+        ]
+      };
+      const destinationActors = Array.from({ length: 6 }, (_, index) => ({
+        ...existingActor,
+        currentZoneId: destination.id,
+        id: `destination-${index}`,
+        shape: index % 2 === 0 ? 'rectangle' as const : 'circle' as const
+      }));
+      const movingActors = Array.from({ length: 5 }, (_, index) => ({
+        ...existingActor,
+        currentZoneId: source.id,
+        id: `moving-${index}`,
+        shape: index % 2 === 0 ? 'rectangle' as const : 'circle' as const
+      }));
+      const baseEncounter = {
+        ...createEncounterState({ id: 'move-many-overlap', name: 'Move many' }),
+        actors: collection([...destinationActors, ...movingActors]),
+        validationState: { mode, messages: [] },
+        zones: collection([destination, source])
+      };
+      const currentEncounter = createEngagement(baseEncounter, {
+        id: 'existing-melee',
+        parentZoneId: destination.id,
+        participantIds: destinationActors.map(({ id }) => id)
+      });
+      const movingIds = movingActors.map(({ id }) => id);
+      const nextEncounter = movingIds.reduce(
+        (encounter, actorId) =>
+          moveActor(encounter, actorId, destination.id),
+        currentEncounter
+      );
+      const prepared = prepareValidatedEncounterChange({
+        action: createEncounterActionRecord('actor.moveMany', {
+          actorIds: movingIds,
+          destinationZoneId: destination.id
+        }),
+        currentEncounter,
+        nextEncounter
+      });
+
+      expect(prepared.blocked).toBe(false);
+      expect(prepared.validationResult.messages).not.toContainEqual(
+        expect.objectContaining({
+          code: expect.stringMatching(/Overlap|NoSpace/)
+        })
+      );
+    }
+  );
+
+  it.each(['OFF', 'ADVISORY', 'STRICT'] as const)(
+    'allows an engagement in a populated zone when its complete geometry fits in %s mode',
+    (mode) => {
+      const populatedZone = {
+        ...zone,
+        polygon: [
+          { x: 0, y: 0 },
+          { x: 400, y: 0 },
+          { x: 400, y: 300 },
+          { x: 0, y: 300 }
+        ]
+      };
+      const actors = Array.from({ length: 10 }, (_, index) => ({
+        ...existingActor,
+        id: `populated-${index}`
+      }));
+      const currentEncounter = {
+        ...createState(mode),
+        actors: collection(actors),
+        zones: collection([populatedZone])
+      };
+      const nextEncounter = createEngagement(currentEncounter, {
+        id: 'populated-melee',
+        parentZoneId: populatedZone.id,
+        participantIds: ['populated-0', 'populated-1']
+      });
+      const prepared = prepareValidatedEncounterChange({
+        action: createEncounterActionRecord('engagement.create', {
+          parentZoneId: populatedZone.id,
+          participantIds: ['populated-0', 'populated-1']
+        }),
+        currentEncounter,
+        nextEncounter
+      });
+
+      expect(prepared.blocked).toBe(false);
+      expect(prepared.validationResult.messages).not.toContainEqual(
+        expect.objectContaining({ code: 'layout.engagementNoSpace' })
+      );
+    }
+  );
+
+  it.each(['OFF', 'ADVISORY', 'STRICT'] as const)(
+    'allows another actor after an engagement when the remaining zone space fits in %s mode',
+    (mode) => {
+      const populatedZone = {
+        ...zone,
+        polygon: [
+          { x: 0, y: 0 },
+          { x: 400, y: 0 },
+          { x: 400, y: 300 },
+          { x: 0, y: 300 }
+        ]
+      };
+      const actors = Array.from({ length: 9 }, (_, index) => ({
+        ...existingActor,
+        id: `existing-${index}`
+      }));
+      const baseEncounter = {
+        ...createState(mode),
+        actors: collection(actors),
+        zones: collection([populatedZone])
+      };
+      const currentEncounter = createEngagement(baseEncounter, {
+        id: 'existing-melee',
+        parentZoneId: populatedZone.id,
+        participantIds: ['existing-0', 'existing-1']
+      });
+      const nextEncounter = createActor(currentEncounter, {
+        currentZoneId: populatedZone.id,
+        id: 'new-single'
+      });
+      const prepared = prepareValidatedEncounterChange({
+        action: createEncounterActionRecord('actor.create', {
+          actorId: 'new-single',
+          destinationZoneId: populatedZone.id
+        }),
+        currentEncounter,
+        nextEncounter
+      });
+
+      expect(prepared.blocked).toBe(false);
+      expect(prepared.nextEncounter.actors.byId['new-single']).toBeDefined();
+    }
+  );
+
+  it.each(['OFF', 'ADVISORY', 'STRICT'] as const)(
+    'blocks an engagement token that cannot fit between otherwise fitting actors in %s mode',
+    (mode) => {
+      const narrowZone = {
+        ...zone,
+        polygon: [
+          { x: 0, y: 0 },
+          { x: 145, y: 0 },
+          { x: 145, y: 100 },
+          { x: 0, y: 100 }
+        ]
+      };
+      const actors = [
+        { ...existingActor, id: 'left' },
+        { ...existingActor, id: 'right' }
+      ];
+      const currentEncounter = {
+        ...createState(mode),
+        actors: collection(actors),
+        zones: collection([narrowZone])
+      };
+      const nextEncounter = createEngagement(currentEncounter, {
+        id: 'narrow-melee',
+        parentZoneId: narrowZone.id,
+        participantIds: ['left', 'right']
+      });
+      const prepared = prepareValidatedEncounterChange({
+        action: createEncounterActionRecord('engagement.create', {
+          parentZoneId: narrowZone.id,
+          participantIds: ['left', 'right']
+        }),
+        currentEncounter,
+        nextEncounter
+      });
+
+      expect(prepared.blocked).toBe(true);
+      expect(prepared.validationResult.messages).toContainEqual(
+        expect.objectContaining({
+          code: 'layout.engagementNoSpace',
+          severity: 'error'
+        })
+      );
+    }
+  );
+
+  it.each(['OFF', 'ADVISORY', 'STRICT'] as const)(
+    'blocks an engagement whose isolated split section cannot fit in %s mode',
+    (mode) => {
+      const splitZone = {
+        ...zone,
+        layoutStrategy: 'SPLIT_FLEX' as const,
+        polygon: [
+          { x: 0, y: 0 },
+          { x: 190, y: 0 },
+          { x: 190, y: 140 },
+          { x: 0, y: 140 }
+        ]
+      };
+      const actors = [
+        { ...existingActor, id: 'engaged-hero', layoutGroup: 'hero' as const },
+        { ...existingActor, id: 'engaged-enemy', layoutGroup: 'enemy' as const },
+        { ...existingActor, id: 'free-hero', layoutGroup: 'hero' as const },
+        { ...existingActor, id: 'free-enemy', layoutGroup: 'enemy' as const }
+      ];
+      const currentEncounter = {
+        ...createState(mode, 'SPLIT_FLEX'),
+        actors: collection(actors),
+        zones: collection([splitZone])
+      };
+      const nextEncounter = createEngagement(currentEncounter, {
+        id: 'melee',
+        parentZoneId: splitZone.id,
+        participantIds: ['engaged-hero', 'engaged-enemy']
+      });
+      const prepared = prepareValidatedEncounterChange({
+        action: createEncounterActionRecord('engagement.create', {
+          parentZoneId: splitZone.id,
+          participantIds: ['engaged-hero', 'engaged-enemy']
+        }),
+        currentEncounter,
+        nextEncounter
+      });
+
+      expect(prepared.blocked).toBe(true);
+      expect(prepared.validationResult.messages).toContainEqual(
+        expect.objectContaining({
+          code: 'layout.polygonFlexNoSpace',
+          severity: 'error'
+        })
+      );
+    }
+  );
+
   it.each(['OFF', 'ADVISORY', 'STRICT'] as const)(
     'rejects an orientation change that cannot pack the new split layout in %s mode',
     (mode) => {

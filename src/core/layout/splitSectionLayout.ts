@@ -7,7 +7,7 @@ import type {
 } from './nesting_ts';
 import type { LayoutPoint } from './types';
 
-export type SplitSectionId = 'hero' | 'neutral' | 'enemy';
+export type SplitSectionId = string;
 
 export type SplitSectionBounds = {
   minX: number;
@@ -119,7 +119,7 @@ export function clipPolygonToSection(
 export function getSplitLayoutSections(
   input: Pick<
     PolygonNestingInput,
-    'actors' | 'layoutOrientation' | 'polygon'
+    'actors' | 'layoutOrientation' | 'polygon' | 'splitSectionOrder'
   >,
   settings: PolygonNestingSettings,
   borderSpacing: number
@@ -133,12 +133,16 @@ export function getSplitLayoutSections(
   const crossAxisSize = topBottom
     ? polygonBounds.maxX - polygonBounds.minX
     : polygonBounds.maxY - polygonBounds.minY;
-  const groups = [0, 1, 2].flatMap((rank) => {
-    const actors = input.actors.filter(
-      (actor) => getSplitGroupRank(actor) === rank
-    );
-
-    return actors.length > 0 ? [{ actors, rank }] : [];
+  const defaultOrder = ['hero', 'neutral', 'enemy'];
+  const sectionIdFor = (actor: NestingActor) =>
+    actor.splitSectionId ?? getSectionId(getSplitGroupRank(actor));
+  const orderedIds = [
+    ...(input.splitSectionOrder ?? defaultOrder),
+    ...input.actors.map(sectionIdFor)
+  ].filter((id, index, values) => values.indexOf(id) === index);
+  const groups = orderedIds.flatMap((id) => {
+    const actors = input.actors.filter((actor) => sectionIdFor(actor) === id);
+    return actors.length > 0 ? [{ actors, id }] : [];
   });
   const sizes = getSplitSectionSizes(
     groups.map(({ actors }) => ({
@@ -157,7 +161,7 @@ export function getSplitLayoutSections(
   );
   let cursor = axisStart;
 
-  return groups.map(({ actors, rank }, index) => {
+  return groups.map(({ actors, id }, index) => {
     const sectionEnd = cursor + sizes[index];
     const bounds: SplitSectionBounds = topBottom
       ? {
@@ -175,7 +179,7 @@ export function getSplitLayoutSections(
     const section = {
       actors,
       bounds,
-      id: getSectionId(rank),
+      id,
       polygon: clipPolygonToSection(input.polygon, bounds)
     };
     cursor = sectionEnd;

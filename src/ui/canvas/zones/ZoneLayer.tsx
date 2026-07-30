@@ -1,7 +1,7 @@
 import type { MouseEvent } from "react";
 import { motion } from "motion/react";
 
-import { toNestingActor } from "@core/layout/actorFootprints";
+import { getEngagementAwareSplitInput } from "@core/layout/engagementSplitLayout";
 import { getFittingSplitSectionDividers } from "@core/layout/splitSectionDividers";
 import type { LayoutPoint } from "@core/layout/types";
 import { isZonePolygonSizeValid } from "@core/validation/zoneSize";
@@ -25,10 +25,10 @@ import { useMotionPreference } from "../../motion_preferences/MotionPreferencePr
 
 type ZoneLayerProps = {
   activeToolId: string;
-  actors: RootState["encounter"]["present"]["actors"];
   actorTargetZoneId: string | null;
   backgroundLuminanceByZoneId: Record<string, number>;
   directManipulationZoneId: string | null;
+  encounter: RootState["encounter"]["present"];
   getDisplayedPolygon: (zone: Zone) => LayoutPoint[];
   onResizeHandleMouseDown: (
     zone: Zone,
@@ -44,15 +44,14 @@ type ZoneLayerProps = {
   onZoneMotionComplete: () => void;
   selection: RootState["interaction"]["selection"];
   zoneDrag: ZoneDragState | null;
-  zones: RootState["encounter"]["present"]["zones"];
 };
 
 export function ZoneLayer({
   activeToolId,
-  actors,
   actorTargetZoneId,
   backgroundLuminanceByZoneId,
   directManipulationZoneId,
+  encounter,
   getDisplayedPolygon,
   onResizeHandleDrag,
   onResizeHandleDragEnd,
@@ -61,13 +60,12 @@ export function ZoneLayer({
   onZoneDragEnd,
   onZoneMotionComplete,
   selection,
-  zoneDrag,
-  zones
+  zoneDrag
 }: ZoneLayerProps) {
   const { animationsDisabled } = useMotionPreference();
 
-  return zones.allIds.map((zoneId) => {
-    const zone = zones.byId[zoneId];
+  return encounter.zones.allIds.map((zoneId) => {
+    const zone = encounter.zones.byId[zoneId];
 
     if (!zone) {
       return null;
@@ -97,23 +95,18 @@ export function ZoneLayer({
     const isSplitLayout =
       zone.layoutStrategy === "SPLIT_FLEX" ||
       zone.layoutStrategy === "SPLIT_SEQUENTIAL";
-    const sectionActors =
+    const splitInput =
       zone.showSectionDividers && isSplitLayout
-        ? actors.allIds.flatMap((actorId) => {
-            const actor = actors.byId[actorId];
-
-            return actor?.currentZoneId === zone.id
-              ? [toNestingActor(actor)]
-              : [];
-          })
-        : [];
+        ? getEngagementAwareSplitInput(encounter, zone.id)
+        : undefined;
     const sectionDividers =
       zone.showSectionDividers && isSplitLayout
         ? getFittingSplitSectionDividers({
-            actors: sectionActors,
+            actors: splitInput?.actors ?? [],
             layoutOrientation: zone.layoutOrientation,
             layoutStrategy: zone.layoutStrategy,
-            polygon
+            polygon,
+            splitSectionOrder: splitInput?.splitSectionOrder
           })
         : [];
     const sectionClipId = `zone-section-clip-${zone.id}`;

@@ -6,6 +6,7 @@ import {
   getActorRadius,
   toNestingActor
 } from '@core/layout/actorFootprints';
+import { getEngagementAwareSplitInput } from '@core/layout/engagementSplitLayout';
 import {
   packPolygonFlexActors,
   packPolygonSplitFlexActors,
@@ -15,6 +16,8 @@ import {
 import type { Actor } from '@entities/actor/types';
 import type { Engagement } from '@entities/engagement/types';
 import { getPolygonBounds, isPointInPolygon } from '../zones/zoneGeometry';
+import { orderActorsForEngagementPacking } from '@core/layout/engagementPackingOrder';
+import { attachEngagementPlacementGeometry } from './actorEngagementPlacementGeometry';
 import { FLEX_ZONE_EDGE_GAP, getFlexActorPoints } from './actorFlexLayout';
 import type { ActorPlacementGeometry } from './actorPlacementCache';
 
@@ -86,6 +89,7 @@ export function calculateActorPlacementGeometry(
   zoneIds?: readonly string[]
 ): ActorPlacementGeometry[] {
   const placements: ActorPlacementGeometry[] = [];
+  const splitSectionPolygons: Record<string, LayoutPoint[]> = {};
   const requestedZoneIds = zoneIds ? new Set(zoneIds) : undefined;
   const actorsByZone = new Map<string, Actor[]>();
   const engagementsByZone = new Map<string, Engagement[]>();
@@ -121,7 +125,10 @@ export function calculateActorPlacementGeometry(
       continue;
     }
 
-    const zoneActors = actorsByZone.get(zoneId) ?? [];
+    const zoneActors = orderActorsForEngagementPacking(
+      encounter,
+      actorsByZone.get(zoneId) ?? []
+    );
     const descriptor = calculateZoneLayoutFromEntities(
       zone,
       zoneActors,
@@ -129,21 +136,36 @@ export function calculateActorPlacementGeometry(
     ).descriptor;
     const zoneBounds = getPolygonBounds(zone.polygon);
     if (descriptor.strategy === 'SPLIT_FLEX') {
+      const splitInput = getEngagementAwareSplitInput(encounter, zoneId);
       const packing = packPolygonSplitFlexActors({
-        actors: zoneActors.map(toNestingActor),
+        actors: splitInput.actors,
         layoutOrientation: descriptor.orientation,
-        polygon: zone.polygon
+        polygon: zone.polygon,
+        splitSectionOrder: splitInput.splitSectionOrder
       });
 
       if (packing.fits) {
+        const sectionById = new Map(
+          packing.splitSections?.map((section) => [section.id, section.polygon])
+        );
+        const nestingActorById = new Map(
+          splitInput.actors.map((actor) => [actor.id, actor])
+        );
+        packing.splitSections?.forEach((section) => {
+          splitSectionPolygons[`${zone.id}:${section.id}`] = section.polygon;
+        });
         zoneActors.forEach((actor) => {
           const point = packing.placements[actor.id];
+          const sectionPolygon = sectionById.get(
+            nestingActorById.get(actor.id)?.splitSectionId ?? actor.layoutGroup
+          );
 
           if (point) {
             placements.push({
               actorId: actor.id,
               point,
-              radius: getActorRadius(actor)
+              radius: getActorRadius(actor),
+              ...(sectionPolygon ? { sectionPolygon } : {})
             });
           }
         });
@@ -153,21 +175,36 @@ export function calculateActorPlacementGeometry(
     }
 
     if (descriptor.strategy === 'SPLIT_SEQUENTIAL') {
+      const splitInput = getEngagementAwareSplitInput(encounter, zoneId);
       const packing = packPolygonSplitSequentialActors({
-        actors: zoneActors.map(toNestingActor),
+        actors: splitInput.actors,
         layoutOrientation: descriptor.orientation,
-        polygon: zone.polygon
+        polygon: zone.polygon,
+        splitSectionOrder: splitInput.splitSectionOrder
       });
 
       if (packing.fits) {
+        const sectionById = new Map(
+          packing.splitSections?.map((section) => [section.id, section.polygon])
+        );
+        const nestingActorById = new Map(
+          splitInput.actors.map((actor) => [actor.id, actor])
+        );
+        packing.splitSections?.forEach((section) => {
+          splitSectionPolygons[`${zone.id}:${section.id}`] = section.polygon;
+        });
         zoneActors.forEach((actor) => {
           const point = packing.placements[actor.id];
+          const sectionPolygon = sectionById.get(
+            nestingActorById.get(actor.id)?.splitSectionId ?? actor.layoutGroup
+          );
 
           if (point) {
             placements.push({
               actorId: actor.id,
               point,
-              radius: getActorRadius(actor)
+              radius: getActorRadius(actor),
+              ...(sectionPolygon ? { sectionPolygon } : {})
             });
           }
         });
@@ -246,7 +283,11 @@ export function calculateActorPlacementGeometry(
     }
   }
 
-  return placements;
+  return attachEngagementPlacementGeometry(
+    encounter,
+    placements,
+    splitSectionPolygons
+  );
 }
 
 export { ACTOR_TOKEN_BASE_RADIUS, FLEX_ZONE_EDGE_GAP };

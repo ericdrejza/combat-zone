@@ -209,23 +209,28 @@ describe('layout strategies', () => {
         {
           id: 'hero',
           className: 'cz-layout-section-hero',
+          items: [{ id: 'actor-second-hero', layoutGroup: 'hero' }]
+        },
+        {
+          id: 'engagement-engagement-melee',
+          className: 'cz-layout-section-engagement-engagement-melee',
           items: [
+            { id: 'engagement-melee', layoutGroup: 'neutral' },
             { id: 'actor-hero', layoutGroup: 'hero' },
-            { id: 'actor-second-hero', layoutGroup: 'hero' }
+            { id: 'actor-enemy', layoutGroup: 'enemy' }
           ]
         },
         {
           id: 'neutral',
           className: 'cz-layout-section-neutral',
           items: [
-            { id: 'actor-objective', layoutGroup: 'neutral' },
-            { id: 'engagement-melee', layoutGroup: 'neutral' }
+            { id: 'actor-objective', layoutGroup: 'neutral' }
           ]
         },
         {
           id: 'enemy',
           className: 'cz-layout-section-enemy',
-          items: [{ id: 'actor-enemy', layoutGroup: 'enemy' }]
+          items: []
         }
       ]
     });
@@ -247,23 +252,28 @@ describe('layout strategies', () => {
         {
           id: 'hero',
           className: 'cz-layout-section-hero cz-layout-section-flex',
+          items: [{ id: 'actor-second-hero', layoutGroup: 'hero' }]
+        },
+        {
+          id: 'engagement-engagement-melee',
+          className: 'cz-layout-section-engagement-engagement-melee cz-layout-section-flex',
           items: [
+            { id: 'engagement-melee', layoutGroup: 'neutral' },
             { id: 'actor-hero', layoutGroup: 'hero' },
-            { id: 'actor-second-hero', layoutGroup: 'hero' }
+            { id: 'actor-enemy', layoutGroup: 'enemy' }
           ]
         },
         {
           id: 'neutral',
           className: 'cz-layout-section-neutral cz-layout-section-flex',
           items: [
-            { id: 'actor-objective', layoutGroup: 'neutral' },
-            { id: 'engagement-melee', layoutGroup: 'neutral' }
+            { id: 'actor-objective', layoutGroup: 'neutral' }
           ]
         },
         {
           id: 'enemy',
           className: 'cz-layout-section-enemy cz-layout-section-flex',
-          items: [{ id: 'actor-enemy', layoutGroup: 'enemy' }]
+          items: []
         }
       ]
     });

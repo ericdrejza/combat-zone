@@ -7,9 +7,41 @@ export function distance(a: LayoutPoint, b: LayoutPoint): number {
   return Math.hypot(a.x - b.x, a.y - b.y);
 }
 
+export function distanceToSegment(
+  point: LayoutPoint,
+  start: LayoutPoint,
+  end: LayoutPoint
+): number {
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  const lengthSquared = dx * dx + dy * dy;
+  if (lengthSquared <= GEOMETRY_EPSILON) return distance(point, start);
+  const ratio = Math.max(
+    0,
+    Math.min(
+      1,
+      ((point.x - start.x) * dx + (point.y - start.y) * dy) / lengthSquared
+    )
+  );
+  return distance(point, {
+    x: start.x + dx * ratio,
+    y: start.y + dy * ratio
+  });
+}
+
+export function distanceToPolygonBoundary(
+  point: LayoutPoint,
+  polygon: readonly LayoutPoint[]
+): number {
+  return polygon.reduce((minimum, start, index) => {
+    const end = polygon[(index + 1) % polygon.length];
+    return Math.min(minimum, distanceToSegment(point, start, end));
+  }, Number.POSITIVE_INFINITY);
+}
+
 export function isPointInPolygon(
   point: LayoutPoint,
-  polygon: LayoutPoint[]
+  polygon: readonly LayoutPoint[]
 ): boolean {
   let inside = false;
 

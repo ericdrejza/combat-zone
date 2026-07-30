@@ -271,7 +271,8 @@ export function tryPackSplitSections(
         incomingDropPoint: input.incomingDropPoint,
         incomingTargetPoint: input.incomingActorId
           ? fitting.placements[input.incomingActorId]
-          : undefined
+          : undefined,
+        splitSections: fitting.sections.map((section) => ({ id: section.id, polygon: section.polygon }))
       }
     : {
         fits: false,

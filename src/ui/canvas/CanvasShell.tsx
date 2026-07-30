@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import type { LayoutPoint } from "@core/layout/types";
 import { POLYGON_LAYOUT_SETTINGS } from "@core/layout/polygonFlexLayout";
 import { useAltKey } from "@hooks/useAltKey";
-import type { RootState } from "@store/store";
+import type { AppDispatch, RootState } from "@store/store";
 import { ZonelessActorPanel } from "../panels/zoneless_actors/ZonelessActorPanel";
 import { closeZoneShapeMenu } from "../toolbar/events";
 import { CanvasDragOverlay } from "./CanvasDragOverlay";
@@ -27,6 +27,7 @@ import type {
   VertexDragState,
   ZoneDragState
 } from "./canvasInteractionTypes";
+import { useEngagementDrag } from './engagements/useEngagementDrag';
 import { type LocalBoxSelectionState } from "./zones/zoneGeometry";
 import { useActorPaintBrush } from "./actors/useActorPaintBrush";
 import { useCanvasDropHandlers } from "./handlers/useCanvasDropHandlers";
@@ -36,9 +37,10 @@ import {
   useCanvasBackgroundLuminance,
   usePolygonDraftBackgroundLuminance
 } from "./useCanvasLuminance";
+import { useDragActionPreview } from './useDragActionPreview';
 
 export function CanvasShell() {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const encounter = useSelector((state: RootState) => state.encounter.present);
   const library = useSelector((state: RootState) => state.library);
   const activeToolId = useSelector(
@@ -83,6 +85,15 @@ export function CanvasShell() {
     () => getActorRenderPlacements(encounter, ACTOR_LAYOUT_COMPUTATION_STRATEGY),
     [encounter, placementRevision]
   );
+  const {
+    engagementDrag,
+    handleEngagementDrag,
+    handleEngagementDragEnd,
+    handleEngagementDragReturnComplete,
+    handleEngagementDragStart,
+    handleEngagementSelect
+  } = useEngagementDrag(dispatch, encounter, actorRenderPlacements);
+  useDragActionPreview(dispatch, encounter, actorDrag, engagementDrag);
   useEffect(() => {
     if (ACTOR_LAYOUT_COMPUTATION_STRATEGY !== "PROACTIVE") {
       return;
@@ -256,6 +267,7 @@ export function CanvasShell() {
         actorRenderPlacements={actorRenderPlacements}
         zoneActorTranslation={zoneActorTranslation}
         actorTargetZoneId={actorTool.targetZoneId}
+        engagementDrag={engagementDrag}
         backgroundImage={backgroundImage}
         backgroundLuminanceByZoneId={backgroundLuminance.byZoneId}
         boxSelection={boxSelection}
@@ -270,6 +282,11 @@ export function CanvasShell() {
         onActorDragEnd={handleActorDragEnd}
         onActorDragStart={handleActorDragStart}
         onActorReturnComplete={() => setActorDrag(null)}
+        onEngagementDrag={handleEngagementDrag}
+        onEngagementDragEnd={handleEngagementDragEnd}
+        onEngagementDragReturnComplete={handleEngagementDragReturnComplete}
+        onEngagementDragStart={handleEngagementDragStart}
+        onEngagementSelect={handleEngagementSelect}
         handleCanvasClick={handleCanvasClick}
         handleCanvasContextMenu={handleCanvasContextMenu}
         handleCanvasDoubleClick={handleCanvasDoubleClick}

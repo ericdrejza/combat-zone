@@ -3,6 +3,8 @@ import type { ActorDragState } from "./canvasInteractionTypes";
 import { ActorLayer } from "./actors/ActorLayer";
 import { CANVAS_HEIGHT, CANVAS_WIDTH } from "./canvasConstants";
 import type { ActorRenderPlacement } from "./actors/actorCanvasLayout";
+import { EngagementDragPreview } from './engagements/EngagementDragPreview';
+import { EngagementIntentPreview } from './engagements/EngagementIntentPreview';
 
 type CanvasDragOverlayProps = {
   actorDrag: ActorDragState;
@@ -30,6 +32,7 @@ export function CanvasDragOverlay({
       data-drag-overlay="actor"
       viewBox={`0 0 ${CANVAS_WIDTH} ${CANVAS_HEIGHT}`}
     >
+      <EngagementDragPreview actorDrag={actorDrag} encounter={encounter} placements={actorRenderPlacements} />
       <ActorLayer
         actorDrag={actorDrag}
         placements={actorRenderPlacements}
@@ -43,6 +46,7 @@ export function CanvasDragOverlay({
         selection={selection}
         showFactionOutlines={showFactionOutlines}
       />
+      <EngagementIntentPreview actorDrag={actorDrag} encounter={encounter} placements={actorRenderPlacements} />
     </svg>
   );
 }

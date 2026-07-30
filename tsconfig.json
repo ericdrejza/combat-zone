@@ -19,7 +19,8 @@
       "@library/*": ["./src/library/*"],
       "@store/*": ["./src/store/*"],
       "@tests/*": ["./tests/*"],
-      "@ui/*": ["./src/ui/*"]
+      "@ui/*": ["./src/ui/*"],
+      "@assets/*": ["./src/assets/*"]
     },
     "resolveJsonModule": true,
     "isolatedModules": true,
