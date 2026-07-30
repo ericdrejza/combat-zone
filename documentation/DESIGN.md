@@ -324,6 +324,12 @@ Each tool defines:
 
 Dragging multiple selected actors moves all dragged actors. Cross-zone drops
 are allowed and preserve the established actor/group move semantics.
+While a proper subset of an Engagement is dragged, every connector branch
+touching a dragged participant retracts with the same 30px behavior as a
+single-actor drag, so no settled branch lingers behind. When every participant
+of an Engagement is dragged, its token and complete connector network instead
+translate by the same transient vector as the actors. This complete-group
+preview applies before drop even when the destination is another Zone.
 Dragging a Zone translates its derived actor placements, Engagement tokens,
 and Engagement connectors by the same transient vector as the Zone polygon.
 The move does not repack Zone contents during the drag.
@@ -583,7 +589,7 @@ zones are canvas objects.
 Engagement clusters keep participant tokens comfortably close to their
 Engagement token without overlap. Participant spacing prefers a 10px gap and
 uses 2px as the hard minimum in dense layouts unless two actors are joined by
-an actor-to-actor connector. Anchored actors retain at least 6px of visible
+an actor-to-actor connector. Anchored actors retain at least 10px of visible
 edge-to-edge space so the 2px connector remains legible. Settled connectors
 avoid actor footprints and other connector lines. Routing uses bounded
 best-effort direct paths; when a direct path is unavailable, it falls back to
@@ -618,6 +624,12 @@ LEFT_RIGHT splits use a vertical line and TOP_BOTTOM splits use a horizontal
 line. If that line cannot fit a larger group, participants wrap into parallel
 lines within the same section. Obstructed token spokes use the same
 actor-to-actor connector chaining described above.
+When an ordinary FLEX Zone contains multiple Engagements, candidate centers
+prefer separate Zone-local regions: each later group balances distance from
+already accepted Engagement tokens with usable distance from the Zone edge.
+This is a placement preference, not reserved space; compact and chain
+fallbacks remain available when density requires them. Split layouts continue
+to use their isolated sections instead.
 
 Rule:
 

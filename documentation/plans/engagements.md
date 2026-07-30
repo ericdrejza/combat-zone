@@ -78,7 +78,7 @@ connectors make the relationship visible while remaining behind actors.
 - Engaged actors are close to their token, but never overlap it or each other.
   Participant spacing prefers 10px; dense layouts may reduce only to a 2px
   hard minimum unless an actor-to-actor branch joins the pair; branch anchors
-  retain at least 6px of visible edge-to-edge span. Spacious FLEX zones first
+  retain at least 10px of visible edge-to-edge span. Spacious FLEX zones first
   try 22px and 16px clearances, then rerun compactly if the wider cluster would
   reduce total zone capacity.
 - In settled layouts, connectors avoid all actor footprints and other connector
@@ -348,7 +348,7 @@ same vector already used for actor previews.
 
 ### Visible branches and large split groups — 2026-07-29
 
-Actor-to-actor fallback branches now require 6px of visible edge-to-edge span;
+Actor-to-actor fallback branches now require 10px of visible edge-to-edge span;
 direct token spokes retain the 2px dense-layout minimum. Split Engagements
 prefer the divider-axis line and fall back to wrapped section geometry when
 larger membership cannot fit that line.
@@ -442,7 +442,7 @@ and moving several mixed-shape actors into a Zone with an existing Engagement.
 | Engagement membership has no numeric cap; only valid Zone fit constrains it | User follow-up on 2026-07-29 | Decided |
 | Engagement participant envelopes cannot nest or interleave, and fitting smaller groups remain growable | User follow-up on 2026-07-29 | Decided |
 | Zone drag translates Engagement tokens and connectors by the actor preview vector | User follow-up on 2026-07-29 | Decided |
-| Actor-to-actor connector anchors retain a 6px visible gap; direct spokes may use the 2px dense minimum | User follow-up on 2026-07-29 | Decided |
+| Actor-to-actor connector anchors retain a 10px visible gap; direct spokes may use the 2px dense minimum | User follow-up on 2026-07-30 | Decided |
 | Large split Engagements wrap inside their section when the preferred divider-axis line cannot fit | User follow-up on 2026-07-29 | Decided |
 | Failed radial packing retries every Engagement with boundary-first serpentine chains; token ownership prevents nesting without circular over-reservation | User follow-up on 2026-07-29 | Decided |
 | Engagement actors/tokens retain 2px from the exact polygon boundary; curved-zone searches prefilter invalid centers before layout generation | User follow-up on 2026-07-29 | Decided |
