@@ -8,6 +8,8 @@ import { ToolButton } from "./ToolButton";
 import { TOOLBAR_ITEMS } from "./toolbarItems";
 import { ZoneToolButton } from "./zone/ZoneToolButton";
 import { MotionPreferenceWarning } from "./MotionPreferenceWarning";
+import { EngageActionButton } from './EngageActionButton';
+import { DisengageActionButton } from './DisengageActionButton';
 
 type ToolbarProps = {
   onActorToolSelected: () => void;
@@ -98,6 +100,8 @@ export function Toolbar({ onActorToolSelected, onOpenLibrary }: ToolbarProps) {
             role="separator"
           />
           {TOOLBAR_ITEMS.map(renderTool)}
+          <EngageActionButton />
+          <DisengageActionButton />
         </nav>
         <MotionPreferenceWarning />
       </div>

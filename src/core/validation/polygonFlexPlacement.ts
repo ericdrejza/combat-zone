@@ -36,6 +36,10 @@ function isActorMovementOrCreation(action: ValidationAction): boolean {
   );
 }
 
+function isEngagementAction(action: ValidationAction): boolean {
+  return action.type.startsWith('engagement.');
+}
+
 function getLayoutChangeZoneIds(
   action: ValidationAction,
   state: EncounterState,
@@ -84,6 +88,15 @@ export function getPolygonFlexAffectedZoneIds(
   nextState: EncounterState
 ): Set<string> {
   const affectedZoneIds = new Set<string>();
+
+  if (isEngagementAction(action)) {
+    for (const stateToInspect of [state, nextState]) {
+      stateToInspect.engagements.allIds.forEach((id) => {
+        const engagement = stateToInspect.engagements.byId[id];
+        if (engagement) affectedZoneIds.add(engagement.parentZoneId);
+      });
+    }
+  }
 
   if (action.type === "zone.reshape") {
     const zoneId = action.payload.zoneId;

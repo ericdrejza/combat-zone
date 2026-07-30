@@ -130,6 +130,18 @@ describe("CanvasShell rendering", () => {
         statusEffects: []
       })
     );
+    actors.push(
+      {
+        ...actors[0],
+        id: "actor-engaged-hero",
+        name: "Engaged hero"
+      },
+      {
+        ...actors[2],
+        id: "actor-engaged-enemy",
+        name: "Engaged enemy"
+      }
+    );
 
     store.dispatch(
       commitEncounterChange({
@@ -140,6 +152,13 @@ describe("CanvasShell rendering", () => {
             name: "Divider Encounter"
           }),
           actors: collection(actors),
+          engagements: collection([{
+            id: "divider-engagement",
+            layoutOrientation: "LEFT_RIGHT",
+            layoutStrategy: "FLEX",
+            parentZoneId: zone.id,
+            participantIds: ["actor-engaged-hero", "actor-engaged-enemy"]
+          }]),
           zones: collection([zone])
         }
       })
@@ -154,7 +173,7 @@ describe("CanvasShell rendering", () => {
       "[data-zone-section-divider]"
     );
 
-    expect(dividers).toHaveLength(2);
+    expect(dividers).toHaveLength(3);
     for (const divider of dividers) {
       expect(divider).toHaveAttribute("stroke", zone.colorBorder);
       expect(divider).toHaveAttribute("stroke-dasharray", "8 8");

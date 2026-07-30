@@ -60,6 +60,48 @@ export function calculateZoneLayoutFromEntities(
   actors: Actor[],
   engagements: Engagement[]
 ): ZoneLayoutResult {
+  if (
+    zone.layoutStrategy === 'SPLIT_FLEX' ||
+    zone.layoutStrategy === 'SPLIT_SEQUENTIAL'
+  ) {
+    const engagedActorIds = new Set(
+      engagements.flatMap((engagement) => engagement.participantIds)
+    );
+    const unengaged = actors.filter((actor) => !engagedActorIds.has(actor.id));
+    const group = (layoutGroup: Actor['layoutGroup']) => unengaged
+      .filter((actor) => actor.layoutGroup === layoutGroup)
+      .map((actor) => ({ id: actor.id, layoutGroup: actor.layoutGroup }));
+    const flex = zone.layoutStrategy === 'SPLIT_FLEX';
+    const section = (id: string, items: LayoutEntity[]) => ({
+      id,
+      className: `cz-layout-section-${id}${flex ? ' cz-layout-section-flex' : ''}`,
+      items
+    });
+    return {
+      descriptor: {
+        strategy: zone.layoutStrategy,
+        orientation: zone.layoutOrientation,
+        className: `cz-layout cz-layout-${zone.layoutStrategy.toLowerCase().replace('_', '-')} cz-layout-orientation-${zone.layoutOrientation.toLowerCase().replace('_', '-')}`,
+        // Engagements are intentionally their own stable split sections,
+        // placed after heroes and before ordinary neutral actors.
+        sections: [
+          section('hero', group('hero')),
+          ...engagements.map((engagement) => section(
+            `engagement-${engagement.id}`,
+            [
+              { id: engagement.id, layoutGroup: 'neutral' as const },
+              ...engagement.participantIds.flatMap((actorId) => {
+                const actor = actors.find((candidate) => candidate.id === actorId);
+                return actor ? [{ id: actor.id, layoutGroup: actor.layoutGroup }] : [];
+              })
+            ]
+          )),
+          section('neutral', group('neutral')),
+          section('enemy', group('enemy'))
+        ]
+      }
+    };
+  }
   const renderables: LayoutEntity[] = [
     ...actors.map((actor) => ({
       id: actor.id,

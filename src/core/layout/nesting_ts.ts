@@ -8,6 +8,8 @@ export type NestingActor = {
   radius: number;
   shape: 'circle' | 'rectangle';
   layoutGroup?: 'hero' | 'enemy' | 'neutral';
+  /** Optional stable split section supplied by a higher-level layout owner. */
+  splitSectionId?: string;
 };
 
 export type PolygonNestingStrategy =
@@ -46,6 +48,8 @@ export type PolygonNestingInput = {
   incomingActorId?: string;
   incomingDropPoint?: LayoutPoint;
   settings?: Partial<PolygonNestingSettings>;
+  /** Active split-section order; defaults to hero, neutral, enemy. */
+  splitSectionOrder?: string[];
 };
 
 export type PolygonNestingResult = {
@@ -55,6 +59,7 @@ export type PolygonNestingResult = {
   incomingDropPoint?: LayoutPoint;
   incomingTargetPoint?: LayoutPoint;
   reason?: 'invalid-zone' | 'no-space';
+  splitSections?: Array<{ id: string; polygon: LayoutPoint[] }>;
 };
 
 function getPolygonArea(polygon: LayoutPoint[]): number {

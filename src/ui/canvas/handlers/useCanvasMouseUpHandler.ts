@@ -2,6 +2,13 @@ import { createEncounterActionRecord } from '@core/history/createEncounterAction
 import { ZONELESS_ACTOR_ZONE_ID } from '@core/encounter/types';
 import { prepareValidatedEncounterChangeForRuntime } from '@core/validation/validatedEncounterChange';
 import { moveActor } from '@entities/actor/actorMutations';
+import {
+  createEngagement,
+  joinEngagement,
+  leaveEngagements,
+  moveActorsPreservingCompleteEngagements
+} from '@entities/engagement/engagementMutations';
+import { isSameEngagementDrop } from '@entities/engagement/engagementDrop';
 import type { Zone } from '@entities/zone/types';
 import { updateZonePolygon } from '@entities/zone/zoneMutations';
 import {
@@ -15,6 +22,12 @@ import {
 } from '../actors/actorCanvasLayout';
 import { cacheActorRenderPlacementsForZoneMove } from '../actors/actorPlacementTranslation';
 import { setOptimisticActorPlacement } from '../actors/actorPlacementOptimisticState';
+import {
+  findActorIdAtPoint,
+  findEngagementIdAtPoint
+} from '../engagements/engagementHitTesting';
+import { isWithinEngagementTether } from '../engagements/engagementDragRules';
+import { getActorEngagement } from '@core/encounter/inspectors';
 import { MIN_SHAPE_SIZE } from '../canvasConstants';
 import type { CanvasInteractionState } from '../canvasInteractionTypes';
 import { commitZoneCreate } from '../zones/zoneCreationActions';
@@ -56,6 +69,113 @@ export function useCanvasMouseUpHandler(input: MouseUpHandlerInput) {
   function handleCanvasMouseUp() {
     if (actorDrag) {
       if (actorDrag.hasMoved) {
+        const draggedActorEngagement = getActorEngagement(
+          encounter,
+          actorDrag.actorId
+        );
+        if (
+          draggedActorEngagement &&
+          isWithinEngagementTether(actorDrag.start, actorDrag.current)
+        ) {
+          setActorDrag({
+            ...actorDrag,
+            current: actorDrag.start,
+            phase: 'returning'
+          });
+          return;
+        }
+        const targetEngagementId = findEngagementIdAtPoint(
+          encounter,
+          input.actorRenderPlacements,
+          actorDrag.current
+        );
+        const targetActorId = findActorIdAtPoint(
+          input.actorRenderPlacements,
+          actorDrag.current,
+          actorDrag.actorIds
+        );
+        const targetActorEngagement = targetActorId
+          ? getActorEngagement(encounter, targetActorId)
+          : undefined;
+        const targetGroupId = targetEngagementId ?? targetActorEngagement?.id;
+        const isSameGroupDrop = isSameEngagementDrop(encounter, actorDrag.actorIds, targetGroupId);
+        if (isSameGroupDrop) {
+          setActorDrag({ ...actorDrag, current: actorDrag.start, phase: 'returning' });
+          return;
+        }
+        let engagementActionType: string | undefined;
+        let nextFromEngagement: typeof encounter | undefined;
+
+        if (
+          targetGroupId &&
+          actorDrag.engagementIntentEngagementId === targetGroupId
+        ) {
+          nextFromEngagement = joinEngagement(
+            encounter,
+            targetGroupId,
+            actorDrag.actorIds
+          );
+          engagementActionType = 'engagement.join';
+        } else if (targetGroupId) {
+          const parentZoneId =
+            encounter.engagements.byId[targetGroupId]?.parentZoneId;
+          if (parentZoneId) {
+            nextFromEngagement = moveActorsPreservingCompleteEngagements(
+              encounter,
+              actorDrag.actorIds,
+              parentZoneId
+            );
+            engagementActionType = 'actor.moveMany';
+          }
+        } else if (
+          targetActorId &&
+          actorDrag.engagementIntentActorId === targetActorId
+        ) {
+          const parentZoneId =
+            encounter.actors.byId[targetActorId]?.currentZoneId;
+          if (parentZoneId && parentZoneId !== ZONELESS_ACTOR_ZONE_ID) {
+            nextFromEngagement = createEngagement(encounter, {
+              id: `engagement-${Date.now()}`,
+              parentZoneId,
+              participantIds: [...actorDrag.actorIds, targetActorId]
+            });
+            engagementActionType = 'engagement.create';
+          }
+        } else if (targetActorId) {
+          // A quick actor drop has ordinary move semantics: place the dragged
+          // actors in the target zone without creating or joining a group.
+          const parentZoneId =
+            encounter.actors.byId[targetActorId]?.currentZoneId;
+          if (parentZoneId) {
+            nextFromEngagement = moveActorsPreservingCompleteEngagements(
+              encounter,
+              actorDrag.actorIds,
+              parentZoneId
+            );
+            engagementActionType = 'actor.moveMany';
+          }
+        }
+        if (nextFromEngagement && nextFromEngagement !== encounter) {
+          const action = createEncounterActionRecord(engagementActionType!, {
+            actorIds: actorDrag.actorIds,
+            participantIds: targetActorId ? [...actorDrag.actorIds, targetActorId] : actorDrag.actorIds,
+            ...(targetGroupId ? { parentZoneId: encounter.engagements.byId[targetGroupId]?.parentZoneId } : {}),
+            ...(targetActorId ? { targetActorId } : {}),
+            ...(targetGroupId ? { targetEngagementId: targetGroupId } : {})
+          });
+          const prepared = prepareValidatedEncounterChangeForRuntime({ action, currentEncounter: encounter, nextEncounter: nextFromEngagement });
+          const commitPreparedEngagement = (resolved: Awaited<typeof prepared>) => {
+            if (!resolved.blocked) {
+              dispatch(commitEncounterChange({ action: resolved.action, nextEncounter: resolved.nextEncounter }));
+              dispatch(selectEntity({ entityType: 'actor', ids: actorDrag.actorIds }));
+              setActorDrag(null);
+              return;
+            }
+            setActorDrag({ ...actorDrag, current: actorDrag.start, phase: 'returning' });
+          };
+          if (prepared instanceof Promise) void prepared.then(commitPreparedEngagement); else commitPreparedEngagement(prepared);
+          return;
+        }
         const destinationZoneId =
           findZoneIdAtPoint(encounter, actorDrag.current) ??
           ZONELESS_ACTOR_ZONE_ID;
@@ -67,7 +187,8 @@ export function useCanvasMouseUpHandler(input: MouseUpHandlerInput) {
         // Picking an actor up and dropping it back into its current zone does
         // not change encounter state. Skip mutation construction and
         // validation so the existing geometry remains authoritative.
-        if (!changesZone) {
+        const leavesEngagement = actorDrag.actorIds.some((actorId) => Boolean(getActorEngagement(encounter, actorId)));
+        if (!changesZone && !leavesEngagement) {
           setActorDrag({
             ...actorDrag,
             current: actorDrag.start,
@@ -76,16 +197,45 @@ export function useCanvasMouseUpHandler(input: MouseUpHandlerInput) {
           return;
         }
 
-        const nextEncounter = actorDrag.actorIds.reduce(
-          (currentEncounter, actorId) =>
-            moveActor(currentEncounter, actorId, destinationZoneId),
-          encounter
-        );
+        const completeDraggedEngagementIds =
+          destinationZoneId !== ZONELESS_ACTOR_ZONE_ID
+            ? encounter.engagements.allIds.filter((engagementId) => {
+                const engagement = encounter.engagements.byId[engagementId];
+                return engagement?.participantIds.every((actorId) =>
+                  actorDrag.actorIds.includes(actorId)
+                );
+              })
+            : [];
+        let nextEncounter =
+          destinationZoneId !== ZONELESS_ACTOR_ZONE_ID
+            ? moveActorsPreservingCompleteEngagements(
+                encounter,
+                actorDrag.actorIds,
+                destinationZoneId
+              )
+            : actorDrag.actorIds.reduce(
+                (currentEncounter, actorId) =>
+                  moveActor(currentEncounter, actorId, destinationZoneId),
+                encounter
+              );
+        if (destinationZoneId === ZONELESS_ACTOR_ZONE_ID) {
+          nextEncounter = leaveEngagements(
+            nextEncounter,
+            actorDrag.actorIds
+          );
+        }
         const action = createEncounterActionRecord(
-          actorDrag.actorIds.length > 1 ? 'actor.moveMany' : 'actor.move',
+          completeDraggedEngagementIds.length > 0
+            ? 'engagement.moveZone'
+            : actorDrag.actorIds.length > 1
+              ? 'actor.moveMany'
+              : 'actor.move',
           {
             actorIds: actorDrag.actorIds,
-            destinationZoneId
+            destinationZoneId,
+            ...(completeDraggedEngagementIds.length > 0
+              ? { engagementIds: completeDraggedEngagementIds }
+              : {})
           }
         );
         const prepared = prepareValidatedEncounterChangeForRuntime({

@@ -210,11 +210,15 @@ describe('zone mutations', () => {
       orientation: 'TOP_BOTTOM',
       strategy: 'SPLIT_SEQUENTIAL',
       sections: [
-        { id: 'hero', items: [{ id: 'actor-hero', layoutGroup: 'hero' }] },
+        { id: 'hero', items: [] },
         {
-          id: 'neutral',
-          items: [{ id: 'engagement-room', layoutGroup: 'neutral' }]
+          id: 'engagement-engagement-room',
+          items: [
+            { id: 'engagement-room', layoutGroup: 'neutral' },
+            { id: 'actor-hero', layoutGroup: 'hero' }
+          ]
         },
+        { id: 'neutral', items: [] },
         { id: 'enemy', items: [] }
       ]
     });

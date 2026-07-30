@@ -12,6 +12,7 @@ import type {
 } from '@core/encounter/types';
 import { ZONELESS_ACTOR_ZONE_ID } from '@core/encounter/types';
 import type { EntityCollection, EntityId } from '@core/state/entityCollection';
+import { removeActorsFromEngagements } from '@entities/engagement/engagementMutations';
 
 export type ActorImageInput = {
   dataUrl: string;
@@ -175,13 +176,16 @@ export function moveActor(
     return state;
   }
 
-  return {
+  const moved = {
     ...state,
     actors: moveEntityToCollectionEnd(state.actors, {
       ...actor,
       currentZoneId: destinationZoneId
     })
   };
+  // A bare zone drop is an explicit disengage; joining/creating engagements
+  // uses the engagement mutation, which keeps membership authoritative there.
+  return removeActorsFromEngagements(moved, [actorId]);
 }
 
 export function updateActorProperties(

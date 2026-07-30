@@ -197,10 +197,13 @@ export const EdgeValidator: Validator<EncounterState> = {
 
 export const EngagementValidator: Validator<EncounterState> = {
   id: "EngagementValidator",
-  validate(action, { state }) {
+  validate(action, { state, nextState }) {
     if (
       action.type !== "engagement.create" &&
-      action.type !== "engagement.update"
+      action.type !== "engagement.update" &&
+      action.type !== "engagement.join" &&
+      action.type !== "engagement.merge" &&
+      action.type !== "engagement.groupSelected"
     ) {
       return result([]);
     }
@@ -210,7 +213,7 @@ export const EngagementValidator: Validator<EncounterState> = {
     const participantIds = payload.getStringArray("participantIds");
     const messages: ValidationMessage[] = [];
 
-    if (!hasZone(state, parentZoneId)) {
+    if (parentZoneId !== undefined && !hasZone(state, parentZoneId)) {
       messages.push({
         code: "engagement.parentZoneMissing",
         message: "Engagement references a parent zone that does not exist.",
@@ -218,7 +221,7 @@ export const EngagementValidator: Validator<EncounterState> = {
       });
     }
 
-    if (participantIds.length < 2) {
+    if (participantIds.length > 0 && participantIds.length < 2) {
       messages.push({
         code: "engagement.tooFewParticipants",
         message: "Engagements must contain at least two participants.",
@@ -236,6 +239,33 @@ export const EngagementValidator: Validator<EncounterState> = {
       }
     }
 
+    // Compound drag/action mutations carry their concrete output in nextState.
+    // Validate it here so STRICT rejects malformed imported or hand-built actions,
+    // while ADVISORY retains the warning-only pipeline behavior.
+    if (nextState) {
+      const ownerByActorId = new Map<string, string>();
+      for (const engagementId of nextState.engagements.allIds) {
+        const engagement = nextState.engagements.byId[engagementId];
+        if (!engagement) continue;
+        if (engagement.participantIds.length < 2) {
+          messages.push({ code: "engagement.tooFewParticipants", message: "Engagements must contain at least two participants.", severity: "error" });
+        }
+        if (new Set(engagement.participantIds).size !== engagement.participantIds.length) {
+          messages.push({ code: "engagement.duplicateParticipant", message: "An engagement cannot contain the same participant twice.", severity: "error" });
+        }
+        for (const actorId of engagement.participantIds) {
+          const actor = nextState.actors.byId[actorId];
+          if (!actor || actor.currentZoneId !== engagement.parentZoneId) {
+            messages.push({ code: "engagement.participantOutsideParentZone", message: "Engagement participants must be in the engagement's zone.", severity: "error" });
+          }
+          const owner = ownerByActorId.get(actorId);
+          if (owner && owner !== engagement.id) {
+            messages.push({ code: "engagement.participantInMultipleGroups", message: "An actor can belong to only one engagement.", severity: "error" });
+          }
+          ownerByActorId.set(actorId, engagement.id);
+        }
+      }
+    }
     return result(messages);
   }
 };
@@ -305,6 +335,14 @@ export const ZoneIntegrityValidator: Validator<EncounterState> = {
           messages.push({
             code: "zoneIntegrity.engagementParticipantMissing",
             message: `Engagement ${engagement.id} references missing participant ${participantId}.`,
+            severity: "error"
+          });
+        }
+        const participant = state.actors.byId[participantId];
+        if (participant && participant.currentZoneId !== engagement.parentZoneId) {
+          messages.push({
+            code: "zoneIntegrity.engagementParticipantOutsideParentZone",
+            message: `Engagement ${engagement.id} contains an actor outside its parent zone.`,
             severity: "error"
           });
         }

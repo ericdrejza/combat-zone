@@ -13,6 +13,7 @@ import {
   createActorPlacementCacheKey,
   getCachedActorPlacementGeometry
 } from './actorPlacementCache';
+import type { ActorPlacementGeometry } from './actorPlacementCache';
 import {
   getProactiveActorPlacementGeometry,
   DEFAULT_LAYOUT_COMPUTATION_STRATEGY
@@ -44,10 +45,14 @@ export { ACTOR_TOKEN_BASE_RADIUS, FLEX_ZONE_EDGE_GAP };
 
 export type ActorRenderPlacement = {
   actor: Actor;
+  /** Accepted derived token point shared by rendering and hit-testing. */
+  engagementTokenPoint?: LayoutPoint;
   /** Transient drop location used as the start of the placement animation. */
   incomingPoint?: LayoutPoint;
   point: LayoutPoint;
   radius: number;
+  /** Split-layout section used by engagement token geometry. */
+  sectionPolygon?: LayoutPoint[];
 };
 
 export function getActorRenderPlacements(
@@ -88,7 +93,7 @@ export function getActorRenderPlacements(
     }
   });
 
-  const geometryWithOptimisticPlacements = [
+  const geometryWithOptimisticPlacements: ActorPlacementGeometry[] = [
     ...currentGeometry,
     ...encounter.actors.allIds.flatMap((actorId) => {
       if (positionedActorIds.has(actorId)) {
@@ -103,12 +108,12 @@ export function getActorRenderPlacements(
         : [];
     })
   ];
-  const proactiveGeometry =
+  const proactiveGeometry: ActorPlacementGeometry[] =
     computationStrategy === 'PROACTIVE'
       ? geometryWithOptimisticPlacements.map((placement) => ({ ...placement }))
       : geometryWithOptimisticPlacements;
   const plannedZoneIds = new Set<string>();
-  const knownGeometry = [] as typeof geometryWithOptimisticPlacements;
+  const knownGeometry: ActorPlacementGeometry[] = [];
 
   if (computationStrategy === 'PROACTIVE') {
     for (const zoneId of encounter.zones.allIds) {
@@ -186,7 +191,8 @@ export function getActorRenderPlacements(
     }
   }
 
-  return proactiveGeometry.flatMap(({ actorId, point, radius }) => {
+  return proactiveGeometry.flatMap(
+    ({ actorId, engagementTokenPoint, point, radius, sectionPolygon }) => {
     const actor = encounter.actors.byId[actorId];
     const incomingPoint = getOptimisticActorPlacement(actorId);
 
@@ -194,13 +200,16 @@ export function getActorRenderPlacements(
       ? [
           {
             actor,
+            ...(engagementTokenPoint ? { engagementTokenPoint } : {}),
             ...(incomingPoint ? { incomingPoint } : {}),
             point,
-            radius
+            radius,
+            ...(sectionPolygon ? { sectionPolygon } : {})
           }
         ]
       : [];
-  });
+    }
+  );
 }
 
 export { getProactiveActorPlacementGeometry };

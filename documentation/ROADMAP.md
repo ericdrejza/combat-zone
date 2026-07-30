@@ -20,26 +20,6 @@ After completing a numbered section (## X.), move the completed section to the e
   movement and creation.
 - [x] Add the approved canvas animation phase with Motion for React.
 
-## 10. Engagement Groups
-
-- [ ] Implement Engagement entity creation through drag/drop.
-  - Actor A dragged onto Actor B creates one Engagement containing exactly
-    `{A, B}`.
-- [ ] Implement adding actors to an existing Engagement.
-  - Actor C dragged onto an Engagement joins the same group.
-  - Do not create nested or sub-groups.
-- [ ] Implement Engagement merge.
-  - Engagement dragged onto Engagement merges all participants into one group.
-- [ ] Implement actor movement out of Engagements.
-  - Actor dragged to empty zone leaves the Engagement.
-- [ ] Implement automatic Engagement dissolution.
-  - Any Engagement with fewer than two members is deleted immediately.
-  - Dissolution occurs as part of the history-tracked action that caused it.
-- [ ] Add Engagement properties editing, including layout strategy.
-- [ ] Apply Engagement layout strategies to participant CSS layout.
-- [ ] Add Vitest coverage for create, join, merge, split/leave,
-  auto-dissolve, layout, undo, and redo.
-
 ## 11. Edges: Basic Zone Graph
 
 - [ ] Implement directional Edge creation between zones with the Edge Tool.

@@ -6,8 +6,12 @@ import type { PolygonNestingSettings } from '@core/layout/nesting_ts';
 
 export type ActorPlacementGeometry = {
   actorId: string;
+  /** Accepted derived token point for this actor's Engagement, if any. */
+  engagementTokenPoint?: { x: number; y: number };
   point: { x: number; y: number };
   radius: number;
+  /** Split-layout section containing this actor, derived with its placement. */
+  sectionPolygon?: Array<{ x: number; y: number }>;
 };
 
 const MAX_CACHE_ENTRIES = 12;
@@ -49,7 +53,13 @@ function getEngagementCacheValue(
   const engagement = encounter.engagements.byId[engagementId];
 
   return engagement
-    ? [engagementId, engagement.parentZoneId]
+    ? [
+        engagementId,
+        engagement.parentZoneId,
+        engagement.participantIds,
+        engagement.layoutStrategy,
+        engagement.layoutOrientation
+      ]
     : [engagementId, null];
 }
 

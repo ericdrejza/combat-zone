@@ -62,6 +62,7 @@ vi.mock("motion/react", async (importOriginal) => {
               onDrag: _onDrag,
               onDragEnd: _onDragEnd,
               onDragStart: _onDragStart,
+              onDragTransitionEnd: _onDragTransitionEnd,
               onAnimationComplete,
               transition: _transition,
               ...elementProps

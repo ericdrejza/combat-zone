@@ -34,8 +34,21 @@ export type ZoneDragState = {
 export type ActorDragState = {
   actorId: string;
   actorIds: string[];
+  /** Target actor held for 500ms to explicitly signal create-engagement. */
+  engagementIntentActorId?: string;
+  /** Existing group held for 500ms to explicitly signal join-engagement. */
+  engagementIntentEngagementId?: string;
   current: LayoutPoint;
   hasMoved: boolean;
+  phase: 'dragging' | 'returning';
+  start: LayoutPoint;
+};
+
+export type EngagementDragState = {
+  current: LayoutPoint;
+  engagementId: string;
+  hasMoved: boolean;
+  hoverTargetEngagementId?: string;
   phase: 'dragging' | 'returning';
   start: LayoutPoint;
 };

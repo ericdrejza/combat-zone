@@ -305,6 +305,7 @@ describe('validation pipeline', () => {
       'zoneIntegrity.actorZoneMissing',
       'zoneIntegrity.edgeToZoneMissing',
       'zoneIntegrity.engagementParentZoneMissing',
+      'zoneIntegrity.engagementParticipantOutsideParentZone',
       'zoneIntegrity.engagementParticipantMissing'
     ]);
   });

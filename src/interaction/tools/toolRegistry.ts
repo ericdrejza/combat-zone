@@ -61,7 +61,7 @@ export const MVP_TOOLS: ToolDefinition[] = [
     label: "Actor",
     tooltip: "Place and move actors.",
     contract: {
-      selectableEntityTypes: ["actor"],
+      selectableEntityTypes: ["actor", "engagement"],
       dragBehavior: "Move actors between zones or engagements in later roadmap work.",
       clickBehavior: "Select actors before actor placement behavior is implemented.",
       keyboardShortcut: "a"
