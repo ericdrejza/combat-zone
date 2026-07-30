@@ -16,6 +16,7 @@ export type PolygonFlexLayoutInput = {
   incomingActorId?: string;
   incomingDropPoint?: LayoutPoint;
   settings?: Partial<PolygonNestingSettings>;
+  splitSectionOrder?: string[];
 };
 
 export type PolygonLayoutInput = PolygonFlexLayoutInput;

@@ -28,13 +28,41 @@ export function cacheActorRenderPlacementsForZoneMove(
     POLYGON_LAYOUT_SETTINGS,
     FLEX_ZONE_EDGE_GAP
   );
-  const geometry = placements.map(({ actor, point, radius }) => ({
+  const geometry = placements.map(({
+    actor,
+    engagementTokenPoint,
+    point,
+    radius,
+    sectionPolygon
+  }) => ({
     actorId: actor.id,
+    ...(engagementTokenPoint
+      ? {
+          engagementTokenPoint:
+            actor.currentZoneId === zoneId
+              ? {
+                  x: engagementTokenPoint.x + offset.x,
+                  y: engagementTokenPoint.y + offset.y
+                }
+              : engagementTokenPoint
+        }
+      : {}),
     point:
       actor.currentZoneId === zoneId
         ? { x: point.x + offset.x, y: point.y + offset.y }
         : point,
-    radius
+    radius,
+    ...(sectionPolygon
+      ? {
+          sectionPolygon:
+            actor.currentZoneId === zoneId
+              ? sectionPolygon.map((vertex) => ({
+                  x: vertex.x + offset.x,
+                  y: vertex.y + offset.y
+                }))
+              : sectionPolygon
+        }
+      : {})
   }));
 
   cacheActorPlacementGeometry(nextKey, geometry);

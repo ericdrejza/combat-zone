@@ -235,3 +235,24 @@
     - Button group buttons should only have icons in them
 - [x] Add Vitest coverage for actor create/place/move/zoneless behavior,
   invalid drops, undo, and redo history.
+
+## 10. Engagement Groups
+
+- [x] Implement Engagement entity creation through drag/drop.
+  - Actor A dragged onto Actor B creates one Engagement containing exactly
+    `{A, B}`.
+  - Add and style Engagement entity on canvas
+- [x] Implement adding actors to an existing Engagement.
+  - Actor C dragged onto an Engagement joins the same group.
+  - Do not create nested or sub-groups.
+- [x] Implement Engagement merge.
+  - Engagement dragged onto other Engagement merges all participants into one group.
+- [x] Implement actor movement out of Engagements.
+  - Actor dragged to empty zone leaves the Engagement.
+- [x] Implement automatic Engagement dissolution.
+  - Any Engagement with fewer than two members is deleted immediately.
+  - Dissolution occurs as part of the history-tracked action that caused it.
+- [x] Add Engagement properties editing, including layout strategy.
+- [x] Apply Engagement layout strategies to participant CSS layout.
+- [x] Add Vitest coverage for create, join, merge, split/leave,
+  auto-dissolve, layout, undo, and redo.

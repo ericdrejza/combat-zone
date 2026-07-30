@@ -107,17 +107,112 @@ covers `DESIGN.md` §15 "Must have" scope only.
 
 ## Engagement groups
 
-- [ ] Dragging Actor A onto Actor B creates a new Engagement containing
+- [x] Dragging Actor A onto Actor B creates a new Engagement containing
       exactly {A, B}.
-- [ ] Dragging Actor C onto that Engagement adds C to the same group (not a
+- [x] Actor → unengaged Actor, existing Engagement participant, or Engagement
+      token intent appears only after 500ms hover; dropping before that moves
+      all dragged actors to the target zone without joining/creating, and
+      dropping after creates or joins the intended Engagement.
+- [x] Dragging Actor C onto that Engagement adds C to the same group (not a
       nested/sub-group).
-- [ ] Dragging one Engagement onto another merges both into a single group
+- [x] Dragging one Engagement onto another merges both into a single group
       containing all participants from both.
-- [ ] Removing a participant such that the Engagement has fewer than 2
+- [x] Dragging multiple selected actors moves every dragged actor, including
+      across zones, with the defined actor/group move semantics.
+- [x] Dragging every participant of an Engagement to another zone before
+      engagement intent matures preserves its ID and membership while updating
+      its parent zone and the participants' actor zone IDs; a matured intent
+      instead groups the dragged actors and hovered actor as indicated. A
+      partial-group quick drop retains the established leave/unengaged behavior.
+- [x] Removing a participant such that the Engagement has fewer than 2
       members auto-dissolves the Engagement (per `AGENT.md` Resolved Edge
       Cases), and this is verified in state, not just visually.
-- [ ] Engagement respects its assigned layout strategy (FLEX / SEQUENTIAL)
-      for participant positioning.
+- [x] The non-toggle Engage action immediately right of Select groups selected
+      actors independently per zone, ignores zones with fewer than two
+      selections, removes only selected actors from prior groups, leaves
+      unselected members intact, and records the complete change as one history
+      action with auto-dissolution included.
+- [x] Engagement respects its assigned layout strategy (FLEX / SEQUENTIAL)
+      and orientation for participant positioning.
+- [x] Engagements render in their own layer after Edges and before Actors: a
+      24px circular token uses the crossed-swords asset; its fill and border
+      match the parent Zone border color and its icon uses luminance-derived
+      black or white contrast. Connectors and token are behind actor tokens.
+- [x] In settled layouts, engagement participants form non-overlapping,
+      comfortably spaced clusters around their token with a 10px preferred and
+      2px hard-minimum participant gap. Actor-to-actor connector branches use
+      at least a 6px edge-to-edge gap so the line remains visible. Connectors
+      avoid actor footprints and other connector lines. Direct connectors
+      share only their own token endpoint; bounded routing falls back to a same-style
+      actor-to-connected-actor tree whose branches may meet only at their
+      connected participant endpoint. Other Engagement tokens and accepted
+      connectors are obstacles; regression coverage includes three
+      Engagements with three actors each in one zone. Every participant has
+      one token-to-actor or actor-to-actor connector; incomplete connector
+      networks are blocked in every validation mode. The packer-approved token
+      point is preserved through worker/cache geometry and shared by rendering
+      and hit-testing; 8/4/3-group coverage verifies every token clears every
+      actor and every participant line remains present. Collision geometry is
+      shape-aware for circle/circle, rectangle/rectangle, circle/rectangle,
+      token/actor, and connector/actor pairs; independent 2px connector
+      strokes cannot overlap.
+- [x] Unequal Engagements use token-owned participant regions: every actor
+      remains closer to its own token than another Engagement token, so a
+      large group cannot wrap around or contain a smaller group. Elongated
+      chains do not reserve circular empty space; a fitting smaller Engagement
+      can still gain participants, while a join that requires nesting is
+      blocked.
+- [x] During a Zone drag, its Engagement tokens and every connector endpoint
+      translate by exactly the same transient vector as its actors and polygon,
+      without repacking or persisting derived coordinates.
+- [x] Dragging an Engagement token works in Actor and Select; dragging an
+      engaged actor retains its connector through 30px of movement and then
+      recoils it to the token center in approximately 150ms. Returning within
+      30px reattaches the tether and preserves membership on drop without a
+      history entry, while settled layouts retain the routing guarantees.
+      Token drag previews use MotionValues, connectors follow the token
+      endpoint, and a non-merge same-zone drop slides home without a history
+      entry.
+- [x] Actor/Engagement drag targets preview the impending action in the
+      toolbar: matured 500ms actor engagement intent or a token merge target
+      activates Engage, moving an engaged actor beyond its tether activates
+      Disengage, and a token targeted for merge receives a Zone-name-color
+      outline. The matured actor intent badge contains the crossed-swords icon.
+- [x] Clicking an Engagement token selects all participant actors. The
+      icon-only Lucide `Unlink2` Disengage action beside Engage enables when
+      any selected actor is engaged and removes only selected participants,
+      including auto-dissolution and exact undo/redo coverage.
+- [x] In SPLIT_FLEX and SPLIT_SEQUENTIAL zones, unengaged actors remain in
+      faction sections and each Engagement receives a separate isolated section
+      in dynamic `engagements.allIds` order between the hero and neutral
+      sections; its participants and 24px token fit inside that section.
+- [x] Spacious FLEX engagement clusters try wider participant clearance, while
+      dense layouts retain the 10px preferred and 2px minimum fallback.
+      Engagement size has no numeric cap; multi-ring packing and exact-center
+      candidates allow at least 20 medium participants in a fitting 500×360
+      FLEX Zone in every validation mode. When multiple radial clusters do not
+      fit, all groups are rearranged with token-anchored serpentine chains;
+      growth from neighboring groups of 9 and 8 actors is covered in every
+      validation mode. Circle and hexagon candidate searches discard
+      out-of-polygon centers before layout/routing work and meet the shared
+      performance budget for neighboring 8/4/3 groups. Every settled
+      participant and token retains at least 2px from the actual polygon edge,
+      including curved approximations and sloped hexagon edges.
+      Engagement participants in split sections prefer one line along the
+      divider axis, wrap into parallel lines when a larger group cannot fit,
+      and use actor-to-actor connector chaining when direct token spokes are
+      obstructed. Eight-actor coverage spans every split strategy/orientation.
+- [x] An engagement creation, join, merge, or move that leaves no valid
+      non-overlapping in-zone geometry is blocked in every validation mode.
+- [x] A final validator independently audits all settled actor and Engagement
+      token footprint pairs after packing. Negative actor/actor, actor/token,
+      and token/token fixtures hard-block in OFF, ADVISORY, and STRICT;
+      positive separated fixtures and multi-actor moves into a Zone containing
+      an existing Engagement are accepted.
+- [x] Vitest coverage verifies engagement creation, delayed intent (including
+      existing groups), join, merge, multi-drag/cross-zone movement, Engage and
+      selected-only Disengage actions, token selection, leave/split,
+      auto-dissolution, layout/routing contracts, and exact undo/redo snapshots.
 
 ## Edges (basic graph)
 

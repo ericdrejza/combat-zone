@@ -1,0 +1,13 @@
+export const ENGAGEMENT_TOKEN_RADIUS = 12;
+export const ENGAGEMENT_PREFERRED_CLEARANCE = 10;
+export const ENGAGEMENT_MINIMUM_CLEARANCE = 2;
+
+/** Leaves a visible segment of the 2px connector between anchored actors. */
+export const ENGAGEMENT_CHAIN_VISIBLE_CLEARANCE = 6;
+export const ENGAGEMENT_SPACIOUS_CLEARANCES = [
+  22,
+  16,
+  ENGAGEMENT_PREFERRED_CLEARANCE,
+  ENGAGEMENT_CHAIN_VISIBLE_CLEARANCE,
+  ENGAGEMENT_MINIMUM_CLEARANCE
+] as const;
