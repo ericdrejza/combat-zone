@@ -10,7 +10,10 @@ import {
   orderEngagementPackingCenters
 } from './engagementPackingLayouts';
 import { engagementPackingCandidateFits } from './engagementPackingValidation';
-import { getActorFootprintArea } from './engagementPackingOrder';
+import {
+  getEngagementCountByZoneId,
+  getEngagementIdsByArea
+} from './engagementPackingOrder';
 import {
   ENGAGEMENT_CHAIN_VISIBLE_CLEARANCE,
   ENGAGEMENT_MINIMUM_CLEARANCE,
@@ -82,25 +85,13 @@ export function packEngagementParticipants(
   const acceptedActors: EngagementPackedActor[] = [];
   const acceptedClusters: EngagementClusterEnvelope[] = [];
   const acceptedTokens: LayoutPoint[] = [];
+  const acceptedTokensByZoneId = new Map<string, LayoutPoint[]>();
   const tokenPoints: Record<string, LayoutPoint> = {};
   let fits = true;
   let failureReason: EngagementPackingResult['failureReason'];
 
-  const engagementIdsByArea = encounter.engagements.allIds
-    .map((engagementId, index) => {
-      const engagement = encounter.engagements.byId[engagementId];
-      const area = engagement?.participantIds.reduce((total, actorId) => {
-        const actor = encounter.actors.byId[actorId];
-        return total + (actor ? getActorFootprintArea(actor) : 0);
-      }, Math.PI * ENGAGEMENT_TOKEN_RADIUS ** 2) ?? 0;
-
-      return { area, engagementId, index };
-    })
-    .sort(
-      (left, right) =>
-        right.area - left.area || left.index - right.index
-    )
-    .map(({ engagementId }) => engagementId);
+  const engagementIdsByArea = getEngagementIdsByArea(encounter);
+  const engagementCountByZoneId = getEngagementCountByZoneId(encounter);
 
   for (const engagementId of engagementIdsByArea) {
     const engagement = encounter.engagements.byId[engagementId];
@@ -118,6 +109,11 @@ export function packEngagementParticipants(
     });
     if (members.length < 2) continue;
     const originalCenter = centerOf(members.map((member) => member.point));
+    const separatesFlexEngagements =
+      zone.layoutStrategy === 'FLEX' &&
+      !usesSplitSection &&
+      (engagementCountByZoneId.get(zone.id) ?? 0) > 1;
+    const zoneAcceptedTokens = acceptedTokensByZoneId.get(zone.id) ?? [];
     let accepted: EngagementPackedActor[] | undefined;
     let acceptedToken: LayoutPoint | undefined;
     const clearances =
@@ -132,7 +128,8 @@ export function packEngagementParticipants(
       const centers = orderEngagementPackingCenters(
         getPolygonCandidates(originalCenter, sectionPolygon, 16),
         sectionPolygon,
-        preferChains
+        preferChains,
+        separatesFlexEngagements ? zoneAcceptedTokens : []
       );
       for (const center of centers) {
         const candidateLayouts = getEngagementPackingLayouts({
@@ -188,6 +185,10 @@ export function packEngagementParticipants(
       acceptedActors.push(...accepted);
       acceptedClusters.push({ participants: accepted, token: acceptedToken });
       acceptedTokens.push(acceptedToken);
+      acceptedTokensByZoneId.set(zone.id, [
+        ...zoneAcceptedTokens,
+        acceptedToken
+      ]);
       tokenPoints[engagementId] = acceptedToken;
     } else {
       fits = false;

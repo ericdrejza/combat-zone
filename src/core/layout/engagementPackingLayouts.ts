@@ -1,6 +1,7 @@
 import { getEngagementChainCandidateLayouts } from './engagementChainLayouts';
 import { ENGAGEMENT_TOKEN_RADIUS } from './engagementGeometryConstants';
 import { getEngagementParticipantCandidateLayouts } from './engagementPackingCandidates';
+import { distanceToPolygonBoundary } from './polygonGeometry';
 import type { LayoutPoint } from './types';
 
 type Participant = {
@@ -27,17 +28,42 @@ function centerOf(points: readonly LayoutPoint[]): LayoutPoint {
 export function orderEngagementPackingCenters(
   centers: LayoutPoint[],
   polygon: readonly LayoutPoint[],
-  preferBoundary: boolean
+  preferBoundary: boolean,
+  avoidPoints: readonly LayoutPoint[] = []
 ): LayoutPoint[] {
-  if (!preferBoundary) return centers;
+  if (!preferBoundary && avoidPoints.length === 0) return centers;
   const polygonCenter = centerOf(polygon);
-  return centers.sort(
+  const scored = centers.map((point) => {
+    const boundaryDistance = distanceToPolygonBoundary(point, polygon);
+    const avoidDistance =
+      avoidPoints.length > 0
+        ? Math.min(
+            ...avoidPoints.map((other) =>
+              Math.hypot(point.x - other.x, point.y - other.y)
+            )
+          )
+        : 0;
+    return {
+      boundaryDistance,
+      point,
+      regionScore:
+        avoidPoints.length > 0
+          ? Math.min(avoidDistance, boundaryDistance)
+          : 0
+    };
+  });
+
+  return scored.sort(
     (left, right) =>
-      Math.hypot(right.x - polygonCenter.x, right.y - polygonCenter.y) -
-        Math.hypot(left.x - polygonCenter.x, left.y - polygonCenter.y) ||
-      left.y - right.y ||
-      left.x - right.x
-  );
+      right.regionScore - left.regionScore ||
+      (preferBoundary
+        ? left.boundaryDistance - right.boundaryDistance
+        : right.boundaryDistance - left.boundaryDistance) ||
+      Math.hypot(right.point.x - polygonCenter.x, right.point.y - polygonCenter.y) -
+        Math.hypot(left.point.x - polygonCenter.x, left.point.y - polygonCenter.y) ||
+      left.point.y - right.point.y ||
+      left.point.x - right.point.x
+  ).map(({ point }) => point);
 }
 
 function getParticipantScale(

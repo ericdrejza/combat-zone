@@ -23,7 +23,7 @@ type EngagementVisualProps = {
   connectors: EngagementConnector[];
   drag: EngagementDragState | null;
   engagementId: string;
-  hiddenActorId?: string;
+  hiddenActorIds?: ReadonlySet<string>;
   isDropTarget: boolean;
   onDrag: (point: LayoutPoint) => void;
   onDragEnd: () => void;
@@ -84,7 +84,7 @@ export function EngagementVisual({
   connectors,
   drag,
   engagementId,
-  hiddenActorId,
+  hiddenActorIds,
   isDropTarget,
   onDrag,
   onDragEnd,
@@ -146,7 +146,12 @@ export function EngagementVisual({
       data-entity-type="engagement"
     >
       {connectors
-        .filter((connector) => connector.actorId !== hiddenActorId)
+        .filter(
+          (connector) =>
+            !hiddenActorIds?.has(connector.actorId) &&
+            (!connector.viaActorId ||
+              !hiddenActorIds?.has(connector.viaActorId))
+        )
         .map((connector) => {
           const followsToken = isSamePoint(connector.from, token);
           return (

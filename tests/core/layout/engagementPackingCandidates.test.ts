@@ -6,7 +6,10 @@ import {
   getEngagementParticipantCandidateLayouts
 } from '@core/layout/engagementPackingCandidates';
 import { getEngagementChainCandidateLayouts } from '@core/layout/engagementChainLayouts';
-import { getEngagementTokenPoint } from '@core/layout/engagementPacking';
+import {
+  ENGAGEMENT_CHAIN_VISIBLE_CLEARANCE,
+  getEngagementTokenPoint
+} from '@core/layout/engagementPacking';
 import { engagementPackingCandidateFits } from '@core/layout/engagementPackingValidation';
 
 describe('engagement participant candidates', () => {
@@ -28,15 +31,15 @@ describe('engagement participant candidates', () => {
     const polygon = [
       { x: 0, y: 0 },
       { x: 220, y: 0 },
-      { x: 220, y: 300 },
-      { x: 0, y: 300 }
+      { x: 220, y: 320 },
+      { x: 0, y: 320 }
     ];
     const points = getEngagementParticipantCandidateLayouts(
-      { x: 110, y: 150 },
+      { x: 110, y: 160 },
       [30, 30, 30, 30],
       'TOP_BOTTOM',
       'SEQUENTIAL',
-      6,
+      ENGAGEMENT_CHAIN_VISIBLE_CLEARANCE,
       12
     )[0];
     const proposed = points.map((point, index) => ({
@@ -50,7 +53,7 @@ describe('engagement participant candidates', () => {
       acceptedActors: [],
       acceptedClusters: [],
       acceptedTokens: [],
-      actorClearance: 6,
+      actorClearance: ENGAGEMENT_CHAIN_VISIBLE_CLEARANCE,
       minimumClearance: 2,
       polygon,
       proposed,

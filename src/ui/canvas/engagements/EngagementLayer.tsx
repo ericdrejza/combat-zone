@@ -39,6 +39,10 @@ type EngagementRenderModel = {
   token: LayoutPoint;
 };
 
+function addOffset(point: LayoutPoint, offset: LayoutPoint): LayoutPoint {
+  return { x: point.x + offset.x, y: point.y + offset.y };
+}
+
 function translateZonePoint(
   point: LayoutPoint,
   zoneId: string,
@@ -144,8 +148,32 @@ export function EngagementLayer({
   return (
     <>
       {models.map((model) => {
-        const connectors =
+        const settledConnectors =
           connectorRouting.connectorsByEngagementId[model.engagementId] ?? [];
+        const engagement = encounter.engagements.byId[model.engagementId];
+        const draggedParticipantIds = new Set(
+          engagement?.participantIds.filter((actorId) =>
+            actorDrag?.actorIds.includes(actorId)
+          ) ?? []
+        );
+        const movesCompleteEngagement =
+          actorDrag?.phase === 'dragging' &&
+          engagement !== undefined &&
+          draggedParticipantIds.size === engagement.participantIds.length;
+        const dragOffset =
+          movesCompleteEngagement && actorDrag
+            ? {
+                x: actorDrag.current.x - actorDrag.start.x,
+                y: actorDrag.current.y - actorDrag.start.y
+              }
+            : { x: 0, y: 0 };
+        const connectors = movesCompleteEngagement
+          ? settledConnectors.map((connector) => ({
+              ...connector,
+              from: addOffset(connector.from, dragOffset),
+              to: addOffset(connector.to, dragOffset)
+            }))
+          : settledConnectors;
         const selectedActorIds =
           selection.selectedEntityType === 'actor'
             ? new Set(selection.selectedIds)
@@ -168,7 +196,9 @@ export function EngagementLayer({
                 : null
             }
             engagementId={model.engagementId}
-            hiddenActorId={actorDrag?.actorId}
+            hiddenActorIds={
+              movesCompleteEngagement ? undefined : draggedParticipantIds
+            }
             isDropTarget={
               engagementDrag?.phase === 'dragging' &&
               engagementDrag.hoverTargetEngagementId === model.engagementId
@@ -179,7 +209,11 @@ export function EngagementLayer({
             onDragStart={onEngagementDragStart}
             onSelect={onEngagementSelect}
             selected={selected}
-            token={model.token}
+            token={
+              movesCompleteEngagement
+                ? addOffset(model.token, dragOffset)
+                : model.token
+            }
             targetOutlineColor={model.outlineColor}
           />
         );
