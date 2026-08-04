@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
 import { createEncounterState } from '@core/encounter/createEncounterState';
-import type { EncounterState } from '@core/encounter/types';
+import {
+  ZONELESS_ACTOR_ZONE_ID,
+  type EncounterState
+} from '@core/encounter/types';
 import { createEncounterActionRecord } from '@core/history/createEncounterActionRecord';
 import type { EntityCollection } from '@core/state/entityCollection';
 import {
@@ -885,6 +888,98 @@ describe('polygon placement validation', () => {
         severity: 'warning'
       })
     ]);
+  });
+
+  it('enlarges an already-grown zone when a large actor joins medium actors', () => {
+    const autoResizeZone = {
+      ...zone,
+      autoResize: true,
+      polygon: [
+        { x: 59.6875, y: 63.75 },
+        { x: 200.3125, y: 63.75 },
+        { x: 200.3125, y: 176.25 },
+        { x: 59.6875, y: 176.25 }
+      ]
+    };
+    const mediumActors = ['medium-one', 'medium-two'].map((id) =>
+      buildActor({ currentZoneId: autoResizeZone.id, id, size: 'medium' })
+    );
+    const currentEncounter = {
+      ...createState('STRICT'),
+      actors: collection(mediumActors),
+      zones: collection([autoResizeZone])
+    };
+    const nextEncounter = createActor(currentEncounter, {
+      currentZoneId: autoResizeZone.id,
+      id: 'large-actor',
+      size: 'large'
+    });
+    const prepared = prepareValidatedEncounterChange({
+      action: createEncounterActionRecord('actor.create', {
+        actorId: 'large-actor',
+        destinationZoneId: autoResizeZone.id
+      }),
+      currentEncounter,
+      nextEncounter
+    });
+
+    expect(prepared.nextEncounter.zones.byId[autoResizeZone.id]?.polygon).not
+      .toEqual(autoResizeZone.polygon);
+    expect(prepared.blocked).toBe(false);
+  });
+
+  it('automatically enlarges an enabled zone when joining an actor moves it into the zone', () => {
+    const autoResizeZone = {
+      ...zone,
+      autoResize: true,
+      polygon: [
+        { x: 0, y: 0 },
+        { x: 180, y: 0 },
+        { x: 180, y: 120 },
+        { x: 0, y: 120 }
+      ]
+    };
+    const participants = ['participant-one', 'participant-two'].map((id) =>
+      buildActor({ currentZoneId: autoResizeZone.id, id })
+    );
+    const joiningActor = buildActor({
+      currentZoneId: ZONELESS_ACTOR_ZONE_ID,
+      id: 'joining-actor'
+    });
+    const currentEncounter = createEngagement(
+      {
+        ...createState('STRICT'),
+        actors: collection([...participants, joiningActor]),
+        zones: collection([autoResizeZone])
+      },
+      {
+        id: 'target-engagement',
+        parentZoneId: autoResizeZone.id,
+        participantIds: participants.map(({ id }) => id)
+      }
+    );
+    const nextEncounter = joinEngagement(
+      currentEncounter,
+      'target-engagement',
+      [joiningActor.id]
+    );
+    const prepared = prepareValidatedEncounterChange({
+      action: createEncounterActionRecord('engagement.join', {
+        actorIds: [joiningActor.id],
+        parentZoneId: autoResizeZone.id,
+        targetEngagementId: 'target-engagement'
+      }),
+      currentEncounter,
+      nextEncounter
+    });
+
+    expect(prepared.blocked).toBe(false);
+    expect(
+      prepared.nextEncounter.zones.byId[autoResizeZone.id]?.polygon
+    ).not.toEqual(autoResizeZone.polygon);
+    expect(
+      prepared.nextEncounter.actors.byId[joiningActor.id]?.currentZoneId
+    ).toBe(autoResizeZone.id);
   });
 
   it.each(['OFF', 'ADVISORY', 'ASSISTED', 'STRICT'] as const)(
