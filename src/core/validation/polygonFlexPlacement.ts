@@ -4,7 +4,6 @@ import type { LayoutPoint } from "../layout/types";
 import {
   findPolygonFlexZoneFit,
   getNestingActorsInZone,
-  isAutoResizeActorAddition,
   isZoneLayoutChange
 } from "./polygonFlexZoneAdjustment";
 import type { ValidationAction } from "./types";
@@ -189,6 +188,22 @@ export type PolygonFlexPlacementAdjustment = {
   resizedZoneIds: string[];
 };
 
+/** Detects membership additions independently of the interaction that caused them. */
+function didZoneGainActor(
+  state: EncounterState,
+  nextState: EncounterState,
+  zoneId: string
+): boolean {
+  return nextState.actors.allIds.some((actorId) => {
+    const nextActor = nextState.actors.byId[actorId];
+
+    return (
+      nextActor?.currentZoneId === zoneId &&
+      state.actors.byId[actorId]?.currentZoneId !== zoneId
+    );
+  });
+}
+
 /**
  * Expands affected polygon FLEX zones when a polygon reshape or actor
  * footprint change cannot fit. Actor entry and movement can opt into the same
@@ -204,13 +219,17 @@ export function adjustPolygonFlexZonesToFit(
     state,
     nextEncounter
   );
-  const canResizeZone =
+  const canResizeWithoutActorAddition =
     action.type === "zone.reshape" ||
     isActorFootprintChange(action) ||
-    isAutoResizeActorAddition(action) ||
     isZoneLayoutChange(action);
 
-  if (!canResizeZone) {
+  if (
+    !canResizeWithoutActorAddition &&
+    !Array.from(affectedZoneIds).some((zoneId) =>
+      didZoneGainActor(state, nextEncounter, zoneId)
+    )
+  ) {
     return { nextEncounter, resizedZoneIds: [] };
   }
 
@@ -224,8 +243,14 @@ export function adjustPolygonFlexZonesToFit(
       continue;
     }
 
+    const actorWasAdded = didZoneGainActor(state, adjustedEncounter, zoneId);
+
+    if (!canResizeWithoutActorAddition && !actorWasAdded) {
+      continue;
+    }
+
     if (
-      (isAutoResizeActorAddition(action) || isZoneLayoutChange(action)) &&
+      (actorWasAdded || isZoneLayoutChange(action)) &&
       !zone.autoResize
     ) {
       continue;
