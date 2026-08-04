@@ -55,21 +55,11 @@ export function prepareValidatedEncounterChange({
     type: action.type,
     payload: action.payload
   };
-  const shouldConsiderZoneResize =
-    action.type === "zone.reshape" ||
-    (isActorFootprintChange(action) &&
-      currentEncounter.validationState.mode !== "STRICT") ||
-    action.type === "actor.create" ||
-    action.type === "actor.move" ||
-    action.type === "actor.moveMany" ||
-    isZoneLayoutChange(action);
-  const adjustment = shouldConsiderZoneResize
-    ? adjustPolygonFlexZonesToFit(
-        validationAction,
-        currentEncounter,
-        nextEncounter
-      )
-    : { nextEncounter, resizedZoneIds: [] };
+  const adjustment = adjustPolygonFlexZonesToFit(
+    validationAction,
+    currentEncounter,
+    nextEncounter
+  );
   const shouldAutoResize =
     action.type === "zone.reshape" ||
     (isActorFootprintChange(action) &&
@@ -78,7 +68,8 @@ export function prepareValidatedEncounterChange({
     action.type === "actor.create" ||
     action.type === "actor.move" ||
     action.type === "actor.moveMany" ||
-    isZoneLayoutChange(action);
+    isZoneLayoutChange(action) ||
+    (!isActorFootprintChange(action) && adjustment.resizedZoneIds.length > 0);
   const requiresConfirmation =
     isActorFootprintChange(action) &&
     currentEncounter.validationState.mode === "ASSISTED" &&
@@ -138,21 +129,11 @@ export async function prepareValidatedEncounterChangeAsync({
     type: action.type,
     payload: action.payload
   };
-  const shouldConsiderZoneResize =
-    action.type === "zone.reshape" ||
-    (isActorFootprintChange(action) &&
-      currentEncounter.validationState.mode !== "STRICT") ||
-    action.type === "actor.create" ||
-    action.type === "actor.move" ||
-    action.type === "actor.moveMany" ||
-    isZoneLayoutChange(action);
-  const adjustment = shouldConsiderZoneResize
-    ? adjustPolygonFlexZonesToFit(
-        validationAction,
-        currentEncounter,
-        nextEncounter
-      )
-    : { nextEncounter, resizedZoneIds: [] };
+  const adjustment = adjustPolygonFlexZonesToFit(
+    validationAction,
+    currentEncounter,
+    nextEncounter
+  );
   const shouldAutoResize =
     action.type === "zone.reshape" ||
     (isActorFootprintChange(action) &&
@@ -161,7 +142,8 @@ export async function prepareValidatedEncounterChangeAsync({
     action.type === "actor.create" ||
     action.type === "actor.move" ||
     action.type === "actor.moveMany" ||
-    isZoneLayoutChange(action);
+    isZoneLayoutChange(action) ||
+    (!isActorFootprintChange(action) && adjustment.resizedZoneIds.length > 0);
   const requiresConfirmation =
     isActorFootprintChange(action) &&
     currentEncounter.validationState.mode === "ASSISTED" &&

@@ -10,6 +10,7 @@ import {
 } from "@interaction/interactionState";
 import {
   commitEncounterChange,
+  redoEncounterChange,
   undoEncounterChange
 } from "@store/encounterSlice";
 import { store } from "@store/store";
@@ -399,6 +400,79 @@ describe("Toolbar", () => {
       )
     ).toBe(true);
     expect(store.getState().encounter.past.at(-1)?.action.type).toBe("actor.create");
+  });
+
+  it("repeatedly grows an auto-resizing target zone as larger actors are created", async () => {
+    const user = userEvent.setup();
+
+    renderApp();
+    const canvas = getCanvas();
+    mockCanvasBounds(canvas);
+    await user.click(screen.getByRole("button", { name: "Zone" }));
+    createRectangleZone(canvas);
+
+    const zone = await screen.findByLabelText("Zone 1");
+    const zoneId = zone.getAttribute("data-entity-id") ?? "";
+    const originalRenderedPoints = zone.getAttribute("points");
+    const originalPolygon = store.getState().encounter.present.zones.byId[
+      zoneId
+    ]!.polygon;
+
+    await user.click(
+      screen.getByRole("button", { name: "Enable automatic zone resizing" })
+    );
+    await user.click(screen.getByRole("button", { name: "Actor" }));
+    fireEvent.click(zone);
+
+    for (const name of ["First", "Second"]) {
+      await user.click(screen.getByRole("button", { name: "Create actor" }));
+      await user.type(screen.getByRole("textbox", { name: "Actor name" }), name);
+      await user.click(screen.getByRole("button", { name: "Create" }));
+      await screen.findByLabelText(name);
+    }
+
+    const resizedPolygon = store.getState().encounter.present.zones.byId[
+      zoneId
+    ]!.polygon;
+
+    expect(resizedPolygon).not.toEqual(originalPolygon);
+    expect(store.getState().encounter.present.actors.allIds).toHaveLength(2);
+    await waitFor(() => {
+      expect(zone.getAttribute("points")).not.toEqual(originalRenderedPoints);
+    });
+    const mediumActorsPolygon = resizedPolygon;
+
+    await user.click(screen.getByRole("button", { name: "Large actor size" }));
+    await user.click(screen.getByRole("button", { name: "Create actor" }));
+    await user.type(
+      screen.getByRole("textbox", { name: "Actor name" }),
+      "Large"
+    );
+    await user.click(screen.getByRole("button", { name: "Create" }));
+    await screen.findByLabelText("Large");
+
+    const largeActorPolygon = store.getState().encounter.present.zones.byId[
+      zoneId
+    ]!.polygon;
+
+    expect(largeActorPolygon).not.toEqual(mediumActorsPolygon);
+    expect(store.getState().encounter.present.actors.allIds).toHaveLength(3);
+
+    act(() => {
+      store.dispatch(undoEncounterChange());
+    });
+    expect(
+      store.getState().encounter.present.zones.byId[zoneId]!.polygon
+    ).toEqual(mediumActorsPolygon);
+    expect(store.getState().encounter.present.actors.allIds).toHaveLength(2);
+
+    act(() => {
+      store.dispatch(redoEncounterChange());
+    });
+    expect(
+      store.getState().encounter.present.zones.byId[zoneId]!.polygon
+    ).toEqual(largeActorPolygon);
+    expect(store.getState().encounter.present.actors.allIds).toHaveLength(3);
   });
 
   it("animates existing actors when user-created actors change zone composition", async () => {

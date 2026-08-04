@@ -1,6 +1,7 @@
 import type { EncounterState } from '../encounter/types';
 import { toNestingActor } from '../layout/actorFootprints';
 import { isPolygonWithinCanvas } from '../layout/polygonCanvasBounds';
+import { orderActorsForEngagementPacking } from '../layout/engagementPackingOrder';
 import { findSmallestPolygonFlexZoneExpansion } from '../layout/polygonFlexZoneExpansion';
 import { doPolygonsOverlap } from '../layout/polygonCollision';
 import {
@@ -11,14 +12,6 @@ import type { NestingActor } from '../layout/nesting_ts';
 import type { LayoutPoint } from '../layout/types';
 import type { Zone } from '@entities/zone/types';
 import type { ValidationAction } from './types';
-
-export function isAutoResizeActorAddition(action: ValidationAction): boolean {
-  return (
-    action.type === 'actor.create' ||
-    action.type === 'actor.move' ||
-    action.type === 'actor.moveMany'
-  );
-}
 
 export function isZoneLayoutChange(action: ValidationAction): boolean {
   if (
@@ -121,9 +114,13 @@ export function getNestingActorsInZone(
   zoneId: string,
   _strategy: string
 ): NestingActor[] {
-  return encounter.actors.allIds.flatMap((actorId) => {
+  const zoneActors = encounter.actors.allIds.flatMap((actorId) => {
     const actor = encounter.actors.byId[actorId];
 
-    return actor && actor.currentZoneId === zoneId ? [toNestingActor(actor)] : [];
+    return actor && actor.currentZoneId === zoneId ? [actor] : [];
   });
+
+  return orderActorsForEngagementPacking(encounter, zoneActors).map(
+    toNestingActor
+  );
 }
