@@ -1,8 +1,6 @@
 import type { EncounterState } from '@core/encounter/types';
-import type { ActorShape } from '@entities/actor/types';
 import {
   type EngagementClusterEnvelope,
-  footprintFitsPolygon,
   getPolygonCandidates
 } from './engagementPackingCandidates';
 import {
@@ -12,7 +10,7 @@ import {
 import { engagementPackingCandidateFits } from './engagementPackingValidation';
 import {
   getEngagementCountByZoneId,
-  getEngagementIdsByArea
+  getEngagementPackingOrder
 } from './engagementPackingOrder';
 import {
   ENGAGEMENT_CHAIN_VISIBLE_CLEARANCE,
@@ -21,18 +19,23 @@ import {
   ENGAGEMENT_SPACIOUS_CLEARANCES,
   ENGAGEMENT_TOKEN_RADIUS
 } from './engagementGeometryConstants';
-import { getEngagementTokenPoint } from './engagementTokenPlacement';
-import { engagementFootprintsAreSeparate } from './engagementFootprintGeometry';
+import {
+  getEngagementTokenCandidates,
+  getEngagementTokenPoint
+} from './engagementTokenPlacement';
 import { engagementPackingHasCompleteConnectors } from './engagementPackingConnectors';
+import { packEngagementsWithJointSearch } from './engagementJointPacking';
+import { tryEngagementPrefixPacking } from './engagementPrefixPacking';
+import type {
+  EngagementPackedActor,
+  EngagementPackingResult
+} from './engagementPackingTypes';
+import {
+  type EngagementFallbackLayout,
+  tryEngagementPackingFallbacks
+} from './engagementPackingFallback';
+import { packLooseActor } from './engagementLooseActorPacking';
 import type { LayoutPoint } from './types';
-
-export type EngagementPackedActor = {
-  actorId: string;
-  point: LayoutPoint;
-  radius: number;
-  sectionPolygon?: LayoutPoint[];
-  shape?: ActorShape;
-};
 
 export {
   ENGAGEMENT_CHAIN_VISIBLE_CLEARANCE,
@@ -41,41 +44,27 @@ export {
   ENGAGEMENT_TOKEN_RADIUS
 };
 export { getEngagementTokenPoint };
-
-export type EngagementParticipantPoint = {
-  actorId: string;
-  point: LayoutPoint;
-  radius: number;
-  shape?: ActorShape;
-};
-
-export type EngagementPackingResult = {
-  failureReason?: 'connectors' | 'space';
-  fits: boolean;
-  placements: EngagementPackedActor[];
-  tokenPoints: Readonly<Record<string, LayoutPoint>>;
-};
+export type {
+  EngagementPackedActor,
+  EngagementPackingResult,
+  EngagementParticipantPoint
+} from './engagementPackingTypes';
 
 function centerOf(points: readonly LayoutPoint[]): LayoutPoint {
   return points.reduce((result, point) => ({ x: result.x + point.x / points.length, y: result.y + point.y / points.length }), { x: 0, y: 0 });
 }
 
-/** Packs complete Engagement geometry while preserving the 2px invariant. */
+/** Packs complete Engagement geometry while preserving the 4px invariant. */
 export function packEngagementParticipants(
   encounter: EncounterState,
   placements: readonly EngagementPackedActor[],
   splitSectionPolygons: Readonly<Record<string, LayoutPoint[]>> = {},
   preferSpaciousFlex = true,
-  preferChains = false
+  preferChains = false,
+  fallbackLayout?: EngagementFallbackLayout
 ): EngagementPackingResult {
   const output = placements.map((placement) => ({ ...placement, point: { ...placement.point } }));
   const byActorId = new Map(output.map((placement) => [placement.actorId, placement]));
-  const engagedActorIds = new Set(
-    encounter.engagements.allIds.flatMap(
-      (engagementId) =>
-        encounter.engagements.byId[engagementId]?.participantIds ?? []
-    )
-  );
   const engagementZoneIds = new Set(
     encounter.engagements.allIds.flatMap((engagementId) => {
       const engagement = encounter.engagements.byId[engagementId];
@@ -90,10 +79,40 @@ export function packEngagementParticipants(
   let fits = true;
   let failureReason: EngagementPackingResult['failureReason'];
 
-  const engagementIdsByArea = getEngagementIdsByArea(encounter);
   const engagementCountByZoneId = getEngagementCountByZoneId(encounter);
+  const packingOrder = getEngagementPackingOrder(
+    encounter,
+    output.flatMap((placement) => {
+      const actor = encounter.actors.byId[placement.actorId];
+      return actor ? [actor] : [];
+    })
+  );
+  const engagementIdsByArea = packingOrder.flatMap((item) =>
+    item.kind === 'engagement' ? [item.engagementId] : []
+  );
 
-  for (const engagementId of engagementIdsByArea) {
+  for (const item of packingOrder) {
+    if (item.kind === 'actor') {
+      const placement = byActorId.get(item.actorId);
+      if (!placement) continue;
+      const acceptedPlacement = packLooseActor(
+        encounter,
+        placement,
+        engagementZoneIds,
+        acceptedActors,
+        acceptedTokens
+      );
+      if (acceptedPlacement === null) {
+        fits = false;
+        failureReason = 'space';
+      } else if (acceptedPlacement) {
+        byActorId.set(item.actorId, acceptedPlacement);
+        acceptedActors.push(acceptedPlacement);
+      }
+      continue;
+    }
+
+    const engagementId = item.engagementId;
     const engagement = encounter.engagements.byId[engagementId];
     const zone = engagement && encounter.zones.byId[engagement.parentZoneId];
     if (!engagement || !zone) continue;
@@ -121,16 +140,17 @@ export function packEngagementParticipants(
         ? ENGAGEMENT_SPACIOUS_CLEARANCES
         : [
             ENGAGEMENT_PREFERRED_CLEARANCE,
-            ENGAGEMENT_CHAIN_VISIBLE_CLEARANCE,
             ENGAGEMENT_MINIMUM_CLEARANCE
           ];
     for (const clearance of clearances) {
-      const centers = orderEngagementPackingCenters(
-        getPolygonCandidates(originalCenter, sectionPolygon, 16),
-        sectionPolygon,
-        preferChains,
-        separatesFlexEngagements ? zoneAcceptedTokens : []
-      );
+      const centers = fallbackLayout === 'preserved'
+        ? [originalCenter]
+        : orderEngagementPackingCenters(
+            getPolygonCandidates(originalCenter, sectionPolygon, 16),
+            sectionPolygon,
+            preferChains && !fallbackLayout,
+            separatesFlexEngagements ? zoneAcceptedTokens : []
+          );
       for (const center of centers) {
         const candidateLayouts = getEngagementPackingLayouts({
           center,
@@ -142,6 +162,10 @@ export function packEngagementParticipants(
               : 'LEFT_RIGHT'
             : engagement.layoutOrientation,
           originalCenter,
+          onlyGrowthPlacement: fallbackLayout === 'growth',
+          onlyPreservedInputPlacement: fallbackLayout === 'preserved',
+          onlySwapPlacement: fallbackLayout === 'swap',
+          polygon: sectionPolygon,
           preferChains,
           strategy: usesSplitSection
             ? 'SEQUENTIAL'
@@ -153,28 +177,34 @@ export function packEngagementParticipants(
             ...member,
             point: layout.points[index]
           }));
-          const token =
-            layout.token ??
-            getEngagementTokenPoint(
+          const tokenCandidates = layout.token
+            ? [layout.token]
+            : layout.searchWholePolygon
+              ? getEngagementTokenCandidates(
+                  proposed,
+                  sectionPolygon,
+                  true,
+                  128
+                )
+              : [getEngagementTokenPoint(proposed, sectionPolygon, false)];
+          for (const token of tokenCandidates) {
+            if (engagementPackingCandidateFits({
+              acceptedActors,
+              acceptedClusters,
+              acceptedTokens,
+              actorClearance: clearance,
+              minimumClearance: ENGAGEMENT_MINIMUM_CLEARANCE,
+              polygon: sectionPolygon,
               proposed,
-              sectionPolygon,
-              layout.searchWholePolygon
-            );
-          if (engagementPackingCandidateFits({
-            acceptedActors,
-            acceptedClusters,
-            acceptedTokens,
-            actorClearance: clearance,
-            minimumClearance: ENGAGEMENT_MINIMUM_CLEARANCE,
-            polygon: sectionPolygon,
-            proposed,
-            token,
-            tokenRadius: ENGAGEMENT_TOKEN_RADIUS
-          })) {
-            accepted = proposed;
-            acceptedToken = token;
-            break;
+              token,
+              tokenRadius: ENGAGEMENT_TOKEN_RADIUS
+            })) {
+              accepted = proposed;
+              acceptedToken = token;
+              break;
+            }
           }
+          if (accepted) break;
         }
         if (accepted) break;
       }
@@ -194,62 +224,6 @@ export function packEngagementParticipants(
       fits = false;
       failureReason = 'space';
     }
-  }
-
-  for (const placement of output) {
-    if (engagedActorIds.has(placement.actorId)) continue;
-    const actor = encounter.actors.byId[placement.actorId];
-    const zone = actor && encounter.zones.byId[actor.currentZoneId];
-    const polygon = placement.sectionPolygon ?? zone?.polygon;
-    if (!actor || !engagementZoneIds.has(actor.currentZoneId) || !polygon) {
-      continue;
-    }
-    let acceptedPoint: LayoutPoint | undefined;
-
-    for (const clearance of [
-      ENGAGEMENT_PREFERRED_CLEARANCE,
-      ENGAGEMENT_MINIMUM_CLEARANCE
-    ]) {
-      const pointFits = (point: LayoutPoint) =>
-        footprintFitsPolygon(
-          point,
-          placement.radius,
-          polygon,
-          ENGAGEMENT_MINIMUM_CLEARANCE,
-          placement.shape
-        ) &&
-        acceptedActors.every((other) =>
-          engagementFootprintsAreSeparate(
-            { ...placement, point },
-            other,
-            clearance
-          )
-        ) &&
-        acceptedTokens.every((token) =>
-          engagementFootprintsAreSeparate(
-            { ...placement, point },
-            { point: token, radius: ENGAGEMENT_TOKEN_RADIUS },
-            clearance
-          )
-        );
-      acceptedPoint = pointFits(placement.point)
-        ? placement.point
-        : getPolygonCandidates(
-            placement.point,
-            polygon,
-            Math.max(12, Math.min(20, placement.radius))
-          ).find(pointFits);
-      if (acceptedPoint) break;
-    }
-
-    if (!acceptedPoint) {
-      fits = false;
-      failureReason = 'space';
-      continue;
-    }
-    const acceptedPlacement = { ...placement, point: acceptedPoint };
-    byActorId.set(placement.actorId, acceptedPlacement);
-    acceptedActors.push(acceptedPlacement);
   }
 
   if (fits) {
@@ -273,10 +247,11 @@ export function packEngagementParticipants(
       placements,
       splitSectionPolygons,
       false,
-      preferChains
+      preferChains,
+      fallbackLayout
     );
   }
-  if (!fits && !preferChains && engagementZoneIds.size > 0) {
+  if (!fits && !preferChains && !fallbackLayout && engagementZoneIds.size > 0) {
     // A radial result can consume the space needed by a later group. Repack
     // every engagement with chain candidates first before rejecting growth.
     return packEngagementParticipants(
@@ -285,6 +260,29 @@ export function packEngagementParticipants(
       splitSectionPolygons,
       false,
       true
+    );
+  }
+  if (!fits && !fallbackLayout && engagementZoneIds.size > 0) {
+    return tryEngagementPackingFallbacks(
+      (fallback) =>
+        packEngagementParticipants(
+          encounter,
+          placements,
+          splitSectionPolygons,
+          false,
+          true,
+          fallback
+        ),
+      () => tryEngagementPrefixPacking(
+        encounter,
+        (seed) => packEngagementParticipants(
+          seed, placements, splitSectionPolygons, false, false, 'seed'
+        ),
+        (seed) => packEngagementsWithJointSearch(
+          encounter, seed, splitSectionPolygons
+        )
+      ),
+      failureReason
     );
   }
 

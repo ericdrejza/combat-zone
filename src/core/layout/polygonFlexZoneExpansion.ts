@@ -19,6 +19,7 @@ import {
 } from './polygonFlexZoneExpansionGeometry';
 
 type ExpansionOptions = {
+  isAdditionalLayoutFit?: (polygon: LayoutPoint[]) => boolean;
   isPolygonAllowed?: (polygon: LayoutPoint[]) => boolean;
   layoutOrientation?: LayoutOrientation;
   layoutStrategy?: PolygonNestingStrategy;
@@ -34,12 +35,15 @@ function fitsActors(
   actors: NestingActor[],
   options: ExpansionOptions
 ): boolean {
-  return packPolygonActors({
-    actors,
-    layoutOrientation: options.layoutOrientation,
-    layoutStrategy: options.layoutStrategy ?? 'FLEX',
-    polygon
-  }).fits;
+  return (
+    packPolygonActors({
+      actors,
+      layoutOrientation: options.layoutOrientation,
+      layoutStrategy: options.layoutStrategy ?? 'FLEX',
+      polygon
+    }).fits &&
+    (options.isAdditionalLayoutFit?.(polygon) ?? true)
+  );
 }
 
 function isAllowed(

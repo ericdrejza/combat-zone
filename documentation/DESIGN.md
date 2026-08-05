@@ -100,16 +100,17 @@ actor type, not a separate stored Zone collection.
 
 Layout strategies:
 
+All actor layout strategies use deterministic polygon-footprint packing for
+rectangle, circle, hexagon, and user-drawn zones. In dense packing, actor
+footprints retain at least 4px of clearance across FLEX, SEQUENTIAL,
+SPLIT_FLEX, and SPLIT_SEQUENTIAL; layouts use larger preferred clearance when
+space permits.
+
 - FLEX (default)
   - Actors are rendered evenly spread out as symmetrically as possible around the zone
   - Spare room is distributed around actors in two dimensions, keeping actors
     away from zone borders when the available space does not require compact
     packing
-  - Actor footprints retain at least 2px of clearance in dense packing;
-    layouts use the larger preferred clearance when space permits
-  - All zone shapes use deterministic polygon-footprint packing for actor
-    targets; the stored polygon is the common geometry contract for rectangles,
-    circles, hexagons, and user-drawn polygons
 - SEQUENTIAL
   - Actors are rendered one after the other in specific order around the zone
   - Actor order is stable based on collection `allIds`; an actor entering a
@@ -588,7 +589,7 @@ zones are canvas objects.
 
 Engagement clusters keep participant tokens comfortably close to their
 Engagement token without overlap. Participant spacing prefers a 10px gap and
-uses 2px as the hard minimum in dense layouts unless two actors are joined by
+uses 4px as the hard minimum in dense layouts unless two actors are joined by
 an actor-to-actor connector. Anchored actors retain at least 10px of visible
 edge-to-edge space so the 2px connector remains legible. Settled connectors
 avoid actor footprints and other connector lines. Routing uses bounded
@@ -596,6 +597,10 @@ best-effort direct paths; when a direct path is unavailable, it falls back to
 a same-style actor-to-connected-actor network/tree. Direct routes may share
 their own Engagement-token endpoint. A fallback tree may instead meet at a
 connected participant endpoint, but otherwise preserves those avoidance rules.
+When both routes are valid, a token-to-actor spoke is preferred unless the
+shortest actor-to-actor branch is at most half the spoke length. The ratio is
+a configurable layout constant. An obstructed route is never selected solely
+because of this length preference.
 Every participant must have exactly one routed connector either from the
 Engagement token or from an already connected actor. A derived layout with an
 unreachable participant is invalid and is blocked in every validation mode.
@@ -612,13 +617,13 @@ complete Zone is repacked with token-anchored serpentine chain candidates,
 from elongated to compact and from the Zone boundary inward. Capacity is
 limited only by whether all actor and token footprints fit the Zone with valid
 connectors.
-Every settled Engagement actor and token retains at least 2px between its
+Every settled Engagement actor and token retains at least 4px between its
 outer footprint and the Zone boundary. Curved and sloped Zone edges use the
 shortest center-to-polygon-edge distance for this check rather than sampling
 only cardinal footprint points.
 In a FLEX Zone with sufficient room, engagement participants first try a
 slightly more open 22px or 16px clearance before falling back to the standard
-10px preferred and 2px minimum clearances. In split layouts, Engagement
+10px preferred and 4px minimum clearances. In split layouts, Engagement
 participants first align in a line along the visible section-divider axis:
 LEFT_RIGHT splits use a vertical line and TOP_BOTTOM splits use a horizontal
 line. If that line cannot fit a larger group, participants wrap into parallel

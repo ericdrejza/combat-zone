@@ -10,27 +10,6 @@ export function getActorFootprintArea(actor: Actor): number {
     : Math.PI * radius ** 2;
 }
 
-export function getEngagementIdsByArea(
-  encounter: EncounterState
-): string[] {
-  return encounter.engagements.allIds
-    .map((engagementId, index) => {
-      const engagement = encounter.engagements.byId[engagementId];
-      const area =
-        engagement?.participantIds.reduce((total, actorId) => {
-          const actor = encounter.actors.byId[actorId];
-          return total + (actor ? getActorFootprintArea(actor) : 0);
-        }, Math.PI * ENGAGEMENT_TOKEN_RADIUS ** 2) ?? 0;
-
-      return { area, engagementId, index };
-    })
-    .sort(
-      (left, right) =>
-        right.area - left.area || left.index - right.index
-    )
-    .map(({ engagementId }) => engagementId);
-}
-
 export function getEngagementCountByZoneId(
   encounter: EncounterState
 ): ReadonlyMap<string, number> {
@@ -41,10 +20,73 @@ export function getEngagementCountByZoneId(
   }, new Map<string, number>());
 }
 
+export type EngagementPackingOrderItem =
+  | {
+      area: number;
+      engagementId: string;
+      kind: 'engagement';
+      sourceIndex: number;
+    }
+  | { actorId: string; area: number; kind: 'actor'; sourceIndex: number };
+
+/** Orders compound Engagements and standalone actors in one area-first queue. */
+export function getEngagementPackingOrder(
+  encounter: EncounterState,
+  actors: readonly Actor[]
+): EngagementPackingOrderItem[] {
+  const actorById = new Map(actors.map((actor) => [actor.id, actor]));
+  const assignedActorIds = new Set<string>();
+  const engagementItems = encounter.engagements.allIds.flatMap(
+    (engagementId, sourceIndex) => {
+      const engagement = encounter.engagements.byId[engagementId];
+      const participants = engagement?.participantIds.flatMap((actorId) => {
+        const actor = actorById.get(actorId);
+        return actor ? [actor] : [];
+      }) ?? [];
+
+      if (participants.length < 2) return [];
+      participants.forEach(({ id }) => assignedActorIds.add(id));
+
+      return [
+        {
+          area: participants.reduce(
+            (total, actor) => total + getActorFootprintArea(actor),
+            Math.PI * ENGAGEMENT_TOKEN_RADIUS ** 2
+          ),
+          engagementId,
+          kind: 'engagement' as const,
+          sourceIndex
+        }
+      ];
+    }
+  );
+  const actorItems = actors.flatMap((actor, sourceIndex) =>
+    assignedActorIds.has(actor.id)
+      ? []
+      : [
+          {
+            actorId: actor.id,
+            area: getActorFootprintArea(actor),
+            kind: 'actor' as const,
+            sourceIndex
+          }
+        ]
+  );
+
+  return [...engagementItems, ...actorItems].sort(
+    (left, right) =>
+      right.area - left.area ||
+      (left.kind === right.kind
+        ? left.sourceIndex - right.sourceIndex
+        : left.kind === 'engagement'
+          ? -1
+          : 1)
+  );
+}
+
 /**
- * Gives compound footprints first choice of constrained polygon space.
- * Collection order remains the stable tie-breaker so equal layouts do not
- * jitter between recalculations.
+ * Gives the largest compound or standalone footprint first choice of space.
+ * Collection order remains the tie-breaker so equal layouts do not jitter.
  */
 export function orderActorsForEngagementPacking(
   encounter: EncounterState,
@@ -54,47 +96,20 @@ export function orderActorsForEngagementPacking(
   const sourceIndex = new Map(
     encounter.actors.allIds.map((actorId, index) => [actorId, index])
   );
-  const assignedActorIds = new Set<string>();
-  const groups = encounter.engagements.allIds.flatMap(
-    (engagementId, engagementIndex) => {
-      const engagement = encounter.engagements.byId[engagementId];
-      const participants = engagement?.participantIds.flatMap((actorId) => {
-        const actor = actorById.get(actorId);
-        return actor ? [actor] : [];
-      }) ?? [];
-
-      if (participants.length < 2) {
-        return [];
-      }
-
-      participants.forEach((actor) => assignedActorIds.add(actor.id));
-      return [{
-        engagementIndex,
-        participants: participants.sort(
-          (left, right) =>
-            getActorFootprintArea(right) - getActorFootprintArea(left) ||
-            (sourceIndex.get(left.id) ?? 0) - (sourceIndex.get(right.id) ?? 0)
-        ),
-        totalArea: participants.reduce(
-          (total, actor) => total + getActorFootprintArea(actor),
-          0
-        )
-      }];
+  return getEngagementPackingOrder(encounter, actors).flatMap((item) => {
+    if (item.kind === 'actor') {
+      const actor = actorById.get(item.actorId);
+      return actor ? [actor] : [];
     }
-  );
 
-  groups.sort(
-    (left, right) =>
-      right.totalArea - left.totalArea ||
-      left.engagementIndex - right.engagementIndex
-  );
-  const unengagedActors = actors
-    .filter((actor) => !assignedActorIds.has(actor.id))
-    .sort(
+    const engagement = encounter.engagements.byId[item.engagementId];
+    return (engagement?.participantIds.flatMap((actorId) => {
+      const actor = actorById.get(actorId);
+      return actor ? [actor] : [];
+    }) ?? []).sort(
       (left, right) =>
         getActorFootprintArea(right) - getActorFootprintArea(left) ||
         (sourceIndex.get(left.id) ?? 0) - (sourceIndex.get(right.id) ?? 0)
     );
-
-  return [...groups.flatMap((group) => group.participants), ...unengagedActors];
+  });
 }

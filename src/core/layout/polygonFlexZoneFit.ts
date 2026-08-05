@@ -18,6 +18,7 @@ export type PolygonFlexZoneFit = {
 
 export type PolygonFlexZoneFitOptions = {
   anchor?: LayoutPoint;
+  isAdditionalLayoutFit?: (polygon: LayoutPoint[]) => boolean;
   isPolygonAllowed?: (polygon: LayoutPoint[]) => boolean;
   layoutOrientation?: PolygonFlexLayoutInput["layoutOrientation"];
   layoutStrategy?: PolygonNestingStrategy;
@@ -50,7 +51,8 @@ function fits(
       layoutOrientation: options.layoutOrientation,
       layoutStrategy: options.layoutStrategy ?? "FLEX",
       polygon
-    }).fits
+    }).fits &&
+    (options.isAdditionalLayoutFit?.(polygon) ?? true)
   );
 }
 

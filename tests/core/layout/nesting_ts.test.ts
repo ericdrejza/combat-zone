@@ -8,9 +8,15 @@ import {
 import {
   packPolygonActors,
   DEFAULT_SPLIT_FLEX_ACTOR_GAP,
-  type NestingActor
+  resolvePolygonNestingSettings,
+  type NestingActor,
+  type PolygonNestingStrategy
 } from '@core/layout/nesting_ts';
-import { MINIMUM_FLEX_ACTOR_GAP } from '@core/layout/nestingSpacing';
+import {
+  getCollisionActorGap,
+  MINIMUM_ACTOR_GAP,
+  MINIMUM_FLEX_ACTOR_GAP
+} from '@core/layout/nestingSpacing';
 
 const rectangle = (width: number, height: number): LayoutPoint[] => [
   { x: 0, y: 0 },
@@ -246,8 +252,8 @@ describe('polygon nesting layout', () => {
     expect(minimumEdgeClearance).toBeGreaterThan(16);
   });
 
-  it('retains a small visual gap in compact dense FLEX rectangles', () => {
-    const polygon = rectangle(256, 132);
+  it('retains the shared minimum gap in compact dense FLEX rectangles', () => {
+    const polygon = rectangle(260, 132);
     const actors = Array.from({ length: 8 }, (_, index) =>
       actor(`compact-${index}`)
     );
@@ -423,7 +429,7 @@ describe('polygon nesting layout', () => {
     expect(rightmostNeutral).toBeLessThanOrEqual(leftmostEnemy);
   });
 
-  it('uses a 2px default gap for SPLIT_FLEX actors', () => {
+  it('uses the shared minimum gap for SPLIT_FLEX actors', () => {
     const result = packPolygonActors({
       actors: [
         { ...actor('hero-one'), layoutGroup: 'hero' as const },
@@ -457,6 +463,27 @@ describe('polygon nesting layout', () => {
       Math.hypot(legacyFirst.x - legacySecond.x, legacyFirst.y - legacySecond.y)
     );
   });
+
+  it.each([
+    'FLEX',
+    'SEQUENTIAL',
+    'SPLIT_FLEX',
+    'SPLIT_SEQUENTIAL'
+  ] as const)(
+    'does not compact %s actors below the shared minimum floor',
+    (layoutStrategy: PolygonNestingStrategy) => {
+      const belowMinimumGap = MINIMUM_ACTOR_GAP - 1;
+      const settings = resolvePolygonNestingSettings({
+        layoutStrategy,
+        settings: { actorGap: belowMinimumGap }
+      });
+
+      expect(settings.actorGap).toBe(MINIMUM_ACTOR_GAP);
+      expect(getCollisionActorGap(layoutStrategy, belowMinimumGap, 2)).toBe(
+        MINIMUM_ACTOR_GAP
+      );
+    }
+  );
 
   it('spaces actors from the same SPLIT_FLEX faction around their section', () => {
     const actors = [

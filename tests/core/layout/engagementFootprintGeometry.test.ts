@@ -4,6 +4,7 @@ import {
   engagementFootprintsAreSeparate,
   engagementSegmentClearsFootprint
 } from '@core/layout/engagementFootprintGeometry';
+import { ENGAGEMENT_MINIMUM_CLEARANCE } from '@core/layout/engagementGeometryConstants';
 
 describe('engagement footprint geometry', () => {
   it('rejects diagonal rectangle overlap that center-radius checks miss', () => {
@@ -20,16 +21,19 @@ describe('engagement footprint geometry', () => {
         radius: 30,
         shape: 'rectangle'
       },
-      2
+      ENGAGEMENT_MINIMUM_CLEARANCE
     )).toBe(false);
     expect(engagementFootprintsAreSeparate(
       first,
       {
-        point: { x: 112, y: 100 },
+        point: {
+          x: 50 + 30 * 2 + ENGAGEMENT_MINIMUM_CLEARANCE,
+          y: 100
+        },
         radius: 30,
         shape: 'rectangle'
       },
-      2
+      ENGAGEMENT_MINIMUM_CLEARANCE
     )).toBe(true);
   });
 
@@ -43,12 +47,18 @@ describe('engagement footprint geometry', () => {
     expect(engagementFootprintsAreSeparate(
       { point: { x: 75, y: 75 }, radius: 12 },
       rectangle,
-      2
+      ENGAGEMENT_MINIMUM_CLEARANCE
     )).toBe(false);
     expect(engagementFootprintsAreSeparate(
-      { point: { x: 80, y: 80 }, radius: 12 },
+      {
+        point: {
+          x: 50 + 20 + ENGAGEMENT_MINIMUM_CLEARANCE * 3,
+          y: 50 + 20 + ENGAGEMENT_MINIMUM_CLEARANCE * 3
+        },
+        radius: 12
+      },
       rectangle,
-      2
+      ENGAGEMENT_MINIMUM_CLEARANCE
     )).toBe(true);
   });
 
@@ -63,13 +73,13 @@ describe('engagement footprint geometry', () => {
       { x: 0, y: 60 },
       { x: 60, y: 0 },
       rectangle,
-      2
+      ENGAGEMENT_MINIMUM_CLEARANCE
     )).toBe(false);
     expect(engagementSegmentClearsFootprint(
       { x: 0, y: 20 },
       { x: 20, y: 0 },
       rectangle,
-      2
+      ENGAGEMENT_MINIMUM_CLEARANCE
     )).toBe(true);
   });
 });

@@ -25,6 +25,11 @@ import { doPolygonsOverlap } from '@core/layout/polygonCollision';
 import type { Actor } from '@entities/actor/types';
 import type { Zone } from '@entities/zone/types';
 import { prepareValidatedEncounterChange } from '@core/validation/validatedEncounterChange';
+import reducer, {
+  commitEncounterChange,
+  redoEncounterChange,
+  undoEncounterChange
+} from '@store/encounterSlice';
 
 function collection<TEntity extends { id: string }>(
   entities: TEntity[]
@@ -127,9 +132,9 @@ describe('polygon placement validation', () => {
         ...zone,
         polygon: [
           { x: 0, y: 0 },
-          { x: 270, y: 0 },
-          { x: 270, y: 270 },
-          { x: 0, y: 270 }
+          { x: 260, y: 0 },
+          { x: 260, y: 260 },
+          { x: 0, y: 260 }
         ]
       };
       const actors = Array.from({ length: 10 }, (_, index) => ({
@@ -220,6 +225,69 @@ describe('polygon placement validation', () => {
       expect(
         prepared.nextEncounter.engagements.byId.small?.participantIds
       ).toHaveLength(4);
+    }
+  );
+
+  it.each(['ADVISORY', 'STRICT'] as const)(
+    'rotates a mixed-size engagement into zone corners when an actor joins in %s mode',
+    (mode) => {
+      const cornerZone = {
+        ...zone,
+        polygon: [
+          { x: 0, y: 0 },
+          { x: 276, y: 0 },
+          { x: 276, y: 246 },
+          { x: 0, y: 246 }
+        ]
+      };
+      const largeActor = buildActor({
+        currentZoneId: cornerZone.id,
+        id: 'large-participant',
+        size: 'large'
+      });
+      const mediumActors = Array.from({ length: 3 }, (_, index) =>
+        buildActor({
+          currentZoneId: cornerZone.id,
+          id: `medium-participant-${index}`
+        })
+      );
+      const currentEncounter = createEngagement(
+        {
+          ...createState(mode),
+          actors: collection([largeActor, ...mediumActors]),
+          zones: collection([cornerZone])
+        },
+        {
+          id: 'corner-melee',
+          parentZoneId: cornerZone.id,
+          participantIds: [
+            largeActor.id,
+            ...mediumActors.slice(0, 2).map(({ id }) => id)
+          ]
+        }
+      );
+      const nextEncounter = joinEngagement(
+        currentEncounter,
+        'corner-melee',
+        [mediumActors[2].id]
+      );
+      const prepared = prepareValidatedEncounterChange({
+        action: createEncounterActionRecord('engagement.join', {
+          actorIds: [mediumActors[2].id],
+          targetEngagementId: 'corner-melee'
+        }),
+        currentEncounter,
+        nextEncounter
+      });
+
+      expect(prepared.blocked).toBe(false);
+      expect(prepared.nextEncounter.zones.byId[cornerZone.id]?.polygon)
+        .toEqual(cornerZone.polygon);
+      expect(prepared.validationResult.messages).not.toContainEqual(
+        expect.objectContaining({
+          code: expect.stringMatching(/^layout\.engagement/)
+        })
+      );
     }
   );
 
@@ -473,6 +541,53 @@ describe('polygon placement validation', () => {
         expect.objectContaining({
           code: 'layout.engagementNoSpace',
           severity: 'error'
+        })
+      );
+    }
+  );
+
+  it.each(['ADVISORY', 'STRICT'] as const)(
+    'resizes for complete engagement geometry after actor-only packing succeeds in %s mode',
+    (mode) => {
+      const narrowZone = {
+        ...zone,
+        autoResize: true,
+        polygon: [
+          { x: 0, y: 0 },
+          { x: 145, y: 0 },
+          { x: 145, y: 100 },
+          { x: 0, y: 100 }
+        ]
+      };
+      const actors = [
+        { ...existingActor, id: 'left' },
+        { ...existingActor, id: 'right' }
+      ];
+      const currentEncounter = {
+        ...createState(mode),
+        actors: collection(actors),
+        zones: collection([narrowZone])
+      };
+      const nextEncounter = createEngagement(currentEncounter, {
+        id: 'narrow-melee',
+        parentZoneId: narrowZone.id,
+        participantIds: ['left', 'right']
+      });
+      const prepared = prepareValidatedEncounterChange({
+        action: createEncounterActionRecord('engagement.create', {
+          parentZoneId: narrowZone.id,
+          participantIds: ['left', 'right']
+        }),
+        currentEncounter,
+        nextEncounter
+      });
+
+      expect(prepared.blocked).toBe(false);
+      expect(prepared.nextEncounter.zones.byId[narrowZone.id]?.polygon).not
+        .toEqual(narrowZone.polygon);
+      expect(prepared.validationResult.messages).not.toContainEqual(
+        expect.objectContaining({
+          code: expect.stringMatching(/^layout\.engagement/)
         })
       );
     }
@@ -890,6 +1005,57 @@ describe('polygon placement validation', () => {
     ]);
   });
 
+  it('automatically enlarges a filled SEQUENTIAL zone for an actor entry', () => {
+    const autoResizeZone = {
+      ...zone,
+      autoResize: true,
+      layoutStrategy: 'SEQUENTIAL' as const,
+      polygon: [
+        { x: 0, y: 0 },
+        { x: 148, y: 0 },
+        { x: 148, y: 148 },
+        { x: 0, y: 148 }
+      ]
+    };
+    const actors = ['first', 'second', 'third'].map((id) =>
+      buildActor({ currentZoneId: autoResizeZone.id, id })
+    );
+    const enteringActor = buildActor({
+      currentZoneId: ZONELESS_ACTOR_ZONE_ID,
+      id: 'entering-actor'
+    });
+    const currentEncounter = createEngagement(
+      {
+        ...createState('STRICT'),
+        actors: collection([...actors, enteringActor]),
+        zones: collection([autoResizeZone])
+      },
+      {
+        id: 'sequential-engagement',
+        parentZoneId: autoResizeZone.id,
+        participantIds: actors.map(({ id }) => id)
+      }
+    );
+    const nextEncounter = moveActor(
+      currentEncounter,
+      enteringActor.id,
+      autoResizeZone.id
+    );
+    const prepared = prepareValidatedEncounterChange({
+      action: createEncounterActionRecord('actor.move', {
+        actorId: enteringActor.id,
+        destinationZoneId: autoResizeZone.id
+      }),
+      currentEncounter,
+      nextEncounter
+    });
+
+    expect(prepared.blocked).toBe(false);
+    expect(
+      prepared.nextEncounter.zones.byId[autoResizeZone.id]?.polygon
+    ).not.toEqual(autoResizeZone.polygon);
+  });
+
   it('enlarges an already-grown zone when a large actor joins medium actors', () => {
     const autoResizeZone = {
       ...zone,
@@ -981,6 +1147,88 @@ describe('polygon placement validation', () => {
       prepared.nextEncounter.actors.byId[joiningActor.id]?.currentZoneId
     ).toBe(autoResizeZone.id);
   });
+
+  it.each(['ADVISORY', 'STRICT'] as const)(
+    'automatically enlarges an enabled zone for a same-zone engagement join in %s mode with exact undo/redo',
+    (mode) => {
+      const autoResizeZone = {
+        ...zone,
+        autoResize: true,
+        polygon: [
+          { x: 0, y: 0 },
+          { x: 190, y: 0 },
+          { x: 190, y: 140 },
+          { x: 0, y: 140 }
+        ]
+      };
+      const participants = ['participant-one', 'participant-two'].map((id) =>
+        buildActor({ currentZoneId: autoResizeZone.id, id })
+      );
+      const joiningActor = buildActor({
+        currentZoneId: autoResizeZone.id,
+        id: 'same-zone-joining-actor'
+      });
+      const currentEncounter = createEngagement(
+        {
+          ...createState(mode),
+          actors: collection([...participants, joiningActor]),
+          zones: collection([autoResizeZone])
+        },
+        {
+          id: 'target-engagement',
+          parentZoneId: autoResizeZone.id,
+          participantIds: participants.map(({ id }) => id)
+        }
+      );
+      const nextEncounter = joinEngagement(
+        currentEncounter,
+        'target-engagement',
+        [joiningActor.id]
+      );
+      const prepared = prepareValidatedEncounterChange({
+        action: createEncounterActionRecord('engagement.join', {
+          actorIds: [joiningActor.id],
+          parentZoneId: autoResizeZone.id,
+          targetEngagementId: 'target-engagement'
+        }),
+        currentEncounter,
+        nextEncounter
+      });
+
+      expect(prepared.blocked).toBe(false);
+      expect(
+        prepared.nextEncounter.zones.byId[autoResizeZone.id]?.polygon
+      ).not.toEqual(autoResizeZone.polygon);
+      expect(
+        prepared.nextEncounter.engagements.byId['target-engagement']
+          ?.participantIds
+      ).toContain(joiningActor.id);
+
+      let history = reducer(undefined, { type: 'test/init' });
+      history = reducer(
+        history,
+        commitEncounterChange({
+          action: createEncounterActionRecord('seed'),
+          nextEncounter: currentEncounter
+        })
+      );
+      history = reducer(
+        history,
+        commitEncounterChange({
+          action: prepared.action,
+          nextEncounter: prepared.nextEncounter
+        })
+      );
+
+      expect(reducer(history, undoEncounterChange()).present).toEqual(
+        currentEncounter
+      );
+      expect(
+        reducer(reducer(history, undoEncounterChange()), redoEncounterChange())
+          .present
+      ).toEqual(prepared.nextEncounter);
+    }
+  );
 
   it.each(['OFF', 'ADVISORY', 'ASSISTED', 'STRICT'] as const)(
     'blocks an overflowing actor creation in %s mode',

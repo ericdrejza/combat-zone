@@ -58,9 +58,10 @@ covers `DESIGN.md` §15 "Must have" scope only.
       polygon zones use rendered rectangle/circle
       footprints, deterministic collection order, and polygon packing without
       overlap.
-- [x] FLEX actor footprints retain at least 2px clearance in dense layouts and
-      distribute spare room around actors in two dimensions instead of
-      unnecessarily pushing actors toward zone borders.
+- [x] Shared polygon packing retains at least 4px actor-footprint clearance in
+      dense FLEX, SEQUENTIAL, SPLIT_FLEX, and SPLIT_SEQUENTIAL layouts; FLEX
+      additionally distributes spare room around actors in two dimensions
+      instead of unnecessarily pushing actors toward zone borders.
 - [x] Non-split SEQUENTIAL actors use the shared polygon packer in collection
       order, with clockwise targets and the same incremental border-spacing
       fallback used by FLEX.
@@ -145,12 +146,14 @@ covers `DESIGN.md` §15 "Must have" scope only.
       black or white contrast. Connectors and token are behind actor tokens.
 - [x] In settled layouts, engagement participants form non-overlapping,
       comfortably spaced clusters around their token with a 10px preferred and
-      2px hard-minimum participant gap. Actor-to-actor connector branches use
+      4px hard-minimum participant gap. Actor-to-actor connector branches use
       at least a 10px edge-to-edge gap so the line remains visible. Connectors
       avoid actor footprints and other connector lines. Direct connectors
       share only their own token endpoint; bounded routing falls back to a same-style
       actor-to-connected-actor tree whose branches may meet only at their
-      connected participant endpoint. Other Engagement tokens and accepted
+      connected participant endpoint. When both paths are clear, the token
+      spoke is preferred unless the actor branch is at most half as long;
+      invalid paths are excluded before that comparison. Other Engagement tokens and accepted
       connectors are obstacles; regression coverage includes three
       Engagements with three actors each in one zone. Every participant has
       one token-to-actor or actor-to-actor connector; incomplete connector
@@ -192,7 +195,7 @@ covers `DESIGN.md` §15 "Must have" scope only.
       in dynamic `engagements.allIds` order between the hero and neutral
       sections; its participants and 24px token fit inside that section.
 - [x] Spacious FLEX engagement clusters try wider participant clearance, while
-      dense layouts retain the 10px preferred and 2px minimum fallback.
+      dense layouts retain the 10px preferred and 4px minimum fallback.
       Multiple Engagements in an ordinary FLEX Zone prefer distant Zone-local
       candidate regions before compact fallback; mixed small/medium groups
       continue to fit beside a larger Engagement and a loose large actor.
@@ -204,7 +207,7 @@ covers `DESIGN.md` §15 "Must have" scope only.
       validation mode. Circle and hexagon candidate searches discard
       out-of-polygon centers before layout/routing work and meet the shared
       performance budget for neighboring 8/4/3 groups. Every settled
-      participant and token retains at least 2px from the actual polygon edge,
+      participant and token retains at least 4px from the actual polygon edge,
       including curved approximations and sloped hexagon edges.
       Engagement participants in split sections prefer one line along the
       divider axis, wrap into parallel lines when a larger group cannot fit,
