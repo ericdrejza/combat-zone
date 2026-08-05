@@ -13,6 +13,7 @@ import {
 import { calculateActorPlacementGeometry } from '@ui/canvas/actors/actorPlacementGeometryCalculator';
 import {
   ENGAGEMENT_CHAIN_VISIBLE_CLEARANCE,
+  ENGAGEMENT_MINIMUM_CLEARANCE,
   ENGAGEMENT_TOKEN_RADIUS,
   getEngagementTokenPoint,
   routeEngagementConnectorGroups,
@@ -103,7 +104,7 @@ function expectVisibleActorBranches(
 }
 
 describe('calculateActorPlacementGeometry', () => {
-  it('packs larger engagement groups before smaller groups and single actors', () => {
+  it('packs engagements and single actors together by descending token area', () => {
     const zoneId = 'packing-order';
     const actors = [
       { ...actor('single-large', zoneId), size: 'large' as const },
@@ -139,9 +140,9 @@ describe('calculateActorPlacementGeometry', () => {
     ).toEqual([
       'large-a',
       'large-b',
+      'single-large',
       'small-a',
       'small-b',
-      'single-large',
       'single-small'
     ]);
   });
@@ -240,7 +241,9 @@ describe('calculateActorPlacementGeometry', () => {
             token.y - participant.point.y
           )
         ).toBeGreaterThanOrEqual(
-          participant.radius + ENGAGEMENT_TOKEN_RADIUS + 2
+          participant.radius +
+            ENGAGEMENT_TOKEN_RADIUS +
+            ENGAGEMENT_MINIMUM_CLEARANCE
         )
       );
     }
@@ -282,15 +285,15 @@ describe('calculateActorPlacementGeometry', () => {
 
     placements.forEach((placement, index) => {
       placements.slice(index + 1).forEach((other) => {
-        expect(Math.hypot(placement.point.x - other.point.x, placement.point.y - other.point.y)).toBeGreaterThanOrEqual(placement.radius + other.radius + 2);
+        expect(Math.hypot(placement.point.x - other.point.x, placement.point.y - other.point.y)).toBeGreaterThanOrEqual(placement.radius + other.radius + ENGAGEMENT_MINIMUM_CLEARANCE);
       });
     });
     tokens.forEach((token, tokenIndex) => {
       placements.forEach((placement) => {
-        expect(Math.hypot(token.x - placement.point.x, token.y - placement.point.y)).toBeGreaterThanOrEqual(placement.radius + ENGAGEMENT_TOKEN_RADIUS + 2);
+        expect(Math.hypot(token.x - placement.point.x, token.y - placement.point.y)).toBeGreaterThanOrEqual(placement.radius + ENGAGEMENT_TOKEN_RADIUS + ENGAGEMENT_MINIMUM_CLEARANCE);
       });
       tokens.slice(tokenIndex + 1).forEach((otherToken) => {
-        expect(Math.hypot(token.x - otherToken.x, token.y - otherToken.y)).toBeGreaterThanOrEqual(ENGAGEMENT_TOKEN_RADIUS * 2 + 2);
+        expect(Math.hypot(token.x - otherToken.x, token.y - otherToken.y)).toBeGreaterThanOrEqual(ENGAGEMENT_TOKEN_RADIUS * 2 + ENGAGEMENT_MINIMUM_CLEARANCE);
       });
     });
   });
@@ -351,7 +354,9 @@ describe('calculateActorPlacementGeometry', () => {
             token!.y - placement.point.y
           )
         ).toBeGreaterThanOrEqual(
-          ENGAGEMENT_TOKEN_RADIUS + placement.radius + 2
+          ENGAGEMENT_TOKEN_RADIUS +
+            placement.radius +
+            ENGAGEMENT_MINIMUM_CLEARANCE
         )
       );
 
@@ -397,7 +402,7 @@ describe('calculateActorPlacementGeometry', () => {
     ['circle', createCirclePolygonFromBounds],
     ['hexagon', createHexagonPolygonFromBounds]
   ] as const)(
-    'keeps engagement actors 2px inside %s zone edges',
+    'keeps engagement actors at minimum clearance inside %s zone edges',
     (shape, createPolygon) => {
       const zoneId = `${shape}-edge-clearance`;
       const groups = [8, 4, 3].map((count, groupIndex) => ({
@@ -442,7 +447,7 @@ describe('calculateActorPlacementGeometry', () => {
       expect(placements).toHaveLength(15);
       placements.forEach(({ point, radius }) =>
         expect(distanceToPolygonBoundary(point, polygon)).toBeGreaterThanOrEqual(
-          radius + 2 - 0.01
+          radius + ENGAGEMENT_MINIMUM_CLEARANCE - 0.01
         )
       );
     }
@@ -516,7 +521,11 @@ describe('calculateActorPlacementGeometry', () => {
         clusters[0].token.x - clusters[1].token.x,
         clusters[0].token.y - clusters[1].token.y
       )
-    ).toBeGreaterThanOrEqual(clusters[0].reach + clusters[1].reach + 2);
+    ).toBeGreaterThanOrEqual(
+      clusters[0].reach +
+        clusters[1].reach +
+        ENGAGEMENT_MINIMUM_CLEARANCE
+    );
   });
 
   it('spreads FLEX engagement participants when the zone has room', () => {
@@ -716,7 +725,9 @@ describe('calculateActorPlacementGeometry', () => {
             placement.point.x - other.point.x,
             placement.point.y - other.point.y
           )
-        ).toBeGreaterThanOrEqual(placement.radius + other.radius + 2);
+        ).toBeGreaterThanOrEqual(
+          placement.radius + other.radius + ENGAGEMENT_MINIMUM_CLEARANCE
+        );
       });
       expect(
         Math.hypot(
@@ -724,7 +735,9 @@ describe('calculateActorPlacementGeometry', () => {
           placement.point.y - token.y
         )
       ).toBeGreaterThanOrEqual(
-        placement.radius + ENGAGEMENT_TOKEN_RADIUS + 2
+        placement.radius +
+          ENGAGEMENT_TOKEN_RADIUS +
+          ENGAGEMENT_MINIMUM_CLEARANCE
       );
     });
   });

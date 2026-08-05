@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { getEngagementTokenPoint, routeEngagementConnectors } from '@ui/canvas/engagements/engagementGeometry';
+import { ENGAGEMENT_BRANCH_TO_DIRECT_LENGTH_RATIO } from '@core/layout/engagementGeometryConstants';
+import {
+  ENGAGEMENT_MINIMUM_CLEARANCE,
+  ENGAGEMENT_TOKEN_RADIUS,
+  getEngagementTokenPoint,
+  routeEngagementConnectors
+} from '@ui/canvas/engagements/engagementGeometry';
 
 describe('engagement connector routing', () => {
   it('uses the token as the shared direct endpoint when paths are clear', () => {
@@ -25,6 +31,32 @@ describe('engagement connector routing', () => {
     const routes = routeEngagementConnectors({ x: 50, y: 0 }, participants);
     expect(routes).toHaveLength(3);
     expect(routes.some((route) => route.viaActorId)).toBe(true);
+  });
+
+  it('uses a shorter actor branch only below the configured length ratio', () => {
+    const token = { x: 0, y: 0 };
+    const target = { actorId: 'target', point: { x: 100, y: 0 }, radius: 5 };
+    const routeTarget = (parentPoint: { x: number; y: number }) => {
+      const parent = { actorId: 'parent', point: parentPoint, radius: 5 };
+      return routeEngagementConnectors(token, [parent, target]).find(
+        ({ actorId }) => actorId === target.actorId
+      );
+    };
+    const shorterParent = { x: 60, y: 20 };
+    const longerParent = { x: 50, y: 50 };
+
+    expect(
+      Math.hypot(
+        shorterParent.x - target.point.x,
+        shorterParent.y - target.point.y
+      )
+    ).toBeLessThan(
+      Math.hypot(target.point.x, target.point.y) *
+        ENGAGEMENT_BRANCH_TO_DIRECT_LENGTH_RATIO
+    );
+    expect(routeTarget(shorterParent)?.viaActorId).toBe('parent');
+    expect(routeTarget(longerParent)?.viaActorId).toBeUndefined();
+    expect(routeTarget(longerParent)?.from).toEqual(token);
   });
 
   it('does not create independent connector crossings', () => {
@@ -82,7 +114,7 @@ describe('engagement connector routing', () => {
     ).toEqual([]);
   });
 
-  it('rejects a connector whose 2px stroke would overlap a parallel line', () => {
+  it('requires minimum center-line clearance from a parallel connector', () => {
     const participant = {
       actorId: 'member',
       point: { x: 100, y: 0 },
@@ -93,8 +125,8 @@ describe('engagement connector routing', () => {
       routeEngagementConnectors({ x: 0, y: 0 }, [participant], {
         existingConnectors: [{
           actorId: 'other',
-          from: { x: 0, y: 1 },
-          to: { x: 100, y: 1 }
+          from: { x: 0, y: ENGAGEMENT_MINIMUM_CLEARANCE - 1 },
+          to: { x: 100, y: ENGAGEMENT_MINIMUM_CLEARANCE - 1 }
         }]
       })
     ).toEqual([]);
@@ -102,8 +134,8 @@ describe('engagement connector routing', () => {
       routeEngagementConnectors({ x: 0, y: 0 }, [participant], {
         existingConnectors: [{
           actorId: 'other',
-          from: { x: 0, y: 2 },
-          to: { x: 100, y: 2 }
+          from: { x: 0, y: ENGAGEMENT_MINIMUM_CLEARANCE },
+          to: { x: 100, y: ENGAGEMENT_MINIMUM_CLEARANCE }
         }]
       })
     ).toHaveLength(1);
@@ -141,7 +173,7 @@ describe('engagement connector routing', () => {
     ];
     const token = getEngagementTokenPoint(participants, [{ x: 0, y: 0 }, { x: 300, y: 0 }, { x: 300, y: 300 }, { x: 0, y: 300 }]);
     participants.forEach((participant) => {
-      expect(Math.hypot(token.x - participant.point.x, token.y - participant.point.y)).toBeGreaterThanOrEqual(participant.radius + 12 + 2);
+      expect(Math.hypot(token.x - participant.point.x, token.y - participant.point.y)).toBeGreaterThanOrEqual(participant.radius + ENGAGEMENT_TOKEN_RADIUS + ENGAGEMENT_MINIMUM_CLEARANCE);
     });
   });
 });

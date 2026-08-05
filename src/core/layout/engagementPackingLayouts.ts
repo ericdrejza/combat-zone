@@ -1,6 +1,8 @@
 import { getEngagementChainCandidateLayouts } from './engagementChainLayouts';
+import { getEngagementGrowthLayouts } from './engagementGrowthLayouts';
 import { ENGAGEMENT_TOKEN_RADIUS } from './engagementGeometryConstants';
 import { getEngagementParticipantCandidateLayouts } from './engagementPackingCandidates';
+import { getEngagementSwapLayouts } from './engagementSwapLayouts';
 import { distanceToPolygonBoundary } from './polygonGeometry';
 import type { LayoutPoint } from './types';
 
@@ -46,9 +48,11 @@ export function orderEngagementPackingCenters(
     return {
       boundaryDistance,
       point,
+      // Spare boundary room is useful, but distance from an existing cluster
+      // gets more weight so roomy zones do not bunch Engagements together.
       regionScore:
         avoidPoints.length > 0
-          ? Math.min(avoidDistance, boundaryDistance)
+          ? Math.min(avoidDistance, boundaryDistance * 2)
           : 0
     };
   });
@@ -94,6 +98,10 @@ export function getEngagementPackingLayouts({
   members,
   orientation,
   originalCenter,
+  onlyPreservedInputPlacement,
+  onlyGrowthPlacement,
+  onlySwapPlacement,
+  polygon,
   preferChains,
   strategy,
   usesSplitSection
@@ -103,10 +111,37 @@ export function getEngagementPackingLayouts({
   members: readonly Participant[];
   orientation: 'LEFT_RIGHT' | 'TOP_BOTTOM';
   originalCenter: LayoutPoint;
+  onlyPreservedInputPlacement: boolean;
+  onlyGrowthPlacement: boolean;
+  onlySwapPlacement: boolean;
+  polygon: readonly LayoutPoint[];
   preferChains: boolean;
   strategy: 'FLEX' | 'SEQUENTIAL';
   usesSplitSection: boolean;
 }): EngagementPackingLayout[] {
+  const preservesInputPlacement =
+    center.x === originalCenter.x && center.y === originalCenter.y;
+  const preserved = preservesInputPlacement &&
+    (usesSplitSection || members.length >= 3)
+    ? [{
+        points: members.map((member) => ({ ...member.point })),
+        searchWholePolygon: true
+      }]
+    : [];
+
+  if (onlyPreservedInputPlacement) return preserved;
+
+  const growth = () => getEngagementGrowthLayouts({
+    center,
+    clearance,
+    members,
+    orientation,
+    polygon,
+    strategy
+  });
+
+  if (onlyGrowthPlacement) return growth();
+
   const radial: EngagementPackingLayout[] =
     getEngagementParticipantCandidateLayouts(
       center,
@@ -123,11 +158,7 @@ export function getEngagementPackingLayouts({
     clearance
   );
 
-  if (
-    usesSplitSection &&
-    center.x === originalCenter.x &&
-    center.y === originalCenter.y
-  ) {
+  if (usesSplitSection && preservesInputPlacement) {
     const scale = getParticipantScale(members, clearance);
     radial.push({
       points: members.map((member) => ({
@@ -139,5 +170,11 @@ export function getEngagementPackingLayouts({
   }
 
   const chained = chain.map(({ points, token }) => ({ points, token }));
-  return preferChains ? [...chained, ...radial] : [...radial, ...chained];
+  const standard = preferChains
+    ? [...chained, ...radial]
+    : [...radial, ...chained];
+
+  return onlySwapPlacement
+    ? getEngagementSwapLayouts([...preserved, ...standard, ...growth()], members)
+    : standard;
 }

@@ -244,15 +244,20 @@ export function getEngagementParticipantCandidateLayouts(
     1,
     Math.min(Math.floor(radii.length / 2), Math.ceil(Math.sqrt(radii.length)))
   );
+  // Half-step rotation lets mixed-size rings use polygon corners instead of
+  // rejecting a fit solely because the largest actor is axis-aligned.
+  const baseAngles = [baseAngle, baseAngle + Math.PI / radii.length];
 
   return Array.from({ length: maximumRingCount }, (_, index) =>
-    getFlexRingLayout(
-      center,
-      radii,
-      baseAngle,
-      clearance,
-      tokenRadius,
-      index + 1
+    baseAngles.map((candidateBaseAngle) =>
+      getFlexRingLayout(
+        center,
+        radii,
+        candidateBaseAngle,
+        clearance,
+        tokenRadius,
+        index + 1
+      )
     )
-  );
+  ).flat();
 }
