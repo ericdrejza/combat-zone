@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { createEncounterState } from '@core/encounter/createEncounterState';
 import {
   engagementClusterEnvelopesAreSeparate,
   footprintFitsPolygon,
@@ -8,9 +9,25 @@ import {
 import { getEngagementChainCandidateLayouts } from '@core/layout/engagementChainLayouts';
 import {
   ENGAGEMENT_CHAIN_VISIBLE_CLEARANCE,
-  getEngagementTokenPoint
+  ENGAGEMENT_MINIMUM_CLEARANCE,
+  ENGAGEMENT_TOKEN_RADIUS,
+  getEngagementTokenPoint,
+  packEngagementParticipants
 } from '@core/layout/engagementPacking';
 import { engagementPackingCandidateFits } from '@core/layout/engagementPackingValidation';
+import type { EntityCollection } from '@core/state/entityCollection';
+import { buildActor } from '@entities/actor/actorMutations';
+import { createEngagement } from '@entities/engagement/engagementMutations';
+import type { Zone } from '@entities/zone/types';
+
+function collection<TEntity extends { id: string }>(
+  entities: TEntity[]
+): EntityCollection<TEntity> {
+  return {
+    allIds: entities.map(({ id }) => id),
+    byId: Object.fromEntries(entities.map((entity) => [entity.id, entity]))
+  };
+}
 
 describe('engagement participant candidates', () => {
   it('enforces full circular footprint clearance from sloped zone edges', () => {
@@ -23,8 +40,17 @@ describe('engagement participant candidates', () => {
     const point = { x: 32, y: 32 };
 
     expect(footprintFitsPolygon(point, 8, diamond)).toBe(true);
-    expect(footprintFitsPolygon(point, 8, diamond, 2)).toBe(false);
-    expect(footprintFitsPolygon({ x: 34, y: 34 }, 8, diamond, 2)).toBe(true);
+    expect(
+      footprintFitsPolygon(point, 8, diamond, ENGAGEMENT_MINIMUM_CLEARANCE)
+    ).toBe(false);
+    expect(
+      footprintFitsPolygon(
+        { x: 34, y: 34 },
+        8,
+        diamond,
+        ENGAGEMENT_MINIMUM_CLEARANCE
+      )
+    ).toBe(true);
   });
 
   it('fits a four-actor chained line with a visible branch gap', () => {
@@ -40,7 +66,7 @@ describe('engagement participant candidates', () => {
       'TOP_BOTTOM',
       'SEQUENTIAL',
       ENGAGEMENT_CHAIN_VISIBLE_CLEARANCE,
-      12
+      ENGAGEMENT_TOKEN_RADIUS
     )[0];
     const proposed = points.map((point, index) => ({
       actorId: `actor-${index}`,
@@ -54,28 +80,28 @@ describe('engagement participant candidates', () => {
       acceptedClusters: [],
       acceptedTokens: [],
       actorClearance: ENGAGEMENT_CHAIN_VISIBLE_CLEARANCE,
-      minimumClearance: 2,
+      minimumClearance: ENGAGEMENT_MINIMUM_CLEARANCE,
       polygon,
       proposed,
       token,
-      tokenRadius: 12
+      tokenRadius: ENGAGEMENT_TOKEN_RADIUS
     })).toBe(true);
   });
 
-  it('offers a compact multi-ring layout as engagement membership grows', () => {
+  it('offers collision-safe compact multi-ring participant layouts as membership grows', () => {
     const polygon = [
       { x: 0, y: 0 },
       { x: 500, y: 0 },
-      { x: 500, y: 360 },
-      { x: 0, y: 360 }
+      { x: 500, y: 370 },
+      { x: 0, y: 370 }
     ];
     const layouts = getEngagementParticipantCandidateLayouts(
-      { x: 250, y: 180 },
+      { x: 250, y: 185 },
       Array.from({ length: 20 }, () => 30),
       'LEFT_RIGHT',
       'FLEX',
-      2,
-      12
+      ENGAGEMENT_MINIMUM_CLEARANCE,
+      ENGAGEMENT_TOKEN_RADIUS
     );
 
     expect(layouts.some((points) => {
@@ -84,21 +110,14 @@ describe('engagement participant candidates', () => {
         point,
         radius: 30
       }));
-      const token = getEngagementTokenPoint(participants, polygon);
-
       return (
         points.every((point) => footprintFitsPolygon(point, 30, polygon)) &&
         points.every((point, index) =>
           points.every((other, otherIndex) =>
             index === otherIndex ||
-            Math.hypot(point.x - other.x, point.y - other.y) >= 62
+            Math.hypot(point.x - other.x, point.y - other.y) >=
+              30 * 2 + ENGAGEMENT_MINIMUM_CLEARANCE
           )
-        ) &&
-        participants.every((participant) =>
-          Math.hypot(
-            participant.point.x - token.x,
-            participant.point.y - token.y
-          ) >= 44
         )
       );
     })).toBe(true);
@@ -106,11 +125,12 @@ describe('engagement participant candidates', () => {
 
   it('offers elongated and compact token-anchored chains', () => {
     const radii = Array.from({ length: 9 }, () => 30);
+    const chainClearance = 6;
     const layouts = getEngagementChainCandidateLayouts(
       { x: 250, y: 180 },
       radii,
       'LEFT_RIGHT',
-      6
+      chainClearance
     );
 
     expect(layouts.length).toBeGreaterThan(2);
@@ -120,9 +140,60 @@ describe('engagement participant candidates', () => {
     )).toBe(true);
     expect(layouts.every(({ points, token }) =>
       points.every((point) =>
-        Math.hypot(point.x - token.x, point.y - token.y) >= 48
+        Math.hypot(point.x - token.x, point.y - token.y) >=
+          30 + ENGAGEMENT_TOKEN_RADIUS + chainClearance
       )
     )).toBe(true);
+  });
+
+  it('preserves valid actor positions when only connector routing is needed', () => {
+    const zone: Zone = {
+      colorBorder: '#000000',
+      colorFill: '#ffffff',
+      id: 'concave-zone',
+      layoutOrientation: 'LEFT_RIGHT',
+      layoutStrategy: 'FLEX',
+      name: 'Concave zone',
+      namePosition: 'top-left',
+      opacity: 1,
+      polygon: [
+        { x: 0, y: 0 },
+        { x: 120, y: 0 },
+        { x: 120, y: 140 },
+        { x: 260, y: 140 },
+        { x: 260, y: 240 },
+        { x: 0, y: 240 }
+      ],
+      shape: 'polygon',
+      showBorder: true,
+      showName: false,
+      tags: []
+    };
+    const actors = ['top', 'bottom-left', 'bottom-right'].map((id) =>
+      buildActor({ currentZoneId: zone.id, id })
+    );
+    const encounter = createEngagement(
+      {
+        ...createEncounterState({ id: 'connector-only', name: 'Connector' }),
+        actors: collection(actors),
+        zones: collection([zone])
+      },
+      {
+        id: 'concave-engagement',
+        parentZoneId: zone.id,
+        participantIds: actors.map(({ id }) => id)
+      }
+    );
+    const placements = [
+      { actorId: 'top', point: { x: 60, y: 40 }, radius: 30 },
+      { actorId: 'bottom-left', point: { x: 60, y: 190 }, radius: 30 },
+      { actorId: 'bottom-right', point: { x: 200, y: 190 }, radius: 30 }
+    ];
+    const packing = packEngagementParticipants(encounter, placements);
+
+    expect(packing.fits).toBe(true);
+    expect(packing.placements).toEqual(placements);
+    expect(packing.tokenPoints['concave-engagement']).toBeDefined();
   });
 
   it('separates elongated engagements by token ownership, not circular reach', () => {
@@ -142,7 +213,11 @@ describe('engagement participant candidates', () => {
     };
 
     expect(
-      engagementClusterEnvelopesAreSeparate(right, [left], 2)
+      engagementClusterEnvelopesAreSeparate(
+        right,
+        [left],
+        ENGAGEMENT_MINIMUM_CLEARANCE
+      )
     ).toBe(true);
     expect(
       engagementClusterEnvelopesAreSeparate(
@@ -151,7 +226,7 @@ describe('engagement participant candidates', () => {
           participants: [{ point: { x: 100, y: 100 } }]
         },
         [left],
-        2
+        ENGAGEMENT_MINIMUM_CLEARANCE
       )
     ).toBe(false);
   });

@@ -6,6 +6,7 @@ import {
   getNestingActorsInZone,
   isZoneLayoutChange
 } from "./polygonFlexZoneAdjustment";
+import { didZoneGainEngagementMembership } from "./engagementGrowth";
 import type { ValidationAction } from "./types";
 
 function getActorIdsFromPayload(action: ValidationAction): string[] {
@@ -205,9 +206,8 @@ function didZoneGainActor(
 }
 
 /**
- * Expands affected polygon FLEX zones when a polygon reshape or actor
- * footprint change cannot fit. Actor entry and movement can opt into the same
- * correction through the destination zone's autoResize setting.
+ * Expands affected polygon FLEX zones when a reshape or footprint change
+ * cannot fit. Actor entry and Engagement growth opt in through autoResize.
  */
 export function adjustPolygonFlexZonesToFit(
   action: ValidationAction,
@@ -224,12 +224,11 @@ export function adjustPolygonFlexZonesToFit(
     isActorFootprintChange(action) ||
     isZoneLayoutChange(action);
 
-  if (
-    !canResizeWithoutActorAddition &&
-    !Array.from(affectedZoneIds).some((zoneId) =>
-      didZoneGainActor(state, nextEncounter, zoneId)
-    )
-  ) {
+  if (!canResizeWithoutActorAddition && !Array.from(affectedZoneIds).some(
+    (zoneId) =>
+      didZoneGainActor(state, nextEncounter, zoneId) ||
+      didZoneGainEngagementMembership(state, nextEncounter, zoneId)
+  )) {
     return { nextEncounter, resizedZoneIds: [] };
   }
 
@@ -244,13 +243,18 @@ export function adjustPolygonFlexZonesToFit(
     }
 
     const actorWasAdded = didZoneGainActor(state, adjustedEncounter, zoneId);
+    const engagementGrew = didZoneGainEngagementMembership(
+      state,
+      adjustedEncounter,
+      zoneId
+    );
 
-    if (!canResizeWithoutActorAddition && !actorWasAdded) {
+    if (!canResizeWithoutActorAddition && !actorWasAdded && !engagementGrew) {
       continue;
     }
 
     if (
-      (actorWasAdded || isZoneLayoutChange(action)) &&
+      (actorWasAdded || engagementGrew || isZoneLayoutChange(action)) &&
       !zone.autoResize
     ) {
       continue;

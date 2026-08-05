@@ -21,6 +21,7 @@ import {
   isFootprintInsideZone
 } from '@core/layout/polygonGeometry';
 import { toNestingActor } from '@core/layout/actorFootprints';
+import { MINIMUM_ACTOR_GAP } from '@core/layout/nestingSpacing';
 import {
   packPolygonSequentialActors,
   POLYGON_LAYOUT_SETTINGS
@@ -359,7 +360,11 @@ describe('actor canvas layout', () => {
 
       const placements = getActorRenderPlacements(encounter);
       console.log(placements.map(({ actor, point }) => [actor.id, point]));
-      expectPackedPlacements(placements, selectedZone.polygon, 2);
+      expectPackedPlacements(
+        placements,
+        selectedZone.polygon,
+        MINIMUM_ACTOR_GAP
+      );
     }
   );
 
@@ -403,12 +408,12 @@ describe('actor canvas layout', () => {
     expectPackedPlacements(
       leftRight,
       leftRightEncounter.zones.byId[zoneId]!.polygon,
-      2
+      MINIMUM_ACTOR_GAP
     );
     expectPackedPlacements(
       topBottom,
       topBottomEncounter.zones.byId[zoneId]!.polygon,
-      2
+      MINIMUM_ACTOR_GAP
     );
   });
 

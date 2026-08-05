@@ -1,6 +1,6 @@
 import type { LayoutOrientation, LayoutPoint } from './types';
 import { getBorderSpacingsForInput, tryPack } from './nestingPacking';
-import { getCollisionActorGap } from './nestingSpacing';
+import { getCollisionActorGap, MINIMUM_ACTOR_GAP } from './nestingSpacing';
 import { tryPackSplitSections } from './splitSectionPacking';
 
 export type NestingActor = {
@@ -36,7 +36,7 @@ export const DEFAULT_POLYGON_NESTING_SETTINGS: PolygonNestingSettings = {
   candidateStep: 8
 };
 
-export const DEFAULT_SPLIT_FLEX_ACTOR_GAP = 2;
+export const DEFAULT_SPLIT_FLEX_ACTOR_GAP = MINIMUM_ACTOR_GAP;
 
 export type PolygonNestingInput = {
   polygon: LayoutPoint[];
@@ -118,7 +118,10 @@ function mergeSettings(
       settings?.borderSpacingStep ??
         DEFAULT_POLYGON_NESTING_SETTINGS.borderSpacingStep
     ),
-    actorGap: Math.max(0, settings?.actorGap ?? defaultActorGap),
+    actorGap: Math.max(
+      MINIMUM_ACTOR_GAP,
+      settings?.actorGap ?? defaultActorGap
+    ),
     circleSegments: Math.max(
       8,
       Math.round(

@@ -1,18 +1,23 @@
 import type { PolygonNestingStrategy } from './nesting_ts';
 
-export const MINIMUM_FLEX_ACTOR_GAP = 2;
+export const MINIMUM_ACTOR_GAP = 4;
+/** @deprecated Use MINIMUM_ACTOR_GAP. */
+export const MINIMUM_FLEX_ACTOR_GAP = MINIMUM_ACTOR_GAP;
 
 /**
- * Dense FLEX layouts reduce their preferred clearance without allowing
- * rendered footprints to touch. The small floor also absorbs SVG edge and
- * circle-approximation artifacts that can otherwise look like overlap.
+ * All layouts retain this hard collision floor. Dense FLEX layouts reduce
+ * their preferred clearance to it, while explicit per-layout spacing can
+ * request a more open arrangement.
  */
 export function getCollisionActorGap(
   layoutStrategy: PolygonNestingStrategy | undefined,
   configuredGap: number,
   actorCount: number
 ): number {
-  return (layoutStrategy ?? 'FLEX') === 'FLEX' && actorCount >= 8
+  const preferredGap =
+    (layoutStrategy ?? 'FLEX') === 'FLEX' && actorCount >= 8
     ? MINIMUM_FLEX_ACTOR_GAP
     : configuredGap;
+
+  return Math.max(MINIMUM_ACTOR_GAP, preferredGap);
 }

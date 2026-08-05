@@ -15,6 +15,7 @@ import {
   distanceToSegment,
   GEOMETRY_EPSILON
 } from './polygonGeometry';
+import { chooseEngagementConnector } from './engagementConnectorSelection';
 
 export type EngagementConnector = {
   actorId: string;
@@ -115,8 +116,8 @@ function pathAvoidsConnectors(
 }
 
 /**
- * Builds one connector per reachable participant, preferring token spokes and
- * then chaining outward through already connected actors.
+ * Builds one connector per reachable participant. Valid token spokes remain
+ * preferred unless an actor branch beats the configured length threshold.
  */
 export function routeEngagementConnectors(
   token: LayoutPoint,
@@ -183,29 +184,11 @@ export function routeEngagementConnectors(
           : []
       )
     );
-    const choices: Array<{
-      distance: number;
-      from: LayoutPoint;
-      participant: EngagementParticipantPoint;
-      pendingIndex: number;
-      viaActorId?: string;
-    }> = [
-      ...directCandidates.map((candidate) => ({
-        ...candidate,
-        from: token
-      })),
-      ...branchCandidates.map((candidate) => ({
-        ...candidate,
-        from: candidate.parent.point,
-        viaActorId: candidate.parent.actorId
-      }))
-    ];
-    const choice = choices.sort(
-      (left, right) =>
-        left.distance - right.distance ||
-        left.participant.actorId.localeCompare(right.participant.actorId) ||
-        (left.viaActorId ?? '').localeCompare(right.viaActorId ?? '')
-    )[0];
+    const choice = chooseEngagementConnector(
+      token,
+      directCandidates,
+      branchCandidates
+    );
     if (!choice) break;
 
     pending.splice(choice.pendingIndex, 1);

@@ -22,20 +22,20 @@ function tokenIsClear(
   token: LayoutPoint,
   placements: readonly PackedFootprint[],
   tokens: readonly LayoutPoint[],
-  minimumClearance: number,
+  clearance: number,
   tokenRadius: number
 ): boolean {
   return placements.every((placement) =>
     engagementFootprintsAreSeparate(
       { point: token, radius: tokenRadius },
       placement,
-      minimumClearance
+      clearance
     )
   ) && tokens.every((otherToken) =>
     engagementFootprintsAreSeparate(
       { point: token, radius: tokenRadius },
       { point: otherToken, radius: tokenRadius },
-      minimumClearance
+      clearance
     )
   );
 }
@@ -106,7 +106,14 @@ export function engagementPackingCandidateFits({
     ) ||
     !tokenIsClear(
       token,
-      [...acceptedActors, ...proposed],
+      proposed,
+      [],
+      actorClearance,
+      tokenRadius
+    ) ||
+    !tokenIsClear(
+      token,
+      acceptedActors,
       acceptedTokens,
       minimumClearance,
       tokenRadius

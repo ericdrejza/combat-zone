@@ -36,8 +36,25 @@ export function getEngagementTokenPoint(
   polygon?: readonly LayoutPoint[],
   searchWholePolygon = true
 ): LayoutPoint {
-  if (!participants.length) return { x: 0, y: 0 };
+  return getEngagementTokenCandidates(
+    participants,
+    polygon,
+    searchWholePolygon,
+    1
+  )[0] ?? { x: 0, y: 0 };
+}
+
+/** Returns every stable token alternative so packing can validate its paths. */
+export function getEngagementTokenCandidates(
+  participants: readonly TokenParticipant[],
+  polygon?: readonly LayoutPoint[],
+  searchWholePolygon = true,
+  maximumCandidates = Number.POSITIVE_INFINITY
+): LayoutPoint[] {
+  if (!participants.length) return [{ x: 0, y: 0 }];
   const centroid = centerOf(participants.map(({ point }) => point));
+  const candidates: LayoutPoint[] = [];
+  const candidateKeys = new Set<string>();
   const fits = (point: LayoutPoint, clearance: number) =>
     participants.every((participant) =>
       engagementFootprintsAreSeparate(
@@ -53,12 +70,20 @@ export function getEngagementTokenPoint(
         polygon,
         ENGAGEMENT_MINIMUM_CLEARANCE
       ));
+  const addCandidate = (point: LayoutPoint, clearance: number) => {
+    const key = `${point.x}:${point.y}`;
+    if (!candidateKeys.has(key) && fits(point, clearance)) {
+      candidateKeys.add(key);
+      candidates.push(point);
+    }
+    return candidates.length >= maximumCandidates;
+  };
 
   for (const clearance of [
     ENGAGEMENT_PREFERRED_CLEARANCE,
     ENGAGEMENT_MINIMUM_CLEARANCE
   ]) {
-    if (fits(centroid, clearance)) return centroid;
+    if (addCandidate(centroid, clearance)) return candidates;
     const largestRadius = Math.max(...participants.map(({ radius }) => radius));
     for (let index = 0; index < 24; index += 1) {
       const angle = (index * Math.PI * 2) / 24;
@@ -71,14 +96,13 @@ export function getEngagementTokenPoint(
         x: centroid.x + Math.cos(angle) * ring,
         y: centroid.y + Math.sin(angle) * ring
       };
-      if (fits(candidate, clearance)) return candidate;
+      if (addCandidate(candidate, clearance)) return candidates;
     }
   }
   if (polygon && searchWholePolygon) {
-    const candidate = getPolygonCandidates(centroid, polygon, 8).find(
-      (point) => fits(point, ENGAGEMENT_MINIMUM_CLEARANCE)
-    );
-    if (candidate) return candidate;
+    for (const point of getPolygonCandidates(centroid, polygon, 8)) {
+      if (addCandidate(point, ENGAGEMENT_MINIMUM_CLEARANCE)) return candidates;
+    }
   }
-  return centroid;
+  return candidates.length > 0 ? candidates : [centroid];
 }

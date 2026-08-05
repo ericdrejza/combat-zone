@@ -18,6 +18,10 @@ node_modules/
 logs/
 *.log
 
+# Temp
+**/temp/
+*.temp
+
 # TypeScript cache
 *.tsbuildinfo
 

@@ -2,8 +2,13 @@ import { describe, expect, it } from 'vitest';
 
 import { createEncounterState } from '@core/encounter/createEncounterState';
 import { routeEngagementConnectorGroups } from '@core/layout/engagementConnectorRouting';
-import { ENGAGEMENT_TOKEN_RADIUS } from '@core/layout/engagementPacking';
+import {
+  ENGAGEMENT_MINIMUM_CLEARANCE,
+  ENGAGEMENT_PREFERRED_CLEARANCE,
+  ENGAGEMENT_TOKEN_RADIUS
+} from '@core/layout/engagementPacking';
 import { orderEngagementPackingCenters } from '@core/layout/engagementPackingLayouts';
+import { engagementPackingCandidateFits } from '@core/layout/engagementPackingValidation';
 import type { EntityCollection } from '@core/state/entityCollection';
 import { engagementEntitiesAreSeparate } from '@core/validation/engagementEntityOverlap';
 import type { Actor, ActorSize } from '@entities/actor/types';
@@ -58,6 +63,54 @@ describe('FLEX engagement separation', () => {
     ).toEqual({ x: 250, y: 50 });
   });
 
+  it('uses more distant engagement regions when the boundary has spare room', () => {
+    const polygon = [
+      { x: 0, y: 0 },
+      { x: 1000, y: 0 },
+      { x: 1000, y: 200 },
+      { x: 0, y: 200 }
+    ];
+
+    expect(
+      orderEngagementPackingCenters(
+        [{ x: 400, y: 100 }, { x: 800, y: 100 }],
+        polygon,
+        false,
+        [{ x: 100, y: 100 }]
+      )[0]
+    ).toEqual({ x: 800, y: 100 });
+  });
+
+  it('applies preferred clearance between an engagement token and its actors', () => {
+    const actorRadius = 30;
+    const requiredDistance =
+      actorRadius + ENGAGEMENT_TOKEN_RADIUS + ENGAGEMENT_PREFERRED_CLEARANCE;
+    const candidateFits = (actorX: number) =>
+      engagementPackingCandidateFits({
+        acceptedActors: [],
+        acceptedClusters: [],
+        acceptedTokens: [],
+        actorClearance: ENGAGEMENT_PREFERRED_CLEARANCE,
+        minimumClearance: ENGAGEMENT_MINIMUM_CLEARANCE,
+        polygon: [
+          { x: -100, y: -100 },
+          { x: 100, y: -100 },
+          { x: 100, y: 100 },
+          { x: -100, y: 100 }
+        ],
+        proposed: [
+          { actorId: 'actor', point: { x: actorX, y: 0 }, radius: actorRadius }
+        ],
+        token: { x: 0, y: 0 },
+        tokenRadius: ENGAGEMENT_TOKEN_RADIUS
+      });
+
+    expect(
+      candidateFits(requiredDistance - ENGAGEMENT_MINIMUM_CLEARANCE * 2)
+    ).toBe(false);
+    expect(candidateFits(requiredDistance)).toBe(true);
+  });
+
   it('fits a new mixed-size engagement away from another group and a loose large actor', () => {
     const zoneId = 'mixed-size-flex';
     const zone: Zone = {
@@ -71,9 +124,9 @@ describe('FLEX engagement separation', () => {
       opacity: 1,
       polygon: [
         { x: 0, y: 0 },
-        { x: 700, y: 0 },
-        { x: 700, y: 440 },
-        { x: 0, y: 440 }
+        { x: 360, y: 0 },
+        { x: 360, y: 300 },
+        { x: 0, y: 300 }
       ],
       shape: 'rectangle',
       showBorder: true,
