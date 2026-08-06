@@ -11,6 +11,7 @@ import {
 } from '@interaction/interactionState';
 import type { SelectableEntityType } from '@interaction/selection/types';
 import { commitEncounterChange } from '@store/encounterSlice';
+import { logEncounterValidationFailure } from '@store/encounterLogSlice';
 import { closeZoneShapeMenu } from '../../toolbar/events';
 import { CLOSE_DISTANCE } from '../canvasConstants';
 import type { CanvasInteractionState } from '../canvasInteractionTypes';
@@ -254,6 +255,13 @@ export function useCanvasClickHandlers(input: ClickHandlerInput) {
       canCommitZonePolygonForCollection(polygon, encounter.zones)
     ) {
         void commitZoneCreate(input, polygon, 'polygon');
+    } else if (polygon.length >= 3) {
+      logEncounterValidationFailure(dispatch, encounter, {
+        actionType: 'zone.create',
+        code: 'zone.invalidPolygonPlacement',
+        message: 'A zone must remain within the canvas and must not overlap another zone.',
+        payload: { polygon, shape: 'polygon' }
+      });
     }
   }
 

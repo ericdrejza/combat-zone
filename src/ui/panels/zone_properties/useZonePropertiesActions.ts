@@ -14,6 +14,7 @@ import {
   toggleZonePaintBrush
 } from "@interaction/interactionState";
 import { commitEncounterChange } from "@store/encounterSlice";
+import { logEncounterValidationBlock } from "@store/encounterLogSlice";
 import type { RootState } from "@store/store";
 import { getExportableZoneProperties } from "./options";
 
@@ -91,6 +92,7 @@ export function useZonePropertiesActions() {
     });
     const commitPrepared = (resolved: Awaited<typeof prepared>) => {
       if (resolved.blocked) {
+        logEncounterValidationBlock(dispatch, resolved);
         return;
       }
 
@@ -185,6 +187,7 @@ export function useZonePropertiesActions() {
     });
     const commitPrepared = (resolved: Awaited<typeof prepared>) => {
       if (resolved.blocked) {
+        logEncounterValidationBlock(dispatch, resolved);
         return;
       }
 

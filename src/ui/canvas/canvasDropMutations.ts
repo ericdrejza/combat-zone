@@ -7,6 +7,7 @@ import { createActor, moveActor } from '@entities/actor/actorMutations';
 import { selectEntity, setActiveTool } from '@interaction/interactionState';
 import { resolveLibraryAsset } from '@library/librarySlice';
 import { commitEncounterChange } from '@store/encounterSlice';
+import { logEncounterValidationBlock } from '@store/encounterLogSlice';
 import type { AppDispatch, RootState } from '@store/store';
 import type { NewActorDragData } from '../toolbar/actor/actorCreationDrag';
 import { readImageFile } from '../toolbar/background/readImageFile';
@@ -39,6 +40,7 @@ function commitCreatedActor(
 
   const commitPrepared = (resolved: Awaited<typeof prepared>) => {
     if (resolved.blocked) {
+      logEncounterValidationBlock(context.dispatch, resolved);
       return;
     }
 
@@ -186,6 +188,7 @@ export function moveActorsToZone(
 
   const commitPrepared = (resolved: Awaited<typeof prepared>) => {
     if (resolved.blocked || nextEncounter === context.encounter) {
+      logEncounterValidationBlock(context.dispatch, resolved);
       return;
     }
 

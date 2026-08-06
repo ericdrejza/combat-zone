@@ -10,6 +10,7 @@ import { prepareValidatedEncounterChangeForRuntime } from "@core/validation/vali
 import { updateActorProperties } from "@entities/actor/actorMutations";
 import { createEncounterActionRecord } from "@core/history/createEncounterActionRecord";
 import { commitEncounterChange } from "@store/encounterSlice";
+import { logEncounterValidationBlock } from "@store/encounterLogSlice";
 import type { RootState } from "@store/store";
 import { useZoneResizeApproval } from "../zoneResizeApproval";
 
@@ -76,6 +77,9 @@ export function ActorPropertiesPanel() {
     };
 
     const handlePrepared = (resolved: Awaited<typeof prepared>) => {
+      if (logEncounterValidationBlock(dispatch, resolved)) {
+        return;
+      }
       if (resolved.requiresConfirmation) {
         requestApproval({ onApprove: () => commitPreparedChange(resolved) });
         return;

@@ -6,6 +6,7 @@ import { prepareValidatedEncounterChangeForRuntime } from '@core/validation/vali
 import { updateEngagementProperties } from '@entities/engagement/engagementMutations';
 import type { Engagement } from '@entities/engagement/types';
 import { commitEncounterChange } from '@store/encounterSlice';
+import { logEncounterValidationBlock } from '@store/encounterLogSlice';
 import type { RootState } from '@store/store';
 
 const STRATEGIES: Engagement['layoutStrategy'][] = ['FLEX', 'SEQUENTIAL'];
@@ -29,6 +30,7 @@ export function EngagementPropertiesPanel() {
       nextEncounter
     });
     const commit = (resolved: Awaited<typeof prepared>) => {
+      logEncounterValidationBlock(dispatch, resolved);
       if (!resolved.blocked) dispatch(commitEncounterChange({ action: resolved.action, nextEncounter: resolved.nextEncounter }));
     };
     if (prepared instanceof Promise) void prepared.then(commit); else commit(prepared);

@@ -185,6 +185,11 @@ describe("CanvasShell zone dragging", () => {
     fireEvent.mouseUp(canvas);
 
     expect(zone).toHaveAttribute("points", originalPoints ?? "");
+    expect(store.getState().encounterLog.entries.at(-1)).toMatchObject({
+      actionType: "zone.move",
+      category: "validation",
+      kind: "validation-block"
+    });
   });
 
   it("prevents dropping an existing zone onto another zone", async () => {
@@ -206,5 +211,10 @@ describe("CanvasShell zone dragging", () => {
     fireEvent.mouseUp(canvas);
 
     expect(zone.getAttribute("points")).toEqual(beforePoints);
+    expect(store.getState().encounterLog.entries.at(-1)).toMatchObject({
+      actionType: "zone.move",
+      category: "validation",
+      kind: "validation-block"
+    });
   });
 });

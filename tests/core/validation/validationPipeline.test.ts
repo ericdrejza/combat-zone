@@ -176,6 +176,46 @@ describe('validation pipeline', () => {
     expect(result.blocked).toBe(true);
   });
 
+  it('accepts runtime actorIds payloads for single and multi-actor movement', () => {
+    const state: EncounterState = {
+      ...createValidEncounterState(),
+      validationState: {
+        mode: 'STRICT',
+        messages: []
+      }
+    };
+
+    for (const actionType of ['actor.move', 'actor.moveMany']) {
+      const valid = runValidationPipelineSync({
+        state,
+        action: {
+          type: actionType,
+          payload: {
+            actorIds: ['actor-hero', 'actor-enemy'],
+            destinationZoneId: 'zone-tower'
+          }
+        }
+      });
+      expect(valid.messages).not.toContainEqual(
+        expect.objectContaining({ code: 'movement.actorMissing' })
+      );
+
+      const invalid = runValidationPipelineSync({
+        state,
+        action: {
+          type: actionType,
+          payload: {
+            actorIds: ['actor-hero', 'actor-missing'],
+            destinationZoneId: 'zone-tower'
+          }
+        }
+      });
+      expect(invalid.messages).toContainEqual(
+        expect.objectContaining({ code: 'movement.actorMissing' })
+      );
+    }
+  });
+
   it('accepts valid actor movement, including movement to the zoneless area', () => {
     const state = createValidEncounterState();
 

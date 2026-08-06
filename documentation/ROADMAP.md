@@ -9,17 +9,6 @@ To reference completed items, see `ROADMAP_COMPLETE.md`.
 
 After completing a numbered section (## X.), move the completed section to the end of `ROADMAP_COMPLETE.md`
 
-## 9. Polygon FLEX actor packing
-
-- [x] Implement deterministic polygon-footprint packing as the shared FLEX
-      strategy for every zone shape.
-- [x] Support configurable preferred/minimum border spacing, actor gaps,
-  rendered rectangle/circle footprints, stable ordering, incoming drop-point
-  metadata, and fit rejection.
-- [x] Enforce no-overlap packing failures in every validation mode for actor
-  movement and creation.
-- [x] Add the approved canvas animation phase with Motion for React.
-
 ## 11. Edges: Basic Zone Graph
 
 - [ ] Implement directional Edge creation between zones with the Edge Tool.
@@ -49,14 +38,15 @@ After completing a numbered section (## X.), move the completed section to the e
 - [ ] Add Vitest coverage for add, reorder, advance turn, unrelated undo/redo
   stability, undo, and redo.
 
-## 13. Properties, Status, and Validation Panels
+## 13. Properties, Status, and Log Panels
 
 - [ ] Implement context-sensitive Properties Panel sections.
   - Actor properties
   - Zone properties
   - Edge properties
   - Engagement properties
-- [ ] Implement Validation Panel display for validation pipeline results.
+- [x] Implement Log Panel display for committed actions and blocked validation
+      results, with categories reserved for filtering.
 - [ ] Implement Bottom Status display for current tool and interaction state.
 - [ ] Ensure panel updates are driven by selection context.
 

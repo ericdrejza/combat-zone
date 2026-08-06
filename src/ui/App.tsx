@@ -10,6 +10,7 @@ import { CanvasShell } from "./canvas/CanvasShell";
 import { AssetLibraryModal } from "./library/AssetLibraryModal";
 import type { DockPanelDefinition, DockSide, DropTarget } from "./panels/PanelsShell";
 import { LibraryPanel, LibraryPanelViewToggle } from "./panels/LibraryPanel";
+import { LogPanel, LogPanelHeaderActions } from "./panels/LogPanel";
 import type {
   LibraryPanelFocusRequest,
   LibraryViewMode
@@ -36,7 +37,7 @@ const initialPanelLayout: PanelLayout = {
   left: [
     { id: "library", title: "Library", collapsed: false },
     { id: "properties", title: "Properties", collapsed: false },
-    { id: "validation", title: "Validation", collapsed: false }
+    { id: "log", title: "Log", collapsed: false }
   ],
   right: [
     { id: "initiative", title: "Initiative", collapsed: false },
@@ -259,6 +260,10 @@ export function App() {
       return <PropertiesPanel />;
     }
 
+    if (panel.id === "log") {
+      return <LogPanel />;
+    }
+
     return undefined;
   }
 
@@ -276,6 +281,10 @@ export function App() {
 
     if (panel.id === "properties") {
       return <ZonePropertiesHeaderActions />;
+    }
+
+    if (panel.id === "log") {
+      return <LogPanelHeaderActions />;
     }
 
     return undefined;
