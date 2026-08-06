@@ -6,11 +6,13 @@ import { Provider } from "react-redux";
 import { resetInteractionState } from "@interaction/interactionState";
 import { resetLibraryState } from "@library/librarySlice";
 import { resetEncounterState } from "@store/encounterSlice";
+import { resetEncounterLog } from "@store/encounterLogSlice";
 import { store } from "@store/store";
 import { App } from "@ui/App";
 
 export function resetAppStore() {
   store.dispatch(resetEncounterState());
+  store.dispatch(resetEncounterLog());
   store.dispatch(resetInteractionState());
   store.dispatch(resetLibraryState());
 }

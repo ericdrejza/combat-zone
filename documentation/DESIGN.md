@@ -436,7 +436,7 @@ Engagement-internal layouts use:
 
 [Toolbar]
 [Left Panel] [Canvas] [Right Panel]
-[Bottom Status / Initiative / Validation]
+[Bottom Status / Initiative / Log]
 
 Panels:
 
@@ -450,7 +450,8 @@ Panels:
 - Library
 - Initiative
 - Properties
-- Validation
+- Log (committed actions and blocked validation attempts, categorized for
+  filtering)
 - Status
 
 Panels update based on selection context.

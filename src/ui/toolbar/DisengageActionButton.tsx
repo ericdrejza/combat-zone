@@ -6,6 +6,7 @@ import { createEncounterActionRecord } from '@core/history/createEncounterAction
 import { prepareValidatedEncounterChangeForRuntime } from '@core/validation/validatedEncounterChange';
 import { leaveEngagements } from '@entities/engagement/engagementMutations';
 import { commitEncounterChange } from '@store/encounterSlice';
+import { logEncounterValidationBlock } from '@store/encounterLogSlice';
 import type { RootState } from '@store/store';
 
 /** Removes only selected actors from their current Engagement groups. */
@@ -36,6 +37,7 @@ export function DisengageActionButton() {
       nextEncounter
     });
     const commit = (resolved: Awaited<typeof prepared>) => {
+      logEncounterValidationBlock(dispatch, resolved);
       if (!resolved.blocked) {
         dispatch(
           commitEncounterChange({

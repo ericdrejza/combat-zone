@@ -235,6 +235,14 @@
     - Button group buttons should only have icons in them
 - [x] Add Vitest coverage for actor create/place/move/zoneless behavior,
   invalid drops, undo, and redo history.
+- [x] Implement deterministic polygon-footprint packing as the shared FLEX
+      strategy for every zone shape.
+- [x] Support configurable preferred/minimum border spacing, actor gaps,
+  rendered rectangle/circle footprints, stable ordering, incoming drop-point
+  metadata, and fit rejection.
+- [x] Enforce no-overlap packing failures in every validation mode for actor
+  movement and creation.
+- [x] Add the approved canvas animation phase with Motion for React.
 
 ## 10. Engagement Groups
 

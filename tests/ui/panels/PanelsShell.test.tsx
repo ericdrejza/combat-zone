@@ -1,23 +1,103 @@
-import { fireEvent, screen, within } from "@testing-library/react";
+import { act, fireEvent, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { renderApp } from "@tests/ui/renderApp";
 import { movePanel } from "@ui/panels/panelLayout";
+import { appendEncounterLogEntry } from "@store/encounterLogSlice";
+import { store } from "@store/store";
 
 describe("PanelsShell", () => {
+  it("renders categorized action and validation-block entries in the Log panel", () => {
+    renderApp();
+
+    act(() => {
+      store.dispatch(
+        appendEncounterLogEntry({
+          actionId: "actor.move-1",
+          actionType: "actor.move",
+          category: "actor",
+          id: "actor.move-1:commit",
+          kind: "commit",
+          message: "Aria moved to the Courtyard.",
+          timestamp: 1
+        })
+      );
+      store.dispatch(
+        appendEncounterLogEntry({
+          actionId: "actor.move-2",
+          actionType: "actor.move",
+          category: "validation",
+          id: "actor.move-2:validation-block",
+          kind: "validation-block",
+          message: "Blocked action: Aria moved to the Vault. Not enough room.",
+          timestamp: 2
+        })
+      );
+    });
+
+    const log = screen.getByLabelText("Encounter log");
+    expect(within(log).getByText("Actor")).toBeInTheDocument();
+    expect(within(log).getByText("Validation")).toBeInTheDocument();
+    expect(within(log).getByText("Blocked")).toBeInTheDocument();
+    expect(
+      within(log).getByText("Aria moved to the Courtyard.")
+    ).toBeInTheDocument();
+  });
+
+  it("clears the encounter log from the Log panel header", () => {
+    renderApp();
+
+    act(() => {
+      store.dispatch(
+        appendEncounterLogEntry({
+          actionId: "actor.move-1",
+          actionType: "actor.move",
+          category: "actor",
+          id: "actor.move-1:commit",
+          kind: "commit",
+          message: "Aria moved to the Courtyard.",
+          timestamp: 1
+        })
+      );
+    });
+
+    const clearButton = screen.getByRole("button", {
+      name: "Clear encounter log"
+    });
+    const reorderButton = screen.getByRole("button", {
+      name: "Reorder Log panel"
+    });
+
+    expect(clearButton.nextElementSibling).toBe(reorderButton);
+    expect(screen.getByLabelText("Encounter log")).toHaveClass(
+      "max-h-80",
+      "overflow-y-auto"
+    );
+
+    fireEvent.click(clearButton);
+
+    expect(
+      screen.getByText("Actions and blocked validation attempts will appear here.")
+    ).toBeInTheDocument();
+    expect(store.getState().encounterLog.entries).toEqual([]);
+  });
+
   it("supports collapsible vertically stacked dock panels", async () => {
     const user = userEvent.setup();
 
     renderApp();
 
     expect(screen.getByText("Actor or Background tools show library assets here.")).toBeInTheDocument();
-    expect(screen.getAllByText("Panel scaffold.", { exact: false })).toHaveLength(2);
+    expect(screen.getAllByText("Panel scaffold.", { exact: false })).toHaveLength(1);
+    expect(
+      screen.getByText("Actions and blocked validation attempts will appear here.")
+    ).toBeInTheDocument();
 
     await user.click(
       screen.getByRole("button", { name: "Collapse Library panel" })
     );
 
-    expect(screen.getAllByText("Panel scaffold.", { exact: false })).toHaveLength(2);
+    expect(screen.getAllByText("Panel scaffold.", { exact: false })).toHaveLength(1);
     expect(
       screen.queryByText("Actor or Background tools show library assets here.")
     ).not.toBeInTheDocument();
@@ -51,7 +131,7 @@ describe("PanelsShell", () => {
       within(leftDock)
         .getAllByRole("heading")
         .map((heading) => heading.textContent)
-    ).toEqual(["Status", "Library", "Properties", "Validation"]);
+    ).toEqual(["Status", "Library", "Properties", "Log"]);
   });
 
   it("allows dragged panels to be dropped on a panel surface instead of only on the gap marker", () => {
@@ -91,7 +171,7 @@ describe("PanelsShell", () => {
       within(leftDock)
         .getAllByRole("heading")
         .map((heading) => heading.textContent)
-    ).toEqual(["Library", "Status", "Properties", "Validation"]);
+    ).toEqual(["Library", "Status", "Properties", "Log"]);
   });
 
   it("keeps a panel in place when dropping it into the lower half of itself", () => {
@@ -103,7 +183,7 @@ describe("PanelsShell", () => {
       right: [
         { id: "properties", title: "Properties", collapsed: false },
         { id: "status", title: "Status", collapsed: false },
-        { id: "validation", title: "Validation", collapsed: false }
+        { id: "log", title: "Log", collapsed: false }
       ]
     };
 
@@ -112,7 +192,7 @@ describe("PanelsShell", () => {
         side: "right",
         index: 2
       }).right.map((panel) => panel.id)
-    ).toEqual(["properties", "status", "validation"]);
+    ).toEqual(["properties", "status", "log"]);
   });
 
   it("preserves collapsed panel state after dragging a panel to the other side", async () => {
@@ -147,7 +227,7 @@ describe("PanelsShell", () => {
       within(leftDock)
         .getAllByRole("heading")
         .map((heading) => heading.textContent)
-    ).toEqual(["Status", "Library", "Properties", "Validation"]);
+    ).toEqual(["Status", "Library", "Properties", "Log"]);
     expect(
       within(leftDock).getByRole("button", { name: "Expand Status panel" })
     ).toHaveAttribute("aria-expanded", "false");

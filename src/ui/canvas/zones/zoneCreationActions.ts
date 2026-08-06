@@ -5,6 +5,10 @@ import type { ZoneShape } from '@entities/zone/types';
 import { createZone } from '@entities/zone/zoneMutations';
 import { selectEntity } from '@interaction/interactionState';
 import { commitEncounterChange } from '@store/encounterSlice';
+import {
+  logEncounterValidationBlock,
+  logEncounterValidationFailure
+} from '@store/encounterLogSlice';
 import type { CanvasInteractionState } from '../canvasInteractionTypes';
 import { canCommitZonePolygon as canCommitZonePolygonForCollection } from './zoneGeometry';
 import { getCloneableZoneProperties } from './zonePropertyTransfers';
@@ -36,6 +40,12 @@ export function commitZoneCreate(
   } = input;
 
   if (!canCommitZonePolygonForCollection(polygon, encounter.zones)) {
+    logEncounterValidationFailure(dispatch, encounter, {
+      actionType: 'zone.create',
+      code: 'zone.invalidPolygonPlacement',
+      message: 'A zone must remain within the canvas and must not overlap another zone.',
+      payload: { polygon, shape }
+    });
     setZoneDraftPoints([]);
     return;
   }
@@ -66,6 +76,7 @@ export function commitZoneCreate(
 
   const commitPrepared = (resolved: Awaited<typeof prepared>) => {
     if (resolved.blocked) {
+      logEncounterValidationBlock(dispatch, resolved);
       setZoneDraftPoints([]);
       return;
     }

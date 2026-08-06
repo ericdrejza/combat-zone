@@ -9,6 +9,7 @@ import { createActor } from "@entities/actor/actorMutations";
 import { ACTOR_LAYOUT_GROUP_COLORS } from "@entities/actor/actorVisuals";
 import { selectEntity } from "@interaction/interactionState";
 import { commitEncounterChange } from "@store/encounterSlice";
+import { logEncounterValidationBlock } from "@store/encounterLogSlice";
 import type { RootState } from "@store/store";
 import { getReadableTextColor } from "../../canvas/canvasLuminance";
 import {
@@ -76,6 +77,7 @@ export function ActorCreationModal({ onClose }: ActorCreationModalProps) {
 
     const commitPrepared = (resolved: Awaited<typeof prepared>) => {
       if (resolved.blocked) {
+        logEncounterValidationBlock(dispatch, resolved);
         return;
       }
 

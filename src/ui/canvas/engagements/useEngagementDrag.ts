@@ -7,6 +7,7 @@ import { prepareValidatedEncounterChangeForRuntime } from '@core/validation/vali
 import { mergeEngagements } from '@entities/engagement/engagementMutations';
 import { selectEntity } from '@interaction/interactionState';
 import { commitEncounterChange } from '@store/encounterSlice';
+import { logEncounterValidationBlock } from '@store/encounterLogSlice';
 import type { AppDispatch } from '@store/store';
 import type { ActorRenderPlacement } from '../actors/actorCanvasLayout';
 import type { EngagementDragState } from '../canvasInteractionTypes';
@@ -110,6 +111,7 @@ export function useEngagementDrag(
       nextEncounter
     });
     const commit = (resolved: Awaited<typeof prepared>) => {
+      logEncounterValidationBlock(dispatch, resolved);
       if (!resolved.blocked) {
         dispatch(
           commitEncounterChange({

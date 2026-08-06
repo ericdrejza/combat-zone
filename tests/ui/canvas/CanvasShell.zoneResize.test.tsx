@@ -99,6 +99,11 @@ describe("CanvasShell zone resizing", () => {
     fireEvent.mouseUp(canvas);
 
     expect(zone).toHaveAttribute("points", originalPoints ?? "");
+    expect(store.getState().encounterLog.entries.at(-1)).toMatchObject({
+      actionType: "zone.reshape",
+      category: "validation",
+      kind: "validation-block"
+    });
   });
 
   it("corrects a resize that makes either zone dimension smaller than a small actor", async () => {

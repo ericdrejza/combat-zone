@@ -111,6 +111,11 @@ describe("CanvasShell zone creation", () => {
 
     expect(screen.queryByLabelText("Zone 2")).not.toBeInTheDocument();
     expect(store.getState().encounter.present.zones.allIds).toHaveLength(1);
+    expect(store.getState().encounterLog.entries.at(-1)).toMatchObject({
+      actionType: "zone.create",
+      category: "validation",
+      kind: "validation-block"
+    });
   });
 
   it("shows an undersized shape draft in red and does not create it", async () => {
