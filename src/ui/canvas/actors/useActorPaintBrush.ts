@@ -4,6 +4,7 @@ import { createEncounterActionRecord } from '@core/history/createEncounterAction
 import { prepareValidatedEncounterChangeForRuntime } from '@core/validation/validatedEncounterChange';
 import { updateActorProperties } from '@entities/actor/actorMutations';
 import { commitEncounterChange } from '@store/encounterSlice';
+import { logEncounterValidationBlock } from '@store/encounterLogSlice';
 import type { AppDispatch, RootState } from '@store/store';
 import { useZoneResizeApproval } from '../../zoneResizeApproval';
 
@@ -84,6 +85,9 @@ export function useActorPaintBrush({
       nextEncounter
     });
     const handlePrepared = (resolved: Awaited<typeof prepared>) => {
+      if (logEncounterValidationBlock(dispatch, resolved)) {
+        return;
+      }
       const commitPreparedChange = () => {
         dispatch(
           commitEncounterChange({

@@ -4,6 +4,7 @@ import { createEncounterActionRecord } from '@core/history/createEncounterAction
 import { prepareValidatedEncounterChangeForRuntime } from '@core/validation/validatedEncounterChange';
 import { engageSelectedActors } from '@entities/engagement/engagementMutations';
 import { commitEncounterChange } from '@store/encounterSlice';
+import { logEncounterValidationBlock } from '@store/encounterLogSlice';
 import type { RootState } from '@store/store';
 import crossedSwordsAsset from '@assets/images/crossed-swords.svg';
 
@@ -33,6 +34,7 @@ export function EngageActionButton() {
       nextEncounter
     });
     const commit = (resolved: Awaited<typeof prepared>) => {
+      logEncounterValidationBlock(dispatch, resolved);
       if (!resolved.blocked) dispatch(commitEncounterChange({ action: resolved.action, nextEncounter: resolved.nextEncounter }));
     };
     if (prepared instanceof Promise) void prepared.then(commit); else commit(prepared);

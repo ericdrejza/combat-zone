@@ -17,6 +17,7 @@ import { resolveLibraryAsset } from "@library/librarySlice";
 import type { LibraryNode, LibrarySectionId } from "@library/types";
 import type { ToolId } from "@interaction/tools/toolRegistry";
 import { commitEncounterChange } from "@store/encounterSlice";
+import { logEncounterValidationBlock } from "@store/encounterLogSlice";
 import type { RootState } from "@store/store";
 import { LIBRARY_NODE_DRAG_TYPE } from "../library/libraryDrag";
 import { getFoldersFirstChildren } from "../library/libraryUi";
@@ -249,6 +250,7 @@ export function LibraryPanel({
 
     const commitPrepared = (resolved: Awaited<typeof prepared>) => {
       if (resolved.blocked) {
+        logEncounterValidationBlock(dispatch, resolved);
         return;
       }
 

@@ -17,6 +17,10 @@ import {
 } from '@interaction/interactionState';
 import { commitEncounterChange } from '@store/encounterSlice';
 import {
+  logEncounterValidationBlock,
+  logEncounterValidationFailure
+} from '@store/encounterLogSlice';
+import {
   findZoneIdAtPoint,
   getActorRenderPlacements
 } from '../actors/actorCanvasLayout';
@@ -171,6 +175,7 @@ export function useCanvasMouseUpHandler(input: MouseUpHandlerInput) {
               setActorDrag(null);
               return;
             }
+            logEncounterValidationBlock(dispatch, resolved);
             setActorDrag({ ...actorDrag, current: actorDrag.start, phase: 'returning' });
           };
           if (prepared instanceof Promise) void prepared.then(commitPreparedEngagement); else commitPreparedEngagement(prepared);
@@ -278,6 +283,8 @@ export function useCanvasMouseUpHandler(input: MouseUpHandlerInput) {
             return;
           }
 
+          logEncounterValidationBlock(dispatch, resolved);
+
           setActorDrag({
             ...actorDrag,
             current: actorDrag.start,
@@ -366,6 +373,12 @@ export function useCanvasMouseUpHandler(input: MouseUpHandlerInput) {
             zoneDrag.zoneId
           )
         ) {
+          logEncounterValidationFailure(dispatch, encounter, {
+            actionType: 'zone.move',
+            code: 'zone.invalidPolygonPlacement',
+            message: 'A zone must remain within the canvas and must not overlap another zone.',
+            payload: { polygon: nextPolygon, zoneId: zoneDrag.zoneId }
+          });
           setZoneDrag(null);
           return;
         }
@@ -439,6 +452,12 @@ export function useCanvasMouseUpHandler(input: MouseUpHandlerInput) {
         vertexDrag.zoneId
       )
     ) {
+      logEncounterValidationFailure(dispatch, encounter, {
+        actionType: 'zone.reshape',
+        code: 'zone.invalidPolygonPlacement',
+        message: 'A zone must remain within the canvas and must not overlap another zone.',
+        payload: { polygon: vertexDrag.polygon, zoneId: vertexDrag.zoneId }
+      });
       setVertexDrag(null);
       return;
     }
@@ -479,6 +498,18 @@ export function useCanvasMouseUpHandler(input: MouseUpHandlerInput) {
           vertexDrag.zoneId
         )
       ) {
+        const pipelineRejected = logEncounterValidationBlock(
+          dispatch,
+          resolved
+        );
+        if (!pipelineRejected) {
+          logEncounterValidationFailure(dispatch, encounter, {
+            actionType: 'zone.reshape',
+            code: 'zone.invalidPolygonPlacement',
+            message: 'A zone must remain within the canvas and must not overlap another zone.',
+            payload: { polygon: committedPolygon, zoneId: vertexDrag.zoneId }
+          });
+        }
         setVertexDrag(null);
         return;
       }

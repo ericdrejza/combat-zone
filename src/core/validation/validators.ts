@@ -58,16 +58,30 @@ function allowsZoneless(zoneId: string | undefined): boolean {
 export const MovementValidator: Validator<EncounterState> = {
   id: "MovementValidator",
   validate(action, { state }) {
-    if (action.type !== "actor.move" && action.type !== "actor.create") {
+    if (
+      action.type !== "actor.move" &&
+      action.type !== "actor.moveMany" &&
+      action.type !== "actor.create"
+    ) {
       return result([]);
     }
 
     const payload = createPayloadReader(action.payload);
     const actorId = payload.getString("actorId");
+    const actorIds = payload.getStringArray("actorIds");
+    const movedActorIds = actorIds.length > 0
+      ? actorIds
+      : actorId
+        ? [actorId]
+        : [];
     const destinationZoneId = payload.getString("destinationZoneId");
     const messages: ValidationMessage[] = [];
 
-    if (action.type === "actor.move" && !hasActor(state, actorId)) {
+    if (
+      (action.type === "actor.move" || action.type === "actor.moveMany") &&
+      (movedActorIds.length === 0 ||
+        movedActorIds.some((movedActorId) => !hasActor(state, movedActorId)))
+    ) {
       messages.push({
         code: "movement.actorMissing",
         message: "Movement references an actor that does not exist.",
