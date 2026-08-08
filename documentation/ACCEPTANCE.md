@@ -258,6 +258,9 @@ covers `DESIGN.md` §15 "Must have" scope only.
       persisted. A target-snapped creation preview participates in pair-lane
       spacing and cannot hide behind another Edge; occupied-slot previews keep
       that slot's lane.
+- [x] Valid Edge paths, arrowheads, and creation previews use readable contrast
+      selected from the sampled canvas background luminance; red unroutable
+      diagnostics remain red.
 - [x] Rendered Edge rule icons have tooltips of at most two words, and a
       selected Edge's canvas status badge shows source, target, movement,
       visibility, tags, and notes without shape.

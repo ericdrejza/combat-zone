@@ -42,8 +42,11 @@ must be updated if an approved Edge behavior changes.
   both ends for bilateral Edges. Visibility is visually distinct (solid,
   dashed, and dotted treatments); visible has no redundant path icon,
   obscured uses dashed-eye, hidden uses eye-off, and difficult uses
-  chevrons-down. Rule badges are placed by traveled-path distance away from
-  Zone boundaries. Use a wide transparent hit path for reliable selection.
+  chevrons-down. Valid paths, arrowheads, and transient creation previews use
+  readable contrast selected from the sampled canvas background luminance;
+  red unroutable diagnostics remain red. Rule badges are placed by
+  traveled-path distance away from Zone boundaries. Use a wide transparent hit
+  path for reliable selection.
 - Edge Properties show endpoints and directionality read-only. They batch-edit
   movement rules, visibility, and shape; shape is an icon radio group using
   MoveRight, CornerDownRight, Spline, and Activity. Tags and notes are editable

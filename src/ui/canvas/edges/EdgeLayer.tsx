@@ -15,6 +15,7 @@ import type { Edge, EdgeMovementRule } from "@entities/edge/types";
 import type { Zone } from "@entities/zone/types";
 import type { RootState } from "@store/store";
 import type { EdgeDragState } from "../canvasInteractionTypes";
+import { getTextColorForLuminance } from "../canvasLuminance";
 
 const routeCache = new Map<string, LayoutPoint[]>();
 
@@ -23,6 +24,7 @@ type Props = {
   edgeDrag: EdgeDragState | null;
   edgeTool: EdgePreset;
   encounter: RootState["encounter"]["present"];
+  canvasBackgroundLuminance: number;
   getDisplayedPolygon: (zone: Zone) => LayoutPoint[];
   selection: RootState["interaction"]["selection"];
 };
@@ -70,7 +72,7 @@ function EdgeBadges({ edge, point }: { edge: Edge; point: LayoutPoint }) {
   );
 }
 
-export function EdgeLayer({ activeToolId, edgeDrag, edgeTool, encounter, getDisplayedPolygon, selection }: Props) {
+export function EdgeLayer({ activeToolId, edgeDrag, edgeTool, encounter, canvasBackgroundLuminance, getDisplayedPolygon, selection }: Props) {
   const edges = encounter.edges.allIds.map((id) => encounter.edges.byId[id]).filter((edge): edge is Edge => Boolean(edge));
   const previewEdge: Edge | undefined = edgeDrag?.targetZoneId ? {
     ...edgeTool,
@@ -127,6 +129,9 @@ export function EdgeLayer({ activeToolId, edgeDrag, edgeTool, encounter, getDisp
       safeLane
     );
     const d = routeToSvgPath(path, edge.shape);
+    const edgeColor = route.valid
+      ? getTextColorForLuminance(canvasBackgroundLuminance)
+      : "#dc2626";
     const selected = selection.selectedEntityType === "edge" && selection.selectedIds.includes(edge.id);
     const badgePoint = pointAlongRoute(path, lane.badgeFraction);
     const dash = !route.valid ? "4 4" : edge.visibilityRule === "obscured" ? "10 6" : edge.visibilityRule === "hidden" ? "3 5" : undefined;
@@ -152,8 +157,8 @@ export function EdgeLayer({ activeToolId, edgeDrag, edgeTool, encounter, getDisp
     return (
       <g key={edge.id} data-edge-route-valid={route.valid}>
         <defs>
-          <marker id={`edge-arrow-end-${edge.id}`} markerHeight="8" markerWidth="8" orient={cardinalEndAngle ?? "auto"} refX="7" refY="4"><path d="M 0 0 L 8 4 L 0 8 z" fill="currentColor" /></marker>
-          <marker id={`edge-arrow-start-${edge.id}`} markerHeight="8" markerWidth="8" orient={cardinalStartAngle ?? "auto-start-reverse"} refX="7" refY="4"><path d="M 0 0 L 8 4 L 0 8 z" fill="currentColor" /></marker>
+          <marker id={`edge-arrow-end-${edge.id}`} markerHeight="8" markerWidth="8" orient={cardinalEndAngle ?? "auto"} refX="7" refY="4"><path d="M 0 0 L 8 4 L 0 8 z" fill={edgeColor} /></marker>
+          <marker id={`edge-arrow-start-${edge.id}`} markerHeight="8" markerWidth="8" orient={cardinalStartAngle ?? "auto-start-reverse"} refX="7" refY="4"><path d="M 0 0 L 8 4 L 0 8 z" fill={edgeColor} /></marker>
         </defs>
         {d ? <>
           <motion.path 
@@ -161,14 +166,14 @@ export function EdgeLayer({ activeToolId, edgeDrag, edgeTool, encounter, getDisp
             aria-label={`${edge.directionality} edge from ${from.name} to ${to.name}`} 
             className={
               `${preview ? "pointer-events-none opacity-60" : "cursor-pointer"} 
-              fill-none ${route.valid ? "text-canvas-ink" : "text-red-600"}`
+              fill-none`
             } 
             data-entity-id={preview ? undefined : edge.id} 
             data-entity-type={preview ? undefined : "edge"} 
             initial={false} 
             markerEnd={`url(#edge-arrow-end-${edge.id})`}
             markerStart={markerStart} 
-            stroke="currentColor" 
+            stroke={edgeColor}
             strokeDasharray={dash} 
             strokeWidth={selected ? 2 : 1} 
           />
@@ -207,9 +212,10 @@ export function EdgeLayer({ activeToolId, edgeDrag, edgeTool, encounter, getDisp
       freePreview = routeToSvgPath(route.path, edgeTool.shape);
     }
   }
+  const edgeColor = getTextColorForLuminance(canvasBackgroundLuminance);
   return <>
     {edges.map((edge) => renderEdge(edge))}
     {activeToolId === "edge" && previewEdge ? renderEdge(previewEdge, true) : null}
-    {freePreview ? <g className="pointer-events-none opacity-60"><defs><marker id="edge-preview-arrow" markerHeight="8" markerWidth="8" orient="auto-start-reverse" refX="7" refY="4"><path d="M 0 0 L 8 4 L 0 8 z" fill="currentColor" /></marker></defs><motion.path className="fill-none text-canvas-ink" d={freePreview} data-edge-free-preview="true" initial={false} markerEnd="url(#edge-preview-arrow)" markerStart={edgeTool.directionality === "bilateral" ? "url(#edge-preview-arrow)" : undefined} stroke="currentColor" strokeDasharray="6 5" strokeWidth={2} /></g> : null}
+    {freePreview ? <g className="pointer-events-none opacity-60"><defs><marker id="edge-preview-arrow" markerHeight="8" markerWidth="8" orient="auto-start-reverse" refX="7" refY="4"><path d="M 0 0 L 8 4 L 0 8 z" fill={edgeColor} /></marker></defs><motion.path className="fill-none" d={freePreview} data-edge-free-preview="true" initial={false} markerEnd="url(#edge-preview-arrow)" markerStart={edgeTool.directionality === "bilateral" ? "url(#edge-preview-arrow)" : undefined} stroke={edgeColor} strokeDasharray="6 5" strokeWidth={2} /></g> : null}
   </>;
 }
