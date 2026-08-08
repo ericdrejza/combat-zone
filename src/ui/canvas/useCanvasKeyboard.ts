@@ -4,6 +4,7 @@ import type { Dispatch } from 'redux';
 import { createEncounterActionRecord } from '@core/history/createEncounterActionRecord';
 import { duplicateActor, deleteActor } from '@entities/actor/actorMutations';
 import { deleteZone } from '@entities/zone/zoneMutations';
+import { deleteEdges } from '@entities/edge/edgeMutations';
 import {
   clearActorPaintBrush,
   clearSelection,
@@ -45,6 +46,20 @@ export function useCanvasKeyboard({
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
       const target = event.target;
+
+      if (
+        event.key === 'Delete' &&
+        selection.selectedEntityType === 'edge' &&
+        selection.selectedIds.length > 0
+      ) {
+        event.preventDefault();
+        dispatch(commitEncounterChange({
+          action: createEncounterActionRecord('edge.delete', { edgeIds: selection.selectedIds }),
+          nextEncounter: deleteEdges(encounter, selection.selectedIds)
+        }));
+        dispatch(clearSelection());
+        return;
+      }
 
       if (
         target instanceof HTMLInputElement ||

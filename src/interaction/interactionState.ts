@@ -13,6 +13,16 @@ import type {
 } from './selection/types';
 import { canToolSelectEntityType, type ToolId } from './tools/toolRegistry';
 import type { ZoneShape } from '@entities/zone/types';
+import {
+  DEFAULT_EDGE_PRESET,
+  type EdgePreset
+} from '@entities/edge/edgeMutations';
+import type {
+  EdgeDirectionality,
+  EdgeMovementRule,
+  EdgeShape,
+  EdgeVisibilityRule
+} from '@entities/edge/types';
 
 export type BoxSelection = {
   start: {
@@ -53,6 +63,7 @@ export type InteractionState = {
   actorTool: ActorToolState;
   activeToolId: ToolId;
   dragActionPreview: 'engage' | 'disengage' | null;
+  edgeTool: EdgePreset;
   selection: SelectionState;
   draft: InteractionDraftState;
   contextualActionRequest: ContextualActionRequest | null;
@@ -91,6 +102,7 @@ const initialState: InteractionState = {
   },
   activeToolId: 'zone',
   dragActionPreview: null,
+  edgeTool: DEFAULT_EDGE_PRESET,
   selection: initialSelection,
   draft: initialDraft,
   contextualActionRequest: null,
@@ -178,6 +190,23 @@ export const interactionSlice = createSlice({
     setZoneShapeMode(state, { payload }: PayloadAction<ZoneShape>) {
       state.zoneShapeMode = payload;
       state.draft.polygonPointIds = [];
+    },
+    setEdgeDirectionality(state, { payload }: PayloadAction<EdgeDirectionality>) {
+      state.edgeTool.directionality = payload;
+    },
+    setEdgeVisibilityRule(state, { payload }: PayloadAction<EdgeVisibilityRule>) {
+      state.edgeTool.visibilityRule = payload;
+    },
+    setEdgeShape(state, { payload }: PayloadAction<EdgeShape>) {
+      state.edgeTool.shape = payload;
+    },
+    toggleEdgeMovementRule(state, { payload }: PayloadAction<EdgeMovementRule>) {
+      state.edgeTool.movementRules = state.edgeTool.movementRules.includes(payload)
+        ? state.edgeTool.movementRules.filter((rule) => rule !== payload)
+        : [...state.edgeTool.movementRules, payload];
+    },
+    resetEdgePreset(state) {
+      state.edgeTool = DEFAULT_EDGE_PRESET;
     },
     setLastZoneOpacity(state, { payload }: PayloadAction<number>) {
       state.lastZoneOpacity = payload;
@@ -308,9 +337,14 @@ export const {
   selectEntity,
   setActiveTool,
   setDragActionPreview,
+  setEdgeDirectionality,
+  setEdgeShape,
+  setEdgeVisibilityRule,
   setLastZoneOpacity,
   setPolygonDraftPointIds,
   setZoneShapeMode,
+  resetEdgePreset,
+  toggleEdgeMovementRule,
   toggleZonePaintBrush,
   toggleActorPaintBrush,
   startBoxSelection,

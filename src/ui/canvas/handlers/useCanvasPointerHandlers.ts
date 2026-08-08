@@ -26,10 +26,13 @@ export function useCanvasPointerHandlers(input: PointerHandlerInput) {
     boxSelection,
     canvasRef,
     dispatch,
+    edgeDrag,
+    edgeTool,
     encounter,
     selection,
     setActorDrag,
     setBoxSelection,
+    setEdgeDrag,
     setShapeDraft,
     setVertexDrag,
     setZoneDraftPoints,
@@ -78,6 +81,18 @@ export function useCanvasPointerHandlers(input: PointerHandlerInput) {
       return;
     }
 
+    if (edgeDrag) {
+      const target = event.target as Element;
+      const zoneElement = target.closest<SVGElement>('[data-entity-type="zone"]');
+      const targetZoneId = zoneElement?.dataset.entityId;
+      setEdgeDrag({
+        ...edgeDrag,
+        current: toSvgPoint(event, event.currentTarget),
+        targetZoneId: targetZoneId !== edgeDrag.sourceZoneId ? targetZoneId : undefined
+      });
+      return;
+    }
+
     if (shapeDraft) {
       setShapeDraft({
         ...shapeDraft,
@@ -119,6 +134,13 @@ export function useCanvasPointerHandlers(input: PointerHandlerInput) {
       | SelectableEntityType
       | undefined;
     const point = toSvgPoint(event, event.currentTarget);
+
+    if (activeToolId === 'edge' && entityType === 'zone' && entityId) {
+      event.preventDefault();
+      dispatch(clearSelection());
+      setEdgeDrag({ current: point, sourceZoneId: entityId, start: point });
+      return;
+    }
 
     if (
       !entityId &&
@@ -278,6 +300,22 @@ export function useCanvasPointerHandlers(input: PointerHandlerInput) {
   }
 
   function handleCanvasMouseUp() {
+    if (edgeDrag) {
+      const targetZoneId = edgeDrag.targetZoneId;
+      setEdgeDrag(null);
+      if (targetZoneId) {
+        void import('../edges/edgeCreationActions').then(({ commitEdgeDrag }) =>
+          commitEdgeDrag({
+            dispatch,
+            encounter,
+            fromZoneId: edgeDrag.sourceZoneId,
+            preset: edgeTool,
+            toZoneId: targetZoneId
+          })
+        );
+      }
+      return;
+    }
     if (actorDrag?.hasMoved || zoneDrag?.hasMoved || vertexDrag?.hasMoved) {
       return;
     }

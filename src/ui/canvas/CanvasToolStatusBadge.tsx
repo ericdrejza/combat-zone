@@ -1,6 +1,7 @@
 type CanvasToolStatusBadgeProps = {
   actorNames: string[];
   activeToolId: string;
+  edgeStatuses: string[];
   zoneStatuses: string[];
   zoneShapeMode: string;
 };
@@ -8,6 +9,7 @@ type CanvasToolStatusBadgeProps = {
 export function CanvasToolStatusBadge({
   actorNames,
   activeToolId,
+  edgeStatuses,
   zoneStatuses,
   zoneShapeMode
 }: CanvasToolStatusBadgeProps) {
@@ -20,10 +22,16 @@ export function CanvasToolStatusBadge({
     zoneStatuses.length > 0
       ? zoneStatuses.join("; ")
       : null;
+  const edgeStatus =
+    (activeToolId === "edge" || activeToolId === "select") &&
+    edgeStatuses.length > 0
+      ? edgeStatuses.join("; ")
+      : null;
 
   const info =
     actorStatus ??
     zoneStatus ??
+    edgeStatus ??
     (activeToolId === "zone" ? `Zone shape: ${zoneShapeMode}` : null);
 
   return (

@@ -7,6 +7,13 @@ import type { RootState } from '@store/store';
 import type { ActorRenderPlacement } from './actors/actorCanvasLayout';
 import type { LocalBoxSelectionState } from './zones/zoneGeometry';
 
+export type EdgeDragState = {
+  current: LayoutPoint;
+  sourceZoneId: string;
+  start: LayoutPoint;
+  targetZoneId?: string;
+};
+
 export type VertexDragState = {
   hasMoved: boolean;
   handleStart: LayoutPoint;
@@ -77,10 +84,13 @@ export type CanvasInteractionState = {
   canvasRef: MutableRefValue<SVGSVGElement | null>;
   dispatch: AppDispatch;
   encounter: RootState['encounter']['present'];
+  edgeDrag: EdgeDragState | null;
+  edgeTool: RootState['interaction']['edgeTool'];
   lastZoneOpacity: RootState['interaction']['lastZoneOpacity'];
   selection: RootState['interaction']['selection'];
   setActorDrag: Dispatch<SetStateAction<ActorDragState | null>>;
   setBoxSelection: Dispatch<SetStateAction<LocalBoxSelectionState | null>>;
+  setEdgeDrag: Dispatch<SetStateAction<EdgeDragState | null>>;
   setShapeDraft: Dispatch<SetStateAction<ShapeDraftState | null>>;
   setVertexDrag: Dispatch<SetStateAction<VertexDragState | null>>;
   setZoneDraftPoints: Dispatch<SetStateAction<LayoutPoint[]>>;
