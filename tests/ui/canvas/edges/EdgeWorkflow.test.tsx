@@ -145,6 +145,56 @@ describe("Edge workflow", () => {
     expect(status).not.toHaveTextContent("curved");
   });
 
+  it("edits discrete interaction tags and exposes tag and note details on the Edge", async () => {
+    const user = userEvent.setup();
+    renderApp();
+    act(seedTwoZones);
+    const created = createOrReplaceEdge(store.getState().encounter.present, {
+      ...DEFAULT_EDGE_PRESET,
+      fromZoneId: "source",
+      id: "metadata",
+      toZoneId: "target"
+    }).nextEncounter;
+    act(() => {
+      store.dispatch(commitEncounterChange({
+        action: createEncounterActionRecord("test.edgeMetadata"),
+        nextEncounter: created
+      }));
+      store.dispatch(setActiveTool("edge"));
+      store.dispatch(selectEntity({ entityType: "edge", ids: ["metadata"] }));
+    });
+
+    const properties = screen.getByLabelText("Properties panel");
+    const tagInput = within(properties).getByRole("textbox", { name: "Add interaction tag" });
+    await user.type(tagInput, "locked{Enter}arcane{Enter}");
+    await waitFor(() => expect(store.getState().encounter.present.edges.byId.metadata?.interactionTags).toEqual(["locked", "arcane"]));
+    expect(within(properties).getByRole("button", { name: "Remove tag locked" })).toHaveTextContent("locked");
+    expect(within(properties).getByRole("button", { name: "Remove tag locked" }).querySelector(".lucide-x")).toHaveClass("opacity-0", "group-hover:opacity-100");
+
+    const notes = within(properties).getByRole("textbox", { name: "Notes" });
+    await user.type(notes, "Requires a silver key");
+    await user.tab();
+    await waitFor(() => expect(store.getState().encounter.present.edges.byId.metadata?.notes).toBe("Requires a silver key"));
+
+    const canvas = getCanvas();
+    const badgeIcons = [...canvas.querySelectorAll<SVGGElement>("[data-edge-badge-icon]")];
+    expect(badgeIcons.map((icon) => icon.getAttribute("aria-label"))).toEqual(["Tags", "Notes"]);
+    const tagHitTarget = badgeIcons[0]?.querySelector("[data-edge-badge-hit-target]");
+    const notesHitTarget = badgeIcons[1]?.querySelector("[data-edge-badge-hit-target]");
+    expect(tagHitTarget).toHaveAttribute("width", "18");
+    fireEvent.pointerEnter(tagHitTarget!);
+    const tagsTooltip = within(canvas).getByRole("tooltip", { name: "Tags tooltip" });
+    expect(tagsTooltip).toHaveTextContent("locked");
+    expect(tagsTooltip).toHaveTextContent("arcane");
+    expect(within(tagsTooltip).queryByRole("button")).not.toBeInTheDocument();
+    fireEvent.pointerLeave(tagHitTarget!);
+    fireEvent.pointerEnter(notesHitTarget!);
+    expect(within(canvas).getByRole("tooltip", { name: "Notes tooltip" })).toHaveTextContent("Requires a silver key");
+
+    await user.click(within(properties).getByRole("button", { name: "Remove tag locked" }));
+    await waitFor(() => expect(store.getState().encounter.present.edges.byId.metadata?.interactionTags).toEqual(["arcane"]));
+  });
+
   it("tracks the cursor immediately before snapping to a target Zone", async () => {
     const user = userEvent.setup();
     renderApp();

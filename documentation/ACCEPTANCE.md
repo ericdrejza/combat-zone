@@ -264,6 +264,9 @@ covers `DESIGN.md` §15 "Must have" scope only.
 - [x] Rendered Edge rule icons have tooltips of at most two words, and a
       selected Edge's canvas status badge shows source, target, movement,
       visibility, tags, and notes without shape.
+- [x] Edge interaction tags are Enter-created removable pills in Properties.
+      Tagged Edges show a tag icon with a read-only, canvas-contrast pill
+      tooltip; noted Edges show an info icon last with the note tooltip.
 - [x] GM can batch-edit selected Edge rules/shape, delete selected Edges, reset
       the sticky toolbar preset, and clear all Edges through confirmation.
 - [x] Deleting either connected zone auto-deletes the edge as part of the
