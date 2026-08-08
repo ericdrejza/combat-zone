@@ -296,7 +296,9 @@ Unrelated Edges may cross, while coincident
 segments are discouraged. Existing unroutable Edges retain their last valid
 route with a warning; a newly unroutable Edge shows endpoint warnings without
 a path. These warnings are non-blocking rendering diagnostics, not graph
-validity.
+validity. Valid Edge paths, arrowheads, and transient creation previews use
+the canvas background luminance to choose readable dark ink or white. Red
+route diagnostics remain red regardless of the canvas luminance.
 
 ### 4.6 Annotation
 
