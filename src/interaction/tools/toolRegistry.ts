@@ -51,8 +51,8 @@ export const MVP_TOOLS: ToolDefinition[] = [
     tooltip: "Create directional zone relationships.",
     contract: {
       selectableEntityTypes: ["edge"],
-      dragBehavior: "Create or adjust edge relationships in later roadmap work.",
-      clickBehavior: "Select edges before edge creation behavior is implemented.",
+      dragBehavior: "Drag from a source zone to a target zone to create or replace an edge.",
+      clickBehavior: "Select an edge for inspection and editable properties.",
       keyboardShortcut: "e"
     }
   },

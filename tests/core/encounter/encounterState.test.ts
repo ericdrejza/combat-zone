@@ -122,9 +122,10 @@ const towerEdge: Edge = {
   id: 'edge-courtyard-tower',
   fromZoneId: 'zone-courtyard',
   toZoneId: 'zone-tower',
-  directionality: 'two-way',
-  movementRule: 'free',
-  visibilityRule: 'clear',
+  directionality: 'bilateral',
+  movementRules: [],
+  visibilityRule: 'visible',
+  shape: 'straight',
   interactionTags: ['stairs'],
   notes: 'Stone stairs connect the spaces.'
 };
@@ -228,9 +229,10 @@ describe('EncounterState foundation', () => {
     expect(state.edges.byId['edge-courtyard-tower']).toMatchObject({
       fromZoneId: 'zone-courtyard',
       toZoneId: 'zone-tower',
-      directionality: 'two-way',
-      movementRule: 'free',
-      visibilityRule: 'clear'
+      directionality: 'bilateral',
+      movementRules: [],
+      visibilityRule: 'visible',
+      shape: 'straight'
     });
   });
 

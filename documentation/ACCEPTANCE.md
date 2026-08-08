@@ -227,14 +227,43 @@ covers `DESIGN.md` §15 "Must have" scope only.
 
 ## Edges (basic graph)
 
-- [ ] GM can create a directional edge between two zones with the Edge Tool.
-- [ ] Edge directionality (one-way / two-way) is settable and visually
-      distinguishable.
-- [ ] Edge movement rule (free / blocked / skillCheck / difficult) is
-      settable via Properties Panel.
-- [ ] Edge visibility rule (clear / obscured / blocked / oneWay) is settable
-      via Properties Panel.
-- [ ] Deleting either connected zone auto-deletes the edge as part of the
+- [x] GM can drag from a source Zone to a target Zone with the Edge Tool to
+      create a bilateral or unilateral Edge.
+- [x] A Zone pair supports one bilateral Edge and one unilateral Edge in each
+      direction; dragging into an occupied slot replaces it in one history
+      entry, while an identical preset only selects it.
+- [x] Edge directionality is visually distinguishable with target or
+      bidirectional arrowheads and cannot be edited after creation.
+- [x] Edge movement rules (`blocked`, `skillCheck`, `difficult`) are
+      independently settable via the toolbar and Properties Panel; an empty
+      selection means unrestricted movement.
+- [x] Edge visibility (`visible`, `obscured`, `hidden`) and shape (`straight`,
+      `rightAngled`, `curved`, `sigmoid`) are settable and visually distinct.
+      Visible has no redundant path icon; obscured uses dashed-eye, hidden uses
+      eye-off, and difficult movement uses chevrons-down consistently.
+      Shape is an icon radio group in the toolbar and Properties Panel using
+      move-right, corner-down-right, spline, and activity respectively.
+- [x] Right-angled Edge arrows are cardinal and follow the dominant direction
+      of their local endpoint path segment. Orthogonally facing Zones use a
+      straight shortest span unless an obstacle requires 90-degree turns.
+      Routing minimizes turns before length, and an unobstructed route has at
+      most one turn.
+- [x] Curved Edges scale curvature with distance and follow obstacle routing;
+      their concavity follows relative Zone position and initially progresses
+      toward an unobstructed target.
+- [x] Edge routes use derived boundary anchors, avoid Zones, update while Zones
+      move, keep 12px preferred obstacle clearance, and separate same-pair
+      lanes and boundary anchors. Rule badges stay around the traveled-path
+      midpoint rather than overlapping a Zone. Routing geometry is not
+      persisted. A target-snapped creation preview participates in pair-lane
+      spacing and cannot hide behind another Edge; occupied-slot previews keep
+      that slot's lane.
+- [x] Rendered Edge rule icons have tooltips of at most two words, and a
+      selected Edge's canvas status badge shows source, target, movement,
+      visibility, tags, and notes without shape.
+- [x] GM can batch-edit selected Edge rules/shape, delete selected Edges, reset
+      the sticky toolbar preset, and clear all Edges through confirmation.
+- [x] Deleting either connected zone auto-deletes the edge as part of the
       same Redux history entry (single undo restores both).
 
 ## Initiative tracker

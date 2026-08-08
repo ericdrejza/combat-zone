@@ -221,6 +221,16 @@ export function formatCommittedEncounterAction(
       return `${listNames(namesForActorIds(engagementActorIds(action, snapshots), snapshots))} moved to ${destinationName(action, snapshots)}.`;
     case "engagement.update":
       return `Updated the engagement for ${listNames(namesForActorIds(engagementActorIds(action, snapshots), snapshots))}${changedPropertyNames(action).length > 0 ? `: ${listNames(changedPropertyNames(action))}` : ""}.`;
+    case "edge.create":
+      return `Created an edge between ${listNames(namesForZoneIds([stringValue(action.payload.fromZoneId), stringValue(action.payload.toZoneId)].filter((id): id is string => Boolean(id)), snapshots))}.`;
+    case "edge.replace":
+      return `Replaced the edge between ${listNames(namesForZoneIds([stringValue(action.payload.fromZoneId), stringValue(action.payload.toZoneId)].filter((id): id is string => Boolean(id)), snapshots))}.`;
+    case "edge.updateProperties":
+      return `Updated ${stringValues(action.payload.edgeIds).length || 1} edge${stringValues(action.payload.edgeIds).length === 1 ? "" : "s"}.`;
+    case "edge.delete":
+      return `Deleted ${stringValues(action.payload.edgeIds).length || 1} edge${stringValues(action.payload.edgeIds).length === 1 ? "" : "s"}.`;
+    case "edge.clearAll":
+      return `Cleared ${stringValues(action.payload.edgeIds).length} edges.`;
     case "background.add": {
       const name =
         objectStringValue(action.payload.backgroundImage, "name") ??
@@ -254,7 +264,7 @@ export function createCommittedEncounterLogEntry(
     category: getEncounterLogCategory(action.type),
     id: `${action.id}:commit`,
     kind: "commit",
-    message: formatCommittedEncounterAction(action, snapshots),
+    message: `${formatCommittedEncounterAction(action, snapshots)}${action.validationResult?.messages.length ? ` Warning: ${action.validationResult.messages.map(({ message }) => message).join(" ")}` : ""}`,
     timestamp: action.timestamp
   };
 }

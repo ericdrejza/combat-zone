@@ -233,21 +233,70 @@ Properties:
 
 - fromZoneId
 - toZoneId
-- directionality (one-way / two-way)
-- movementRule:
-  - free
+- directionality (bilateral / unilateral)
+- movementRules[] (empty means unrestricted):
   - blocked
   - skillCheck
   - difficult
 - visibilityRule:
-  - clear
+  - visible
   - obscured
-  - blocked
-  - oneWay
+  - hidden
+- shape:
+  - straight
+  - rightAngled
+  - curved
+  - sigmoid
 - interactionTags[] (free-form)
 - notes
 
-Edges are graph-first, geometry-independent.
+Edges are graph-first and geometry-independent. Geometry, boundary anchors,
+lane offsets, and paths are derived render state and are never persisted on an
+Edge. A zone pair supports at most one bilateral Edge and one unilateral Edge
+in each direction. When all three exist, the bilateral route renders between
+the two unilateral routes.
+
+The Edge Tool creates relationships by dragging from the source Zone to the
+target Zone. Its sticky preset defaults to bilateral, unrestricted movement,
+visible, and straight. Dragging into an occupied pair slot replaces that Edge;
+dragging an identical preset into the slot selects the existing Edge without a
+history entry. Endpoints and directionality are immutable after creation.
+Shape is an icon radio group in both the toolbar and Edge Properties: Lucide
+MoveRight for straight, CornerDownRight for right-angled, Spline for curved,
+and Activity for sigmoid.
+
+Rendered routes attach to the closest available derived boundary anchors and
+prefer the shortest collision-free path. Multiple Edges in a Zone pair use
+distinct boundary anchors as well as distinct lanes. They keep 12px from
+non-participating Zones and same-pair lanes keep 12px between centerlines.
+Target-snapped creation previews participate in this lane layout, temporarily
+spacing established pair Edges so the preview remains distinguishable. A
+preview replacing an occupied pair slot retains that slot's lane.
+Clearance may reduce to zero in tight passages, but routes never intentionally
+cross a Zone. Rule badges sit around the traveled-path midpoint, away from Zone
+boundaries. Each rendered rule icon has a tooltip of at most two words. Visible
+is the assumed visibility and has no path icon; obscured uses the Lucide
+dashed-eye icon, hidden uses eye-off, and difficult movement uses
+chevrons-down. Routes update while Zones move. The free drag preview
+tracks the pointer without path interpolation; snapping to a target Zone keeps
+the established transition. Right-angled endpoint arrows follow their local
+path segment, quantized to its dominant axis: a segment moving farther right
+than vertically points right, with equivalent behavior in the other three
+cardinal directions. When facing Zone sides have horizontal or vertical
+overlap, the route uses that shortest orthogonal span. A right-angled route
+stays straight on a clear orthogonal span, but introduces 90-degree turns when
+another Zone blocks it. Right-angle routing minimizes its number of turns
+before comparing route length; without obstacles it has at most one turn.
+Direct curved routes scale their bend by distance and choose concavity from
+the target's relative position so their initial tangent progresses toward the
+target; routed obstacle waypoints guide curves around intervening Zones.
+When an Edge is selected, the canvas status badge summarizes its source,
+target, movement and visibility selections, tags, and notes, without shape.
+Unrelated Edges may cross, while coincident
+segments are discouraged. Existing unroutable Edges retain their last valid
+route with a warning; a newly unroutable Edge shows endpoint warnings without
+a path. These warnings are non-blocking rendering diagnostics, not graph
+validity.
 
 ### 4.6 Annotation
 

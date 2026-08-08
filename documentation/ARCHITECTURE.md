@@ -54,4 +54,7 @@ inventing a variant schema.
 - **Edges are graph objects, not geometry.** Do not derive edge validity or
   behavior from canvas coordinates or polygon adjacency — edges are
   explicit directional relationships with their own rules
-  (`documentation/DESIGN.md` §4.5).
+  (`documentation/DESIGN.md` §4.5). Edge paths, boundary anchors, lane offsets,
+  and routing failures are derived render state. A non-persisted route cache
+  may reuse a working path across replacement, undo, and Zone movement, but it
+  must never become an authoritative EncounterState fact.

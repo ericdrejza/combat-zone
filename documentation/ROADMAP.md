@@ -9,24 +9,6 @@ To reference completed items, see `ROADMAP_COMPLETE.md`.
 
 After completing a numbered section (## X.), move the completed section to the end of `ROADMAP_COMPLETE.md`
 
-## 11. Edges: Basic Zone Graph
-
-- [ ] Implement directional Edge creation between zones with the Edge Tool.
-- [ ] Implement visual distinction for edge directionality.
-  - One-way
-  - Two-way
-- [ ] Add Edge properties editing.
-  - Directionality
-  - Movement rule: `free`, `blocked`, `skillCheck`, `difficult`
-  - Visibility rule: `clear`, `obscured`, `blocked`, `oneWay`
-  - Interaction tags
-  - Notes
-- [ ] Ensure edges remain graph-first and geometry-independent.
-- [ ] Ensure deleting either connected zone auto-deletes the edge as part of
-  the same reversible history entry.
-- [ ] Add Vitest coverage for create, edit, delete, cascading zone delete,
-  undo, and redo.
-
 ## 12. Initiative Tracker
 
 - [ ] Implement Initiative Panel.
