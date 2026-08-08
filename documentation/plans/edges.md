@@ -82,6 +82,9 @@ must be updated if an approved Edge behavior changes.
   both preview and established Edges remain distinct. A preview replacing an
   occupied slot uses that existing slot's lane.
 - Give every rendered movement/visibility icon a tooltip of at most two words.
+- Edit interaction tags as discrete Enter-created removable pills. Show tag
+  and trailing note icons on an Edge when populated; their hover tooltips show
+  read-only canvas-contrast tag pills and note contents respectively.
   When selected, summarize the Edge's source, target, movement, visibility,
   tags, and notes in the canvas status badge; omit shape.
 - Keep a non-persisted route cache keyed by pair slot and Zone geometry
