@@ -14,6 +14,7 @@ import type {
   ActorDragStartEvent,
   ActorDragState,
   EngagementDragState,
+  EdgeDragState,
   ShapeDraftState,
   ZoneDragState
 } from "./canvasInteractionTypes";
@@ -30,6 +31,8 @@ import { ZoneLayer } from "./zones/ZoneLayer";
 import { EngagementLayer } from './engagements/EngagementLayer';
 import type { ActorRenderPlacement } from "./actors/actorCanvasLayout";
 import type { ActorPlacementTranslation } from "./actors/actorPlacementTranslation";
+import { EdgeLayer } from "./edges/EdgeLayer";
+import type { EdgePreset } from "@entities/edge/edgeMutations";
 
 type CanvasWorkspaceProps = {
   activeToolId: RootState["interaction"]["activeToolId"];
@@ -43,6 +46,8 @@ type CanvasWorkspaceProps = {
   canvasRef: { current: SVGSVGElement | null };
   directManipulationZoneId: string | null;
   encounter: RootState["encounter"]["present"];
+  edgeDrag: EdgeDragState | null;
+  edgeTool: EdgePreset;
   actorRenderPlacements: ActorRenderPlacement[];
   zoneActorTranslation: ActorPlacementTranslation | null;
   getDisplayedPolygon: (zone: Zone) => LayoutPoint[];
@@ -103,6 +108,8 @@ export function CanvasWorkspace({
   canvasRef,
   directManipulationZoneId,
   encounter,
+  edgeDrag,
+  edgeTool,
   getDisplayedPolygon,
   onActorDrag,
   onActorDragEnd,
@@ -185,6 +192,16 @@ export function CanvasWorkspace({
                 onZoneMotionComplete={onZoneMotionComplete}
                 selection={selection}
                 zoneDrag={zoneDrag}
+              />
+            ) : null}
+            {layer.id === "edges" ? (
+              <EdgeLayer
+                activeToolId={activeToolId}
+                edgeDrag={edgeDrag}
+                edgeTool={edgeTool}
+                encounter={encounter}
+                getDisplayedPolygon={getDisplayedPolygon}
+                selection={selection}
               />
             ) : null}
             {layer.id === 'engagements' ? (

@@ -80,9 +80,10 @@ const connectedEdge: Edge = {
   id: 'edge-room-hall',
   fromZoneId: zone.id,
   toZoneId: 'zone-hall',
-  directionality: 'two-way',
-  movementRule: 'free',
-  visibilityRule: 'clear',
+  directionality: 'bilateral',
+  movementRules: [],
+  visibilityRule: 'visible',
+  shape: 'straight',
   interactionTags: []
 };
 

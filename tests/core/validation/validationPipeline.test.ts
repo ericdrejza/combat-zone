@@ -313,9 +313,10 @@ describe('validation pipeline', () => {
       id: 'edge-broken',
       fromZoneId: 'zone-courtyard',
       toZoneId: 'zone-missing',
-      directionality: 'two-way',
-      movementRule: 'free',
-      visibilityRule: 'clear',
+      directionality: 'bilateral',
+      movementRules: [],
+      visibilityRule: 'visible',
+      shape: 'straight',
       interactionTags: []
     };
     const brokenEngagement: Engagement = {

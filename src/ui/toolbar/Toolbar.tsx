@@ -10,6 +10,7 @@ import { ZoneToolButton } from "./zone/ZoneToolButton";
 import { MotionPreferenceWarning } from "./MotionPreferenceWarning";
 import { EngageActionButton } from './EngageActionButton';
 import { DisengageActionButton } from './DisengageActionButton';
+import { EdgeToolButton } from './edge/EdgeToolButton';
 
 type ToolbarProps = {
   onActorToolSelected: () => void;
@@ -24,6 +25,7 @@ export function Toolbar({ onActorToolSelected, onOpenLibrary }: ToolbarProps) {
   const zoneShapeMode = useSelector(
     (state: RootState) => state.interaction.zoneShapeMode
   );
+  const edgeTool = useSelector((state: RootState) => state.interaction.edgeTool);
   function renderTool(item: (typeof TOOLBAR_ITEMS)[number]) {
     if (item.type === "separator") {
       return (
@@ -69,6 +71,10 @@ export function Toolbar({ onActorToolSelected, onOpenLibrary }: ToolbarProps) {
           tool={tool}
         />
       );
+    }
+
+    if (tool.id === "edge") {
+      return <EdgeToolButton key={tool.id} activeToolId={activeToolId} edgeTool={edgeTool} encounter={encounter} tool={tool} />;
     }
 
     return (

@@ -6,7 +6,7 @@ import type { Edge } from "@entities/edge/types";
 import type { Engagement } from "@entities/engagement/types";
 import type { Zone } from "@entities/zone/types";
 
-export const ENCOUNTER_SCHEMA_VERSION = 1;
+export const ENCOUNTER_SCHEMA_VERSION = 2;
 export const ZONELESS_ACTOR_ZONE_ID = "zoneless";
 
 export type EncounterSchemaVersion = typeof ENCOUNTER_SCHEMA_VERSION;

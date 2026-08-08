@@ -23,6 +23,7 @@ import { subscribeToActorPlacementWorker } from "./actors/actorPlacementWorkerCl
 import type { ActorPlacementTranslation } from "./actors/actorPlacementTranslation";
 import type {
   ActorDragState,
+  EdgeDragState,
   ShapeDraftState,
   VertexDragState,
   ZoneDragState
@@ -38,6 +39,7 @@ import {
   usePolygonDraftBackgroundLuminance
 } from "./useCanvasLuminance";
 import { useDragActionPreview } from './useDragActionPreview';
+import { getEdgeStatusSummary } from "./edges/edgeStatusSummary";
 
 export function CanvasShell() {
   const dispatch = useDispatch<AppDispatch>();
@@ -47,6 +49,7 @@ export function CanvasShell() {
     (state: RootState) => state.interaction.activeToolId
   );
   const actorTool = useSelector((state: RootState) => state.interaction.actorTool);
+  const edgeTool = useSelector((state: RootState) => state.interaction.edgeTool);
   const actorPaintBrush = useSelector(
     (state: RootState) => state.interaction.actorPaintBrush
   );
@@ -61,6 +64,7 @@ export function CanvasShell() {
   );
   const selection = useSelector((state: RootState) => state.interaction.selection);
   const [actorDrag, setActorDrag] = useState<ActorDragState | null>(null);
+  const [edgeDrag, setEdgeDrag] = useState<EdgeDragState | null>(null);
   const [hoveredActorId, setHoveredActorId] = useState<string | null>(null);
   const [zoneDraftPoints, setZoneDraftPoints] = useState<LayoutPoint[]>([]);
   const [shapeDraft, setShapeDraft] = useState<ShapeDraftState | null>(null);
@@ -182,10 +186,13 @@ export function CanvasShell() {
     canvasRef,
     dispatch,
     encounter,
+    edgeDrag,
+    edgeTool,
     lastZoneOpacity,
     selection,
     setActorDrag,
     setBoxSelection,
+    setEdgeDrag,
     setShapeDraft,
     setVertexDrag,
     setZoneDraftPoints,
@@ -247,6 +254,13 @@ export function CanvasShell() {
               : zone.name
           )
       : [];
+  const selectedEdgeStatuses =
+    selection.selectedEntityType === "edge"
+      ? selection.selectedIds
+          .map((edgeId) => encounter.edges.byId[edgeId])
+          .filter((edge): edge is NonNullable<typeof edge> => Boolean(edge))
+          .map((edge) => getEdgeStatusSummary(edge, encounter))
+      : [];
   const isDraggingCanvasEntity = Boolean(
     actorDrag?.phase === "dragging" ||
       zoneDrag?.phase === "dragging" ||
@@ -277,6 +291,8 @@ export function CanvasShell() {
           vertexDrag?.zoneId ?? zoneDrag?.zoneId ?? null
         }
         encounter={encounter}
+        edgeDrag={edgeDrag}
+        edgeTool={edgeTool}
         getDisplayedPolygon={getDisplayedPolygon}
         onActorDrag={handleActorDrag}
         onActorDragEnd={handleActorDragEnd}
@@ -318,6 +334,7 @@ export function CanvasShell() {
       <CanvasToolStatusBadge
         activeToolId={activeToolId}
         actorNames={statusActorNames}
+        edgeStatuses={selectedEdgeStatuses}
         zoneStatuses={selectedZoneStatuses}
         zoneShapeMode={zoneShapeMode}
       />

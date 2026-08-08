@@ -264,3 +264,26 @@
 - [x] Apply Engagement layout strategies to participant CSS layout.
 - [x] Add Vitest coverage for create, join, merge, split/leave,
   auto-dissolve, layout, undo, and redo.
+
+## 11. Edges: Basic Zone Graph
+
+- [x] Implement directional Edge creation between zones with the Edge Tool.
+- [x] Implement visual distinction for edge directionality.
+  - Bilateral
+  - Unilateral
+- [x] Add Edge properties editing.
+  - Read-only directionality and endpoints
+  - Movement rules: `blocked`, `skillCheck`, `difficult`
+  - Visibility rule: `visible`, `obscured`, `hidden`
+  - Shape: `straight`, `rightAngled`, `curved`, `sigmoid`
+  - Interaction tags
+  - Notes
+- [x] Add sticky Edge toolbar presets, reset, occupied-slot replacement, and
+      confirmed clear-all.
+- [x] Route Edges around Zones with derived anchors, lane separation, live
+      Zone-move updates, route caching, and non-blocking routing diagnostics.
+- [x] Ensure edges remain graph-first and geometry-independent.
+- [x] Ensure deleting either connected zone auto-deletes the edge as part of
+      the same reversible history entry.
+- [x] Add Vitest coverage for create, edit, delete, cascading zone delete,
+      undo, and redo.
