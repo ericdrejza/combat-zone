@@ -200,6 +200,7 @@ export function CanvasWorkspace({
                 edgeDrag={edgeDrag}
                 edgeTool={edgeTool}
                 encounter={encounter}
+                canvasBackgroundLuminance={canvasBackgroundLuminance}
                 getDisplayedPolygon={getDisplayedPolygon}
                 selection={selection}
               />
