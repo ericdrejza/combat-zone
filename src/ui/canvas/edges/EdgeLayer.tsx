@@ -1,4 +1,3 @@
-import { Ban, ChevronsDown, Dices, EyeDashed, EyeOff } from "lucide-react";
 import { motion } from "motion/react";
 
 import type { LayoutPoint } from "@core/layout/types";
@@ -11,11 +10,12 @@ import {
   routeEdge,
   routeToSvgPath
 } from "@entities/edge/edgeRouting";
-import type { Edge, EdgeMovementRule } from "@entities/edge/types";
+import type { Edge } from "@entities/edge/types";
 import type { Zone } from "@entities/zone/types";
 import type { RootState } from "@store/store";
 import type { EdgeDragState } from "../canvasInteractionTypes";
 import { getTextColorForLuminance } from "../canvasLuminance";
+import { EdgeBadges } from "./EdgeBadges";
 
 const routeCache = new Map<string, LayoutPoint[]>();
 
@@ -31,45 +31,6 @@ type Props = {
 
 function pairKey(edge: Pick<Edge, "fromZoneId" | "toZoneId">) {
   return [edge.fromZoneId, edge.toZoneId].sort().join("<->");
-}
-
-function movementIcon(rule: EdgeMovementRule) {
-  return rule === "blocked"
-    ? { Icon: Ban, label: "Blocked" }
-    : rule === "skillCheck"
-      ? { Icon: Dices, label: "Skill check" }
-      : { Icon: ChevronsDown, label: "Difficult" };
-}
-
-function EdgeBadges({ edge, point }: { edge: Edge; point: LayoutPoint }) {
-  const visibility = edge.visibilityRule === "obscured"
-    ? { Icon: EyeDashed, label: "Obscured" }
-    : edge.visibilityRule === "hidden"
-      ? { Icon: EyeOff, label: "Hidden" }
-      : undefined;
-  const icons = [
-    ...(visibility ? [visibility] : []),
-    ...edge.movementRules.map(movementIcon)
-  ];
-  if (icons.length === 0) return null;
-  return (
-    <g aria-label={`${edge.visibilityRule} visibility${edge.movementRules.length ? `; ${edge.movementRules.join(", ")}` : ""}`}>
-      <rect className="pointer-events-none" fill="white" height="20" opacity="0.9" rx="10" width={icons.length * 18 + 6} x={point.x - (icons.length * 18 + 6) / 2} y={point.y - 10} />
-      {icons.map(({ Icon, label }, index) => (
-        <g
-          key={label}
-          aria-label={label}
-          className="pointer-events-auto"
-          data-edge-badge-icon="true"
-          data-entity-id={edge.id}
-          data-entity-type="edge"
-        >
-          <title>{label}</title>
-          <Icon aria-hidden="true" height={14} width={14} x={point.x - (icons.length * 18) / 2 + index * 18} y={point.y - 7} />
-        </g>
-      ))}
-    </g>
-  );
 }
 
 export function EdgeLayer({ activeToolId, edgeDrag, edgeTool, encounter, canvasBackgroundLuminance, getDisplayedPolygon, selection }: Props) {
@@ -178,7 +139,7 @@ export function EdgeLayer({ activeToolId, edgeDrag, edgeTool, encounter, canvasB
             strokeWidth={selected ? 2 : 1} 
           />
           {!preview && <path className="cursor-pointer fill-none stroke-transparent" d={d} data-entity-id={edge.id} data-entity-type="edge" strokeWidth={14} />}
-          {badgePoint && !preview ? <EdgeBadges edge={edge} point={badgePoint} /> : null}
+          {badgePoint && !preview ? <EdgeBadges edge={edge} edgeColor={edgeColor} point={badgePoint} /> : null}
         </> : null}
         {
           !route.valid 

@@ -277,7 +277,11 @@ cross a Zone. Rule badges sit around the traveled-path midpoint, away from Zone
 boundaries. Each rendered rule icon has a tooltip of at most two words. Visible
 is the assumed visibility and has no path icon; obscured uses the Lucide
 dashed-eye icon, hidden uses eye-off, and difficult movement uses
-chevrons-down. Routes update while Zones move. The free drag preview
+chevrons-down. Interaction tags are entered individually with Enter and render
+as removable pills in Edge Properties. Edges with tags show a tag icon, while
+Edges with notes show an info icon last in the badge. Hovering these icons
+shows the tag pills or note contents; canvas tag pills use the sampled canvas
+contrast color and are not removable from the canvas. Routes update while Zones move. The free drag preview
 tracks the pointer without path interpolation; snapping to a target Zone keeps
 the established transition. Right-angled endpoint arrows follow their local
 path segment, quantized to its dominant axis: a segment moving farther right
