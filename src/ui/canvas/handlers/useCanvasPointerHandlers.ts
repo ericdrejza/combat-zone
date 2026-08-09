@@ -248,6 +248,15 @@ export function useCanvasPointerHandlers(input: PointerHandlerInput) {
       actorIds: dragActorIds,
       current: point,
       hasMoved: false,
+      originPointsByActorId: Object.fromEntries(
+        dragActorIds.map((dragActorId) => {
+          const placement = input.actorRenderPlacements.find(
+            ({ actor }) => actor.id === dragActorId
+          );
+
+          return [dragActorId, placement?.point ?? point];
+        })
+      ),
       phase: 'dragging',
       start: point
     });

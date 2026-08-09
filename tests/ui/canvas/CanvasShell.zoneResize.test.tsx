@@ -13,6 +13,37 @@ import {
 } from "@tests/ui/renderApp";
 
 describe("CanvasShell zone resizing", () => {
+  it("keeps resize-handle speed synchronized through horizontal letterboxing", async () => {
+    const user = userEvent.setup();
+
+    renderApp();
+    const canvas = getCanvas();
+    mockCanvasBounds(canvas, {
+      height: 640,
+      right: 1200,
+      width: 1200
+    });
+
+    await selectZoneTool(user);
+    createRectangleZone(canvas, { x: 200, y: 80 }, { x: 300, y: 160 });
+
+    const zone = await screen.findByLabelText("Zone 1");
+    const topRightHandle = screen.getByLabelText("Zone 1 vertex 2");
+
+    fireEvent.mouseDown(topRightHandle, {
+      button: 0,
+      clientX: 300,
+      clientY: 80
+    });
+    fireEvent.mouseMove(canvas, { clientX: 340, clientY: 60 });
+    fireEvent.mouseUp(canvas);
+
+    expect(zone).toHaveAttribute(
+      "points",
+      "80,60 220,60 220,160 80,160"
+    );
+  });
+
   it("resizes rectangle zones with connected corners instead of moving one vertex", async () => {
     const user = userEvent.setup();
 

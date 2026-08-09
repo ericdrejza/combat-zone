@@ -194,7 +194,13 @@ export function getActorRenderPlacements(
   return proactiveGeometry.flatMap(
     ({ actorId, engagementTokenPoint, point, radius, sectionPolygon }) => {
     const actor = encounter.actors.byId[actorId];
-    const incomingPoint = getOptimisticActorPlacement(actorId);
+    const optimisticPoint = getOptimisticActorPlacement(actorId);
+    const hasAuthoritativePlacement = Boolean(
+      geometry || (actor && plannedZoneIds.has(actor.currentZoneId))
+    );
+    const incomingPoint = hasAuthoritativePlacement
+      ? optimisticPoint
+      : undefined;
 
     return actor
       ? [

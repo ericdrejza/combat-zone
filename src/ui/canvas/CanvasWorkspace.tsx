@@ -3,7 +3,7 @@ import type {
   MouseEvent,
   MouseEventHandler
 } from "react";
-import { MotionConfig, motion, transformViewBoxPoint } from "motion/react";
+import { MotionConfig, motion } from "motion/react";
 
 import type { LayoutPoint } from "@core/layout/types";
 import type { Zone } from "@entities/zone/types";
@@ -33,6 +33,7 @@ import type { ActorRenderPlacement } from "./actors/actorCanvasLayout";
 import type { ActorPlacementTranslation } from "./actors/actorPlacementTranslation";
 import { EdgeLayer } from "./edges/EdgeLayer";
 import type { EdgePreset } from "@entities/edge/edgeMutations";
+import { createCanvasMotionPointTransform } from "./canvasCoordinates";
 
 type CanvasWorkspaceProps = {
   activeToolId: RootState["interaction"]["activeToolId"];
@@ -58,7 +59,8 @@ type CanvasWorkspaceProps = {
   ) => void;
   onActorDrag: (point: LayoutPoint) => void;
   onActorDragEnd: (event: ActorDragEndEvent) => void;
-  onActorReturnComplete: () => void;
+  onActorIncomingPointCommitted: (actorId: string) => void;
+  onActorReturnComplete: (actorId: string) => void;
   onEngagementDrag: (point: LayoutPoint) => void;
   onEngagementDragEnd: () => void;
   onEngagementDragReturnComplete: () => void;
@@ -114,6 +116,7 @@ export function CanvasWorkspace({
   onActorDrag,
   onActorDragEnd,
   onActorDragStart,
+  onActorIncomingPointCommitted,
   onActorReturnComplete,
   onEngagementDrag,
   onEngagementDragEnd,
@@ -146,7 +149,7 @@ export function CanvasWorkspace({
   onZoneMotionComplete
 }: CanvasWorkspaceProps) {
   return (
-    <MotionConfig transformPagePoint={transformViewBoxPoint(canvasRef)}>
+    <MotionConfig transformPagePoint={createCanvasMotionPointTransform(canvasRef)}>
       <motion.svg
         aria-label="SVG encounter workspace"
         className={`h-full min-h-0 w-full bg-[${CANVAS_BACKGROUND_COLOR}]`}
@@ -225,6 +228,7 @@ export function CanvasWorkspace({
                   onActorDrag={onActorDrag}
                   onActorDragEnd={onActorDragEnd}
                   onActorDragStart={onActorDragStart}
+                  onIncomingPointCommitted={onActorIncomingPointCommitted}
                   onActorReturnComplete={onActorReturnComplete}
                   onActorMouseEnter={onActorMouseEnter}
                   onActorMouseLeave={onActorMouseLeave}

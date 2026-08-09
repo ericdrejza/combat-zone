@@ -167,6 +167,39 @@ describe("CanvasShell zone dragging", () => {
     );
   });
 
+  it("keeps zone drag speed synchronized through horizontal letterboxing", async () => {
+    const user = userEvent.setup();
+
+    renderApp();
+    const canvas = getCanvas();
+    mockCanvasBounds(canvas, {
+      height: 640,
+      right: 1200,
+      width: 1200
+    });
+
+    await selectZoneTool(user);
+    createRectangleZone(canvas, { x: 240, y: 120 }, { x: 340, y: 220 });
+
+    const zone = await screen.findByLabelText("Zone 1");
+    const zoneId = zone.getAttribute("data-entity-id") ?? "";
+    const originalPolygon =
+      store.getState().encounter.present.zones.byId[zoneId]?.polygon ?? [];
+
+    fireEvent.mouseDown(zone, { button: 0, clientX: 290, clientY: 170 });
+    fireEvent.mouseMove(canvas, { clientX: 330, clientY: 195 });
+    fireEvent.mouseUp(canvas);
+
+    expect(
+      store.getState().encounter.present.zones.byId[zoneId]?.polygon
+    ).toEqual(
+      originalPolygon.map((point) => ({
+        x: point.x + 40,
+        y: point.y + 25
+      }))
+    );
+  });
+
   it("rejects zone moves that would drop vertices off screen", async () => {
     const user = userEvent.setup();
 

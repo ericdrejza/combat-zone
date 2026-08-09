@@ -15,11 +15,10 @@ type MotionCoordinates = {
 type ActorMotionTrackProps = {
   children: (
     coordinates: MotionCoordinates,
-    completeTrack: () => void
+    completeTrack: () => "direct-return" | "track" | null
   ) => ReactNode;
   direct: boolean;
   incomingPoint?: LayoutPoint;
-  onIncomingPointCommitted?: () => void;
   target: LayoutPoint;
 };
 
@@ -44,17 +43,23 @@ export function ActorMotionTrack({
   children,
   direct,
   incomingPoint,
-  onIncomingPointCommitted,
   target
 }: ActorMotionTrackProps) {
   const processedIncomingPoint = useRef<LayoutPoint>();
+  const directRef = useRef(direct);
+  const pendingDirectReturnRef = useRef(false);
   const [track, setTrack] = useState<TrackState>(() => ({
     revision: 0,
     target: incomingPoint ?? target
   }));
   const hasNewIncomingPoint =
     Boolean(incomingPoint) &&
-    incomingPoint !== processedIncomingPoint.current;
+    !pointsMatch(incomingPoint, processedIncomingPoint.current);
+
+  if (directRef.current && !direct) {
+    pendingDirectReturnRef.current = true;
+  }
+  directRef.current = direct;
 
   useEffect(() => {
     if (direct) {
@@ -69,7 +74,6 @@ export function ActorMotionTrack({
 
     if (hasNewIncomingPoint && incomingPoint) {
       processedIncomingPoint.current = incomingPoint;
-      onIncomingPointCommitted?.();
       setTrack((current) => ({
         pathStart: incomingPoint,
         revision: current.revision + 1,
@@ -91,7 +95,6 @@ export function ActorMotionTrack({
     direct,
     hasNewIncomingPoint,
     incomingPoint,
-    onIncomingPointCommitted,
     target
   ]);
 
@@ -99,6 +102,8 @@ export function ActorMotionTrack({
     ? target
     : hasNewIncomingPoint && incomingPoint
       ? incomingPoint
+      : pendingDirectReturnRef.current
+        ? target
       : track.pathStart
         ? {
             x: [track.pathStart.x, track.target.x],
@@ -106,14 +111,23 @@ export function ActorMotionTrack({
           }
         : track.target;
 
-  function completeTrack() {
+  function completeTrack(): "direct-return" | "track" | null {
     const completedRevision = track.revision;
+    const completedMotion = track.pathStart
+      ? "track"
+      : pendingDirectReturnRef.current
+        ? "direct-return"
+        : null;
+
+    pendingDirectReturnRef.current = false;
 
     setTrack((current) =>
       current.pathStart && current.revision === completedRevision
         ? { revision: current.revision, target: current.target }
         : current
     );
+
+    return completedMotion;
   }
 
   return children(coordinates, completeTrack);
