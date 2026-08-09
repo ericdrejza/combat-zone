@@ -30,6 +30,18 @@ export function CanvasBackgroundLayer({
           y="0"
         />
       ) : null}
+      <rect
+        aria-hidden="true"
+        className="pointer-events-none fill-none stroke-canvas-line"
+        data-canvas-boundary="true"
+        height={CANVAS_HEIGHT - 2}
+        strokeDasharray="8 8"
+        strokeOpacity="0.8"
+        strokeWidth="2"
+        width={CANVAS_WIDTH - 2}
+        x="1"
+        y="1"
+      />
     </>
   );
 }

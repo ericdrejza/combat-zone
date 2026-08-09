@@ -10,6 +10,7 @@ import {
   CIRCLE_SEGMENTS,
   HEXAGON_SEGMENTS
 } from '../canvasConstants';
+import { clientPointToViewBoxPoint } from '../canvasCoordinates';
 
 export type Bounds = {
   height: number;
@@ -44,19 +45,11 @@ export function toSvgPoint(
   event: Pick<globalThis.MouseEvent, 'clientX' | 'clientY'>,
   svg: SVGSVGElement
 ): LayoutPoint {
-  const bounds = svg.getBoundingClientRect();
-  const width = bounds.width || CANVAS_WIDTH;
-  const height = bounds.height || CANVAS_HEIGHT;
-  const scale = Math.min(width / CANVAS_WIDTH, height / CANVAS_HEIGHT);
-  const renderedWidth = CANVAS_WIDTH * scale;
-  const renderedHeight = CANVAS_HEIGHT * scale;
-  const xOffset = (width - renderedWidth) / 2;
-  const yOffset = (height - renderedHeight) / 2;
-
-  return {
-    x: (event.clientX - bounds.left - xOffset) / scale,
-    y: (event.clientY - bounds.top - yOffset) / scale
-  };
+  return clientPointToViewBoxPoint(
+    { x: event.clientX, y: event.clientY },
+    svg.getBoundingClientRect(),
+    { height: CANVAS_HEIGHT, width: CANVAS_WIDTH }
+  );
 }
 
 export function polygonToPoints(polygon: LayoutPoint[]): string {

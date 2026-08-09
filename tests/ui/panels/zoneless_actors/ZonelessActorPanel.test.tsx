@@ -578,7 +578,8 @@ describe("ZonelessActorPanel", () => {
     expect(dragOverlay).toHaveClass("z-30");
     expect(
       dragOverlay?.querySelector('[data-entity-id="actor-a"]')
-    ).toBeInTheDocument();
+    ).not.toBeInTheDocument();
+    expect(screen.getAllByLabelText("Aegis")).toHaveLength(1);
     fireEvent.mouseUp(panel);
 
     expect(

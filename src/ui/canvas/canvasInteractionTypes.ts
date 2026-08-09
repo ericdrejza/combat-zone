@@ -41,6 +41,8 @@ export type ZoneDragState = {
 export type ActorDragState = {
   actorId: string;
   actorIds: string[];
+  /** Frozen render points keep worker revisions from moving a drag's origin. */
+  originPointsByActorId?: Record<string, LayoutPoint>;
   /** Target actor held for 500ms to explicitly signal create-engagement. */
   engagementIntentActorId?: string;
   /** Existing group held for 500ms to explicitly signal join-engagement. */
@@ -48,6 +50,8 @@ export type ActorDragState = {
   current: LayoutPoint;
   hasMoved: boolean;
   phase: 'dragging' | 'returning';
+  /** Explicit snap-back targets used when a drop does not mutate the encounter. */
+  returnPointsByActorId?: Record<string, LayoutPoint>;
   start: LayoutPoint;
 };
 

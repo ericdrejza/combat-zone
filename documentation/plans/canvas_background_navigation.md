@@ -75,6 +75,12 @@ them only after the relevant implementation has passed its completion checks.
    selection, actor drag, Zone drag, and Zone resize-handle drag.
 4. Keep the existing `960 × 640` encounter canvas, validation rules, history
    behavior, and rendering ownership unchanged in this stage.
+5. Preserve one persistent actor node throughout an actor drop. For a
+   cross-Zone drop, hold that node at the cursor drop point while the
+   authoritative layout is pending, then make one Motion transition to the
+   calculated placement. For a same-Zone drop, make one Motion transition from
+   the drop point back to the frozen original placement. Do not remount the
+   actor or allow a bounce through an intermediate position.
 
 ### Verification
 
@@ -85,6 +91,11 @@ horizontal and vertical workspace margins. Verify:
 - Zone drag commits the displayed SVG-domain vector;
 - actor and resize-handle drags use identical scale/offset behavior;
 - native drop placement shares the conversion; and
+- worker-pending cross-Zone handoff holds one persistent actor at the drop
+  point before one transition to its calculated placement;
+- a cross-Zone drop followed by a same-Zone drop transitions from the latter
+  drop point back to the frozen original placement without remounting or
+  bouncing; and
 - existing containment/validation behavior remains intact.
 
 Run affected tests, `npm run test:agent`, `npm run typecheck`, and the
