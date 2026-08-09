@@ -75,8 +75,6 @@ the design as future or nice-to-have work.
 
 - [ ] Advanced validation behavior beyond MVP plumbing.
 - [ ] Additional layout strategies.
-  - Radial
-  - Stack
   - Manual
 - [ ] Theme expansion beyond light, dark, and system default.
 - [ ] Command palette.
