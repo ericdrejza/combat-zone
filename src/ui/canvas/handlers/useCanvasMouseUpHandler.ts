@@ -393,7 +393,8 @@ export function useCanvasMouseUpHandler(input: MouseUpHandlerInput) {
           !canCommitZonePolygonForCollection(
             nextPolygon,
             encounter.zones,
-            zoneDrag.zoneId
+            zoneDrag.zoneId,
+            encounter.canvasSize
           )
         ) {
           logEncounterValidationFailure(dispatch, encounter, {
@@ -472,7 +473,8 @@ export function useCanvasMouseUpHandler(input: MouseUpHandlerInput) {
       !canCommitZonePolygonForCollection(
         vertexDrag.polygon,
         encounter.zones,
-        vertexDrag.zoneId
+        vertexDrag.zoneId,
+        encounter.canvasSize
       )
     ) {
       logEncounterValidationFailure(dispatch, encounter, {
@@ -518,7 +520,8 @@ export function useCanvasMouseUpHandler(input: MouseUpHandlerInput) {
         !canCommitZonePolygonForCollection(
           committedPolygon,
           encounter.zones,
-          vertexDrag.zoneId
+          vertexDrag.zoneId,
+          encounter.canvasSize
         )
       ) {
         const pipelineRejected = logEncounterValidationBlock(

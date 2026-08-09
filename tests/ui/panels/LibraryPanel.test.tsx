@@ -368,8 +368,10 @@ describe("LibraryPanel", () => {
         uploadImage({
           asset: {
             dataUrl: "data:image/png;base64,battle-map",
+            height: 640,
             mediaType: "image/png",
-            name: "Battle Map"
+            name: "Battle Map",
+            width: 960
           },
           parentId: "backgrounds-root",
           sectionId: "backgrounds"

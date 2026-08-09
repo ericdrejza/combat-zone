@@ -2,6 +2,7 @@ import type { EntityId } from "../state/entityCollection";
 import { createEmptyEntityCollection } from "../state/entityCollection";
 import type { EncounterState } from "./types";
 import { ENCOUNTER_SCHEMA_VERSION } from "./types";
+import { DEFAULT_CANVAS_SIZE } from "@core/layout/polygonCanvasBounds";
 
 export type CreateEncounterStateInput = {
   id: EntityId;
@@ -17,6 +18,7 @@ export function createEncounterState({
     id,
     name,
     backgroundImage: null,
+    canvasSize: { ...DEFAULT_CANVAS_SIZE },
     zones: createEmptyEntityCollection(),
     edges: createEmptyEntityCollection(),
     actors: createEmptyEntityCollection(),

@@ -1,6 +1,19 @@
 import "@testing-library/jest-dom/vitest";
 import { vi } from "vitest";
 
+class TestLoadedImage extends EventTarget {
+  height = 640;
+  naturalHeight = 640;
+  naturalWidth = 960;
+  width = 960;
+
+  set src(_value: string) {
+    queueMicrotask(() => this.dispatchEvent(new Event("load")));
+  }
+}
+
+vi.stubGlobal("Image", TestLoadedImage);
+
 if (!globalThis.PointerEvent) {
   class TestPointerEvent extends MouseEvent {
     readonly isPrimary: boolean;

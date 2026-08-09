@@ -29,8 +29,10 @@ describe("encounter log store", () => {
           ...current,
           backgroundImage: {
             dataUrl: "data:image/png;base64,AA==",
+            height: 100,
             mediaType: "image/png",
-            name: "Battle Map"
+            name: "Battle Map",
+            width: 100
           }
         }
       })

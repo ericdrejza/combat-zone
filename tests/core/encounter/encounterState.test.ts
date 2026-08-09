@@ -177,6 +177,7 @@ describe('EncounterState foundation', () => {
       id: 'encounter-empty',
       name: 'Empty Encounter',
       backgroundImage: null,
+      canvasSize: { height: 640, width: 960 },
       zones: { byId: {}, allIds: [] },
       edges: { byId: {}, allIds: [] },
       actors: { byId: {}, allIds: [] },

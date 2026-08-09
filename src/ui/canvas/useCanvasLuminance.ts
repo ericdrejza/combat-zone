@@ -3,11 +3,8 @@ import { useEffect, useState } from "react";
 import type { LayoutPoint } from "@core/layout/types";
 import type { Zone } from "@entities/zone/types";
 import type { RootState } from "@store/store";
-import {
-  BACKGROUND_SAMPLE_COUNT,
-  CANVAS_HEIGHT,
-  CANVAS_WIDTH
-} from "./canvasConstants";
+import type { CanvasSize } from "@core/layout/polygonCanvasBounds";
+import { BACKGROUND_SAMPLE_COUNT } from "./canvasConstants";
 import {
   createDeterministicSamplePoints,
   drawCanvasBackgroundImage,
@@ -28,7 +25,8 @@ export type CanvasBackgroundLuminance = {
 
 export function useCanvasBackgroundLuminance(
   backgroundImage: BackgroundImage,
-  zones: ZoneCollection
+  zones: ZoneCollection,
+  canvasSize: CanvasSize
 ): CanvasBackgroundLuminance {
   const fallbackLuminance = getFallbackCanvasLuminance();
   const [backgroundLuminance, setBackgroundLuminance] =
@@ -75,8 +73,8 @@ export function useCanvasBackgroundLuminance(
       }
 
       const canvas = document.createElement("canvas");
-      canvas.width = CANVAS_WIDTH;
-      canvas.height = CANVAS_HEIGHT;
+      canvas.width = canvasSize.width;
+      canvas.height = canvasSize.height;
 
       const context = canvas.getContext("2d", { willReadFrequently: true });
 
@@ -88,19 +86,19 @@ export function useCanvasBackgroundLuminance(
         return;
       }
 
-      drawCanvasBackgroundImage(context, image);
+      drawCanvasBackgroundImage(context, image, canvasSize);
 
       const luminanceByZoneId = Object.fromEntries(
         backgroundTextZones.map((zone) => [
           zone.id,
-          sampleZoneBackgroundLuminance(context, zone)
+          sampleZoneBackgroundLuminance(context, zone, canvasSize)
         ])
       );
 
       if (!cancelled) {
         setBackgroundLuminance({
           byZoneId: luminanceByZoneId,
-          canvas: sampleCanvasBackgroundLuminance(context)
+          canvas: sampleCanvasBackgroundLuminance(context, canvasSize)
         });
       }
     });
@@ -109,14 +107,15 @@ export function useCanvasBackgroundLuminance(
     return () => {
       cancelled = true;
     };
-  }, [backgroundImage, zones.allIds, zones.byId]);
+  }, [backgroundImage, canvasSize, zones.allIds, zones.byId]);
 
   return backgroundLuminance;
 }
 
 export function usePolygonDraftBackgroundLuminance(
   backgroundImage: BackgroundImage,
-  zoneDraftPoints: LayoutPoint[]
+  zoneDraftPoints: LayoutPoint[],
+  canvasSize: CanvasSize
 ): number {
   const [polygonDraftBackgroundLuminance, setPolygonDraftBackgroundLuminance] =
     useState(getFallbackCanvasLuminance());
@@ -148,8 +147,8 @@ export function usePolygonDraftBackgroundLuminance(
       }
 
       const canvas = document.createElement("canvas");
-      canvas.width = CANVAS_WIDTH;
-      canvas.height = CANVAS_HEIGHT;
+      canvas.width = canvasSize.width;
+      canvas.height = canvasSize.height;
 
       const context = canvas.getContext("2d", { willReadFrequently: true });
 
@@ -158,13 +157,17 @@ export function usePolygonDraftBackgroundLuminance(
         return;
       }
 
-      drawCanvasBackgroundImage(context, image);
+      drawCanvasBackgroundImage(context, image, canvasSize);
 
       const samplePoints =
         zoneDraftPoints.length >= 3
           ? createDeterministicSamplePoints(zoneDraftPoints, BACKGROUND_SAMPLE_COUNT)
           : zoneDraftPoints;
-      const luminance = getAverageCanvasLuminance(context, samplePoints);
+      const luminance = getAverageCanvasLuminance(
+        context,
+        samplePoints,
+        canvasSize
+      );
 
       if (!cancelled) {
         setPolygonDraftBackgroundLuminance(luminance);
@@ -175,7 +178,7 @@ export function usePolygonDraftBackgroundLuminance(
     return () => {
       cancelled = true;
     };
-  }, [backgroundImage, zoneDraftPoints]);
+  }, [backgroundImage, canvasSize, zoneDraftPoints]);
 
   return polygonDraftBackgroundLuminance;
 }

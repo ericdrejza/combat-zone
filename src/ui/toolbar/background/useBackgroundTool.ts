@@ -6,17 +6,28 @@ import { createEncounterActionRecord } from "@core/history/createEncounterAction
 import { setActiveTool } from "@interaction/interactionState";
 import { commitEncounterChange } from "@store/encounterSlice";
 import { readImageFile } from "./readImageFile";
+import { useCanvasViewport } from "@ui/canvas/CanvasViewportContext";
+import {
+  getActiveBackgroundFitMode,
+  canvasMatchesBackgroundFitMode,
+  getBackgroundFitCanvasSize,
+  scaleCanvasSize,
+  type BackgroundFitMode
+} from "./backgroundSizing";
+import {
+  commitBackgroundImage,
+  commitCanvasResize
+} from "./backgroundCanvasActions";
 
 type BackgroundAction = "add" | "replace";
 
 export function useBackgroundTool(encounter: EncounterState) {
   const dispatch = useDispatch();
+  const { viewportSize } = useCanvasViewport();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [pendingBackgroundAction, setPendingBackgroundAction] =
-    useState<BackgroundAction>("add");
-
-  function requestBackgroundUpload(action: BackgroundAction) {
-    setPendingBackgroundAction(action);
+  const [preferredFitMode, setPreferredFitMode] =
+    useState<BackgroundFitMode | null>("fit");
+  function requestBackgroundUpload(_action: BackgroundAction) {
     fileInputRef.current?.click();
   }
 
@@ -32,22 +43,13 @@ export function useBackgroundTool(encounter: EncounterState) {
     }
 
     const nextBackgroundImage = await readImageFile(file);
-    const actionType =
-      pendingBackgroundAction === "replace"
-        ? "background.replace"
-        : "background.add";
-
-    dispatch(
-      commitEncounterChange({
-        action: createEncounterActionRecord(actionType, {
-          backgroundImage: nextBackgroundImage
-        }),
-        nextEncounter: {
-          ...encounter,
-          backgroundImage: nextBackgroundImage
-        }
-      })
-    );
+    setPreferredFitMode("fit");
+    commitBackgroundImage({
+      backgroundImage: nextBackgroundImage,
+      dispatch,
+      encounter,
+      viewportSize
+    });
     dispatch(setActiveTool("zone"));
   }
 
@@ -67,12 +69,73 @@ export function useBackgroundTool(encounter: EncounterState) {
         }
       })
     );
+    setPreferredFitMode("fit");
   }
 
+  function resizeBackground(mode: BackgroundFitMode) {
+    if (!encounter.backgroundImage) return;
+
+    setPreferredFitMode(mode);
+    const availableSize =
+      viewportSize.width > 0 && viewportSize.height > 0
+        ? viewportSize
+        : encounter.canvasSize;
+    const requestedCanvasSize = getBackgroundFitCanvasSize(
+      encounter.backgroundImage,
+      availableSize,
+      mode
+    );
+    commitCanvasResize({
+      actionType: "canvas.resize",
+      dispatch,
+      encounter,
+      payload: { mode },
+      requestedCanvasSize
+    });
+  }
+
+  function scaleBackground(scale: number) {
+    setPreferredFitMode(null);
+    commitCanvasResize({
+      actionType: "canvas.resize",
+      dispatch,
+      encounter,
+      payload: { scale },
+      requestedCanvasSize: scaleCanvasSize(encounter.canvasSize, scale),
+      requestedZoneScale: scale
+    });
+  }
+
+  const availableSize =
+    viewportSize.width > 0 && viewportSize.height > 0
+      ? viewportSize
+      : encounter.canvasSize;
+  const derivedFitMode = encounter.backgroundImage
+    ? getActiveBackgroundFitMode(
+        encounter.canvasSize,
+        encounter.backgroundImage,
+        availableSize
+      )
+    : null;
+  const activeFitMode =
+    encounter.backgroundImage &&
+    preferredFitMode &&
+    canvasMatchesBackgroundFitMode(
+      encounter.canvasSize,
+      encounter.backgroundImage,
+      availableSize,
+      preferredFitMode
+    )
+      ? preferredFitMode
+      : derivedFitMode;
+
   return {
+    activeFitMode,
     deleteBackground,
     fileInputRef,
     handleBackgroundFileChange,
-    requestBackgroundUpload
+    requestBackgroundUpload,
+    resizeBackground,
+    scaleBackground
   };
 }

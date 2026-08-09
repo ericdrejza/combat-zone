@@ -10,6 +10,7 @@ import { useDispatch, useSelector } from "react-redux";
 
 import { setActorDragImage } from "@core/rendering/actorDragPreview";
 import { createEncounterActionRecord } from "@core/history/createEncounterActionRecord";
+import { readImageAssetDimensions } from "@ui/toolbar/background/readImageFile";
 import { prepareValidatedEncounterChangeForRuntime } from "@core/validation/validatedEncounterChange";
 import { createActor } from "@entities/actor/actorMutations";
 import { clearSelection } from "@interaction/interactionState";
@@ -22,6 +23,8 @@ import type { RootState } from "@store/store";
 import { LIBRARY_NODE_DRAG_TYPE } from "../library/libraryDrag";
 import { getFoldersFirstChildren } from "../library/libraryUi";
 import { LibraryPanelNode } from "./LibraryPanelNode";
+import { commitBackgroundImage } from "@ui/toolbar/background/backgroundCanvasActions";
+import { useCanvasViewport } from "@ui/canvas/CanvasViewportContext";
 
 function getPanelSectionId(activeToolId: ToolId): LibrarySectionId | null {
   if (activeToolId === "actor") {
@@ -88,6 +91,7 @@ export function LibraryPanel({
   viewMode
 }: LibraryPanelProps) {
   const dispatch = useDispatch();
+  const { viewportSize } = useCanvasViewport();
   const encounter = useSelector((state: RootState) => state.encounter.present);
   const library = useSelector((state: RootState) => state.library);
   const activeToolId = useSelector(
@@ -174,18 +178,19 @@ export function LibraryPanel({
       return;
     }
 
-    dispatch(commitEncounterChange({
-      action: createEncounterActionRecord(
-        encounter.backgroundImage ? "background.replace" : "background.add",
-        {
-          backgroundImage: asset
-        }
-      ),
-      nextEncounter: {
-        ...encounter,
-        backgroundImage: asset
-      }
-    }));
+    const commitImage = (backgroundImage: Awaited<ReturnType<typeof readImageAssetDimensions>>) =>
+      commitBackgroundImage({
+        backgroundImage,
+        dispatch,
+        encounter,
+        viewportSize
+      });
+
+    if (asset.width && asset.height) {
+      commitImage({ ...asset, height: asset.height, width: asset.width });
+    } else {
+      void readImageAssetDimensions(asset).then(commitImage);
+    }
   }
 
   function startLibraryDrag(event: DragEvent<HTMLElement>, node: LibraryNode) {

@@ -4,8 +4,10 @@ export type LibraryNodeType = "folder" | "image" | "link";
 
 export type LibraryImageAsset = {
   dataUrl: string;
+  height?: number;
   mediaType: string;
   name: string;
+  width?: number;
 };
 
 export type LibraryNode = {

@@ -106,6 +106,24 @@ covers `DESIGN.md` §15 "Must have" scope only.
 - [x] Native image-drop creation and background changes are undoable and
       redoable as single Redux history entries.
 
+## Canvas background and navigation
+
+- [x] Adding or replacing a background records its intrinsic dimensions,
+      defaults to whole-image fit, preserves aspect ratio, and proportionally
+      scales existing Zone polygons from the top-left origin.
+- [x] Background controls provide dimensions-derived To fit, Fit width, and
+      Fit height radio commands plus 10% Shrink and Expand actions. Shrinking
+      clamps before an existing Zone/actor layout becomes invalid.
+- [x] Canvas-size and background mutations are single undoable/redoable Redux
+      history entries; deleting a background retains the current canvas size.
+- [x] Zoom to fit, Zoom out, and Zoom in affect perception only, preserve the
+      viewed center, stay within 20–400%, and do not create history entries.
+- [x] The canvas scrolls vertically by wheel, horizontally by Shift + wheel,
+      and by arrow keys while focused. Default-enabled, toggleable right-drag
+      panning scrolls both axes and suppresses context actions only after a pan.
+- [x] Drawing, dragging, resizing, selection, overlays, and native drops share
+      the same SVG coordinate transform at every zoom and scroll position.
+
 ## Engagement groups
 
 - [x] Dragging Actor A onto Actor B creates a new Engagement containing
