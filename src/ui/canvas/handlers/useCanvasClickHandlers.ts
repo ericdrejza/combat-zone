@@ -174,7 +174,7 @@ export function useCanvasClickHandlers(input: ClickHandlerInput) {
       closeZoneShapeMenu();
       const nextPoint = toSvgPoint(event, event.currentTarget);
 
-      if (!isPointWithinCanvas(nextPoint)) {
+      if (!isPointWithinCanvas(nextPoint, encounter.canvasSize)) {
         return;
       }
 
@@ -192,7 +192,8 @@ export function useCanvasClickHandlers(input: ClickHandlerInput) {
       const nextPoints = [...zoneDraftPoints, nextPoint];
 
       if (
-        (nextPoints.length >= 3 && !isPolygonWithinCanvas(nextPoints)) ||
+        (nextPoints.length >= 3 &&
+          !isPolygonWithinCanvas(nextPoints, encounter.canvasSize)) ||
         doesZoneOverlapExistingInCollection(nextPoints, encounter.zones)
       ) {
         return;
@@ -252,7 +253,12 @@ export function useCanvasClickHandlers(input: ClickHandlerInput) {
 
     if (
       polygon.length >= 3 &&
-      canCommitZonePolygonForCollection(polygon, encounter.zones)
+      canCommitZonePolygonForCollection(
+        polygon,
+        encounter.zones,
+        undefined,
+        encounter.canvasSize
+      )
     ) {
         void commitZoneCreate(input, polygon, 'polygon');
     } else if (polygon.length >= 3) {

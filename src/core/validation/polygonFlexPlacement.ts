@@ -89,6 +89,14 @@ export function getPolygonFlexAffectedZoneIds(
 ): Set<string> {
   const affectedZoneIds = new Set<string>();
 
+  if (
+    action.type === "canvas.resize" ||
+    action.type === "background.add" ||
+    action.type === "background.replace"
+  ) {
+    nextState.zones.allIds.forEach((zoneId) => affectedZoneIds.add(zoneId));
+  }
+
   if (isEngagementAction(action)) {
     for (const stateToInspect of [state, nextState]) {
       stateToInspect.engagements.allIds.forEach((id) => {

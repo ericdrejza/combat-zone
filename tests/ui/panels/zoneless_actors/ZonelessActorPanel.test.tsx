@@ -76,8 +76,10 @@ function seedEncounter(
   zones: Zone[] = [],
   backgroundImage: {
     dataUrl: string;
+    height: number;
     mediaType: string;
     name: string;
+    width: number;
   } | null = null
 ) {
   store.dispatch(
@@ -306,8 +308,10 @@ describe("ZonelessActorPanel", () => {
         [],
         {
           dataUrl: "data:image/png;base64,dark",
+          height: 100,
           mediaType: "image/png",
-          name: "dark.png"
+          name: "dark.png",
+          width: 100
         }
       );
       store.dispatch(setActiveTool("actor"));

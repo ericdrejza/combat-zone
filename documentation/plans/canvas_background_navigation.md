@@ -13,6 +13,14 @@ Do not update `documentation/DESIGN.md`, `documentation/ACCEPTANCE.md`, or
 `documentation/ROADMAP.md` during this planning/documentation work. Update
 them only after the relevant implementation has passed its completion checks.
 
+## Implementation status
+
+- Stage 1 was completed and passed its required manual browser gate.
+- Stage 2 — persisted canvas bounds and background commands — is implemented.
+- Stage 3 — scrollable viewport, zoom, and pan — is implemented.
+- Automated verification and Chrome browser verification completed for the
+  implemented canvas/background/navigation behavior.
+
 ## Settled model
 
 - Persist `EncounterState.canvasSize` as `{ width, height }`, defaulting to
@@ -24,7 +32,9 @@ them only after the relevant implementation has passed its completion checks.
   commands and background geometry.
 - Do **not** persist a background `sizingMode`. Fit choices are one-time
   commands. Their selected radio state is derived from the current canvas and
-  intrinsic-image dimensions, never stored as a competing source of truth.
+  intrinsic-image dimensions, never stored as a competing source of truth. A
+  session-local preferred command disambiguates mathematically identical fit
+  results for the radio UI only; it is never persisted.
 - Fit commands are one-time canvas-size mutations computed from the visible
   scroll viewport at 100% zoom:
   - `fit`: `scale = min(viewportWidth / imageWidth, viewportHeight /

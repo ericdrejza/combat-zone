@@ -11,6 +11,7 @@ import { MotionPreferenceWarning } from "./MotionPreferenceWarning";
 import { EngageActionButton } from './EngageActionButton';
 import { DisengageActionButton } from './DisengageActionButton';
 import { EdgeToolButton } from './edge/EdgeToolButton';
+import { CanvasZoomControls } from "./CanvasZoomControls";
 
 type ToolbarProps = {
   onActorToolSelected: () => void;
@@ -110,6 +111,9 @@ export function Toolbar({ onActorToolSelected, onOpenLibrary }: ToolbarProps) {
           <DisengageActionButton />
         </nav>
         <MotionPreferenceWarning />
+        <div className="ml-auto shrink-0">
+          <CanvasZoomControls />
+        </div>
       </div>
     </header>
   );

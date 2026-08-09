@@ -10,6 +10,7 @@ import { closeZoneShapeMenu } from "../toolbar/events";
 import { CanvasDragOverlay } from "./CanvasDragOverlay";
 import { CanvasToolStatusBadge } from "./CanvasToolStatusBadge";
 import { CanvasWorkspace } from "./CanvasWorkspace";
+import { CanvasViewport } from "./CanvasViewport";
 import { getTextColorForLuminance } from "./canvasLuminance";
 import {
   ACTOR_LAYOUT_COMPUTATION_STRATEGY,
@@ -136,11 +137,13 @@ export function CanvasShell() {
   }, [encounter, zoneDrag]);
   const backgroundLuminance = useCanvasBackgroundLuminance(
     backgroundImage,
-    encounter.zones
+    encounter.zones,
+    encounter.canvasSize
   );
   const polygonDraftBackgroundLuminance = usePolygonDraftBackgroundLuminance(
     backgroundImage,
-    zoneDraftPoints
+    zoneDraftPoints,
+    encounter.canvasSize
   );
 
   useCanvasKeyboard({
@@ -311,7 +314,8 @@ export function CanvasShell() {
       }`}
       role="main"
     >
-      <CanvasWorkspace
+      <CanvasViewport canvasSize={encounter.canvasSize}>
+        <CanvasWorkspace
         activeToolId={activeToolId}
         actorDrag={actorDrag}
         actorRenderPlacements={actorRenderPlacements}
@@ -372,7 +376,16 @@ export function CanvasShell() {
         zoneDraftPoints={zoneDraftPoints}
         zoneShapeMode={zoneShapeMode}
         zoneDrag={zoneDrag}
-      />
+        />
+        {actorDrag ? (
+          <CanvasDragOverlay
+            actorDrag={actorDrag}
+            actorRenderPlacements={actorRenderPlacements}
+            canvasSize={encounter.canvasSize}
+            encounter={encounter}
+          />
+        ) : null}
+      </CanvasViewport>
       <CanvasToolStatusBadge
         activeToolId={activeToolId}
         actorNames={statusActorNames}
@@ -389,13 +402,6 @@ export function CanvasShell() {
         onActorCreationDrop={handleActorCreationDropToZoneless}
         selection={selection}
       />
-      {actorDrag ? (
-        <CanvasDragOverlay
-          actorDrag={actorDrag}
-          actorRenderPlacements={actorRenderPlacements}
-          encounter={encounter}
-        />
-      ) : null}
     </section>
   );
 }

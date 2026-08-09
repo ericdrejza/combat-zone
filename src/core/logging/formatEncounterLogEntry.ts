@@ -249,6 +249,8 @@ export function formatCommittedEncounterAction(
         snapshots.before.backgroundImage?.name;
       return name ? `${name} background deleted.` : "Background deleted.";
     }
+    case "canvas.resize":
+      return "Canvas resized.";
     default:
       return `${action.type} committed.`;
   }

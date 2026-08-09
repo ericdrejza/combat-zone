@@ -1,4 +1,5 @@
 import type { LayoutPoint } from '@core/layout/types';
+import type { CanvasSize } from '@core/layout/polygonCanvasBounds';
 import { doPolygonsOverlap as doCorePolygonsOverlap } from '@core/layout/polygonCollision';
 import {
   isPointWithinCanvas,
@@ -61,10 +62,11 @@ export function doesZoneOverlapExisting(
 export function canCommitZonePolygon(
   polygon: LayoutPoint[],
   zones: RootState['encounter']['present']['zones'],
-  ignoredZoneId?: string
+  ignoredZoneId?: string,
+  canvasSize?: CanvasSize
 ): boolean {
   return (
-    isPolygonWithinCanvas(polygon) &&
+    isPolygonWithinCanvas(polygon, canvasSize) &&
     !doesZoneOverlapExisting(polygon, zones, ignoredZoneId)
   );
 }

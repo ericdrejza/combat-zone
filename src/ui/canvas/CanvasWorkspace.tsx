@@ -21,11 +21,7 @@ import type {
 import { ActorLayer } from "./actors/ActorLayer";
 import { CanvasBackgroundLayer } from "./background/CanvasBackgroundLayer";
 import { CanvasOverlays } from "./CanvasOverlays";
-import {
-  CANVAS_BACKGROUND_COLOR,
-  CANVAS_HEIGHT,
-  CANVAS_WIDTH
-} from "./canvasConstants";
+import { CANVAS_BACKGROUND_COLOR } from "./canvasConstants";
 import type { LocalBoxSelectionState } from "./zones/zoneGeometry";
 import { ZoneLayer } from "./zones/ZoneLayer";
 import { EngagementLayer } from './engagements/EngagementLayer';
@@ -168,7 +164,7 @@ export function CanvasWorkspace({
         onMouseMove={handleCanvasMouseMove}
         onMouseUp={handleCanvasMouseUp}
         role="img"
-        viewBox={`0 0 ${CANVAS_WIDTH} ${CANVAS_HEIGHT}`}
+        viewBox={`0 0 ${encounter.canvasSize.width} ${encounter.canvasSize.height}`}
       >
         {RENDER_LAYERS.map((layer) => (
           <g
@@ -177,7 +173,10 @@ export function CanvasWorkspace({
             data-layer={layer.id}
           >
             {layer.id === "background" ? (
-              <CanvasBackgroundLayer backgroundImage={backgroundImage} />
+              <CanvasBackgroundLayer
+                backgroundImage={backgroundImage}
+                canvasSize={encounter.canvasSize}
+              />
             ) : null}
             {layer.id === "zones" ? (
               <ZoneLayer

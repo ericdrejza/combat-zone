@@ -64,7 +64,7 @@ function canExpandWithoutZoneOverlap(
   polygon: LayoutPoint[]
 ): boolean {
   return (
-    isPolygonWithinCanvas(polygon) &&
+    isPolygonWithinCanvas(polygon, encounter.canvasSize) &&
     encounter.zones.allIds.every((otherZoneId) => {
     const otherZone = encounter.zones.byId[otherZoneId];
 

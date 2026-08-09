@@ -14,6 +14,7 @@ import type {
   Validator
 } from "./types";
 import { getUnroutableEdgeIds } from "@entities/edge/edgeRouting";
+import { isPolygonWithinCanvas } from "@core/layout/polygonCanvasBounds";
 
 type PayloadReader = {
   getString(key: string): string | undefined;
@@ -385,6 +386,42 @@ export const ZoneIntegrityValidator: Validator<EncounterState> = {
   }
 };
 
+/** Canvas mutations may not leave persisted zone geometry outside its bounds. */
+export const CanvasBoundsValidator: Validator<EncounterState> = {
+  id: "CanvasBoundsValidator",
+  runsInOffMode: true,
+  validate(action, { nextState }) {
+    if (
+      !nextState ||
+      (action.type !== "canvas.resize" &&
+        action.type !== "background.add" &&
+        action.type !== "background.replace")
+    ) {
+      return result([]);
+    }
+
+    const outsideZone = nextState.zones.allIds
+      .map((zoneId) => nextState.zones.byId[zoneId])
+      .find(
+        (zone) =>
+          zone &&
+          !isPolygonWithinCanvas(zone.polygon, nextState.canvasSize)
+      );
+    const messages = outsideZone
+      ? [{
+          code: "canvas.zoneOutsideBounds",
+          message: `Zone ${outsideZone.name} would be outside the resized canvas.`,
+          severity: "error" as const
+        }]
+      : [];
+
+    return {
+      ...result(messages),
+      blocked: messages.length > 0
+    };
+  }
+};
+
 export const MVP_VALIDATORS: Validator<EncounterState>[] = [
   MovementValidator,
   ZoneSizeValidator,
@@ -393,5 +430,6 @@ export const MVP_VALIDATORS: Validator<EncounterState>[] = [
   EdgeValidator,
   EdgeRouteDiagnosticValidator,
   EngagementValidator,
-  ZoneIntegrityValidator
+  ZoneIntegrityValidator,
+  CanvasBoundsValidator
 ];

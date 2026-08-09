@@ -63,7 +63,7 @@ describe('validation pipeline acceleration', () => {
       });
 
       expect(FakeValidationWorker.lastInstance?.request?.resource).toBe('WEBGPU');
-      expect(FakeValidationWorker.lastInstance?.request?.validatorIds).toHaveLength(8);
+      expect(FakeValidationWorker.lastInstance?.request?.validatorIds).toHaveLength(9);
       expect(result).toMatchObject({
         blocked: false,
         valid: true,
