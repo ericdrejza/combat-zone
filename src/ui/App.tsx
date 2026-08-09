@@ -7,6 +7,7 @@ import { setActiveTool } from "@interaction/interactionState";
 import { MVP_TOOLS } from "@interaction/tools/toolRegistry";
 import type { ToolId } from "@interaction/tools/toolRegistry";
 import { CanvasShell } from "./canvas/CanvasShell";
+import { CanvasViewportProvider } from "./canvas/CanvasViewportContext";
 import { AssetLibraryModal } from "./library/AssetLibraryModal";
 import type { DockPanelDefinition, DockSide, DropTarget } from "./panels/PanelsShell";
 import { LibraryPanel, LibraryPanelViewToggle } from "./panels/LibraryPanel";
@@ -30,6 +31,9 @@ import type { LibraryNode } from "@library/types";
 import { ActorRenameModal } from "./toolbar/actor/ActorRenameModal";
 import { ZoneResizeApprovalProvider } from "./zoneResizeApproval";
 import { MotionPreferenceProvider } from "./motion_preferences/MotionPreferenceProvider";
+import { readImageAssetDimensions } from "./toolbar/background/readImageFile";
+import { commitBackgroundImage } from "./toolbar/background/backgroundCanvasActions";
+import { useCanvasViewport } from "./canvas/CanvasViewportContext";
 
 type SidebarCollapsedState = Record<DockSide, boolean>;
 
@@ -67,8 +71,9 @@ function shouldIgnoreKeyboardShortcut(target: EventTarget | null): boolean {
   );
 }
 
-export function App() {
+function AppContent() {
   const dispatch = useDispatch();
+  const { viewportSize } = useCanvasViewport();
   const activeToolId = useSelector(
     (state: RootState) => state.interaction.activeToolId
   );
@@ -205,19 +210,20 @@ export function App() {
       return;
     }
 
-    dispatch(
-      commitEncounterChange({
-        action: createEncounterActionRecord(
-          encounter.backgroundImage ? "background.replace" : "background.add",
-          { backgroundImage: asset }
-        ),
-        nextEncounter: {
-          ...encounter,
-          backgroundImage: asset
-        }
-      })
-    );
     setLibraryModalOpen(false);
+    const commitImage = (backgroundImage: Awaited<ReturnType<typeof readImageAssetDimensions>>) =>
+      commitBackgroundImage({
+        backgroundImage,
+        dispatch,
+        encounter,
+        viewportSize
+      });
+
+    if (asset.width && asset.height) {
+      commitImage({ ...asset, height: asset.height, width: asset.width });
+    } else {
+      void readImageAssetDimensions(asset).then(commitImage);
+    }
   }
 
   function handlePanelDrop(target: DropTarget) {
@@ -375,5 +381,13 @@ export function App() {
         </div>
       </ZoneResizeApprovalProvider>
     </MotionPreferenceProvider>
+  );
+}
+
+export function App() {
+  return (
+    <CanvasViewportProvider>
+      <AppContent />
+    </CanvasViewportProvider>
   );
 }

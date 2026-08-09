@@ -4,12 +4,7 @@ import type { LayoutPoint } from '@core/layout/types';
 import type { Zone } from '@entities/zone/types';
 import type { ZoneShape } from '@entities/zone/types';
 import type { RootState } from '@store/store';
-import {
-  CANVAS_HEIGHT,
-  CANVAS_WIDTH,
-  CIRCLE_SEGMENTS,
-  HEXAGON_SEGMENTS
-} from '../canvasConstants';
+import { CIRCLE_SEGMENTS, HEXAGON_SEGMENTS } from '../canvasConstants';
 import { clientPointToViewBoxPoint } from '../canvasCoordinates';
 
 export type Bounds = {
@@ -45,10 +40,21 @@ export function toSvgPoint(
   event: Pick<globalThis.MouseEvent, 'clientX' | 'clientY'>,
   svg: SVGSVGElement
 ): LayoutPoint {
+  const viewBoxAttribute = svg
+    .getAttribute('viewBox')
+    ?.split(/\s+/)
+    .map(Number);
+  const viewBox = svg.viewBox?.baseVal;
+
   return clientPointToViewBoxPoint(
     { x: event.clientX, y: event.clientY },
     svg.getBoundingClientRect(),
-    { height: CANVAS_HEIGHT, width: CANVAS_WIDTH }
+    {
+      height: viewBox?.height ?? viewBoxAttribute?.[3] ?? 640,
+      width: viewBox?.width ?? viewBoxAttribute?.[2] ?? 960,
+      x: viewBox?.x ?? viewBoxAttribute?.[0] ?? 0,
+      y: viewBox?.y ?? viewBoxAttribute?.[1] ?? 0
+    }
   );
 }
 

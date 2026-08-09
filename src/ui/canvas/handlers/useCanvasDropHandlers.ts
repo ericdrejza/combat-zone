@@ -26,6 +26,7 @@ import {
   readZonelessActorIds
 } from '../../panels/zoneless_actors/zonelessActorDrag';
 import { toSvgPoint } from '../zones/zoneGeometry';
+import { useCanvasViewport } from '../CanvasViewportContext';
 
 type UseCanvasDropHandlersInput = {
   activeToolId: RootState['interaction']['activeToolId'];
@@ -42,6 +43,7 @@ export function useCanvasDropHandlers({
   encounter,
   library
 }: UseCanvasDropHandlersInput) {
+  const { viewportSize } = useCanvasViewport();
   const mutationContext = {
     actorTool,
     dispatch,
@@ -139,7 +141,11 @@ export function useCanvasDropHandlers({
     if (activeToolId === 'background' && externalFiles) {
       event.preventDefault();
       if (droppedImageFile) {
-        void commitBackgroundFromFile(mutationContext, droppedImageFile);
+        void commitBackgroundFromFile(
+          mutationContext,
+          droppedImageFile,
+          viewportSize
+        );
       }
       return;
     }

@@ -1,10 +1,10 @@
 import type { LayoutPoint } from '@core/layout/types';
+import type { CanvasSize } from '@core/layout/polygonCanvasBounds';
+import { DEFAULT_CANVAS_SIZE } from '@core/layout/polygonCanvasBounds';
 import type { Zone } from '@entities/zone/types';
 import {
   BACKGROUND_SAMPLE_COUNT,
   CANVAS_BACKGROUND_COLOR,
-  CANVAS_HEIGHT,
-  CANVAS_WIDTH,
   LOW_ZONE_OPACITY_THRESHOLD
 } from './canvasConstants';
 import { getPolygonBounds, isPointInPolygon } from './zones/zoneGeometry';
@@ -83,31 +83,22 @@ export function createDeterministicSamplePoints(
 
 export function drawCanvasBackgroundImage(
   context: CanvasRenderingContext2D,
-  image: HTMLImageElement
+  image: HTMLImageElement,
+  canvasSize: CanvasSize = DEFAULT_CANVAS_SIZE
 ) {
-  const imageWidth = image.naturalWidth || image.width || CANVAS_WIDTH;
-  const imageHeight = image.naturalHeight || image.height || CANVAS_HEIGHT;
-  const scale = Math.max(
-    CANVAS_WIDTH / imageWidth,
-    CANVAS_HEIGHT / imageHeight
-  );
-  const renderedWidth = imageWidth * scale;
-  const renderedHeight = imageHeight * scale;
-  const x = (CANVAS_WIDTH - renderedWidth) / 2;
-  const y = (CANVAS_HEIGHT - renderedHeight) / 2;
-
-  context.drawImage(image, x, y, renderedWidth, renderedHeight);
+  context.drawImage(image, 0, 0, canvasSize.width, canvasSize.height);
 }
 
 export function getAverageCanvasLuminance(
   context: CanvasRenderingContext2D,
-  points: LayoutPoint[]
+  points: LayoutPoint[],
+  canvasSize: CanvasSize = DEFAULT_CANVAS_SIZE
 ): number {
   return (
     points.reduce((total, point) => {
       const pixel = context.getImageData(
-        Math.max(0, Math.min(CANVAS_WIDTH - 1, Math.floor(point.x))),
-        Math.max(0, Math.min(CANVAS_HEIGHT - 1, Math.floor(point.y))),
+        Math.max(0, Math.min(canvasSize.width - 1, Math.floor(point.x))),
+        Math.max(0, Math.min(canvasSize.height - 1, Math.floor(point.y))),
         1,
         1
       ).data;
@@ -119,27 +110,35 @@ export function getAverageCanvasLuminance(
 
 export function sampleZoneBackgroundLuminance(
   context: CanvasRenderingContext2D,
-  zone: Zone
+  zone: Zone,
+  canvasSize: CanvasSize = DEFAULT_CANVAS_SIZE
 ): number {
   return getAverageCanvasLuminance(
     context,
-    createDeterministicSamplePoints(zone.polygon, BACKGROUND_SAMPLE_COUNT)
+    createDeterministicSamplePoints(zone.polygon, BACKGROUND_SAMPLE_COUNT),
+    canvasSize
   );
 }
 
-export function createCanvasBackgroundSamplePoints(): LayoutPoint[] {
-  const xPositions = [0.25, 0.5, 0.75].map((ratio) => CANVAS_WIDTH * ratio);
-  const yPositions = [CANVAS_HEIGHT - 60, CANVAS_HEIGHT - 24];
+export function createCanvasBackgroundSamplePoints(
+  canvasSize: CanvasSize = DEFAULT_CANVAS_SIZE
+): LayoutPoint[] {
+  const xPositions = [0.25, 0.5, 0.75].map(
+    (ratio) => canvasSize.width * ratio
+  );
+  const yPositions = [canvasSize.height - 60, canvasSize.height - 24];
 
   return yPositions.flatMap((y) => xPositions.map((x) => ({ x, y })));
 }
 
 export function sampleCanvasBackgroundLuminance(
-  context: CanvasRenderingContext2D
+  context: CanvasRenderingContext2D,
+  canvasSize: CanvasSize = DEFAULT_CANVAS_SIZE
 ): number {
   return getAverageCanvasLuminance(
     context,
-    createCanvasBackgroundSamplePoints()
+    createCanvasBackgroundSamplePoints(canvasSize),
+    canvasSize
   );
 }
 

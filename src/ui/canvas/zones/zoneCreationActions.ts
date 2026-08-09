@@ -39,7 +39,14 @@ export function commitZoneCreate(
     suppressNextCanvasClickRef
   } = input;
 
-  if (!canCommitZonePolygonForCollection(polygon, encounter.zones)) {
+  if (
+    !canCommitZonePolygonForCollection(
+      polygon,
+      encounter.zones,
+      undefined,
+      encounter.canvasSize
+    )
+  ) {
     logEncounterValidationFailure(dispatch, encounter, {
       actionType: 'zone.create',
       code: 'zone.invalidPolygonPlacement',

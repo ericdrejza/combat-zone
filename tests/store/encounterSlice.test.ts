@@ -49,6 +49,7 @@ describe("encounter Redux history", () => {
         id: "active-encounter",
         name: "Untitled Encounter",
         backgroundImage: null,
+        canvasSize: { height: 640, width: 960 },
         zones: { byId: {}, allIds: [] },
         edges: { byId: {}, allIds: [] },
         actors: { byId: {}, allIds: [] },

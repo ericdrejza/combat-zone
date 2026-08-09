@@ -13,6 +13,8 @@ import type { NewActorDragData } from '../toolbar/actor/actorCreationDrag';
 import { readImageFile } from '../toolbar/background/readImageFile';
 import type { LayoutPoint } from '@core/layout/types';
 import { setOptimisticActorPlacement } from './actors/actorPlacementOptimisticState';
+import type { CanvasSize } from '@core/layout/polygonCanvasBounds';
+import { commitBackgroundImage } from '../toolbar/background/backgroundCanvasActions';
 
 type CanvasDropContext = {
   actorTool: RootState['interaction']['actorTool'];
@@ -140,24 +142,16 @@ export async function commitActorFromImage(
 
 export async function commitBackgroundFromFile(
   context: Pick<CanvasDropContext, 'dispatch' | 'encounter'>,
-  file: File
+  file: File,
+  viewportSize: CanvasSize
 ) {
   const nextBackgroundImage = await readImageFile(file);
-  const actionType = context.encounter.backgroundImage
-    ? 'background.replace'
-    : 'background.add';
-
-  context.dispatch(
-    commitEncounterChange({
-      action: createEncounterActionRecord(actionType, {
-        backgroundImage: nextBackgroundImage
-      }),
-      nextEncounter: {
-        ...context.encounter,
-        backgroundImage: nextBackgroundImage
-      }
-    })
-  );
+  commitBackgroundImage({
+    backgroundImage: nextBackgroundImage,
+    dispatch: context.dispatch,
+    encounter: context.encounter,
+    viewportSize
+  });
   context.dispatch(setActiveTool('zone'));
 }
 

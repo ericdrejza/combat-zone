@@ -43,6 +43,20 @@ function getChangedZoneIds(
   }
 
   if (
+    action.type === 'canvas.resize' ||
+    action.type === 'background.add' ||
+    action.type === 'background.replace'
+  ) {
+    return nextState.zones.allIds.filter(
+      (zoneId) =>
+        !polygonsEqual(
+          state.zones.byId[zoneId]?.polygon,
+          nextState.zones.byId[zoneId]?.polygon
+        )
+    );
+  }
+
+  if (
     action.type !== 'actor.create' &&
     action.type !== 'actor.move' &&
     action.type !== 'actor.moveMany' &&

@@ -5,8 +5,9 @@ import type { Annotation } from "@entities/annotation/types";
 import type { Edge } from "@entities/edge/types";
 import type { Engagement } from "@entities/engagement/types";
 import type { Zone } from "@entities/zone/types";
+import type { CanvasSize } from "@core/layout/polygonCanvasBounds";
 
-export const ENCOUNTER_SCHEMA_VERSION = 2;
+export const ENCOUNTER_SCHEMA_VERSION = 3;
 export const ZONELESS_ACTOR_ZONE_ID = "zoneless";
 
 export type EncounterSchemaVersion = typeof ENCOUNTER_SCHEMA_VERSION;
@@ -25,8 +26,10 @@ export type EncounterValidationState = {
 
 export type EncounterBackgroundImage = {
   dataUrl: string;
+  height: number;
   mediaType: string;
   name: string;
+  width: number;
 };
 
 export type EncounterState = {
@@ -34,6 +37,7 @@ export type EncounterState = {
   id: EntityId;
   name: string;
   backgroundImage: EncounterBackgroundImage | null;
+  canvasSize: CanvasSize;
   zones: EntityCollection<Zone>;
   edges: EntityCollection<Edge>;
   actors: EntityCollection<Actor>;

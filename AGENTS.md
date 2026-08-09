@@ -194,3 +194,5 @@ to reduce output.
 2. If you see a test that is breaking due to a change that you didn't make, ask
 me what is the expected behavior and update the test accordingly.
 3. Do not test for styling (e.g. css styling on an element)
+4. If a bug or issue persists after multiple attempts at fixing it, resort to
+realtime agent testing of the application.

@@ -249,7 +249,11 @@ export const PolygonPlacementValidator: Validator<EncounterState> = {
 
     return {
       ...result(messages),
-      blocked: messages.some((message) => message.severity === "error")
+      blocked:
+        action.type !== "canvas.resize" &&
+        action.type !== "background.add" &&
+        action.type !== "background.replace" &&
+        messages.some((message) => message.severity === "error")
     };
   }
 };

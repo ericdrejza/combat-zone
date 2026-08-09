@@ -1,4 +1,14 @@
-import { Image, ImagePlus, RefreshCw, Trash2 } from "lucide-react";
+import {
+  Expand,
+  Image,
+  ImagePlus,
+  Minimize2,
+  MoveHorizontal,
+  MoveVertical,
+  RefreshCw,
+  Shrink,
+  Trash2
+} from "lucide-react";
 import { useDispatch } from "react-redux";
 
 import type { EncounterState } from "@core/encounter/types";
@@ -28,15 +38,18 @@ export function BackgroundToolButton({
   const dispatch = useDispatch();
   const backgroundImage = encounter.backgroundImage;
   const {
+    activeFitMode,
     deleteBackground,
     fileInputRef,
     handleBackgroundFileChange,
-    requestBackgroundUpload
+    requestBackgroundUpload,
+    resizeBackground,
+    scaleBackground
   } = useBackgroundTool(encounter);
   const selected = activeToolId === "background";
 
   return (
-    <ToolbarOptionRow>
+    <ToolbarOptionRow aria-label="Background options">
       <button
         aria-expanded={selected}
         aria-haspopup="menu"
@@ -56,46 +69,104 @@ export function BackgroundToolButton({
         {tool.label}
       </button>
       {selected ? (
-        <ToolbarOptionGroup
-          aria-label="Background options"
-          role="menu"
-        >
-          {!backgroundImage ? (
-            <ToolbarOptionButton
-              aria-label="Add"
-              className="w-8 min-w-0 px-0"
-              onClick={() => requestBackgroundUpload("add")}
-              role="menuitem"
-              title="Add"
-              type="button"
-            >
-              <ImagePlus aria-hidden="true" className="h-4 w-4" />
-            </ToolbarOptionButton>
+        <>
+        {!backgroundImage ? (
+            <ToolbarOptionGroup>
+              <ToolbarOptionButton
+                aria-label="Add"
+                className="w-8 min-w-0 px-0"
+                onClick={() => requestBackgroundUpload("add")}
+                role="menuitem"
+                title="Add"
+                type="button"
+              >
+                <ImagePlus aria-hidden="true" className="h-4 w-4" />
+              </ToolbarOptionButton>
+            </ToolbarOptionGroup>
+
           ) : (
             <>
-              <ToolbarOptionButton
-                aria-label="Replace"
-                className="w-8 min-w-0 px-0"
-                onClick={() => requestBackgroundUpload("replace")}
-                role="menuitem"
-                title="Replace"
-                type="button"
-              >
-                <RefreshCw aria-hidden="true" className="h-4 w-4" />
-              </ToolbarOptionButton>
-              <ToolbarOptionButton
-                aria-label="Delete"
-                className="w-8 min-w-0 px-0 text-red-700 hover:bg-red-50"
-                onClick={deleteBackground}
-                role="menuitem"
-                title="Delete"
-                type="button"
-              >
-                <Trash2 aria-hidden="true" className="h-4 w-4" />
-              </ToolbarOptionButton>
-            </>
+              <ToolbarOptionGroup>
+                <ToolbarOptionButton
+                  aria-label="Replace"
+                  className="w-8 min-w-0 px-0"
+                  onClick={() => requestBackgroundUpload("replace")}
+                  role="menuitem"
+                  title="Replace"
+                  type="button"
+                >
+                  <RefreshCw aria-hidden="true" className="h-4 w-4" />
+                </ToolbarOptionButton>
+                <ToolbarOptionButton
+                  aria-label="Delete"
+                  className="w-8 min-w-0 px-0 text-red-700 hover:bg-red-50"
+                  onClick={deleteBackground}
+                  role="menuitem"
+                  title="Delete"
+                  type="button"
+                >
+                  <Trash2 aria-hidden="true" className="h-4 w-4" />
+                </ToolbarOptionButton>
+              </ToolbarOptionGroup>
+                <ToolbarOptionGroup
+                  aria-label="Background size"
+                  role="radiogroup"
+                >
+                  <ToolbarOptionButton
+                    active={activeFitMode === "fit"}
+                    aria-checked={activeFitMode === "fit"}
+                    aria-label="Fit"
+                    onClick={() => resizeBackground("fit")}
+                    role="radio"
+                    title="Fit"
+                    type="button"
+                  >
+                    <Minimize2 aria-hidden="true" className="h-4 w-4" />
+                  </ToolbarOptionButton>
+                  <ToolbarOptionButton
+                    active={activeFitMode === "fit-width"}
+                    aria-checked={activeFitMode === "fit-width"}
+                    aria-label="Fit width"
+                    onClick={() => resizeBackground("fit-width")}
+                    role="radio"
+                    title="Fit width"
+                    type="button"
+                  >
+                    <MoveHorizontal aria-hidden="true" className="h-4 w-4" />
+                  </ToolbarOptionButton>
+                  <ToolbarOptionButton
+                    active={activeFitMode === "fit-height"}
+                    aria-checked={activeFitMode === "fit-height"}
+                    aria-label="Fit height"
+                    onClick={() => resizeBackground("fit-height")}
+                    role="radio"
+                    title="Fit height"
+                    type="button"
+                  >
+                    <MoveVertical aria-hidden="true" className="h-4 w-4" />
+                  </ToolbarOptionButton>
+                </ToolbarOptionGroup>
+                <ToolbarOptionGroup aria-label="Background scale">
+                  <ToolbarOptionButton
+                    aria-label="Shrink"
+                    onClick={() => scaleBackground(0.9)}
+                    title="Shrink"
+                    type="button"
+                  >
+                    <Shrink aria-hidden="true" className="h-4 w-4" />
+                  </ToolbarOptionButton>
+                  <ToolbarOptionButton
+                    aria-label="Expand"
+                    onClick={() => scaleBackground(1.1)}
+                    title="Expand"
+                    type="button"
+                  >
+                    <Expand aria-hidden="true" className="h-4 w-4" />
+                  </ToolbarOptionButton>
+                </ToolbarOptionGroup>
+              </>
           )}
-        </ToolbarOptionGroup>
+        </>
       ) : null}
       <input
         ref={fileInputRef}
