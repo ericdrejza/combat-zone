@@ -25,7 +25,6 @@ type ActorLayerProps = {
   actorDrag: ActorDragState | null;
   backgroundLuminanceByZoneId: Record<string, number>;
   canvasBackgroundLuminance: number;
-  dragOverlay?: boolean;
   showFactionOutlines: boolean;
   encounter: RootState["encounter"]["present"];
   placements: ActorRenderPlacement[];
@@ -39,7 +38,8 @@ type ActorLayerProps = {
   ) => void;
   onActorDrag?: (point: LayoutPoint) => void;
   onActorDragEnd?: (event: ActorDragEndEvent) => void;
-  onActorReturnComplete?: () => void;
+  onIncomingPointCommitted?: (actorId: string) => void;
+  onActorReturnComplete?: (actorId: string) => void;
   selection: RootState["interaction"]["selection"];
 };
 
@@ -52,9 +52,15 @@ function getDraggedPoint(
     return point;
   }
 
+  if (actorDrag.phase === "returning") {
+    return actorDrag.returnPointsByActorId?.[actorId] ?? point;
+  }
+
+  const origin = actorDrag.originPointsByActorId?.[actorId] ?? point;
+
   return {
-    x: point.x + actorDrag.current.x - actorDrag.start.x,
-    y: point.y + actorDrag.current.y - actorDrag.start.y
+    x: origin.x + actorDrag.current.x - actorDrag.start.x,
+    y: origin.y + actorDrag.current.y - actorDrag.start.y
   };
 }
 
@@ -78,7 +84,6 @@ export function ActorLayer({
   actorDrag,
   backgroundLuminanceByZoneId,
   canvasBackgroundLuminance,
-  dragOverlay = false,
   showFactionOutlines,
   encounter,
   placements,
@@ -89,32 +94,25 @@ export function ActorLayer({
   onActorDragStart,
   onActorDrag,
   onActorDragEnd,
+  onIncomingPointCommitted,
   onActorReturnComplete
 }: ActorLayerProps) {
   const { animationsDisabled } = useMotionPreference();
 
-  return placements
-    .filter(({ actor }) => {
-      if (dragOverlay) {
-        return Boolean(actorDrag?.actorIds.includes(actor.id));
-      }
-
-      return true;
-    })
-    .map(({ actor, incomingPoint: placementIncomingPoint, point, radius }) => {
+  return placements.map(
+    ({ actor, incomingPoint: placementIncomingPoint, point, radius }) => {
       const zoneMovedPoint = getZoneMovedPoint(
         actor.currentZoneId,
         point,
         zoneActorTranslation
       );
       const isMotionDraggedActor =
-        !dragOverlay &&
         actorDrag?.phase === "dragging" &&
         actorDrag.actorId === actor.id;
       const renderedPoint = isMotionDraggedActor
         ? zoneMovedPoint
         : getDraggedPoint(actor.id, zoneMovedPoint, actorDrag);
-      const incomingPoint = placementIncomingPoint
+      const placementDropPoint = placementIncomingPoint
         ? getDraggedPoint(
             actor.id,
             getZoneMovedPoint(
@@ -125,6 +123,7 @@ export function ActorLayer({
             actorDrag
           )
         : undefined;
+      const incomingPoint = placementDropPoint;
       const isDirectManipulation = Boolean(
         (actorDrag?.phase === "dragging" &&
           actorDrag.actorIds.includes(actor.id)) ||
@@ -142,7 +141,7 @@ export function ActorLayer({
             backgroundLuminanceByZoneId[actorZone.id]
           )
         : getTextColorForLuminance(canvasBackgroundLuminance);
-      const clipId = `${actor.id}-clip${dragOverlay ? "-drag-overlay" : ""}`;
+      const clipId = `${actor.id}-clip`;
       const actorTransition = getCanvasTransition(
         isDirectManipulation,
         animationsDisabled
@@ -152,9 +151,6 @@ export function ActorLayer({
           key={actor.id}
           direct={isDirectManipulation}
           incomingPoint={incomingPoint}
-          onIncomingPointCommitted={() =>
-            clearOptimisticActorPlacement(actor.id)
-          }
           target={renderedPoint}
         >
           {(animatePoint, completeTrack) => (
@@ -163,10 +159,6 @@ export function ActorLayer({
               className="cursor-grab select-none active:cursor-grabbing"
               data-entity-id={actor.id}
               data-entity-type="actor"
-              style={{
-                opacity:
-                  !dragOverlay && actorDrag?.actorIds.includes(actor.id) ? 0 : 1
-              }}
               onMouseEnter={
                 activeToolId === "zone"
                   ? undefined
@@ -177,10 +169,7 @@ export function ActorLayer({
                   ? undefined
                   : () => onActorMouseLeave(actor.id)
               }
-              drag={
-                !dragOverlay &&
-                (activeToolId === "actor" || activeToolId === "select")
-              }
+              drag={activeToolId === "actor" || activeToolId === "select"}
               dragMomentum={false}
               dragElastic={0}
               onDragStart={(event) =>
@@ -197,14 +186,24 @@ export function ActorLayer({
               animate={isMotionDraggedActor ? undefined : animatePoint}
               transition={actorTransition}
               onAnimationComplete={() => {
-                completeTrack();
+                const completedMotion = completeTrack();
 
                 if (
-                  !dragOverlay &&
-                  actorDrag?.phase === "returning" &&
-                  actorDrag.actorId === actor.id
+                  completedMotion === "track" &&
+                  placementIncomingPoint
                 ) {
-                  onActorReturnComplete?.();
+                  clearOptimisticActorPlacement(actor.id);
+                  onIncomingPointCommitted?.(actor.id);
+                }
+
+                if (
+                  completedMotion &&
+                  actorDrag?.phase === "returning" &&
+                  actorDrag.actorIds.includes(actor.id) &&
+                  (completedMotion === "track" ||
+                    Boolean(actorDrag.returnPointsByActorId?.[actor.id]))
+                ) {
+                  onActorReturnComplete?.(actor.id);
                 }
               }}
             >
@@ -223,5 +222,6 @@ export function ActorLayer({
           )}
         </ActorMotionTrack>
       );
-    });
+    }
+  );
 }

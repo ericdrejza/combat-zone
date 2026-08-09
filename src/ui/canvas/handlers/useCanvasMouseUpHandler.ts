@@ -33,7 +33,10 @@ import {
 import { isWithinEngagementTether } from '../engagements/engagementDragRules';
 import { getActorEngagement } from '@core/encounter/inspectors';
 import { MIN_SHAPE_SIZE } from '../canvasConstants';
-import type { CanvasInteractionState } from '../canvasInteractionTypes';
+import type {
+  ActorDragState,
+  CanvasInteractionState
+} from '../canvasInteractionTypes';
 import { commitZoneCreate } from '../zones/zoneCreationActions';
 import {
   canCommitZonePolygon as canCommitZonePolygonForCollection,
@@ -49,6 +52,37 @@ import {
 type MouseUpHandlerInput = CanvasInteractionState & {
   getDisplayedPolygon: (zone: Zone) => Zone['polygon'];
 };
+
+function createSnapBackDrag(actorDrag: ActorDragState): ActorDragState {
+  return {
+    ...actorDrag,
+    phase: 'returning',
+    returnPointsByActorId: actorDrag.originPointsByActorId ?? {
+      [actorDrag.actorId]: actorDrag.start
+    }
+  };
+}
+
+function cacheActorDropPoints(
+  actorDrag: ActorDragState,
+  placements: CanvasInteractionState['actorRenderPlacements']
+): void {
+  const offset = {
+    x: actorDrag.current.x - actorDrag.start.x,
+    y: actorDrag.current.y - actorDrag.start.y
+  };
+
+  placements
+    .filter(({ actor }) => actorDrag.actorIds.includes(actor.id))
+    .forEach(({ actor, point }) => {
+      const origin = actorDrag.originPointsByActorId?.[actor.id] ?? point;
+
+      setOptimisticActorPlacement(actor.id, {
+        x: origin.x + offset.x,
+        y: origin.y + offset.y
+      });
+    });
+}
 
 export function useCanvasMouseUpHandler(input: MouseUpHandlerInput) {
   const {
@@ -81,11 +115,7 @@ export function useCanvasMouseUpHandler(input: MouseUpHandlerInput) {
           draggedActorEngagement &&
           isWithinEngagementTether(actorDrag.start, actorDrag.current)
         ) {
-          setActorDrag({
-            ...actorDrag,
-            current: actorDrag.start,
-            phase: 'returning'
-          });
+          setActorDrag(createSnapBackDrag(actorDrag));
           return;
         }
         const targetEngagementId = findEngagementIdAtPoint(
@@ -104,7 +134,7 @@ export function useCanvasMouseUpHandler(input: MouseUpHandlerInput) {
         const targetGroupId = targetEngagementId ?? targetActorEngagement?.id;
         const isSameGroupDrop = isSameEngagementDrop(encounter, actorDrag.actorIds, targetGroupId);
         if (isSameGroupDrop) {
-          setActorDrag({ ...actorDrag, current: actorDrag.start, phase: 'returning' });
+          setActorDrag(createSnapBackDrag(actorDrag));
           return;
         }
         let engagementActionType: string | undefined;
@@ -170,13 +200,18 @@ export function useCanvasMouseUpHandler(input: MouseUpHandlerInput) {
           const prepared = prepareValidatedEncounterChangeForRuntime({ action, currentEncounter: encounter, nextEncounter: nextFromEngagement });
           const commitPreparedEngagement = (resolved: Awaited<typeof prepared>) => {
             if (!resolved.blocked) {
+              cacheActorDropPoints(actorDrag, input.actorRenderPlacements);
               dispatch(commitEncounterChange({ action: resolved.action, nextEncounter: resolved.nextEncounter }));
               dispatch(selectEntity({ entityType: 'actor', ids: actorDrag.actorIds }));
-              setActorDrag(null);
+              setActorDrag({
+                ...actorDrag,
+                phase: 'returning',
+                returnPointsByActorId: undefined
+              });
               return;
             }
             logEncounterValidationBlock(dispatch, resolved);
-            setActorDrag({ ...actorDrag, current: actorDrag.start, phase: 'returning' });
+            setActorDrag(createSnapBackDrag(actorDrag));
           };
           if (prepared instanceof Promise) void prepared.then(commitPreparedEngagement); else commitPreparedEngagement(prepared);
           return;
@@ -194,11 +229,7 @@ export function useCanvasMouseUpHandler(input: MouseUpHandlerInput) {
         // validation so the existing geometry remains authoritative.
         const leavesEngagement = actorDrag.actorIds.some((actorId) => Boolean(getActorEngagement(encounter, actorId)));
         if (!changesZone && !leavesEngagement) {
-          setActorDrag({
-            ...actorDrag,
-            current: actorDrag.start,
-            phase: 'returning'
-          });
+          setActorDrag(createSnapBackDrag(actorDrag));
           return;
         }
 
@@ -252,19 +283,7 @@ export function useCanvasMouseUpHandler(input: MouseUpHandlerInput) {
         const commitPrepared = (resolved: Awaited<typeof prepared>) => {
           if (!resolved.blocked && nextEncounter !== encounter) {
             if (destinationZoneId !== ZONELESS_ACTOR_ZONE_ID) {
-              const offset = {
-                x: actorDrag.current.x - actorDrag.start.x,
-                y: actorDrag.current.y - actorDrag.start.y
-              };
-
-              input.actorRenderPlacements
-                .filter(({ actor }) => actorDrag.actorIds.includes(actor.id))
-                .forEach(({ actor, point }) => {
-                  setOptimisticActorPlacement(actor.id, {
-                    x: point.x + offset.x,
-                    y: point.y + offset.y
-                  });
-                });
+              cacheActorDropPoints(actorDrag, input.actorRenderPlacements);
             }
 
             dispatch(
@@ -279,17 +298,21 @@ export function useCanvasMouseUpHandler(input: MouseUpHandlerInput) {
                 ids: actorDrag.actorIds
               })
             );
-            setActorDrag(null);
+            setActorDrag(
+              destinationZoneId === ZONELESS_ACTOR_ZONE_ID
+                ? null
+                : {
+                    ...actorDrag,
+                    phase: 'returning',
+                    returnPointsByActorId: undefined
+                  }
+            );
             return;
           }
 
           logEncounterValidationBlock(dispatch, resolved);
 
-          setActorDrag({
-            ...actorDrag,
-            current: actorDrag.start,
-            phase: 'returning'
-          });
+          setActorDrag(createSnapBackDrag(actorDrag));
         };
 
         if (prepared instanceof Promise) {

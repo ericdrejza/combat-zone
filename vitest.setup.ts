@@ -50,6 +50,11 @@ vi.mock("motion/react", async (importOriginal) => {
             const latestProps = React.useRef(props);
             const firstRender = React.useRef(true);
             const lastMotionPath = React.useRef<string>();
+            const lastTarget = React.useRef({ x: 0, y: 0 });
+            const positionHistory = React.useRef<Array<{ x: number; y: number }>>(
+              []
+            );
+            const [dragOffset, setDragOffset] = React.useState({ x: 0, y: 0 });
             latestProps.current = props;
             const {
               animate,
@@ -84,6 +89,12 @@ vi.mock("motion/react", async (importOriginal) => {
             const targetY = Array.isArray(animated.y)
               ? animated.y.at(-1)
               : animated.y;
+            if (typeof targetX === "number") {
+              lastTarget.current.x = targetX;
+            }
+            if (typeof targetY === "number") {
+              lastTarget.current.y = targetY;
+            }
             if (Array.isArray(animated.x) || Array.isArray(animated.y)) {
               lastMotionPath.current = JSON.stringify({
                 x: animated.x,
@@ -91,8 +102,26 @@ vi.mock("motion/react", async (importOriginal) => {
               });
             }
 
-            if (typeof targetX === "number" || typeof targetY === "number") {
-              style.transform = `translateX(${Number(targetX ?? 0)}px) translateY(${Number(targetY ?? 0)}px)`;
+            if (
+              typeof targetX === "number" ||
+              typeof targetY === "number" ||
+              dragOffset.x !== 0 ||
+              dragOffset.y !== 0
+            ) {
+              const renderedPosition = {
+                x: lastTarget.current.x + dragOffset.x,
+                y: lastTarget.current.y + dragOffset.y
+              };
+              const previousPosition = positionHistory.current.at(-1);
+
+              if (
+                !previousPosition ||
+                previousPosition.x !== renderedPosition.x ||
+                previousPosition.y !== renderedPosition.y
+              ) {
+                positionHistory.current.push(renderedPosition);
+              }
+              style.transform = `translateX(${renderedPosition.x}px) translateY(${renderedPosition.y}px)`;
             }
 
             const animatedAttributes = Object.fromEntries(
@@ -131,6 +160,7 @@ vi.mock("motion/react", async (importOriginal) => {
                 velocity: { x: 0, y: 0 }
               });
               const handleMove = (mouseEvent: MouseEvent) => {
+                setDragOffset(dragInfo(mouseEvent).offset);
                 (
                   latestProps.current.onDrag as
                     | ((event: MouseEvent, info: ReturnType<typeof dragInfo>) => void)
@@ -145,6 +175,7 @@ vi.mock("motion/react", async (importOriginal) => {
                     | ((event: MouseEvent, info: ReturnType<typeof dragInfo>) => void)
                     | undefined
                 )?.(mouseEvent, dragInfo(mouseEvent));
+                setDragOffset({ x: 0, y: 0 });
               };
 
               (
@@ -175,6 +206,13 @@ vi.mock("motion/react", async (importOriginal) => {
                   : {}),
                 ...(lastMotionPath.current
                   ? { "data-motion-path": lastMotionPath.current }
+                  : {}),
+                ...(positionHistory.current.length > 0
+                  ? {
+                      "data-motion-position-history": JSON.stringify(
+                        positionHistory.current
+                      )
+                    }
                   : {}),
                 onMouseDown: handleMouseDown,
                 ref,

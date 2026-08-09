@@ -75,6 +75,10 @@ export function CanvasShell() {
     null
   );
   const canvasRef = useRef<SVGSVGElement | null>(null);
+  const actorReturnCompletionRef = useRef({
+    actorIds: new Set<string>(),
+    key: ""
+  });
   const suppressNextCanvasClickRef = useRef(false);
   const suppressNextCanvasClickUnconditionallyRef = useRef(false);
   const suppressNextCanvasClickPointRef = useRef<LayoutPoint | null>(null);
@@ -267,6 +271,38 @@ export function CanvasShell() {
       vertexDrag
   );
 
+  function handleActorReturnComplete(actorId: string) {
+    if (!actorDrag || actorDrag.phase !== "returning") {
+      return;
+    }
+
+    const completionKey = `${actorDrag.actorId}:${actorDrag.actorIds.join(",")}:${actorDrag.start.x}:${actorDrag.start.y}`;
+
+    if (actorReturnCompletionRef.current.key !== completionKey) {
+      actorReturnCompletionRef.current = {
+        actorIds: new Set<string>(),
+        key: completionKey
+      };
+    }
+
+    actorReturnCompletionRef.current.actorIds.add(actorId);
+
+    if (
+      actorDrag.actorIds.every((draggedActorId) =>
+        actorReturnCompletionRef.current.actorIds.has(draggedActorId)
+      )
+    ) {
+      setActorDrag(null);
+    }
+  }
+
+  function resetActorReturnCompletion() {
+    actorReturnCompletionRef.current = {
+      actorIds: new Set<string>(),
+      key: ""
+    };
+  }
+
   return (
     <section
       aria-label="Encounter canvas"
@@ -296,8 +332,14 @@ export function CanvasShell() {
         getDisplayedPolygon={getDisplayedPolygon}
         onActorDrag={handleActorDrag}
         onActorDragEnd={handleActorDragEnd}
-        onActorDragStart={handleActorDragStart}
-        onActorReturnComplete={() => setActorDrag(null)}
+        onActorDragStart={(...args) => {
+          resetActorReturnCompletion();
+          handleActorDragStart(...args);
+        }}
+        onActorIncomingPointCommitted={() =>
+          setPlacementRevision((value) => value + 1)
+        }
+        onActorReturnComplete={handleActorReturnComplete}
         onEngagementDrag={handleEngagementDrag}
         onEngagementDragEnd={handleEngagementDragEnd}
         onEngagementDragReturnComplete={handleEngagementDragReturnComplete}
@@ -351,11 +393,7 @@ export function CanvasShell() {
         <CanvasDragOverlay
           actorDrag={actorDrag}
           actorRenderPlacements={actorRenderPlacements}
-          backgroundLuminanceByZoneId={backgroundLuminance.byZoneId}
-          canvasBackgroundLuminance={backgroundLuminance.canvas}
           encounter={encounter}
-          selection={selection}
-          showFactionOutlines={showFactionOutlines}
         />
       ) : null}
     </section>
