@@ -4,6 +4,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState
@@ -15,6 +16,7 @@ import type { RootState } from "@store/store";
 import {
   CANVAS_ZOOM_STEP,
   clampZoom,
+  getCenteredCanvasResizeScroll,
   getCenteredZoomScroll,
   getZoomToFit
 } from "./canvasViewportMath";
@@ -27,10 +29,22 @@ type CanvasViewportValue = {
   zoom: number;
   zoomIn: () => void;
   zoomOut: () => void;
+  resetZoom: () => void;
   zoomToFit: () => void;
 };
 
 const CanvasViewportContext = createContext<CanvasViewportValue | null>(null);
+
+function readViewportSize(
+  element: HTMLDivElement,
+  fallback: CanvasSize
+): CanvasSize {
+  const bounds = element.getBoundingClientRect();
+  return {
+    height: element.clientHeight || bounds.height || fallback.height,
+    width: element.clientWidth || bounds.width || fallback.width
+  };
+}
 
 export function CanvasViewportProvider({ children }: PropsWithChildren) {
   const encounterId = useSelector(
@@ -49,19 +63,44 @@ export function CanvasViewportProvider({ children }: PropsWithChildren) {
   const [zoom, setZoom] = useState(1);
   const zoomRef = useRef(zoom);
   const previousDocumentRef = useRef({ canvasSize, encounterId });
+  const pendingResizeRef = useRef<{
+    currentCanvasSize: CanvasSize;
+    nextCanvasSize: CanvasSize;
+    scrollLeft: number;
+    scrollTop: number;
+    viewportSize: CanvasSize;
+    zoom: number;
+  } | null>(null);
   const pendingFitRef = useRef(true);
   zoomRef.current = zoom;
+
+  const previousDocument = previousDocumentRef.current;
+  const encounterChanged = previousDocument.encounterId !== encounterId;
+  const canvasChanged =
+    previousDocument.canvasSize.width !== canvasSize.width ||
+    previousDocument.canvasSize.height !== canvasSize.height;
+  if (encounterChanged) {
+    pendingFitRef.current = true;
+    pendingResizeRef.current = null;
+  } else if (canvasChanged && viewportElement) {
+    pendingFitRef.current = false;
+    pendingResizeRef.current = {
+      currentCanvasSize: previousDocument.canvasSize,
+      nextCanvasSize: canvasSize,
+      scrollLeft: viewportElement.scrollLeft,
+      scrollTop: viewportElement.scrollTop,
+      viewportSize: readViewportSize(viewportElement, viewportSize),
+      zoom: zoomRef.current
+    };
+  }
+  previousDocumentRef.current = { canvasSize, encounterId };
 
   useEffect(() => {
     if (!viewportElement) return;
 
     const measure = () =>
       setViewportSize((current) => {
-        const bounds = viewportElement.getBoundingClientRect();
-        const next = {
-          height: bounds.height || viewportElement.clientHeight,
-          width: bounds.width || viewportElement.clientWidth
-        };
+        const next = readViewportSize(viewportElement, current);
         return current.height === next.height && current.width === next.width
           ? current
           : next;
@@ -88,10 +127,7 @@ export function CanvasViewportProvider({ children }: PropsWithChildren) {
             nextZoom,
             scrollLeft: viewportElement.scrollLeft,
             scrollTop: viewportElement.scrollTop,
-            viewportSize: {
-              height: viewportElement.clientHeight || viewportSize.height,
-              width: viewportElement.clientWidth || viewportSize.width
-            }
+            viewportSize: readViewportSize(viewportElement, viewportSize)
           })
         : null;
 
@@ -112,22 +148,15 @@ export function CanvasViewportProvider({ children }: PropsWithChildren) {
     [canvasSize, setCenteredZoom, viewportSize]
   );
 
-  useEffect(() => {
-    const previous = previousDocumentRef.current;
-    previousDocumentRef.current = { canvasSize, encounterId };
+  useLayoutEffect(() => {
+    const pendingResize = pendingResizeRef.current;
+    if (!pendingResize || !viewportElement) return;
 
-    if (previous.encounterId !== encounterId) {
-      pendingFitRef.current = true;
-      return;
-    }
-    if (
-      previous.canvasSize.width !== canvasSize.width ||
-      previous.canvasSize.height !== canvasSize.height
-    ) {
-      pendingFitRef.current = false;
-      setCenteredZoom(1);
-    }
-  }, [canvasSize, encounterId, setCenteredZoom]);
+    pendingResizeRef.current = null;
+    const scroll = getCenteredCanvasResizeScroll(pendingResize);
+    viewportElement.scrollLeft = scroll.left;
+    viewportElement.scrollTop = scroll.top;
+  }, [canvasSize, viewportElement]);
 
   useEffect(() => {
     if (
@@ -146,6 +175,7 @@ export function CanvasViewportProvider({ children }: PropsWithChildren) {
     () => ({
       panEnabled,
       registerViewport: setViewportElement,
+      resetZoom: () => setCenteredZoom(1),
       setPanEnabled,
       viewportSize,
       zoom,

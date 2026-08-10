@@ -16,10 +16,10 @@ them only after the relevant implementation has passed its completion checks.
 ## Implementation status
 
 - Stage 1 was completed and passed its required manual browser gate.
-- Stage 2 — persisted canvas bounds and background commands — is implemented.
-- Stage 3 — scrollable viewport, zoom, and pan — is implemented.
-- Automated verification and Chrome browser verification completed for the
-  implemented canvas/background/navigation behavior.
+- Stages 2 and 3, including the viewport and canvas-resize refinements, are
+  implemented and verified.
+- Verification completed: 77 files / 484 tests pass; typecheck and the
+  production build pass.
 
 ## Settled model
 
@@ -59,7 +59,8 @@ them only after the relevant implementation has passed its completion checks.
   shapes are not distorted. If that result is unsafe, enlarge it to the
   nearest valid scale; a clamped result is custom and has no selected fit
   radio. Deleting a background keeps canvas bounds unchanged.
-- A canvas-size mutation resets viewport zoom to 100%.
+- A canvas-size mutation preserves the current zoom and the logical canvas
+  point centered in the viewport.
 - Viewport state is session-only and remains outside encounter Redux history:
   zoom, scroll position, and pan interaction state do not create history
   entries. A future loaded encounter starts with zoom-to-fit.
@@ -70,6 +71,28 @@ them only after the relevant implementation has passed its completion checks.
   arrow keys pan the scrollable viewport while it is focused. Existing
   right-click cancellation behavior remains available when the gesture is not
   being used to pan.
+
+## Completed viewport and canvas-resize refinements
+
+The following refinements are implemented and covered by the completed
+verification recorded above.
+
+- The viewport remains scrollable in both axes, but native scrollbar chrome is
+  visually hidden; scrolling, keyboard navigation, wheel input, and panning
+  remain available.
+- A canvas-size mutation preserves the current zoom rather than resetting it
+  to 100%. It also preserves the logical canvas point centered in the viewport:
+  capture the centered point before the mutation, map it through the same
+  top-left canvas resize transform, then restore scroll position so that mapped
+  point is centered after layout.
+- Fit commands operate relative to the currently zoomed viewport rather than
+  assuming an unzoomed viewport. Their calculations use the available viewport
+  dimensions and current zoom context.
+- Zoom/navigation controls are available even when no background image exists.
+- Add an explicit reset-zoom control and a visible current-zoom percentage in
+  addition to zoom out, zoom in, and zoom-to-fit.
+- At exactly 100% zoom, retain a fixed perceptual anchor so the canvas does
+  not visually jump as fit/resize calculations or viewport dimensions update.
 
 ## Stage 1 — shared coordinate conversion
 
@@ -162,8 +185,9 @@ existing add, replace, and delete controls and their accessible labels.
 
 Use `Minimize2`, `MoveHorizontal`, and `MoveVertical` for the Background radio
 group, followed by `Shrink` and `Expand` action buttons titled exactly
-“Shrink” and “Expand”. The global viewport controls use `Scan`, `ZoomOut`,
-`ZoomIn`, and `MousePointer2` in that order at the toolbar right.
+“Shrink” and “Expand”. The global viewport controls include `Scan`, `ZoomOut`,
+`ZoomIn`, an explicit reset-zoom control, a visible percentage, and
+`MousePointer2` at the toolbar right.
 
 ### Verification
 
@@ -197,14 +221,17 @@ Add tests for:
 
 ### Interaction contract
 
-1. Render the settled right-side Lucide controls in this order: `Scan`
-   (one-time zoom-to-fit), `ZoomOut`, `ZoomIn`, and `MousePointer2`
-   (right-drag pan toggle/indicator). Give each an accessible name and concise
-   tooltip.
+1. Render the settled right-side Lucide controls with `Scan` (one-time
+   zoom-to-fit), `ZoomOut`, `ZoomIn`, an explicit reset-zoom control, a visible
+   percentage, and `MousePointer2` (right-drag pan toggle/indicator). Render
+   them even with no background image, and give each control an accessible name
+   and concise tooltip.
 2. Clamp zoom to 20–400%, change it in 10% increments, and recenter scrolling
    so each zoom step preserves the currently viewed canvas center.
-3. Reset zoom to 100% after any canvas-size mutation. Apply zoom-to-fit once
-   when a future encounter load presents its canvas.
+3. Preserve zoom and the viewport's centered logical canvas point after any
+   canvas-size mutation. Apply zoom-to-fit once when a future encounter load
+   presents its canvas, calculate fit against the current zoomed viewport, and
+   preserve the fixed perceptual anchor at exactly 100% zoom.
 4. Enable right-drag panning by default. During an actual pan, update the
    scroll viewport and suppress the context menu for that gesture only.
 5. Make the canvas focusable. While it has focus, arrow keys pan the scroll
@@ -214,9 +241,14 @@ Add tests for:
 
 Add tests for:
 
-- exact control order, Lucide accessibility names/tooltips, zoom bounds,
-  10-point stepping, reset-to-100 after canvas resizing, and zoom-to-fit;
+- controls available without a background, accessibility names/tooltips, reset
+  zoom, visible percentage, zoom bounds, 10-point stepping, and zoom-to-fit;
 - center-preserving zoom scroll math and two-axis scroll reachability;
+- hidden native scrollbar chrome while wheel, keyboard, and pan scrolling
+  remain usable;
+- preservation of zoom and the mapped centered logical canvas point after a
+  canvas-size mutation, including the fixed 100% perceptual anchor and fit
+  calculations relative to the current zoomed viewport;
 - default-enabled and toggleable right-drag panning, including context-menu
   behavior when no pan occurs;
 - canvas-focused arrow-key panning;

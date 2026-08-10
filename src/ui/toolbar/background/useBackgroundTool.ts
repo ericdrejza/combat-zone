@@ -11,6 +11,7 @@ import {
   getActiveBackgroundFitMode,
   canvasMatchesBackgroundFitMode,
   getBackgroundFitCanvasSize,
+  getLogicalViewportSize,
   scaleCanvasSize,
   type BackgroundFitMode
 } from "./backgroundSizing";
@@ -23,7 +24,7 @@ type BackgroundAction = "add" | "replace";
 
 export function useBackgroundTool(encounter: EncounterState) {
   const dispatch = useDispatch();
-  const { viewportSize } = useCanvasViewport();
+  const { viewportSize, zoom } = useCanvasViewport();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [preferredFitMode, setPreferredFitMode] =
     useState<BackgroundFitMode | null>("fit");
@@ -48,7 +49,8 @@ export function useBackgroundTool(encounter: EncounterState) {
       backgroundImage: nextBackgroundImage,
       dispatch,
       encounter,
-      viewportSize
+      viewportSize,
+      viewportZoom: zoom
     });
     dispatch(setActiveTool("zone"));
   }
@@ -73,15 +75,13 @@ export function useBackgroundTool(encounter: EncounterState) {
   }
 
   function resizeBackground(mode: BackgroundFitMode) {
-    if (!encounter.backgroundImage) return;
-
     setPreferredFitMode(mode);
     const availableSize =
       viewportSize.width > 0 && viewportSize.height > 0
-        ? viewportSize
+        ? getLogicalViewportSize(viewportSize, zoom)
         : encounter.canvasSize;
     const requestedCanvasSize = getBackgroundFitCanvasSize(
-      encounter.backgroundImage,
+      encounter.backgroundImage ?? encounter.canvasSize,
       availableSize,
       mode
     );
@@ -108,21 +108,19 @@ export function useBackgroundTool(encounter: EncounterState) {
 
   const availableSize =
     viewportSize.width > 0 && viewportSize.height > 0
-      ? viewportSize
+      ? getLogicalViewportSize(viewportSize, zoom)
       : encounter.canvasSize;
-  const derivedFitMode = encounter.backgroundImage
-    ? getActiveBackgroundFitMode(
-        encounter.canvasSize,
-        encounter.backgroundImage,
-        availableSize
-      )
-    : null;
+  const aspectRatioSource = encounter.backgroundImage ?? encounter.canvasSize;
+  const derivedFitMode = getActiveBackgroundFitMode(
+    encounter.canvasSize,
+    aspectRatioSource,
+    availableSize
+  );
   const activeFitMode =
-    encounter.backgroundImage &&
     preferredFitMode &&
     canvasMatchesBackgroundFitMode(
       encounter.canvasSize,
-      encounter.backgroundImage,
+      aspectRatioSource,
       availableSize,
       preferredFitMode
     )

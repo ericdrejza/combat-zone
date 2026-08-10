@@ -93,7 +93,10 @@ large as possible within the visible workspace. Deleting a background keeps
 the current canvas bounds. The Background Tool also provides one-time fit,
 fit-width, fit-height, 10% shrink, and 10% expand commands. Shrinking clamps to
 the nearest larger scale that retains valid Zone and derived actor layouts.
-Every background or canvas-size mutation is one reversible history action.
+These sizing controls remain available without an image, using the current
+canvas aspect ratio. Fit commands target the logical area visible at the
+current viewport zoom. Every background or canvas-size mutation is one
+reversible history action.
 
 ### 4.2 Zone
 
@@ -473,11 +476,16 @@ for confirmation before applying both changes.
 Viewport navigation is session-only perception state and does not change
 encounter coordinates or create history. Zoom ranges from 20% to 400%; zoom-in
 and zoom-out use 10-point steps and preserve the viewed canvas center. Zoom to
-fit shows the complete canvas within the available viewport. A canvas-size
-mutation resets zoom to 100%, while loading a different encounter initially
-zooms it to fit.
+fit shows the complete canvas within the available viewport. The toolbar shows
+the current percentage and provides an explicit reset to 100%. At 100%, equal
+logical actor sizes have equal perceived sizes regardless of canvas bounds.
+Loading a different encounter initially zooms it to fit.
 
-The canvas viewport scrolls on both axes. The mouse wheel scrolls vertically,
+A canvas-size mutation preserves zoom and keeps the same proportional canvas
+point centered by mapping it through the top-left resize transform. When the
+rendered canvas no longer overflows an axis, it centers on that axis.
+
+The canvas viewport scrolls on both axes with scrollbar chrome hidden. The mouse wheel scrolls vertically,
 Shift + mouse wheel scrolls horizontally, and arrow keys scroll while the
 viewport has focus. Right-button drag panning is enabled by default and can be
 toggled from the toolbar. A right-click without a pan gesture retains the

@@ -1,7 +1,7 @@
 import type { CanvasSize } from "@core/layout/polygonCanvasBounds";
-import type { EncounterBackgroundImage } from "@core/encounter/types";
 
 export type BackgroundFitMode = "fit" | "fit-height" | "fit-width";
+type AspectRatioSource = Pick<CanvasSize, "height" | "width">;
 
 function roundSize(size: CanvasSize): CanvasSize {
   return {
@@ -11,7 +11,7 @@ function roundSize(size: CanvasSize): CanvasSize {
 }
 
 export function getBackgroundFitCanvasSize(
-  image: Pick<EncounterBackgroundImage, "height" | "width">,
+  image: AspectRatioSource,
   viewport: CanvasSize,
   mode: BackgroundFitMode
 ): CanvasSize {
@@ -43,7 +43,7 @@ function sizesMatch(left: CanvasSize, right: CanvasSize): boolean {
 
 export function canvasMatchesBackgroundFitMode(
   canvasSize: CanvasSize,
-  image: EncounterBackgroundImage,
+  image: AspectRatioSource,
   viewport: CanvasSize,
   mode: BackgroundFitMode
 ): boolean {
@@ -56,7 +56,7 @@ export function canvasMatchesBackgroundFitMode(
 /** Equivalent fit-width/height results intentionally resolve to Fit. */
 export function getActiveBackgroundFitMode(
   canvasSize: CanvasSize,
-  image: EncounterBackgroundImage,
+  image: AspectRatioSource,
   viewport: CanvasSize
 ): BackgroundFitMode | null {
   const fit = getBackgroundFitCanvasSize(image, viewport, "fit");
@@ -92,4 +92,14 @@ export function scaleCanvasSize(
     height: canvasSize.height * scale,
     width: canvasSize.width * scale
   });
+}
+
+export function getLogicalViewportSize(
+  viewportSize: CanvasSize,
+  zoom: number
+): CanvasSize {
+  return {
+    height: viewportSize.height / zoom,
+    width: viewportSize.width / zoom
+  };
 }

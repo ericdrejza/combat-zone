@@ -9,7 +9,10 @@ import { prepareValidatedEncounterChangeForRuntime } from "@core/validation/vali
 import { commitEncounterChange } from "@store/encounterSlice";
 import { logEncounterValidationBlock } from "@store/encounterLogSlice";
 import type { AppDispatch } from "@store/store";
-import { getBackgroundFitCanvasSize } from "./backgroundSizing";
+import {
+  getBackgroundFitCanvasSize,
+  getLogicalViewportSize
+} from "./backgroundSizing";
 
 type CanvasActionType =
   | "background.add"
@@ -176,13 +179,14 @@ export function commitBackgroundImage(input: {
   dispatch: AppDispatch;
   encounter: EncounterState;
   viewportSize: CanvasSize;
+  viewportZoom: number;
 }): void {
   const actionType = input.encounter.backgroundImage
     ? "background.replace"
     : "background.add";
   const availableSize =
     input.viewportSize.width > 0 && input.viewportSize.height > 0
-      ? input.viewportSize
+      ? getLogicalViewportSize(input.viewportSize, input.viewportZoom)
       : input.encounter.canvasSize;
   const requestedCanvasSize = getBackgroundFitCanvasSize(
     input.backgroundImage,

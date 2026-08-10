@@ -73,7 +73,7 @@ function shouldIgnoreKeyboardShortcut(target: EventTarget | null): boolean {
 
 function AppContent() {
   const dispatch = useDispatch();
-  const { viewportSize } = useCanvasViewport();
+  const { viewportSize, zoom: viewportZoom } = useCanvasViewport();
   const activeToolId = useSelector(
     (state: RootState) => state.interaction.activeToolId
   );
@@ -216,7 +216,8 @@ function AppContent() {
         backgroundImage,
         dispatch,
         encounter,
-        viewportSize
+        viewportSize,
+        viewportZoom
       });
 
     if (asset.width && asset.height) {
