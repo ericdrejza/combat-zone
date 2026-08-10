@@ -1,136 +1,31 @@
 import { describe, expect, it } from 'vitest';
 
-import type { Actor } from '@entities/actor/types';
-import type { Edge } from '@entities/edge/types';
-import type { Engagement } from '@entities/engagement/types';
 import { createEncounterState } from '@core/encounter/createEncounterState';
 import { ZONELESS_ACTOR_ZONE_ID } from '@core/encounter/types';
 import { createEncounterActionRecord } from '@core/history/createEncounterActionRecord';
 import { calculateZoneLayout } from '@core/layout/encounterLayout';
 import { prepareValidatedEncounterChange } from '@core/validation/validatedEncounterChange';
-import type { EntityCollection } from '@core/state/entityCollection';
 import reducer, {
-  commitEncounterChange,
   redoEncounterChange,
   undoEncounterChange
 } from '@store/encounterSlice';
-import type { Zone } from '@entities/zone/types';
 import {
   createZone,
   deleteZone,
   updateZonePolygon,
   updateZoneProperties
 } from '@entities/zone/zoneMutations';
-
-function collection<TEntity extends { id: string }>(
-  entities: TEntity[]
-): EntityCollection<TEntity> {
-  return {
-    byId: Object.fromEntries(entities.map((entity) => [entity.id, entity])),
-    allIds: entities.map((entity) => entity.id)
-  };
-}
-
-const zone: Zone = {
-  colorBorder: '#9b876b',
-  colorFill: '#ffffff',
-  id: 'zone-room',
-  name: 'Room',
-  namePosition: 'top-left',
-  opacity: 0.7,
-  polygon: [
-    { x: 0, y: 0 },
-    { x: 100, y: 0 },
-    { x: 100, y: 100 },
-    { x: 0, y: 100 }
-  ],
-  showBorder: true,
-  showName: false,
-  shape: 'rectangle',
-  layoutStrategy: 'FLEX',
-  layoutOrientation: 'LEFT_RIGHT',
-  tags: []
-};
-
-const actorInZone: Actor = {
-  id: 'actor-hero',
-  name: 'Hero',
-  actorType: 'creature',
-  layoutGroup: 'hero',
-  size: 'medium',
-  shape: 'circle',
-  currentZoneId: zone.id,
-  statusEffects: [],
-  metadata: {}
-};
-
-const actorOutsideZone: Actor = {
-  id: 'actor-enemy',
-  name: 'Enemy',
-  actorType: 'creature',
-  layoutGroup: 'enemy',
-  size: 'medium',
-  shape: 'circle',
-  currentZoneId: ZONELESS_ACTOR_ZONE_ID,
-  statusEffects: [],
-  metadata: {}
-};
-
-const connectedEdge: Edge = {
-  id: 'edge-room-hall',
-  fromZoneId: zone.id,
-  toZoneId: 'zone-hall',
-  directionality: 'bilateral',
-  movementRules: [],
-  visibilityRule: 'visible',
-  shape: 'straight',
-  interactionTags: []
-};
-
-const unrelatedEdge: Edge = {
-  ...connectedEdge,
-  id: 'edge-other',
-  fromZoneId: 'zone-hall',
-  toZoneId: 'zone-yard'
-};
-
-const engagementInZone: Engagement = {
-  id: 'engagement-room',
-  participantIds: ['actor-hero', 'actor-enemy'],
-  parentZoneId: zone.id,
-  layoutStrategy: 'SEQUENTIAL',
-  layoutOrientation: 'LEFT_RIGHT'
-};
-
-function createZoneEncounterState() {
-  return {
-    ...createEncounterState({
-      id: 'encounter-zones',
-      name: 'Zone Encounter'
-    }),
-    zones: collection([zone]),
-    actors: collection([actorInZone, actorOutsideZone]),
-    edges: collection([connectedEdge, unrelatedEdge]),
-    engagements: collection([engagementInZone])
-  };
-}
-
-function commitState(
-  state: ReturnType<typeof reducer>,
-  type: string,
-  nextEncounter: ReturnType<typeof createZoneEncounterState>
-) {
-  return reducer(
-    state,
-    commitEncounterChange({
-      action: createEncounterActionRecord(type),
-      nextEncounter
-    })
-  );
-}
+import {
+  collection,
+  commitState,
+  createZoneEncounterState,
+  unrelatedEdge,
+  zone
+} from './zoneMutationTestSupport';
 
 describe('zone mutations', () => {
-  it('creates a polygon zone and restores it through undo and redo', () => {
+  describe('create, reshape, and properties', () => {
+    it('creates a polygon zone and restores it through undo and redo', () => {
     const initialState = reducer(undefined, { type: 'test/init' });
     const polygon = [
       { x: 10, y: 10 },
@@ -155,9 +50,9 @@ describe('zone mutations', () => {
 
     state = reducer(state, redoEncounterChange());
     expect(state.present).toEqual(nextEncounter);
-  });
+    });
 
-  it('reshapes a zone polygon and restores the exact previous polygon on undo', () => {
+    it('reshapes a zone polygon and restores the exact previous polygon on undo', () => {
     const initialState = reducer(undefined, { type: 'test/init' });
     const baseEncounter = createZoneEncounterState();
     let state = commitState(initialState, 'test.seed', baseEncounter);
@@ -182,9 +77,9 @@ describe('zone mutations', () => {
 
     state = reducer(state, redoEncounterChange());
     expect(state.present.zones.byId[zone.id]?.polygon).toEqual(polygon);
-  });
+    });
 
-  it('updates zone properties and immediately changes the derived layout descriptor', () => {
+    it('updates zone properties and immediately changes the derived layout descriptor', () => {
     const initialState = reducer(undefined, { type: 'test/init' });
     const baseEncounter = createZoneEncounterState();
     let state = commitState(initialState, 'test.seed', baseEncounter);
@@ -239,11 +134,11 @@ describe('zone mutations', () => {
     expect(
       state.present.zones.byId[zone.id]?.showSectionDividers
     ).toBe(true);
-  });
+    });
 
-  it.each(['ADVISORY', 'STRICT'] as const)(
-    'allows divider visibility changes in %s validation mode',
-    (mode) => {
+    it.each(['ADVISORY', 'STRICT'] as const)(
+      'allows divider visibility changes in %s validation mode',
+      (mode) => {
       const emptyEncounter = createEncounterState({
         id: 'encounter-divider-validation',
         name: 'Divider validation'
@@ -274,10 +169,12 @@ describe('zone mutations', () => {
       expect(
         result.nextEncounter.zones.byId[zone.id]?.showSectionDividers
       ).toBe(true);
-    }
-  );
+      }
+    );
+  });
 
-  it('deletes a zone as one reversible history entry with actor, edge, and engagement cascades', () => {
+  describe('delete and cascade', () => {
+    it('deletes a zone as one reversible history entry with actor, edge, and engagement cascades', () => {
     const initialState = reducer(undefined, { type: 'test/init' });
     const baseEncounter = createZoneEncounterState();
     let state = commitState(initialState, 'test.seed', baseEncounter);
@@ -301,5 +198,6 @@ describe('zone mutations', () => {
 
     state = reducer(state, redoEncounterChange());
     expect(state.present).toEqual(deletedEncounter);
+    });
   });
 });

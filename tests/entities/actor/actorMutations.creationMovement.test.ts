@@ -1,98 +1,24 @@
 import { describe, expect, it } from 'vitest';
 
-import { createEncounterState } from '@core/encounter/createEncounterState';
 import { ZONELESS_ACTOR_ZONE_ID } from '@core/encounter/types';
-import { createEncounterActionRecord } from '@core/history/createEncounterActionRecord';
 import { calculateZoneLayout } from '@core/layout/encounterLayout';
-import type { EntityCollection } from '@core/state/entityCollection';
-import { prepareValidatedEncounterChange } from '@core/validation/validatedEncounterChange';
 import reducer, {
-  commitEncounterChange,
   redoEncounterChange,
   undoEncounterChange
 } from '@store/encounterSlice';
-import type { Zone } from '@entities/zone/types';
-import type { Actor } from '@entities/actor/types';
 import {
   createActor,
-  deleteActor,
-  duplicateActor,
-  moveActor,
-  updateActorProperties
+  moveActor
 } from '@entities/actor/actorMutations';
-
-function collection<TEntity extends { id: string }>(
-  entities: TEntity[]
-): EntityCollection<TEntity> {
-  return {
-    byId: Object.fromEntries(entities.map((entity) => [entity.id, entity])),
-    allIds: entities.map((entity) => entity.id)
-  };
-}
-
-const zoneA: Zone = {
-  colorBorder: '#9b876b',
-  colorFill: '#ffffff',
-  id: 'zone-a',
-  layoutOrientation: 'LEFT_RIGHT',
-  layoutStrategy: 'FLEX',
-  name: 'Zone A',
-  namePosition: 'top-left',
-  opacity: 0.7,
-  polygon: [
-    { x: 0, y: 0 },
-    { x: 100, y: 0 },
-    { x: 100, y: 100 },
-    { x: 0, y: 100 }
-  ],
-  shape: 'rectangle',
-  showBorder: true,
-  showName: false,
-  tags: []
-};
-
-const zoneB: Zone = {
-  ...zoneA,
-  id: 'zone-b',
-  name: 'Zone B'
-};
-
-const actor: Actor = {
-  actorType: 'creature',
-  currentZoneId: zoneA.id,
-  id: 'actor-hero',
-  layoutGroup: 'hero',
-  metadata: {},
-  name: 'Hero',
-  shape: 'circle',
-  size: 'medium',
-  statusEffects: []
-};
-
-function createActorEncounterState() {
-  return {
-    ...createEncounterState({
-      id: 'encounter-actors',
-      name: 'Actor Encounter'
-    }),
-    zones: collection([zoneA, zoneB]),
-    actors: collection([actor])
-  };
-}
-
-function commitState(
-  state: ReturnType<typeof reducer>,
-  type: string,
-  nextEncounter: ReturnType<typeof createActorEncounterState>
-) {
-  return reducer(
-    state,
-    commitEncounterChange({
-      action: createEncounterActionRecord(type),
-      nextEncounter
-    })
-  );
-}
+import type { Actor } from '@entities/actor/types';
+import {
+  actor,
+  collection,
+  commitState,
+  createActorEncounterState,
+  zoneA,
+  zoneB
+} from './actorMutationsTestSupport';
 
 describe('actor mutations', () => {
   it('inherits the uploaded image name when no actor name is provided', () => {
@@ -259,96 +185,5 @@ describe('actor mutations', () => {
     state = reducer(state, redoEncounterChange());
     state = reducer(state, redoEncounterChange());
     expect(state.present).toEqual(reenteredEncounter);
-  });
-
-  it('updates actor properties, duplicates actors, and deletes actors reversibly', () => {
-    const initialHistory = reducer(undefined, { type: 'test/init' });
-    let state = commitState(
-      initialHistory,
-      'test.seed',
-      createActorEncounterState()
-    );
-    const updatedEncounter = updateActorProperties(state.present, actor.id, {
-      actorType: 'objective',
-      layoutGroup: 'neutral',
-      name: 'Relic',
-      shape: 'rectangle',
-      size: 'xLarge'
-    });
-
-    state = commitState(state, 'actor.updateProperties', updatedEncounter);
-    expect(state.present.actors.byId[actor.id]).toMatchObject({
-      actorType: 'objective',
-      layoutGroup: 'neutral',
-      name: 'Relic',
-      shape: 'rectangle',
-      size: 'xLarge'
-    });
-
-    const duplicatedEncounter = duplicateActor(
-      state.present,
-      actor.id,
-      'actor-copy',
-      zoneB.id
-    );
-    state = commitState(state, 'actor.duplicate', duplicatedEncounter);
-    expect(state.present.actors.byId['actor-copy']).toMatchObject({
-      currentZoneId: zoneB.id,
-      name: 'Relic Copy'
-    });
-
-    const deletedEncounter = deleteActor(state.present, actor.id);
-    state = commitState(state, 'actor.delete', deletedEncounter);
-    expect(state.present.actors.byId[actor.id]).toBeUndefined();
-
-    state = reducer(state, undoEncounterChange());
-    expect(state.present.actors.byId[actor.id]).toBeDefined();
-
-    state = reducer(state, redoEncounterChange());
-    expect(state.present).toEqual(deletedEncounter);
-  });
-
-  it('blocks invalid actor moves in STRICT mode and allows them with messages in ADVISORY mode', () => {
-    const strictEncounter = {
-      ...createActorEncounterState(),
-      validationState: {
-        messages: [],
-        mode: 'STRICT' as const
-      }
-    };
-    const invalidMove = moveActor(strictEncounter, actor.id, 'zone-missing');
-    const strictResult = prepareValidatedEncounterChange({
-      action: createEncounterActionRecord('actor.move', {
-        actorId: actor.id,
-        destinationZoneId: 'zone-missing'
-      }),
-      currentEncounter: strictEncounter,
-      nextEncounter: invalidMove
-    });
-
-    expect(strictResult.blocked).toBe(true);
-
-    const advisoryEncounter = {
-      ...strictEncounter,
-      validationState: {
-        messages: [],
-        mode: 'ADVISORY' as const
-      }
-    };
-    const advisoryResult = prepareValidatedEncounterChange({
-      action: createEncounterActionRecord('actor.move', {
-        actorId: actor.id,
-        destinationZoneId: 'zone-missing'
-      }),
-      currentEncounter: advisoryEncounter,
-      nextEncounter: moveActor(advisoryEncounter, actor.id, 'zone-missing')
-    });
-
-    expect(advisoryResult.blocked).toBe(false);
-    expect(advisoryResult.validationResult.messages).toEqual([
-      expect.objectContaining({
-        code: 'movement.destinationZoneMissing'
-      })
-    ]);
   });
 });
