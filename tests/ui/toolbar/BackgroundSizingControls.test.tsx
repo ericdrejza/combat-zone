@@ -69,8 +69,9 @@ describe("background sizing controls", () => {
     await user.click(screen.getByRole("radio", { name: "Fit height" }));
 
     let encounter = store.getState().encounter.present;
-    expect(encounter.canvasSize).toEqual({ height: 400, width: 800 });
-    expect(encounter.zones.byId[zone.id]?.polygon[0]).toEqual({ x: 100, y: 100 });
+    expect(viewport).toHaveAttribute("data-canvas-zoom", "0.625");
+    expect(encounter.canvasSize).toEqual({ height: 640, width: 1280 });
+    expect(encounter.zones.byId[zone.id]?.polygon[0]).toEqual({ x: 160, y: 160 });
     expect(store.getState().encounter.past.at(-1)?.action.type).toBe("canvas.resize");
     expect(screen.getByRole("radio", { name: "Fit height" })).toHaveAttribute("aria-checked", "true");
 
@@ -84,7 +85,7 @@ describe("background sizing controls", () => {
     act(() => {
       store.dispatch(redoEncounterChange());
     });
-    expect(store.getState().encounter.present.canvasSize).toEqual({ height: 400, width: 800 });
+    expect(store.getState().encounter.present.canvasSize).toEqual({ height: 640, width: 1280 });
   });
 
   it("shrinks and expands by ten percent and retains bounds on delete", async () => {
@@ -108,5 +109,22 @@ describe("background sizing controls", () => {
     await user.click(screen.getByRole("menuitem", { name: "Delete" }));
     expect(store.getState().encounter.present.backgroundImage).toBeNull();
     expect(store.getState().encounter.present.canvasSize).toEqual(sizeBeforeDelete);
+  });
+
+  it("offers fit and scale controls for a canvas without an image", async () => {
+    const user = userEvent.setup();
+    renderApp();
+
+    await user.click(screen.getByRole("button", { name: "Background" }));
+    expect(screen.getByRole("radio", { name: "Fit" })).toBeEnabled();
+    expect(screen.getByRole("radio", { name: "Fit width" })).toBeEnabled();
+    expect(screen.getByRole("radio", { name: "Fit height" })).toBeEnabled();
+
+    await user.click(screen.getByRole("button", { name: "Shrink" }));
+    expect(store.getState().encounter.present.backgroundImage).toBeNull();
+    expect(store.getState().encounter.present.canvasSize).toEqual({
+      height: 576,
+      width: 864
+    });
   });
 });

@@ -53,6 +53,8 @@ After completing a numbered section (## X.), move the completed section to the e
       proportional Zone scaling, safe shrink clamping, and exact history.
 - [x] Implement session-only zoom-to-fit, zoom stepping, two-axis scrolling,
       focused arrow-key navigation, and toggleable right-drag panning.
+- [x] Preserve zoom and the centered canvas point through canvas sizing; hide
+      scrollbar chrome and expose zoom percentage/reset controls.
 - [x] Verify native image drops for the Background and Actor tools, including
   Redux history undo/redo coverage.
 - [ ] Create an acceptance test matrix covering every item in

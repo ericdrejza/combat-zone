@@ -114,13 +114,20 @@ covers `DESIGN.md` §15 "Must have" scope only.
 - [x] Background controls provide dimensions-derived To fit, Fit width, and
       Fit height radio commands plus 10% Shrink and Expand actions. Shrinking
       clamps before an existing Zone/actor layout becomes invalid.
+- [x] Background sizing controls remain available without an image, and fit
+      commands target the currently zoomed visible viewport.
 - [x] Canvas-size and background mutations are single undoable/redoable Redux
       history entries; deleting a background retains the current canvas size.
 - [x] Zoom to fit, Zoom out, and Zoom in affect perception only, preserve the
       viewed center, stay within 20–400%, and do not create history entries.
+- [x] The toolbar displays the current zoom percentage and Reset zoom restores
+      the fixed 100% perceptual anchor.
+- [x] Canvas resizing preserves zoom and the proportionally centered canvas
+      point, centering automatically on axes that no longer overflow.
 - [x] The canvas scrolls vertically by wheel, horizontally by Shift + wheel,
       and by arrow keys while focused. Default-enabled, toggleable right-drag
       panning scrolls both axes and suppresses context actions only after a pan.
+      Native scrollbar chrome remains hidden.
 - [x] Drawing, dragging, resizing, selection, overlays, and native drops share
       the same SVG coordinate transform at every zoom and scroll position.
 

@@ -5,6 +5,7 @@ import { createEncounterActionRecord } from "@core/history/createEncounterAction
 import { commitEncounterChange } from "@store/encounterSlice";
 import { store } from "@store/store";
 import {
+  getCenteredCanvasResizeScroll,
   getCenteredZoomScroll,
   getZoomToFit
 } from "@ui/canvas/canvasViewportMath";
@@ -28,6 +29,16 @@ describe("canvas viewport navigation", () => {
         viewportSize: { height: 320, width: 600 }
       })
     ).toEqual({ left: 500, top: 320 });
+    expect(
+      getCenteredCanvasResizeScroll({
+        currentCanvasSize: { height: 800, width: 1000 },
+        nextCanvasSize: { height: 1600, width: 2000 },
+        scrollLeft: 300,
+        scrollTop: 250,
+        viewportSize: { height: 300, width: 400 },
+        zoom: 1
+      })
+    ).toEqual({ left: 800, top: 650 });
   });
 
   it("orders controls, changes perception only, and toggles panning", async () => {
@@ -40,6 +51,7 @@ describe("canvas viewport navigation", () => {
       "Zoom to fit",
       "Zoom out",
       "Zoom in",
+      "Reset zoom",
       "Pan with right drag"
     ]);
     const historyLength = store.getState().encounter.past.length;
@@ -47,7 +59,12 @@ describe("canvas viewport navigation", () => {
 
     await user.click(screen.getByRole("button", { name: "Zoom in" }));
     expect(viewport).toHaveAttribute("data-canvas-zoom", "1.1");
+    expect(screen.getByLabelText("Current zoom")).toHaveTextContent("110%");
     expect(store.getState().encounter.past).toHaveLength(historyLength);
+
+    await user.click(screen.getByRole("button", { name: "Reset zoom" }));
+    expect(viewport).toHaveAttribute("data-canvas-zoom", "1");
+    expect(screen.getByLabelText("Current zoom")).toHaveTextContent("100%");
 
     const panButton = screen.getByRole("button", { name: "Pan with right drag" });
     expect(panButton).toHaveAttribute("aria-pressed", "true");
@@ -74,13 +91,19 @@ describe("canvas viewport navigation", () => {
     expect(viewport.scrollTop).toBe(150);
   });
 
-  it("resets zoom to 100% after a persisted canvas resize", async () => {
+  it("preserves zoom and the proportionally centered point after canvas resize", async () => {
     const user = userEvent.setup();
     renderApp();
     const viewport = screen.getByLabelText("Canvas viewport");
+    Object.defineProperties(viewport, {
+      clientHeight: { configurable: true, value: 300 },
+      clientWidth: { configurable: true, value: 400 }
+    });
 
     await user.click(screen.getByRole("button", { name: "Zoom in" }));
     expect(viewport).toHaveAttribute("data-canvas-zoom", "1.1");
+    viewport.scrollLeft = 200;
+    viewport.scrollTop = 150;
 
     act(() => {
       const encounter = store.getState().encounter.present;
@@ -89,12 +112,14 @@ describe("canvas viewport navigation", () => {
           action: createEncounterActionRecord("canvas.resize"),
           nextEncounter: {
             ...encounter,
-            canvasSize: { height: 720, width: 1080 }
+            canvasSize: { height: 1280, width: 1920 }
           }
         })
       );
     });
 
-    expect(viewport).toHaveAttribute("data-canvas-zoom", "1");
+    expect(viewport).toHaveAttribute("data-canvas-zoom", "1.1");
+    expect(viewport.scrollLeft).toBeCloseTo(600);
+    expect(viewport.scrollTop).toBeCloseTo(450);
   });
 });
