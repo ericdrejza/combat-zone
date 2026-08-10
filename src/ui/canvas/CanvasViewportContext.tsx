@@ -22,6 +22,7 @@ import {
 } from "./canvasViewportMath";
 
 type CanvasViewportValue = {
+  getViewportSize: () => CanvasSize;
   panEnabled: boolean;
   registerViewport: (element: HTMLDivElement | null) => void;
   setPanEnabled: (enabled: boolean) => void;
@@ -116,6 +117,15 @@ export function CanvasViewportProvider({ children }: PropsWithChildren) {
     return () => observer.disconnect();
   }, [viewportElement]);
 
+  /** Reads layout synchronously so commands do not depend on observer timing. */
+  const getViewportSize = useCallback(
+    () =>
+      viewportElement
+        ? readViewportSize(viewportElement, viewportSize)
+        : viewportSize,
+    [viewportElement, viewportSize]
+  );
+
   const setCenteredZoom = useCallback(
     (requestedZoom: number) => {
       const nextZoom = clampZoom(requestedZoom);
@@ -127,7 +137,7 @@ export function CanvasViewportProvider({ children }: PropsWithChildren) {
             nextZoom,
             scrollLeft: viewportElement.scrollLeft,
             scrollTop: viewportElement.scrollTop,
-            viewportSize: readViewportSize(viewportElement, viewportSize)
+            viewportSize: getViewportSize()
           })
         : null;
 
@@ -140,12 +150,12 @@ export function CanvasViewportProvider({ children }: PropsWithChildren) {
         });
       }
     },
-    [canvasSize, viewportElement, viewportSize]
+    [canvasSize, getViewportSize, viewportElement]
   );
 
   const zoomToFit = useCallback(
-    () => setCenteredZoom(getZoomToFit(canvasSize, viewportSize)),
-    [canvasSize, setCenteredZoom, viewportSize]
+    () => setCenteredZoom(getZoomToFit(canvasSize, getViewportSize())),
+    [canvasSize, getViewportSize, setCenteredZoom]
   );
 
   useLayoutEffect(() => {
@@ -173,6 +183,7 @@ export function CanvasViewportProvider({ children }: PropsWithChildren) {
 
   const value = useMemo<CanvasViewportValue>(
     () => ({
+      getViewportSize,
       panEnabled,
       registerViewport: setViewportElement,
       resetZoom: () => setCenteredZoom(1),
@@ -183,7 +194,7 @@ export function CanvasViewportProvider({ children }: PropsWithChildren) {
       zoomOut: () => setCenteredZoom(zoomRef.current - CANVAS_ZOOM_STEP),
       zoomToFit
     }),
-    [panEnabled, setCenteredZoom, viewportSize, zoom, zoomToFit]
+    [getViewportSize, panEnabled, setCenteredZoom, viewportSize, zoom, zoomToFit]
   );
 
   return (

@@ -72,6 +72,25 @@ describe("canvas viewport navigation", () => {
     expect(panButton).toHaveAttribute("aria-pressed", "false");
   });
 
+  it("reads the currently visible workspace when zooming to fit", async () => {
+    const user = userEvent.setup();
+    renderApp();
+    const viewport = screen.getByLabelText("Canvas viewport");
+    let height = 400;
+    let width = 600;
+    Object.defineProperties(viewport, {
+      clientHeight: { configurable: true, get: () => height },
+      clientWidth: { configurable: true, get: () => width }
+    });
+    fireEvent(window, new Event("resize"));
+
+    height = 800;
+    width = 1000;
+    await user.click(screen.getByRole("button", { name: "Zoom to fit" }));
+
+    expect(viewport).toHaveAttribute("data-canvas-zoom", "1.042");
+  });
+
   it("scrolls with shift-wheel, arrow keys, and enabled right drag", () => {
     renderApp();
     const viewport = screen.getByLabelText("Canvas viewport");
