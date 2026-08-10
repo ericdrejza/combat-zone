@@ -88,6 +88,30 @@ describe("background sizing controls", () => {
     expect(store.getState().encounter.present.canvasSize).toEqual({ height: 640, width: 1280 });
   });
 
+  it("reads the currently visible workspace for a fit command", async () => {
+    const user = userEvent.setup();
+    renderApp();
+    const viewport = screen.getByLabelText("Canvas viewport");
+    let height = 400;
+    let width = 600;
+    Object.defineProperties(viewport, {
+      clientHeight: { configurable: true, get: () => height },
+      clientWidth: { configurable: true, get: () => width }
+    });
+    fireEvent(window, new Event("resize"));
+    act(seedBackgroundEncounter);
+    await user.click(screen.getByRole("button", { name: "Background" }));
+
+    height = 800;
+    width = 1000;
+    await user.click(screen.getByRole("radio", { name: "Fit width" }));
+
+    expect(store.getState().encounter.present.canvasSize).toEqual({
+      height: 800,
+      width: 1600
+    });
+  });
+
   it("shrinks and expands by ten percent and retains bounds on delete", async () => {
     const user = userEvent.setup();
     renderApp();

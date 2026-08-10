@@ -24,7 +24,7 @@ type BackgroundAction = "add" | "replace";
 
 export function useBackgroundTool(encounter: EncounterState) {
   const dispatch = useDispatch();
-  const { viewportSize, zoom } = useCanvasViewport();
+  const { getViewportSize, viewportSize, zoom } = useCanvasViewport();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [preferredFitMode, setPreferredFitMode] =
     useState<BackgroundFitMode | null>("fit");
@@ -49,7 +49,7 @@ export function useBackgroundTool(encounter: EncounterState) {
       backgroundImage: nextBackgroundImage,
       dispatch,
       encounter,
-      viewportSize,
+      viewportSize: getViewportSize(),
       viewportZoom: zoom
     });
     dispatch(setActiveTool("zone"));
@@ -76,9 +76,10 @@ export function useBackgroundTool(encounter: EncounterState) {
 
   function resizeBackground(mode: BackgroundFitMode) {
     setPreferredFitMode(mode);
+    const currentViewportSize = getViewportSize();
     const availableSize =
-      viewportSize.width > 0 && viewportSize.height > 0
-        ? getLogicalViewportSize(viewportSize, zoom)
+      currentViewportSize.width > 0 && currentViewportSize.height > 0
+        ? getLogicalViewportSize(currentViewportSize, zoom)
         : encounter.canvasSize;
     const requestedCanvasSize = getBackgroundFitCanvasSize(
       encounter.backgroundImage ?? encounter.canvasSize,

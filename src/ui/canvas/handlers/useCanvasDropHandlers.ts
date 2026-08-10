@@ -43,7 +43,7 @@ export function useCanvasDropHandlers({
   encounter,
   library
 }: UseCanvasDropHandlersInput) {
-  const { viewportSize, zoom: viewportZoom } = useCanvasViewport();
+  const { getViewportSize, zoom: viewportZoom } = useCanvasViewport();
   const mutationContext = {
     actorTool,
     dispatch,
@@ -144,7 +144,7 @@ export function useCanvasDropHandlers({
         void commitBackgroundFromFile(
           mutationContext,
           droppedImageFile,
-          viewportSize,
+          getViewportSize,
           viewportZoom
         );
       }

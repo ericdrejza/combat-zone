@@ -91,7 +91,7 @@ export function LibraryPanel({
   viewMode
 }: LibraryPanelProps) {
   const dispatch = useDispatch();
-  const { viewportSize, zoom: viewportZoom } = useCanvasViewport();
+  const { getViewportSize, zoom: viewportZoom } = useCanvasViewport();
   const encounter = useSelector((state: RootState) => state.encounter.present);
   const library = useSelector((state: RootState) => state.library);
   const activeToolId = useSelector(
@@ -183,7 +183,7 @@ export function LibraryPanel({
         backgroundImage,
         dispatch,
         encounter,
-        viewportSize,
+        viewportSize: getViewportSize(),
         viewportZoom
       });
 
