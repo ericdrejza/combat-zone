@@ -1,8 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 import type { LayoutPoint } from "@core/layout/types";
-import { POLYGON_LAYOUT_SETTINGS } from "@core/layout/polygonFlexLayout";
 import { useAltKey } from "@hooks/useAltKey";
 import type { AppDispatch, RootState } from "@store/store";
 import { ZonelessActorPanel } from "../panels/zoneless_actors/ZonelessActorPanel";
@@ -12,16 +11,6 @@ import { CanvasToolStatusBadge } from "./CanvasToolStatusBadge";
 import { CanvasWorkspace } from "./CanvasWorkspace";
 import { CanvasViewport } from "./CanvasViewport";
 import { getTextColorForLuminance } from "./canvasLuminance";
-import {
-  ACTOR_LAYOUT_COMPUTATION_STRATEGY,
-  getActorRenderPlacements
-} from "./actors/actorCanvasLayout";
-import { calculateNonSplitZonePlacementGeometry } from "./actors/actorNonSplitLayout";
-import {
-  scheduleProactiveActorPlacementComputations
-} from "./actors/proactiveActorPlacementCache";
-import { subscribeToActorPlacementWorker } from "./actors/actorPlacementWorkerClient";
-import type { ActorPlacementTranslation } from "./actors/actorPlacementTranslation";
 import type {
   ActorDragState,
   EdgeDragState,
@@ -40,7 +29,10 @@ import {
   usePolygonDraftBackgroundLuminance
 } from "./useCanvasLuminance";
 import { useDragActionPreview } from './useDragActionPreview';
-import { getEdgeStatusSummary } from "./edges/edgeStatusSummary";
+import { getCanvasStatus } from "./canvasStatus";
+import { useActorReturnCompletion } from "./useActorReturnCompletion";
+import { useZoneActorTranslation } from "./useZoneActorTranslation";
+import { useActorRenderPlacements } from "./actors/useActorRenderPlacements";
 
 export function CanvasShell() {
   const dispatch = useDispatch<AppDispatch>();
@@ -71,29 +63,18 @@ export function CanvasShell() {
   const [shapeDraft, setShapeDraft] = useState<ShapeDraftState | null>(null);
   const [vertexDrag, setVertexDrag] = useState<VertexDragState | null>(null);
   const [zoneDrag, setZoneDrag] = useState<ZoneDragState | null>(null);
-  const [placementRevision, setPlacementRevision] = useState(0);
   const [boxSelection, setBoxSelection] = useState<LocalBoxSelectionState | null>(
     null
   );
   const canvasRef = useRef<SVGSVGElement | null>(null);
-  const actorReturnCompletionRef = useRef({
-    actorIds: new Set<string>(),
-    key: ""
-  });
   const suppressNextCanvasClickRef = useRef(false);
   const suppressNextCanvasClickUnconditionallyRef = useRef(false);
   const suppressNextCanvasClickPointRef = useRef<LayoutPoint | null>(null);
   const suppressNextEntityClickRef = useRef<string | null>(null);
   const altKeyDown = useAltKey();
   const backgroundImage = encounter.backgroundImage;
-  useEffect(
-    () => subscribeToActorPlacementWorker(() => setPlacementRevision((value) => value + 1)),
-    []
-  );
-  const actorRenderPlacements = useMemo(
-    () => getActorRenderPlacements(encounter, ACTOR_LAYOUT_COMPUTATION_STRATEGY),
-    [encounter, placementRevision]
-  );
+  const { placements: actorRenderPlacements, refreshPlacements } =
+    useActorRenderPlacements(encounter);
   const {
     engagementDrag,
     handleEngagementDrag,
@@ -103,38 +84,7 @@ export function CanvasShell() {
     handleEngagementSelect
   } = useEngagementDrag(dispatch, encounter, actorRenderPlacements);
   useDragActionPreview(dispatch, encounter, actorDrag, engagementDrag);
-  useEffect(() => {
-    if (ACTOR_LAYOUT_COMPUTATION_STRATEGY !== "PROACTIVE") {
-      return;
-    }
-
-    scheduleProactiveActorPlacementComputations(
-      encounter,
-      POLYGON_LAYOUT_SETTINGS,
-      calculateNonSplitZonePlacementGeometry
-    );
-  }, [encounter]);
-  const zoneActorTranslation = useMemo<ActorPlacementTranslation | null>(() => {
-    if (!zoneDrag) {
-      return null;
-    }
-
-    const zone = encounter.zones.byId[zoneDrag.zoneId];
-
-    // Once the mutation commits, the polygon is no longer the original drag
-    // polygon. The cached geometry already contains the translated positions.
-    if (!zone || zone.polygon !== zoneDrag.originalPolygon) {
-      return null;
-    }
-
-    return {
-      offset: {
-        x: zoneDrag.current.x - zoneDrag.start.x,
-        y: zoneDrag.current.y - zoneDrag.start.y
-      },
-      zoneId: zoneDrag.zoneId
-    };
-  }, [encounter, zoneDrag]);
+  const zoneActorTranslation = useZoneActorTranslation(encounter, zoneDrag);
   const backgroundLuminance = useCanvasBackgroundLuminance(
     backgroundImage,
     encounter.zones,
@@ -234,77 +184,15 @@ export function CanvasShell() {
   );
   const showFactionOutlines =
     altKeyDown && (activeToolId === "actor" || activeToolId === "select");
-  const selectedActorNames =
-    selection.selectedEntityType === "actor"
-      ? selection.selectedIds
-          .map((actorId) => encounter.actors.byId[actorId]?.name)
-          .filter((name): name is string => Boolean(name))
-          .sort((left, right) => left.localeCompare(right))
-      : [];
-  const hoveredActorName = hoveredActorId
-    ? encounter.actors.byId[hoveredActorId]?.name
-    : undefined;
-  const statusActorNames =
-    selectedActorNames.length > 0
-      ? selectedActorNames
-      : hoveredActorName
-        ? [hoveredActorName]
-        : [];
-  const selectedZoneStatuses =
-    selection.selectedEntityType === "zone"
-      ? selection.selectedIds
-          .map((zoneId) => encounter.zones.byId[zoneId])
-          .filter((zone): zone is NonNullable<typeof zone> => Boolean(zone))
-          .map((zone) =>
-            zone.tags.length > 0
-              ? `${zone.name}: ${zone.tags.join(", ")}`
-              : zone.name
-          )
-      : [];
-  const selectedEdgeStatuses =
-    selection.selectedEntityType === "edge"
-      ? selection.selectedIds
-          .map((edgeId) => encounter.edges.byId[edgeId])
-          .filter((edge): edge is NonNullable<typeof edge> => Boolean(edge))
-          .map((edge) => getEdgeStatusSummary(edge, encounter))
-      : [];
+  const canvasStatus = getCanvasStatus(encounter, selection, hoveredActorId);
   const isDraggingCanvasEntity = Boolean(
     actorDrag?.phase === "dragging" ||
       zoneDrag?.phase === "dragging" ||
       vertexDrag
   );
 
-  function handleActorReturnComplete(actorId: string) {
-    if (!actorDrag || actorDrag.phase !== "returning") {
-      return;
-    }
-
-    const completionKey = `${actorDrag.actorId}:${actorDrag.actorIds.join(",")}:${actorDrag.start.x}:${actorDrag.start.y}`;
-
-    if (actorReturnCompletionRef.current.key !== completionKey) {
-      actorReturnCompletionRef.current = {
-        actorIds: new Set<string>(),
-        key: completionKey
-      };
-    }
-
-    actorReturnCompletionRef.current.actorIds.add(actorId);
-
-    if (
-      actorDrag.actorIds.every((draggedActorId) =>
-        actorReturnCompletionRef.current.actorIds.has(draggedActorId)
-      )
-    ) {
-      setActorDrag(null);
-    }
-  }
-
-  function resetActorReturnCompletion() {
-    actorReturnCompletionRef.current = {
-      actorIds: new Set<string>(),
-      key: ""
-    };
-  }
+  const { handleActorReturnComplete, resetActorReturnCompletion } =
+    useActorReturnCompletion(actorDrag, () => setActorDrag(null));
 
   return (
     <section
@@ -340,9 +228,7 @@ export function CanvasShell() {
           resetActorReturnCompletion();
           handleActorDragStart(...args);
         }}
-        onActorIncomingPointCommitted={() =>
-          setPlacementRevision((value) => value + 1)
-        }
+        onActorIncomingPointCommitted={refreshPlacements}
         onActorReturnComplete={handleActorReturnComplete}
         onEngagementDrag={handleEngagementDrag}
         onEngagementDragEnd={handleEngagementDragEnd}
@@ -388,9 +274,9 @@ export function CanvasShell() {
       </CanvasViewport>
       <CanvasToolStatusBadge
         activeToolId={activeToolId}
-        actorNames={statusActorNames}
-        edgeStatuses={selectedEdgeStatuses}
-        zoneStatuses={selectedZoneStatuses}
+        actorNames={canvasStatus.actorNames}
+        edgeStatuses={canvasStatus.edgeStatuses}
+        zoneStatuses={canvasStatus.zoneStatuses}
         zoneShapeMode={zoneShapeMode}
       />
       <ZonelessActorPanel
