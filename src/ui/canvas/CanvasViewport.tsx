@@ -113,7 +113,7 @@ export function CanvasViewport({ canvasSize, children }: CanvasViewportProps) {
     <div
       ref={setViewportRef}
       aria-label="Canvas viewport"
-      className={`h-full w-full overflow-auto outline-none focus-visible:ring-2 focus-visible:ring-canvas-ink ${
+      className={`scrollbar-hidden h-full w-full overflow-auto outline-none focus-visible:ring-2 focus-visible:ring-canvas-ink ${
         panStartRef.current ? "cursor-grabbing" : ""
       }`}
       data-canvas-zoom={viewport.zoom}

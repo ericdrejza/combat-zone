@@ -143,14 +143,16 @@ export async function commitActorFromImage(
 export async function commitBackgroundFromFile(
   context: Pick<CanvasDropContext, 'dispatch' | 'encounter'>,
   file: File,
-  viewportSize: CanvasSize
+  viewportSize: CanvasSize,
+  viewportZoom: number
 ) {
   const nextBackgroundImage = await readImageFile(file);
   commitBackgroundImage({
     backgroundImage: nextBackgroundImage,
     dispatch: context.dispatch,
     encounter: context.encounter,
-    viewportSize
+    viewportSize,
+    viewportZoom
   });
   context.dispatch(setActiveTool('zone'));
 }

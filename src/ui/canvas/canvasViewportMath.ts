@@ -81,3 +81,63 @@ export function getCenteredZoomScroll(input: {
     )
   };
 }
+
+/** Keeps the same proportional canvas point centered through a canvas resize. */
+export function getCenteredCanvasResizeScroll(input: {
+  currentCanvasSize: CanvasSize;
+  nextCanvasSize: CanvasSize;
+  scrollLeft: number;
+  scrollTop: number;
+  viewportSize: CanvasSize;
+  zoom: number;
+}): { left: number; top: number } {
+  const currentRenderedSize = {
+    height: input.currentCanvasSize.height * input.zoom,
+    width: input.currentCanvasSize.width * input.zoom
+  };
+  const nextRenderedSize = {
+    height: input.nextCanvasSize.height * input.zoom,
+    width: input.nextCanvasSize.width * input.zoom
+  };
+  const currentOffset = {
+    x: Math.max(0, (input.viewportSize.width - currentRenderedSize.width) / 2),
+    y: Math.max(0, (input.viewportSize.height - currentRenderedSize.height) / 2)
+  };
+  const centeredRatio = {
+    x: Math.min(
+      1,
+      Math.max(
+        0,
+        (input.scrollLeft + input.viewportSize.width / 2 - currentOffset.x) /
+          currentRenderedSize.width
+      )
+    ),
+    y: Math.min(
+      1,
+      Math.max(
+        0,
+        (input.scrollTop + input.viewportSize.height / 2 - currentOffset.y) /
+          currentRenderedSize.height
+      )
+    )
+  };
+  const nextOffset = {
+    x: Math.max(0, (input.viewportSize.width - nextRenderedSize.width) / 2),
+    y: Math.max(0, (input.viewportSize.height - nextRenderedSize.height) / 2)
+  };
+
+  return {
+    left: Math.max(
+      0,
+      centeredRatio.x * nextRenderedSize.width +
+        nextOffset.x -
+        input.viewportSize.width / 2
+    ),
+    top: Math.max(
+      0,
+      centeredRatio.y * nextRenderedSize.height +
+        nextOffset.y -
+        input.viewportSize.height / 2
+    )
+  };
+}

@@ -25,3 +25,11 @@ body {
   height: 100vh;
   overflow: hidden;
 }
+
+.scrollbar-hidden {
+  scrollbar-width: none;
+}
+
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none;
+}
