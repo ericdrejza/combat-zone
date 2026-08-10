@@ -9,41 +9,7 @@ import { uploadImage } from "@library/librarySlice";
 import { commitEncounterChange } from "@store/encounterSlice";
 import { store } from "@store/store";
 import { getCanvas, mockCanvasBounds, renderApp } from "@tests/ui/renderApp";
-
-function dataTransfer() {
-  const data = new Map<string, string>();
-  const types: string[] = [];
-
-  return {
-    dropEffect: "none",
-    effectAllowed: "none",
-    getData: (type: string) => data.get(type) ?? "",
-    setData: (type: string, value: string) => {
-      data.set(type, value);
-      types.push(type);
-    },
-    setDragImage: () => undefined,
-    types
-  };
-}
-
-function dropOnCanvas(
-  canvas: HTMLElement,
-  transfer: ReturnType<typeof dataTransfer>,
-  clientX: number,
-  clientY: number
-) {
-  const event = new Event("drop", { bubbles: true, cancelable: true });
-
-  Object.defineProperties(event, {
-    clientX: { value: clientX },
-    clientY: { value: clientY },
-    dataTransfer: { value: transfer }
-  });
-  act(() => {
-    canvas.dispatchEvent(event);
-  });
-}
+import { dataTransfer, dropOnCanvas } from "./LibraryPanel.test_support";
 
 describe("LibraryPanel", () => {
   it("toggles between list and two-column grid views", async () => {
@@ -80,9 +46,7 @@ describe("LibraryPanel", () => {
     await user.click(toggle);
 
     const asset = within(libraryPanel).getByRole("button", { name: "Scout" });
-    expect(
-      asset.parentElement
-    ).toHaveClass("grid-cols-2");
+    expect(asset.parentElement).toHaveClass("grid-cols-2");
     expect(asset).toHaveClass("flex-col");
     expect(
       within(libraryPanel).getByRole("button", {
@@ -200,8 +164,8 @@ describe("LibraryPanel", () => {
       "Current library folder"
     );
     const assetButton = within(libraryPanel).getByRole("button", {
-        name: "scout-token"
-      });
+      name: "scout-token"
+    });
 
     expect(currentFolder).toHaveTextContent("Tokens");
     expect(
@@ -243,9 +207,7 @@ describe("LibraryPanel", () => {
     await user.click(screen.getByRole("button", { name: "battle-map" }));
 
     await waitFor(() => {
-      expect(
-        screen.getByLabelText("Canvas background image")
-      ).toBeInTheDocument();
+      expect(screen.getByLabelText("Canvas background image")).toBeInTheDocument();
     });
   });
 
@@ -280,111 +242,12 @@ describe("LibraryPanel", () => {
     await user.click(screen.getByRole("button", { name: "Close Asset Library" }));
     await user.click(screen.getByRole("button", { name: "Actor" }));
 
-    expect(
-      screen.getByRole("button", { name: "scout-token" })
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "scout-token" })).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Select" }));
 
     expect(
       screen.getByRole("button", { name: "Expand Library panel" })
     ).toHaveAttribute("aria-expanded", "false");
-  });
-
-  it("reopens the Library panel from Actor only when Select auto-collapsed it", async () => {
-    const user = userEvent.setup();
-
-    renderApp();
-
-    await user.click(screen.getByRole("button", { name: "Select" }));
-
-    expect(
-      screen.getByRole("button", { name: "Expand Library panel" })
-    ).toHaveAttribute("aria-expanded", "false");
-
-    await user.click(screen.getByRole("button", { name: "Actor" }));
-
-    expect(
-      screen.getByRole("button", { name: "Collapse Library panel" })
-    ).toHaveAttribute("aria-expanded", "true");
-  });
-
-  it("keeps the Library panel collapsed for Actor when the user collapsed it manually", async () => {
-    const user = userEvent.setup();
-
-    renderApp();
-
-    await user.click(
-      screen.getByRole("button", { name: "Collapse Library panel" })
-    );
-    await user.click(screen.getByRole("button", { name: "Select" }));
-    await user.click(screen.getByRole("button", { name: "Actor" }));
-
-    expect(
-      screen.getByRole("button", { name: "Expand Library panel" })
-    ).toHaveAttribute("aria-expanded", "false");
-  });
-
-  it("hands a double-clicked token from the modal to the focused Actor library panel", async () => {
-    const user = userEvent.setup();
-
-    renderApp();
-    act(() => {
-      store.dispatch(
-        uploadImage({
-          asset: {
-            dataUrl: "data:image/png;base64,scout",
-            mediaType: "image/png",
-            name: "Scout"
-          },
-          parentId: "tokens-root",
-          sectionId: "tokens"
-        })
-      );
-    });
-
-    await user.click(screen.getByRole("button", { name: "Library" }));
-    await user.click(screen.getByRole("tab", { name: "Tokens" }));
-    fireEvent.doubleClick(screen.getByRole("button", { name: "Scout" }));
-
-    expect(screen.queryByRole("dialog", { name: "Asset Library" })).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Actor" })).toHaveAttribute(
-      "aria-pressed",
-      "true"
-    );
-    const panel = screen.getByRole("region", { name: "Library panel" });
-    expect(within(panel).getByLabelText("Current library folder")).toHaveTextContent(
-      "Tokens"
-    );
-    expect(within(panel).getByRole("button", { name: "Scout" })).toHaveFocus();
-  });
-
-  it("applies a background immediately when an image is double-clicked in the modal", async () => {
-    const user = userEvent.setup();
-
-    renderApp();
-    act(() => {
-      store.dispatch(
-        uploadImage({
-          asset: {
-            dataUrl: "data:image/png;base64,battle-map",
-            height: 640,
-            mediaType: "image/png",
-            name: "Battle Map",
-            width: 960
-          },
-          parentId: "backgrounds-root",
-          sectionId: "backgrounds"
-        })
-      );
-    });
-
-    await user.click(screen.getByRole("button", { name: "Library" }));
-    await user.click(screen.getByRole("tab", { name: "Backgrounds" }));
-    fireEvent.doubleClick(screen.getByRole("button", { name: "Battle Map" }));
-
-    expect(screen.queryByRole("dialog", { name: "Asset Library" })).not.toBeInTheDocument();
-    expect(store.getState().encounter.present.backgroundImage?.name).toBe("Battle Map");
-    expect(store.getState().encounter.past.at(-1)?.action.type).toBe("background.add");
   });
 });

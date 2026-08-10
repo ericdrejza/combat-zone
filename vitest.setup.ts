@@ -8,7 +8,7 @@ class TestLoadedImage extends EventTarget {
   width = 960;
 
   set src(_value: string) {
-    queueMicrotask(() => this.dispatchEvent(new Event("load")));
+    this.dispatchEvent(new Event("load"));
   }
 }
 

@@ -253,6 +253,9 @@ describe("Edge workflow", () => {
       clientX: 440,
       clientY: 140
     });
+    await waitFor(() => {
+      expect(store.getState().encounter.present.edges.allIds).toHaveLength(2);
+    });
   });
 
   it("confirms clear-all and restores all edges with undo", async () => {
