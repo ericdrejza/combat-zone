@@ -57,7 +57,8 @@ describe("encounter Redux history", () => {
         annotations: { byId: {}, allIds: [] },
         initiativeTracker: {
           actorIds: [],
-          currentActorId: null
+          currentActorId: null,
+          currentRound: null
         },
         validationState: {
           mode: "ADVISORY",

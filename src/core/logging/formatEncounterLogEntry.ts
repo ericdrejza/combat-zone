@@ -231,6 +231,24 @@ export function formatCommittedEncounterAction(
       return `Deleted ${stringValues(action.payload.edgeIds).length || 1} edge${stringValues(action.payload.edgeIds).length === 1 ? "" : "s"}.`;
     case "edge.clearAll":
       return `Cleared ${stringValues(action.payload.edgeIds).length} edges.`;
+    case "initiative.addActors":
+      return `${actorNames()} added to initiative.`;
+    case "initiative.removeActor":
+      return `${actorNames()} removed from initiative.`;
+    case "initiative.clear":
+      return `Cleared ${stringValues(action.payload.actorIds).length} initiative entries.`;
+    case "initiative.updateValue":
+      return `Updated ${actorNames()}'s initiative.`;
+    case "initiative.reorder":
+      return `${actorNames()} reordered in initiative.`;
+    case "initiative.start":
+      return "Initiative started.";
+    case "initiative.end":
+      return "Combat ended.";
+    case "initiative.next":
+      return "Advanced to the next initiative turn.";
+    case "initiative.previous":
+      return "Returned to the previous initiative turn.";
     case "background.add": {
       const name =
         objectStringValue(action.payload.backgroundImage, "name") ??

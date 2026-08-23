@@ -9,17 +9,6 @@ To reference completed items, see `ROADMAP_COMPLETE.md`.
 
 After completing a numbered section (## X.), move the completed section to the end of `ROADMAP_COMPLETE.md`
 
-## 12. Initiative Tracker
-
-- [ ] Implement Initiative Panel.
-- [ ] Allow actors to be added to the initiative list.
-- [ ] Allow initiative entries to be reordered.
-- [ ] Implement next-turn advancement.
-  - Update the current actor indicator.
-- [ ] Ensure initiative order survives undo/redo of unrelated actions.
-- [ ] Add Vitest coverage for add, reorder, advance turn, unrelated undo/redo
-  stability, undo, and redo.
-
 ## 13. Properties, Status, and Log Panels
 
 - [ ] Implement context-sensitive Properties Panel sections.

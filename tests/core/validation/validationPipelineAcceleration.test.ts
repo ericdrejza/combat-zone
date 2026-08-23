@@ -6,6 +6,7 @@ import {
 } from '@core/computationResource';
 import { createEncounterState } from '@core/encounter/createEncounterState';
 import { runValidationPipeline } from '@core/validation/pipeline';
+import { MVP_VALIDATORS } from '@core/validation/validators';
 import type {
   ValidationWorkerRequest,
   ValidationWorkerResponse
@@ -63,7 +64,9 @@ describe('validation pipeline acceleration', () => {
       });
 
       expect(FakeValidationWorker.lastInstance?.request?.resource).toBe('WEBGPU');
-      expect(FakeValidationWorker.lastInstance?.request?.validatorIds).toHaveLength(9);
+      expect(FakeValidationWorker.lastInstance?.request?.validatorIds).toHaveLength(
+        MVP_VALIDATORS.length
+      );
       expect(result).toMatchObject({
         blocked: false,
         valid: true,

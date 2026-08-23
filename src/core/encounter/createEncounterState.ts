@@ -26,7 +26,8 @@ export function createEncounterState({
     annotations: createEmptyEntityCollection(),
     initiativeTracker: {
       actorIds: [],
-      currentActorId: null
+      currentActorId: null,
+      currentRound: null
     },
     validationState: {
       mode: "ADVISORY",
