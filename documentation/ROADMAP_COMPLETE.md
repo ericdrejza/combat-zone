@@ -7,8 +7,8 @@
   Annotations.
   - Zones include polygon geometry, layout strategy, and tags; zone contents
     are derived from actor and engagement state.
-  - Actors include current zone, actor type, initiative, status
-    effects, stats, image, and metadata.
+  - Actors include current zone, actor type, status effects, stats, image, and
+    metadata; initiative values belong to tracker entries.
   - Engagements are transitive participant groups, not actor pairs, and own
     participant membership.
   - Edges are explicit graph relationships, not derived from geometry.
@@ -295,7 +295,8 @@
   - [x] Add Selected adds all selected actors.
   - [x] Add Visible adds all actors currently assigned to Zones.
   - [x] Add All adds every actor in the encounter.
-  - [x] Add Remove All / clear control.
+  - [x] Add Remove Selected and Remove All controls; removed composite entries
+        discard their scoped initiative values.
 - [x] Allow initiative entries to be reordered and automatically sorted by
       initiative value.
 - [x] Implement start/end combat and next-turn/previous-turn advancement.
@@ -303,5 +304,14 @@
   - [x] Track the current round and increment automatically when advancing
         from the last actor to the first.
 - [x] Ensure initiative order survives undo/redo of unrelated actions.
+- [x] Select initiative participants on click and use a swappable double-click
+      strategy to make a participant current without changing the round.
+- [x] Reflect selected participants with bold names and support Ctrl toggle and
+      cumulative Shift range selection within initiative order without native
+      text highlighting.
+- [x] Auto-scroll the initiative viewport when a reordered participant is
+      dragged against a scrollable edge.
+- [x] Preserve active rounds with an empty participant list; empty Next/Prev
+      changes only the round, and adding participants assigns the first current.
 - [x] Add Vitest coverage for add, edit, reorder, advance turn, removal,
       validation modes, unrelated undo/redo stability, undo, and redo.

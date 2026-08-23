@@ -6,9 +6,13 @@ import {
   advanceInitiative,
   clearInitiative,
   endInitiative,
+  getInitiativeActorIds,
+  getInitiativeEntry,
   removeActorFromInitiative,
+  removeActorsFromInitiative,
   reorderInitiativeActor,
   retreatInitiative,
+  setCurrentInitiativeActor,
   startInitiative,
   updateInitiativeValue
 } from "@core/encounter/initiativeMutations";
@@ -33,12 +37,11 @@ function collection<TEntity extends { id: string }>(
   };
 }
 
-function actor(id: string, name: string, initiative?: number): Actor {
+function actor(id: string, name: string): Actor {
   return {
     actorType: "creature",
     currentZoneId: "zoneless",
     id,
-    initiative,
     layoutGroup: "neutral",
     metadata: {},
     name,
@@ -52,9 +55,9 @@ function encounter(): EncounterState {
   return {
     ...createEncounterState({ id: "initiative", name: "Initiative" }),
     actors: collection([
-      actor("alpha", "Alpha", 15),
-      actor("bravo", "Bravo", 10),
-      actor("charlie", "Charlie", 10),
+      actor("alpha", "Alpha"),
+      actor("bravo", "Bravo"),
+      actor("charlie", "Charlie"),
       actor("delta", "Delta"),
       actor("echo", "Echo")
     ])
@@ -87,7 +90,7 @@ function assertExactHistory(
 }
 
 describe("initiative tracker mutations", () => {
-  it("adds a simultaneous batch by score and alphabetizes ties and blanks", () => {
+  it("alphabetizes each simultaneous batch while retaining existing blanks", () => {
     const initial = addActorsToInitiative(encounter(), ["delta"]);
     const added = addActorsToInitiative(initial, [
       "echo",
@@ -98,33 +101,36 @@ describe("initiative tracker mutations", () => {
       "alpha"
     ]);
 
-    expect(added.initiativeTracker.actorIds).toEqual([
+    expect(getInitiativeActorIds(added)).toEqual([
+      "delta",
       "alpha",
       "bravo",
       "charlie",
-      "delta",
       "echo"
     ]);
     expect(addActorsToInitiative(added, ["alpha"])).toBe(added);
   });
 
   it("stably sorts edited actors within their new score group", () => {
-    const initial = addActorsToInitiative(encounter(), [
+    let initial = addActorsToInitiative(encounter(), [
       "alpha",
       "bravo",
       "charlie",
       "delta"
     ]);
+    initial = updateInitiativeValue(initial, "alpha", 15);
+    initial = updateInitiativeValue(initial, "bravo", 10);
+    initial = updateInitiativeValue(initial, "charlie", 10);
     const changed = updateInitiativeValue(initial, "alpha", 10);
     const blanked = updateInitiativeValue(changed, "bravo", undefined);
 
-    expect(changed.initiativeTracker.actorIds).toEqual([
+    expect(getInitiativeActorIds(changed)).toEqual([
       "alpha",
       "bravo",
       "charlie",
       "delta"
     ]);
-    expect(blanked.initiativeTracker.actorIds).toEqual([
+    expect(getInitiativeActorIds(blanked)).toEqual([
       "alpha",
       "charlie",
       "bravo",
@@ -133,7 +139,9 @@ describe("initiative tracker mutations", () => {
   });
 
   it("derives a dragged actor's score from the preceding or subsequent actor", () => {
-    const initial = addActorsToInitiative(encounter(), ["alpha", "bravo", "delta"]);
+    let initial = addActorsToInitiative(encounter(), ["alpha", "bravo", "delta"]);
+    initial = updateInitiativeValue(initial, "alpha", 15);
+    initial = updateInitiativeValue(initial, "bravo", 10);
     const movedBetween = reorderInitiativeActor(initial, "delta", [
       "alpha",
       "delta",
@@ -145,21 +153,21 @@ describe("initiative tracker mutations", () => {
       "delta"
     ]);
 
-    expect(movedBetween.actors.byId.delta?.initiative).toBe(15);
-    expect(movedBetween.initiativeTracker.actorIds).toEqual([
+    expect(getInitiativeEntry(movedBetween, "delta")?.value).toBe(15);
+    expect(getInitiativeActorIds(movedBetween)).toEqual([
       "alpha",
       "delta",
       "bravo"
     ]);
-    expect(movedFirst.actors.byId.bravo?.initiative).toBe(15);
-    expect(movedFirst.initiativeTracker.actorIds).toEqual([
+    expect(getInitiativeEntry(movedFirst, "bravo")?.value).toBe(15);
+    expect(getInitiativeActorIds(movedFirst)).toEqual([
       "bravo",
       "alpha",
       "delta"
     ]);
 
     const lone = addActorsToInitiative(encounter(), ["delta"]);
-    expect(reorderInitiativeActor(lone, "delta", ["delta"]).actors.byId.delta?.initiative).toBeUndefined();
+    expect(getInitiativeEntry(reorderInitiativeActor(lone, "delta", ["delta"]), "delta")?.value).toBeUndefined();
   });
 
   it("starts, advances, wraps rounds, retreats, and enforces the first-turn boundary", () => {
@@ -193,12 +201,34 @@ describe("initiative tracker mutations", () => {
     const ended = endInitiative(started);
 
     expect(ended.initiativeTracker).toEqual({
-      actorIds: ["alpha", "bravo"],
+      entries: [{ actorId: "alpha" }, { actorId: "bravo" }],
       currentActorId: null,
       currentRound: null
     });
     expect(ended.actors).toBe(started.actors);
     assertExactHistory("initiative.end", started, ended);
+  });
+
+  it("sets a current participant without changing the round", () => {
+    const started = advanceInitiative(
+      advanceInitiative(
+        startInitiative(
+          addActorsToInitiative(encounter(), ["alpha", "bravo"])
+        )
+      )
+    );
+    const changed = setCurrentInitiativeActor(started, "bravo");
+
+    expect(started.initiativeTracker.currentRound).toBe(2);
+    expect(changed.initiativeTracker).toEqual({
+      entries: [{ actorId: "alpha" }, { actorId: "bravo" }],
+      currentActorId: "bravo",
+      currentRound: 2
+    });
+    expect(
+      setCurrentInitiativeActor(endInitiative(started), "bravo")
+    ).toEqual(endInitiative(started));
+    assertExactHistory("initiative.setCurrent", started, changed);
   });
 
   it("advances after removing the current actor and increments on wrap", () => {
@@ -207,19 +237,19 @@ describe("initiative tracker mutations", () => {
     const lastRemoved = removeActorFromInitiative(firstRemoved, "bravo");
 
     expect(firstRemoved.initiativeTracker).toEqual({
-      actorIds: ["bravo"],
+      entries: [{ actorId: "bravo" }],
       currentActorId: "bravo",
       currentRound: 1
     });
     expect(lastRemoved.initiativeTracker).toEqual({
-      actorIds: [],
+      entries: [],
       currentActorId: null,
-      currentRound: null
+      currentRound: 1
     });
 
     const currentLast = advanceInitiative(startInitiative(listed));
     expect(removeActorFromInitiative(currentLast, "bravo").initiativeTracker).toEqual({
-      actorIds: ["alpha"],
+      entries: [{ actorId: "alpha" }],
       currentActorId: "alpha",
       currentRound: 2
     });
@@ -233,7 +263,7 @@ describe("initiative tracker mutations", () => {
 
     expect(deleted.actors.byId.alpha).toBeUndefined();
     expect(deleted.initiativeTracker).toEqual({
-      actorIds: ["bravo"],
+      entries: [{ actorId: "bravo" }],
       currentActorId: "bravo",
       currentRound: 1
     });
@@ -248,11 +278,40 @@ describe("initiative tracker mutations", () => {
     const advanced = advanceInitiative(started);
     const cleared = clearInitiative(advanced);
 
+    expect(cleared.initiativeTracker).toEqual({
+      entries: [],
+      currentActorId: null,
+      currentRound: 1
+    });
+    expect(advanceInitiative(cleared).initiativeTracker.currentRound).toBe(2);
+    expect(retreatInitiative(advanceInitiative(cleared)).initiativeTracker.currentRound).toBe(1);
+    const readdedDuringCombat = addActorsToInitiative(cleared, ["bravo", "alpha"]);
+    expect(readdedDuringCombat.initiativeTracker).toEqual({
+      entries: [{ actorId: "alpha" }, { actorId: "bravo" }],
+      currentActorId: "alpha",
+      currentRound: 1
+    });
+
     assertExactHistory("initiative.addActors", initial, added);
     assertExactHistory("initiative.reorder", added, reordered);
     assertExactHistory("initiative.start", reordered, started);
     assertExactHistory("initiative.next", started, advanced);
     assertExactHistory("initiative.clear", advanced, cleared);
+  });
+
+  it("discards scoped values on remove and re-adds participants blank", () => {
+    let listed = addActorsToInitiative(encounter(), ["alpha", "bravo"]);
+    listed = updateInitiativeValue(listed, "alpha", 18);
+    listed = updateInitiativeValue(listed, "bravo", 12);
+    const removed = removeActorsFromInitiative(listed, ["alpha", "bravo"]);
+    const readded = addActorsToInitiative(removed, ["alpha", "bravo"]);
+
+    expect(removed.initiativeTracker.entries).toEqual([]);
+    expect(readded.initiativeTracker.entries).toEqual([
+      { actorId: "alpha" },
+      { actorId: "bravo" }
+    ]);
+    assertExactHistory("initiative.removeActors", listed, removed);
   });
 
   it("preserves initiative through unrelated history commits", () => {
@@ -270,7 +329,7 @@ describe("initiative tracker mutations", () => {
   it("warns in advisory mode and blocks in strict mode", () => {
     for (const mode of ["ADVISORY", "STRICT"] as const) {
       const initial = {
-        ...encounter(),
+        ...addActorsToInitiative(encounter(), ["alpha"]),
         validationState: { messages: [], mode }
       };
       const invalid = updateInitiativeValue(initial, "alpha", 100);

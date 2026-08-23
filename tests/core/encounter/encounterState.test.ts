@@ -79,7 +79,6 @@ const heroActor: Actor = {
   size: 'medium',
   shape: 'circle',
   currentZoneId: 'zone-courtyard',
-  initiative: 15,
   statusEffects: [],
   metadata: {},
   stats: { hp: 12 }
@@ -93,7 +92,6 @@ const goblinActor: Actor = {
   size: 'medium',
   shape: 'circle',
   currentZoneId: ZONELESS_ACTOR_ZONE_ID,
-  initiative: 11,
   statusEffects: ['hidden'],
   metadata: { faction: 'enemy' }
 };
@@ -149,7 +147,10 @@ function createPopulatedEncounterState(): EncounterState {
     edges: collection([towerEdge]),
     annotations: collection([markerAnnotation]),
     initiativeTracker: {
-      actorIds: ['actor-hero', 'actor-goblin'],
+      entries: [
+        { actorId: 'actor-hero', value: 15 },
+        { actorId: 'actor-goblin', value: 11 }
+      ],
       currentActorId: 'actor-hero',
       currentRound: 1
     },
@@ -185,7 +186,7 @@ describe('EncounterState foundation', () => {
       engagements: { byId: {}, allIds: [] },
       annotations: { byId: {}, allIds: [] },
       initiativeTracker: {
-        actorIds: [],
+        entries: [],
         currentActorId: null,
         currentRound: null
       },

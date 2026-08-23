@@ -56,7 +56,7 @@ describe("encounter Redux history", () => {
         engagements: { byId: {}, allIds: [] },
         annotations: { byId: {}, allIds: [] },
         initiativeTracker: {
-          actorIds: [],
+          entries: [],
           currentActorId: null,
           currentRound: null
         },

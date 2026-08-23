@@ -2,17 +2,18 @@ import type { EncounterState } from "@core/encounter/types";
 import {
   INITIATIVE_MAX,
   INITIATIVE_MIN,
-  sortInitiativeActorIds
+  sortInitiativeEntries
 } from "@core/encounter/initiativeMutations";
 import type { ValidationMessage, Validator } from "./types";
 import { result } from "./validatorUtils";
 
-/** Protects initiative references, ordering, score range, and turn consistency. */
+/** Protects scoped initiative entries, ordering, and active-turn consistency. */
 export const InitiativeValidator: Validator<EncounterState> = {
   id: "InitiativeValidator",
   validate(_action, { state, nextState }) {
     const candidate = nextState ?? state;
-    const { actorIds, currentActorId, currentRound } = candidate.initiativeTracker;
+    const { entries, currentActorId, currentRound } = candidate.initiativeTracker;
+    const actorIds = entries.map(({ actorId }) => actorId);
     const messages: ValidationMessage[] = [];
 
     if (new Set(actorIds).size !== actorIds.length) {
@@ -30,8 +31,8 @@ export const InitiativeValidator: Validator<EncounterState> = {
       });
     }
     if (
-      sortInitiativeActorIds(candidate, actorIds).some(
-        (actorId, index) => actorId !== actorIds[index]
+      sortInitiativeEntries(entries).some(
+        (entry, index) => entry.actorId !== entries[index]?.actorId
       )
     ) {
       messages.push({
@@ -40,35 +41,35 @@ export const InitiativeValidator: Validator<EncounterState> = {
         severity: "error"
       });
     }
-
-    for (const actorId of candidate.actors.allIds) {
-      const initiative = candidate.actors.byId[actorId]?.initiative;
-      if (
-        initiative !== undefined &&
-        (!Number.isInteger(initiative) ||
-          initiative < INITIATIVE_MIN ||
-          initiative > INITIATIVE_MAX)
-      ) {
-        messages.push({
-          code: "initiative.valueInvalid",
-          message: `Initiative must be a whole number from ${INITIATIVE_MIN} through ${INITIATIVE_MAX}.`,
-          severity: "error"
-        });
-        break;
-      }
+    if (
+      entries.some(
+        ({ value }) =>
+          value !== undefined &&
+          (!Number.isInteger(value) ||
+            value < INITIATIVE_MIN ||
+            value > INITIATIVE_MAX)
+      )
+    ) {
+      messages.push({
+        code: "initiative.valueInvalid",
+        message: `Initiative must be a whole number from ${INITIATIVE_MIN} through ${INITIATIVE_MAX}.`,
+        severity: "error"
+      });
     }
 
-    const activeFieldsMatch =
-      (currentActorId === null && currentRound === null) ||
-      (currentActorId !== null &&
-        currentRound !== null &&
-        Number.isInteger(currentRound) &&
-        currentRound > 0 &&
-        actorIds.includes(currentActorId));
-    if (!activeFieldsMatch) {
+    const inactiveIsConsistent = currentRound === null && currentActorId === null;
+    const activeRoundIsValid =
+      currentRound !== null && Number.isInteger(currentRound) && currentRound > 0;
+    const activeParticipantIsConsistent =
+      activeRoundIsValid &&
+      ((entries.length === 0 && currentActorId === null) ||
+        (entries.length > 0 &&
+          currentActorId !== null &&
+          actorIds.includes(currentActorId)));
+    if (!inactiveIsConsistent && !activeParticipantIsConsistent) {
       messages.push({
         code: "initiative.turnInvalid",
-        message: "The current initiative actor and round are inconsistent.",
+        message: "The current initiative participant and round are inconsistent.",
         severity: "error"
       });
     }

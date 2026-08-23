@@ -299,9 +299,9 @@ covers `DESIGN.md` §15 "Must have" scope only.
 
 ## Initiative tracker
 
-- [ ] Actors can be added to and reordered within an initiative list.
-- [ ] Advancing to the next turn updates the "current actor" indicator.
-- [ ] Initiative order survives undo/redo of unrelated actions (e.g. moving
+- [x] Actors can be added to and reordered within an initiative list.
+- [x] Advancing to the next turn updates the "current actor" indicator.
+- [x] Initiative order survives undo/redo of unrelated actions (e.g. moving
       an actor between zones does not corrupt initiative order).
 
 ## Toolbar interaction system

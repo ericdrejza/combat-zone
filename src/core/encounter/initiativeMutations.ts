@@ -1,29 +1,49 @@
 import type { EntityId } from "@core/state/entityCollection";
-import type { EncounterState, InitiativeTrackerState } from "./types";
+import type {
+  EncounterState,
+  InitiativeEntry,
+  InitiativeTrackerState
+} from "./types";
 
 export const INITIATIVE_MIN = -10;
 export const INITIATIVE_MAX = 99;
 
-function valueFor(state: EncounterState, actorId: EntityId): number | undefined {
-  return state.actors.byId[actorId]?.initiative;
+export {
+  advanceInitiative,
+  endInitiative,
+  retreatInitiative,
+  setCurrentInitiativeActor,
+  startInitiative
+} from "./initiativeTurnMutations";
+
+export function getInitiativeActorIds(state: EncounterState): EntityId[] {
+  return state.initiativeTracker.entries.map(({ actorId }) => actorId);
 }
 
-/** Keeps score groups descending while retaining persisted order within ties. */
-export function sortInitiativeActorIds(
+export function getInitiativeEntry(
   state: EncounterState,
-  actorIds: EntityId[]
-): EntityId[] {
-  return actorIds
-    .map((actorId, index) => ({ actorId, index, value: valueFor(state, actorId) }))
+  actorId: EntityId
+): InitiativeEntry | undefined {
+  return state.initiativeTracker.entries.find(
+    (entry) => entry.actorId === actorId
+  );
+}
+
+/** Keeps values descending while retaining persisted order within ties. */
+export function sortInitiativeEntries(
+  entries: InitiativeEntry[]
+): InitiativeEntry[] {
+  return entries
+    .map((entry, index) => ({ entry, index }))
     .sort((left, right) => {
-      if (left.value === undefined && right.value === undefined) {
+      if (left.entry.value === undefined && right.entry.value === undefined) {
         return left.index - right.index;
       }
-      if (left.value === undefined) return 1;
-      if (right.value === undefined) return -1;
-      return right.value - left.value || left.index - right.index;
+      if (left.entry.value === undefined) return 1;
+      if (right.entry.value === undefined) return -1;
+      return right.entry.value - left.entry.value || left.index - right.index;
     })
-    .map(({ actorId }) => actorId);
+    .map(({ entry }) => entry);
 }
 
 function alphabetizeActorIds(state: EncounterState, actorIds: EntityId[]) {
@@ -34,26 +54,31 @@ function alphabetizeActorIds(state: EncounterState, actorIds: EntityId[]) {
   });
 }
 
-/** Adds a batch after existing tie members and alphabetizes only that batch. */
+/** Adds an alphabetized batch of blank, tracker-owned initiative entries. */
 export function addActorsToInitiative(
   state: EncounterState,
   actorIds: EntityId[]
 ): EncounterState {
-  const existingIds = new Set(state.initiativeTracker.actorIds);
+  const existingIds = new Set(getInitiativeActorIds(state));
   const uniqueNewIds = [...new Set(actorIds)].filter(
     (actorId) => state.actors.byId[actorId] && !existingIds.has(actorId)
   );
   if (uniqueNewIds.length === 0) return state;
 
-  const actorIdsWithBatch = [
-    ...state.initiativeTracker.actorIds,
-    ...alphabetizeActorIds(state, uniqueNewIds)
-  ];
+  const entries = sortInitiativeEntries([
+    ...state.initiativeTracker.entries,
+    ...alphabetizeActorIds(state, uniqueNewIds).map((actorId) => ({ actorId }))
+  ]);
   return {
     ...state,
     initiativeTracker: {
       ...state.initiativeTracker,
-      actorIds: sortInitiativeActorIds(state, actorIdsWithBatch)
+      entries,
+      currentActorId:
+        state.initiativeTracker.currentRound !== null &&
+        state.initiativeTracker.currentActorId === null
+          ? entries[0]?.actorId ?? null
+          : state.initiativeTracker.currentActorId
     }
   };
 }
@@ -61,36 +86,29 @@ export function addActorsToInitiative(
 export function updateInitiativeValue(
   state: EncounterState,
   actorId: EntityId,
-  initiative: number | undefined
+  value: number | undefined
 ): EncounterState {
-  const actor = state.actors.byId[actorId];
-  if (!actor || actor.initiative === initiative) return state;
+  const entry = getInitiativeEntry(state, actorId);
+  if (!entry || entry.value === value) return state;
 
-  const nextState: EncounterState = {
-    ...state,
-    actors: {
-      ...state.actors,
-      byId: { ...state.actors.byId, [actorId]: { ...actor, initiative } }
-    }
-  };
-  const currentIds = state.initiativeTracker.actorIds;
-  const actorIds = currentIds.includes(actorId)
-    ? sortInitiativeActorIds(nextState, currentIds)
-    : currentIds;
-
+  const entries = sortInitiativeEntries(
+    state.initiativeTracker.entries.map((candidate) =>
+      candidate.actorId === actorId ? { actorId, value } : candidate
+    )
+  );
   return {
-    ...nextState,
-    initiativeTracker: { ...state.initiativeTracker, actorIds }
+    ...state,
+    initiativeTracker: { ...state.initiativeTracker, entries }
   };
 }
 
-/** Applies a drop order and derives the dragged actor's score from its neighbor. */
+/** Applies a drop order and derives the dragged entry's value from its neighbor. */
 export function reorderInitiativeActor(
   state: EncounterState,
   actorId: EntityId,
   requestedActorIds: EntityId[]
 ): EncounterState {
-  const currentIds = state.initiativeTracker.actorIds;
+  const currentIds = getInitiativeActorIds(state);
   if (
     requestedActorIds.length !== currentIds.length ||
     new Set(requestedActorIds).size !== currentIds.length ||
@@ -100,31 +118,28 @@ export function reorderInitiativeActor(
   }
 
   const targetIndex = requestedActorIds.indexOf(actorId);
-  const actor = state.actors.byId[actorId];
-  if (!actor || targetIndex < 0) return state;
+  const entry = getInitiativeEntry(state, actorId);
+  if (!entry || targetIndex < 0) return state;
 
-  const neighborId =
-    targetIndex > 0 ? requestedActorIds[targetIndex - 1] : requestedActorIds[1];
-  const nextInitiative = neighborId
-    ? state.actors.byId[neighborId]?.initiative
-    : actor.initiative;
-  const nextState: EncounterState = {
-    ...state,
-    actors: {
-      ...state.actors,
-      byId: {
-        ...state.actors.byId,
-        [actorId]: { ...actor, initiative: nextInitiative }
-      }
-    }
-  };
+  const entriesByActorId = new Map(
+    state.initiativeTracker.entries.map((candidate) => [candidate.actorId, candidate])
+  );
+  const requestedEntries = requestedActorIds.map(
+    (requestedId) => entriesByActorId.get(requestedId)!
+  );
+  const neighbor =
+    targetIndex > 0 ? requestedEntries[targetIndex - 1] : requestedEntries[1];
+  const entries = sortInitiativeEntries(
+    requestedEntries.map((candidate) =>
+      candidate.actorId === actorId
+        ? { actorId, value: neighbor ? neighbor.value : entry.value }
+        : candidate
+    )
+  );
 
   return {
-    ...nextState,
-    initiativeTracker: {
-      ...state.initiativeTracker,
-      actorIds: sortInitiativeActorIds(nextState, requestedActorIds)
-    }
+    ...state,
+    initiativeTracker: { ...state.initiativeTracker, entries }
   };
 }
 
@@ -132,19 +147,21 @@ function removeFromTracker(
   tracker: InitiativeTrackerState,
   actorId: EntityId
 ): InitiativeTrackerState {
-  const removedIndex = tracker.actorIds.indexOf(actorId);
+  const removedIndex = tracker.entries.findIndex(
+    (entry) => entry.actorId === actorId
+  );
   if (removedIndex < 0) return tracker;
 
-  const actorIds = tracker.actorIds.filter((id) => id !== actorId);
-  if (tracker.currentActorId !== actorId) return { ...tracker, actorIds };
-  if (actorIds.length === 0) {
-    return { actorIds, currentActorId: null, currentRound: null };
+  const entries = tracker.entries.filter((entry) => entry.actorId !== actorId);
+  if (tracker.currentActorId !== actorId) return { ...tracker, entries };
+  if (entries.length === 0) {
+    return { entries, currentActorId: null, currentRound: tracker.currentRound };
   }
 
-  const wrapped = removedIndex >= actorIds.length;
+  const wrapped = removedIndex >= entries.length;
   return {
-    actorIds,
-    currentActorId: actorIds[wrapped ? 0 : removedIndex] ?? null,
+    entries,
+    currentActorId: entries[wrapped ? 0 : removedIndex]?.actorId ?? null,
     currentRound:
       wrapped && tracker.currentRound !== null
         ? tracker.currentRound + 1
@@ -162,72 +179,44 @@ export function removeActorFromInitiative(
     : { ...state, initiativeTracker };
 }
 
-export function clearInitiative(state: EncounterState): EncounterState {
-  if (state.initiativeTracker.actorIds.length === 0) return state;
-  return {
-    ...state,
-    initiativeTracker: { actorIds: [], currentActorId: null, currentRound: null }
-  };
-}
+export function removeActorsFromInitiative(
+  state: EncounterState,
+  actorIds: EntityId[]
+): EncounterState {
+  const idsToRemove = new Set(actorIds);
+  const presentIds = getInitiativeActorIds(state).filter((id) =>
+    idsToRemove.has(id)
+  );
+  if (presentIds.length === 0) return state;
 
-export function startInitiative(state: EncounterState): EncounterState {
-  const firstActorId = state.initiativeTracker.actorIds[0];
-  if (!firstActorId || state.initiativeTracker.currentActorId) return state;
-  return {
-    ...state,
-    initiativeTracker: {
-      ...state.initiativeTracker,
-      currentActorId: firstActorId,
-      currentRound: 1
-    }
-  };
-}
-
-export function endInitiative(state: EncounterState): EncounterState {
-  if (state.initiativeTracker.currentActorId === null) return state;
-  return {
-    ...state,
-    initiativeTracker: {
-      ...state.initiativeTracker,
-      currentActorId: null,
-      currentRound: null
-    }
-  };
-}
-
-export function advanceInitiative(state: EncounterState): EncounterState {
-  const { actorIds, currentActorId, currentRound } = state.initiativeTracker;
-  const currentIndex = currentActorId ? actorIds.indexOf(currentActorId) : -1;
-  if (currentIndex < 0 || currentRound === null || actorIds.length === 0) return state;
-  const wrapped = currentIndex === actorIds.length - 1;
-  return {
-    ...state,
-    initiativeTracker: {
-      actorIds,
-      currentActorId: actorIds[wrapped ? 0 : currentIndex + 1] ?? null,
-      currentRound: wrapped ? currentRound + 1 : currentRound
-    }
-  };
-}
-
-export function retreatInitiative(state: EncounterState): EncounterState {
-  const { actorIds, currentActorId, currentRound } = state.initiativeTracker;
-  const currentIndex = currentActorId ? actorIds.indexOf(currentActorId) : -1;
-  if (
-    currentIndex < 0 ||
-    currentRound === null ||
-    actorIds.length === 0 ||
-    (currentRound === 1 && currentIndex === 0)
-  ) {
-    return state;
+  let nextState = state;
+  for (const actorId of presentIds) {
+    nextState = removeActorFromInitiative(nextState, actorId);
   }
-  const wrapped = currentIndex === 0;
+  if (
+    nextState.initiativeTracker.entries.length === 0 &&
+    state.initiativeTracker.currentRound !== null
+  ) {
+    return {
+      ...nextState,
+      initiativeTracker: {
+        ...nextState.initiativeTracker,
+        currentActorId: null,
+        currentRound: state.initiativeTracker.currentRound
+      }
+    };
+  }
+  return nextState;
+}
+
+export function clearInitiative(state: EncounterState): EncounterState {
+  if (state.initiativeTracker.entries.length === 0) return state;
   return {
     ...state,
     initiativeTracker: {
-      actorIds,
-      currentActorId: actorIds[wrapped ? actorIds.length - 1 : currentIndex - 1] ?? null,
-      currentRound: wrapped ? currentRound - 1 : currentRound
+      entries: [],
+      currentActorId: null,
+      currentRound: state.initiativeTracker.currentRound
     }
   };
 }
