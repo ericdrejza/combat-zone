@@ -12,6 +12,7 @@ import { AssetLibraryModal } from "./library/AssetLibraryModal";
 import type { DockPanelDefinition, DockSide, DropTarget } from "./panels/PanelsShell";
 import { LibraryPanel, LibraryPanelViewToggle } from "./panels/LibraryPanel";
 import { LogPanel, LogPanelHeaderActions } from "./panels/LogPanel";
+import { InitiativePanel } from "./panels/InitiativePanel";
 import type {
   LibraryPanelFocusRequest,
   LibraryViewMode
@@ -269,6 +270,10 @@ function AppContent() {
 
     if (panel.id === "log") {
       return <LogPanel />;
+    }
+
+    if (panel.id === "initiative") {
+      return <InitiativePanel />;
     }
 
     return undefined;

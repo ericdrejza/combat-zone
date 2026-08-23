@@ -13,6 +13,7 @@ import type {
 import { ZONELESS_ACTOR_ZONE_ID } from '@core/encounter/types';
 import type { EntityCollection, EntityId } from '@core/state/entityCollection';
 import { removeActorsFromEngagements } from '@entities/engagement/engagementMutations';
+import { removeActorFromInitiative } from '@core/encounter/initiativeMutations';
 
 export type ActorImageInput = {
   dataUrl: string;
@@ -216,18 +217,12 @@ export function deleteActor(
     return state;
   }
 
+  const withoutInitiativeActor = removeActorFromInitiative(state, actorId);
+
   return {
-    ...state,
+    ...withoutInitiativeActor,
     actors: removeEntity(state.actors, actorId),
     engagements: removeActorFromEngagements(state, actorId),
-    initiativeTracker: {
-      ...state.initiativeTracker,
-      actorIds: state.initiativeTracker.actorIds.filter((id) => id !== actorId),
-      currentActorId:
-        state.initiativeTracker.currentActorId === actorId
-          ? null
-          : state.initiativeTracker.currentActorId
-    }
   };
 }
 

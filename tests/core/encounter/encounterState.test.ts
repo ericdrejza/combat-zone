@@ -150,7 +150,8 @@ function createPopulatedEncounterState(): EncounterState {
     annotations: collection([markerAnnotation]),
     initiativeTracker: {
       actorIds: ['actor-hero', 'actor-goblin'],
-      currentActorId: 'actor-hero'
+      currentActorId: 'actor-hero',
+      currentRound: 1
     },
     validationState: {
       mode: 'ADVISORY',
@@ -185,7 +186,8 @@ describe('EncounterState foundation', () => {
       annotations: { byId: {}, allIds: [] },
       initiativeTracker: {
         actorIds: [],
-        currentActorId: null
+        currentActorId: null,
+        currentRound: null
       },
       validationState: {
         mode: 'ADVISORY',
