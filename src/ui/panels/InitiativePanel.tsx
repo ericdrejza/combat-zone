@@ -41,6 +41,7 @@ import { useParticipantInteractions } from "./initiative/useParticipantInteracti
 import { useInitiativeActions } from "./initiative/useInitiativeActions";
 import { InitiativeRow } from "./initiative/InitiativeRow";
 import { useInitiativeReorderAutoScroll } from "./initiative/useInitiativeReorderAutoScroll";
+import { useInitiativeTurnAutoScroll } from "./initiative/useInitiativeTurnAutoScroll";
 
 const actionClass =
   "inline-flex h-9 w-9 items-center justify-center rounded-xl border border-canvas-line bg-white text-canvas-ink disabled:cursor-not-allowed disabled:opacity-40";
@@ -60,6 +61,12 @@ export function InitiativePanel({
   const [confirmClear, setConfirmClear] = useState(false);
   const { listRef, stopAutoScroll, updateAutoScroll } =
     useInitiativeReorderAutoScroll();
+  useInitiativeTurnAutoScroll(
+    listRef,
+    initiativeActorIds,
+    encounter.initiativeTracker.currentActorId,
+    animationsDisabled
+  );
   const actors = initiativeActorIds
     .map((actorId) => encounter.actors.byId[actorId])
     .filter((actor): actor is Actor => Boolean(actor));
