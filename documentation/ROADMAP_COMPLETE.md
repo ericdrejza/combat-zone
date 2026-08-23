@@ -287,3 +287,21 @@
       the same reversible history entry.
 - [x] Add Vitest coverage for create, edit, delete, cascading zone delete,
       undo, and redo.
+
+## 12. Initiative Tracker
+
+- [x] Implement Initiative Panel.
+- [x] Allow actors to be added to and removed from the initiative list.
+  - [x] Add Selected adds all selected actors.
+  - [x] Add Visible adds all actors currently assigned to Zones.
+  - [x] Add All adds every actor in the encounter.
+  - [x] Add Remove All / clear control.
+- [x] Allow initiative entries to be reordered and automatically sorted by
+      initiative value.
+- [x] Implement start/end combat and next-turn/previous-turn advancement.
+  - [x] Update the current actor indicator.
+  - [x] Track the current round and increment automatically when advancing
+        from the last actor to the first.
+- [x] Ensure initiative order survives undo/redo of unrelated actions.
+- [x] Add Vitest coverage for add, edit, reorder, advance turn, removal,
+      validation modes, unrelated undo/redo stability, undo, and redo.

@@ -88,7 +88,9 @@ describe("PanelsShell", () => {
     renderApp();
 
     expect(screen.getByText("Actor or Background tools show library assets here.")).toBeInTheDocument();
-    expect(screen.getAllByText("Panel scaffold.", { exact: false })).toHaveLength(1);
+    expect(
+      screen.getByText("Add actors to begin tracking initiative.")
+    ).toBeInTheDocument();
     expect(
       screen.getByText("Actions and blocked validation attempts will appear here.")
     ).toBeInTheDocument();
@@ -97,7 +99,9 @@ describe("PanelsShell", () => {
       screen.getByRole("button", { name: "Collapse Library panel" })
     );
 
-    expect(screen.getAllByText("Panel scaffold.", { exact: false })).toHaveLength(1);
+    expect(
+      screen.getByText("Add actors to begin tracking initiative.")
+    ).toBeInTheDocument();
     expect(
       screen.queryByText("Actor or Background tools show library assets here.")
     ).not.toBeInTheDocument();
