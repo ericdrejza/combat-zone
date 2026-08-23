@@ -114,7 +114,7 @@ export function getEngagementParticipants(
 }
 
 export function getInitiativeActors(state: EncounterState): Actor[] {
-  return state.initiativeTracker.actorIds
-    .map((actorId) => getActor(state, actorId))
+  return state.initiativeTracker.entries
+    .map(({ actorId }) => getActor(state, actorId))
     .filter((actor): actor is Actor => Boolean(actor));
 }

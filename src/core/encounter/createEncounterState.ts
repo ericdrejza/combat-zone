@@ -25,7 +25,7 @@ export function createEncounterState({
     engagements: createEmptyEntityCollection(),
     annotations: createEmptyEntityCollection(),
     initiativeTracker: {
-      actorIds: [],
+      entries: [],
       currentActorId: null,
       currentRound: null
     },

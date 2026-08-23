@@ -19,7 +19,6 @@ export type Actor = {
   shape: ActorShape;
   image?: string;
   currentZoneId: ActorZoneAssignment;
-  initiative?: number;
   statusEffects: string[];
   metadata: Record<string, unknown>;
   stats?: Record<string, unknown>;
