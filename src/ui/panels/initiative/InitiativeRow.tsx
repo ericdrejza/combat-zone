@@ -64,6 +64,7 @@ export function InitiativeRow({
       }`}
       dragControls={dragControls}
       dragListener={false}
+      data-initiative-actor-id={actor.id}
       onClick={(event) => onClick(actor.id, event)}
       onDoubleClick={(event) => onDoubleClick(actor.id, event)}
       onDrag={(event) => {
