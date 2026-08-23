@@ -186,12 +186,16 @@ Properties:
 - size
 - stats (optional system-specific blob)
 - currentZoneId | zoneless
-- initiative
 - statusEffects[]
 - metadata
 
 Engagement membership is owned by Engagement `participants[]`; Actors do not
 store a duplicate engagement reference.
+
+Initiative membership and values are owned by ordered Initiative Tracker
+entries. Each entry is the composite relationship between the tracker, an
+Actor ID, and that participant's optional initiative value. Removing an entry
+discards its value; adding that Actor again creates a blank entry.
 
 When `autoResize` is enabled, adding an actor to a FLEX zone automatically
 enlarges the zone to the smallest size that fits all of its actors. Expansion

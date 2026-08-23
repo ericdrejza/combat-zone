@@ -7,15 +7,20 @@ import type { Engagement } from "@entities/engagement/types";
 import type { Zone } from "@entities/zone/types";
 import type { CanvasSize } from "@core/layout/polygonCanvasBounds";
 
-export const ENCOUNTER_SCHEMA_VERSION = 4;
+export const ENCOUNTER_SCHEMA_VERSION = 5;
 export const ZONELESS_ACTOR_ZONE_ID = "zoneless";
 
 export type EncounterSchemaVersion = typeof ENCOUNTER_SCHEMA_VERSION;
 export type ZonelessActorZoneId = typeof ZONELESS_ACTOR_ZONE_ID;
 export type ActorZoneAssignment = EntityId | ZonelessActorZoneId;
 
+export type InitiativeEntry = {
+  actorId: EntityId;
+  value?: number;
+};
+
 export type InitiativeTrackerState = {
-  actorIds: EntityId[];
+  entries: InitiativeEntry[];
   currentActorId: EntityId | null;
   currentRound: number | null;
 };

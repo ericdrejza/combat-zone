@@ -21,6 +21,10 @@ function stringValues(value: JsonValue | undefined): string[] {
     : [];
 }
 
+function numberValue(value: JsonValue | undefined): number | undefined {
+  return typeof value === "number" ? value : undefined;
+}
+
 function objectStringValue(
   value: JsonValue | undefined,
   key: string
@@ -235,14 +239,20 @@ export function formatCommittedEncounterAction(
       return `${actorNames()} added to initiative.`;
     case "initiative.removeActor":
       return `${actorNames()} removed from initiative.`;
+    case "initiative.removeActors":
+      return `${actorNames()} removed from initiative.`;
     case "initiative.clear":
       return `Cleared ${stringValues(action.payload.actorIds).length} initiative entries.`;
     case "initiative.updateValue":
-      return `Updated ${actorNames()}'s initiative.`;
+      return action.payload.initiative === null
+        ? `Cleared ${actorNames()}'s initiative.`
+        : `Set ${actorNames()}'s initiative to ${numberValue(action.payload.initiative) ?? "an invalid value"}.`;
     case "initiative.reorder":
       return `${actorNames()} reordered in initiative.`;
     case "initiative.start":
       return "Initiative started.";
+    case "initiative.setCurrent":
+      return `${actorNames()} made the current initiative participant.`;
     case "initiative.end":
       return "Combat ended.";
     case "initiative.next":

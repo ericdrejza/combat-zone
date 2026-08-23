@@ -133,10 +133,12 @@ describe("encounter log message formatting", () => {
       ["engagement.update", { participantIds: ["actor-goblin", "actor-wizard"], properties: { layoutStrategy: "SEQUENTIAL" } }],
       ["initiative.addActors", { actorIds: ["actor-goblin", "actor-wizard"] }],
       ["initiative.removeActor", { actorId: "actor-goblin" }],
+      ["initiative.removeActors", { actorIds: ["actor-goblin", "actor-wizard"] }],
       ["initiative.clear", { actorIds: ["actor-goblin", "actor-wizard"] }],
       ["initiative.updateValue", { actorId: "actor-goblin", initiative: 12 }],
       ["initiative.reorder", { actorId: "actor-goblin", actorIds: ["actor-goblin", "actor-wizard"] }],
       ["initiative.start", {}],
+      ["initiative.setCurrent", { actorId: "actor-goblin" }],
       ["initiative.end", { actorId: "actor-goblin", round: 1 }],
       ["initiative.next", { actorId: "actor-goblin", round: 1 }],
       ["initiative.previous", { actorId: "actor-wizard", round: 1 }],
@@ -183,6 +185,25 @@ describe("encounter log message formatting", () => {
     ).toBe(
       "Updated the engagement for Goblin and Wizard: layoutStrategy."
     );
+  });
+
+  it("includes the changed initiative value or states that it was cleared", () => {
+    const current = encounter();
+    const setValue = createEncounterActionRecord("initiative.updateValue", {
+      actorId: "actor-goblin",
+      initiative: 17
+    });
+    const clearValue = createEncounterActionRecord("initiative.updateValue", {
+      actorId: "actor-goblin",
+      initiative: null
+    });
+
+    expect(
+      formatCommittedEncounterAction(setValue, { before: current, after: current })
+    ).toBe("Set Goblin's initiative to 17.");
+    expect(
+      formatCommittedEncounterAction(clearValue, { before: current, after: current })
+    ).toBe("Cleared Goblin's initiative.");
   });
 
   it("does not use an Unknown placeholder for a pre-guarded zone creation", () => {
