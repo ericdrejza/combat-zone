@@ -1,6 +1,8 @@
 import { animate } from "motion/react";
 import { useEffect, type RefObject } from "react";
 
+const TURN_VISIBILITY_MARGIN_PX = 4;
+
 type VerticalBounds = {
   bottom: number;
   top: number;
@@ -27,11 +29,15 @@ export function getInitiativeTurnScrollTarget({
   viewportHeight
 }: TurnScrollTargetOptions): number {
   const activeMinimum = clamp(
-    active.bottom - viewportHeight,
+    active.bottom + TURN_VISIBILITY_MARGIN_PX - viewportHeight,
     0,
     maximumScrollTop
   );
-  const activeMaximum = clamp(active.top, 0, maximumScrollTop);
+  const activeMaximum = clamp(
+    active.top - TURN_VISIBILITY_MARGIN_PX,
+    0,
+    maximumScrollTop
+  );
 
   if (activeMinimum > activeMaximum) {
     return activeMaximum;
@@ -40,7 +46,11 @@ export function getInitiativeTurnScrollTarget({
   if (onDeck) {
     const combinedMinimum = Math.max(
       activeMinimum,
-      clamp(onDeck.bottom - viewportHeight, 0, maximumScrollTop)
+      clamp(
+        onDeck.bottom + TURN_VISIBILITY_MARGIN_PX - viewportHeight,
+        0,
+        maximumScrollTop
+      )
     );
     if (combinedMinimum <= activeMaximum) {
       return clamp(currentScrollTop, combinedMinimum, activeMaximum);
