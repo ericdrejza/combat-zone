@@ -19,6 +19,7 @@ export function useAssetLibraryModalState() {
   const [draggedNodeId, setDraggedNodeId] = useState<string | null>(null);
   const [dropFolderId, setDropFolderId] = useState<string | null>(null);
   const [linkPickerOpen, setLinkPickerOpen] = useState(false);
+  const [urlDialogOpen, setUrlDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentFolderBySection, setCurrentFolderBySection] = useState<
     Partial<Record<LibrarySectionId, string>>
@@ -119,6 +120,8 @@ export function useAssetLibraryModalState() {
     setPendingDeleteNodeId,
     setSearchQuery,
     setSelectedNodeBySection,
-    toggleFolder
+    setUrlDialogOpen,
+    toggleFolder,
+    urlDialogOpen
   };
 }

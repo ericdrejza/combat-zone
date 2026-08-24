@@ -2,6 +2,7 @@ import reducer, {
   createFolder,
   createLink,
   deleteNode,
+  getLibraryNodePath,
   moveNode,
   renameNode,
   resolveLibraryAsset,
@@ -141,5 +142,25 @@ describe("librarySlice", () => {
     expect(
       state.sections.encounters.nodesById["encounters-root"].childIds
     ).toEqual([]);
+  });
+
+  it("derives a library path from normalized folder parents", () => {
+    let state = reducer(undefined, createFolder({
+      name: "Maps",
+      parentId: "backgrounds-root",
+      sectionId: "backgrounds"
+    }));
+    const folderId = getOnlyChildId(state, "backgrounds-root");
+
+    state = reducer(state, uploadImage({
+      asset: imageAsset,
+      parentId: folderId,
+      sectionId: "backgrounds"
+    }));
+    const imageId = getOnlyChildId(state, folderId);
+
+    expect(getLibraryNodePath(state.sections.backgrounds, imageId)).toBe(
+      "Backgrounds/Maps/map.png"
+    );
   });
 });

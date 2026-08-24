@@ -18,7 +18,7 @@ describe("AssetLibraryModal", () => {
     await createFolder("Maps");
     await user.click(screen.getByRole("button", { name: "Maps" }));
     await user.click(screen.getByRole("button", { name: "Add to Backgrounds" }));
-    await user.click(screen.getByRole("menuitem", { name: "Upload new image" }));
+    await user.click(screen.getByRole("menuitem", { name: "Upload file" }));
 
     fireEvent.change(screen.getByLabelText("Upload library image"), {
       target: {
@@ -44,7 +44,7 @@ describe("AssetLibraryModal", () => {
     const user = await openBackgroundLibrary();
 
     await user.click(screen.getByRole("button", { name: "Add to Backgrounds" }));
-    await user.click(screen.getByRole("menuitem", { name: "Upload new image" }));
+    await user.click(screen.getByRole("menuitem", { name: "Upload file" }));
     fireEvent.change(screen.getByLabelText("Upload library image"), {
       target: {
         files: [new File(["base"], "base-map.png", { type: "image/png" })]
@@ -58,7 +58,7 @@ describe("AssetLibraryModal", () => {
     await user.click(screen.getByRole("button", { name: "base-map" }));
     vi.spyOn(window, "prompt").mockReturnValueOnce("Siblings");
     await user.click(screen.getByRole("button", { name: "Add to Backgrounds" }));
-    await user.click(screen.getByRole("menuitem", { name: "Create new folder" }));
+    await user.click(screen.getByRole("menuitem", { name: "Create folder" }));
 
     expect(screen.getByRole("button", { name: "base-map" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Siblings" })).toBeInTheDocument();
@@ -93,7 +93,7 @@ describe("AssetLibraryModal", () => {
 
     await createFolder("Maps");
     await user.click(screen.getByRole("button", { name: "Add to Backgrounds" }));
-    await user.click(screen.getByRole("menuitem", { name: "Upload new image" }));
+    await user.click(screen.getByRole("menuitem", { name: "Upload file" }));
     fireEvent.change(screen.getByLabelText("Upload library image"), {
       target: {
         files: [new File(["move"], "move-map.png", { type: "image/png" })]

@@ -19,7 +19,7 @@ export async function createFolder(name: string) {
   vi.spyOn(window, "prompt").mockReturnValueOnce(name);
 
   await userEvent.click(screen.getByRole("button", { name: "Add to Backgrounds" }));
-  await userEvent.click(screen.getByRole("menuitem", { name: "Create new folder" }));
+  await userEvent.click(screen.getByRole("menuitem", { name: "Create folder" }));
 }
 
 export function createDragDataTransfer() {

@@ -33,6 +33,7 @@ export type EncounterValidationState = {
 export type EncounterBackgroundImage = {
   dataUrl: string;
   height: number;
+  libraryNodeId?: string;
   mediaType: string;
   name: string;
   width: number;

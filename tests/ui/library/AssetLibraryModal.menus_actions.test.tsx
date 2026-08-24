@@ -16,11 +16,11 @@ describe("AssetLibraryModal", () => {
 
     await createFolder("Maps");
     await user.click(screen.getByRole("button", { name: "Add to Backgrounds" }));
-    expect(screen.getByRole("menuitem", { name: "Upload new image" })).toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: "Upload file" })).toBeInTheDocument();
 
     await user.click(screen.getByText("Asset Library"));
     expect(
-      screen.queryByRole("menuitem", { name: "Upload new image" })
+      screen.queryByRole("menuitem", { name: "Upload file" })
     ).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Open Maps actions" }));
@@ -36,7 +36,7 @@ describe("AssetLibraryModal", () => {
     await createFolder("Maps");
     await user.click(screen.getByRole("button", { name: "Maps" }));
     await user.click(screen.getByRole("button", { name: "Add to Backgrounds" }));
-    await user.click(screen.getByRole("menuitem", { name: "Upload new image" }));
+    await user.click(screen.getByRole("menuitem", { name: "Upload file" }));
     fireEvent.change(screen.getByLabelText("Upload library image"), {
       target: {
         files: [new File(["map"], "nested-map.png", { type: "image/png" })]
@@ -91,7 +91,7 @@ describe("AssetLibraryModal", () => {
     );
 
     await user.click(screen.getByRole("button", { name: "Add to Backgrounds" }));
-    await user.click(screen.getByRole("menuitem", { name: "Upload new image" }));
+    await user.click(screen.getByRole("menuitem", { name: "Upload file" }));
     fireEvent.change(screen.getByLabelText("Upload library image"), {
       target: {
         files: [new File(["map"], "card-map.png", { type: "image/png" })]

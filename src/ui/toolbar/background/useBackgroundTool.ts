@@ -4,8 +4,8 @@ import { useDispatch } from "react-redux";
 import type { EncounterState } from "@core/encounter/types";
 import { createEncounterActionRecord } from "@core/history/createEncounterActionRecord";
 import { setActiveTool } from "@interaction/interactionState";
+import { createWebImageAsset } from "@library/webImageAsset";
 import { commitEncounterChange } from "@store/encounterSlice";
-import { readImageFile } from "./readImageFile";
 import { useCanvasViewport } from "@ui/canvas/CanvasViewportContext";
 import {
   getActiveBackgroundFitMode,
@@ -19,6 +19,7 @@ import {
   commitBackgroundImage,
   commitCanvasResize
 } from "./backgroundCanvasActions";
+import { readImageAssetDimensions, readImageFile } from "./readImageFile";
 
 type BackgroundAction = "add" | "replace";
 
@@ -44,6 +45,21 @@ export function useBackgroundTool(encounter: EncounterState) {
     }
 
     const nextBackgroundImage = await readImageFile(file);
+    setPreferredFitMode("fit");
+    commitBackgroundImage({
+      backgroundImage: nextBackgroundImage,
+      dispatch,
+      encounter,
+      viewportSize: getViewportSize(),
+      viewportZoom: zoom
+    });
+    dispatch(setActiveTool("zone"));
+  }
+
+  async function addBackgroundFromUrl(url: string) {
+    const nextBackgroundImage = await readImageAssetDimensions(
+      createWebImageAsset(url)
+    );
     setPreferredFitMode("fit");
     commitBackgroundImage({
       backgroundImage: nextBackgroundImage,
@@ -130,6 +146,7 @@ export function useBackgroundTool(encounter: EncounterState) {
 
   return {
     activeFitMode,
+    addBackgroundFromUrl,
     deleteBackground,
     fileInputRef,
     handleBackgroundFileChange,

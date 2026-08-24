@@ -86,19 +86,24 @@ export function useCanvasBackgroundLuminance(
         return;
       }
 
-      drawCanvasBackgroundImage(context, image, canvasSize);
+      try {
+        drawCanvasBackgroundImage(context, image, canvasSize);
+        const luminanceByZoneId = Object.fromEntries(
+          backgroundTextZones.map((zone) => [
+            zone.id,
+            sampleZoneBackgroundLuminance(context, zone, canvasSize)
+          ])
+        );
 
-      const luminanceByZoneId = Object.fromEntries(
-        backgroundTextZones.map((zone) => [
-          zone.id,
-          sampleZoneBackgroundLuminance(context, zone, canvasSize)
-        ])
-      );
-
-      if (!cancelled) {
         setBackgroundLuminance({
           byZoneId: luminanceByZoneId,
           canvas: sampleCanvasBackgroundLuminance(context, canvasSize)
+        });
+      } catch {
+        // Remote hosts may allow display while blocking cross-origin pixel reads.
+        setBackgroundLuminance({
+          byZoneId: fallbackByZoneId,
+          canvas: fallbackLuminance
         });
       }
     });
@@ -157,20 +162,20 @@ export function usePolygonDraftBackgroundLuminance(
         return;
       }
 
-      drawCanvasBackgroundImage(context, image, canvasSize);
-
-      const samplePoints =
-        zoneDraftPoints.length >= 3
-          ? createDeterministicSamplePoints(zoneDraftPoints, BACKGROUND_SAMPLE_COUNT)
-          : zoneDraftPoints;
-      const luminance = getAverageCanvasLuminance(
-        context,
-        samplePoints,
-        canvasSize
-      );
-
-      if (!cancelled) {
-        setPolygonDraftBackgroundLuminance(luminance);
+      try {
+        drawCanvasBackgroundImage(context, image, canvasSize);
+        const samplePoints =
+          zoneDraftPoints.length >= 3
+            ? createDeterministicSamplePoints(
+                zoneDraftPoints,
+                BACKGROUND_SAMPLE_COUNT
+              )
+            : zoneDraftPoints;
+        setPolygonDraftBackgroundLuminance(
+          getAverageCanvasLuminance(context, samplePoints, canvasSize)
+        );
+      } catch {
+        setPolygonDraftBackgroundLuminance(fallbackLuminance);
       }
     });
     image.src = backgroundImage.dataUrl;
