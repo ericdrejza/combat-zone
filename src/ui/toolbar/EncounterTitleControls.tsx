@@ -1,0 +1,126 @@
+import { Check, LoaderCircle, Lock, Save, TriangleAlert } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+
+import { createEncounterActionRecord } from "@core/history/createEncounterActionRecord";
+import { prepareValidatedEncounterChangeForRuntime } from "@core/validation/validatedEncounterChange";
+import { commitEncounterChange } from "@store/encounterSlice";
+import { logEncounterValidationBlock } from "@store/encounterLogSlice";
+import type { RootState } from "@store/store";
+
+export type SaveStatus = "idle" | "saving" | "saved" | "error";
+
+type EncounterTitleControlsProps = {
+  onSave: () => void;
+  readOnly: boolean;
+  saveStatus: SaveStatus;
+};
+
+const STATUS_LABELS: Record<SaveStatus, string> = {
+  error: "Save failed",
+  idle: "Not saved",
+  saved: "Saved",
+  saving: "Saving"
+};
+
+export function EncounterTitleControls({
+  onSave,
+  readOnly,
+  saveStatus
+}: EncounterTitleControlsProps) {
+  const dispatch = useDispatch();
+  const encounter = useSelector((state: RootState) => state.encounter.present);
+  const [draftName, setDraftName] = useState(encounter.name);
+
+  useEffect(() => setDraftName(encounter.name), [encounter.id, encounter.name]);
+
+  function commitName() {
+    const name = draftName.trim();
+    if (readOnly || !name || name === encounter.name) {
+      setDraftName(encounter.name);
+      return;
+    }
+
+    const prepared = prepareValidatedEncounterChangeForRuntime({
+      action: createEncounterActionRecord("encounter.rename", { name }),
+      currentEncounter: encounter,
+      nextEncounter: { ...encounter, name }
+    });
+    const commitPrepared = (resolved: Awaited<typeof prepared>) => {
+      if (resolved.blocked) {
+        logEncounterValidationBlock(dispatch, resolved);
+        setDraftName(encounter.name);
+        return;
+      }
+      dispatch(
+        commitEncounterChange({
+          action: resolved.action,
+          nextEncounter: resolved.nextEncounter
+        })
+      );
+    };
+
+    if (prepared instanceof Promise) {
+      void prepared.then(commitPrepared);
+    } else {
+      commitPrepared(prepared);
+    }
+  }
+
+  const StatusIcon =
+    saveStatus === "saving"
+      ? LoaderCircle
+      : saveStatus === "error"
+        ? TriangleAlert
+        : Check;
+
+  return (
+    <div className="mr-2 flex min-w-[12rem] max-w-[22rem] shrink items-center gap-2">
+      <input
+        aria-label="Encounter name"
+        className="min-w-0 flex-1 border-b border-transparent bg-transparent px-1 font-display text-xl font-semibold tracking-tight outline-none transition hover:border-canvas-line focus:border-canvas-ink disabled:cursor-not-allowed"
+        disabled={readOnly}
+        onBlur={commitName}
+        onChange={(event) => setDraftName(event.target.value)}
+        onKeyDown={(event) => {
+          if (event.key === "Enter") {
+            event.currentTarget.blur();
+          } else if (event.key === "Escape") {
+            setDraftName(encounter.name);
+            event.currentTarget.blur();
+          }
+        }}
+        value={draftName}
+      />
+      <button
+        aria-label="Save encounter"
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-canvas-line bg-white text-canvas-ink transition hover:bg-canvas disabled:cursor-not-allowed disabled:opacity-50"
+        disabled={readOnly || saveStatus === "saving"}
+        onClick={onSave}
+        title="Save encounter (Ctrl/Cmd+S)"
+        type="button"
+      >
+        <Save aria-hidden="true" className="h-4 w-4" />
+      </button>
+      <span
+        aria-label={`Persistence status: ${STATUS_LABELS[saveStatus]}`}
+        className={`flex shrink-0 items-center gap-1 text-xs ${
+          saveStatus === "error" ? "text-red-700" : "text-canvas-muted"
+        }`}
+        role="status"
+      >
+        <StatusIcon
+          aria-hidden="true"
+          className={`h-3.5 w-3.5 ${saveStatus === "saving" ? "animate-spin" : ""}`}
+        />
+        <span className="sr-only sm:not-sr-only">{STATUS_LABELS[saveStatus]}</span>
+      </span>
+      {readOnly ? (
+        <span className="flex shrink-0 items-center gap-1 rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-900" role="status">
+          <Lock aria-hidden="true" className="h-3.5 w-3.5" />
+          Read-only—open in another tab
+        </span>
+      ) : null}
+    </div>
+  );
+}

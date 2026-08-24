@@ -6,6 +6,7 @@ import type { DockSide } from "./PanelsShell";
 export type SidebarDockProps = {
   children: ReactNode;
   collapsed: boolean;
+  footer?: ReactNode;
   onToggle: () => void;
   side: DockSide;
 };
@@ -13,6 +14,7 @@ export type SidebarDockProps = {
 export function SidebarDock({
   children,
   collapsed,
+  footer,
   onToggle,
   side
 }: SidebarDockProps) {
@@ -46,6 +48,9 @@ export function SidebarDock({
         <ToggleIcon aria-hidden="true" className="h-5 w-5" />
       </button>
       {collapsed ? null : children}
+      {footer ? (
+        <div className={collapsed ? "mt-auto" : "mt-auto pt-1"}>{footer}</div>
+      ) : null}
     </aside>
   );
 }

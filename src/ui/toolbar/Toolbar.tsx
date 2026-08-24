@@ -12,13 +12,26 @@ import { EngageActionButton } from './EngageActionButton';
 import { DisengageActionButton } from './DisengageActionButton';
 import { EdgeToolButton } from './edge/EdgeToolButton';
 import { CanvasZoomControls } from "./CanvasZoomControls";
+import {
+  EncounterTitleControls,
+  type SaveStatus
+} from "./EncounterTitleControls";
 
 type ToolbarProps = {
   onActorToolSelected: () => void;
   onOpenLibrary: () => void;
+  onSaveEncounter?: () => void;
+  persistenceReadOnly?: boolean;
+  saveStatus?: SaveStatus;
 };
 
-export function Toolbar({ onActorToolSelected, onOpenLibrary }: ToolbarProps) {
+export function Toolbar({
+  onActorToolSelected,
+  onOpenLibrary,
+  onSaveEncounter = () => undefined,
+  persistenceReadOnly = false,
+  saveStatus = "idle"
+}: ToolbarProps) {
   const encounter = useSelector((state: RootState) => state.encounter.present);
   const activeToolId = useSelector(
     (state: RootState) => state.interaction.activeToolId
@@ -93,9 +106,11 @@ export function Toolbar({ onActorToolSelected, onOpenLibrary }: ToolbarProps) {
       className="h-16 min-h-16 overflow-hidden border-b border-canvas-line bg-canvas-panel px-4 py-3 shadow-sm"
     >
       <div className="flex h-full min-w-0 flex-nowrap items-center gap-2">
-        <h1 className="mr-4 shrink-0 font-display text-2xl font-semibold tracking-tight">
-          Combat Zone
-        </h1>
+        <EncounterTitleControls
+          onSave={onSaveEncounter}
+          readOnly={persistenceReadOnly}
+          saveStatus={saveStatus}
+        />
         <nav
           aria-label="Tools"
           className="flex min-w-0 flex-nowrap items-center gap-2 overflow-x-auto"

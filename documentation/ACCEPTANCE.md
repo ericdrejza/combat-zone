@@ -326,12 +326,12 @@ covers `DESIGN.md` §15 "Must have" scope only.
 
 ## Local persistence
 
-- [ ] Autosave triggers on every committed Redux history entry (or on a reasonable
+- [x] Autosave triggers on every committed Redux history entry (or on a reasonable
       debounce) to local browser storage.
-- [ ] Manual "Save" / "Load" round-trips the full encounter state including
+- [x] Manual "Save" / "Load" round-trips the full encounter state including
       all entity types without loss.
-- [ ] Exported JSON includes a `schemaVersion` field (per `AGENT.md`).
-- [ ] Reloading the app after a browser refresh restores the last
+- [x] Exported JSON includes a `schemaVersion` field (per `AGENT.md`).
+- [x] Reloading the app after a browser refresh restores the last
       autosaved state.
 
 ---
