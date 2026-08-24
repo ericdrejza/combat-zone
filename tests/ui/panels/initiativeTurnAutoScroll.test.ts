@@ -29,7 +29,7 @@ describe("initiative turn auto-scroll", () => {
         onDeck: { bottom: 328, top: 288 },
         viewportHeight: 120
       })
-    ).toBe(208);
+    ).toBe(212);
   });
 
   it("prioritizes the active row when both rows cannot fit", () => {
@@ -41,7 +41,7 @@ describe("initiative turn auto-scroll", () => {
         onDeck: { bottom: 420, top: 288 },
         viewportHeight: 120
       })
-    ).toBe(240);
+    ).toBe(236);
   });
 
   it("reveals the active row when there is no on-deck participant", () => {
@@ -52,7 +52,20 @@ describe("initiative turn auto-scroll", () => {
         maximumScrollTop: 400,
         viewportHeight: 120
       })
-    ).toBe(380);
+    ).toBe(384);
+  });
+
+  it("leaves the full active row inside the viewport when scrolling backward", () => {
+    const target = getInitiativeTurnScrollTarget({
+      active: { bottom: 140.4, top: 100.4 },
+      currentScrollTop: 150,
+      maximumScrollTop: 400,
+      onDeck: { bottom: 188.4, top: 148.4 },
+      viewportHeight: 120
+    });
+
+    expect(target).toBeCloseTo(96.4);
+    expect(100.4 - target).toBeGreaterThanOrEqual(4);
   });
 
   it("moves the list when turn navigation changes the active participant", () => {
@@ -93,6 +106,6 @@ describe("initiative turn auto-scroll", () => {
 
     rerender({ currentActorId: "bravo" });
 
-    expect(list.scrollTop).toBe(208);
+    expect(list.scrollTop).toBe(212);
   });
 });

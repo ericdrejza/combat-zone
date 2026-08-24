@@ -66,6 +66,12 @@ function seedActors() {
   });
 }
 
+function displayedInitiativeActorIds(): string[] {
+  return Array.from(
+    document.querySelectorAll<HTMLElement>("[data-initiative-actor-id]")
+  ).map((row) => row.dataset.initiativeActorId!);
+}
+
 describe("InitiativePanel", () => {
   it("adds selected, visible, and all actors using their defined scopes", async () => {
     const user = userEvent.setup();
@@ -222,6 +228,61 @@ describe("InitiativePanel", () => {
     expect(
       getInitiativeEntry(store.getState().encounter.present, "bravo")?.value
     ).toBe(1);
+  });
+
+  it("defers chevron sorting until the edited row is no longer hovered", async () => {
+    const user = userEvent.setup();
+    renderApp();
+    seedActors();
+    await user.click(screen.getByTitle("Add all actors"));
+
+    const charlieRow = screen.getByText("Charlie").closest("li")!;
+    await user.hover(charlieRow);
+    await user.click(
+      screen.getByRole("button", { name: "Increase Charlie initiative" })
+    );
+
+    expect(getInitiativeActorIds(store.getState().encounter.present)).toEqual([
+      "charlie",
+      "alpha",
+      "bravo"
+    ]);
+    expect(displayedInitiativeActorIds()).toEqual([
+      "alpha",
+      "bravo",
+      "charlie"
+    ]);
+
+    await user.unhover(charlieRow);
+    await waitFor(() => {
+      expect(displayedInitiativeActorIds()).toEqual([
+        "charlie",
+        "alpha",
+        "bravo"
+      ]);
+    });
+  });
+
+  it("sorts immediately when a manual initiative edit is submitted", async () => {
+    const user = userEvent.setup();
+    renderApp();
+    seedActors();
+    await user.click(screen.getByTitle("Add all actors"));
+
+    const bravoRow = screen.getByText("Bravo").closest("li")!;
+    await user.hover(bravoRow);
+    await user.type(
+      screen.getByRole("textbox", { name: "Bravo initiative" }),
+      "20{Enter}"
+    );
+
+    await waitFor(() => {
+      expect(displayedInitiativeActorIds()).toEqual([
+        "bravo",
+        "alpha",
+        "charlie"
+      ]);
+    });
   });
 
   it("selects on click and makes current without selecting on double-click", async () => {

@@ -59,6 +59,9 @@ export function InitiativePanel({
   const initiativeActorIds = getInitiativeActorIds(encounter);
   const [draftOrder, setDraftOrder] = useState(initiativeActorIds);
   const [confirmClear, setConfirmClear] = useState(false);
+  const [deferredSortActorId, setDeferredSortActorId] = useState<string | null>(
+    null
+  );
   const { listRef, stopAutoScroll, updateAutoScroll } =
     useInitiativeReorderAutoScroll();
   useInitiativeTurnAutoScroll(
@@ -98,8 +101,9 @@ export function InitiativePanel({
     (actors.length === 0 || currentIndex === actors.length - 1);
 
   useEffect(() => {
+    if (deferredSortActorId !== null) return;
     setDraftOrder(initiativeActorIds);
-  }, [encounter.initiativeTracker.entries]);
+  }, [deferredSortActorId, encounter.initiativeTracker.entries]);
 
   function commitAdd(actorIds: string[], scope: string) {
     commitInitiativeChange(
@@ -185,13 +189,19 @@ export function InitiativePanel({
                     );
                   }
                 }
-                onInitiativeChange={(changedActorId, initiative) =>
+                onHoverEnd={(hoveredActorId) => {
+                  if (deferredSortActorId === hoveredActorId) {
+                    setDeferredSortActorId(null);
+                  }
+                }}
+                onInitiativeChange={(changedActorId, initiative, deferSort) => {
+                  setDeferredSortActorId(deferSort ? changedActorId : null);
                   commitSimple(
                     "initiative.updateValue",
                     updateInitiativeValue(encounter, changedActorId, initiative),
                     { actorId: changedActorId, initiative: initiative ?? null }
-                  )
-                }
+                  );
+                }}
                 onRemove={(removedActorId) =>
                   commitSimple(
                     "initiative.removeActor",

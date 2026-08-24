@@ -1,6 +1,6 @@
 import { ChevronLeft, ChevronRight, GripVertical, Skull } from "lucide-react";
 import { Reorder, motion, useDragControls } from "motion/react";
-import type { MouseEvent } from "react";
+import { useRef, type MouseEvent } from "react";
 
 import { INITIATIVE_MAX, INITIATIVE_MIN } from "@core/encounter/initiativeMutations";
 import type { Actor } from "@entities/actor/types";
@@ -26,7 +26,12 @@ type InitiativeRowProps = {
   onDoubleClick: (actorId: string, event: MouseEvent<HTMLElement>) => void;
   onDrag: (pointerClientY: number) => void;
   onDragEnd: (actorId: string) => void;
-  onInitiativeChange: (actorId: string, initiative: number | undefined) => void;
+  onHoverEnd: (actorId: string) => void;
+  onInitiativeChange: (
+    actorId: string,
+    initiative: number | undefined,
+    deferSort: boolean
+  ) => void;
   onRemove: (actorId: string) => void;
 };
 
@@ -40,15 +45,17 @@ export function InitiativeRow({
   onDoubleClick,
   onDrag,
   onDragEnd,
+  onHoverEnd,
   onInitiativeChange,
   onRemove
 }: InitiativeRowProps) {
   const dragControls = useDragControls();
+  const hoveredRef = useRef(false);
 
   function adjustInitiative(delta: -1 | 1) {
     const nextValue = (initiativeValue ?? 0) + delta;
     if (nextValue < INITIATIVE_MIN || nextValue > INITIATIVE_MAX) return;
-    onInitiativeChange(actor.id, nextValue);
+    onInitiativeChange(actor.id, nextValue, hoveredRef.current);
   }
 
   const chevronVisibilityClasses = initiativeValue === undefined
@@ -71,6 +78,13 @@ export function InitiativeRow({
         if ("clientY" in event) onDrag(event.clientY);
       }}
       onDragEnd={() => onDragEnd(actor.id)}
+      onMouseEnter={() => {
+        hoveredRef.current = true;
+      }}
+      onMouseLeave={() => {
+        hoveredRef.current = false;
+        onHoverEnd(actor.id);
+      }}
       onMouseDown={(event) => {
         if (
           event.shiftKey &&
@@ -129,7 +143,7 @@ export function InitiativeRow({
                 initiative >= INITIATIVE_MIN &&
                 initiative <= INITIATIVE_MAX)
             ) {
-              onInitiativeChange(actor.id, initiative);
+              onInitiativeChange(actor.id, initiative, false);
             } else {
               event.currentTarget.value = initiativeValue?.toString() ?? "";
             }
