@@ -1,6 +1,12 @@
 import { ChevronLeft, ChevronRight, GripVertical, Skull } from "lucide-react";
 import { Reorder, motion, useDragControls } from "motion/react";
-import { useRef, type MouseEvent } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type FocusEvent,
+  type MouseEvent
+} from "react";
 
 import { INITIATIVE_MAX, INITIATIVE_MIN } from "@core/encounter/initiativeMutations";
 import type { Actor } from "@entities/actor/types";
@@ -26,12 +32,8 @@ type InitiativeRowProps = {
   onDoubleClick: (actorId: string, event: MouseEvent<HTMLElement>) => void;
   onDrag: (pointerClientY: number) => void;
   onDragEnd: (actorId: string) => void;
-  onHoverEnd: (actorId: string) => void;
-  onInitiativeChange: (
-    actorId: string,
-    initiative: number | undefined,
-    deferSort: boolean
-  ) => void;
+  onInitiativeChange: (actorId: string, initiative: number | undefined) => void;
+  onInvalidInitiative: (actorId: string, input: string) => void;
   onRemove: (actorId: string) => void;
 };
 
@@ -45,18 +47,64 @@ export function InitiativeRow({
   onDoubleClick,
   onDrag,
   onDragEnd,
-  onHoverEnd,
   onInitiativeChange,
+  onInvalidInitiative,
   onRemove
 }: InitiativeRowProps) {
   const dragControls = useDragControls();
-  const hoveredRef = useRef(false);
+  const [draftValue, setDraftValue] = useState(initiativeValue?.toString() ?? "");
+  const editSourceRef = useRef<"chevron" | "manual" | null>(null);
+
+  useEffect(() => {
+    if (editSourceRef.current === null) {
+      setDraftValue(initiativeValue?.toString() ?? "");
+    }
+  }, [initiativeValue]);
+
+  function parseDraft(): number | undefined | null {
+    const trimmedValue = draftValue.trim();
+    if (trimmedValue === "") return undefined;
+    const value = Number(trimmedValue);
+    return Number.isInteger(value) &&
+      value >= INITIATIVE_MIN &&
+      value <= INITIATIVE_MAX
+      ? value
+      : null;
+  }
+
+  function finalizeInitiativeEdit() {
+    if (editSourceRef.current === null) return;
+    editSourceRef.current = null;
+    const value = parseDraft();
+    if (value === null) {
+      onInvalidInitiative(actor.id, draftValue);
+      setDraftValue(initiativeValue?.toString() ?? "");
+      return;
+    }
+    onInitiativeChange(actor.id, value);
+  }
 
   function adjustInitiative(delta: -1 | 1) {
-    const nextValue = (initiativeValue ?? 0) + delta;
+    const parsedDraft = parseDraft();
+    const baseValue =
+      parsedDraft === undefined ? 0 : parsedDraft ?? initiativeValue ?? 0;
+    const nextValue = baseValue + delta;
     if (nextValue < INITIATIVE_MIN || nextValue > INITIATIVE_MAX) return;
-    onInitiativeChange(actor.id, nextValue, hoveredRef.current);
+    editSourceRef.current = "chevron";
+    setDraftValue(nextValue.toString());
   }
+
+  function handleEditorBlur(event: FocusEvent<HTMLSpanElement>) {
+    if (
+      event.relatedTarget instanceof Node &&
+      event.currentTarget.contains(event.relatedTarget)
+    ) {
+      return;
+    }
+    finalizeInitiativeEdit();
+  }
+
+  const parsedDraft = parseDraft();
 
   const chevronVisibilityClasses = initiativeValue === undefined
     ? "group-hover/row:pointer-events-auto group-hover/row:opacity-100"
@@ -78,12 +126,8 @@ export function InitiativeRow({
         if ("clientY" in event) onDrag(event.clientY);
       }}
       onDragEnd={() => onDragEnd(actor.id)}
-      onMouseEnter={() => {
-        hoveredRef.current = true;
-      }}
       onMouseLeave={() => {
-        hoveredRef.current = false;
-        onHoverEnd(actor.id);
+        if (editSourceRef.current === "chevron") finalizeInitiativeEdit();
       }}
       onMouseDown={(event) => {
         if (
@@ -114,11 +158,14 @@ export function InitiativeRow({
           layoutId="initiative-current-actor"
         />
       ) : null}
-      <span className="group/initiative flex items-center gap-0">
+      <span
+        className="group/initiative flex items-center gap-0"
+        onBlur={handleEditorBlur}
+      >
         <button
           aria-label={`Decrease ${actor.name} initiative`}
           className={`pointer-events-none opacity-0 text-canvas-muted hover:text-canvas-ink disabled:cursor-not-allowed disabled:opacity-40 ${chevronVisibilityClasses}`}
-          disabled={initiativeValue !== undefined && initiativeValue <= INITIATIVE_MIN}
+          disabled={parsedDraft !== null && parsedDraft !== undefined && parsedDraft <= INITIATIVE_MIN}
           onClick={(event) => {
             event.stopPropagation();
             adjustInitiative(-1);
@@ -131,35 +178,30 @@ export function InitiativeRow({
         <input
           aria-label={`${actor.name} initiative`}
           className="w-9 border-0 bg-transparent px-0 py-1 text-center outline-none focus:ring-1 focus:ring-canvas-line"
-          defaultValue={initiativeValue ?? ""}
+          onChange={(event) => {
+            editSourceRef.current = "manual";
+            setDraftValue(event.currentTarget.value);
+          }}
           inputMode="numeric"
-          key={`${actor.id}:${initiativeValue ?? "blank"}`}
-          onBlur={(event) => {
-            const value = event.currentTarget.value.trim();
-            const initiative = value === "" ? undefined : Number(value);
-            if (
-              initiative === undefined ||
-              (Number.isInteger(initiative) &&
-                initiative >= INITIATIVE_MIN &&
-                initiative <= INITIATIVE_MAX)
-            ) {
-              onInitiativeChange(actor.id, initiative, false);
-            } else {
-              event.currentTarget.value = initiativeValue?.toString() ?? "";
-            }
+          onBlur={() => {
+            if (editSourceRef.current === "manual") finalizeInitiativeEdit();
           }}
           onClick={(event) => event.stopPropagation()}
           onDoubleClick={(event) => event.stopPropagation()}
           onFocus={(event) => event.target.select()}
           onKeyDown={(event) => {
-            if (event.key === "Enter") event.currentTarget.blur();
+            if (event.key === "Enter") {
+              finalizeInitiativeEdit();
+              event.currentTarget.blur();
+            }
           }}
           type="text"
+          value={draftValue}
         />
         <button
           aria-label={`Increase ${actor.name} initiative`}
           className={`pointer-events-none opacity-0 text-canvas-muted hover:text-canvas-ink disabled:cursor-not-allowed disabled:opacity-40 ${chevronVisibilityClasses}`}
-          disabled={initiativeValue !== undefined && initiativeValue >= INITIATIVE_MAX}
+          disabled={parsedDraft !== null && parsedDraft !== undefined && parsedDraft >= INITIATIVE_MAX}
           onClick={(event) => {
             event.stopPropagation();
             adjustInitiative(1);

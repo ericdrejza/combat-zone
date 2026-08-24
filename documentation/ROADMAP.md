@@ -18,7 +18,7 @@ After completing a numbered section (## X.), move the completed section to the e
   - Engagement properties
 - [x] Implement Log Panel display for committed actions and blocked validation
       results, with categories reserved for filtering.
-- [ ] Implement Bottom Status display for current tool and interaction state.
+- [ ] Implement Top Left Status display for current tool and interaction state.
 - [ ] Ensure panel updates are driven by selection context.
 
 ## 14. Local Persistence, Save/Load, and Export
