@@ -11,6 +11,7 @@ import {
 } from "./AssetLibraryMenus";
 import { useAssetLibraryModalController } from "./useAssetLibraryModalController";
 import type { LibraryNode } from "@library/types";
+import { WebImageUrlDialog } from "./WebImageUrlDialog";
 
 type AssetLibraryModalProps = {
   onClose: () => void;
@@ -95,6 +96,10 @@ export function AssetLibraryModal({
                 onOpenFolderPicker={() => controller.folderInputRef.current?.click()}
                 onOpenLinkPicker={() => {
                   controller.setLinkPickerOpen(true);
+                  controller.setAddMenuOpen(false);
+                }}
+                onOpenUrlDialog={() => {
+                  controller.setUrlDialogOpen(true);
                   controller.setAddMenuOpen(false);
                 }}
                 onToggleAddMenu={() =>
@@ -184,6 +189,14 @@ export function AssetLibraryModal({
           imageNodes={controller.imageNodes}
           onClose={() => controller.setLinkPickerOpen(false)}
           onSelectAsset={controller.createLinkToAsset}
+        />
+      ) : null}
+      {controller.urlDialogOpen ? (
+        <WebImageUrlDialog
+          description="The library will keep a reference to this URL; the image file will not be copied into the library."
+          onClose={() => controller.setUrlDialogOpen(false)}
+          onSubmit={controller.createUrlAsset}
+          title="Link image URL"
         />
       ) : null}
     </div>

@@ -1,10 +1,37 @@
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { afterEach } from "vitest";
 
 import { store } from "@store/store";
+import {
+  redoEncounterChange,
+  undoEncounterChange
+} from "@store/encounterSlice";
 import { renderApp } from "@tests/ui/renderApp";
 
+const DefaultTestImage = globalThis.Image;
+
 describe("Toolbar zone and background", () => {
+  afterEach(() => {
+    vi.stubGlobal("Image", DefaultTestImage);
+  });
+
+  class LoadedImage {
+    height = 450;
+    naturalHeight = 450;
+    naturalWidth = 800;
+    width = 800;
+    private listeners = new Map<string, () => void>();
+
+    addEventListener(type: string, listener: () => void) {
+      this.listeners.set(type, listener);
+    }
+
+    set src(_value: string) {
+      queueMicrotask(() => this.listeners.get("load")?.());
+    }
+  }
+
   it("opens Zone shape radios from the Zone toolbar button", async () => {
     const user = userEvent.setup();
 
@@ -89,5 +116,36 @@ describe("Toolbar zone and background", () => {
       ).not.toBeInTheDocument();
     });
     expect(screen.getByRole("menuitem", { name: "Add" })).toBeInTheDocument();
+  });
+
+  it("adds a URL-backed background from the link-2 action", async () => {
+    vi.stubGlobal("Image", LoadedImage);
+    const user = userEvent.setup();
+
+    renderApp();
+    await user.click(screen.getByRole("button", { name: "Background" }));
+    await user.click(
+      screen.getByRole("menuitem", { name: "Add background from web" })
+    );
+    await user.type(
+      screen.getByRole("textbox", { name: "Image URL" }),
+      "https://maps.example/arena.png"
+    );
+    await user.click(screen.getByRole("button", { name: "Add image" }));
+
+    await waitFor(() => {
+      expect(store.getState().encounter.present.backgroundImage).toMatchObject({
+        dataUrl: "https://maps.example/arena.png",
+        height: 450,
+        width: 800
+      });
+    });
+    expect(store.getState().encounter.past).toHaveLength(1);
+    store.dispatch(undoEncounterChange());
+    expect(store.getState().encounter.present.backgroundImage).toBeNull();
+    store.dispatch(redoEncounterChange());
+    expect(store.getState().encounter.present.backgroundImage?.dataUrl).toBe(
+      "https://maps.example/arena.png"
+    );
   });
 });

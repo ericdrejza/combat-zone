@@ -1,4 +1,4 @@
-import { FolderPlus, Link, Plus, Upload } from "lucide-react";
+import { FolderPlus, FolderUp, Link, Link2, Plus, Upload } from "lucide-react";
 import type { RefObject } from "react";
 
 type AssetLibraryAddMenuProps = {
@@ -11,6 +11,7 @@ type AssetLibraryAddMenuProps = {
   onOpenFilePicker: () => void;
   onOpenFolderPicker: () => void;
   onOpenLinkPicker: () => void;
+  onOpenUrlDialog: () => void;
   onToggleAddMenu: () => void;
 };
 
@@ -24,6 +25,7 @@ export function AssetLibraryAddMenu({
   onOpenFilePicker,
   onOpenFolderPicker,
   onOpenLinkPicker,
+  onOpenUrlDialog,
   onToggleAddMenu
 }: AssetLibraryAddMenuProps) {
   return (
@@ -51,26 +53,17 @@ export function AssetLibraryAddMenu({
             type="button"
           >
             <Upload aria-hidden="true" className="h-4 w-4" />
-            Upload new image
+            Upload file
           </button>
           <button
             className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left transition hover:bg-canvas disabled:cursor-not-allowed disabled:text-canvas-muted"
             disabled={!canUploadAssets}
-            onClick={onOpenFolderPicker}
+            onClick={onOpenUrlDialog}
             role="menuitem"
             type="button"
           >
-            <FolderPlus aria-hidden="true" className="h-4 w-4" />
-            Upload folder
-          </button>
-          <button
-            className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left transition hover:bg-canvas"
-            onClick={onCreateFolder}
-            role="menuitem"
-            type="button"
-          >
-            <FolderPlus aria-hidden="true" className="h-4 w-4" />
-            Create new folder
+            <Link2 aria-hidden="true" className="h-4 w-4" />
+            Web link
           </button>
           <button
             className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left transition hover:bg-canvas disabled:cursor-not-allowed disabled:text-canvas-muted"
@@ -80,7 +73,27 @@ export function AssetLibraryAddMenu({
             type="button"
           >
             <Link aria-hidden="true" className="h-4 w-4" />
-            Link existing asset
+            Link asset
+          </button>
+          <hr className="my-1 border-canvas-line" />
+          <button
+            className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left transition hover:bg-canvas"
+            onClick={onCreateFolder}
+            role="menuitem"
+            type="button"
+          >
+            <FolderPlus aria-hidden="true" className="h-4 w-4" />
+            Create folder
+          </button>
+          <button
+            className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left transition hover:bg-canvas disabled:cursor-not-allowed disabled:text-canvas-muted"
+            disabled={!canUploadAssets}
+            onClick={onOpenFolderPicker}
+            role="menuitem"
+            type="button"
+          >
+            <FolderUp aria-hidden="true" className="h-4 w-4" />
+            Upload folder
           </button>
         </div>
       ) : null}
