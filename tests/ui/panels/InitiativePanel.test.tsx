@@ -14,7 +14,11 @@ import {
   selectEntity,
   setActiveTool
 } from "@interaction/interactionState";
-import { commitEncounterChange } from "@store/encounterSlice";
+import {
+  commitEncounterChange,
+  redoEncounterChange,
+  undoEncounterChange
+} from "@store/encounterSlice";
 import { store } from "@store/store";
 import { renderApp } from "@tests/ui/renderApp";
 
@@ -194,19 +198,49 @@ describe("InitiativePanel", () => {
     expect(alphaInput).toHaveAttribute("type", "text");
     await user.type(alphaInput, "15");
     await user.tab();
+    const historyLength = store.getState().encounter.past.length;
+    const loggedValueChanges = () =>
+      store
+        .getState()
+        .encounterLog.entries.filter(
+          ({ actionType }) => actionType === "initiative.updateValue"
+        );
+    const initialLogCount = loggedValueChanges().length;
+    const alphaRow = alphaInput.closest("li")!;
+    await user.hover(alphaRow);
+    const increase = screen.getByRole("button", {
+      name: "Increase Alpha initiative"
+    });
 
-    await user.click(
-      screen.getByRole("button", { name: "Decrease Alpha initiative" })
-    );
-    expect(
-      getInitiativeEntry(store.getState().encounter.present, "alpha")?.value
-    ).toBe(14);
-    await user.click(
-      screen.getByRole("button", { name: "Increase Alpha initiative" })
-    );
+    await user.click(increase);
+    await user.click(increase);
+    await user.click(increase);
+
+    expect(alphaInput).toHaveValue("18");
     expect(
       getInitiativeEntry(store.getState().encounter.present, "alpha")?.value
     ).toBe(15);
+    expect(store.getState().encounter.past).toHaveLength(historyLength);
+    expect(loggedValueChanges()).toHaveLength(initialLogCount);
+
+    await user.unhover(alphaRow);
+    expect(
+      getInitiativeEntry(store.getState().encounter.present, "alpha")?.value
+    ).toBe(18);
+    expect(store.getState().encounter.past).toHaveLength(historyLength + 1);
+    expect(loggedValueChanges()).toHaveLength(initialLogCount + 1);
+    expect(loggedValueChanges().at(-1)?.message).toContain(
+      "Set Alpha's initiative to 18."
+    );
+
+    act(() => store.dispatch(undoEncounterChange()));
+    expect(
+      getInitiativeEntry(store.getState().encounter.present, "alpha")?.value
+    ).toBe(15);
+    act(() => store.dispatch(redoEncounterChange()));
+    expect(
+      getInitiativeEntry(store.getState().encounter.present, "alpha")?.value
+    ).toBe(18);
   });
 
   it("adjusts a blank initiative value from zero with either chevron", async () => {
@@ -215,16 +249,30 @@ describe("InitiativePanel", () => {
     seedActors();
     await user.click(screen.getByTitle("Add all actors"));
 
+    const alphaRow = screen
+      .getByRole("textbox", { name: "Alpha initiative" })
+      .closest("li")!;
+    await user.hover(alphaRow);
     await user.click(
       screen.getByRole("button", { name: "Decrease Alpha initiative" })
     );
     expect(
       getInitiativeEntry(store.getState().encounter.present, "alpha")?.value
+    ).toBeUndefined();
+    await user.unhover(alphaRow);
+    expect(
+      getInitiativeEntry(store.getState().encounter.present, "alpha")?.value
     ).toBe(-1);
 
+    const bravoRow = screen.getByText("Bravo").closest("li")!;
+    await user.hover(bravoRow);
     await user.click(
       screen.getByRole("button", { name: "Increase Bravo initiative" })
     );
+    expect(
+      getInitiativeEntry(store.getState().encounter.present, "bravo")?.value
+    ).toBeUndefined();
+    await user.unhover(bravoRow);
     expect(
       getInitiativeEntry(store.getState().encounter.present, "bravo")?.value
     ).toBe(1);
@@ -243,9 +291,9 @@ describe("InitiativePanel", () => {
     );
 
     expect(getInitiativeActorIds(store.getState().encounter.present)).toEqual([
-      "charlie",
       "alpha",
-      "bravo"
+      "bravo",
+      "charlie"
     ]);
     expect(displayedInitiativeActorIds()).toEqual([
       "alpha",
@@ -283,6 +331,32 @@ describe("InitiativePanel", () => {
         "charlie"
       ]);
     });
+  });
+
+  it("logs an invalid manual value without changing state or history", async () => {
+    const user = userEvent.setup();
+    renderApp();
+    seedActors();
+    await user.click(screen.getByTitle("Add all actors"));
+    const historyLength = store.getState().encounter.past.length;
+
+    await user.type(
+      screen.getByRole("textbox", { name: "Alpha initiative" }),
+      "100{Enter}"
+    );
+
+    expect(
+      getInitiativeEntry(store.getState().encounter.present, "alpha")?.value
+    ).toBeUndefined();
+    expect(store.getState().encounter.past).toHaveLength(historyLength);
+    expect(store.getState().encounterLog.entries.at(-1)).toMatchObject({
+      actionType: "initiative.updateValue",
+      category: "validation",
+      kind: "validation-block"
+    });
+    expect(store.getState().encounterLog.entries.at(-1)?.message).toContain(
+      "Set Alpha's initiative to 100."
+    );
   });
 
   it("selects on click and makes current without selecting on double-click", async () => {

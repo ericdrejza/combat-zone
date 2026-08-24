@@ -52,16 +52,14 @@ export function InitiativePanel({
   participantInteractionStrategy?: InitiativeParticipantInteractionStrategy;
 } = {}) {
   const { animationsDisabled } = useMotionPreference();
-  const { commitInitiativeChange, encounter } = useInitiativeActions();
+  const { commitInitiativeChange, encounter, logInvalidInitiativeValue } =
+    useInitiativeActions();
   const { onParticipantClick, onParticipantDoubleClick } =
     useParticipantInteractions(participantInteractionStrategy);
   const selection = useSelector((state: RootState) => state.interaction.selection);
   const initiativeActorIds = getInitiativeActorIds(encounter);
   const [draftOrder, setDraftOrder] = useState(initiativeActorIds);
   const [confirmClear, setConfirmClear] = useState(false);
-  const [deferredSortActorId, setDeferredSortActorId] = useState<string | null>(
-    null
-  );
   const { listRef, stopAutoScroll, updateAutoScroll } =
     useInitiativeReorderAutoScroll();
   useInitiativeTurnAutoScroll(
@@ -101,9 +99,8 @@ export function InitiativePanel({
     (actors.length === 0 || currentIndex === actors.length - 1);
 
   useEffect(() => {
-    if (deferredSortActorId !== null) return;
     setDraftOrder(initiativeActorIds);
-  }, [deferredSortActorId, encounter.initiativeTracker.entries]);
+  }, [encounter.initiativeTracker.entries]);
 
   function commitAdd(actorIds: string[], scope: string) {
     commitInitiativeChange(
@@ -189,19 +186,14 @@ export function InitiativePanel({
                     );
                   }
                 }
-                onHoverEnd={(hoveredActorId) => {
-                  if (deferredSortActorId === hoveredActorId) {
-                    setDeferredSortActorId(null);
-                  }
-                }}
-                onInitiativeChange={(changedActorId, initiative, deferSort) => {
-                  setDeferredSortActorId(deferSort ? changedActorId : null);
+                onInitiativeChange={(changedActorId, initiative) => {
                   commitSimple(
                     "initiative.updateValue",
                     updateInitiativeValue(encounter, changedActorId, initiative),
                     { actorId: changedActorId, initiative: initiative ?? null }
                   );
                 }}
+                onInvalidInitiative={logInvalidInitiativeValue}
                 onRemove={(removedActorId) =>
                   commitSimple(
                     "initiative.removeActor",
