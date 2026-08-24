@@ -316,6 +316,33 @@
 - [x] Add Vitest coverage for add, edit, reorder, advance turn, removal,
       validation modes, unrelated undo/redo stability, undo, and redo.
 
+## 13. Properties, Status, and Log Panels
+
+- [x] Implement context-sensitive Properties Panel sections.
+  - Actor properties
+  - Zone properties
+  - Edge properties
+  - Engagement properties
+- [x] Implement Log Panel display for committed actions and blocked validation
+      results, with categories reserved for filtering.
+- [x] Implement Top Left Status display for current tool and interaction state.
+- [x] Ensure panel updates are driven by selection context.
+
+## 14. Local Persistence, Save/Load, and Export
+
+- [x] Implement autosave to local browser storage.
+  - IndexedDB
+  - Trigger on every committed Redux history entry or a reasonable debounce.
+- [x] Restore the latest autosaved state after browser refresh.
+- [x] Implement manual Save and Load.
+  - Round-trip full encounter state.
+  - Include all entity types.
+- [x] Implement JSON export/import.
+  - Include `schemaVersion` in every exported file.
+  - Support full workspace export.
+  - Support encounter-only export.
+- [x] Add tests or manual verification for no-loss round trips.
+
 ## 16. Responsive Mobile and Touch Workspace
 
 - [x] Implement the compact icon toolbar, active subtool bar, responsive Zoom,

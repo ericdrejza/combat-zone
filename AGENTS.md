@@ -67,6 +67,46 @@ first — this table is a locked decision, not a suggestion.
 - Only denormalize persisted state for a proven performance or product need,
   and document the synchronization invariant before implementing it.
 
+## PERSISTENCE RULES
+
+The persistence architecture and operational details live in
+`documentation/plans/persistence.md`; product and domain behavior remains in
+`documentation/DESIGN.md` §11. Keep this file limited to the following
+engineering contracts:
+
+- Persist through the `WorkspaceRepository` boundary. UI and Redux code must
+  not issue IndexedDB requests or depend on an adapter's storage details;
+  IndexedDB is the MVP adapter and test doubles should implement the same
+  repository contract.
+- Only the current `EncounterState` (`encounter.present`) is durable. Redux
+  `past`/`future` history, action logs, interaction drafts, viewport state,
+  layout caches, and other derived render data are session-only. Loading a
+  snapshot must create fresh history and clear transient state.
+- Validate and explicitly migrate every persisted encounter, workspace
+  manifest, Library record, and import envelope before it reaches Redux.
+  Version fields are required; reject unsupported newer versions and preserve
+  the last valid data when validation, migration, quota, or write operations
+  fail.
+- Use revision checks for encounter writes and stable IDs for records. A
+  multi-record import must commit atomically; overwrite imports must create a
+  recoverable local backup before replacement. Reset must use its in-progress
+  marker and recovery sequence so an interruption cannot leave stale
+  application state.
+- Keep import entry points type-specific: workspace envelopes are imported from
+  Settings and encounter envelopes from the Encounter Library Add menu. A
+  valid envelope of the wrong kind must explain the correct entry point and
+  must not mutate local data.
+- Treat the single-editor Web Lock and the Redux persistence-write guard as
+  defense-in-depth. Read-only tabs may inspect, navigate, and export, but all
+  EncounterState, Library, import, and reset mutations require the writer
+  boundary even when a control is disabled.
+- Reset only application-owned IndexedDB records and namespaced preferences;
+  never clear unrelated browser data. Require the writer boundary and retain
+  interrupted-reset recovery behavior.
+- Keep future cloud synchronization behind repository/sync interfaces.
+  Redux and UI components must not write directly to Firebase or another
+  remote provider; local IndexedDB remains the local source of truth.
+
 ## ENGINEERING QUALITY RULES
 
 - Keep source files under 300 lines whenever practical. If a file approaches
@@ -116,6 +156,7 @@ src/
   core/
     encounter/       # encounter state shape, creation, and inspectors
     history/          # Redux history types and undo/redo helpers
+    persistence/      # repository contracts/adapters, envelopes, migrations, reset
     layout/           # FLEX, SEQUENTIAL, SPLIT_SEQUENTIAL — shared strategy pattern
     rendering/        # shared SVG primitives and overlay visuals
     validation/       # pipeline runner + shared validators (ZoneIntegrityValidator, etc.)
@@ -130,6 +171,7 @@ src/
     tools/            # SelectTool, ZoneTool, EdgeTool, ActorTool, EngagementTool, AnnotationTool, BackgroundTool, DeleteTool
     selection/        # shift/ctrl/box-select rules
   store/             # Redux store setup and slice registration
+    persistenceWriteGuardMiddleware.ts # read-only writer-boundary enforcement
   ui/
     canvas/           # canvas shell, render-order composition (per documentation/DESIGN.md §13)
     library/          # library panel and modal UI
@@ -139,6 +181,8 @@ src/
     toolbar/          # top-level toolbar and tool buttons
       background/     # background tool controls and file handling
       zone/           # zone tool controls and mode switching
+    persistence/      # persistence provider/context and import/recovery UI
+    settings/         # settings and application-owned local-data controls
 tests/               # All tests live here
 ```
 
@@ -181,6 +225,23 @@ A feature is not complete until:
    question, not silently resolved.
 6. The appropriate checkbox is checked in `documentation/ROADMAP.md`; it will
    only be allowed to be checked if the previous criteria are met.
+
+New or changed persistence behavior additionally requires relevant coverage
+for:
+
+- Repository and envelope tests covering lossless round trips, schema
+  validation/migration, unsupported versions, revision conflicts, write
+  failures, and preservation of the last valid data.
+- Autosave, explicit-save, undo/redo, flush-before-navigation, refresh/draft
+  recovery, and fresh-history-on-load tests.
+- Atomic merge/overwrite import tests covering backup creation, ID/reference
+  remapping, wrong-kind entry points, and no mutation on invalid input.
+- Writer-lock/read-only tests proving central mutation blocking, lock transfer,
+  and cross-tab reload/reset behavior.
+- Reset tests proving phrase/lock requirements, interrupted recovery,
+  application-owned cleanup only, default restoration, and clean draft
+  creation. Cloud work must add emulator coverage before it is considered
+  complete.
 
 ## ACCEPTANCE CRITERIA
 

@@ -1,4 +1,5 @@
 import { X } from "lucide-react";
+import { useRef, useState } from "react";
 
 import { LIBRARY_SECTION_IDS, LIBRARY_SECTION_LABELS } from "@library/types";
 import { AssetLibraryAddMenu } from "./AssetLibraryAddMenu";
@@ -12,19 +13,112 @@ import {
 import { useAssetLibraryModalController } from "./useAssetLibraryModalController";
 import type { LibraryNode } from "@library/types";
 import { WebImageUrlDialog } from "./WebImageUrlDialog";
+import { usePersistence } from "@ui/persistence/PersistenceProvider";
+import { downloadExport } from "@ui/persistence/downloadExport";
+import { RenameModal } from "@ui/RenameModal";
+
+export type AssetLibraryMode =
+  | "browse"
+  | "encounter-only"
+  | "save-destination"
+  | "import-destination";
 
 type AssetLibraryModalProps = {
   onClose: () => void;
   onBackgroundDoubleClick: (node: LibraryNode) => void;
   onTokenDoubleClick: (node: LibraryNode) => void;
+  mode?: AssetLibraryMode;
+  onCreateEncounter?: () => void;
+  onActiveEncounterDeleted?: () => void;
+  onRequestLoadEncounter?: (id: string) => void;
+  onSaveDestinationComplete?: () => void;
+  onImportDestinationSelected?: (folderId: string) => void;
+  onImportEncounterFile?: (file: File) => void;
 };
 
 export function AssetLibraryModal({
   onBackgroundDoubleClick,
   onClose,
-  onTokenDoubleClick
+  onTokenDoubleClick,
+  mode = "browse",
+  onCreateEncounter,
+  onActiveEncounterDeleted,
+  onRequestLoadEncounter,
+  onSaveDestinationComplete,
+  onImportDestinationSelected,
+  onImportEncounterFile
 }: AssetLibraryModalProps) {
   const controller = useAssetLibraryModalController();
+  const persistence = usePersistence();
+  const encounterOnly = mode !== "browse";
+  const pendingDeleteNode = controller.pendingDeleteNode;
+  const encounterImportInputRef = useRef<HTMLInputElement>(null);
+  const [renameTarget, setRenameTarget] = useState<
+    | { kind: "encounter"; id: string; name: string }
+    | { kind: "node"; node: LibraryNode }
+    | null
+  >(null);
+  const renameTargetName =
+    renameTarget?.kind === "encounter"
+      ? renameTarget.name
+      : renameTarget?.node.name;
+
+  function folderContainsEncounters(folder: LibraryNode): boolean {
+    if (controller.activeSectionId !== "encounters" || folder.type !== "folder") {
+      return false;
+    }
+    const folderIds = new Set<string>();
+    const pending = [folder.id];
+    while (pending.length > 0) {
+      const folderId = pending.pop() as string;
+      folderIds.add(folderId);
+      const node = controller.activeSection.nodesById[folderId];
+      for (const childId of node?.type === "folder" ? node.childIds ?? [] : []) {
+        const child = controller.activeSection.nodesById[childId];
+        if (child?.type === "folder") pending.push(child.id);
+      }
+    }
+    return persistence.encounters.some(
+      (record) => record.folderId !== null && folderIds.has(record.folderId)
+    );
+  }
+
+  function preventEncounterOrphan(folder: LibraryNode): boolean {
+    if (!folderContainsEncounters(folder)) return false;
+    window.alert("Move or delete the encounters in this folder before deleting it.");
+    return true;
+  }
+
+  function handleEncounterDragOver(
+    event: React.DragEvent<HTMLElement>,
+    folderId: string
+  ): boolean {
+    if (
+      !Array.from(event.dataTransfer.types ?? []).includes(
+        "application/x-combat-zone-encounter"
+      )
+    ) {
+      return false;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    event.dataTransfer.dropEffect = "move";
+    controller.setDropFolderId(folderId);
+    return true;
+  }
+
+  function handleEncounterDrop(event: React.DragEvent<HTMLElement>, folderId: string) {
+    if (typeof event.dataTransfer.getData !== "function") return false;
+    const encounterId = event.dataTransfer.getData(
+      "application/x-combat-zone-encounter"
+    );
+    if (!encounterId) return false;
+    event.preventDefault();
+    event.stopPropagation();
+    controller.setDropFolderId(null);
+    void persistence.moveEncounter(encounterId, folderId);
+    return true;
+  }
 
   function handleDoubleClick(node: LibraryNode) {
     if (node.type === "folder") {
@@ -60,7 +154,7 @@ export function AssetLibraryModal({
           </button>
         </header>
         <div className="scrollbar-hidden flex shrink-0 overflow-x-auto border-b border-canvas-line px-3 pt-3 lg:px-5" role="tablist">
-          {LIBRARY_SECTION_IDS.map((sectionId) => (
+          {(encounterOnly ? (["encounters"] as const) : LIBRARY_SECTION_IDS).map((sectionId) => (
             <button
               key={sectionId}
               aria-selected={controller.activeSectionId === sectionId}
@@ -86,13 +180,22 @@ export function AssetLibraryModal({
               <h3 className="text-sm font-semibold">
                 {controller.activeSection.name}
               </h3>
-              <AssetLibraryAddMenu
+              {!persistence.readOnly ? <AssetLibraryAddMenu
                 addMenuOpen={controller.addMenuOpen}
                 addMenuRef={controller.addMenuRef}
                 canLinkAssets={controller.imageNodes.length > 0}
                 canUploadAssets={controller.activeSectionId !== "encounters"}
+                encounterSection={controller.activeSectionId === "encounters"}
+                onCreateEncounter={() => {
+                  controller.setAddMenuOpen(false);
+                  onCreateEncounter?.();
+                }}
                 onCreateFolder={controller.createFolderInSelection}
                 onOpenFilePicker={() => controller.fileInputRef.current?.click()}
+                onOpenEncounterImportPicker={() => {
+                  controller.setAddMenuOpen(false);
+                  encounterImportInputRef.current?.click();
+                }}
                 onOpenFolderPicker={() => controller.folderInputRef.current?.click()}
                 onOpenLinkPicker={() => {
                   controller.setLinkPickerOpen(true);
@@ -106,17 +209,25 @@ export function AssetLibraryModal({
                   controller.setAddMenuOpen((open) => !open)
                 }
                 sectionName={controller.activeSection.name}
-              />
+              /> : null}
             </div>
             <AssetLibraryExplorer
               activeSection={controller.activeSection}
               dropFolderId={controller.dropFolderId}
               expandedFolderIds={controller.expandedFolderIds}
               onDragEnd={controller.clearDragState}
-              onDragOverFolder={controller.handleDragOverFolder}
+              onDragOverFolder={(event, node) => {
+                if (!handleEncounterDragOver(event, node.id)) {
+                  controller.handleDragOverFolder(event, node);
+                }
+              }}
               onDragStart={(_event, node) => controller.setDraggedNodeId(node.id)}
               onDoubleClickNode={handleDoubleClick}
-              onDropOnFolder={controller.handleDropOnFolder}
+              onDropOnFolder={(event, node) => {
+                if (!handleEncounterDrop(event, node.id)) {
+                  controller.handleDropOnFolder(event, node);
+                }
+              }}
               onEnterFolder={controller.enterFolder}
               onOpenContextMenu={controller.openContextMenuForNode}
               onSearchQueryChange={controller.setSearchQuery}
@@ -132,12 +243,58 @@ export function AssetLibraryModal({
             currentFolder={controller.currentFolder}
             dropFolderId={controller.dropFolderId}
             onDragEnd={controller.clearDragState}
-            onDragOverContents={controller.handleDragOverContents}
-            onDragOverFolder={controller.handleDragOverFolder}
+            encounterRecords={
+              controller.activeSectionId === "encounters"
+                ? persistence.encounters
+                : []
+            }
+            onDeleteEncounter={(id) => {
+              void persistence.deleteEncounter(id).then((deletedActive) => {
+                if (deletedActive) onActiveEncounterDeleted?.();
+              });
+            }}
+            onDuplicateEncounter={(id) => void persistence.duplicateEncounter(id)}
+            onExportEncounter={(id, name) => {
+              void persistence.exportEncounter(id).then((envelope) =>
+                downloadExport(
+                  envelope,
+                  `${name.trim().replace(/[^a-z0-9_-]+/gi, "-") || "encounter"}.json`
+                )
+              );
+            }}
+            onLoadEncounter={(id) => {
+              if (onRequestLoadEncounter) {
+                onRequestLoadEncounter(id);
+              } else {
+                void persistence.loadEncounter(id).then(onClose);
+              }
+            }}
+            onRequestRenameEncounter={(id, name) =>
+              setRenameTarget({ kind: "encounter", id, name })
+            }
+            readOnly={persistence.readOnly}
+            onDragOverContents={(event) => {
+              if (!handleEncounterDragOver(event, controller.currentFolder.id)) {
+                controller.handleDragOverContents(event);
+              }
+            }}
+            onDragOverFolder={(event, node) => {
+              if (!handleEncounterDragOver(event, node.id)) {
+                controller.handleDragOverFolder(event, node);
+              }
+            }}
             onDragStart={(_event, node) => controller.setDraggedNodeId(node.id)}
             onDoubleClickNode={handleDoubleClick}
-            onDropOnContents={controller.handleDropOnContents}
-            onDropOnFolder={controller.handleDropOnFolder}
+            onDropOnContents={(event) => {
+              if (!handleEncounterDrop(event, controller.currentFolder.id)) {
+                controller.handleDropOnContents(event);
+              }
+            }}
+            onDropOnFolder={(event, node) => {
+              if (!handleEncounterDrop(event, node.id)) {
+                controller.handleDropOnFolder(event, node);
+              }
+            }}
             onEnterFolder={controller.enterFolder}
             onOpenContextMenu={controller.openContextMenuForNode}
             onSelectNode={controller.selectNode}
@@ -145,7 +302,43 @@ export function AssetLibraryModal({
             setDropFolderId={controller.setDropFolderId}
           />
         </div>
+        {mode === "save-destination" || mode === "import-destination" ? (
+          <footer className="flex items-center justify-between border-t border-canvas-line px-5 py-3">
+            <p className="text-sm text-canvas-muted">
+              {mode === "save-destination" ? "Save" : "Import"} to {controller.currentFolder.name}
+            </p>
+            <button
+              className="rounded-xl bg-canvas-ink px-4 py-2 text-sm font-semibold text-white"
+              onClick={() => {
+                if (mode === "import-destination") {
+                  onImportDestinationSelected?.(controller.currentFolder.id);
+                  onClose();
+                } else {
+                  void persistence.save(controller.currentFolder.id).then(() => {
+                    onClose();
+                    onSaveDestinationComplete?.();
+                  });
+                }
+              }}
+              type="button"
+            >
+              {mode === "save-destination" ? "Save here" : "Import here"}
+            </button>
+          </footer>
+        ) : null}
       </div>
+      <input
+        ref={encounterImportInputRef}
+        accept="application/json,.json"
+        aria-label="Import encounter JSON"
+        className="sr-only"
+        onChange={(event) => {
+          const file = event.target.files?.[0];
+          event.target.value = "";
+          if (file) onImportEncounterFile?.(file);
+        }}
+        type="file"
+      />
       <input
         ref={controller.fileInputRef}
         accept="image/*"
@@ -173,15 +366,25 @@ export function AssetLibraryModal({
           contextMenu={controller.contextMenu}
           contextMenuRef={controller.contextMenuRef}
           node={controller.contextNode}
-          onDelete={controller.handleDelete}
-          onRename={controller.handleRename}
+          onDelete={(node) => {
+            if (!preventEncounterOrphan(node)) controller.handleDelete(node);
+          }}
+          onRename={(node) => {
+            controller.setContextMenu(null);
+            setRenameTarget({ kind: "node", node });
+          }}
+          readOnly={persistence.readOnly}
         />
       ) : null}
-      {controller.pendingDeleteNode ? (
+      {pendingDeleteNode ? (
         <ConfirmFolderDeleteDialog
-          node={controller.pendingDeleteNode}
+          node={pendingDeleteNode}
           onCancel={() => controller.setPendingDeleteNodeId(null)}
-          onDelete={controller.confirmDeletePendingFolder}
+          onDelete={() => {
+            if (!preventEncounterOrphan(pendingDeleteNode)) {
+              controller.confirmDeletePendingFolder();
+            }
+          }}
         />
       ) : null}
       {controller.linkPickerOpen ? (
@@ -197,6 +400,22 @@ export function AssetLibraryModal({
           onClose={() => controller.setUrlDialogOpen(false)}
           onSubmit={controller.createUrlAsset}
           title="Link image URL"
+        />
+      ) : null}
+      {renameTarget ? (
+        <RenameModal
+          ariaLabel={`Rename ${renameTargetName}`}
+          initialName={renameTargetName}
+          inputLabel="New library item name"
+          onClose={() => setRenameTarget(null)}
+          onRename={(name) => {
+            if (renameTarget.kind === "encounter") {
+              void persistence.renameEncounter(renameTarget.id, name);
+            } else {
+              controller.renameLibraryNode(renameTarget.node, name);
+            }
+          }}
+          title="Rename library item"
         />
       ) : null}
     </div>

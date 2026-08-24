@@ -81,8 +81,18 @@ describe("AssetLibraryModal", () => {
     fireEvent.contextMenu(folderCard);
     expect(screen.getByRole("menuitem", { name: "Rename" })).toBeInTheDocument();
 
-    vi.spyOn(window, "prompt").mockReturnValueOnce("Battle Maps");
     await user.click(screen.getByRole("menuitem", { name: "Rename" }));
+    const renameInput = screen.getByRole("textbox", {
+      name: "New library item name"
+    });
+    await user.clear(renameInput);
+    await user.type(renameInput, "Battle Maps");
+    await user.click(
+      within(screen.getByRole("dialog", { name: "Rename Maps" })).getByRole(
+        "button",
+        { name: "Rename" }
+      )
+    );
 
     expect(screen.getAllByText("Battle Maps").length).toBeGreaterThan(0);
     await user.click(

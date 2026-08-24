@@ -9,6 +9,7 @@ import {
 import reducer, {
   clearEncounterHistory,
   commitEncounterChange,
+  loadEncounterState,
   redoEncounterChange,
   undoEncounterChange
 } from "@store/encounterSlice";
@@ -124,6 +125,28 @@ describe("encounter Redux history", () => {
 
     expect(reducer(initialState, undoEncounterChange())).toEqual(initialState);
     expect(reducer(initialState, redoEncounterChange())).toEqual(initialState);
+  });
+
+  it("loads a persisted encounter with fresh undo and redo history", () => {
+    const initialState = reducer(undefined, { type: "test/init" });
+    const loadedEncounter = {
+      ...initialState.present,
+      id: "persisted-encounter",
+      name: "Persisted Encounter"
+    };
+    const committedState = reducer(
+      initialState,
+      commitEncounterChange({
+        action: actionRecord(1),
+        nextEncounter: renamePresentEncounter(initialState, 1)
+      })
+    );
+
+    expect(reducer(committedState, loadEncounterState(loadedEncounter))).toEqual({
+      past: [],
+      present: loadedEncounter,
+      future: []
+    });
   });
 
   it("truncates redo history when committing after undo", () => {

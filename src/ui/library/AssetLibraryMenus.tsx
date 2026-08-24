@@ -1,4 +1,4 @@
-import { FileImage, Trash2, X } from "lucide-react";
+import { Copy, Download, FileImage, Pencil, Trash2, X } from "lucide-react";
 import type { RefObject } from "react";
 
 import type { LibraryNode } from "@library/types";
@@ -9,12 +9,90 @@ export type ContextMenuState = {
   y: number;
 } | null;
 
+export type EncounterContextMenuState = {
+  encounterId: string;
+  name: string;
+  x: number;
+  y: number;
+} | null;
+
+type EncounterContextMenuProps = {
+  contextMenu: NonNullable<EncounterContextMenuState>;
+  contextMenuRef: RefObject<HTMLDivElement>;
+  onDelete: (id: string, name: string) => void;
+  onDuplicate: (id: string) => void;
+  onExport: (id: string, name: string) => void;
+  onRename: (id: string, name: string) => void;
+  readOnly: boolean;
+};
+
+/** Actions for encounter records are separate from asset-node actions. */
+export function EncounterContextMenu({
+  contextMenu,
+  contextMenuRef,
+  onDelete,
+  onDuplicate,
+  onExport,
+  onRename,
+  readOnly
+}: EncounterContextMenuProps) {
+  return (
+    <div
+      ref={contextMenuRef}
+      className="fixed z-[60] w-40 rounded-2xl border border-canvas-line bg-white p-2 text-sm shadow-lg"
+      role="menu"
+      style={{ left: contextMenu.x, top: contextMenu.y }}
+    >
+      <button
+        className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left transition hover:bg-canvas disabled:cursor-not-allowed disabled:text-canvas-muted"
+        disabled={readOnly}
+        onClick={() => onRename(contextMenu.encounterId, contextMenu.name)}
+        role="menuitem"
+        type="button"
+      >
+        <Pencil aria-hidden="true" className="h-4 w-4" />
+        Rename
+      </button>
+      <button
+        className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left transition hover:bg-canvas disabled:cursor-not-allowed disabled:text-canvas-muted"
+        disabled={readOnly}
+        onClick={() => onDuplicate(contextMenu.encounterId)}
+        role="menuitem"
+        type="button"
+      >
+        <Copy aria-hidden="true" className="h-4 w-4" />
+        Duplicate
+      </button>
+      <button
+        className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left transition hover:bg-canvas"
+        onClick={() => onExport(contextMenu.encounterId, contextMenu.name)}
+        role="menuitem"
+        type="button"
+      >
+        <Download aria-hidden="true" className="h-4 w-4" />
+        Export
+      </button>
+      <button
+        className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:text-canvas-muted"
+        disabled={readOnly}
+        onClick={() => onDelete(contextMenu.encounterId, contextMenu.name)}
+        role="menuitem"
+        type="button"
+      >
+        <Trash2 aria-hidden="true" className="h-4 w-4" />
+        Delete
+      </button>
+    </div>
+  );
+}
+
 type AssetContextMenuProps = {
   contextMenu: NonNullable<ContextMenuState>;
   contextMenuRef: RefObject<HTMLDivElement>;
   node: LibraryNode;
   onDelete: (node: LibraryNode) => void;
   onRename: (node: LibraryNode) => void;
+  readOnly?: boolean;
 };
 
 export function AssetContextMenu({
@@ -22,7 +100,8 @@ export function AssetContextMenu({
   contextMenuRef,
   node,
   onDelete,
-  onRename
+  onRename,
+  readOnly = false
 }: AssetContextMenuProps) {
   return (
     <div
@@ -32,7 +111,8 @@ export function AssetContextMenu({
       style={{ left: contextMenu.x, top: contextMenu.y }}
     >
       <button
-        className="w-full rounded-xl px-3 py-2 text-left transition hover:bg-canvas"
+        className="w-full rounded-xl px-3 py-2 text-left transition hover:bg-canvas disabled:cursor-not-allowed disabled:text-canvas-muted"
+        disabled={readOnly}
         onClick={() => onRename(node)}
         role="menuitem"
         type="button"
@@ -40,7 +120,8 @@ export function AssetContextMenu({
         Rename
       </button>
       <button
-        className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-red-700 transition hover:bg-red-50"
+        className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:text-canvas-muted"
+        disabled={readOnly}
         onClick={() => onDelete(node)}
         role="menuitem"
         type="button"

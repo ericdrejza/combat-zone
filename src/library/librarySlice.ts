@@ -148,6 +148,9 @@ export const librarySlice = createSlice({
   name: "library",
   initialState: createInitialState(),
   reducers: {
+    loadLibraryState(_state, { payload }: PayloadAction<LibraryState>) {
+      return payload;
+    },
     createFolder: {
       reducer(state, { payload }: PayloadAction<CreateFolderPayload & { id: string }>) {
         const section = state.sections[payload.sectionId];
@@ -285,6 +288,7 @@ export const {
   createFolder,
   createLink,
   deleteNode,
+  loadLibraryState,
   moveNode,
   renameNode,
   resetLibraryState,

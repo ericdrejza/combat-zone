@@ -9,33 +9,6 @@ To reference completed items, see `ROADMAP_COMPLETE.md`.
 
 After completing a numbered section (## X.), move the completed section to the end of `ROADMAP_COMPLETE.md`
 
-## 13. Properties, Status, and Log Panels
-
-- [ ] Implement context-sensitive Properties Panel sections.
-  - Actor properties
-  - Zone properties
-  - Edge properties
-  - Engagement properties
-- [x] Implement Log Panel display for committed actions and blocked validation
-      results, with categories reserved for filtering.
-- [ ] Implement Top Left Status display for current tool and interaction state.
-- [ ] Ensure panel updates are driven by selection context.
-
-## 14. Local Persistence, Save/Load, and Export
-
-- [ ] Implement autosave to local browser storage.
-  - IndexedDB
-  - Trigger on every committed Redux history entry or a reasonable debounce.
-- [ ] Restore the latest autosaved state after browser refresh.
-- [ ] Implement manual Save and Load.
-  - Round-trip full encounter state.
-  - Include all entity types.
-- [ ] Implement JSON export/import.
-  - Include `schemaVersion` in every exported file.
-  - Support full workspace export.
-  - Support encounter-only export.
-- [ ] Add tests or manual verification for no-loss round trips.
-
 ## 15. MVP Acceptance Hardening
 
 - [x] Implement aspect-preserving background/canvas sizing commands with

@@ -73,6 +73,9 @@ const encounterSlice = createSlice({
       state.past = [];
       state.future = [];
     },
+    loadEncounterState(_state, { payload }: PayloadAction<EncounterState>) {
+      return createEncounterHistoryState(payload);
+    },
     resetEncounterState() {
       return initialState;
     }
@@ -82,6 +85,7 @@ const encounterSlice = createSlice({
 export const {
   clearEncounterHistory,
   commitEncounterChange,
+  loadEncounterState,
   redoEncounterChange,
   resetEncounterState,
   undoEncounterChange

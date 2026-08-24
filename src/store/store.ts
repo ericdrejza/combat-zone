@@ -5,6 +5,7 @@ import encounterReducer from "./encounterSlice";
 import encounterLogReducer from "./encounterLogSlice";
 import { encounterLogMiddleware } from "./encounterLogMiddleware";
 import libraryReducer from "@library/librarySlice";
+import { persistenceWriteGuardMiddleware } from "./persistenceWriteGuardMiddleware";
 
 export const store = configureStore({
   reducer: {
@@ -14,7 +15,10 @@ export const store = configureStore({
     library: libraryReducer
   },
   middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware().concat(encounterLogMiddleware)
+    getDefaultMiddleware().concat(
+      persistenceWriteGuardMiddleware,
+      encounterLogMiddleware
+    )
 });
 
 export type RootState = ReturnType<typeof store.getState>;

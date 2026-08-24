@@ -8,7 +8,6 @@ import { MVP_TOOLS } from "@interaction/tools/toolRegistry";
 import type { ToolId } from "@interaction/tools/toolRegistry";
 import { CanvasShell } from "./canvas/CanvasShell";
 import { CanvasViewportProvider } from "./canvas/CanvasViewportContext";
-import { AssetLibraryModal } from "./library/AssetLibraryModal";
 import type { DockPanelDefinition, DockSide, DropTarget } from "./panels/PanelsShell";
 import { LibraryPanel, LibraryPanelViewToggle } from "./panels/LibraryPanel";
 import { LogPanel, LogPanelHeaderActions } from "./panels/LogPanel";
@@ -43,6 +42,8 @@ import { CompactZonelessActorPanel } from "./panels/zoneless_actors/CompactZonel
 import { EncounterRenameDialog } from "./encounter/EncounterRenameDialog";
 import { TouchTooltipProvider } from "./toolbar/TouchTooltip";
 import { useVisualViewportRect } from "@hooks/useVisualViewportRect";
+import { SettingsButton } from "./settings/SettingsButton";
+import { useAppPersistenceUi } from "./persistence/useAppPersistenceUi";
 
 type SidebarCollapsedState = Record<DockSide, boolean>;
 
@@ -101,19 +102,28 @@ function AppContent() {
     });
   const [draggedPanelId, setDraggedPanelId] = useState<string | null>(null);
   const [dropTarget, setDropTarget] = useState<DropTarget | null>(null);
-  const [libraryModalOpen, setLibraryModalOpen] = useState(false);
   const [libraryFocusRequest, setLibraryFocusRequest] =
     useState<LibraryPanelFocusRequest | null>(null);
   const [libraryViewMode, setLibraryViewMode] =
     useState<LibraryViewMode>("list");
   const [renameModalOpen, setRenameModalOpen] = useState(false);
   const [encounterRenameOpen, setEncounterRenameOpen] = useState(false);
+  const persistenceUi = useAppPersistenceUi({
+    onBackgroundDoubleClick: applyBackgroundFromLibrary,
+    onTokenDoubleClick: focusTokenInLibrary
+  });
   const workspaceColumns = `${
     sidebarCollapsed.left ? "3.25rem" : "18rem"
   } minmax(0,1fr) ${sidebarCollapsed.right ? "3.25rem" : "18rem"}`;
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
+      if ((event.ctrlKey || event.metaKey) && !event.altKey && event.key.toLowerCase() === "s") {
+        event.preventDefault();
+        void persistenceUi.requestSave();
+        return;
+      }
+
       if (shouldIgnoreKeyboardShortcut(event.target)) {
         return;
       }
@@ -149,7 +159,7 @@ function AppContent() {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [dispatch, selection]);
+  }, [dispatch, selection, persistenceUi]);
 
   function mapLibraryPanel(
     layout: PanelLayout,
@@ -211,7 +221,6 @@ function AppContent() {
     );
     setLibraryAutoCollapsedBySelect(false);
     dispatch(setActiveTool("actor"));
-    setLibraryModalOpen(false);
   }
 
   function applyBackgroundFromLibrary(node: LibraryNode) {
@@ -222,7 +231,6 @@ function AppContent() {
       return;
     }
 
-    setLibraryModalOpen(false);
     const commitImage = (backgroundImage: Awaited<ReturnType<typeof readImageAssetDimensions>>) =>
       commitBackgroundImage({
         backgroundImage: { ...backgroundImage, libraryNodeId: node.id },
@@ -349,8 +357,12 @@ function AppContent() {
       <Toolbar
         encounterName={encounter.name}
         onActorToolSelected={expandAutoCollapsedLibraryPanel}
-        onOpenLibrary={() => setLibraryModalOpen(true)}
+        onOpenLibrary={persistenceUi.openLibrary}
+        onOpenSettings={persistenceUi.openSettings}
         onRenameEncounter={() => setEncounterRenameOpen(true)}
+        onSaveEncounter={() => void persistenceUi.requestSave()}
+        persistenceReadOnly={persistenceUi.readOnly}
+        saveStatus={persistenceUi.saveStatus}
       />
       <main
         className="relative grid min-h-0 flex-1 grid-cols-1 gap-2 overflow-hidden p-2 lg:grid-cols-[var(--workspace-columns)] lg:gap-4 lg:p-4"
@@ -363,6 +375,7 @@ function AppContent() {
         {!compactLayout ? (
         <SidebarDock
           collapsed={sidebarCollapsed.left}
+          footer={<SettingsButton onClick={persistenceUi.openSettings} />}
           onToggle={() =>
             setSidebarCollapsed((current) => ({
               ...current,
@@ -423,13 +436,7 @@ function AppContent() {
         </SidebarDock>
         ) : null}
       </main>
-      {libraryModalOpen ? (
-        <AssetLibraryModal
-          onBackgroundDoubleClick={applyBackgroundFromLibrary}
-          onClose={() => setLibraryModalOpen(false)}
-          onTokenDoubleClick={focusTokenInLibrary}
-        />
-      ) : null}
+      {persistenceUi.dialogs}
       {renameModalOpen ? (
         <ActorRenameModal onClose={() => setRenameModalOpen(false)} />
       ) : null}

@@ -12,10 +12,11 @@ type EncounterTitleProps = {
   compact?: boolean;
   name: string;
   onRename?: () => void;
+  readOnly?: boolean;
 };
 
 /** Provides an inline, history-tracked rename without letting the toolbar cover the title. */
-export function EncounterTitle({ compact = false, name, onRename }: EncounterTitleProps) {
+export function EncounterTitle({ compact = false, name, onRename, readOnly = false }: EncounterTitleProps) {
   const dispatch = useDispatch();
   const encounter = useSelector((state: RootState) => state.encounter.present);
   const [editing, setEditing] = useState(false);
@@ -64,6 +65,7 @@ export function EncounterTitle({ compact = false, name, onRename }: EncounterTit
       <button
         aria-label={`Rename encounter ${name}`}
         className="flex h-11 min-w-11 shrink-0 items-center justify-center rounded-full border border-canvas-line bg-white px-2 text-canvas-ink shadow-sm transition hover:bg-canvas"
+        disabled={readOnly}
         onClick={onRename}
         title="Rename encounter"
         type="button"
@@ -101,6 +103,7 @@ export function EncounterTitle({ compact = false, name, onRename }: EncounterTit
     <button
       aria-label={`Edit encounter name ${name}`}
       className="inline-flex max-w-full min-w-0 items-center rounded-lg px-1 py-1 text-left font-display text-xl font-semibold tracking-tight hover:bg-white/60 lg:text-2xl"
+      disabled={readOnly}
       onClick={startEditing}
       title="Edit encounter name"
       type="button"
