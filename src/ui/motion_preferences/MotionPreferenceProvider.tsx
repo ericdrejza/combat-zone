@@ -8,6 +8,7 @@ import {
 
 export const MOTION_OVERRIDE_STORAGE_KEY =
   "combat-zone.animation-effects-enabled";
+export const LOCAL_PREFERENCES_RESET_EVENT = "combat-zone:preferences-reset";
 
 type MotionPreference = {
   animationsDisabled: boolean;
@@ -69,6 +70,13 @@ export function MotionPreferenceProvider({
   const [animationsEnabledOverride, setAnimationsEnabledOverride] = useState(
     getStoredAnimationOverride
   );
+
+  useEffect(() => {
+    const resetPreference = () => setAnimationsEnabledOverride(false);
+    globalThis.addEventListener(LOCAL_PREFERENCES_RESET_EVENT, resetPreference);
+    return () =>
+      globalThis.removeEventListener(LOCAL_PREFERENCES_RESET_EVENT, resetPreference);
+  }, []);
 
   function enableAnimations() {
     setAnimationsEnabledOverride(true);

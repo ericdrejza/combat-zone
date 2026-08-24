@@ -234,12 +234,9 @@ export function useAssetLibraryModalController() {
     setAddMenuOpen(false);
   }
 
-  function handleRename(node: LibraryNode) {
-    const name = window.prompt("New name", node.name);
-    if (name) {
-      dispatch(renameNode({ name, nodeId: node.id, sectionId: activeSectionId }));
-      setContextMenu(null);
-    }
+  function renameLibraryNode(node: LibraryNode, name: string) {
+    dispatch(renameNode({ name, nodeId: node.id, sectionId: activeSectionId }));
+    setContextMenu(null);
   }
 
   function handleDelete(node: LibraryNode) {
@@ -302,7 +299,7 @@ export function useAssetLibraryModalController() {
     handleDropOnFolder,
     handleFileChange,
     handleFolderChange,
-    handleRename,
+    renameLibraryNode,
     openContextMenuForNode
   };
 }

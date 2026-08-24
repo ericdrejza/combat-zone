@@ -1,11 +1,17 @@
-import { FileImage, Folder, Link } from "lucide-react";
+import { FileImage, FileText, Folder, Link } from "lucide-react";
 import { useTime, useTransform } from "motion/react";
+import { useEffect, useRef, useState } from "react";
 import type { DragEvent } from "react";
 
 import type { LibraryNode, LibrarySection } from "@library/types";
 import { LIBRARY_NODE_DRAG_TYPE } from "./libraryDrag";
 import { getAlphabetizedChildren } from "./libraryUi";
 import { AssetImagePreview } from "./AssetImagePreview";
+import type { EncounterRecord } from "@core/persistence";
+import {
+  EncounterContextMenu,
+  type EncounterContextMenuState
+} from "./AssetLibraryMenus";
 
 type AssetLibraryContentsProps = {
   activeSection: LibrarySection;
@@ -36,6 +42,13 @@ type AssetLibraryContentsProps = {
   ) => void;
   onSelectNode: (nodeId: string) => void;
   setDropFolderId: (folderId: string | null) => void;
+  encounterRecords?: EncounterRecord[];
+  onDeleteEncounter?: (id: string) => void;
+  onDuplicateEncounter?: (id: string) => void;
+  onExportEncounter?: (id: string, name: string) => void;
+  onLoadEncounter?: (id: string) => void;
+  onRequestRenameEncounter?: (id: string, name: string) => void;
+  readOnly?: boolean;
 };
 
 export function AssetLibraryContents({
@@ -53,12 +66,35 @@ export function AssetLibraryContents({
   onEnterFolder,
   onOpenContextMenu,
   onSelectNode,
-  setDropFolderId
+  setDropFolderId,
+  encounterRecords = [],
+  onDeleteEncounter,
+  onDuplicateEncounter,
+  onExportEncounter,
+  onLoadEncounter,
+  onRequestRenameEncounter,
+  readOnly = false
 }: AssetLibraryContentsProps) {
   const time = useTime();
+  const [encounterContextMenu, setEncounterContextMenu] =
+    useState<EncounterContextMenuState>(null);
+  const encounterContextMenuRef = useRef<HTMLDivElement>(null);
   const loadingRotation = useTransform(time, (milliseconds) =>
     `rotate(${(milliseconds / 1000) * 360}deg)`
   );
+
+  useEffect(() => {
+    if (!encounterContextMenu) return;
+
+    function handlePointerDown(event: PointerEvent) {
+      if (!encounterContextMenuRef.current?.contains(event.target as Node)) {
+        setEncounterContextMenu(null);
+      }
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [encounterContextMenu]);
 
   return (
     <section
@@ -91,7 +127,7 @@ export function AssetLibraryContents({
                     ? "border-canvas-ink ring-2 ring-canvas-ink/20"
                     : "border-canvas-line"
               }`}
-              draggable
+              draggable={!readOnly}
               onClick={() => {
                 if (node.type === "folder") {
                   onEnterFolder(node.id);
@@ -142,7 +178,82 @@ export function AssetLibraryContents({
             </button>
           );
         })}
+        {encounterRecords
+          .filter(
+            (record) =>
+              record.folderId === currentFolder.id ||
+              (record.folderId === null && currentFolder.id === activeSection.rootId)
+          )
+          .sort((left, right) => left.state.name.localeCompare(right.state.name))
+          .map((record) => (
+            <div
+              key={record.id}
+              className="rounded-2xl border border-canvas-line bg-white p-2 transition hover:bg-canvas"
+              draggable={!readOnly}
+              onContextMenu={(event) => {
+                event.preventDefault();
+                setEncounterContextMenu({
+                  encounterId: record.id,
+                  name: record.state.name,
+                  x: event.clientX,
+                  y: event.clientY
+                });
+              }}
+              onDragStart={(event) => {
+                event.dataTransfer.effectAllowed = "move";
+                event.dataTransfer.setData(
+                  "application/x-combat-zone-encounter",
+                  record.id
+                );
+              }}
+            >
+              <button
+                aria-label={record.state.name}
+                className="w-full text-left"
+                onDoubleClick={() => onLoadEncounter?.(record.id)}
+                type="button"
+              >
+                <div className="flex aspect-[4/3] items-center justify-center overflow-hidden rounded-xl bg-canvas">
+                  {record.state.backgroundImage ? (
+                    <img
+                      alt=""
+                      className="h-full w-full object-cover"
+                      src={record.state.backgroundImage.dataUrl}
+                    />
+                  ) : (
+                    <FileText aria-hidden="true" className="h-10 w-10 text-canvas-muted" />
+                  )}
+                </div>
+                <p className="mt-2 truncate text-xs font-medium">{record.state.name}</p>
+              </button>
+            </div>
+          ))}
       </div>
+      {encounterContextMenu ? (
+        <EncounterContextMenu
+          contextMenu={encounterContextMenu}
+          contextMenuRef={encounterContextMenuRef}
+          onDelete={(id, name) => {
+            setEncounterContextMenu(null);
+            if (window.confirm(`Delete "${name}"?`)) {
+              onDeleteEncounter?.(id);
+            }
+          }}
+          onDuplicate={(id) => {
+            setEncounterContextMenu(null);
+            onDuplicateEncounter?.(id);
+          }}
+          onExport={(id, name) => {
+            setEncounterContextMenu(null);
+            onExportEncounter?.(id, name);
+          }}
+          onRename={(id, name) => {
+            setEncounterContextMenu(null);
+            onRequestRenameEncounter?.(id, name);
+          }}
+          readOnly={readOnly}
+        />
+      ) : null}
     </section>
   );
 }

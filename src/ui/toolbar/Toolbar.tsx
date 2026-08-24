@@ -5,6 +5,7 @@ import { useCompactLayout } from "@hooks/useCompactLayout";
 import { useMobileControls } from "@hooks/useMobileControls";
 import type { RootState } from "@store/store";
 import { EncounterTitle } from "@ui/encounter/EncounterTitle";
+import { SettingsButton } from "@ui/settings/SettingsButton";
 import { ActorToolButton } from "./actor/ActorToolButton";
 import { BackgroundToolButton } from "./background/BackgroundToolButton";
 import { LibraryToolbarButton } from "./LibraryToolbarButton";
@@ -16,19 +17,31 @@ import { EngageActionButton } from './EngageActionButton';
 import { DisengageActionButton } from './DisengageActionButton';
 import { EdgeToolButton } from './edge/EdgeToolButton';
 import { CanvasZoomControls } from "./CanvasZoomControls";
+import {
+  EncounterTitleControls,
+  type SaveStatus
+} from "./EncounterTitleControls";
 
 type ToolbarProps = {
   encounterName: string;
   onActorToolSelected: () => void;
   onOpenLibrary: () => void;
+  onOpenSettings: () => void;
   onRenameEncounter: () => void;
+  onSaveEncounter?: () => void;
+  persistenceReadOnly?: boolean;
+  saveStatus?: SaveStatus;
 };
 
 export function Toolbar({
   encounterName,
   onActorToolSelected,
   onOpenLibrary,
-  onRenameEncounter
+  onOpenSettings,
+  onRenameEncounter,
+  onSaveEncounter = () => undefined,
+  persistenceReadOnly = false,
+  saveStatus = "idle"
 }: ToolbarProps) {
   const compactLayout = useCompactLayout();
   const showMobileControls = useMobileControls(compactLayout);
@@ -126,9 +139,16 @@ export function Toolbar({
             <EncounterTitle
               name={encounterName}
               onRename={onRenameEncounter}
+              readOnly={persistenceReadOnly}
             />
           </h1>
         ) : null}
+        <EncounterTitleControls
+          onSave={onSaveEncounter}
+          readOnly={persistenceReadOnly}
+          saveStatus={saveStatus}
+          showTitle={false}
+        />
         <nav
           aria-label="Tools"
           className="scrollbar-hidden flex min-w-0 flex-1 flex-nowrap items-center gap-2 overflow-x-auto"
@@ -148,6 +168,7 @@ export function Toolbar({
               compact
               name={encounterName}
               onRename={onRenameEncounter}
+              readOnly={persistenceReadOnly}
             />
           ) : null}
           <LibraryToolbarButton onOpenLibrary={onOpenLibrary} />
@@ -168,6 +189,7 @@ export function Toolbar({
           ) : null}
         </nav>
         <MotionPreferenceWarning />
+        {compactLayout ? <SettingsButton onClick={onOpenSettings} /> : null}
         </div>
         {!compactLayout ? (
           <div className="ml-auto shrink-0">
