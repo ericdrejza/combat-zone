@@ -180,7 +180,7 @@ export function LibraryPanel({
 
     const commitImage = (backgroundImage: Awaited<ReturnType<typeof readImageAssetDimensions>>) =>
       commitBackgroundImage({
-        backgroundImage,
+        backgroundImage: { ...backgroundImage, libraryNodeId: node.id },
         dispatch,
         encounter,
         viewportSize: getViewportSize(),

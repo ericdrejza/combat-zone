@@ -313,3 +313,21 @@ export function resolveLibraryAsset(
 
   return null;
 }
+
+/** Derives a breadcrumb from normalized parent relationships. */
+export function getLibraryNodePath(
+  section: LibrarySection,
+  nodeId: string
+): string | null {
+  const names: string[] = [];
+  const visited = new Set<string>();
+  let node: LibraryNode | undefined = section.nodesById[nodeId];
+
+  while (node && !visited.has(node.id)) {
+    visited.add(node.id);
+    names.unshift(node.name);
+    node = node.parentId ? section.nodesById[node.parentId] : undefined;
+  }
+
+  return names.length > 0 ? names.join("/") : null;
+}

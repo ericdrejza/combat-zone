@@ -1,9 +1,11 @@
 import { FileImage, Folder, Link } from "lucide-react";
+import { useTime, useTransform } from "motion/react";
 import type { DragEvent } from "react";
 
 import type { LibraryNode, LibrarySection } from "@library/types";
 import { LIBRARY_NODE_DRAG_TYPE } from "./libraryDrag";
 import { getAlphabetizedChildren } from "./libraryUi";
+import { AssetImagePreview } from "./AssetImagePreview";
 
 type AssetLibraryContentsProps = {
   activeSection: LibrarySection;
@@ -53,6 +55,11 @@ export function AssetLibraryContents({
   onSelectNode,
   setDropFolderId
 }: AssetLibraryContentsProps) {
+  const time = useTime();
+  const loadingRotation = useTransform(time, (milliseconds) =>
+    `rotate(${(milliseconds / 1000) * 360}deg)`
+  );
+
   return (
     <section
       aria-label="Asset library contents"
@@ -75,6 +82,7 @@ export function AssetLibraryContents({
           return (
             <button
               key={node.id}
+              aria-label={node.name}
               aria-pressed={selected}
               className={`rounded-2xl border bg-white p-2 text-left transition hover:bg-canvas ${
                 dropFolderId === node.id
@@ -119,11 +127,15 @@ export function AssetLibraryContents({
                 ) : node.type === "link" ? (
                   <Link aria-hidden="true" className="h-8 w-8 text-canvas-muted" />
                 ) : (
-                  <img
-                    alt=""
-                    className="h-full w-full object-cover"
-                    src={node.asset?.dataUrl}
-                  />
+                  node.asset ? (
+                    <AssetImagePreview
+                      name={node.name}
+                      rotation={loadingRotation}
+                      src={node.asset.dataUrl}
+                    />
+                  ) : (
+                    <FileImage aria-hidden="true" className="h-8 w-8 text-canvas-muted" />
+                  )
                 )}
               </div>
               <p className="mt-2 truncate text-xs font-medium">{node.name}</p>

@@ -7,9 +7,11 @@ import {
   createLink,
   deleteNode,
   moveNode,
-  renameNode
+  renameNode,
+  uploadImage
 } from "@library/librarySlice";
 import type { LibraryNode } from "@library/types";
+import { createWebImageAsset } from "@library/webImageAsset";
 import { createImageFilesInFolder } from "./assetLibraryUpload";
 import {
   hasExternalFiles,
@@ -277,10 +279,21 @@ export function useAssetLibraryModalController() {
     setLinkPickerOpen(false);
   }
 
+  function createUrlAsset(url: string) {
+    dispatch(uploadImage({
+      asset: createWebImageAsset(url),
+      parentId: getAddParentId(),
+      sectionId: activeSectionId
+    }));
+    setAddMenuOpen(false);
+    state.setUrlDialogOpen(false);
+  }
+
   return {
     ...state,
     createFolderInSelection,
     createLinkToAsset,
+    createUrlAsset,
     confirmDeletePendingFolder,
     handleDelete,
     handleDragOverContents,

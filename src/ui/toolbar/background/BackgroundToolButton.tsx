@@ -2,6 +2,7 @@ import {
   Expand,
   Image,
   ImagePlus,
+  Link2,
   Minimize2,
   MoveHorizontal,
   MoveVertical,
@@ -9,6 +10,7 @@ import {
   Shrink,
   Trash2
 } from "lucide-react";
+import { useState } from "react";
 import { useDispatch } from "react-redux";
 
 import type { EncounterState } from "@core/encounter/types";
@@ -17,6 +19,7 @@ import type {
   ToolDefinition,
   ToolId
 } from "@interaction/tools/toolRegistry";
+import { WebImageUrlDialog } from "@ui/library/WebImageUrlDialog";
 import {
   ToolbarOptionButton,
   ToolbarOptionGroup,
@@ -36,9 +39,11 @@ export function BackgroundToolButton({
   tool
 }: BackgroundToolButtonProps) {
   const dispatch = useDispatch();
+  const [webImageDialogOpen, setWebImageDialogOpen] = useState(false);
   const backgroundImage = encounter.backgroundImage;
   const {
     activeFitMode,
+    addBackgroundFromUrl,
     deleteBackground,
     fileInputRef,
     handleBackgroundFileChange,
@@ -82,6 +87,16 @@ export function BackgroundToolButton({
               >
                 <ImagePlus aria-hidden="true" className="h-4 w-4" />
               </ToolbarOptionButton>
+              <ToolbarOptionButton
+                aria-label="Add background from web"
+                className="w-8 min-w-0 px-0"
+                onClick={() => setWebImageDialogOpen(true)}
+                role="menuitem"
+                title="Add from web"
+                type="button"
+              >
+                <Link2 aria-hidden="true" className="h-4 w-4" />
+              </ToolbarOptionButton>
             </ToolbarOptionGroup>
           ) : (
             <ToolbarOptionGroup>
@@ -94,6 +109,16 @@ export function BackgroundToolButton({
                 type="button"
               >
                 <RefreshCw aria-hidden="true" className="h-4 w-4" />
+              </ToolbarOptionButton>
+              <ToolbarOptionButton
+                aria-label="Replace background from web"
+                className="w-8 min-w-0 px-0"
+                onClick={() => setWebImageDialogOpen(true)}
+                role="menuitem"
+                title="Replace from web"
+                type="button"
+              >
+                <Link2 aria-hidden="true" className="h-4 w-4" />
               </ToolbarOptionButton>
               <ToolbarOptionButton
                 aria-label="Delete"
@@ -175,6 +200,21 @@ export function BackgroundToolButton({
         }}
         type="file"
       />
+      {webImageDialogOpen ? (
+        <WebImageUrlDialog
+          description="The encounter will keep a reference to this URL; the image file will not be copied into the encounter."
+          onClose={() => setWebImageDialogOpen(false)}
+          onSubmit={async (url) => {
+            await addBackgroundFromUrl(url);
+            setWebImageDialogOpen(false);
+          }}
+          title={
+            backgroundImage
+              ? "Replace background from web"
+              : "Add background from web"
+          }
+        />
+      ) : null}
     </ToolbarOptionRow>
   );
 }
