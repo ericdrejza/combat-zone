@@ -1,5 +1,6 @@
 import { act, fireEvent, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { vi } from "vitest";
 
 import { createEncounterActionRecord } from "@core/history/createEncounterActionRecord";
 import { commitEncounterChange } from "@store/encounterSlice";
@@ -7,11 +8,18 @@ import { store } from "@store/store";
 import {
   getCenteredCanvasResizeScroll,
   getCenteredZoomScroll,
+  getPointerDistance,
+  getPointerMidpoint,
+  getZoomScrollAtPoint,
   getZoomToFit
 } from "@ui/canvas/canvasViewportMath";
 import { renderApp } from "@tests/ui/renderApp";
 
 describe("canvas viewport navigation", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it("calculates fit zoom and center-preserving scroll positions", () => {
     expect(
       getZoomToFit(
@@ -41,6 +49,44 @@ describe("canvas viewport navigation", () => {
     ).toEqual({ left: 800, top: 650 });
   });
 
+  it("calculates midpoint-preserving pinch zoom and pointer geometry", () => {
+    const first = { x: 100, y: 120 };
+    const second = { x: 300, y: 280 };
+    expect(getPointerDistance(first, second)).toBeCloseTo(256.12495);
+    expect(getPointerMidpoint(first, second)).toEqual({ x: 200, y: 200 });
+    expect(
+      getZoomScrollAtPoint({
+        canvasPoint: { x: 300, y: 250 },
+        canvasSize: { height: 1000, width: 1000 },
+        currentZoom: 1,
+        nextZoom: 2,
+        scrollLeft: 200,
+        scrollTop: 100,
+        viewportPoint: { x: 150, y: 200 },
+        viewportSize: { height: 500, width: 500 }
+      })
+    ).toEqual({ left: 450, top: 300 });
+  });
+
+  it("does not emulate a context action when a touch pointer is held", () => {
+    vi.useFakeTimers();
+    renderApp();
+    const viewport = screen.getByLabelText("Canvas viewport");
+    const onContextMenu = vi.fn();
+    viewport.addEventListener("contextmenu", onContextMenu);
+
+    fireEvent.pointerDown(viewport, {
+      button: 0,
+      clientX: 120,
+      clientY: 120,
+      pointerId: 1,
+      pointerType: "touch"
+    });
+    act(() => vi.advanceTimersByTime(600));
+
+    expect(onContextMenu).not.toHaveBeenCalled();
+  });
+
   it("orders controls, changes perception only, and toggles panning", async () => {
     const user = userEvent.setup();
     renderApp();
@@ -48,6 +94,7 @@ describe("canvas viewport navigation", () => {
     const buttons = within(navigation).getAllByRole("button");
 
     expect(buttons.map((button) => button.getAttribute("aria-label"))).toEqual([
+      "Collapse canvas navigation",
       "Zoom to fit",
       "Zoom out",
       "Zoom in",
@@ -70,9 +117,15 @@ describe("canvas viewport navigation", () => {
     expect(panButton).toHaveAttribute("aria-pressed", "true");
     await user.click(panButton);
     expect(panButton).toHaveAttribute("aria-pressed", "false");
+
+    await user.click(screen.getByRole("button", { name: "Collapse canvas navigation" }));
+    const expandButton = screen.getByRole("button", { name: "Expand canvas navigation" });
+    expect(expandButton.querySelector("svg.lucide-search")).not.toBeNull();
+    await user.click(expandButton);
+    expect(screen.getByRole("button", { name: "Collapse canvas navigation" })).toBeInTheDocument();
   });
 
-  it("reads the currently visible workspace when zooming to fit", async () => {
+  it("re-reads the current workspace size every time zoom to fit runs", async () => {
     const user = userEvent.setup();
     renderApp();
     const viewport = screen.getByLabelText("Canvas viewport");
@@ -82,7 +135,8 @@ describe("canvas viewport navigation", () => {
       clientHeight: { configurable: true, get: () => height },
       clientWidth: { configurable: true, get: () => width }
     });
-    fireEvent(window, new Event("resize"));
+    await user.click(screen.getByRole("button", { name: "Zoom to fit" }));
+    expect(viewport).toHaveAttribute("data-canvas-zoom", "0.625");
 
     height = 800;
     width = 1000;

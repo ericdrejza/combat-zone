@@ -1,8 +1,10 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { motion } from "motion/react";
 
 import type { LayoutPoint } from "@core/layout/types";
 import { useAltKey } from "@hooks/useAltKey";
+import { useCompactLayout } from "@hooks/useCompactLayout";
 import type { AppDispatch, RootState } from "@store/store";
 import { ZonelessActorPanel } from "../panels/zoneless_actors/ZonelessActorPanel";
 import { closeZoneShapeMenu } from "../toolbar/events";
@@ -33,6 +35,8 @@ import { getCanvasStatus } from "./canvasStatus";
 import { useActorReturnCompletion } from "./useActorReturnCompletion";
 import { useZoneActorTranslation } from "./useZoneActorTranslation";
 import { useActorRenderPlacements } from "./actors/useActorRenderPlacements";
+import { useCompactCanvasTransfer } from "./useCompactCanvasTransfer";
+import { TOUCH_NAVIGATION_START_EVENT } from "./useCanvasTouchGestures";
 
 export function CanvasShell() {
   const dispatch = useDispatch<AppDispatch>();
@@ -56,6 +60,10 @@ export function CanvasShell() {
     (state: RootState) => state.interaction.lastZoneOpacity
   );
   const selection = useSelector((state: RootState) => state.interaction.selection);
+  const touchMultiSelect = useSelector(
+    (state: RootState) => state.interaction.touchMultiSelect
+  );
+  const compactLayout = useCompactLayout();
   const [actorDrag, setActorDrag] = useState<ActorDragState | null>(null);
   const [edgeDrag, setEdgeDrag] = useState<EdgeDragState | null>(null);
   const [hoveredActorId, setHoveredActorId] = useState<string | null>(null);
@@ -72,6 +80,14 @@ export function CanvasShell() {
   const suppressNextCanvasClickPointRef = useRef<LayoutPoint | null>(null);
   const suppressNextEntityClickRef = useRef<string | null>(null);
   const altKeyDown = useAltKey();
+  const compactTransferPreview = useCompactCanvasTransfer({
+    activeToolId,
+    actorTool,
+    canvasRef,
+    dispatch,
+    encounter,
+    library
+  });
   const backgroundImage = encounter.backgroundImage;
   const { placements: actorRenderPlacements, refreshPlacements } =
     useActorRenderPlacements(encounter);
@@ -95,6 +111,28 @@ export function CanvasShell() {
     zoneDraftPoints,
     encounter.canvasSize
   );
+
+  useEffect(() => {
+    const cancelEditingForTouchNavigation = () => {
+      setActorDrag(null);
+      setBoxSelection(null);
+      setEdgeDrag(null);
+      setShapeDraft(null);
+      setVertexDrag(null);
+      setZoneDrag(null);
+      setZoneDraftPoints([]);
+      suppressNextCanvasClickUnconditionallyRef.current = true;
+    };
+    window.addEventListener(
+      TOUCH_NAVIGATION_START_EVENT,
+      cancelEditingForTouchNavigation
+    );
+    return () =>
+      window.removeEventListener(
+        TOUCH_NAVIGATION_START_EVENT,
+        cancelEditingForTouchNavigation
+      );
+  }, []);
 
   useCanvasKeyboard({
     activeToolId,
@@ -163,7 +201,8 @@ export function CanvasShell() {
     zoneDraftPoints,
     zoneDrag,
     zonePaintBrush,
-    zoneShapeMode
+    zoneShapeMode,
+    touchMultiSelect
   });
 
   const {
@@ -224,9 +263,12 @@ export function CanvasShell() {
         getDisplayedPolygon={getDisplayedPolygon}
         onActorDrag={handleActorDrag}
         onActorDragEnd={handleActorDragEnd}
-        onActorDragStart={(...args) => {
+        onActorDragStart={(actorId, point, event) => {
           resetActorReturnCompletion();
-          handleActorDragStart(...args);
+          handleActorDragStart(actorId, point, {
+            ...event,
+            touchMultiSelect
+          });
         }}
         onActorIncomingPointCommitted={refreshPlacements}
         onActorReturnComplete={handleActorReturnComplete}
@@ -279,15 +321,30 @@ export function CanvasShell() {
         zoneStatuses={canvasStatus.zoneStatuses}
         zoneShapeMode={zoneShapeMode}
       />
-      <ZonelessActorPanel
-        activeToolId={activeToolId}
-        actors={encounter.actors}
-        canvasBackgroundLuminance={backgroundLuminance.canvas}
-        isActorDragActive={Boolean(actorDrag?.hasMoved)}
-        onActorCreationDragOver={handleActorCreationDragOverZoneless}
-        onActorCreationDrop={handleActorCreationDropToZoneless}
-        selection={selection}
-      />
+      {!compactLayout ? (
+        <ZonelessActorPanel
+          activeToolId={activeToolId}
+          actors={encounter.actors}
+          canvasBackgroundLuminance={backgroundLuminance.canvas}
+          isActorDragActive={Boolean(actorDrag?.hasMoved)}
+          onActorCreationDragOver={handleActorCreationDragOverZoneless}
+          onActorCreationDrop={handleActorCreationDropToZoneless}
+          selection={selection}
+        />
+      ) : null}
+      {compactTransferPreview ? (
+        <motion.div
+          animate={{
+            x: compactTransferPreview.clientX + 12,
+            y: compactTransferPreview.clientY + 12
+          }}
+          className="pointer-events-none fixed left-0 top-0 z-[90] max-w-40 truncate rounded-full border border-canvas-line bg-canvas-panel px-3 py-2 text-sm font-medium shadow-lg"
+          initial={false}
+          role="status"
+        >
+          {compactTransferPreview.label}
+        </motion.div>
+      ) : null}
     </section>
   );
 }

@@ -315,3 +315,17 @@
       changes only the round, and adding participants assigns the first current.
 - [x] Add Vitest coverage for add, edit, reorder, advance turn, removal,
       validation modes, unrelated undo/redo stability, undo, and redo.
+
+## 16. Responsive Mobile and Touch Workspace
+
+- [x] Implement the compact icon toolbar, active subtool bar, responsive Zoom,
+      and always-visible Encounter naming.
+- [x] Replace compact docked sidebars with the hold/drag panel launcher and
+      right drawer, including the Zoneless panel presentation.
+- [x] Implement Pointer Event editing, two-touch pan/pinch, touch
+      multi-selection without hold-to-right-click emulation, and continuing
+      drawer-to-canvas transfers.
+- [x] Harden panels, dialogs, safe-area layout, and the Asset Library from
+      320px through desktop widths.
+- [x] Add responsive, accessibility, touch gesture, history, and regression
+      coverage and verify the complete agent test suite.

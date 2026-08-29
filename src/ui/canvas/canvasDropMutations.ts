@@ -1,5 +1,3 @@
-import path from 'path';
-
 import { ZONELESS_ACTOR_ZONE_ID } from '@core/encounter/types';
 import { createEncounterActionRecord } from '@core/history/createEncounterActionRecord';
 import { prepareValidatedEncounterChangeForRuntime } from '@core/validation/validatedEncounterChange';
@@ -15,6 +13,7 @@ import type { LayoutPoint } from '@core/layout/types';
 import { setOptimisticActorPlacement } from './actors/actorPlacementOptimisticState';
 import type { CanvasSize } from '@core/layout/polygonCanvasBounds';
 import { commitBackgroundImage } from '../toolbar/background/backgroundCanvasActions';
+import { getFileNameWithoutExtension } from '@library/fileName';
 
 type CanvasDropContext = {
   actorTool: RootState['interaction']['actorTool'];
@@ -131,7 +130,7 @@ export async function commitActorFromImage(
       id: actorId,
       image,
       layoutGroup: context.actorTool.layoutGroup,
-      name: path.parse(image.name).name,
+      name: getFileNameWithoutExtension(image.name),
       shape: context.actorTool.shape,
       size: context.actorTool.size
     },

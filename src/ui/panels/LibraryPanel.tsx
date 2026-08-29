@@ -25,6 +25,7 @@ import { getFoldersFirstChildren } from "../library/libraryUi";
 import { LibraryPanelNode } from "./LibraryPanelNode";
 import { commitBackgroundImage } from "@ui/toolbar/background/backgroundCanvasActions";
 import { useCanvasViewport } from "@ui/canvas/CanvasViewportContext";
+import { armCompactCanvasTransfer } from "@ui/canvas/compactCanvasTransfer";
 
 function getPanelSectionId(activeToolId: ToolId): LibrarySectionId | null {
   if (activeToolId === "actor") {
@@ -323,6 +324,14 @@ export function LibraryPanel({
               onDragEnd={finishLibraryDrag}
               onDragStart={(event) => startLibraryDrag(event, node)}
               onNavigate={() => navigateTo(node.id)}
+              onPointerDown={(event) => {
+                if (activeSectionId === "tokens" && node.type !== "folder") {
+                  armCompactCanvasTransfer(event.nativeEvent, {
+                    kind: "library-node",
+                    nodeId: node.id
+                  });
+                }
+              }}
               viewMode={viewMode}
             />
           );

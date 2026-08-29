@@ -1,10 +1,10 @@
-import path from 'path';
 import type { Dispatch, UnknownAction } from '@reduxjs/toolkit';
 
 import { createFolder, uploadImage } from '@library/librarySlice';
 import type { LibrarySectionId } from '@library/types';
 import { readImageFile } from '../toolbar/background/readImageFile';
 import type { DroppedImageFile } from './libraryFileDrop';
+import { getFileNameWithoutExtension } from '@library/fileName';
 
 type CreateImageFilesOptions = {
   dispatch: Dispatch<UnknownAction>;
@@ -58,7 +58,7 @@ export async function createImageFilesInFolder({
 
     dispatch(
       uploadImage({
-        asset: { ...asset, name: path.parse(asset.name).name },
+        asset: { ...asset, name: getFileNameWithoutExtension(asset.name) },
         parentId,
         sectionId
       })

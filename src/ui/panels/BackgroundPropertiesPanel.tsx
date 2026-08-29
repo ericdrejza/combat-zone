@@ -1,9 +1,9 @@
-import path from "path";
 import { useSelector } from "react-redux";
 
 import { getLibraryNodePath } from "@library/librarySlice";
 import { isWebImageSource } from "@library/webImageAsset";
 import type { RootState } from "@store/store";
+import { getFileNameWithoutExtension } from "@library/fileName";
 
 type ReadOnlyBackgroundFieldProps = {
   label: string;
@@ -54,7 +54,7 @@ export function BackgroundPropertiesPanel() {
     <div className="space-y-4 text-sm">
       <ReadOnlyBackgroundField
         label="Name"
-        value={path.parse(backgroundImage.name).name}
+        value={getFileNameWithoutExtension(backgroundImage.name)}
       />
       {libraryPath ? (
         <ReadOnlyBackgroundField label="Library Path" value={libraryPath} />

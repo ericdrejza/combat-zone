@@ -6,11 +6,21 @@ import reducer, {
   selectEntity,
   setActiveTool,
   setPolygonDraftPointIds,
-  startBoxSelection
+  setTouchMultiSelect,
+  startBoxSelection,
+  toggleTouchMultiSelect
 } from "@interaction/interactionState";
 import { MVP_TOOLS } from "@interaction/tools/toolRegistry";
 
 describe("interaction engine", () => {
+  it("keeps touch multi-select as a session-only interaction modifier", () => {
+    let state = reducer(undefined, setTouchMultiSelect(true));
+    expect(state.touchMultiSelect).toBe(true);
+
+    state = reducer(state, toggleTouchMultiSelect());
+    expect(state.touchMultiSelect).toBe(false);
+  });
+
   it("registers every MVP tool with a tooltip and interaction contract", () => {
     expect(MVP_TOOLS.map((tool) => tool.id)).toEqual([
       "select",

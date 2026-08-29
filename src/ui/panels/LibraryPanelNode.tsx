@@ -1,5 +1,5 @@
 import { FileImage, Folder, Link } from "lucide-react";
-import type { DragEvent } from "react";
+import type { DragEvent, PointerEvent } from "react";
 
 import type { LibraryImageAsset, LibraryNode } from "@library/types";
 import type { LibraryViewMode } from "./LibraryPanel";
@@ -14,6 +14,7 @@ type LibraryPanelNodeProps = {
   onDragEnd: () => void;
   onDragStart: (event: DragEvent<HTMLElement>) => void;
   onNavigate: () => void;
+  onPointerDown?: (event: PointerEvent<HTMLButtonElement>) => void;
   viewMode: LibraryViewMode;
 };
 
@@ -27,6 +28,7 @@ export function LibraryPanelNode({
   onDragEnd,
   onDragStart,
   onNavigate,
+  onPointerDown,
   viewMode
 }: LibraryPanelNodeProps) {
   if (node.type === "folder") {
@@ -60,6 +62,7 @@ export function LibraryPanelNode({
       onClick={onClick}
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
+      onPointerDown={onPointerDown}
       type="button"
     >
       <span

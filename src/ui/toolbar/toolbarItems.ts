@@ -1,10 +1,33 @@
-import { Circle, Hexagon, Pentagon, Square } from 'lucide-react';
+import {
+  ArrowRightFromLine,
+  CircleUserRound,
+  Circle,
+  Hexagon,
+  Image,
+  Pointer,
+  Pentagon,
+  Square,
+  Shapes,
+  StickyNote,
+  type LucideIcon
+} from 'lucide-react';
 
 import type { ZoneShape } from '@entities/zone/types';
 import {
   TOOL_DEFINITIONS_BY_ID,
   type ToolDefinition
 } from '@interaction/tools/toolRegistry';
+import type { ToolId } from '@interaction/tools/toolRegistry';
+
+/** Primary tool iconography stays centralized so compact and desktop controls match. */
+export const TOOL_ICONS: Record<ToolId, LucideIcon> = {
+  actor: CircleUserRound,
+  annotation: StickyNote,
+  background: Image,
+  edge: ArrowRightFromLine,
+  select: Pointer,
+  zone: Shapes
+};
 
 export type ZoneShapeOption = {
   icon: typeof Square;

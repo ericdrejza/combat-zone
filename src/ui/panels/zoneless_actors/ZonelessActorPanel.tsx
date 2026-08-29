@@ -31,7 +31,7 @@ type ZonelessActorPanelProps = {
   selection: RootState["interaction"]["selection"];
 };
 
-type ActorGroup = {
+export type ActorGroup = {
   id: ActorLayoutGroup;
   label: string;
   actors: Actor[];
@@ -51,7 +51,7 @@ function sortActors(actors: Actor[]): Actor[] {
   });
 }
 
-function getZonelessActors(
+export function getZonelessActors(
   actors: ZonelessActorPanelProps["actors"]
 ): Actor[] {
   return sortActors(
@@ -64,7 +64,7 @@ function getZonelessActors(
   );
 }
 
-function getGroupedActors(actors: Actor[]): ActorGroup[] {
+export function getGroupedActors(actors: Actor[]): ActorGroup[] {
   return GROUPS.map((group) => ({
     ...group,
     actors: actors.filter((actor) => actor.layoutGroup === group.id)

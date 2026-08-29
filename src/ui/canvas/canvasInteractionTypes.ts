@@ -67,7 +67,9 @@ export type EngagementDragState = {
 export type ActorDragStartEvent = {
   ctrlKey: boolean;
   metaKey: boolean;
+  pointerType?: string;
   shiftKey: boolean;
+  touchMultiSelect?: boolean;
 };
 
 export type ActorDragEndEvent = {
@@ -92,6 +94,7 @@ export type CanvasInteractionState = {
   edgeTool: RootState['interaction']['edgeTool'];
   lastZoneOpacity: RootState['interaction']['lastZoneOpacity'];
   selection: RootState['interaction']['selection'];
+  touchMultiSelect?: RootState['interaction']['touchMultiSelect'];
   setActorDrag: Dispatch<SetStateAction<ActorDragState | null>>;
   setBoxSelection: Dispatch<SetStateAction<LocalBoxSelectionState | null>>;
   setEdgeDrag: Dispatch<SetStateAction<EdgeDragState | null>>;

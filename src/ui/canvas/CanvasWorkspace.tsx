@@ -1,7 +1,8 @@
 import type {
   DragEventHandler,
   MouseEvent,
-  MouseEventHandler
+  MouseEventHandler,
+  PointerEvent as ReactPointerEvent
 } from "react";
 import { MotionConfig, motion } from "motion/react";
 
@@ -67,8 +68,12 @@ type CanvasWorkspaceProps = {
   handleCanvasDoubleClick: MouseEventHandler<SVGSVGElement>;
   handleCanvasDragOver: DragEventHandler<SVGSVGElement>;
   handleCanvasDrop: DragEventHandler<SVGSVGElement>;
-  handleCanvasMouseDown: MouseEventHandler<SVGSVGElement>;
-  handleCanvasMouseMove: MouseEventHandler<SVGSVGElement>;
+  handleCanvasMouseDown: (
+    event: MouseEvent<SVGSVGElement> | ReactPointerEvent<SVGSVGElement>
+  ) => void;
+  handleCanvasMouseMove: (
+    event: MouseEvent<SVGSVGElement> | ReactPointerEvent<SVGSVGElement>
+  ) => void;
   handleCanvasMouseUp: MouseEventHandler<SVGSVGElement>;
   handleResizeHandleMouseDown: (
     zone: Zone,
@@ -163,6 +168,21 @@ export function CanvasWorkspace({
         onMouseDown={handleCanvasMouseDown}
         onMouseMove={handleCanvasMouseMove}
         onMouseUp={handleCanvasMouseUp}
+        onPointerDown={(event) => {
+          if (event.pointerType !== "mouse") {
+            handleCanvasMouseDown(event);
+          }
+        }}
+        onPointerMove={(event) => {
+          if (event.pointerType !== "mouse") {
+            handleCanvasMouseMove(event);
+          }
+        }}
+        onPointerUp={(event) => {
+          if (event.pointerType !== "mouse") {
+            handleCanvasMouseUp(event);
+          }
+        }}
         role="img"
         viewBox={`0 0 ${encounter.canvasSize.width} ${encounter.canvasSize.height}`}
       >

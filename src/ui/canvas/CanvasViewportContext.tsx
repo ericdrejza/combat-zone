@@ -12,12 +12,14 @@ import {
 import { useSelector } from "react-redux";
 
 import type { CanvasSize } from "@core/layout/polygonCanvasBounds";
+import type { LayoutPoint } from "@core/layout/types";
 import type { RootState } from "@store/store";
 import {
   CANVAS_ZOOM_STEP,
   clampZoom,
   getCenteredCanvasResizeScroll,
   getCenteredZoomScroll,
+  getZoomScrollAtPoint,
   getZoomToFit
 } from "./canvasViewportMath";
 
@@ -31,6 +33,12 @@ type CanvasViewportValue = {
   zoomIn: () => void;
   zoomOut: () => void;
   resetZoom: () => void;
+  /** Changes zoom while preserving a canvas point under a viewport point. */
+  setZoomAtPoint: (
+    requestedZoom: number,
+    viewportPoint: LayoutPoint,
+    canvasPoint?: LayoutPoint
+  ) => void;
   zoomToFit: () => void;
 };
 
@@ -73,6 +81,7 @@ export function CanvasViewportProvider({ children }: PropsWithChildren) {
     zoom: number;
   } | null>(null);
   const pendingFitRef = useRef(true);
+  const pendingManualFitFrameRef = useRef<number | null>(null);
   zoomRef.current = zoom;
 
   const previousDocument = previousDocumentRef.current;
@@ -117,6 +126,15 @@ export function CanvasViewportProvider({ children }: PropsWithChildren) {
     return () => observer.disconnect();
   }, [viewportElement]);
 
+  useEffect(
+    () => () => {
+      if (pendingManualFitFrameRef.current !== null) {
+        cancelAnimationFrame(pendingManualFitFrameRef.current);
+      }
+    },
+    []
+  );
+
   /** Reads layout synchronously so commands do not depend on observer timing. */
   const getViewportSize = useCallback(
     () =>
@@ -153,8 +171,63 @@ export function CanvasViewportProvider({ children }: PropsWithChildren) {
     [canvasSize, getViewportSize, viewportElement]
   );
 
+  const setZoomAtPoint = useCallback(
+    (
+      requestedZoom: number,
+      viewportPoint: LayoutPoint,
+      canvasPoint?: LayoutPoint
+    ) => {
+      const nextZoom = clampZoom(requestedZoom);
+      const currentZoom = zoomRef.current;
+      const scroll = viewportElement
+        ? getZoomScrollAtPoint({
+            canvasPoint,
+            canvasSize,
+            currentZoom,
+            nextZoom,
+            scrollLeft: viewportElement.scrollLeft,
+            scrollTop: viewportElement.scrollTop,
+            viewportPoint,
+            viewportSize: getViewportSize()
+          })
+        : null;
+
+      zoomRef.current = nextZoom;
+      setZoom(nextZoom);
+      if (viewportElement && scroll) {
+        requestAnimationFrame(() => {
+          viewportElement.scrollLeft = scroll.left;
+          viewportElement.scrollTop = scroll.top;
+        });
+      }
+    },
+    [canvasSize, getViewportSize, viewportElement]
+  );
+
   const zoomToFit = useCallback(
-    () => setCenteredZoom(getZoomToFit(canvasSize, getViewportSize())),
+    () => {
+      const fitCurrentViewport = () => {
+        const currentViewportSize = getViewportSize();
+        setViewportSize((current) =>
+          current.height === currentViewportSize.height &&
+          current.width === currentViewportSize.width
+            ? current
+            : currentViewportSize
+        );
+        setCenteredZoom(getZoomToFit(canvasSize, currentViewportSize));
+      };
+
+      // Read synchronously for immediate feedback, then re-read after the
+      // browser finishes any responsive reflow caused by the current frame.
+      fitCurrentViewport();
+      if (pendingManualFitFrameRef.current !== null) {
+        cancelAnimationFrame(pendingManualFitFrameRef.current);
+      }
+      pendingManualFitFrameRef.current = requestAnimationFrame(() => {
+        pendingManualFitFrameRef.current = null;
+        fitCurrentViewport();
+      });
+    },
     [canvasSize, getViewportSize, setCenteredZoom]
   );
 
@@ -188,13 +261,22 @@ export function CanvasViewportProvider({ children }: PropsWithChildren) {
       registerViewport: setViewportElement,
       resetZoom: () => setCenteredZoom(1),
       setPanEnabled,
+      setZoomAtPoint,
       viewportSize,
       zoom,
       zoomIn: () => setCenteredZoom(zoomRef.current + CANVAS_ZOOM_STEP),
       zoomOut: () => setCenteredZoom(zoomRef.current - CANVAS_ZOOM_STEP),
       zoomToFit
     }),
-    [getViewportSize, panEnabled, setCenteredZoom, viewportSize, zoom, zoomToFit]
+    [
+      getViewportSize,
+      panEnabled,
+      setCenteredZoom,
+      setZoomAtPoint,
+      viewportSize,
+      zoom,
+      zoomToFit
+    ]
   );
 
   return (

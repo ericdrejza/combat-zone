@@ -4,7 +4,10 @@ import userEvent from "@testing-library/user-event";
 import { createEncounterState } from "@core/encounter/createEncounterState";
 import { createEncounterActionRecord } from "@core/history/createEncounterActionRecord";
 import { createActor } from "@entities/actor/actorMutations";
-import { selectEntity, setActiveTool } from "@interaction/interactionState";
+import {
+  selectEntity,
+  setActiveTool
+} from "@interaction/interactionState";
 import { uploadImage } from "@library/librarySlice";
 import { commitEncounterChange } from "@store/encounterSlice";
 import { store } from "@store/store";
@@ -204,7 +207,9 @@ describe("LibraryPanel", () => {
 
     await user.click(screen.getByRole("button", { name: "Close Asset Library" }));
     await user.click(screen.getByRole("button", { name: "Background" }));
-    await user.click(screen.getByRole("button", { name: "battle-map" }));
+    const backgroundAsset = screen.getByRole("button", { name: "battle-map" });
+    expect(backgroundAsset).toHaveAttribute("draggable", "false");
+    await user.click(backgroundAsset);
 
     await waitFor(() => {
       expect(screen.getByLabelText("Canvas background image")).toBeInTheDocument();
@@ -215,6 +220,48 @@ describe("LibraryPanel", () => {
     expect(
       store.getState().encounter.present.backgroundImage?.libraryNodeId
     ).toBe(libraryBackground?.id);
+  });
+
+  it("creates a tapped library actor in the previously selected target zone", async () => {
+    const user = userEvent.setup();
+
+    renderApp();
+    const canvas = getCanvas();
+    mockCanvasBounds(canvas);
+    await user.click(screen.getByRole("button", { name: "Zone" }));
+    fireEvent.mouseDown(canvas, { button: 0, clientX: 100, clientY: 100 });
+    fireEvent.mouseMove(canvas, { clientX: 320, clientY: 280 });
+    fireEvent.mouseUp(canvas);
+    const targetZoneId = store.getState().encounter.present.zones.allIds[0];
+    await user.click(screen.getByRole("button", { name: "Actor" }));
+    fireEvent.click(screen.getByLabelText("Zone 1"));
+
+    act(() => {
+      store.dispatch(
+        uploadImage({
+          asset: {
+            dataUrl: "data:image/png;base64,tap-actor",
+            mediaType: "image/png",
+            name: "Tap Actor"
+          },
+          parentId: "tokens-root",
+          sectionId: "tokens"
+        })
+      );
+    });
+
+    const tokenAsset = screen.getByRole("button", { name: "Tap Actor" });
+    expect(tokenAsset).toHaveAttribute("draggable", "true");
+    await user.click(tokenAsset);
+
+    await waitFor(() => {
+      expect(
+        Object.values(store.getState().encounter.present.actors.byId).some(
+          (actor) =>
+            actor.name === "Tap Actor" && actor.currentZoneId === targetZoneId
+        )
+      ).toBe(true);
+    });
   });
 
   it("shows token assets when Actor is active and collapses them for Select", async () => {

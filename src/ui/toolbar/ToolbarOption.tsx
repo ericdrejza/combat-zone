@@ -3,6 +3,7 @@ import type {
   HTMLAttributes,
   PropsWithChildren
 } from "react";
+import { TouchTooltip } from "./TouchTooltip";
 
 const TOOLBAR_OPTION_ROW_CLASS_NAME = "flex shrink-0 items-center gap-2";
 const TOOLBAR_OPTION_GROUP_CLASS_NAME =
@@ -57,16 +58,44 @@ export function ToolbarOptionButton({
     : "border-canvas-line bg-white text-canvas-muted hover:bg-canvas";
 
   return (
-    <button
+    <TouchTooltip
+      label={
+        typeof props.title === "string"
+          ? props.title
+          : typeof props["aria-label"] === "string"
+            ? props["aria-label"]
+            : ""
+      }
+    >
+      <button
+        {...props}
+        className={joinClassNames(
+          "flex h-11 min-w-11 items-center justify-center gap-1 rounded-full border px-1.5 transition lg:h-8 lg:min-w-10",
+          stateClassName,
+          className
+        )}
+      >
+        {children}
+      </button>
+    </TouchTooltip>
+  );
+}
+
+export function ToolbarSubtoolBar({
+  children,
+  className,
+  ...props
+}: PropsWithChildren<HTMLAttributes<HTMLDivElement>>) {
+  return (
+    <div
       {...props}
       className={joinClassNames(
-        "flex h-8 min-w-10 items-center justify-center gap-1 rounded-full border px-1.5 transition",
-        stateClassName,
+        "flex min-w-max shrink-0 items-center gap-2 lg:contents",
         className
       )}
     >
       {children}
-    </button>
+    </div>
   );
 }
 
@@ -83,7 +112,7 @@ export function ToolbarOptionKeybind({
   return (
     <span
       aria-hidden="true"
-      className={joinClassNames("text-[10px] leading-none", className)}
+      className={joinClassNames("hidden text-[10px] leading-none lg:inline", className)}
     >
       {children}
     </span>

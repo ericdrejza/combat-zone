@@ -35,6 +35,15 @@ import { MotionPreferenceProvider } from "./motion_preferences/MotionPreferenceP
 import { readImageAssetDimensions } from "./toolbar/background/readImageFile";
 import { commitBackgroundImage } from "./toolbar/background/backgroundCanvasActions";
 import { useCanvasViewport } from "./canvas/CanvasViewportContext";
+import { useCompactLayout } from "@hooks/useCompactLayout";
+import { CompactPanelLauncher } from "./panels/CompactPanelLauncher";
+import type {
+  CompactPanelDefinition
+} from "./panels/compactPanelMetadata";
+import { CompactZonelessActorPanel } from "./panels/zoneless_actors/CompactZonelessActorPanel";
+import { EncounterRenameDialog } from "./encounter/EncounterRenameDialog";
+import { EncounterTitle } from "./encounter/EncounterTitle";
+import { TouchTooltipProvider } from "./toolbar/TouchTooltip";
 
 type SidebarCollapsedState = Record<DockSide, boolean>;
 
@@ -81,6 +90,7 @@ function AppContent() {
   const encounter = useSelector((state: RootState) => state.encounter.present);
   const library = useSelector((state: RootState) => state.library);
   const selection = useSelector((state: RootState) => state.interaction.selection);
+  const compactLayout = useCompactLayout();
   const [panelLayout, setPanelLayout] = useState<PanelLayout>(initialPanelLayout);
   const [libraryAutoCollapsedBySelect, setLibraryAutoCollapsedBySelect] =
     useState(false);
@@ -97,6 +107,7 @@ function AppContent() {
   const [libraryViewMode, setLibraryViewMode] =
     useState<LibraryViewMode>("list");
   const [renameModalOpen, setRenameModalOpen] = useState(false);
+  const [encounterRenameOpen, setEncounterRenameOpen] = useState(false);
   const workspaceColumns = `${
     sidebarCollapsed.left ? "3.25rem" : "18rem"
   } minmax(0,1fr) ${sidebarCollapsed.right ? "3.25rem" : "18rem"}`;
@@ -253,7 +264,9 @@ function AppContent() {
     }));
   }
 
-  function renderPanelContent(panel: DockPanelDefinition) {
+  function renderPanelContent(
+    panel: DockPanelDefinition | CompactPanelDefinition
+  ) {
     if (panel.id === "library") {
       return (
         <LibraryPanel
@@ -276,10 +289,16 @@ function AppContent() {
       return <InitiativePanel />;
     }
 
+    if (panel.id === "zoneless") {
+      return <CompactZonelessActorPanel />;
+    }
+
     return undefined;
   }
 
-  function renderPanelHeaderActions(panel: DockPanelDefinition) {
+  function renderPanelHeaderActions(
+    panel: DockPanelDefinition | CompactPanelDefinition
+  ) {
     if (panel.id === "library") {
       return (
         <LibraryPanelViewToggle
@@ -304,20 +323,24 @@ function AppContent() {
 
   return (
     <MotionPreferenceProvider>
+      <TouchTooltipProvider>
       <ZoneResizeApprovalProvider>
-        <div className="flex h-screen max-h-screen w-screen max-w-screen flex-col overflow-hidden bg-canvas text-canvas-ink">
+        <div className="flex h-screen h-dvh max-h-screen max-h-dvh w-screen max-w-screen flex-col overflow-hidden bg-canvas text-canvas-ink">
       <Toolbar
+        encounterName={encounter.name}
         onActorToolSelected={expandAutoCollapsedLibraryPanel}
         onOpenLibrary={() => setLibraryModalOpen(true)}
+        onRenameEncounter={() => setEncounterRenameOpen(true)}
       />
       <main
-        className="grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-hidden p-4 lg:grid-cols-[var(--workspace-columns)]"
+        className="relative grid min-h-0 flex-1 grid-cols-1 gap-2 overflow-hidden p-2 lg:grid-cols-[var(--workspace-columns)] lg:gap-4 lg:p-4"
         style={
           {
             "--workspace-columns": workspaceColumns
           } as CSSProperties
         }
       >
+        {!compactLayout ? (
         <SidebarDock
           collapsed={sidebarCollapsed.left}
           onToggle={() =>
@@ -345,7 +368,26 @@ function AppContent() {
             side="left"
           />
         </SidebarDock>
+        ) : null}
         <CanvasShell />
+        {compactLayout ? (
+          <>
+            <div className="pointer-events-none absolute left-3 top-3 z-30">
+              <div className="pointer-events-auto">
+                <EncounterTitle
+                  compact
+                  name={encounter.name}
+                  onRename={() => setEncounterRenameOpen(true)}
+                />
+              </div>
+            </div>
+            <CompactPanelLauncher
+              renderPanelContent={renderPanelContent}
+              renderPanelHeaderActions={renderPanelHeaderActions}
+            />
+          </>
+        ) : null}
+        {!compactLayout ? (
         <SidebarDock
           collapsed={sidebarCollapsed.right}
           onToggle={() =>
@@ -373,6 +415,7 @@ function AppContent() {
             side="right"
           />
         </SidebarDock>
+        ) : null}
       </main>
       {libraryModalOpen ? (
         <AssetLibraryModal
@@ -384,8 +427,12 @@ function AppContent() {
       {renameModalOpen ? (
         <ActorRenameModal onClose={() => setRenameModalOpen(false)} />
       ) : null}
+      {encounterRenameOpen ? (
+        <EncounterRenameDialog onClose={() => setEncounterRenameOpen(false)} />
+      ) : null}
         </div>
       </ZoneResizeApprovalProvider>
+      </TouchTooltipProvider>
     </MotionPreferenceProvider>
   );
 }

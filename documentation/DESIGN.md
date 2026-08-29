@@ -72,6 +72,7 @@ Workspace
 
 Root runtime container.
 
+- name
 - zones[]
 - edges[]
 - actors[]
@@ -97,6 +98,10 @@ These sizing controls remain available without an image, using the current
 canvas aspect ratio. Fit commands target the logical area visible at the
 current viewport zoom. Every background or canvas-size mutation is one
 reversible history action.
+
+The active Encounter name is always visible: in the desktop toolbar and in a
+compact canvas title chip below 1024px. Renaming trims surrounding whitespace,
+requires a non-empty result, and commits as one reversible history action.
 
 ### 4.2 Zone
 
@@ -373,6 +378,22 @@ Each tool defines:
 - keyboard shortcuts
 - tooltip description (mandatory UI element)
 
+Every primary tool has an established icon. At viewport widths below 1024px,
+the primary toolbar is an icon-only, horizontally scrollable row with touch
+targets of at least 44 CSS pixels. Holding a tooltip-bearing element with a
+touch pointer for 500ms shows its tooltip without activating the control;
+mouse input continues to use hover and keyboard focus exposes the same help.
+The selected tool's
+subtools render in a horizontally scrollable bar below the primary row. The
+current zoom percentage is the only persistent text in the compact toolbar;
+the Encounter name remains visible in the canvas title chip.
+
+Zoom is a utility rather than an entity-editing mode. On compact screens it is
+a primary toolbar icon whose controls occupy the subtool bar without changing
+the active editing tool. On larger screens the zoom controls remain at the
+right edge and can collapse to or expand from a single icon; they begin
+expanded each session.
+
 ### 5.2 Selection Rules
 
 - Multi-select allowed per active tool type
@@ -495,6 +516,13 @@ viewport has focus. Right-button drag panning is enabled by default and can be
 toggled from the toolbar. A right-click without a pan gesture retains the
 active tool's existing context action.
 
+Touch input uses one pointer for the active tool's normal editing gesture and
+two pointers for midpoint-preserving pan and pinch zoom. Touch does not emulate
+right-click through a hold gesture; context actions remain available through
+normal mouse right-click when testing a compact layout. Touch multi-selection
+is exposed as a subtool toggle because modifier keys are not available.
+Perception-only touch navigation does not create history.
+
 ## 6. Layout System
 
 ### 6.1 Zone Layout Strategies
@@ -537,10 +565,20 @@ Engagement-internal layouts use:
 
 Panels:
 
-- dock left/right only
+- dock left/right at viewport widths of 1024px and above
 - collapsible
 - stackable vertically
 - multiple tabs for panel groups
+
+Below 1024px, the canvas owns the workspace and docked panels are replaced by
+a bottom-right launcher and one right-side overlay drawer. The launcher uses
+this wrapping panel order: Library, Properties, Log, Status, Initiative,
+Zoneless. Library is the initial target. A short tap toggles the targeted
+drawer. Holding for 500ms opens an upward vertical icon bar; dragging enlarges
+the prospective icon and shows its caption, and release changes the launcher
+target without opening the drawer. The next tap opens that panel. The drawer
+leaves the launcher rail visible and closes from the launcher, its header,
+backdrop, or Escape.
 
 ### 7.2 Panels
 
@@ -552,6 +590,14 @@ Panels:
 - Status
 
 Panels update based on selection context.
+
+The Zoneless actors presentation remains the collapsible, resizable
+bottom-center overlay on larger screens and becomes a panel in the compact
+drawer. Starting a touch drag from a Library actor token or Zoneless closes
+the drawer after the movement threshold while the same drag continues over
+the revealed canvas. Library backgrounds apply on tap and are not dragged.
+Tapping a Library actor creates it with the active Actor Tool settings when a
+target Zone was previously selected.
 
 ### 7.3 Properties Panel
 

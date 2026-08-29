@@ -5,6 +5,8 @@ import type {
   ToolDefinition,
   ToolId
 } from "@interaction/tools/toolRegistry";
+import { TOOL_ICONS } from "./toolbarItems";
+import { TouchTooltip } from "./TouchTooltip";
 
 type ToolButtonProps = {
   activeToolId: ToolId;
@@ -20,22 +22,28 @@ export function ToolButton({
   const dispatch = useDispatch();
   const selected = activeToolId === tool.id;
 
+  const Icon = TOOL_ICONS[tool.id];
+
   return (
-    <button
-      aria-pressed={selected}
-      className={`shrink-0 rounded-full border px-3 py-1.5 text-sm font-medium shadow-sm transition hover:bg-canvas ${
-        selected
-          ? "border-canvas-ink bg-canvas-ink text-white"
-          : "border-canvas-line bg-white text-canvas-ink"
-      }`}
-      onClick={() => {
-        dispatch(setActiveTool(tool.id));
-        onSelected?.();
-      }}
-      title={tool.tooltip}
-      type="button"
-    >
-      {tool.label}
-    </button>
+    <TouchTooltip label={tool.tooltip}>
+      <button
+        aria-label={tool.label}
+        aria-pressed={selected}
+        className={`flex h-11 min-w-11 shrink-0 items-center justify-center gap-2 rounded-full border px-2 text-sm font-medium shadow-sm transition hover:bg-canvas lg:h-auto lg:min-w-0 lg:px-3 lg:py-1.5 ${
+          selected
+            ? "border-canvas-ink bg-canvas-ink text-white"
+            : "border-canvas-line bg-white text-canvas-ink"
+        }`}
+        onClick={() => {
+          dispatch(setActiveTool(tool.id));
+          onSelected?.();
+        }}
+        title={tool.tooltip}
+        type="button"
+      >
+        <Icon aria-hidden="true" className="h-5 w-5 shrink-0" />
+        <span className="hidden lg:inline">{tool.label}</span>
+      </button>
+    </TouchTooltip>
   );
 }
