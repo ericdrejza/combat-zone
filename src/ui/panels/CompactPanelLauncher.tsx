@@ -1,0 +1,354 @@
+import { AnimatePresence, motion } from "motion/react";
+import {
+  ChevronDown,
+  ChevronUp
+} from "lucide-react";
+import type {
+  KeyboardEvent,
+  PointerEvent as ReactPointerEvent,
+  ReactNode
+} from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+
+import {
+  COMPACT_PANEL_DEFINITIONS,
+  type CompactPanelDefinition,
+  type CompactPanelId
+} from "./compactPanelMetadata";
+import { CompactPanelDrawer } from "./CompactPanelDrawer";
+import { CompactPanelMenu } from "./CompactPanelMenu";
+import { COMPACT_CANVAS_TRANSFER_EVENT } from "../canvas/compactCanvasTransfer";
+
+const HOLD_DURATION_MS = 500;
+
+export type CompactPanelLauncherProps = {
+  /** Content for each panel. Keeping this callback in the shell avoids coupling it to Redux. */
+  renderPanelContent?: (panel: CompactPanelDefinition) => ReactNode;
+  renderPanelHeaderActions?: (panel: CompactPanelDefinition) => ReactNode;
+  onPanelChange?: (panelId: CompactPanelId) => void;
+  onDrawerChange?: (open: boolean) => void;
+  selectedPanelId?: CompactPanelId;
+  panels?: readonly CompactPanelDefinition[];
+};
+
+type Point = { x: number; y: number };
+
+/**
+ * Compact (<1024px) panel affordance. The launcher is intentionally mounted
+ * independently from the desktop docks so responsive layout changes do not
+ * alter panel state or the panel content contract.
+ */
+export function CompactPanelLauncher({
+  onDrawerChange,
+  onPanelChange,
+  panels = COMPACT_PANEL_DEFINITIONS,
+  renderPanelContent,
+  renderPanelHeaderActions,
+  selectedPanelId: controlledSelectedPanelId
+}: CompactPanelLauncherProps) {
+  const [internalSelectedPanelId, setInternalSelectedPanelId] =
+    useState<CompactPanelId>("library");
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [highlightedIndex, setHighlightedIndex] = useState<number | null>(null);
+  const [keyboardMenuOpen, setKeyboardMenuOpen] = useState(false);
+  const selectedPanelId = controlledSelectedPanelId ?? internalSelectedPanelId;
+  const selectedPanel =
+    panels.find((panel) => panel.id === selectedPanelId) ?? panels[0];
+  const launcherRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pointerIdRef = useRef<number | null>(null);
+  const holdActiveRef = useRef(false);
+  const suppressClickRef = useRef(false);
+
+  const setDrawer = useCallback(
+    (open: boolean) => {
+      setDrawerOpen(open);
+      onDrawerChange?.(open);
+      if (!open) {
+        requestAnimationFrame(() => launcherRef.current?.focus());
+      }
+    },
+    [onDrawerChange]
+  );
+
+  const selectPanel = useCallback(
+    (panelId: CompactPanelId) => {
+      if (!controlledSelectedPanelId) {
+        setInternalSelectedPanelId(panelId);
+      }
+      onPanelChange?.(panelId);
+    },
+    [controlledSelectedPanelId, onPanelChange]
+  );
+
+  const closeMenu = useCallback(() => {
+    setMenuOpen(false);
+    setKeyboardMenuOpen(false);
+    setHighlightedIndex(null);
+  }, []);
+
+  const indexAtPoint = useCallback(
+    ({ x, y }: Point): number | null => {
+      const menu = menuRef.current;
+      if (!menu) {
+        return null;
+      }
+      const itemElements = Array.from(
+        menu.querySelectorAll<HTMLElement>("[data-compact-panel-item]")
+      );
+      const index = itemElements.findIndex((element) => {
+        const rect = element.getBoundingClientRect();
+        return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
+      });
+      return index >= 0 ? index : null;
+    },
+    []
+  );
+
+  const finishPointer = useCallback(
+    (point: Point) => {
+      if (holdTimerRef.current) {
+        clearTimeout(holdTimerRef.current);
+        holdTimerRef.current = null;
+      }
+      if (holdActiveRef.current) {
+        const index = indexAtPoint(point);
+        if (index !== null && panels[index]) {
+          selectPanel(panels[index].id);
+        }
+        suppressClickRef.current = true;
+        // A pointer release on the launcher may still dispatch a click after
+        // this callback. Clear the guard after that browser event has run so
+        // keyboard activation cannot be swallowed by a previous hold.
+        setTimeout(() => {
+          suppressClickRef.current = false;
+        }, 0);
+        closeMenu();
+      } else {
+        suppressClickRef.current = true;
+        setDrawer(!drawerOpen);
+      }
+      holdActiveRef.current = false;
+      pointerIdRef.current = null;
+    },
+    [closeMenu, drawerOpen, indexAtPoint, panels, selectPanel]
+  );
+
+  useEffect(() => {
+    const onPointerMove = (event: PointerEvent) => {
+      if (
+        pointerIdRef.current === null ||
+        event.pointerId !== pointerIdRef.current ||
+        !holdActiveRef.current
+      ) {
+        return;
+      }
+      setHighlightedIndex(indexAtPoint({ x: event.clientX, y: event.clientY }));
+    };
+    const onPointerUp = (event: PointerEvent) => {
+      if (
+        pointerIdRef.current === null ||
+        event.pointerId !== pointerIdRef.current
+      ) {
+        return;
+      }
+      finishPointer({ x: event.clientX, y: event.clientY });
+    };
+    window.addEventListener("pointermove", onPointerMove);
+    window.addEventListener("pointerup", onPointerUp);
+    window.addEventListener("pointercancel", onPointerUp);
+    return () => {
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", onPointerUp);
+      window.removeEventListener("pointercancel", onPointerUp);
+    };
+  }, [finishPointer, indexAtPoint]);
+
+  useLayoutEffect(() => {
+    if (!keyboardMenuOpen) {
+      return;
+    }
+    const selectedIndex = panels.findIndex((panel) => panel.id === selectedPanelId);
+    const focusIndex = selectedIndex >= 0 ? selectedIndex : 0;
+    menuRef.current
+      ?.querySelectorAll<HTMLButtonElement>("[data-compact-panel-item]")
+      .item(focusIndex)?.focus();
+  }, [keyboardMenuOpen, panels, selectedPanelId]);
+
+  useEffect(() => {
+    function onDocumentKeyDown(event: globalThis.KeyboardEvent) {
+      if (event.key === "Escape") {
+        if (menuOpen) {
+          event.preventDefault();
+          closeMenu();
+        } else if (drawerOpen) {
+          event.preventDefault();
+          setDrawer(false);
+        }
+      }
+    }
+    document.addEventListener("keydown", onDocumentKeyDown);
+    return () => document.removeEventListener("keydown", onDocumentKeyDown);
+  }, [closeMenu, drawerOpen, menuOpen, setDrawer]);
+
+  useEffect(() => {
+    const closeForCanvasTransfer = () => {
+      closeMenu();
+      setDrawer(false);
+    };
+    window.addEventListener(
+      COMPACT_CANVAS_TRANSFER_EVENT,
+      closeForCanvasTransfer
+    );
+    return () =>
+      window.removeEventListener(
+        COMPACT_CANVAS_TRANSFER_EVENT,
+        closeForCanvasTransfer
+      );
+  }, [closeMenu, setDrawer]);
+
+  function openKeyboardMenu() {
+    setMenuOpen(true);
+    setKeyboardMenuOpen(true);
+    setHighlightedIndex(
+      Math.max(0, panels.findIndex((panel) => panel.id === selectedPanelId))
+    );
+    setDrawer(false);
+  }
+
+  function onLauncherPointerDown(event: ReactPointerEvent<HTMLButtonElement>) {
+    if (event.button !== 0) {
+      return;
+    }
+    pointerIdRef.current = event.pointerId;
+    holdActiveRef.current = false;
+    holdTimerRef.current = setTimeout(() => {
+      holdActiveRef.current = true;
+      setMenuOpen(true);
+      setKeyboardMenuOpen(false);
+      setDrawer(false);
+    }, HOLD_DURATION_MS);
+  }
+
+  function onLauncherKeyDown(event: KeyboardEvent<HTMLButtonElement>) {
+    if (event.key === "ArrowUp" || event.key === "ArrowDown") {
+      event.preventDefault();
+      openKeyboardMenu();
+    } else if (event.key === "Escape" && (drawerOpen || menuOpen)) {
+      event.preventDefault();
+      closeMenu();
+      setDrawer(false);
+    }
+  }
+
+  function onLauncherClick() {
+    if (suppressClickRef.current) {
+      suppressClickRef.current = false;
+      return;
+    }
+    // Pointer events perform the short-tap action. This also supports keyboard activation.
+    if (pointerIdRef.current === null) {
+      setDrawer(!drawerOpen);
+    }
+  }
+
+  function onMenuKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      closeMenu();
+      launcherRef.current?.focus();
+      return;
+    }
+    if (event.key === "Enter" && highlightedIndex !== null && panels[highlightedIndex]) {
+      event.preventDefault();
+      selectPanel(panels[highlightedIndex].id);
+      closeMenu();
+      launcherRef.current?.focus();
+      return;
+    }
+    if (event.key !== "ArrowUp" && event.key !== "ArrowDown") {
+      return;
+    }
+    event.preventDefault();
+    const current = highlightedIndex ?? panels.findIndex((panel) => panel.id === selectedPanelId);
+    const direction = event.key === "ArrowDown" ? 1 : -1;
+    const next = (Math.max(0, current) + direction + panels.length) % panels.length;
+    setHighlightedIndex(next);
+    menuRef.current
+      ?.querySelectorAll<HTMLButtonElement>("[data-compact-panel-item]")
+      .item(next)?.focus();
+  }
+
+  if (!selectedPanel) {
+    return null;
+  }
+
+  return (
+    <div className="pointer-events-none absolute inset-0 z-40 block min-[1024px]:hidden" data-compact-panels>
+      <AnimatePresence>
+        {drawerOpen ? (
+          <motion.div
+            aria-hidden="true"
+            className="pointer-events-auto absolute inset-0 bg-black/20"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setDrawer(false)}
+          />
+        ) : null}
+      </AnimatePresence>
+      <AnimatePresence>
+        {drawerOpen ? (
+          <CompactPanelDrawer
+            onClose={() => setDrawer(false)}
+            panel={selectedPanel}
+            renderPanelContent={renderPanelContent}
+            renderPanelHeaderActions={renderPanelHeaderActions}
+          />
+        ) : null}
+      </AnimatePresence>
+      <AnimatePresence>
+        {menuOpen ? (
+          <div>
+            <CompactPanelMenu
+              highlightedIndex={highlightedIndex}
+              menuRef={menuRef}
+              onClose={() => {
+                closeMenu();
+                launcherRef.current?.focus();
+              }}
+              onKeyDown={onMenuKeyDown}
+              onPanelHover={setHighlightedIndex}
+              onPanelSelect={selectPanel}
+              panels={panels}
+              selectedPanelId={selectedPanelId}
+            />
+          </div>
+        ) : null}
+      </AnimatePresence>
+      <button
+        ref={launcherRef}
+        aria-expanded={drawerOpen}
+        aria-haspopup="dialog"
+        aria-label={`${selectedPanel.title} panel`}
+        className="pointer-events-auto absolute bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] right-2 flex h-11 w-11 items-center justify-center rounded-full border border-canvas-line bg-canvas-panel text-canvas-ink shadow-lg transition hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-canvas-ink"
+        onClick={onLauncherClick}
+        onKeyDown={onLauncherKeyDown}
+        onPointerDown={onLauncherPointerDown}
+        onPointerUp={(event) => finishPointer({ x: event.clientX, y: event.clientY })}
+        onPointerCancel={(event) => finishPointer({ x: event.clientX, y: event.clientY })}
+        type="button"
+      >
+        <selectedPanel.Icon aria-hidden="true" className="h-5 w-5" />
+        <span className="sr-only">{selectedPanel.title}</span>
+        {drawerOpen ? (
+          <ChevronDown aria-hidden="true" className="absolute -top-1 -right-1 h-3 w-3" />
+        ) : (
+          <ChevronUp aria-hidden="true" className="absolute -top-1 -right-1 h-3 w-3" />
+        )}
+      </button>
+    </div>
+  );
+}

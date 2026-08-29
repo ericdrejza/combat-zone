@@ -1,4 +1,4 @@
-import type { DragEvent, MouseEvent } from "react";
+import type { DragEvent, MouseEvent, PointerEvent } from "react";
 
 import { ACTOR_LAYOUT_GROUP_COLORS, ACTOR_SIZE_MULTIPLIERS } from "@entities/actor/actorVisuals";
 import type { Actor } from "@entities/actor/types";
@@ -29,7 +29,8 @@ export function ZonelessActorPanelToken({
   selectedIds,
   onSelect,
   onDragStart,
-  onDragEnd
+  onDragEnd,
+  onPointerDown
 }: {
   actor: Actor;
   activeToolId: RootState["interaction"]["activeToolId"];
@@ -37,6 +38,10 @@ export function ZonelessActorPanelToken({
   onSelect: (actorId: string, event: MouseEvent<HTMLButtonElement>) => void;
   onDragStart: (actorId: string, event: DragEvent<HTMLButtonElement>) => void;
   onDragEnd: () => void;
+  onPointerDown?: (
+    actorId: string,
+    event: PointerEvent<HTMLButtonElement>
+  ) => void;
 }) {
   const selected = selectedIds.includes(actor.id);
   const colors = ACTOR_LAYOUT_GROUP_COLORS[actor.layoutGroup];
@@ -51,6 +56,7 @@ export function ZonelessActorPanelToken({
       onClick={(event) => onSelect(actor.id, event)}
       onDragEnd={onDragEnd}
       onDragStart={(event) => onDragStart(actor.id, event)}
+      onPointerDown={(event) => onPointerDown?.(actor.id, event)}
       type="button"
     >
       <span

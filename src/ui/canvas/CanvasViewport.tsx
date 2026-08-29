@@ -1,19 +1,21 @@
 import {
   type KeyboardEvent,
   type MouseEvent,
+  type PointerEvent,
   type PropsWithChildren,
   type WheelEvent,
   useCallback,
-  useEffect,
   useRef
 } from "react";
 
 import type { CanvasSize } from "@core/layout/polygonCanvasBounds";
 import { useCanvasViewport } from "./CanvasViewportContext";
+import { useCanvasTouchGestures } from "./useCanvasTouchGestures";
 
 type PanStart = {
   clientX: number;
   clientY: number;
+  pointerId?: number;
   scrollLeft: number;
   scrollTop: number;
 };
@@ -35,24 +37,38 @@ export function CanvasViewport({ canvasSize, children }: CanvasViewportProps) {
     },
     [registerViewport]
   );
-
-  useEffect(() => {
-    return () => viewport.registerViewport(null);
-  }, [viewport.registerViewport]);
+  const touchGestures = useCanvasTouchGestures({
+    canvasSize,
+    elementRef,
+    viewport
+  });
 
   function handleMouseDown(event: MouseEvent<HTMLDivElement>) {
     const element = elementRef.current;
-    if (!element || !viewport.panEnabled || event.button !== 2) return;
+    if (
+      !element ||
+      !viewport.panEnabled ||
+      event.button !== 2 ||
+      panStartRef.current
+    ) return;
+
+    startMousePan(event.clientX, event.clientY);
+  }
+
+  function startMousePan(clientX: number, clientY: number, pointerId?: number) {
+    const element = elementRef.current;
+    if (!element || !viewport.panEnabled) return;
 
     panStartRef.current = {
-      clientX: event.clientX,
-      clientY: event.clientY,
+      clientX,
+      clientY,
+      pointerId,
       scrollLeft: element.scrollLeft,
       scrollTop: element.scrollTop
     };
     pannedRef.current = false;
 
-    const handleMove = (moveEvent: globalThis.MouseEvent) => {
+    const handleMove = (moveEvent: Pick<globalThis.MouseEvent, "clientX" | "clientY">) => {
       const start = panStartRef.current;
       if (!start) return;
 
@@ -66,9 +82,29 @@ export function CanvasViewport({ canvasSize, children }: CanvasViewportProps) {
       panStartRef.current = null;
       window.removeEventListener("mousemove", handleMove);
       window.removeEventListener("mouseup", handleUp);
+      window.removeEventListener("pointermove", handleMove);
+      window.removeEventListener("pointerup", handleUp);
+      window.removeEventListener("pointercancel", handleUp);
     };
     window.addEventListener("mousemove", handleMove);
     window.addEventListener("mouseup", handleUp);
+    if (pointerId !== undefined) {
+      window.addEventListener("pointermove", handleMove);
+      window.addEventListener("pointerup", handleUp);
+      window.addEventListener("pointercancel", handleUp);
+    }
+  }
+
+  function handlePointerDown(event: PointerEvent<HTMLDivElement>) {
+    if (event.pointerType === "touch") return;
+
+    if (
+      event.pointerType === "mouse" &&
+      event.button === 2 &&
+      !panStartRef.current
+    ) {
+      startMousePan(event.clientX, event.clientY, event.pointerId);
+    }
   }
 
   function handleContextMenu(event: MouseEvent<HTMLDivElement>) {
@@ -120,7 +156,13 @@ export function CanvasViewport({ canvasSize, children }: CanvasViewportProps) {
       onContextMenuCapture={handleContextMenu}
       onKeyDown={handleKeyDown}
       onMouseDown={handleMouseDown}
+      onPointerDownCapture={touchGestures.handlePointerDown}
+      onPointerDown={handlePointerDown}
+      onPointerMoveCapture={touchGestures.handlePointerMove}
+      onPointerUpCapture={touchGestures.handlePointerUp}
+      onPointerCancelCapture={touchGestures.handlePointerCancel}
       onWheel={handleWheel}
+      style={{ touchAction: "none" }}
       tabIndex={0}
     >
       <div

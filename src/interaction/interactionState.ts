@@ -62,6 +62,8 @@ export type InteractionState = {
   actorPaintBrush: boolean;
   actorTool: ActorToolState;
   activeToolId: ToolId;
+  /** Session-only modifier used by touch selection controls. */
+  touchMultiSelect: boolean;
   dragActionPreview: 'engage' | 'disengage' | null;
   edgeTool: EdgePreset;
   selection: SelectionState;
@@ -101,6 +103,7 @@ const initialState: InteractionState = {
     targetZoneId: null
   },
   activeToolId: 'zone',
+  touchMultiSelect: false,
   dragActionPreview: null,
   edgeTool: DEFAULT_EDGE_PRESET,
   selection: initialSelection,
@@ -163,6 +166,12 @@ export const interactionSlice = createSlice({
       ) {
         state.selection = initialSelection;
       }
+    },
+    setTouchMultiSelect(state, { payload }: PayloadAction<boolean>) {
+      state.touchMultiSelect = payload;
+    },
+    toggleTouchMultiSelect(state) {
+      state.touchMultiSelect = !state.touchMultiSelect;
     },
     clearInteractionDraft(state) {
       state.draft = initialDraft;
@@ -336,6 +345,7 @@ export const {
   resetInteractionState,
   selectEntity,
   setActiveTool,
+  setTouchMultiSelect,
   setDragActionPreview,
   setEdgeDirectionality,
   setEdgeShape,
@@ -347,6 +357,7 @@ export const {
   toggleEdgeMovementRule,
   toggleZonePaintBrush,
   toggleActorPaintBrush,
+  toggleTouchMultiSelect,
   startBoxSelection,
   updateBoxSelection
 } = interactionSlice.actions;

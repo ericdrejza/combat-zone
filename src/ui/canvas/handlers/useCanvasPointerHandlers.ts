@@ -1,4 +1,4 @@
-import type { MouseEvent } from 'react';
+import type { MouseEvent, PointerEvent } from 'react';
 import { useEffect } from 'react';
 
 import type { LayoutPoint } from '@core/layout/types';
@@ -18,6 +18,20 @@ import {
 } from '../zones/zoneGeometry';
 
 type PointerHandlerInput = CanvasInteractionState;
+
+function usesTouchMultiSelect(
+  event: Pick<MouseEvent<SVGSVGElement> | PointerEvent<SVGSVGElement>, 'shiftKey' | 'ctrlKey' | 'metaKey'> & {
+    pointerType?: string;
+  },
+  enabled: boolean
+): boolean {
+  return (
+    event.shiftKey ||
+    event.ctrlKey ||
+    event.metaKey ||
+    (event.pointerType === 'touch' && enabled)
+  );
+}
 
 export function useCanvasPointerHandlers(input: PointerHandlerInput) {
   const {
@@ -45,7 +59,8 @@ export function useCanvasPointerHandlers(input: PointerHandlerInput) {
     vertexDrag,
     zoneDrag,
     zonePaintBrush,
-    zoneShapeMode
+    zoneShapeMode,
+    touchMultiSelect = false
   } = input;
   const { updateIntent } = useEngagementHoverIntent(
     encounter,
@@ -76,7 +91,9 @@ export function useCanvasPointerHandlers(input: PointerHandlerInput) {
     getDisplayedPolygon
   });
 
-  function handleCanvasMouseMove(event: MouseEvent<SVGSVGElement>) {
+  function handleCanvasMouseMove(
+    event: MouseEvent<SVGSVGElement> | PointerEvent<SVGSVGElement>
+  ) {
     if (actorDrag) {
       return;
     }
@@ -118,7 +135,9 @@ export function useCanvasPointerHandlers(input: PointerHandlerInput) {
     }
   }
 
-  function handleCanvasMouseDown(event: MouseEvent<SVGSVGElement>) {
+  function handleCanvasMouseDown(
+    event: MouseEvent<SVGSVGElement> | PointerEvent<SVGSVGElement>
+  ) {
     if (zonePaintBrush) {
       return;
     }
@@ -133,6 +152,13 @@ export function useCanvasPointerHandlers(input: PointerHandlerInput) {
     const entityType = entityElement?.dataset.entityType as
       | SelectableEntityType
       | undefined;
+    const multiSelect = usesTouchMultiSelect(
+      event as (MouseEvent<SVGSVGElement> | PointerEvent<SVGSVGElement>) & { pointerType?: string },
+      touchMultiSelect
+    );
+    const pointerType = (event as (MouseEvent<SVGSVGElement> | PointerEvent<SVGSVGElement>) & {
+      pointerType?: string;
+    }).pointerType;
     const point = toSvgPoint(event, event.currentTarget);
 
     if (activeToolId === 'edge' && entityType === 'zone' && entityId) {
@@ -144,7 +170,7 @@ export function useCanvasPointerHandlers(input: PointerHandlerInput) {
 
     if (
       !entityId &&
-      event.shiftKey &&
+      (event.shiftKey || (pointerType === 'touch' && touchMultiSelect)) &&
       (activeToolId === 'actor' ||
         activeToolId === 'zone' ||
         activeToolId === 'select')
@@ -168,12 +194,12 @@ export function useCanvasPointerHandlers(input: PointerHandlerInput) {
         selectEntity({
           entityType: 'zone',
           ids: [entityId],
-          toggle: event.shiftKey || event.ctrlKey || event.metaKey
+          toggle: multiSelect
         })
       );
       suppressNextCanvasClickRef.current = true;
       suppressNextEntityClickRef.current = entityId;
-      if (event.ctrlKey || event.metaKey) {
+      if (event.ctrlKey || event.metaKey || (pointerType === 'touch' && touchMultiSelect)) {
         setZoneDraftPoints([]);
         return;
       }
@@ -218,26 +244,27 @@ export function useCanvasPointerHandlers(input: PointerHandlerInput) {
     }
 
     closeZoneShapeMenu();
+    const multiSelect =
+      event.shiftKey ||
+      event.ctrlKey ||
+      event.metaKey ||
+      Boolean(event.touchMultiSelect);
     const dragActorIds =
       selection.selectedEntityType === 'actor' &&
       selection.selectedIds.includes(actorId) &&
-      !event.shiftKey &&
-      !event.ctrlKey &&
-      !event.metaKey
+      !multiSelect
         ? selection.selectedIds
         : [actorId];
 
     if (
       dragActorIds.length === 1 ||
-      event.shiftKey ||
-      event.ctrlKey ||
-      event.metaKey
+      multiSelect
     ) {
       dispatch(
         selectEntity({
           entityType: 'actor',
           ids: [actorId],
-          toggle: event.shiftKey || event.ctrlKey || event.metaKey
+          toggle: multiSelect
         })
       );
     }

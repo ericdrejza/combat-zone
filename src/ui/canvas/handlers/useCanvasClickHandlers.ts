@@ -43,6 +43,7 @@ type ClickHandlerInput = Pick<
   | 'suppressNextCanvasClickRef'
   | 'suppressNextCanvasClickUnconditionallyRef'
   | 'suppressNextEntityClickRef'
+  | 'touchMultiSelect'
   | 'vertexDrag'
   | 'zoneDraftPoints'
   | 'zoneDrag'
@@ -65,6 +66,7 @@ export function useCanvasClickHandlers(input: ClickHandlerInput) {
     suppressNextCanvasClickRef,
     suppressNextCanvasClickUnconditionallyRef,
     suppressNextEntityClickRef,
+    touchMultiSelect,
     vertexDrag,
     zoneDraftPoints,
     zoneDrag,
@@ -212,7 +214,8 @@ export function useCanvasClickHandlers(input: ClickHandlerInput) {
       selectEntity({
         entityType,
         ids: [entityId],
-        toggle: event.shiftKey || event.ctrlKey || event.metaKey
+        toggle:
+          event.shiftKey || event.ctrlKey || event.metaKey || touchMultiSelect
       })
     );
   }

@@ -25,8 +25,9 @@ covers `DESIGN.md` §15 "Must have" scope only.
 
 ## Actors (drag/drop)
 
-- [x] Zoneless actors are represented in a collapsible bottom-center panel,
-      sorted alphabetically, with optional Hero/Neutral/Enemy grouping.
+- [x] Zoneless actors are represented in a collapsible bottom-center panel on
+      larger screens and in the compact panel drawer below 1024px, sorted
+      alphabetically, with optional Hero/Neutral/Enemy grouping.
 - [x] Actors can be selected in the zoneless panel and dragged individually or
       as a selected group into a zone; dropping outside a zone leaves them in
       the panel without creating history.
@@ -130,6 +131,9 @@ covers `DESIGN.md` §15 "Must have" scope only.
       Native scrollbar chrome remains hidden.
 - [x] Drawing, dragging, resizing, selection, overlays, and native drops share
       the same SVG coordinate transform at every zoom and scroll position.
+- [x] On touch screens, one pointer performs active-tool editing and two
+      pointers pan and pinch zoom without history; touch hold does not emulate
+      right-click.
 
 ## Engagement groups
 
@@ -306,12 +310,35 @@ covers `DESIGN.md` §15 "Must have" scope only.
 
 ## Toolbar interaction system
 
-- [ ] Every tool has a visible tooltip describing its function
+- [x] Every tool has a visible tooltip describing its function
       (per `DESIGN.md` §5.1 mandatory tooltip requirement).
+- [x] Holding any tooltip-bearing control for 500ms with a touch pointer shows
+      its tooltip without activating it; mouse click-and-hold does not invoke
+      the touch tooltip path.
 - [ ] Switching tools does not require a global mode change — each tool's
       selection/drag/click rules are self-contained and switching tools
       never leaves stale interaction state (e.g. a half-drawn polygon)
       dangling.
+
+## Responsive workspace
+
+- [x] Below 1024px, every primary toolbar tool is an icon-only 44px-minimum
+      target in a horizontally scrollable row and active subtools render in a
+      separate horizontal bar.
+- [x] Compact Zoom opens in the subtool bar without changing the active editing
+      tool; desktop Zoom starts expanded and can collapse to one icon.
+- [x] The compact panel launcher defaults to Library, supports tap-to-toggle
+      and 500ms hold/drag/release selection in the documented wrapping order,
+      and has equivalent keyboard operation.
+- [x] Compact drawers close through their header, backdrop, launcher, or
+      Escape, while touch drags from Library and Zoneless continue after the
+      drawer closes.
+- [x] Library backgrounds apply on tap without dragging; only actor assets
+      support drag-to-canvas, and an actor tap uses a previously selected Zone.
+- [x] The current Encounter name is visible at every width and a trimmed,
+      non-empty rename is one undoable and redoable history action.
+- [x] The workspace, Asset Library, panels, dialogs, and canvas remain usable
+      in portrait and landscape from 320px through wide desktop widths.
 
 ## Undo/redo
 

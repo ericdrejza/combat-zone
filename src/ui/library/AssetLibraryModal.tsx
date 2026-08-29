@@ -44,11 +44,11 @@ export function AssetLibraryModal({
     <div
       aria-label="Asset Library"
       aria-modal="true"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-6"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-2 lg:p-6"
       role="dialog"
     >
-      <div className="flex h-[min(44rem,92vh)] w-[min(68rem,96vw)] flex-col overflow-hidden rounded-3xl border border-canvas-line bg-canvas-panel shadow-2xl">
-        <header className="flex items-center justify-between border-b border-canvas-line px-5 py-4">
+      <div className="flex h-[min(44rem,calc(100dvh-1rem))] w-[min(68rem,calc(100vw-1rem))] flex-col overflow-hidden rounded-2xl border border-canvas-line bg-canvas-panel shadow-2xl lg:rounded-3xl">
+        <header className="flex items-center justify-between border-b border-canvas-line px-3 py-3 lg:px-5 lg:py-4">
           <h2 className="font-display text-xl font-semibold">Asset Library</h2>
           <button
             aria-label="Close Asset Library"
@@ -59,12 +59,12 @@ export function AssetLibraryModal({
             <X aria-hidden="true" className="h-4 w-4" />
           </button>
         </header>
-        <div className="flex border-b border-canvas-line px-5 pt-3" role="tablist">
+        <div className="scrollbar-hidden flex shrink-0 overflow-x-auto border-b border-canvas-line px-3 pt-3 lg:px-5" role="tablist">
           {LIBRARY_SECTION_IDS.map((sectionId) => (
             <button
               key={sectionId}
               aria-selected={controller.activeSectionId === sectionId}
-              className={`rounded-t-xl border border-b-0 px-4 py-2 text-sm font-medium transition ${
+              className={`shrink-0 rounded-t-xl border border-b-0 px-4 py-2 text-sm font-medium transition ${
                 controller.activeSectionId === sectionId
                   ? "border-canvas-line bg-white text-canvas-ink"
                   : "border-transparent text-canvas-muted hover:bg-canvas"
@@ -80,8 +80,8 @@ export function AssetLibraryModal({
             </button>
           ))}
         </div>
-        <div className="grid min-h-0 flex-1 grid-cols-[18rem_minmax(0,1fr)]">
-          <aside className="min-h-0 border-r border-canvas-line p-4">
+        <div className="grid min-h-0 flex-1 grid-cols-1 grid-rows-[minmax(11rem,40%)_minmax(0,1fr)] lg:grid-cols-[18rem_minmax(0,1fr)] lg:grid-rows-1">
+          <aside className="min-h-0 overflow-hidden border-b border-canvas-line p-3 lg:border-b-0 lg:border-r lg:p-4">
             <div className="mb-3 flex items-center justify-between gap-2">
               <h3 className="text-sm font-semibold">
                 {controller.activeSection.name}
