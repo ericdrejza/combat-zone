@@ -140,6 +140,14 @@ export function Toolbar({
             }
           }}
         >
+          {compactLayout ? (
+            <EncounterTitle
+              compact
+              iconOnly
+              name={encounterName}
+              onRename={onRenameEncounter}
+            />
+          ) : null}
           <LibraryToolbarButton onOpenLibrary={onOpenLibrary} />
           <span
             aria-orientation="vertical"

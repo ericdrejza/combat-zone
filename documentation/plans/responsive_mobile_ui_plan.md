@@ -29,26 +29,36 @@ single-panel drawer.
 - A stationary 500ms touch hold on any tooltip-bearing element shows its
   tooltip without activating the control. Mouse pointers continue to use
   hover and never enter the touch-hold path. Touch selection supports the same
-  selection toggle behavior as mouse input. Canvas touch
-  holds do not emulate right-click; mouse right-click remains available while
-  testing at a compact viewport width.
+  selection toggle behavior as mouse input. Touch holds anywhere in the app do
+  not invoke browser or application right-click context actions; mouse
+  right-click remains available while testing at a compact viewport width.
 - Touch canvas gestures have full parity: one-finger editing/selection and
   two-finger pan/pinch navigation, with existing right-drag desktop panning
   preserved.
-- Encounter title and rename controls remain reachable at compact widths and
-  use the same state/history behavior as desktop.
+- A compact bottom-left Delete control appears for a non-empty Zone, Edge, or
+  Actor selection only while its matching entity tool is active. It reuses the
+  keyboard deletion workflow, including selection clearing, history, and
+  entity-specific cascading effects.
+- At compact widths, Encounter rename remains in its normal far-left toolbar
+  position as an icon-only pencil control. A touch hold shows the current
+  Encounter name, and activation uses the same state/history behavior as
+  desktop.
 
 ## Mobile panels and launcher
 
 - At compact widths, replace the desktop side docks with a fixed bottom-right
   panel launcher and one scrollable drawer. The launcher defaults to Library.
 - The canonical launcher target order is:
-  `Library → Properties → Log → Status → Initiative → Zoneless`.
+  `Log → Library → Zoneless → Properties → Status → Initiative`.
 - The launcher icon always represents the last selected launcher target.
-- A short tap opens the current launcher target’s drawer. Holding or dragging
-  the launcher for 500ms opens the vertical target menu. Moving across menu
-  targets and releasing selects the target and closes the menu without opening
-  the drawer; the next short tap opens the selected drawer.
+- A short tap opens the current launcher target’s drawer. Holding the launcher
+  for 500ms opens a persistent vertical target menu. Releasing leaves the menu
+  open without closing an open panel; tapping outside closes only the menu.
+  Tapping a target selects it and closes the menu. An open panel replaces its
+  content in place, while a closed panel remains closed until the next short
+  launcher tap. Panel opening and closing has no horizontal travel animation.
+- The launcher also remains available on coarse-pointer, no-hover touch devices
+  whose desktop-site mode reports a viewport at or above 1024px.
 - Menu target selection works with touch, mouse, and keyboard equivalents.
   Escape and outside interaction dismiss transient menu/drawer state without
   changing EncounterState.
@@ -78,7 +88,7 @@ single-panel drawer.
    existing panel render callbacks, using the canonical six-target order.
 3. Update canvas touch handlers and viewport gesture handling for one-finger
    editing, two-finger pan/pinch, and selection toggles without touch-hold
-   right-click emulation.
+   right-click emulation anywhere in the application.
    Preserve desktop mouse/right-drag behavior and coordinate transforms.
 4. Update the compact Zoneless panel and Asset Library modal layout so drawer
    content fits narrow dynamic viewports, remains internally scrollable, and
@@ -102,8 +112,8 @@ single-panel drawer.
 - Toolbar tests cover icon presence, desktop labels, compact semantics, 44px
   targets, secondary subtool placement, horizontal scrolling, zoom utility
   behavior, and touch tooltip timing.
-- Panel tests cover Library default, short tap opening, 500ms hold menu,
-  drag/release target selection without drawer opening, next-tap opening,
+- Panel tests cover Library default, short tap opening, persistent 500ms hold
+  menu, tapped target selection without drawer opening, next-tap opening,
   canonical order, keyboard equivalents, focus return, and dismissal.
 - Touch/canvas tests cover one-finger editing, two-finger pan/pinch, selection
   toggles, no touch-hold context emulation, and unchanged desktop gestures.

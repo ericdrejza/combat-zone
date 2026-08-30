@@ -99,9 +99,11 @@ canvas aspect ratio. Fit commands target the logical area visible at the
 current viewport zoom. Every background or canvas-size mutation is one
 reversible history action.
 
-The active Encounter name is always visible: in the desktop toolbar and in a
-compact canvas title chip below 1024px. Renaming trims surrounding whitespace,
-requires a non-empty result, and commits as one reversible history action.
+The active Encounter name is visible in the desktop toolbar. Below 1024px, its
+normal far-left toolbar position becomes an icon-only pencil button; a touch
+hold shows the Encounter name in a tooltip. Renaming trims surrounding
+whitespace, requires a non-empty result, and commits as one reversible history
+action.
 
 ### 4.2 Zone
 
@@ -386,7 +388,13 @@ mouse input continues to use hover and keyboard focus exposes the same help.
 The selected tool's
 subtools render in a horizontally scrollable bar below the primary row. The
 current zoom percentage is the only persistent text in the compact toolbar;
-the Encounter name remains visible in the canvas title chip.
+the Encounter name is available from the far-left rename button's touch-hold
+tooltip.
+
+On mobile, selecting one or more Zones, Edges, or Actors with its matching
+entity tool shows an icon-only Delete control at the bottom-left of the canvas.
+The control deletes the complete current same-type selection through the same
+history-tracked workflow as the keyboard Delete command.
 
 Zoom is a utility rather than an entity-editing mode. On compact screens it is
 a primary toolbar icon whose controls occupy the subtool bar without changing
@@ -517,10 +525,11 @@ toggled from the toolbar. A right-click without a pan gesture retains the
 active tool's existing context action.
 
 Touch input uses one pointer for the active tool's normal editing gesture and
-two pointers for midpoint-preserving pan and pinch zoom. Touch does not emulate
-right-click through a hold gesture; context actions remain available through
-normal mouse right-click when testing a compact layout. Touch multi-selection
-is exposed as a subtool toggle because modifier keys are not available.
+two pointers for midpoint-preserving pan and pinch zoom. Touch holds anywhere
+in the application do not invoke browser or application right-click context
+actions; context actions remain available through normal mouse right-click
+when testing a compact layout. Touch multi-selection is exposed as a subtool
+toggle because modifier keys are not available.
 Perception-only touch navigation does not create history.
 
 ## 6. Layout System
@@ -572,13 +581,19 @@ Panels:
 
 Below 1024px, the canvas owns the workspace and docked panels are replaced by
 a bottom-right launcher and one right-side overlay drawer. The launcher uses
-this wrapping panel order: Library, Properties, Log, Status, Initiative,
-Zoneless. Library is the initial target. A short tap toggles the targeted
-drawer. Holding for 500ms opens an upward vertical icon bar; dragging enlarges
-the prospective icon and shows its caption, and release changes the launcher
-target without opening the drawer. The next tap opens that panel. The drawer
-leaves the launcher rail visible and closes from the launcher, its header,
+this wrapping panel order: Log, Library, Zoneless, Properties, Status,
+Initiative. Library is the initial target. A short tap toggles the targeted panel
+drawer. Holding for 500ms opens a persistent upward vertical icon bar; releasing
+the launcher leaves the bar open without closing an open panel. Tapping outside
+the icon bar closes it. Tapping an icon changes the launcher target; an open
+panel replaces its content in place, while a closed panel remains closed until
+the next launcher tap. Panels fade in and out without horizontal travel. The
+panel leaves the launcher rail visible and closes from the launcher, its header,
 backdrop, or Escape.
+
+The compact panel launcher also remains available on coarse-pointer, no-hover
+touch devices when a browser's desktop-site mode reports a layout viewport at
+or above 1024px.
 
 ### 7.2 Panels
 

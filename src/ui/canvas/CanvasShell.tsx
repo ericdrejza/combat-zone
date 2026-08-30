@@ -5,11 +5,14 @@ import { motion } from "motion/react";
 import type { LayoutPoint } from "@core/layout/types";
 import { useAltKey } from "@hooks/useAltKey";
 import { useCompactLayout } from "@hooks/useCompactLayout";
+import { useMobileControls } from "@hooks/useMobileControls";
+import { deleteSelectedEntities } from "@interaction/selection/deleteSelectedEntities";
 import type { AppDispatch, RootState } from "@store/store";
 import { ZonelessActorPanel } from "../panels/zoneless_actors/ZonelessActorPanel";
 import { closeZoneShapeMenu } from "../toolbar/events";
 import { CanvasDragOverlay } from "./CanvasDragOverlay";
 import { CanvasToolStatusBadge } from "./CanvasToolStatusBadge";
+import { CompactSelectionDeleteButton } from "./CompactSelectionDeleteButton";
 import { CanvasWorkspace } from "./CanvasWorkspace";
 import { CanvasViewport } from "./CanvasViewport";
 import { getTextColorForLuminance } from "./canvasLuminance";
@@ -64,6 +67,7 @@ export function CanvasShell() {
     (state: RootState) => state.interaction.touchMultiSelect
   );
   const compactLayout = useCompactLayout();
+  const showMobileControls = useMobileControls(compactLayout);
   const [actorDrag, setActorDrag] = useState<ActorDragState | null>(null);
   const [edgeDrag, setEdgeDrag] = useState<EdgeDragState | null>(null);
   const [hoveredActorId, setHoveredActorId] = useState<string | null>(null);
@@ -321,6 +325,13 @@ export function CanvasShell() {
         zoneStatuses={canvasStatus.zoneStatuses}
         zoneShapeMode={zoneShapeMode}
       />
+      {showMobileControls ? (
+        <CompactSelectionDeleteButton
+          activeToolId={activeToolId}
+          onDelete={() => deleteSelectedEntities(dispatch, encounter, selection)}
+          selection={selection}
+        />
+      ) : null}
       {!compactLayout ? (
         <ZonelessActorPanel
           activeToolId={activeToolId}

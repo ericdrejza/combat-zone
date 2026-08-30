@@ -1,6 +1,7 @@
-import { act, screen, within } from "@testing-library/react";
+import { act, fireEvent, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
+import { TOUCH_PRIMARY_INPUT_QUERY } from "@hooks/useMobileControls";
 import { renderApp } from "@tests/ui/renderApp";
 
 function installCompactMatchMedia() {
@@ -8,6 +9,20 @@ function installCompactMatchMedia() {
   window.matchMedia = vi.fn().mockImplementation((query: string) => ({
     addEventListener: vi.fn(),
     matches: query === "(max-width: 1023px)",
+    media: query,
+    onchange: null,
+    removeEventListener: vi.fn()
+  }));
+  return () => {
+    window.matchMedia = original;
+  };
+}
+
+function installTouchDesktopMatchMedia() {
+  const original = window.matchMedia;
+  window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+    addEventListener: vi.fn(),
+    matches: query === TOUCH_PRIMARY_INPUT_QUERY,
     media: query,
     onchange: null,
     removeEventListener: vi.fn()
@@ -54,6 +69,19 @@ function installResponsiveMatchMedia(initialCompact: boolean) {
 }
 
 describe("responsive workspace", () => {
+  it("keeps the panel launcher available when a touch phone requests desktop width", () => {
+    const restoreMatchMedia = installTouchDesktopMatchMedia();
+
+    try {
+      renderApp();
+
+      expect(screen.getByLabelText("left docked panels")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Library panel" })).toBeInTheDocument();
+    } finally {
+      restoreMatchMedia();
+    }
+  });
+
   it("uses icon tools, a secondary option strip, and compact panel launcher", async () => {
     const restoreMatchMedia = installCompactMatchMedia();
     const user = userEvent.setup();
@@ -79,9 +107,14 @@ describe("responsive workspace", () => {
       expect(screen.queryByLabelText("left docked panels")).not.toBeInTheDocument();
       expect(screen.queryByLabelText("right docked panels")).not.toBeInTheDocument();
       expect(screen.getByRole("button", { name: "Library panel" })).toBeInTheDocument();
-      expect(
-        screen.getByRole("button", { name: /Rename encounter Untitled Encounter/ })
-      ).toBeInTheDocument();
+      const renameButton = within(tools).getByRole("button", {
+        name: /Rename encounter Untitled Encounter/
+      });
+      expect(renameButton).toBeInTheDocument();
+      expect(renameButton.querySelector("svg")).not.toBeNull();
+      expect(screen.getAllByRole("button", {
+        name: /Rename encounter Untitled Encounter/
+      })).toHaveLength(1);
 
       await user.click(within(tools).getByRole("button", { name: "Zone" }));
       expect(
@@ -119,6 +152,34 @@ describe("responsive workspace", () => {
       unmount();
     } finally {
       restoreMatchMedia();
+    }
+  });
+
+  it("shows the encounter name after holding the compact toolbar rename button", () => {
+    vi.useFakeTimers();
+    const restoreMatchMedia = installCompactMatchMedia();
+
+    try {
+      renderApp();
+      const tools = screen.getByRole("navigation", { name: "Tools" });
+      const renameButton = within(tools).getByRole("button", {
+        name: /Rename encounter Untitled Encounter/
+      });
+
+      fireEvent.pointerDown(renameButton, {
+        button: 0,
+        clientX: 24,
+        clientY: 24,
+        pointerId: 1,
+        pointerType: "touch"
+      });
+      act(() => vi.advanceTimersByTime(500));
+
+      expect(screen.getByRole("tooltip")).toHaveTextContent("Untitled Encounter");
+      fireEvent.pointerUp(renameButton, { pointerId: 1, pointerType: "touch" });
+    } finally {
+      restoreMatchMedia();
+      vi.useRealTimers();
     }
   });
 

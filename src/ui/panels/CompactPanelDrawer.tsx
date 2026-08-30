@@ -22,10 +22,10 @@ export function CompactPanelDrawer({
       aria-label={`${panel.title} panel`}
       aria-modal="true"
       className="pointer-events-auto absolute inset-y-0 right-0 flex w-[min(24rem,calc(100vw-3.5rem))] max-w-[24rem] flex-col border-l border-canvas-line bg-canvas-panel shadow-2xl [padding-bottom:calc(env(safe-area-inset-bottom)+4.5rem)]"
-      initial={{ x: "100%" }}
-      animate={{ x: 0 }}
-      exit={{ x: "100%" }}
-      transition={{ type: "spring", stiffness: 360, damping: 34 }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.15 }}
       role="dialog"
     >
       <header className="flex min-h-14 shrink-0 items-center justify-between gap-2 border-b border-canvas-line px-4">
