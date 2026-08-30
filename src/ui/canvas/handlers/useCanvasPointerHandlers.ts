@@ -10,6 +10,7 @@ import type { CanvasInteractionState } from '../canvasInteractionTypes';
 import type { ActorDragStartEvent } from '../canvasInteractionTypes';
 import { useCanvasMouseUpHandler } from './useCanvasMouseUpHandler';
 import { useEngagementHoverIntent } from '../engagements/useEngagementHoverIntent';
+import { getPointerTargetZoneId } from '../edges/edgePointerTarget';
 import {
   distance,
   getDisplayedZonePolygon,
@@ -99,9 +100,7 @@ export function useCanvasPointerHandlers(input: PointerHandlerInput) {
     }
 
     if (edgeDrag) {
-      const target = event.target as Element;
-      const zoneElement = target.closest<SVGElement>('[data-entity-type="zone"]');
-      const targetZoneId = zoneElement?.dataset.entityId;
+      const targetZoneId = getPointerTargetZoneId(event);
       setEdgeDrag({
         ...edgeDrag,
         current: toSvgPoint(event, event.currentTarget),
@@ -335,9 +334,18 @@ export function useCanvasPointerHandlers(input: PointerHandlerInput) {
     void finishCanvasInteraction();
   }
 
-  function handleCanvasMouseUp() {
+  function handleCanvasMouseUp(
+    event?: MouseEvent<SVGSVGElement> | PointerEvent<SVGSVGElement>
+  ) {
     if (edgeDrag) {
-      const targetZoneId = edgeDrag.targetZoneId;
+      const pointerTargetZoneId = event
+        ? getPointerTargetZoneId(event)
+        : undefined;
+      const targetZoneId = pointerTargetZoneId === undefined
+        ? edgeDrag.targetZoneId
+        : pointerTargetZoneId !== edgeDrag.sourceZoneId
+          ? pointerTargetZoneId
+          : undefined;
       setEdgeDrag(null);
       if (targetZoneId) {
         void import('../edges/edgeCreationActions').then(({ commitEdgeDrag }) =>

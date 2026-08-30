@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { motion } from "motion/react";
 
 import type { LayoutPoint } from "@core/layout/types";
 import { useAltKey } from "@hooks/useAltKey";
@@ -14,6 +13,7 @@ import { CanvasDragOverlay } from "./CanvasDragOverlay";
 import { CanvasToolStatusBadge } from "./CanvasToolStatusBadge";
 import { CompactSelectionDeleteButton } from "./CompactSelectionDeleteButton";
 import { CanvasWorkspace } from "./CanvasWorkspace";
+import { CanvasTransferPreview } from "./CanvasTransferPreview";
 import { CanvasViewport } from "./CanvasViewport";
 import { getTextColorForLuminance } from "./canvasLuminance";
 import type {
@@ -344,17 +344,7 @@ export function CanvasShell() {
         />
       ) : null}
       {compactTransferPreview ? (
-        <motion.div
-          animate={{
-            x: compactTransferPreview.clientX + 12,
-            y: compactTransferPreview.clientY + 12
-          }}
-          className="pointer-events-none fixed left-0 top-0 z-[90] max-w-40 truncate rounded-full border border-canvas-line bg-canvas-panel px-3 py-2 text-sm font-medium shadow-lg"
-          initial={false}
-          role="status"
-        >
-          {compactTransferPreview.label}
-        </motion.div>
+        <CanvasTransferPreview preview={compactTransferPreview} />
       ) : null}
     </section>
   );

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
-export const COMPACT_LAYOUT_QUERY = "(max-width: 1023px)";
+export const COMPACT_LAYOUT_BREAKPOINT_PX = 1024;
+export const COMPACT_LAYOUT_QUERY = `(width < ${COMPACT_LAYOUT_BREAKPOINT_PX}px)`;
 
 function getInitialCompactLayout(): boolean {
   if (typeof window === "undefined") {
@@ -9,7 +10,7 @@ function getInitialCompactLayout(): boolean {
 
   return window.matchMedia
     ? window.matchMedia(COMPACT_LAYOUT_QUERY).matches
-    : window.innerWidth < 1024;
+    : window.innerWidth < COMPACT_LAYOUT_BREAKPOINT_PX;
 }
 
 /** Keeps behavior and accessible DOM composition aligned with the lg breakpoint. */
@@ -18,7 +19,8 @@ export function useCompactLayout(): boolean {
 
   useEffect(() => {
     if (!window.matchMedia) {
-      const updateFromWidth = () => setCompact(window.innerWidth < 1024);
+      const updateFromWidth = () =>
+        setCompact(window.innerWidth < COMPACT_LAYOUT_BREAKPOINT_PX);
       window.addEventListener("resize", updateFromWidth);
       return () => window.removeEventListener("resize", updateFromWidth);
     }

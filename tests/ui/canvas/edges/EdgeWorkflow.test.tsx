@@ -62,6 +62,56 @@ describe("Edge workflow", () => {
     expect(store.getState().encounter.present.edges.allIds).toEqual([]);
   });
 
+  it("creates an edge from a touch drag when pointer capture keeps targeting the source Zone", async () => {
+    renderApp();
+    act(seedTwoZones);
+    act(() => { store.dispatch(setActiveTool("edge")); });
+    const canvas = getCanvas();
+    mockCanvasBounds(canvas);
+    const source = screen.getByLabelText("Source");
+    const target = screen.getByLabelText("Target");
+    const originalElementsFromPoint = document.elementsFromPoint;
+    Object.defineProperty(document, "elementsFromPoint", {
+      configurable: true,
+      value: vi.fn(() => [target])
+    });
+
+    try {
+      fireEvent.pointerDown(source, {
+        button: 0,
+        clientX: 140,
+        clientY: 140,
+        pointerId: 1,
+        pointerType: "touch"
+      });
+      // Touch pointer capture keeps dispatching through the source element.
+      fireEvent.pointerMove(source, {
+        clientX: 440,
+        clientY: 140,
+        pointerId: 1,
+        pointerType: "touch"
+      });
+      fireEvent.pointerUp(source, {
+        clientX: 440,
+        clientY: 140,
+        pointerId: 1,
+        pointerType: "touch"
+      });
+
+      await waitFor(() => {
+        expect(store.getState().encounter.present.edges.allIds).toHaveLength(1);
+      });
+      expect(store.getState().encounter.present.edges.byId[
+        store.getState().encounter.present.edges.allIds[0]
+      ]).toMatchObject({ fromZoneId: "source", toZoneId: "target" });
+    } finally {
+      Object.defineProperty(document, "elementsFromPoint", {
+        configurable: true,
+        value: originalElementsFromPoint
+      });
+    }
+  });
+
   it("batch edits selected edge rules through one undoable Properties action", async () => {
     const user = userEvent.setup();
     renderApp();

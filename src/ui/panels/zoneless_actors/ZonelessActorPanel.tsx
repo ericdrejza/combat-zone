@@ -1,4 +1,4 @@
-import type { DragEvent, MouseEvent } from "react";
+import type { DragEvent, MouseEvent, PointerEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ChevronDown,
@@ -20,6 +20,7 @@ import {
 } from "./zonelessActorDrag";
 import { useResizablePanel } from "../../canvas/useResizablePanel";
 import { ZonelessActorPanelToken } from "./ZonelessActorPanelToken";
+import { armCompactCanvasTransfer } from "@ui/canvas/compactCanvasTransfer";
 
 type ZonelessActorPanelProps = {
   activeToolId: RootState["interaction"]["activeToolId"];
@@ -165,6 +166,27 @@ export function ZonelessActorPanel({
     dragPreviewCleanupRef.current = null;
   }
 
+  function startPointerTransfer(
+    actorId: string,
+    event: PointerEvent<HTMLButtonElement>
+  ) {
+    const actorIds = selectedZonelessIds.includes(actorId)
+      ? selectedZonelessIds
+      : [actorId];
+    const actor = zonelessActors.find((candidate) => candidate.id === actorId);
+
+    if (!actor) {
+      return;
+    }
+
+    armCompactCanvasTransfer(
+      event.nativeEvent,
+      { actor, actorIds, kind: "zoneless-actors" },
+      undefined,
+      "all"
+    );
+  }
+
   return (
     <aside
       aria-label="Zoneless actors"
@@ -264,10 +286,10 @@ export function ZonelessActorPanel({
                     {group.actors.map((actor) => (
                       <ZonelessActorPanelToken
                         actor={actor}
-                        activeToolId={activeToolId}
                         key={actor.id}
                         onDragEnd={handleDragEnd}
                         onDragStart={handleDragStart}
+                        onPointerDown={startPointerTransfer}
                         onSelect={handleSelect}
                         selectedIds={selectedIds}
                       />
@@ -281,10 +303,10 @@ export function ZonelessActorPanel({
               {zonelessActors.map((actor) => (
                 <ZonelessActorPanelToken
                   actor={actor}
-                  activeToolId={activeToolId}
                   key={actor.id}
                   onDragEnd={handleDragEnd}
                   onDragStart={handleDragStart}
+                  onPointerDown={startPointerTransfer}
                   onSelect={handleSelect}
                   selectedIds={selectedIds}
                 />

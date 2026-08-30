@@ -1,6 +1,7 @@
 import { act, fireEvent, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
+import { COMPACT_LAYOUT_QUERY } from "@hooks/useCompactLayout";
 import { clearSelection, setActiveTool } from "@interaction/interactionState";
 import { undoEncounterChange } from "@store/encounterSlice";
 import { store } from "@store/store";
@@ -16,7 +17,7 @@ function installCompactMatchMedia() {
   const original = window.matchMedia;
   window.matchMedia = vi.fn().mockImplementation((query: string) => ({
     addEventListener: vi.fn(),
-    matches: query === "(max-width: 1023px)",
+    matches: query === COMPACT_LAYOUT_QUERY,
     media: query,
     onchange: null,
     removeEventListener: vi.fn()

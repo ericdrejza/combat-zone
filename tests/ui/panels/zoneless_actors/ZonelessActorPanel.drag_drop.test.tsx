@@ -4,7 +4,7 @@ import { afterEach, vi } from "vitest";
 
 import { ZONELESS_ACTOR_ZONE_ID } from "@core/encounter/types";
 import { setActiveTool } from "@interaction/interactionState";
-import { ACTOR_CREATION_DRAG_TYPE } from "@ui/toolbar/actor/actorCreationDrag";
+import { COMPACT_LAYOUT_QUERY } from "@hooks/useCompactLayout";
 import {
   redoEncounterChange,
   undoEncounterChange
@@ -30,9 +30,141 @@ afterEach(() => {
 });
 
 describe("ZonelessActorPanel drag and drop", () => {
+  it("moves a zoneless actor with a mouse pointer transfer", async () => {
+    const user = userEvent.setup();
+
+    renderApp();
+    act(() => {
+      seedEncounter([
+        {
+          ...actor("actor-a", "Aegis"),
+          image: "data:image/png;base64,aegis"
+        }
+      ], [zone()]);
+      store.dispatch(setActiveTool("actor"));
+    });
+    await user.click(
+      screen.getByRole("button", { name: "Expand zoneless actors" })
+    );
+
+    const canvas = getCanvas();
+    mockCanvasBounds(canvas);
+    const actorButton = screen.getByRole("button", { name: "Aegis" });
+    expect(actorButton).toHaveAttribute("draggable", "false");
+
+    fireEvent.pointerDown(actorButton, {
+      button: 0,
+      clientX: 500,
+      clientY: 300,
+      pointerId: 21,
+      pointerType: "mouse"
+    });
+    fireEvent.pointerMove(window, {
+      clientX: 510,
+      clientY: 300,
+      pointerId: 21,
+      pointerType: "mouse"
+    });
+    const transferPreview = screen.getByRole("status", {
+      name: "Dragging 1 actor"
+    });
+    expect(transferPreview.querySelector("svg")).toBeInTheDocument();
+    expect(transferPreview.querySelector("image")).toHaveAttribute(
+      "href",
+      "data:image/png;base64,aegis"
+    );
+    fireEvent.pointerUp(window, {
+      clientX: 120,
+      clientY: 120,
+      pointerId: 21,
+      pointerType: "mouse"
+    });
+
+    expect(
+      store.getState().encounter.present.actors.byId["actor-a"]?.currentZoneId
+    ).toBe("zone-target");
+  });
+
+  it("continues a touch transfer after the compact zoneless drawer closes", () => {
+    const originalMatchMedia = window.matchMedia;
+    window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+      addEventListener: vi.fn(),
+      matches: query === COMPACT_LAYOUT_QUERY,
+      media: query,
+      onchange: null,
+      removeEventListener: vi.fn()
+    }));
+
+    try {
+      renderApp();
+      act(() => {
+        seedEncounter([
+          {
+            ...actor("actor-a", "Aegis"),
+            image: "data:image/png;base64,compact-aegis"
+          }
+        ], [zone()]);
+        store.dispatch(setActiveTool("actor"));
+      });
+      const canvas = getCanvas();
+      mockCanvasBounds(canvas);
+      const libraryLauncher = screen.getByRole("button", {
+        name: "Library panel"
+      });
+      fireEvent.keyDown(libraryLauncher, { key: "ArrowDown" });
+      fireEvent.click(screen.getByRole("menuitem", { name: "Zoneless" }));
+
+      const zonelessLauncher = screen.getByRole("button", {
+        name: "Zoneless panel"
+      });
+      fireEvent.pointerDown(zonelessLauncher, { button: 0, pointerId: 30 });
+      fireEvent.pointerUp(zonelessLauncher, { pointerId: 30 });
+      expect(
+        screen.getByRole("dialog", { name: "Zoneless panel" })
+      ).toBeInTheDocument();
+
+      const actorButton = screen.getByRole("button", { name: "Aegis" });
+      fireEvent.pointerDown(actorButton, {
+        button: 0,
+        clientX: 500,
+        clientY: 300,
+        pointerId: 31,
+        pointerType: "touch"
+      });
+      fireEvent.pointerMove(window, {
+        clientX: 510,
+        clientY: 300,
+        pointerId: 31,
+        pointerType: "touch"
+      });
+
+      expect(
+        screen.queryByRole("dialog", { name: "Zoneless panel" })
+      ).not.toBeInTheDocument();
+      const transferPreview = screen.getByRole("status", {
+        name: "Dragging 1 actor"
+      });
+      expect(transferPreview.querySelector("image")).toHaveAttribute(
+        "href",
+        "data:image/png;base64,compact-aegis"
+      );
+      fireEvent.pointerUp(window, {
+        clientX: 120,
+        clientY: 120,
+        pointerId: 31,
+        pointerType: "touch"
+      });
+
+      expect(
+        store.getState().encounter.present.actors.byId["actor-a"]?.currentZoneId
+      ).toBe("zone-target");
+    } finally {
+      window.matchMedia = originalMatchMedia;
+    }
+  });
+
   it("creates a new actor when the actor preview is dropped into the panel", async () => {
     const user = userEvent.setup();
-    const transfer = dataTransfer();
 
     renderApp();
     act(() => {
@@ -43,21 +175,32 @@ describe("ZonelessActorPanel drag and drop", () => {
       screen.getByRole("textbox", { name: "Actor name" }),
       "Dropped Actor"
     );
+    const canvas = getCanvas();
+    mockCanvasBounds(canvas);
+    const preview = screen.getByLabelText("Actor preview");
 
-    fireEvent.dragStart(screen.getByLabelText("Actor preview"), {
-      dataTransfer: transfer
+    fireEvent.pointerDown(preview, {
+      button: 0,
+      clientX: 500,
+      clientY: 300,
+      pointerId: 10,
+      pointerType: "mouse"
     });
-    await waitFor(() => {
-      expect(
-        screen.queryByRole("dialog", { name: "Create actor" })
-      ).not.toBeInTheDocument();
+    fireEvent.pointerMove(window, {
+      clientX: 510,
+      clientY: 300,
+      pointerId: 10,
+      pointerType: "mouse"
     });
-
-    const panel = screen.getByRole("complementary", {
-      name: "Zoneless actors"
+    expect(
+      screen.queryByRole("dialog", { name: "Create actor" })
+    ).not.toBeInTheDocument();
+    fireEvent.pointerUp(window, {
+      clientX: 700,
+      clientY: 500,
+      pointerId: 10,
+      pointerType: "mouse"
     });
-    fireEvent.dragOver(panel, { dataTransfer: transfer });
-    fireEvent.drop(panel, { dataTransfer: transfer });
 
     const createdActor = Object.values(
       store.getState().encounter.present.actors.byId
@@ -86,8 +229,6 @@ describe("ZonelessActorPanel drag and drop", () => {
           candidate.currentZoneId === ZONELESS_ACTOR_ZONE_ID
       )
     ).toBe(true);
-    expect(transfer.dropEffect).toBe("copy");
-    expect(transfer.types).toContain(ACTOR_CREATION_DRAG_TYPE);
   });
 
   it("moves selected panel actors into a zone and restores them with undo/redo", async () => {

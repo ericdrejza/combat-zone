@@ -1,24 +1,41 @@
+import type { Actor } from "@entities/actor/types";
+import type { NewActorDragData } from "@ui/toolbar/actor/actorCreationDrag";
+
 export const COMPACT_CANVAS_TRANSFER_EVENT = "combat-zone:compact-canvas-transfer";
 
+export type ActorTransferVisual = NewActorDragData & Pick<Actor, "image">;
+
 export type CompactCanvasTransferPayload =
-  | { actorIds: string[]; kind: "zoneless-actors" }
+  | {
+      actor: ActorTransferVisual;
+      actorIds: string[];
+      kind: "zoneless-actors";
+    }
+  | { actor: NewActorDragData; kind: "new-actor" }
   | { kind: "library-node"; nodeId: string };
 
 export type CompactCanvasTransferDetail = {
   clientX: number;
   clientY: number;
+  onTransferEnd?: () => void;
   payload: CompactCanvasTransferPayload;
   pointerId: number;
 };
 
 const TRANSFER_THRESHOLD_PX = 8;
 
-/** Arms a touch transfer, handing it to the canvas only after intentional movement. */
+/** Arms a pointer transfer, handing it to the canvas only after intentional movement. */
 export function armCompactCanvasTransfer(
   event: PointerEvent,
-  payload: CompactCanvasTransferPayload
+  payload: CompactCanvasTransferPayload,
+  onTransferStart?: () => void,
+  pointerTypes: "touch" | "all" = "touch",
+  onTransferEnd?: () => void
 ): void {
-  if (event.pointerType !== "touch" || event.button !== 0) {
+  if (
+    event.button !== 0 ||
+    (pointerTypes === "touch" && event.pointerType !== "touch")
+  ) {
     return;
   }
 
@@ -48,10 +65,12 @@ export function armCompactCanvasTransfer(
           clientX: moveEvent.clientX,
           clientY: moveEvent.clientY,
           payload,
-          pointerId
+          pointerId,
+          ...(onTransferEnd ? { onTransferEnd } : {})
         }
       })
     );
+    onTransferStart?.();
   };
   const handleEnd = (endEvent: PointerEvent) => {
     if (endEvent.pointerId === pointerId) {

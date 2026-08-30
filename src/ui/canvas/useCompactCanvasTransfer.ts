@@ -5,15 +5,16 @@ import { clearSelection } from "@interaction/interactionState";
 import type { AppDispatch, RootState } from "@store/store";
 import { findZoneIdAtPoint } from "./actors/actorCanvasLayout";
 import {
+  commitActorFromCreation,
   commitActorFromLibraryNode,
   moveActorsToZone
 } from "./canvasDropMutations";
 import {
   COMPACT_CANVAS_TRANSFER_EVENT,
+  type ActorTransferVisual,
   type CompactCanvasTransferDetail
 } from "./compactCanvasTransfer";
 import { toSvgPoint } from "./zones/zoneGeometry";
-
 type UseCompactCanvasTransferInput = {
   actorTool: RootState["interaction"]["actorTool"];
   activeToolId: RootState["interaction"]["activeToolId"];
@@ -24,12 +25,13 @@ type UseCompactCanvasTransferInput = {
 };
 
 export type CompactTransferPreview = {
+  actor?: ActorTransferVisual;
   clientX: number;
   clientY: number;
   label: string;
 } | null;
 
-/** Owns a touch transfer after its source drawer has safely unmounted. */
+/** Owns a pointer transfer after its source surface has safely unmounted. */
 export function useCompactCanvasTransfer({
   activeToolId,
   actorTool,
@@ -46,7 +48,8 @@ export function useCompactCanvasTransfer({
       const { payload, pointerId } = detail;
 
       if (
-        (payload.kind === "library-node" && activeToolId !== "actor") ||
+        ((payload.kind === "library-node" || payload.kind === "new-actor") &&
+          activeToolId !== "actor") ||
         (payload.kind === "zoneless-actors" &&
           activeToolId !== "actor" &&
           activeToolId !== "select")
@@ -61,8 +64,14 @@ export function useCompactCanvasTransfer({
       const label =
         payload.kind === "library-node"
           ? library.sections.tokens.nodesById[payload.nodeId]?.name ?? "Actor"
-          : `${payload.actorIds.length} actor${payload.actorIds.length === 1 ? "" : "s"}`;
-      setPreview({ clientX: detail.clientX, clientY: detail.clientY, label });
+          : payload.kind === "new-actor"
+            ? payload.actor.name
+            : `${payload.actorIds.length} actor${payload.actorIds.length === 1 ? "" : "s"}`;
+      const actor =
+        payload.kind === "new-actor" || payload.kind === "zoneless-actors"
+          ? payload.actor
+          : undefined;
+      setPreview({ actor, clientX: detail.clientX, clientY: detail.clientY, label });
 
       const mutationContext = { actorTool, dispatch, encounter, library };
       const cleanup = () => {
@@ -70,10 +79,11 @@ export function useCompactCanvasTransfer({
         window.removeEventListener("pointerup", handleUp);
         window.removeEventListener("pointercancel", handleCancel);
         setPreview(null);
+        detail.onTransferEnd?.();
       };
       const handleMove = (moveEvent: PointerEvent) => {
         if (moveEvent.pointerId === pointerId) {
-          setPreview({ clientX: moveEvent.clientX, clientY: moveEvent.clientY, label });
+          setPreview({ actor, clientX: moveEvent.clientX, clientY: moveEvent.clientY, label });
         }
       };
       const handleUp = (upEvent: PointerEvent) => {
@@ -98,6 +108,13 @@ export function useCompactCanvasTransfer({
               commitActorFromLibraryNode(
                 mutationContext,
                 payload.nodeId,
+                destinationZoneId ?? ZONELESS_ACTOR_ZONE_ID,
+                point
+              );
+            } else if (payload.kind === "new-actor") {
+              commitActorFromCreation(
+                mutationContext,
+                payload.actor,
                 destinationZoneId ?? ZONELESS_ACTOR_ZONE_ID,
                 point
               );

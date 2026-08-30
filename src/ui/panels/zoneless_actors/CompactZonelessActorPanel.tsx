@@ -83,7 +83,6 @@ export function CompactZonelessActorPanel() {
     return actorIds.map((actor) => (
       <ZonelessActorPanelToken
         actor={actor}
-        activeToolId={activeToolId}
         key={actor.id}
         onDragEnd={finishDrag}
         onDragStart={startDrag}
@@ -92,9 +91,10 @@ export function CompactZonelessActorPanel() {
             ? selectedIds
             : [actorId];
           armCompactCanvasTransfer(event.nativeEvent, {
+            actor,
             actorIds,
             kind: "zoneless-actors"
-          });
+          }, undefined, "all");
         }}
         onSelect={selectActor}
         selectedIds={selectedIds}

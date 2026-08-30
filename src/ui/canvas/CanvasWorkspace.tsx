@@ -74,7 +74,9 @@ type CanvasWorkspaceProps = {
   handleCanvasMouseMove: (
     event: MouseEvent<SVGSVGElement> | ReactPointerEvent<SVGSVGElement>
   ) => void;
-  handleCanvasMouseUp: MouseEventHandler<SVGSVGElement>;
+  handleCanvasMouseUp: (
+    event: MouseEvent<SVGSVGElement> | ReactPointerEvent<SVGSVGElement>
+  ) => void;
   handleResizeHandleMouseDown: (
     zone: Zone,
     polygon: LayoutPoint[],
