@@ -31,12 +31,10 @@ export type CompactPanelLauncherProps = {
   panels?: readonly CompactPanelDefinition[];
 };
 
-type Point = { x: number; y: number };
-
 /**
- * Compact (<1024px) panel affordance. The launcher is intentionally mounted
- * independently from the desktop docks so responsive layout changes do not
- * alter panel state or the panel content contract.
+ * Mobile panel affordance. The launcher is intentionally mounted independently
+ * from the desktop docks so responsive layout changes do not alter panel state
+ * or the panel content contract.
  */
 export function CompactPanelLauncher({
   onDrawerChange,
@@ -89,35 +87,13 @@ export function CompactPanelLauncher({
     setHighlightedIndex(null);
   }, []);
 
-  const indexAtPoint = useCallback(
-    ({ x, y }: Point): number | null => {
-      const menu = menuRef.current;
-      if (!menu) {
-        return null;
-      }
-      const itemElements = Array.from(
-        menu.querySelectorAll<HTMLElement>("[data-compact-panel-item]")
-      );
-      const index = itemElements.findIndex((element) => {
-        const rect = element.getBoundingClientRect();
-        return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
-      });
-      return index >= 0 ? index : null;
-    },
-    []
-  );
-
   const finishPointer = useCallback(
-    (point: Point) => {
+    () => {
       if (holdTimerRef.current) {
         clearTimeout(holdTimerRef.current);
         holdTimerRef.current = null;
       }
       if (holdActiveRef.current) {
-        const index = indexAtPoint(point);
-        if (index !== null && panels[index]) {
-          selectPanel(panels[index].id);
-        }
         suppressClickRef.current = true;
         // A pointer release on the launcher may still dispatch a click after
         // this callback. Clear the guard after that browser event has run so
@@ -125,7 +101,6 @@ export function CompactPanelLauncher({
         setTimeout(() => {
           suppressClickRef.current = false;
         }, 0);
-        closeMenu();
       } else {
         suppressClickRef.current = true;
         setDrawer(!drawerOpen);
@@ -133,20 +108,10 @@ export function CompactPanelLauncher({
       holdActiveRef.current = false;
       pointerIdRef.current = null;
     },
-    [closeMenu, drawerOpen, indexAtPoint, panels, selectPanel]
+    [drawerOpen, setDrawer]
   );
 
   useEffect(() => {
-    const onPointerMove = (event: PointerEvent) => {
-      if (
-        pointerIdRef.current === null ||
-        event.pointerId !== pointerIdRef.current ||
-        !holdActiveRef.current
-      ) {
-        return;
-      }
-      setHighlightedIndex(indexAtPoint({ x: event.clientX, y: event.clientY }));
-    };
     const onPointerUp = (event: PointerEvent) => {
       if (
         pointerIdRef.current === null ||
@@ -154,17 +119,15 @@ export function CompactPanelLauncher({
       ) {
         return;
       }
-      finishPointer({ x: event.clientX, y: event.clientY });
+      finishPointer();
     };
-    window.addEventListener("pointermove", onPointerMove);
     window.addEventListener("pointerup", onPointerUp);
     window.addEventListener("pointercancel", onPointerUp);
     return () => {
-      window.removeEventListener("pointermove", onPointerMove);
       window.removeEventListener("pointerup", onPointerUp);
       window.removeEventListener("pointercancel", onPointerUp);
     };
-  }, [finishPointer, indexAtPoint]);
+  }, [finishPointer]);
 
   useLayoutEffect(() => {
     if (!keyboardMenuOpen) {
@@ -215,7 +178,6 @@ export function CompactPanelLauncher({
     setHighlightedIndex(
       Math.max(0, panels.findIndex((panel) => panel.id === selectedPanelId))
     );
-    setDrawer(false);
   }
 
   function onLauncherPointerDown(event: ReactPointerEvent<HTMLButtonElement>) {
@@ -228,7 +190,6 @@ export function CompactPanelLauncher({
       holdActiveRef.current = true;
       setMenuOpen(true);
       setKeyboardMenuOpen(false);
-      setDrawer(false);
     }, HOLD_DURATION_MS);
   }
 
@@ -238,8 +199,11 @@ export function CompactPanelLauncher({
       openKeyboardMenu();
     } else if (event.key === "Escape" && (drawerOpen || menuOpen)) {
       event.preventDefault();
-      closeMenu();
-      setDrawer(false);
+      if (menuOpen) {
+        closeMenu();
+      } else {
+        setDrawer(false);
+      }
     }
   }
 
@@ -286,16 +250,19 @@ export function CompactPanelLauncher({
   }
 
   return (
-    <div className="pointer-events-none absolute inset-0 z-40 block min-[1024px]:hidden" data-compact-panels>
+    <div className="pointer-events-none absolute inset-0 z-40" data-compact-panels>
       <AnimatePresence>
         {drawerOpen ? (
-          <motion.div
-            aria-hidden="true"
+          <motion.button
+            aria-label="Close panel drawer"
             className="pointer-events-auto absolute inset-0 bg-black/20"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setDrawer(false)}
+            onPointerDown={() => setDrawer(false)}
+            tabIndex={-1}
+            type="button"
           />
         ) : null}
       </AnimatePresence>
@@ -306,6 +273,21 @@ export function CompactPanelLauncher({
             panel={selectedPanel}
             renderPanelContent={renderPanelContent}
             renderPanelHeaderActions={renderPanelHeaderActions}
+          />
+        ) : null}
+      </AnimatePresence>
+      <AnimatePresence>
+        {menuOpen ? (
+          <motion.button
+            aria-label="Dismiss panel chooser"
+            className="pointer-events-auto absolute inset-0 bg-transparent"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={closeMenu}
+            onPointerDown={closeMenu}
+            tabIndex={-1}
+            type="button"
           />
         ) : null}
       </AnimatePresence>
@@ -337,8 +319,8 @@ export function CompactPanelLauncher({
         onClick={onLauncherClick}
         onKeyDown={onLauncherKeyDown}
         onPointerDown={onLauncherPointerDown}
-        onPointerUp={(event) => finishPointer({ x: event.clientX, y: event.clientY })}
-        onPointerCancel={(event) => finishPointer({ x: event.clientX, y: event.clientY })}
+        onPointerUp={finishPointer}
+        onPointerCancel={finishPointer}
         type="button"
       >
         <selectedPanel.Icon aria-hidden="true" className="h-5 w-5" />

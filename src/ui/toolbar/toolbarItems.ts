@@ -1,5 +1,6 @@
 import {
   ArrowRightFromLine,
+  Bookmark,
   CircleUserRound,
   Circle,
   Hexagon,
@@ -8,7 +9,6 @@ import {
   Pentagon,
   Square,
   Shapes,
-  StickyNote,
   type LucideIcon
 } from 'lucide-react';
 
@@ -22,7 +22,7 @@ import type { ToolId } from '@interaction/tools/toolRegistry';
 /** Primary tool iconography stays centralized so compact and desktop controls match. */
 export const TOOL_ICONS: Record<ToolId, LucideIcon> = {
   actor: CircleUserRound,
-  annotation: StickyNote,
+  annotation: Bookmark,
   background: Image,
   edge: ArrowRightFromLine,
   select: Pointer,

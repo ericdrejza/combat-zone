@@ -36,13 +36,13 @@ import { readImageAssetDimensions } from "./toolbar/background/readImageFile";
 import { commitBackgroundImage } from "./toolbar/background/backgroundCanvasActions";
 import { useCanvasViewport } from "./canvas/CanvasViewportContext";
 import { useCompactLayout } from "@hooks/useCompactLayout";
+import { useMobileControls } from "@hooks/useMobileControls";
 import { CompactPanelLauncher } from "./panels/CompactPanelLauncher";
 import type {
   CompactPanelDefinition
 } from "./panels/compactPanelMetadata";
 import { CompactZonelessActorPanel } from "./panels/zoneless_actors/CompactZonelessActorPanel";
 import { EncounterRenameDialog } from "./encounter/EncounterRenameDialog";
-import { EncounterTitle } from "./encounter/EncounterTitle";
 import { TouchTooltipProvider } from "./toolbar/TouchTooltip";
 
 type SidebarCollapsedState = Record<DockSide, boolean>;
@@ -91,6 +91,7 @@ function AppContent() {
   const library = useSelector((state: RootState) => state.library);
   const selection = useSelector((state: RootState) => state.interaction.selection);
   const compactLayout = useCompactLayout();
+  const showCompactPanelLauncher = useMobileControls(compactLayout);
   const [panelLayout, setPanelLayout] = useState<PanelLayout>(initialPanelLayout);
   const [libraryAutoCollapsedBySelect, setLibraryAutoCollapsedBySelect] =
     useState(false);
@@ -370,22 +371,11 @@ function AppContent() {
         </SidebarDock>
         ) : null}
         <CanvasShell />
-        {compactLayout ? (
-          <>
-            <div className="pointer-events-none absolute left-3 top-3 z-30">
-              <div className="pointer-events-auto">
-                <EncounterTitle
-                  compact
-                  name={encounter.name}
-                  onRename={() => setEncounterRenameOpen(true)}
-                />
-              </div>
-            </div>
-            <CompactPanelLauncher
-              renderPanelContent={renderPanelContent}
-              renderPanelHeaderActions={renderPanelHeaderActions}
-            />
-          </>
+        {showCompactPanelLauncher ? (
+          <CompactPanelLauncher
+            renderPanelContent={renderPanelContent}
+            renderPanelHeaderActions={renderPanelHeaderActions}
+          />
         ) : null}
         {!compactLayout ? (
         <SidebarDock

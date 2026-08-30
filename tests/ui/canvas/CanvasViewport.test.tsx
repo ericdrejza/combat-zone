@@ -68,7 +68,7 @@ describe("canvas viewport navigation", () => {
     ).toEqual({ left: 450, top: 300 });
   });
 
-  it("does not emulate a context action when a touch pointer is held", () => {
+  it("blocks the browser context action when a touch pointer is held", () => {
     vi.useFakeTimers();
     renderApp();
     const viewport = screen.getByLabelText("Canvas viewport");
@@ -83,7 +83,13 @@ describe("canvas viewport navigation", () => {
       pointerType: "touch"
     });
     act(() => vi.advanceTimersByTime(600));
+    const contextMenu = new MouseEvent("contextmenu", {
+      bubbles: true,
+      cancelable: true
+    });
+    viewport.dispatchEvent(contextMenu);
 
+    expect(contextMenu.defaultPrevented).toBe(true);
     expect(onContextMenu).not.toHaveBeenCalled();
   });
 

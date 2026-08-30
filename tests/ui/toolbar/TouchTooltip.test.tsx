@@ -62,6 +62,49 @@ describe("TouchTooltipProvider", () => {
     expect(onClick).toHaveBeenCalledOnce();
   });
 
+  it("blocks touch-generated context menus across the application", () => {
+    const onContextMenu = vi.fn();
+    render(
+      <TouchTooltipProvider>
+        <div onContextMenu={onContextMenu}>Canvas-like surface</div>
+      </TouchTooltipProvider>
+    );
+    const surface = screen.getByText("Canvas-like surface");
+
+    fireEvent.pointerDown(surface, {
+      button: 0,
+      pointerId: 4,
+      pointerType: "touch"
+    });
+    const contextMenu = new MouseEvent("contextmenu", {
+      bubbles: true,
+      cancelable: true
+    });
+    surface.dispatchEvent(contextMenu);
+
+    expect(contextMenu.defaultPrevented).toBe(true);
+    expect(onContextMenu).not.toHaveBeenCalled();
+  });
+
+  it("preserves genuine mouse context menus", () => {
+    const onContextMenu = vi.fn();
+    render(
+      <TouchTooltipProvider>
+        <div onContextMenu={onContextMenu}>Mouse surface</div>
+      </TouchTooltipProvider>
+    );
+    const surface = screen.getByText("Mouse surface");
+    const contextMenu = new MouseEvent("contextmenu", {
+      bubbles: true,
+      cancelable: true
+    });
+
+    surface.dispatchEvent(contextMenu);
+
+    expect(contextMenu.defaultPrevented).toBe(false);
+    expect(onContextMenu).toHaveBeenCalledOnce();
+  });
+
   it("uses explicit tooltip labels when an element has no title", () => {
     vi.useFakeTimers();
     render(

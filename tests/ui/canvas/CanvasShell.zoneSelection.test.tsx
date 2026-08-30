@@ -2,6 +2,7 @@ import { act, fireEvent, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { clearSelection, setActiveTool } from "@interaction/interactionState";
+import { undoEncounterChange } from "@store/encounterSlice";
 import { store } from "@store/store";
 import {
   createRectangleZone,
@@ -10,6 +11,20 @@ import {
   renderApp,
   selectZoneTool
 } from "@tests/ui/renderApp";
+
+function installCompactMatchMedia() {
+  const original = window.matchMedia;
+  window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+    addEventListener: vi.fn(),
+    matches: query === "(max-width: 1023px)",
+    media: query,
+    onchange: null,
+    removeEventListener: vi.fn()
+  }));
+  return () => {
+    window.matchMedia = original;
+  };
+}
 
 describe("CanvasShell zone selection", () => {
   it("selects canvas entities through the active tool interaction contract", async () => {
@@ -283,5 +298,37 @@ describe("CanvasShell zone selection", () => {
       selectedEntityType: null,
       selectedIds: []
     });
+  });
+
+  it("deletes and restores a selected Zone Tool zone from the compact control", async () => {
+    const restoreMatchMedia = installCompactMatchMedia();
+    const user = userEvent.setup();
+    const view = renderApp();
+
+    try {
+      const canvas = getCanvas();
+      mockCanvasBounds(canvas);
+      await selectZoneTool(user);
+      createRectangleZone(canvas);
+
+      const zone = await screen.findByLabelText("Zone 1");
+      const zoneId = zone.getAttribute("data-entity-id") ?? "";
+      await user.click(screen.getByRole("button", {
+        name: "Delete selected zone"
+      }));
+
+      expect(screen.queryByLabelText("Zone 1")).not.toBeInTheDocument();
+      expect(store.getState().encounter.past.at(-1)?.action.type).toBe("zone.delete");
+      expect(store.getState().interaction.selection.selectedIds).toEqual([]);
+
+      act(() => {
+        store.dispatch(undoEncounterChange());
+      });
+      expect(store.getState().encounter.present.zones.byId[zoneId]).toBeDefined();
+      expect(await screen.findByLabelText("Zone 1")).toBeInTheDocument();
+    } finally {
+      view.unmount();
+      restoreMatchMedia();
+    }
   });
 });

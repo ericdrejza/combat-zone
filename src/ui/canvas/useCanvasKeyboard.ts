@@ -2,12 +2,10 @@ import { useEffect } from 'react';
 import type { Dispatch } from 'redux';
 
 import { createEncounterActionRecord } from '@core/history/createEncounterActionRecord';
-import { duplicateActor, deleteActor } from '@entities/actor/actorMutations';
-import { deleteZone } from '@entities/zone/zoneMutations';
-import { deleteEdges } from '@entities/edge/edgeMutations';
+import { duplicateActor } from '@entities/actor/actorMutations';
+import { deleteSelectedEntities } from '@interaction/selection/deleteSelectedEntities';
 import {
   clearActorPaintBrush,
-  clearSelection,
   clearZonePaintBrush,
   selectEntity,
   setActorClipboardActor,
@@ -53,11 +51,7 @@ export function useCanvasKeyboard({
         selection.selectedIds.length > 0
       ) {
         event.preventDefault();
-        dispatch(commitEncounterChange({
-          action: createEncounterActionRecord('edge.delete', { edgeIds: selection.selectedIds }),
-          nextEncounter: deleteEdges(encounter, selection.selectedIds)
-        }));
-        dispatch(clearSelection());
+        deleteSelectedEntities(dispatch, encounter, selection);
         return;
       }
 
@@ -77,20 +71,7 @@ export function useCanvasKeyboard({
       ) {
         event.preventDefault();
 
-        const nextEncounter = selection.selectedIds.reduce(
-          (currentEncounter, actorId) => deleteActor(currentEncounter, actorId),
-          encounter
-        );
-
-        dispatch(
-          commitEncounterChange({
-            action: createEncounterActionRecord('actor.delete', {
-              actorIds: selection.selectedIds
-            }),
-            nextEncounter
-          })
-        );
-        dispatch(clearSelection());
+        deleteSelectedEntities(dispatch, encounter, selection);
         return;
       }
 
@@ -101,20 +82,7 @@ export function useCanvasKeyboard({
       ) {
         event.preventDefault();
 
-        const nextEncounter = selection.selectedIds.reduce(
-          (currentEncounter, zoneId) => deleteZone(currentEncounter, zoneId),
-          encounter
-        );
-
-        dispatch(
-          commitEncounterChange({
-            action: createEncounterActionRecord('zone.delete', {
-              zoneIds: selection.selectedIds
-            }),
-            nextEncounter
-          })
-        );
-        dispatch(clearSelection());
+        deleteSelectedEntities(dispatch, encounter, selection);
         return;
       }
 

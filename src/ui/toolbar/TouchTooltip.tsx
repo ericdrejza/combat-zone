@@ -42,9 +42,11 @@ function findTooltipTarget(target: EventTarget): {
   label: string;
 } | null {
   if (!(target instanceof Element)) return null;
-  const element = target.closest<HTMLElement>(
-    "[data-touch-tooltip-label], [title]"
-  );
+  // An explicit wrapper label must win over a child button's browser title.
+  // This lets controls keep a descriptive desktop title while exposing a
+  // context-specific label during a touch hold.
+  const labeledWrapper = target.closest<HTMLElement>("[data-touch-tooltip-label]");
+  const element = labeledWrapper ?? target.closest<HTMLElement>("[title]");
   if (!element) return null;
   const label = element.dataset.touchTooltipLabel ?? element.title;
   return label.trim() ? { element, label } : null;
@@ -60,6 +62,8 @@ export function TouchTooltipProvider({ children }: { children: ReactNode }) {
   const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const suppressNextClickRef = useRef(false);
+  const activeTouchPointersRef = useRef(new Set<number>());
+  const lastTouchEndAtRef = useRef(0);
 
   function clearHold() {
     if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
@@ -81,7 +85,9 @@ export function TouchTooltipProvider({ children }: { children: ReactNode }) {
   );
 
   function handlePointerDown(event: ReactPointerEvent<HTMLDivElement>) {
-    if (event.pointerType !== "touch" || event.button !== 0) return;
+    if (event.pointerType !== "touch") return;
+    activeTouchPointersRef.current.add(event.pointerId);
+    if (event.button !== 0) return;
     const resolved = findTooltipTarget(event.target);
     if (!resolved) return;
 
@@ -131,7 +137,25 @@ export function TouchTooltipProvider({ children }: { children: ReactNode }) {
   }
 
   function handlePointerEnd(event: ReactPointerEvent<HTMLDivElement>) {
+    if (event.pointerType === "touch") {
+      activeTouchPointersRef.current.delete(event.pointerId);
+      lastTouchEndAtRef.current = Date.now();
+    }
     if (pendingRef.current?.pointerId === event.pointerId) clearHold();
+  }
+
+  function handleContextMenu(event: React.MouseEvent<HTMLDivElement>) {
+    const nativeEvent = event.nativeEvent as MouseEvent & {
+      sourceCapabilities?: { firesTouchEvents?: boolean };
+    };
+    const followsTouch =
+      activeTouchPointersRef.current.size > 0 ||
+      nativeEvent.sourceCapabilities?.firesTouchEvents === true ||
+      Date.now() - lastTouchEndAtRef.current < 750;
+
+    if (!followsTouch) return;
+    event.preventDefault();
+    event.stopPropagation();
   }
 
   return (
@@ -143,9 +167,7 @@ export function TouchTooltipProvider({ children }: { children: ReactNode }) {
         event.stopPropagation();
         suppressNextClickRef.current = false;
       }}
-      onContextMenuCapture={(event) => {
-        if (suppressNextClickRef.current) event.preventDefault();
-      }}
+      onContextMenuCapture={handleContextMenu}
       onPointerCancelCapture={handlePointerEnd}
       onPointerDownCapture={handlePointerDown}
       onPointerMoveCapture={handlePointerMove}
