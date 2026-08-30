@@ -1,21 +1,17 @@
 import { useEffect, useRef, useState } from "react";
-import type { DragEvent } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 import { createEncounterActionRecord } from "@core/history/createEncounterActionRecord";
 import { prepareValidatedEncounterChangeForRuntime } from "@core/validation/validatedEncounterChange";
-import { setActorDragImage } from "@core/rendering/actorDragPreview";
 import { createActor } from "@entities/actor/actorMutations";
 import { ACTOR_LAYOUT_GROUP_COLORS } from "@entities/actor/actorVisuals";
 import { selectEntity } from "@interaction/interactionState";
 import { commitEncounterChange } from "@store/encounterSlice";
 import { logEncounterValidationBlock } from "@store/encounterLogSlice";
 import type { RootState } from "@store/store";
+import { armCompactCanvasTransfer } from "@ui/canvas/compactCanvasTransfer";
 import { getReadableTextColor } from "../../canvas/canvasLuminance";
-import {
-  ACTOR_CREATION_DRAG_TYPE,
-  type NewActorDragData
-} from "./actorCreationDrag";
+import type { NewActorDragData } from "./actorCreationDrag";
 
 type ActorCreationModalProps = {
   onClose: () => void;
@@ -26,8 +22,7 @@ export function ActorCreationModal({ onClose }: ActorCreationModalProps) {
   const encounter = useSelector((state: RootState) => state.encounter.present);
   const actorTool = useSelector((state: RootState) => state.interaction.actorTool);
   const [name, setName] = useState("");
-  const closeAfterDragRef = useRef<number | null>(null);
-  const dragPreviewCleanupRef = useRef<(() => void) | null>(null);
+  const [transferActive, setTransferActive] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const targetZone = actorTool.targetZoneId
     ? encounter.zones.byId[actorTool.targetZoneId]
@@ -37,13 +32,6 @@ export function ActorCreationModal({ onClose }: ActorCreationModalProps) {
 
   useEffect(() => {
     inputRef.current?.focus();
-
-    return () => {
-      if (closeAfterDragRef.current !== null) {
-        window.clearTimeout(closeAfterDragRef.current);
-      }
-      dragPreviewCleanupRef.current?.();
-    };
   }, []);
 
   function create() {
@@ -98,42 +86,30 @@ export function ActorCreationModal({ onClose }: ActorCreationModalProps) {
     }
   }
 
-  function startDrag(event: DragEvent<HTMLSpanElement>) {
-    const dragData: NewActorDragData = {
+  function getDragData(): NewActorDragData {
+    return {
       layoutGroup: actorTool.layoutGroup,
       name: displayName,
       shape: actorTool.shape,
       size: actorTool.size
     };
-
-    dragPreviewCleanupRef.current?.();
-    dragPreviewCleanupRef.current = setActorDragImage(event.dataTransfer, {
-      layoutGroup: dragData.layoutGroup,
-      name: dragData.name,
-      shape: dragData.shape,
-      size: dragData.size
-    });
-    event.dataTransfer.effectAllowed = "copy";
-    event.dataTransfer.setData(ACTOR_CREATION_DRAG_TYPE, JSON.stringify(dragData));
-    event.dataTransfer.setData("text/plain", JSON.stringify(dragData));
-
-    // Keep the drag source mounted until the browser has started the native
-    // drag. Removing it synchronously from dragstart cancels the drag.
-    closeAfterDragRef.current = window.setTimeout(onClose, 0);
   }
 
   return (
     <div
       aria-label="Create actor"
       aria-modal="true"
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/30 p-4"
+      aria-hidden={transferActive || undefined}
+      className={`fixed inset-0 z-[60] flex items-center justify-center bg-black/30 p-4 ${
+        transferActive ? "pointer-events-none opacity-0" : ""
+      }`}
       onKeyDown={(event) => {
         if (event.key === "Escape") {
           event.preventDefault();
           onClose();
         }
       }}
-      role="dialog"
+      role={transferActive ? undefined : "dialog"}
     >
       <form
         className="w-[min(22rem,calc(100vw-2rem))] space-y-4 rounded-2xl border border-canvas-line bg-canvas-panel p-5 shadow-2xl"
@@ -146,12 +122,20 @@ export function ActorCreationModal({ onClose }: ActorCreationModalProps) {
         <div className="flex justify-center rounded-xl border border-canvas-line bg-canvas p-4">
           <span
             aria-label="Actor preview"
-            className={`flex h-20 w-20 items-center justify-center overflow-hidden border-4 border-white text-center text-xs font-bold uppercase shadow-sm ${
+            className={`flex h-20 w-20 touch-none cursor-grab select-none items-center justify-center overflow-hidden border-4 border-white text-center text-xs font-bold uppercase shadow-sm active:cursor-grabbing ${
               actorTool.shape === "rectangle" ? "rounded-xl" : "rounded-full"
-            }`}
+            } ${transferActive ? "pointer-events-auto" : ""}`}
             data-actor-preview="true"
-            draggable
-            onDragStart={startDrag}
+            onPointerDown={(event) => {
+              event.currentTarget.setPointerCapture?.(event.pointerId);
+              armCompactCanvasTransfer(
+                event.nativeEvent,
+                { actor: getDragData(), kind: "new-actor" },
+                () => setTransferActive(true),
+                "all",
+                onClose
+              );
+            }}
             style={{
               backgroundColor: colors.fill,
               color: getReadableTextColor(colors.fill)

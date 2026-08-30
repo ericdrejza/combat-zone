@@ -610,9 +610,14 @@ The Zoneless actors presentation remains the collapsible, resizable
 bottom-center overlay on larger screens and becomes a panel in the compact
 drawer. Starting a touch drag from a Library actor token or Zoneless closes
 the drawer after the movement threshold while the same drag continues over
-the revealed canvas. Library backgrounds apply on tap and are not dragged.
+the revealed canvas. Library and Zoneless actor transfers use the same
+pointer-based gesture for mouse, touch, and pen input on every layout. Library
+backgrounds apply on tap and are not dragged.
 Tapping a Library actor creates it with the active Actor Tool settings when a
-target Zone was previously selected.
+target Zone was previously selected. The Actor creation dialog's preview uses
+the same pointer-based transfer for mouse, touch, and pen input, closing the
+dialog after movement begins and creating the configured Actor where the
+pointer is released.
 
 ### 7.3 Properties Panel
 

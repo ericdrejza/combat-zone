@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { createEncounterState } from "@core/encounter/createEncounterState";
 import { createEncounterActionRecord } from "@core/history/createEncounterActionRecord";
 import { createActor } from "@entities/actor/actorMutations";
+import { COMPACT_LAYOUT_QUERY } from "@hooks/useCompactLayout";
 import {
   selectEntity,
   setActiveTool
@@ -15,6 +16,120 @@ import { getCanvas, mockCanvasBounds, renderApp } from "@tests/ui/renderApp";
 import { dataTransfer, dropOnCanvas } from "./LibraryPanel.test_support";
 
 describe("LibraryPanel", () => {
+  it("creates an actor with a mouse pointer transfer", () => {
+    renderApp();
+    act(() => {
+      store.dispatch(setActiveTool("actor"));
+      store.dispatch(
+        uploadImage({
+          asset: {
+            dataUrl: "data:image/png;base64,pointer-scout",
+            mediaType: "image/png",
+            name: "Pointer Scout"
+          },
+          parentId: "tokens-root",
+          sectionId: "tokens"
+        })
+      );
+    });
+
+    const canvas = getCanvas();
+    mockCanvasBounds(canvas);
+    const token = screen.getByRole("button", { name: "Pointer Scout" });
+    fireEvent.pointerDown(token, {
+      button: 0,
+      clientX: 500,
+      clientY: 300,
+      pointerId: 40,
+      pointerType: "mouse"
+    });
+    fireEvent.pointerMove(window, {
+      clientX: 510,
+      clientY: 300,
+      pointerId: 40,
+      pointerType: "mouse"
+    });
+    fireEvent.pointerUp(window, {
+      clientX: 700,
+      clientY: 500,
+      pointerId: 40,
+      pointerType: "mouse"
+    });
+
+    expect(
+      Object.values(store.getState().encounter.present.actors.byId).some(
+        (actor) => actor.name === "Pointer Scout"
+      )
+    ).toBe(true);
+  });
+
+  it("continues a touch transfer after the compact Library drawer closes", () => {
+    const originalMatchMedia = window.matchMedia;
+    window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+      addEventListener: vi.fn(),
+      matches: query === COMPACT_LAYOUT_QUERY,
+      media: query,
+      onchange: null,
+      removeEventListener: vi.fn()
+    }));
+
+    try {
+      renderApp();
+      act(() => {
+        store.dispatch(setActiveTool("actor"));
+        store.dispatch(
+          uploadImage({
+            asset: {
+              dataUrl: "data:image/png;base64,touch-scout",
+              mediaType: "image/png",
+              name: "Touch Scout"
+            },
+            parentId: "tokens-root",
+            sectionId: "tokens"
+          })
+        );
+      });
+      const canvas = getCanvas();
+      mockCanvasBounds(canvas);
+      const launcher = screen.getByRole("button", { name: "Library panel" });
+      fireEvent.pointerDown(launcher, { button: 0, pointerId: 41 });
+      fireEvent.pointerUp(launcher, { pointerId: 41 });
+
+      const token = screen.getByRole("button", { name: "Touch Scout" });
+      fireEvent.pointerDown(token, {
+        button: 0,
+        clientX: 500,
+        clientY: 300,
+        pointerId: 42,
+        pointerType: "touch"
+      });
+      fireEvent.pointerMove(window, {
+        clientX: 510,
+        clientY: 300,
+        pointerId: 42,
+        pointerType: "touch"
+      });
+
+      expect(
+        screen.queryByRole("dialog", { name: "Library panel" })
+      ).not.toBeInTheDocument();
+      fireEvent.pointerUp(window, {
+        clientX: 700,
+        clientY: 500,
+        pointerId: 42,
+        pointerType: "touch"
+      });
+
+      expect(
+        Object.values(store.getState().encounter.present.actors.byId).some(
+          (actor) => actor.name === "Touch Scout"
+        )
+      ).toBe(true);
+    } finally {
+      window.matchMedia = originalMatchMedia;
+    }
+  });
+
   it("toggles between list and two-column grid views", async () => {
     const user = userEvent.setup();
 
@@ -251,7 +366,7 @@ describe("LibraryPanel", () => {
     });
 
     const tokenAsset = screen.getByRole("button", { name: "Tap Actor" });
-    expect(tokenAsset).toHaveAttribute("draggable", "true");
+    expect(tokenAsset).toHaveAttribute("draggable", "false");
     await user.click(tokenAsset);
 
     await waitFor(() => {

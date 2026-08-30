@@ -9,10 +9,6 @@ import {
   mockCanvasBounds,
   renderApp
 } from "@tests/ui/renderApp";
-import {
-  createActorDragDataTransfer,
-  dropOnCanvas
-} from "./toolbarTestHelpers";
 
 describe("Toolbar actor creation", () => {
   it("opens the actor creation modal with a target-aware create action and preview", async () => {
@@ -166,7 +162,6 @@ describe("Toolbar actor creation", () => {
 
   it("creates the preview actor in a zone when dragged from the modal", async () => {
     const user = userEvent.setup();
-    const transfer = createActorDragDataTransfer();
 
     renderApp();
     const canvas = getCanvas();
@@ -176,25 +171,33 @@ describe("Toolbar actor creation", () => {
     await user.click(screen.getByRole("button", { name: "Actor" }));
     await user.click(screen.getByRole("button", { name: "Create actor" }));
     await user.type(screen.getByRole("textbox", { name: "Actor name" }), "Dragged Actor");
-    fireEvent.dragStart(screen.getByLabelText("Actor preview"), {
-      dataTransfer: transfer
+    const preview = screen.getByLabelText("Actor preview");
+    fireEvent.pointerDown(preview, {
+      button: 0,
+      clientX: 500,
+      clientY: 300,
+      pointerId: 8,
+      pointerType: "mouse"
     });
-
-    expect(screen.getByRole("dialog", { name: "Create actor" })).toBeInTheDocument();
-    await waitFor(() => {
-      expect(
-        screen.queryByRole("dialog", { name: "Create actor" })
-      ).not.toBeInTheDocument();
+    fireEvent.pointerMove(window, {
+      clientX: 510,
+      clientY: 300,
+      pointerId: 8,
+      pointerType: "mouse"
     });
-
-    fireEvent.dragOver(canvas, {
+    expect(screen.queryByRole("dialog", { name: "Create actor" })).not.toBeInTheDocument();
+    expect(document.querySelector('[data-actor-preview="true"]')).toBeInTheDocument();
+    const dragPreview = screen.getByRole("status", { name: "Dragging Dragged Actor" });
+    expect(dragPreview.querySelector("svg")).toBeInTheDocument();
+    expect(dragPreview.querySelector("circle")).toBeInTheDocument();
+    expect(dragPreview).toHaveTextContent("DRAGGED ACTOR");
+    fireEvent.pointerUp(window, {
       clientX: 100,
       clientY: 100,
-      dataTransfer: transfer
+      pointerId: 8,
+      pointerType: "mouse"
     });
-    expect(transfer.effectAllowed).toBe("copy");
-    expect(transfer.dropEffect).toBe("copy");
-    dropOnCanvas(canvas, transfer, 100, 100);
+    expect(document.querySelector('[data-actor-preview="true"]')).not.toBeInTheDocument();
 
     const actor = Object.values(store.getState().encounter.present.actors.byId).find(
       (candidate) => candidate.name === "Dragged Actor"
@@ -216,5 +219,48 @@ describe("Toolbar actor creation", () => {
     expect(path.y?.[0]).toBe(100);
     expect(path.x?.length).toBe(2);
     expect(path.y?.length).toBe(2);
+  });
+
+  it("creates an actor from a touch drag out of the creation dialog", async () => {
+    const user = userEvent.setup();
+    renderApp();
+    const canvas = getCanvas();
+    mockCanvasBounds(canvas);
+    await user.click(screen.getByRole("button", { name: "Zone" }));
+    createRectangleZone(canvas);
+    await user.click(screen.getByRole("button", { name: "Actor" }));
+    await user.click(screen.getByRole("button", { name: "Create actor" }));
+    await user.type(screen.getByRole("textbox", { name: "Actor name" }), "Touch Actor");
+    const preview = screen.getByLabelText("Actor preview");
+
+    fireEvent.pointerDown(preview, {
+      button: 0,
+      clientX: 10,
+      clientY: 10,
+      pointerId: 9,
+      pointerType: "touch"
+    });
+    fireEvent.pointerMove(window, {
+      clientX: 20,
+      clientY: 10,
+      pointerId: 9,
+      pointerType: "touch"
+    });
+    expect(screen.queryByRole("dialog", { name: "Create actor" })).not.toBeInTheDocument();
+
+    fireEvent.pointerUp(window, {
+      clientX: 100,
+      clientY: 100,
+      pointerId: 9,
+      pointerType: "touch"
+    });
+
+    await waitFor(() => {
+      expect(
+        Object.values(store.getState().encounter.present.actors.byId).some(
+          (actor) => actor.name === "Touch Actor"
+        )
+      ).toBe(true);
+    });
   });
 });

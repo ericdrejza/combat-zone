@@ -329,7 +329,7 @@ export function LibraryPanel({
                   armCompactCanvasTransfer(event.nativeEvent, {
                     kind: "library-node",
                     nodeId: node.id
-                  });
+                  }, undefined, "all");
                 }
               }}
               viewMode={viewMode}

@@ -2,7 +2,6 @@ import type { DragEvent, MouseEvent, PointerEvent } from "react";
 
 import { ACTOR_LAYOUT_GROUP_COLORS, ACTOR_SIZE_MULTIPLIERS } from "@entities/actor/actorVisuals";
 import type { Actor } from "@entities/actor/types";
-import type { RootState } from "@store/store";
 import { getReadableTextColor } from "../../canvas/canvasLuminance";
 
 function actorSizeClass(actor: Actor): string {
@@ -25,7 +24,6 @@ function actorSizeClass(actor: Actor): string {
 
 export function ZonelessActorPanelToken({
   actor,
-  activeToolId,
   selectedIds,
   onSelect,
   onDragStart,
@@ -33,7 +31,6 @@ export function ZonelessActorPanelToken({
   onPointerDown
 }: {
   actor: Actor;
-  activeToolId: RootState["interaction"]["activeToolId"];
   selectedIds: string[];
   onSelect: (actorId: string, event: MouseEvent<HTMLButtonElement>) => void;
   onDragStart: (actorId: string, event: DragEvent<HTMLButtonElement>) => void;
@@ -49,10 +46,10 @@ export function ZonelessActorPanelToken({
   return (
     <button
       aria-label={actor.name}
-      className={`group flex min-w-16 flex-col items-center gap-1 rounded-xl px-2 py-1.5 text-xs transition hover:bg-canvas ${
+      className={`group flex min-w-16 touch-none cursor-grab select-none flex-col items-center gap-1 rounded-xl px-2 py-1.5 text-xs transition hover:bg-canvas active:cursor-grabbing ${
         selected ? "bg-canvas ring-2 ring-canvas-ink/30" : ""
       }`}
-      draggable={activeToolId === "actor" || activeToolId === "select"}
+      draggable={false}
       onClick={(event) => onSelect(actor.id, event)}
       onDragEnd={onDragEnd}
       onDragStart={(event) => onDragStart(actor.id, event)}
@@ -69,7 +66,12 @@ export function ZonelessActorPanelToken({
         }}
       >
         {actor.image ? (
-          <img alt="" className="h-full w-full object-cover" src={actor.image} />
+          <img
+            alt=""
+            className="h-full w-full object-cover"
+            draggable={false}
+            src={actor.image}
+          />
         ) : (
           actor.name.slice(0, 2).toUpperCase()
         )}

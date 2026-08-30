@@ -52,12 +52,18 @@ export function LibraryPanelNode({
 
   return (
     <button
-      className={`group flex w-full rounded-xl px-3 py-2 text-left text-sm transition hover:bg-canvas ${
+      className={`group flex w-full touch-none select-none rounded-xl px-3 py-2 text-left text-sm transition hover:bg-canvas ${
         viewMode === "grid"
           ? "min-w-0 flex-col items-stretch gap-1"
           : "items-center gap-3"
-      } ${isBackground || isToken ? "cursor-pointer" : "cursor-default"}`}
-      draggable={isToken}
+      } ${
+        isToken
+          ? "cursor-grab active:cursor-grabbing"
+          : isBackground
+            ? "cursor-pointer"
+            : "cursor-default"
+      }`}
+      draggable={false}
       ref={buttonRef}
       onClick={onClick}
       onDragStart={onDragStart}
@@ -74,6 +80,7 @@ export function LibraryPanelNode({
           <img
             alt=""
             className="h-full w-full object-cover transition duration-150 ease-out group-hover:scale-[1.2]"
+            draggable={false}
             src={asset.dataUrl}
           />
         ) : node.type === "link" ? (

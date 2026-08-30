@@ -1,6 +1,10 @@
 import { act, fireEvent, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
+import {
+  COMPACT_LAYOUT_BREAKPOINT_PX,
+  COMPACT_LAYOUT_QUERY
+} from "@hooks/useCompactLayout";
 import { TOUCH_PRIMARY_INPUT_QUERY } from "@hooks/useMobileControls";
 import { renderApp } from "@tests/ui/renderApp";
 
@@ -8,7 +12,7 @@ function installCompactMatchMedia() {
   const original = window.matchMedia;
   window.matchMedia = vi.fn().mockImplementation((query: string) => ({
     addEventListener: vi.fn(),
-    matches: query === "(max-width: 1023px)",
+    matches: query === COMPACT_LAYOUT_QUERY,
     media: query,
     onchange: null,
     removeEventListener: vi.fn()
@@ -37,7 +41,7 @@ function installResponsiveMatchMedia(initialCompact: boolean) {
   let compact = initialCompact;
   const listeners = new Set<(event: MediaQueryListEvent) => void>();
   window.matchMedia = vi.fn().mockImplementation((query: string) => {
-    const compactQuery = query === "(max-width: 1023px)";
+    const compactQuery = query === COMPACT_LAYOUT_QUERY;
     return {
       addEventListener: (_type: string, listener: (event: MediaQueryListEvent) => void) => {
         if (compactQuery) listeners.add(listener);
@@ -61,7 +65,7 @@ function installResponsiveMatchMedia(initialCompact: boolean) {
       compact = nextCompact;
       const event = {
         matches: compact,
-        media: "(max-width: 1023px)"
+        media: COMPACT_LAYOUT_QUERY
       } as MediaQueryListEvent;
       listeners.forEach((listener) => listener(event));
     }
@@ -69,6 +73,11 @@ function installResponsiveMatchMedia(initialCompact: boolean) {
 }
 
 describe("responsive workspace", () => {
+  it("uses one exact compact-to-desktop transition at 1024 CSS pixels", () => {
+    expect(COMPACT_LAYOUT_BREAKPOINT_PX).toBe(1024);
+    expect(COMPACT_LAYOUT_QUERY).toBe("(width < 1024px)");
+  });
+
   it("keeps the panel launcher available when a touch phone requests desktop width", () => {
     const restoreMatchMedia = installTouchDesktopMatchMedia();
 
