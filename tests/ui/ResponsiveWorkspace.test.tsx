@@ -116,14 +116,11 @@ describe("responsive workspace", () => {
       expect(screen.queryByLabelText("left docked panels")).not.toBeInTheDocument();
       expect(screen.queryByLabelText("right docked panels")).not.toBeInTheDocument();
       expect(screen.getByRole("button", { name: "Library panel" })).toBeInTheDocument();
-      const renameButton = within(tools).getByRole("button", {
-        name: /Rename encounter Untitled Encounter/
+      const renameButton = screen.getByRole("button", {
+        name: "Rename encounter Untitled Encounter"
       });
       expect(renameButton).toBeInTheDocument();
       expect(renameButton.querySelector("svg")).not.toBeNull();
-      expect(screen.getAllByRole("button", {
-        name: /Rename encounter Untitled Encounter/
-      })).toHaveLength(1);
 
       await user.click(within(tools).getByRole("button", { name: "Zone" }));
       expect(
@@ -170,9 +167,8 @@ describe("responsive workspace", () => {
 
     try {
       renderApp();
-      const tools = screen.getByRole("navigation", { name: "Tools" });
-      const renameButton = within(tools).getByRole("button", {
-        name: /Rename encounter Untitled Encounter/
+      const renameButton = screen.getByRole("button", {
+        name: "Rename encounter Untitled Encounter"
       });
 
       fireEvent.pointerDown(renameButton, {

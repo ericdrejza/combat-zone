@@ -120,12 +120,14 @@ export function Toolbar({
       className="min-h-16 overflow-hidden border-b border-canvas-line bg-canvas-panel px-2 py-2 shadow-sm lg:h-16 lg:px-4 lg:py-3"
     >
       <div className="flex min-w-0 flex-col gap-2 lg:h-full lg:flex-row lg:items-center">
-        {!compactLayout ? (
-        <h1 className="mr-4 min-w-0 shrink font-display text-2xl font-semibold tracking-tight">
-          <EncounterTitle name={encounterName} onRename={onRenameEncounter} />
+        <div className="flex min-w-0 flex-1 items-center gap-2">
+        <h1 className="relative z-50 min-w-0 max-w-[min(28rem,35vw)] shrink-0 font-display font-semibold tracking-tight">
+          <EncounterTitle
+            compact={compactLayout}
+            name={encounterName}
+            onRename={onRenameEncounter}
+          />
         </h1>
-        ) : null}
-        <div className="flex min-w-0 items-center gap-2">
         <nav
           aria-label="Tools"
           className="scrollbar-hidden flex min-w-0 flex-1 flex-nowrap items-center gap-2 overflow-x-auto"
@@ -140,14 +142,6 @@ export function Toolbar({
             }
           }}
         >
-          {compactLayout ? (
-            <EncounterTitle
-              compact
-              iconOnly
-              name={encounterName}
-              onRename={onRenameEncounter}
-            />
-          ) : null}
           <LibraryToolbarButton onOpenLibrary={onOpenLibrary} />
           <span
             aria-orientation="vertical"

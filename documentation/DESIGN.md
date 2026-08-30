@@ -99,9 +99,12 @@ canvas aspect ratio. Fit commands target the logical area visible at the
 current viewport zoom. Every background or canvas-size mutation is one
 reversible history action.
 
-The active Encounter name is visible in the desktop toolbar. Below 1024px, its
-normal far-left toolbar position becomes an icon-only pencil button; a touch
-hold shows the Encounter name in a tooltip. Renaming trims surrounding
+The active Encounter name is visible before the toolbar tools on the desktop
+layout. Clicking the name replaces it with an inline input in the same toolbar
+position; the input is layered above the other toolbar elements while editing
+and selects the complete current name. Below 1024px, the name position becomes
+an icon-only pencil button; a touch hold shows the Encounter name in a tooltip,
+and clicking the button opens the rename dialog. Renaming trims surrounding
 whitespace, requires a non-empty result, and commits as one reversible history
 action.
 
@@ -387,8 +390,8 @@ touch pointer for 500ms shows its tooltip without activating the control;
 mouse input continues to use hover and keyboard focus exposes the same help.
 The selected tool's
 subtools render in a horizontally scrollable bar below the primary row. The
-current zoom percentage is the only persistent text in the compact toolbar;
-the Encounter name is available from the far-left rename button's touch-hold
+current zoom percentage remains persistent in the compact toolbar; the
+Encounter name is available from the far-left rename button's touch-hold
 tooltip.
 
 On mobile, selecting one or more Zones, Edges, or Actors with its matching
