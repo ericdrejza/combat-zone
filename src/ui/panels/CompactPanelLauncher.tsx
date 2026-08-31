@@ -315,7 +315,7 @@ export function CompactPanelLauncher({
         aria-expanded={drawerOpen}
         aria-haspopup="dialog"
         aria-label={`${selectedPanel.title} panel`}
-        className="pointer-events-auto absolute bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] right-2 flex h-11 w-11 items-center justify-center rounded-full border border-canvas-line bg-canvas-panel text-canvas-ink shadow-lg transition hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-canvas-ink"
+        className="pointer-events-auto absolute bottom-3 right-2 flex h-11 w-11 items-center justify-center rounded-full border border-canvas-line bg-canvas-panel text-canvas-ink shadow-lg transition hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-canvas-ink"
         onClick={onLauncherClick}
         onKeyDown={onLauncherKeyDown}
         onPointerDown={onLauncherPointerDown}

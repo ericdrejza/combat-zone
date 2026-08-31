@@ -326,7 +326,10 @@ function AppContent() {
     <MotionPreferenceProvider>
       <TouchTooltipProvider>
       <ZoneResizeApprovalProvider>
-        <div className="flex h-screen h-dvh max-h-screen max-h-dvh w-screen max-w-screen flex-col overflow-hidden bg-canvas text-canvas-ink">
+        <div
+          className="flex h-screen h-dvh max-h-screen max-h-dvh w-screen max-w-screen flex-col overflow-hidden bg-canvas text-canvas-ink"
+          data-app-shell
+        >
       <Toolbar
         encounterName={encounter.name}
         onActorToolSelected={expandAutoCollapsedLibraryPanel}

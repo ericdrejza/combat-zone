@@ -372,7 +372,7 @@ export function useCanvasPointerHandlers(input: PointerHandlerInput) {
     polygon: LayoutPoint[],
     point: LayoutPoint,
     vertexIndex: number,
-    event: MouseEvent<SVGCircleElement>
+    event: MouseEvent<SVGCircleElement> | PointerEvent<SVGCircleElement>
   ) {
     event.preventDefault();
     event.stopPropagation();

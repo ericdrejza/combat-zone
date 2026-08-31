@@ -69,6 +69,44 @@ describe("CanvasShell zone resizing", () => {
     });
   });
 
+  it("resizes from a touch pointer without starting another zone", async () => {
+    const user = userEvent.setup();
+
+    renderApp();
+    const canvas = getCanvas();
+    mockCanvasBounds(canvas);
+
+    await selectZoneTool(user);
+    createRectangleZone(canvas);
+
+    const zone = await screen.findByLabelText("Zone 1");
+    const topRightHandle = screen.getByLabelText("Zone 1 vertex 2");
+
+    fireEvent.pointerDown(topRightHandle, {
+      button: 0,
+      clientX: 180,
+      clientY: 80,
+      pointerId: 1,
+      pointerType: "touch"
+    });
+    fireEvent.pointerMove(canvas, {
+      clientX: 220,
+      clientY: 60,
+      pointerId: 1,
+      pointerType: "touch"
+    });
+    fireEvent.pointerUp(canvas, {
+      clientX: 220,
+      clientY: 60,
+      pointerId: 1,
+      pointerType: "touch"
+    });
+
+    expect(zone).toBeInTheDocument();
+    expect(screen.queryByLabelText("Zone 2")).not.toBeInTheDocument();
+    expect(store.getState().encounter.present.zones.allIds).toHaveLength(1);
+  });
+
   it("can resize repeatedly from the same selected-zone vertex", async () => {
     const user = userEvent.setup();
 

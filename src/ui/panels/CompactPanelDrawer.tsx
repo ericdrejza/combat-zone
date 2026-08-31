@@ -21,7 +21,7 @@ export function CompactPanelDrawer({
     <motion.aside
       aria-label={`${panel.title} panel`}
       aria-modal="true"
-      className="pointer-events-auto absolute inset-y-0 right-0 flex w-[min(24rem,calc(100vw-3.5rem))] max-w-[24rem] flex-col border-l border-canvas-line bg-canvas-panel shadow-2xl [padding-bottom:calc(env(safe-area-inset-bottom)+4.5rem)]"
+      className="pointer-events-auto absolute inset-y-0 right-0 flex w-[min(24rem,calc(100vw-3.5rem))] max-w-[24rem] flex-col border-l border-canvas-line bg-canvas-panel shadow-2xl pb-[4.5rem]"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
