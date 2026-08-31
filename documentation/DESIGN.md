@@ -361,17 +361,24 @@ Tools define interaction behavior:
 - Engage action
 - Disengage action
 
-The non-toggle Engage action appears immediately to the right of Select. It
-groups the currently selected actors independently per zone: a zone with fewer
-than two selected actors is a no-op; otherwise those actors are removed from
-their old Engagements, unselected old members remain, and the selected actors
-become one Engagement. Any resulting group with fewer than two members
-dissolves. The complete operation is one history-tracked action.
+On desktop, the non-toggle Engage action appears immediately to the right of
+Select. It groups the currently selected actors independently per zone: a zone
+with fewer than two selected actors is a no-op; otherwise those actors are
+removed from their old Engagements, unselected old members remain, and the
+selected actors become one Engagement. Any resulting group with fewer than
+two members dissolves. The complete operation is one history-tracked action.
 
-The non-toggle icon-only Disengage action appears beside Engage and uses the
-Lucide `Unlink2` icon. It is enabled when any selected actor belongs to an
-Engagement and removes only the selected engaged actors; any undersized group
-auto-dissolves in the same history-tracked action.
+On desktop, the non-toggle icon-only Disengage action appears beside Engage
+and uses the Lucide `Unlink2` icon. It is enabled when any selected actor
+belongs to an Engagement and removes only the selected engaged actors; any
+undersized group auto-dissolves in the same history-tracked action.
+
+On mobile, Engage and Disengage are removed from the primary toolbar. When the
+Actor or Select tool is active, the bottom-left canvas action row shows Engage
+only when at least two selected actors share a Zone, and shows Disengage when
+at least one selected actor belongs to an Engagement. If both are shown,
+Disengage is to the right of Engage. Delete remains the leftmost action when
+it shares that row.
 
 Panning is handled by right-click drag rather than a dedicated toolbar tool.
 
@@ -392,7 +399,8 @@ The selected tool's
 subtools render in a horizontally scrollable bar below the primary row. The
 current zoom percentage remains persistent in the compact toolbar; the
 Encounter name is available from the far-left rename button's touch-hold
-tooltip.
+tooltip. The rename button is the first icon in the same horizontally
+scrollable compact toolbar row as the other tools.
 
 On mobile, selecting one or more Zones, Edges, or Actors with its matching
 entity tool shows an icon-only Delete control at the bottom-left of the canvas.

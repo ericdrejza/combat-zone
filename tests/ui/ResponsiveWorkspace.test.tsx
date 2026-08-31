@@ -99,6 +99,16 @@ describe("responsive workspace", () => {
       const { unmount } = renderApp();
       const tools = screen.getByRole("navigation", { name: "Tools" });
 
+      expect(within(tools).getAllByRole("button")[0]).toHaveAccessibleName(
+        "Rename encounter Untitled Encounter"
+      );
+      expect(
+        within(tools).queryByRole("button", { name: "Engage selected actors" })
+      ).not.toBeInTheDocument();
+      expect(
+        within(tools).queryByRole("button", { name: "Disengage selected actors" })
+      ).not.toBeInTheDocument();
+
       for (const name of [
         "Library",
         "Background",

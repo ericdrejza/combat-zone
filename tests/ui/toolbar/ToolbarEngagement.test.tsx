@@ -1,5 +1,6 @@
-import { act, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { Provider } from "react-redux";
 
 import { createEncounterState } from "@core/encounter/createEncounterState";
 import { createEncounterActionRecord } from "@core/history/createEncounterActionRecord";
@@ -7,6 +8,8 @@ import { selectEntity, setActiveTool } from "@interaction/interactionState";
 import { commitEncounterChange, undoEncounterChange } from "@store/encounterSlice";
 import { store } from "@store/store";
 import { renderApp } from "@tests/ui/renderApp";
+import { EngageActionButton } from "@ui/toolbar/EngageActionButton";
+import { TouchTooltipProvider } from "@ui/toolbar/TouchTooltip";
 
 describe("Toolbar engagement actions", () => {
   it("disengages only selected engaged actors and preserves undo", async () => {
@@ -96,5 +99,46 @@ describe("Toolbar engagement actions", () => {
     expect(
       store.getState().encounter.present.engagements.byId.melee?.participantIds
     ).toEqual(["a", "b", "c"]);
+  });
+
+  it("keeps the crossed-swords image out of the native touch drag path", () => {
+    vi.useFakeTimers();
+    act(() => {
+      store.dispatch(setActiveTool("actor"));
+      store.dispatch(selectEntity({ entityType: "actor", ids: ["a", "b"] }));
+    });
+
+    try {
+      render(
+        <Provider store={store}>
+          <TouchTooltipProvider>
+            <EngageActionButton compact />
+          </TouchTooltipProvider>
+        </Provider>
+      );
+      const button = screen.getByRole("button", {
+        name: "Engage selected actors"
+      });
+      const icon = button.querySelector("img");
+
+      expect(icon).toHaveAttribute("draggable", "false");
+      expect(icon).toHaveClass("pointer-events-none");
+
+      fireEvent.pointerDown(icon ?? button, {
+        button: 0,
+        clientX: 100,
+        clientY: 100,
+        pointerId: 1,
+        pointerType: "touch"
+      });
+      act(() => vi.advanceTimersByTime(500));
+
+      expect(screen.getByRole("tooltip")).toHaveTextContent(
+        "Engage selected actors in each zone"
+      );
+      fireEvent.pointerUp(button, { pointerId: 1, pointerType: "touch" });
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

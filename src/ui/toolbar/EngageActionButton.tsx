@@ -10,8 +10,12 @@ import crossedSwordsAsset from '@assets/images/crossed-swords.svg';
 
 const CROSSED_SWORDS_ASSET = crossedSwordsAsset;
 
+type EngageActionButtonProps = {
+  compact?: boolean;
+};
+
 /** One-shot action: group the current actor selection independently per zone. */
-export function EngageActionButton() {
+export function EngageActionButton({ compact = false }: EngageActionButtonProps) {
   const dispatch = useDispatch();
   const encounter = useSelector((state: RootState) => state.encounter.present);
   const selection = useSelector((state: RootState) => state.interaction.selection);
@@ -44,7 +48,7 @@ export function EngageActionButton() {
     <button
       aria-label="Engage selected actors"
       aria-pressed={previewActive}
-      className={`shrink-0 rounded-full border p-2 shadow-sm transition ${
+      className={`${compact ? 'flex h-11 min-w-11 items-center justify-center' : ''} shrink-0 rounded-full border p-2 shadow-sm transition ${
         previewActive
           ? 'border-canvas-ink bg-canvas-ink text-white'
           : 'border-canvas-line bg-white text-canvas-ink hover:bg-canvas disabled:opacity-40'
@@ -57,7 +61,8 @@ export function EngageActionButton() {
       <img
         alt=""
         aria-hidden="true"
-        className={`h-4 w-4 ${previewActive ? 'brightness-0 invert' : ''}`}
+        className={`pointer-events-none h-4 w-4 select-none ${previewActive ? 'brightness-0 invert' : ''}`}
+        draggable={false}
         src={CROSSED_SWORDS_ASSET}
       />
     </button>

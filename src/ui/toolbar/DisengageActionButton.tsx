@@ -10,7 +10,11 @@ import { logEncounterValidationBlock } from '@store/encounterLogSlice';
 import type { RootState } from '@store/store';
 
 /** Removes only selected actors from their current Engagement groups. */
-export function DisengageActionButton() {
+type DisengageActionButtonProps = {
+  compact?: boolean;
+};
+
+export function DisengageActionButton({ compact = false }: DisengageActionButtonProps) {
   const dispatch = useDispatch();
   const encounter = useSelector((state: RootState) => state.encounter.present);
   const selection = useSelector(
@@ -55,14 +59,14 @@ export function DisengageActionButton() {
     <button
       aria-label="Disengage selected actors"
       aria-pressed={previewActive}
-      className={`shrink-0 rounded-full border p-2 shadow-sm transition ${
+      className={`${compact ? 'flex h-11 min-w-11 items-center justify-center' : ''} shrink-0 rounded-full border p-2 shadow-sm transition ${
         previewActive
           ? 'border-canvas-ink bg-canvas-ink text-white'
           : 'border-canvas-line bg-white text-canvas-ink hover:bg-canvas disabled:opacity-40'
       } disabled:cursor-not-allowed`}
       disabled={engagedActorIds.length === 0}
       onClick={disengage}
-      title="Remove selected actors from their engagements"
+      title="Disengage selected actors"
       type="button"
     >
       <Unlink2 aria-hidden="true" className="h-4 w-4" />

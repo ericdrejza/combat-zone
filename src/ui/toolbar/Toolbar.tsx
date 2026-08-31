@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 
 import { useCompactLayout } from "@hooks/useCompactLayout";
+import { useMobileControls } from "@hooks/useMobileControls";
 import type { RootState } from "@store/store";
 import { EncounterTitle } from "@ui/encounter/EncounterTitle";
 import { ActorToolButton } from "./actor/ActorToolButton";
@@ -32,6 +33,7 @@ export function Toolbar({
   onRenameEncounter
 }: ToolbarProps) {
   const compactLayout = useCompactLayout();
+  const showMobileControls = useMobileControls(compactLayout);
   const [compactSubtoolHost, setCompactSubtoolHost] =
     useState<HTMLDivElement | null>(null);
   const [compactZoomOpen, setCompactZoomOpen] = useState(false);
@@ -121,13 +123,14 @@ export function Toolbar({
     >
       <div className="flex min-w-0 flex-col gap-2 lg:h-full lg:flex-row lg:items-center">
         <div className="flex min-w-0 flex-1 items-center gap-2">
-        <h1 className="relative z-50 min-w-0 max-w-[min(28rem,35vw)] shrink-0 font-display font-semibold tracking-tight">
-          <EncounterTitle
-            compact={compactLayout}
-            name={encounterName}
-            onRename={onRenameEncounter}
-          />
-        </h1>
+        {!compactLayout ? (
+          <h1 className="relative z-50 min-w-0 max-w-[min(28rem,35vw)] shrink-0 font-display font-semibold tracking-tight">
+            <EncounterTitle
+              name={encounterName}
+              onRename={onRenameEncounter}
+            />
+          </h1>
+        ) : null}
         <nav
           aria-label="Tools"
           className="scrollbar-hidden flex min-w-0 flex-1 flex-nowrap items-center gap-2 overflow-x-auto"
@@ -142,6 +145,13 @@ export function Toolbar({
             }
           }}
         >
+          {compactLayout ? (
+            <EncounterTitle
+              compact
+              name={encounterName}
+              onRename={onRenameEncounter}
+            />
+          ) : null}
           <LibraryToolbarButton onOpenLibrary={onOpenLibrary} />
           <span
             aria-orientation="vertical"
@@ -149,8 +159,8 @@ export function Toolbar({
             role="separator"
           />
           {TOOLBAR_ITEMS.map(renderTool)}
-          <EngageActionButton />
-          <DisengageActionButton />
+          {!showMobileControls ? <EngageActionButton /> : null}
+          {!showMobileControls ? <DisengageActionButton /> : null}
           {compactLayout ? (
           <CanvasZoomControls
             compactOpen={compactZoomOpen}
