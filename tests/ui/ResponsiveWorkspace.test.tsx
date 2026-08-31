@@ -78,14 +78,16 @@ describe("responsive workspace", () => {
     expect(COMPACT_LAYOUT_QUERY).toBe("(width < 1024px)");
   });
 
-  it("keeps the panel launcher available when a touch phone requests desktop width", () => {
+  it("keeps the panel launcher hidden while docked sidebars are visible", () => {
     const restoreMatchMedia = installTouchDesktopMatchMedia();
 
     try {
       renderApp();
 
       expect(screen.getByLabelText("left docked panels")).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: "Library panel" })).toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: "Library panel" })
+      ).not.toBeInTheDocument();
     } finally {
       restoreMatchMedia();
     }

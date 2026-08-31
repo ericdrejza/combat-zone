@@ -333,7 +333,8 @@ covers `DESIGN.md` §15 "Must have" scope only.
       separate horizontal bar.
 - [x] Compact Zoom opens in the subtool bar without changing the active editing
       tool; desktop Zoom starts expanded and can collapse to one icon.
-- [x] The compact panel launcher defaults to Library, supports tap-to-toggle
+- [x] While docked side panels are hidden below 1024px, the compact panel
+      launcher defaults to Library, supports tap-to-toggle
       and 500ms hold/drag/release selection in the documented wrapping order,
       and has equivalent keyboard operation.
 - [x] Compact drawers close through their header, backdrop, launcher, or

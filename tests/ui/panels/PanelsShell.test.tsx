@@ -138,6 +138,141 @@ describe("PanelsShell", () => {
     ).toEqual(["Status", "Library", "Properties", "Log"]);
   });
 
+  it("moves side panels with a touch pointer drag", () => {
+    renderApp();
+    const statusHandle = screen.getByRole("button", {
+      name: "Reorder Status panel"
+    });
+    const leftDock = screen.getByLabelText("left docked panels");
+    const leftTopDropZone = screen.getByLabelText(
+      "Drop panel 0 in left docked panels"
+    );
+    const originalElementFromPoint = document.elementFromPoint;
+    document.elementFromPoint = vi.fn(() => leftTopDropZone);
+
+    try {
+      fireEvent.pointerDown(statusHandle, {
+        button: 0,
+        clientX: 200,
+        clientY: 200,
+        isPrimary: true,
+        pointerId: 7,
+        pointerType: "touch"
+      });
+      fireEvent.pointerMove(window, {
+        clientX: 100,
+        clientY: 100,
+        pointerId: 7,
+        pointerType: "touch"
+      });
+
+      expect(leftTopDropZone.firstElementChild).toHaveClass("bg-canvas-ink");
+
+      fireEvent.pointerUp(window, {
+        clientX: 100,
+        clientY: 100,
+        pointerId: 7,
+        pointerType: "touch"
+      });
+
+      expect(
+        within(leftDock)
+          .getAllByRole("heading")
+          .map((heading) => heading.textContent)
+      ).toEqual(["Status", "Library", "Properties", "Log"]);
+    } finally {
+      document.elementFromPoint = originalElementFromPoint;
+    }
+  });
+
+  it("moves side panels with a mouse pointer drag", () => {
+    renderApp();
+    const statusHandle = screen.getByRole("button", {
+      name: "Reorder Status panel"
+    });
+    const leftDock = screen.getByLabelText("left docked panels");
+    const leftTopDropZone = screen.getByLabelText(
+      "Drop panel 0 in left docked panels"
+    );
+    const originalElementFromPoint = document.elementFromPoint;
+    document.elementFromPoint = vi.fn(() => leftTopDropZone);
+
+    try {
+      fireEvent.pointerDown(statusHandle, {
+        button: 0,
+        clientX: 200,
+        clientY: 200,
+        isPrimary: true,
+        pointerId: 9,
+        pointerType: "mouse"
+      });
+      fireEvent.pointerMove(window, {
+        clientX: 100,
+        clientY: 100,
+        pointerId: 9,
+        pointerType: "mouse"
+      });
+      fireEvent.pointerUp(window, {
+        clientX: 100,
+        clientY: 100,
+        pointerId: 9,
+        pointerType: "mouse"
+      });
+
+      expect(
+        within(leftDock)
+          .getAllByRole("heading")
+          .map((heading) => heading.textContent)
+      ).toEqual(["Status", "Library", "Properties", "Log"]);
+    } finally {
+      document.elementFromPoint = originalElementFromPoint;
+    }
+  });
+
+  it("does not start a touch reorder before the drag threshold", () => {
+    renderApp();
+    const statusHandle = screen.getByRole("button", {
+      name: "Reorder Status panel"
+    });
+    const leftDock = screen.getByLabelText("left docked panels");
+    const leftTopDropZone = screen.getByLabelText(
+      "Drop panel 0 in left docked panels"
+    );
+    const originalElementFromPoint = document.elementFromPoint;
+    document.elementFromPoint = vi.fn(() => leftTopDropZone);
+
+    try {
+      fireEvent.pointerDown(statusHandle, {
+        button: 0,
+        clientX: 100,
+        clientY: 100,
+        isPrimary: true,
+        pointerId: 8,
+        pointerType: "touch"
+      });
+      fireEvent.pointerMove(window, {
+        clientX: 102,
+        clientY: 102,
+        pointerId: 8,
+        pointerType: "touch"
+      });
+      fireEvent.pointerUp(window, {
+        clientX: 102,
+        clientY: 102,
+        pointerId: 8,
+        pointerType: "touch"
+      });
+
+      expect(
+        within(leftDock)
+          .getAllByRole("heading")
+          .map((heading) => heading.textContent)
+      ).toEqual(["Library", "Properties", "Log"]);
+    } finally {
+      document.elementFromPoint = originalElementFromPoint;
+    }
+  });
+
   it("allows dragged panels to be dropped on a panel surface instead of only on the gap marker", () => {
     renderApp();
     const dataTransfer = {

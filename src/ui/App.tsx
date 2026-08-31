@@ -237,14 +237,23 @@ function AppContent() {
     }
   }
 
-  function handlePanelDrop(target: DropTarget) {
-    if (!draggedPanelId) {
+  function handlePanelDrop(target: DropTarget, pointerPanelId?: string) {
+    const panelId = pointerPanelId ?? draggedPanelId;
+    if (!panelId) {
       return;
     }
 
-    setPanelLayout((layout) => movePanel(layout, draggedPanelId, target));
+    setPanelLayout((layout) => movePanel(layout, panelId, target));
     setDraggedPanelId(null);
     setDropTarget(null);
+  }
+
+  function handlePanelDropPreview(target: DropTarget) {
+    setDropTarget((current) =>
+      current?.side === target.side && current.index === target.index
+        ? current
+        : target
+    );
   }
 
   function handlePanelCollapsedChange(panelId: string, collapsed: boolean) {
@@ -362,7 +371,7 @@ function AppContent() {
             onDragStart={setDraggedPanelId}
             onPanelCollapsedChange={handlePanelCollapsedChange}
             onDropPanel={handlePanelDrop}
-            onPreviewDrop={setDropTarget}
+            onPreviewDrop={handlePanelDropPreview}
             panels={panelLayout.left}
             renderPanelHeaderActions={renderPanelHeaderActions}
             renderPanelContent={renderPanelContent}
@@ -395,7 +404,7 @@ function AppContent() {
             onDragStart={setDraggedPanelId}
             onPanelCollapsedChange={handlePanelCollapsedChange}
             onDropPanel={handlePanelDrop}
-            onPreviewDrop={setDropTarget}
+            onPreviewDrop={handlePanelDropPreview}
             panels={panelLayout.right}
             renderPanelHeaderActions={renderPanelHeaderActions}
             renderPanelContent={renderPanelContent}

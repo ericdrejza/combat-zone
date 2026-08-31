@@ -602,9 +602,8 @@ the next launcher tap. Panels fade in and out without horizontal travel. The
 panel leaves the launcher rail visible and closes from the launcher, its header,
 backdrop, or Escape.
 
-The compact panel launcher also remains available on coarse-pointer, no-hover
-touch devices when a browser's desktop-site mode reports a layout viewport at
-or above 1024px.
+The compact panel launcher is only available below 1024px, while the docked
+side panels are hidden.
 
 ### 7.2 Panels
 
