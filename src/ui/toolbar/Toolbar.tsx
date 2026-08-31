@@ -16,8 +16,6 @@ import { EngageActionButton } from './EngageActionButton';
 import { DisengageActionButton } from './DisengageActionButton';
 import { EdgeToolButton } from './edge/EdgeToolButton';
 import { CanvasZoomControls } from "./CanvasZoomControls";
-import { ToolbarSubtoolBar } from "./ToolbarOption";
-import { TouchSelectionToggle } from "./TouchSelectionToggle";
 
 type ToolbarProps = {
   encounterName: string;
@@ -182,12 +180,6 @@ export function Toolbar({
           className="scrollbar-hidden flex min-h-0 w-full items-center gap-2 overflow-x-auto empty:hidden lg:hidden"
           data-toolbar-subtools="true"
         >
-          {!compactZoomOpen &&
-          (activeToolId === "select" || activeToolId === "annotation") ? (
-            <ToolbarSubtoolBar aria-label="Selection options">
-              <TouchSelectionToggle toolId={activeToolId} />
-            </ToolbarSubtoolBar>
-          ) : null}
         </div>
       </div>
     </header>

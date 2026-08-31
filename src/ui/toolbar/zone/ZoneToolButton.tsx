@@ -19,7 +19,6 @@ import {
 } from "../ToolbarOption";
 import { TOOL_ICONS, ZONE_SHAPE_OPTIONS } from "../toolbarItems";
 import { TouchTooltip } from "../TouchTooltip";
-import { TouchSelectionToggle } from "../TouchSelectionToggle";
 
 type ZoneToolButtonProps = {
   activeToolId: ToolId;
@@ -81,7 +80,6 @@ export function ZoneToolButton({
   const optionBar = selected ? (
     <ToolbarSubtoolBar aria-label="Zone shape options">
       {renderOptions()}
-      <TouchSelectionToggle toolId="zone" />
     </ToolbarSubtoolBar>
   ) : null;
 

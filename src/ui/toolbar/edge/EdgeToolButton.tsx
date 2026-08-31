@@ -41,7 +41,6 @@ import {
 } from "../ToolbarOption";
 import { TOOL_ICONS } from "../toolbarItems";
 import { TouchTooltip } from "../TouchTooltip";
-import { TouchSelectionToggle } from "../TouchSelectionToggle";
 
 type Props = {
   activeToolId: ToolId;
@@ -128,7 +127,6 @@ export function EdgeToolButton({ activeToolId, compactLayout, compactSubtoolHost
   const optionBar = selected ? (
     <ToolbarSubtoolBar aria-label="Edge options">
       {renderOptions()}
-      <TouchSelectionToggle toolId="edge" />
     </ToolbarSubtoolBar>
   ) : null;
 

@@ -51,7 +51,7 @@ function encounterWithSelectedActions() {
 }
 
 describe("CanvasShell compact actions", () => {
-  it("places Delete before Engage and Disengage in the shared mobile row", async () => {
+  it("places multi-select before Delete, Engage, and Disengage in the shared mobile row", async () => {
     const restoreMatchMedia = installCompactMatchMedia();
 
     try {
@@ -71,10 +71,13 @@ describe("CanvasShell compact actions", () => {
       const canvas = screen.getByRole("main", { name: "Encounter canvas" });
       await waitFor(() => {
         expect(
-          within(canvas)
-            .getAllByRole("button")
+          within(canvas).getByRole("switch", { name: "Touch multi-select" })
+        ).toBeInTheDocument();
+        expect(
+          Array.from(canvas.querySelectorAll("button"))
             .map((button) => button.getAttribute("aria-label"))
         ).toEqual([
+          "Touch multi-select",
           "Delete 2 selected actors",
           "Engage selected actors",
           "Disengage selected actors"
