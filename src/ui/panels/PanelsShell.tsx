@@ -1,6 +1,8 @@
 import { ChevronDown, ChevronUp, GripVertical } from "lucide-react";
 import type { ReactNode } from "react";
 
+import { startPanelPointerDrag } from "./panelPointerDrag";
+
 export type DockSide = "left" | "right";
 
 export type DockPanelDefinition = {
@@ -21,7 +23,7 @@ type PanelsShellProps = {
   onDragEnd: () => void;
   onDragStart: (panelId: string) => void;
   onPanelCollapsedChange: (panelId: string, collapsed: boolean) => void;
-  onDropPanel: (target: DropTarget) => void;
+  onDropPanel: (target: DropTarget, panelId?: string) => void;
   onPreviewDrop: (target: DropTarget) => void;
   panels: DockPanelDefinition[];
   renderPanelHeaderActions?: (panel: DockPanelDefinition) => ReactNode;
@@ -48,6 +50,9 @@ export function PanelsShell({
     <aside
       aria-label={`${side} docked panels`}
       className="flex min-h-0 flex-1 flex-col overflow-y-auto pr-1"
+      data-panel-drop-index={panels.length}
+      data-panel-drop-kind="dock"
+      data-panel-drop-side={side}
       onDragOver={(event) => {
         if (!draggedPanelId) {
           return;
@@ -76,12 +81,14 @@ export function PanelsShell({
               dropTarget.index === index &&
               draggedPanelId !== null
             }
+            enabled={draggedPanelId !== null}
             index={index}
             onDropPanel={onDropPanel}
             onPreviewDrop={onPreviewDrop}
             side={side}
           />
           <DockPanel
+            draggedPanelId={draggedPanelId}
             index={index}
             onDragEnd={onDragEnd}
             onDragStart={onDragStart}
@@ -101,6 +108,7 @@ export function PanelsShell({
           dropTarget.index === panels.length &&
           draggedPanelId !== null
         }
+        enabled={draggedPanelId !== null}
         index={panels.length}
         onDropPanel={onDropPanel}
         onPreviewDrop={onPreviewDrop}
@@ -111,11 +119,12 @@ export function PanelsShell({
 }
 
 type DockPanelProps = {
+  draggedPanelId: string | null;
   index: number;
   onDragEnd: () => void;
   onDragStart: (panelId: string) => void;
   onPanelCollapsedChange: (panelId: string, collapsed: boolean) => void;
-  onDropPanel: (target: DropTarget) => void;
+  onDropPanel: (target: DropTarget, panelId?: string) => void;
   onPreviewDrop: (target: DropTarget) => void;
   panel: DockPanelDefinition;
   renderPanelHeaderActions?: (panel: DockPanelDefinition) => ReactNode;
@@ -124,6 +133,7 @@ type DockPanelProps = {
 };
 
 function DockPanel({
+  draggedPanelId,
   index,
   onDragEnd,
   onDragStart,
@@ -149,7 +159,11 @@ function DockPanel({
     <section
       aria-label={`${panel.title} panel`}
       className="rounded-3xl border border-canvas-line bg-canvas-panel shadow-sm"
+      data-panel-drop-index={index}
+      data-panel-drop-kind="panel"
+      data-panel-drop-side={side}
       onDragOver={(event) => {
+        if (!draggedPanelId) return;
         event.preventDefault();
         event.stopPropagation();
         if (event.dataTransfer) {
@@ -158,6 +172,7 @@ function DockPanel({
         onPreviewDrop(getPanelDropTarget(event));
       }}
       onDrop={(event) => {
+        if (!draggedPanelId) return;
         event.preventDefault();
         event.stopPropagation();
         onDropPanel(getPanelDropTarget(event));
@@ -169,14 +184,24 @@ function DockPanel({
           {renderPanelHeaderActions?.(panel)}
           <button
             aria-label={`Reorder ${panel.title} panel`}
-            className="flex h-8 w-8 cursor-grab items-center justify-center rounded-full border border-canvas-line bg-white text-canvas-muted transition hover:bg-canvas active:cursor-grabbing"
-            draggable
+            className="flex h-8 w-8 touch-none cursor-grab items-center justify-center rounded-full border border-canvas-line bg-white text-canvas-muted transition hover:bg-canvas active:cursor-grabbing"
+            draggable={false}
             onDragEnd={onDragEnd}
             onDragStart={(event) => {
               event.dataTransfer.effectAllowed = "move";
               event.dataTransfer.setData("text/plain", panel.id);
               onDragStart(panel.id);
             }}
+            onPointerDown={(event) =>
+              startPanelPointerDrag({
+                event,
+                onDragEnd,
+                onDragStart,
+                onDropPanel,
+                onPreviewDrop,
+                panelId: panel.id
+              })
+            }
             type="button"
           >
             <GripVertical aria-hidden="true" className="h-4 w-4" />
@@ -218,14 +243,16 @@ function DockPanel({
 
 type PanelDropMarkerProps = {
   active: boolean;
+  enabled: boolean;
   index: number;
-  onDropPanel: (target: DropTarget) => void;
+  onDropPanel: (target: DropTarget, panelId?: string) => void;
   onPreviewDrop: (target: DropTarget) => void;
   side: DockSide;
 };
 
 function PanelDropMarker({
   active,
+  enabled,
   index,
   onDropPanel,
   onPreviewDrop,
@@ -235,6 +262,7 @@ function PanelDropMarker({
     <PanelDropTarget
       active={active}
       className="py-1"
+      enabled={enabled}
       index={index}
       label={`Drop panel ${index} in ${side} docked panels`}
       onDropPanel={onDropPanel}
@@ -252,6 +280,7 @@ type PanelDropTargetProps = PanelDropMarkerProps & {
 function PanelDropTarget({
   active,
   className,
+  enabled,
   index,
   label,
   onDropPanel,
@@ -264,7 +293,11 @@ function PanelDropTarget({
     <div
       aria-label={label}
       className={className}
+      data-panel-drop-index={index}
+      data-panel-drop-kind="marker"
+      data-panel-drop-side={side}
       onDragOver={(event) => {
+        if (!enabled) return;
         event.preventDefault();
         event.stopPropagation();
         if (event.dataTransfer) {
@@ -273,6 +306,7 @@ function PanelDropTarget({
         onPreviewDrop(target);
       }}
       onDrop={(event) => {
+        if (!enabled) return;
         event.preventDefault();
         event.stopPropagation();
         onDropPanel(target);

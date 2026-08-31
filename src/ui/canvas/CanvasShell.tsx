@@ -372,14 +372,16 @@ export function CanvasShell({
               />
             </div>
           ) : null}
-          <div className="relative z-50 ml-auto shrink-0">
-            <CompactPanelLauncher
-              inline
-              overlayContainer={canvasShellElement}
-              renderPanelContent={renderCompactPanelContent}
-              renderPanelHeaderActions={renderCompactPanelHeaderActions}
-            />
-          </div>
+          {compactLayout ? (
+            <div className="relative z-50 ml-auto shrink-0">
+              <CompactPanelLauncher
+                inline
+                overlayContainer={canvasShellElement}
+                renderPanelContent={renderCompactPanelContent}
+                renderPanelHeaderActions={renderCompactPanelHeaderActions}
+              />
+            </div>
+          ) : null}
         </div>
       ) : null}
       {!compactLayout && !showMobileControls ? (
