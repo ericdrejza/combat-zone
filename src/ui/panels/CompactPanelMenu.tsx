@@ -28,7 +28,7 @@ export function CompactPanelMenu({
     <div ref={menuRef}>
       <motion.div
         aria-label="Choose panel"
-        className="pointer-events-auto absolute bottom-[calc(env(safe-area-inset-bottom)+4.75rem)] right-2 flex flex-col gap-1 rounded-2xl border border-canvas-line bg-canvas-panel/95 p-2 shadow-xl backdrop-blur"
+        className="pointer-events-auto absolute bottom-[4.75rem] right-2 flex flex-col gap-1 rounded-2xl border border-canvas-line bg-canvas-panel/95 p-2 shadow-xl backdrop-blur"
         initial={{ opacity: 0, y: 12, scale: 0.94 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: 12, scale: 0.94 }}

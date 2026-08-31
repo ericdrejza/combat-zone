@@ -1,4 +1,4 @@
-import type { MouseEvent } from "react";
+import type { MouseEvent, PointerEvent } from "react";
 import { motion } from "motion/react";
 
 import { getEngagementAwareSplitInput } from "@core/layout/engagementSplitLayout";
@@ -35,7 +35,7 @@ type ZoneLayerProps = {
     polygon: LayoutPoint[],
     point: LayoutPoint,
     vertexIndex: number,
-    event: MouseEvent<SVGCircleElement>
+    event: MouseEvent<SVGCircleElement> | PointerEvent<SVGCircleElement>
   ) => void;
   onResizeHandleDrag: (point: LayoutPoint) => void;
   onResizeHandleDragEnd: (event: ActorDragEndEvent) => void;
@@ -274,6 +274,17 @@ export function ZoneLayer({
                       event
                     )
                   }
+                  onPointerDown={(event) => {
+                    if (event.pointerType !== "mouse") {
+                      onResizeHandleMouseDown(
+                        zone,
+                        polygon,
+                        point,
+                        vertexIndex,
+                        event
+                      );
+                    }
+                  }}
                   onDrag={(_, info) => onResizeHandleDrag(info.offset)}
                   onDragEnd={(event) => onResizeHandleDragEnd(event)}
                   transition={zoneGeometryTransition}

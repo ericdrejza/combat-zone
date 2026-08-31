@@ -231,6 +231,7 @@ describe("Toolbar actor creation", () => {
     await user.click(screen.getByRole("button", { name: "Actor" }));
     await user.click(screen.getByRole("button", { name: "Create actor" }));
     await user.type(screen.getByRole("textbox", { name: "Actor name" }), "Touch Actor");
+    const actorNameInput = screen.getByRole("textbox", { name: "Actor name" });
     const preview = screen.getByLabelText("Actor preview");
 
     fireEvent.pointerDown(preview, {
@@ -246,6 +247,10 @@ describe("Toolbar actor creation", () => {
       pointerId: 9,
       pointerType: "touch"
     });
+    // The focused name input must release the IME before the drag is handed
+    // to the canvas; otherwise Android can leave the app viewport panned after
+    // the modal unmounts.
+    expect(document.activeElement).not.toBe(actorNameInput);
     expect(screen.queryByRole("dialog", { name: "Create actor" })).not.toBeInTheDocument();
 
     fireEvent.pointerUp(window, {

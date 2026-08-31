@@ -39,7 +39,7 @@ export function CompactSelectionDeleteButton({
     : `Delete ${count} selected ${entityType}s`;
 
   return (
-    <div className="absolute bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] left-2 z-30">
+    <div className="absolute bottom-3 left-2 z-30">
       <TouchTooltip label={label}>
         <motion.button
           aria-label={label}

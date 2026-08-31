@@ -131,7 +131,13 @@ export function ActorCreationModal({ onClose }: ActorCreationModalProps) {
               armCompactCanvasTransfer(
                 event.nativeEvent,
                 { actor: getDragData(), kind: "new-actor" },
-                () => setTransferActive(true),
+                () => {
+                  // Android keeps the IME open while the focused input remains
+                  // mounted. Blur before handing the gesture to the canvas so
+                  // the viewport can return to its full height during drag.
+                  inputRef.current?.blur();
+                  setTransferActive(true);
+                },
                 "all",
                 onClose
               );

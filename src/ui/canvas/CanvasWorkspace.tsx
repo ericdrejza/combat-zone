@@ -82,7 +82,7 @@ type CanvasWorkspaceProps = {
     polygon: LayoutPoint[],
     point: LayoutPoint,
     vertexIndex: number,
-    event: MouseEvent<SVGCircleElement>
+    event: MouseEvent<SVGCircleElement> | ReactPointerEvent<SVGCircleElement>
   ) => void;
   onResizeHandleDrag: (point: LayoutPoint) => void;
   onResizeHandleDragEnd: (event: ActorDragEndEvent) => void;
