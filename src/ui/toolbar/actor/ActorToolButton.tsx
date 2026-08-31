@@ -27,7 +27,6 @@ import {
   ToolbarSubtoolBar
 } from "../ToolbarOption";
 import { ActorCreationModal } from "./ActorCreationModal";
-import { TouchSelectionToggle } from "../TouchSelectionToggle";
 
 type ActorToolButtonProps = {
   activeToolId: ToolId;
@@ -272,7 +271,6 @@ export function ActorToolButton({
   const optionBar = activeToolId === "actor" ? (
     <ToolbarSubtoolBar aria-label="Actor options">
       {renderOptions()}
-      <TouchSelectionToggle toolId="actor" />
     </ToolbarSubtoolBar>
   ) : null;
 

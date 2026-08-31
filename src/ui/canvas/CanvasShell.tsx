@@ -41,6 +41,7 @@ import { useZoneActorTranslation } from "./useZoneActorTranslation";
 import { useActorRenderPlacements } from "./actors/useActorRenderPlacements";
 import { useCompactCanvasTransfer } from "./useCompactCanvasTransfer";
 import { TOUCH_NAVIGATION_START_EVENT } from "./useCanvasTouchGestures";
+import { TouchSelectionToggle } from "@ui/toolbar/TouchSelectionToggle";
 
 export function CanvasShell() {
   const dispatch = useDispatch<AppDispatch>();
@@ -327,21 +328,40 @@ export function CanvasShell() {
         zoneShapeMode={zoneShapeMode}
       />
       {showMobileControls ? (
-        <div className="absolute bottom-3 left-2 z-30 flex items-center gap-2">
-          <CompactSelectionDeleteButton
-            activeToolId={activeToolId}
-            inline
-            onDelete={() => deleteSelectedEntities(dispatch, encounter, selection)}
-            selection={selection}
-          />
-          <CompactEngagementActionButtons
-            activeToolId={activeToolId}
-            encounter={encounter}
-            selection={selection}
-          />
+        <div className={`absolute bottom-3 left-2 z-30 flex items-end gap-2 ${
+          compactLayout ? "" : "right-2"
+        }`}>
+          <div className="flex shrink-0 items-center gap-2">
+            <TouchSelectionToggle toolId={activeToolId} />
+            <CompactSelectionDeleteButton
+              activeToolId={activeToolId}
+              inline
+              onDelete={() => deleteSelectedEntities(dispatch, encounter, selection)}
+              selection={selection}
+            />
+            <CompactEngagementActionButtons
+              activeToolId={activeToolId}
+              encounter={encounter}
+              selection={selection}
+            />
+          </div>
+          {!compactLayout ? (
+            <div className="flex min-w-0 flex-1 justify-center">
+              <ZonelessActorPanel
+                activeToolId={activeToolId}
+                actors={encounter.actors}
+                canvasBackgroundLuminance={backgroundLuminance.canvas}
+                isActorDragActive={Boolean(actorDrag?.hasMoved)}
+                isInBottomRow
+                onActorCreationDragOver={handleActorCreationDragOverZoneless}
+                onActorCreationDrop={handleActorCreationDropToZoneless}
+                selection={selection}
+              />
+            </div>
+          ) : null}
         </div>
       ) : null}
-      {!compactLayout ? (
+      {!compactLayout && !showMobileControls ? (
         <ZonelessActorPanel
           activeToolId={activeToolId}
           actors={encounter.actors}

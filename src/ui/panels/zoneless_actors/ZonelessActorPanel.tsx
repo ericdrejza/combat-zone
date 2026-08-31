@@ -26,6 +26,7 @@ type ZonelessActorPanelProps = {
   activeToolId: RootState["interaction"]["activeToolId"];
   actors: RootState["encounter"]["present"]["actors"];
   canvasBackgroundLuminance: number;
+  isInBottomRow?: boolean;
   isActorDragActive: boolean;
   onActorCreationDragOver: (event: DragEvent<HTMLElement>) => void;
   onActorCreationDrop: (event: DragEvent<HTMLElement>) => void;
@@ -76,6 +77,7 @@ export function ZonelessActorPanel({
   activeToolId,
   actors,
   canvasBackgroundLuminance,
+  isInBottomRow = false,
   isActorDragActive,
   onActorCreationDragOver,
   onActorCreationDrop,
@@ -190,7 +192,7 @@ export function ZonelessActorPanel({
   return (
     <aside
       aria-label="Zoneless actors"
-      className={`min-w-min absolute bottom-3 left-1/2 flex -translate-x-1/2 flex-col overflow-hidden border p-2 ${
+      className={`${isInBottomRow ? "relative min-w-0 translate-x-0" : "absolute bottom-3 left-1/2 min-w-min -translate-x-1/2"} z-40 flex max-w-full flex-col overflow-hidden border p-2 ${
         expanded
           ? "rounded-2xl border-canvas-line bg-canvas-panel/10 shadow-lg backdrop-blur"
           : "rounded-lg bg-transparent"
@@ -202,7 +204,7 @@ export function ZonelessActorPanel({
       onDrop={onActorCreationDrop}
       style={{
         height: expanded ? `${size.height}px` : undefined,
-        maxWidth: "calc(100% - 1.5rem)",
+        maxWidth: isInBottomRow ? "100%" : "calc(100% - 1.5rem)",
         borderColor: contrastColor,
         color: contrastColor,
         width: `${size.width}px`
