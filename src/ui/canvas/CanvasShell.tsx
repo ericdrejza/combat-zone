@@ -11,6 +11,7 @@ import { ZonelessActorPanel } from "../panels/zoneless_actors/ZonelessActorPanel
 import { closeZoneShapeMenu } from "../toolbar/events";
 import { CanvasDragOverlay } from "./CanvasDragOverlay";
 import { CanvasToolStatusBadge } from "./CanvasToolStatusBadge";
+import { CompactEngagementActionButtons } from "./CompactEngagementActionButtons";
 import { CompactSelectionDeleteButton } from "./CompactSelectionDeleteButton";
 import { CanvasWorkspace } from "./CanvasWorkspace";
 import { CanvasTransferPreview } from "./CanvasTransferPreview";
@@ -326,11 +327,19 @@ export function CanvasShell() {
         zoneShapeMode={zoneShapeMode}
       />
       {showMobileControls ? (
-        <CompactSelectionDeleteButton
-          activeToolId={activeToolId}
-          onDelete={() => deleteSelectedEntities(dispatch, encounter, selection)}
-          selection={selection}
-        />
+        <div className="absolute bottom-3 left-2 z-30 flex items-center gap-2">
+          <CompactSelectionDeleteButton
+            activeToolId={activeToolId}
+            inline
+            onDelete={() => deleteSelectedEntities(dispatch, encounter, selection)}
+            selection={selection}
+          />
+          <CompactEngagementActionButtons
+            activeToolId={activeToolId}
+            encounter={encounter}
+            selection={selection}
+          />
+        </div>
       ) : null}
       {!compactLayout ? (
         <ZonelessActorPanel

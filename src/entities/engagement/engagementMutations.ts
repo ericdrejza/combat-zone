@@ -20,6 +20,34 @@ function uniqueIds(ids: readonly EntityId[]): EntityId[] {
   return [...new Set(ids)];
 }
 
+function getSelectedActorIdsByZone(
+  state: EncounterState,
+  selectedActorIds: readonly EntityId[]
+): Map<EntityId, EntityId[]> {
+  const actorIdsByZone = new Map<EntityId, EntityId[]>();
+
+  for (const actorId of uniqueIds(selectedActorIds)) {
+    const actor = state.actors.byId[actorId];
+    if (!actor || !state.zones.byId[actor.currentZoneId]) continue;
+
+    const actorIds = actorIdsByZone.get(actor.currentZoneId) ?? [];
+    actorIds.push(actorId);
+    actorIdsByZone.set(actor.currentZoneId, actorIds);
+  }
+
+  return actorIdsByZone;
+}
+
+/** Returns whether the selection contains at least two actors in one real Zone. */
+export function canEngageSelectedActors(
+  state: EncounterState,
+  selectedActorIds: readonly EntityId[]
+): boolean {
+  return [...getSelectedActorIdsByZone(state, selectedActorIds).values()].some(
+    (actorIds) => actorIds.length >= 2
+  );
+}
+
 /** Removes members and dissolves groups which no longer have melee meaning. */
 export function removeActorsFromEngagements(
   state: EncounterState,
@@ -233,14 +261,7 @@ export function engageSelectedActors(
   selectedActorIds: readonly EntityId[],
   createId: (zoneId: EntityId) => EntityId
 ): EncounterState {
-  const idsByZone = new Map<EntityId, EntityId[]>();
-  for (const actorId of uniqueIds(selectedActorIds)) {
-    const actor = state.actors.byId[actorId];
-    if (!actor || !state.zones.byId[actor.currentZoneId]) continue;
-    const group = idsByZone.get(actor.currentZoneId) ?? [];
-    group.push(actorId);
-    idsByZone.set(actor.currentZoneId, group);
-  }
+  const idsByZone = getSelectedActorIdsByZone(state, selectedActorIds);
   let next = state;
   for (const [zoneId, participantIds] of idsByZone) {
     if (participantIds.length >= 2) {

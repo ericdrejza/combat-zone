@@ -162,7 +162,7 @@ covers `DESIGN.md` §15 "Must have" scope only.
 - [x] Removing a participant such that the Engagement has fewer than 2
       members auto-dissolves the Engagement (per `AGENT.md` Resolved Edge
       Cases), and this is verified in state, not just visually.
-- [x] The non-toggle Engage action immediately right of Select groups selected
+- [x] The non-toggle desktop Engage action immediately right of Select groups selected
       actors independently per zone, ignores zones with fewer than two
       selections, removes only selected actors from prior groups, leaves
       unselected members intact, and records the complete change as one history
@@ -219,6 +219,12 @@ covers `DESIGN.md` §15 "Must have" scope only.
       icon-only Lucide `Unlink2` Disengage action beside Engage enables when
       any selected actor is engaged and removes only selected participants,
       including auto-dissolution and exact undo/redo coverage.
+- [x] On mobile, Engage and Disengage are contextual bottom-left canvas
+      actions for Actor and Select tools: Engage requires at least two selected
+      actors in one Zone, Disengage requires at least one selected engaged
+      actor, and Disengage is to the right of Engage when both are visible.
+      Delete remains leftmost when it shares the action row, and the compact
+      rename button scrolls with the primary toolbar tools.
 - [x] In SPLIT_FLEX and SPLIT_SEQUENTIAL zones, unengaged actors remain in
       faction sections and each Engagement receives a separate isolated section
       in dynamic `engagements.allIds` order between the hero and neutral
