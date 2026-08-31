@@ -80,7 +80,8 @@ describe("CanvasShell compact actions", () => {
           "Touch multi-select",
           "Delete 2 selected actors",
           "Engage selected actors",
-          "Disengage selected actors"
+          "Disengage selected actors",
+          "Library panel"
         ]);
       });
     } finally {

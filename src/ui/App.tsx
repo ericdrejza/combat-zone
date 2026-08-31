@@ -36,8 +36,6 @@ import { readImageAssetDimensions } from "./toolbar/background/readImageFile";
 import { commitBackgroundImage } from "./toolbar/background/backgroundCanvasActions";
 import { useCanvasViewport } from "./canvas/CanvasViewportContext";
 import { useCompactLayout } from "@hooks/useCompactLayout";
-import { useMobileControls } from "@hooks/useMobileControls";
-import { CompactPanelLauncher } from "./panels/CompactPanelLauncher";
 import type {
   CompactPanelDefinition
 } from "./panels/compactPanelMetadata";
@@ -91,7 +89,6 @@ function AppContent() {
   const library = useSelector((state: RootState) => state.library);
   const selection = useSelector((state: RootState) => state.interaction.selection);
   const compactLayout = useCompactLayout();
-  const showCompactPanelLauncher = useMobileControls(compactLayout);
   const [panelLayout, setPanelLayout] = useState<PanelLayout>(initialPanelLayout);
   const [libraryAutoCollapsedBySelect, setLibraryAutoCollapsedBySelect] =
     useState(false);
@@ -373,13 +370,10 @@ function AppContent() {
           />
         </SidebarDock>
         ) : null}
-        <CanvasShell />
-        {showCompactPanelLauncher ? (
-          <CompactPanelLauncher
-            renderPanelContent={renderPanelContent}
-            renderPanelHeaderActions={renderPanelHeaderActions}
-          />
-        ) : null}
+        <CanvasShell
+          renderCompactPanelContent={renderPanelContent}
+          renderCompactPanelHeaderActions={renderPanelHeaderActions}
+        />
         {!compactLayout ? (
         <SidebarDock
           collapsed={sidebarCollapsed.right}

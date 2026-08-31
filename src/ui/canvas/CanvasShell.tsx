@@ -42,8 +42,20 @@ import { useActorRenderPlacements } from "./actors/useActorRenderPlacements";
 import { useCompactCanvasTransfer } from "./useCompactCanvasTransfer";
 import { TOUCH_NAVIGATION_START_EVENT } from "./useCanvasTouchGestures";
 import { TouchSelectionToggle } from "@ui/toolbar/TouchSelectionToggle";
+import {
+  CompactPanelLauncher,
+  type CompactPanelLauncherProps
+} from "@ui/panels/CompactPanelLauncher";
 
-export function CanvasShell() {
+type CanvasShellProps = {
+  renderCompactPanelContent?: CompactPanelLauncherProps["renderPanelContent"];
+  renderCompactPanelHeaderActions?: CompactPanelLauncherProps["renderPanelHeaderActions"];
+};
+
+export function CanvasShell({
+  renderCompactPanelContent,
+  renderCompactPanelHeaderActions
+}: CanvasShellProps) {
   const dispatch = useDispatch<AppDispatch>();
   const encounter = useSelector((state: RootState) => state.encounter.present);
   const library = useSelector((state: RootState) => state.library);
@@ -80,6 +92,8 @@ export function CanvasShell() {
   const [boxSelection, setBoxSelection] = useState<LocalBoxSelectionState | null>(
     null
   );
+  const [canvasShellElement, setCanvasShellElement] =
+    useState<HTMLElement | null>(null);
   const canvasRef = useRef<SVGSVGElement | null>(null);
   const suppressNextCanvasClickRef = useRef(false);
   const suppressNextCanvasClickUnconditionallyRef = useRef(false);
@@ -245,6 +259,7 @@ export function CanvasShell() {
       className={`relative min-h-0 overflow-hidden rounded-3xl border border-canvas-line bg-canvas-panel shadow-sm ${
         isDraggingCanvasEntity ? "select-none" : ""
       }`}
+      ref={setCanvasShellElement}
       role="main"
     >
       <CanvasViewport canvasSize={encounter.canvasSize}>
@@ -328,10 +343,8 @@ export function CanvasShell() {
         zoneShapeMode={zoneShapeMode}
       />
       {showMobileControls ? (
-        <div className={`absolute bottom-3 left-2 z-30 flex items-end gap-2 ${
-          compactLayout ? "" : "right-2"
-        }`}>
-          <div className="flex shrink-0 items-center gap-2">
+        <div className="absolute bottom-3 left-2 right-2 flex items-end gap-2">
+          <div className="relative z-30 flex shrink-0 items-center gap-2">
             <TouchSelectionToggle toolId={activeToolId} />
             <CompactSelectionDeleteButton
               activeToolId={activeToolId}
@@ -346,7 +359,7 @@ export function CanvasShell() {
             />
           </div>
           {!compactLayout ? (
-            <div className="flex min-w-0 flex-1 justify-center">
+            <div className="relative z-30 flex min-w-0 flex-1 justify-center">
               <ZonelessActorPanel
                 activeToolId={activeToolId}
                 actors={encounter.actors}
@@ -359,6 +372,14 @@ export function CanvasShell() {
               />
             </div>
           ) : null}
+          <div className="relative z-50 ml-auto shrink-0">
+            <CompactPanelLauncher
+              inline
+              overlayContainer={canvasShellElement}
+              renderPanelContent={renderCompactPanelContent}
+              renderPanelHeaderActions={renderCompactPanelHeaderActions}
+            />
+          </div>
         </div>
       ) : null}
       {!compactLayout && !showMobileControls ? (

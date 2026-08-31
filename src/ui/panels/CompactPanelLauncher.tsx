@@ -1,14 +1,11 @@
 import { AnimatePresence, motion } from "motion/react";
-import {
-  ChevronDown,
-  ChevronUp
-} from "lucide-react";
 import type {
   KeyboardEvent,
   PointerEvent as ReactPointerEvent,
   ReactNode
 } from "react";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 import {
   COMPACT_PANEL_DEFINITIONS,
@@ -23,6 +20,8 @@ const HOLD_DURATION_MS = 500;
 
 export type CompactPanelLauncherProps = {
   /** Content for each panel. Keeping this callback in the shell avoids coupling it to Redux. */
+  inline?: boolean;
+  overlayContainer?: Element | null;
   renderPanelContent?: (panel: CompactPanelDefinition) => ReactNode;
   renderPanelHeaderActions?: (panel: CompactPanelDefinition) => ReactNode;
   onPanelChange?: (panelId: CompactPanelId) => void;
@@ -37,11 +36,13 @@ export type CompactPanelLauncherProps = {
  * or the panel content contract.
  */
 export function CompactPanelLauncher({
+  inline = false,
   onDrawerChange,
   onPanelChange,
   panels = COMPACT_PANEL_DEFINITIONS,
   renderPanelContent,
   renderPanelHeaderActions,
+  overlayContainer,
   selectedPanelId: controlledSelectedPanelId
 }: CompactPanelLauncherProps) {
   const [internalSelectedPanelId, setInternalSelectedPanelId] =
@@ -249,7 +250,30 @@ export function CompactPanelLauncher({
     return null;
   }
 
-  return (
+  const launcherButton = (
+    <button
+      ref={launcherRef}
+      aria-expanded={drawerOpen}
+      aria-haspopup="dialog"
+      aria-label={`${selectedPanel.title} panel`}
+      className={`${inline ? "relative z-40" : "pointer-events-auto absolute bottom-3 right-2"} flex h-11 w-11 items-center justify-center rounded-full border shadow-lg transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-canvas-ink ${
+        drawerOpen
+          ? "border-canvas-ink bg-canvas-ink text-white hover:bg-canvas-ink/90"
+          : "border-canvas-line bg-canvas-panel text-canvas-ink hover:bg-white"
+      }`}
+      onClick={onLauncherClick}
+      onKeyDown={onLauncherKeyDown}
+      onPointerDown={onLauncherPointerDown}
+      onPointerUp={finishPointer}
+      onPointerCancel={finishPointer}
+      type="button"
+    >
+      <selectedPanel.Icon aria-hidden="true" className="h-5 w-5" />
+      <span className="sr-only">{selectedPanel.title}</span>
+    </button>
+  );
+
+  const launcherOverlay = (
     <div className="pointer-events-none absolute inset-0 z-40" data-compact-panels>
       <AnimatePresence>
         {drawerOpen ? (
@@ -310,27 +334,19 @@ export function CompactPanelLauncher({
           </div>
         ) : null}
       </AnimatePresence>
-      <button
-        ref={launcherRef}
-        aria-expanded={drawerOpen}
-        aria-haspopup="dialog"
-        aria-label={`${selectedPanel.title} panel`}
-        className="pointer-events-auto absolute bottom-3 right-2 flex h-11 w-11 items-center justify-center rounded-full border border-canvas-line bg-canvas-panel text-canvas-ink shadow-lg transition hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-canvas-ink"
-        onClick={onLauncherClick}
-        onKeyDown={onLauncherKeyDown}
-        onPointerDown={onLauncherPointerDown}
-        onPointerUp={finishPointer}
-        onPointerCancel={finishPointer}
-        type="button"
-      >
-        <selectedPanel.Icon aria-hidden="true" className="h-5 w-5" />
-        <span className="sr-only">{selectedPanel.title}</span>
-        {drawerOpen ? (
-          <ChevronDown aria-hidden="true" className="absolute -top-1 -right-1 h-3 w-3" />
-        ) : (
-          <ChevronUp aria-hidden="true" className="absolute -top-1 -right-1 h-3 w-3" />
-        )}
-      </button>
     </div>
+  );
+
+  const renderedOverlay = inline
+    ? overlayContainer
+      ? createPortal(launcherOverlay, overlayContainer)
+      : null
+    : launcherOverlay;
+
+  return (
+    <>
+      {renderedOverlay}
+      {launcherButton}
+    </>
   );
 }
