@@ -37,7 +37,7 @@ export function WebImageUrlDialog({
     <div
       aria-label={title}
       aria-modal="true"
-      className="fixed inset-0 z-[70] flex items-center justify-center bg-black/30 p-6"
+      className="viewport-overlay z-[70] flex items-center justify-center overflow-y-auto bg-black/30 p-6"
       role="dialog"
     >
       <form

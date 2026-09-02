@@ -11,6 +11,25 @@ import {
 } from "@tests/ui/renderApp";
 
 describe("Toolbar actor creation", () => {
+  it("keeps mobile-friendly autofocus and releases it before closing", async () => {
+    const user = userEvent.setup();
+
+    renderApp();
+    await user.click(screen.getByRole("button", { name: "Actor" }));
+    await user.click(screen.getByRole("button", { name: "Create actor" }));
+
+    const input = screen.getByRole("textbox", { name: "Actor name" });
+    const blur = vi.spyOn(input, "blur");
+    expect(input).toHaveFocus();
+
+    await user.click(screen.getByRole("button", { name: "Cancel" }));
+
+    expect(blur).toHaveBeenCalledOnce();
+    expect(
+      screen.queryByRole("dialog", { name: "Create actor" })
+    ).not.toBeInTheDocument();
+  });
+
   it("opens the actor creation modal with a target-aware create action and preview", async () => {
     const user = userEvent.setup();
 

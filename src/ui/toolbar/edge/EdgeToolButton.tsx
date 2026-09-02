@@ -153,7 +153,7 @@ export function EdgeToolButton({ activeToolId, compactLayout, compactSubtoolHost
         ? createPortal(optionBar, compactSubtoolHost)
         : null}
       {confirmClear ? (
-        <div aria-label="Confirm clear all edges" aria-modal="true" className="fixed inset-0 z-[70] flex items-center justify-center bg-black/30 p-6" role="dialog">
+        <div aria-label="Confirm clear all edges" aria-modal="true" className="viewport-overlay z-[70] flex items-center justify-center overflow-y-auto bg-black/30 p-6" role="dialog">
           <div className="w-[min(26rem,92vw)] rounded-3xl border border-canvas-line bg-white p-5 shadow-2xl">
             <h3 className="font-display text-lg font-semibold">Clear all edges?</h3>
             <p className="mt-2 text-sm text-canvas-muted">This removes every edge from the encounter. You can undo this action.</p>

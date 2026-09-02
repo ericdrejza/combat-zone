@@ -42,6 +42,7 @@ import type {
 import { CompactZonelessActorPanel } from "./panels/zoneless_actors/CompactZonelessActorPanel";
 import { EncounterRenameDialog } from "./encounter/EncounterRenameDialog";
 import { TouchTooltipProvider } from "./toolbar/TouchTooltip";
+import { useVisualViewportRect } from "@hooks/useVisualViewportRect";
 
 type SidebarCollapsedState = Record<DockSide, boolean>;
 
@@ -89,6 +90,7 @@ function AppContent() {
   const library = useSelector((state: RootState) => state.library);
   const selection = useSelector((state: RootState) => state.interaction.selection);
   const compactLayout = useCompactLayout();
+  const visualViewport = useVisualViewportRect();
   const [panelLayout, setPanelLayout] = useState<PanelLayout>(initialPanelLayout);
   const [libraryAutoCollapsedBySelect, setLibraryAutoCollapsedBySelect] =
     useState(false);
@@ -331,11 +333,19 @@ function AppContent() {
   return (
     <MotionPreferenceProvider>
       <TouchTooltipProvider>
-      <ZoneResizeApprovalProvider>
         <div
-          className="flex h-screen h-dvh max-h-screen max-h-dvh w-screen max-w-screen flex-col overflow-hidden bg-canvas text-canvas-ink"
+          className="flex flex-col overflow-hidden bg-canvas text-canvas-ink"
           data-app-shell
+          style={
+            {
+              "--app-viewport-height": `${visualViewport.height}px`,
+              "--app-viewport-left": `${visualViewport.offsetLeft}px`,
+              "--app-viewport-top": `${visualViewport.offsetTop}px`,
+              "--app-viewport-width": `${visualViewport.width}px`
+            } as CSSProperties
+          }
         >
+      <ZoneResizeApprovalProvider>
       <Toolbar
         encounterName={encounter.name}
         onActorToolSelected={expandAutoCollapsedLibraryPanel}
@@ -426,8 +436,8 @@ function AppContent() {
       {encounterRenameOpen ? (
         <EncounterRenameDialog onClose={() => setEncounterRenameOpen(false)} />
       ) : null}
-        </div>
       </ZoneResizeApprovalProvider>
+        </div>
       </TouchTooltipProvider>
     </MotionPreferenceProvider>
   );

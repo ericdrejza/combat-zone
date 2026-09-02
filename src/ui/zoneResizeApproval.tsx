@@ -44,7 +44,7 @@ export function ZoneResizeApprovalProvider({
         <div
           aria-label="Resize zone approval"
           aria-modal="true"
-          className="fixed inset-0 z-[70] flex items-center justify-center bg-black/30 p-4"
+          className="viewport-overlay z-[70] flex items-center justify-center overflow-y-auto bg-black/30 p-4"
           role="dialog"
         >
           <div className="w-[min(22rem,calc(100vw-2rem))] rounded-2xl border border-canvas-line bg-canvas-panel p-5 shadow-2xl">

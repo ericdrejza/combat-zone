@@ -53,7 +53,7 @@ export function ActorRenameModal({ onClose }: ActorRenameModalProps) {
     <div
       aria-label="Rename actors"
       aria-modal="true"
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/30 p-4"
+      className="viewport-overlay z-[60] flex items-center justify-center overflow-y-auto bg-black/30 p-4"
       onKeyDown={(event) => {
         if (event.key === "Escape") {
           event.preventDefault();
