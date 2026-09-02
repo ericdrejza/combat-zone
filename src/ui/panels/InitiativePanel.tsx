@@ -211,7 +211,7 @@ export function InitiativePanel({
       )}
 
       {confirmClear ? (
-        <div aria-label="Confirm remove all initiative actors" aria-modal="true" className="fixed inset-0 z-[70] flex items-center justify-center bg-black/30 p-6" role="dialog">
+        <div aria-label="Confirm remove all initiative actors" aria-modal="true" className="viewport-overlay z-[70] flex items-center justify-center overflow-y-auto bg-black/30 p-6" role="dialog">
           <div className="w-[min(26rem,92vw)] rounded-3xl border border-canvas-line bg-white p-5 shadow-2xl">
             <h3 className="font-display text-lg font-semibold">Clear initiative?</h3>
             <p className="mt-2 text-sm text-canvas-muted">This removes every participant and scoped initiative value. The active round is preserved, and you can undo this action.</p>

@@ -48,7 +48,7 @@ export function EncounterRenameDialog({ onClose }: EncounterRenameDialogProps) {
     <div
       aria-label="Rename encounter"
       aria-modal="true"
-      className="fixed inset-0 z-[80] flex items-center justify-center bg-black/40 p-4"
+      className="viewport-overlay z-[80] flex items-center justify-center overflow-y-auto bg-black/40 p-4"
       onKeyDown={(event) => {
         if (event.key === "Escape") {
           event.preventDefault();

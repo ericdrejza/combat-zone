@@ -34,6 +34,11 @@ export function ActorCreationModal({ onClose }: ActorCreationModalProps) {
     inputRef.current?.focus();
   }, []);
 
+  function close() {
+    inputRef.current?.blur();
+    onClose();
+  }
+
   function create() {
     if (!targetZone) {
       return;
@@ -76,7 +81,7 @@ export function ActorCreationModal({ onClose }: ActorCreationModalProps) {
         })
       );
       dispatch(selectEntity({ entityType: "actor", ids: [actorId] }));
-      onClose();
+      close();
     };
 
     if (prepared instanceof Promise) {
@@ -100,19 +105,19 @@ export function ActorCreationModal({ onClose }: ActorCreationModalProps) {
       aria-label="Create actor"
       aria-modal="true"
       aria-hidden={transferActive || undefined}
-      className={`fixed inset-0 z-[60] flex items-center justify-center bg-black/30 p-4 ${
+      className={`viewport-overlay z-[60] flex items-start justify-center overflow-y-auto bg-black/30 p-4 ${
         transferActive ? "pointer-events-none opacity-0" : ""
       }`}
       onKeyDown={(event) => {
         if (event.key === "Escape") {
           event.preventDefault();
-          onClose();
+          close();
         }
       }}
       role={transferActive ? undefined : "dialog"}
     >
       <form
-        className="w-[min(22rem,calc(100vw-2rem))] space-y-4 rounded-2xl border border-canvas-line bg-canvas-panel p-5 shadow-2xl"
+        className="my-auto max-h-full w-[min(22rem,calc(100vw-2rem))] space-y-4 overflow-y-auto rounded-2xl border border-canvas-line bg-canvas-panel p-5 shadow-2xl"
         onSubmit={(event) => {
           event.preventDefault();
           void create();
@@ -139,7 +144,7 @@ export function ActorCreationModal({ onClose }: ActorCreationModalProps) {
                   setTransferActive(true);
                 },
                 "all",
-                onClose
+                close
               );
             }}
             style={{
@@ -168,7 +173,7 @@ export function ActorCreationModal({ onClose }: ActorCreationModalProps) {
         <div className="flex justify-end gap-2">
           <button
             className="rounded-xl border border-canvas-line bg-white px-4 py-2 text-sm font-medium transition hover:bg-canvas"
-            onClick={onClose}
+            onClick={close}
             type="button"
           >
             Cancel

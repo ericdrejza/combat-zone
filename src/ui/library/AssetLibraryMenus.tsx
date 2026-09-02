@@ -67,7 +67,7 @@ export function ConfirmFolderDeleteDialog({
     <div
       aria-label="Confirm folder deletion"
       aria-modal="true"
-      className="fixed inset-0 z-[65] flex items-center justify-center bg-black/30 p-6"
+      className="viewport-overlay z-[65] flex items-center justify-center overflow-y-auto bg-black/30 p-6"
       role="dialog"
     >
       <div className="w-[min(26rem,92vw)] rounded-3xl border border-canvas-line bg-white p-5 shadow-2xl">
@@ -111,7 +111,7 @@ export function AssetLinkPickerDialog({
     <div
       aria-label="Select existing asset"
       aria-modal="true"
-      className="fixed inset-0 z-[55] flex items-center justify-center bg-black/30 p-6"
+      className="viewport-overlay z-[55] flex items-center justify-center overflow-y-auto bg-black/30 p-6"
       role="dialog"
     >
       <div className="w-[min(24rem,92vw)] rounded-3xl border border-canvas-line bg-white p-4 shadow-2xl">
