@@ -39,7 +39,7 @@ export function createActor(zoneId: string): Actor {
     actorType: 'creature',
     currentZoneId: zoneId,
     id: 'actor-1',
-    image: 'data:image/png;base64,actor',
+    image: { kind: 'embedded', dataUrl: 'data:image/png;base64,actor' },
     layoutGroup: 'hero',
     metadata: {},
     name: 'Aegis',

@@ -44,6 +44,7 @@ import { TouchTooltipProvider } from "./toolbar/TouchTooltip";
 import { useVisualViewportRect } from "@hooks/useVisualViewportRect";
 import { SettingsButton } from "./settings/SettingsButton";
 import { useAppPersistenceUi } from "./persistence/useAppPersistenceUi";
+import { useOptionalCloudSync } from "./cloud_sync";
 
 type SidebarCollapsedState = Record<DockSide, boolean>;
 
@@ -82,6 +83,7 @@ function shouldIgnoreKeyboardShortcut(target: EventTarget | null): boolean {
 }
 
 function AppContent() {
+  const cloud = useOptionalCloudSync();
   const dispatch = useDispatch();
   const { getViewportSize, zoom: viewportZoom } = useCanvasViewport();
   const activeToolId = useSelector(
@@ -243,7 +245,7 @@ function AppContent() {
     if (asset.width && asset.height) {
       commitImage({ ...asset, height: asset.height, width: asset.width });
     } else {
-      void readImageAssetDimensions(asset).then(commitImage);
+      void readImageAssetDimensions(asset, cloud?.resolveImageAsset).then(commitImage);
     }
   }
 

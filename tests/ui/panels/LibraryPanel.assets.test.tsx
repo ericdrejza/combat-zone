@@ -23,7 +23,7 @@ describe("LibraryPanel", () => {
       store.dispatch(
         uploadImage({
           asset: {
-            dataUrl: "data:image/png;base64,pointer-scout",
+            source: { kind: "embedded", dataUrl: "data:image/png;base64,pointer-scout" },
             mediaType: "image/png",
             name: "Pointer Scout"
           },
@@ -80,7 +80,7 @@ describe("LibraryPanel", () => {
         store.dispatch(
           uploadImage({
             asset: {
-              dataUrl: "data:image/png;base64,touch-scout",
+              source: { kind: "embedded", dataUrl: "data:image/png;base64,touch-scout" },
               mediaType: "image/png",
               name: "Touch Scout"
             },
@@ -139,7 +139,7 @@ describe("LibraryPanel", () => {
       store.dispatch(
         uploadImage({
           asset: {
-            dataUrl: "data:image/png;base64,scout",
+            source: { kind: "embedded", dataUrl: "data:image/png;base64,scout" },
             mediaType: "image/png",
             name: "Scout"
           },
@@ -208,7 +208,7 @@ describe("LibraryPanel", () => {
       store.dispatch(
         uploadImage({
           asset: {
-            dataUrl: "data:image/png;base64,scout",
+            source: { kind: "embedded", dataUrl: "data:image/png;base64,scout" },
             mediaType: "image/png",
             name: "Scout"
           },
@@ -355,7 +355,7 @@ describe("LibraryPanel", () => {
       store.dispatch(
         uploadImage({
           asset: {
-            dataUrl: "data:image/png;base64,tap-actor",
+            source: { kind: "embedded", dataUrl: "data:image/png;base64,tap-actor" },
             mediaType: "image/png",
             name: "Tap Actor"
           },

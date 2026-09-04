@@ -1,5 +1,6 @@
 import { ENCOUNTER_SCHEMA_VERSION, type EncounterState } from "@core/encounter/types";
 import type { LibraryState } from "@library/types";
+import { isImageAssetSource, migrateLegacyImageSource } from "@core/assets/imageAssetSource";
 import {
   EXPORT_SCHEMA_VERSION,
   PersistenceValidationError,
@@ -11,6 +12,10 @@ import {
 } from "./types";
 
 type UnknownRecord = Record<string, unknown>;
+
+const LEGACY_ENCOUNTER_SCHEMA_VERSION = 5;
+const LEGACY_EXPORT_SCHEMA_VERSION = 1;
+const LEGACY_WORKSPACE_SCHEMA_VERSION = 1;
 
 function isRecord(value: unknown): value is UnknownRecord {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -79,6 +84,18 @@ export function assertEncounterState(value: unknown, name = "encounter"): assert
   if (value.backgroundImage !== null && !isRecord(value.backgroundImage)) {
     throw new PersistenceValidationError(`${name}.backgroundImage is invalid.`);
   }
+  if (
+    isRecord(value.backgroundImage) &&
+    !isImageAssetSource(value.backgroundImage.source)
+  ) {
+    throw new PersistenceValidationError(`${name}.backgroundImage.source is invalid.`);
+  }
+  for (const actorId of (value.actors as { allIds: string[] }).allIds) {
+    const actor = (value.actors as { byId: UnknownRecord }).byId[actorId];
+    if (isRecord(actor) && actor.image !== undefined && !isImageAssetSource(actor.image)) {
+      throw new PersistenceValidationError(`${name}.actors.${actorId}.image is invalid.`);
+    }
+  }
 }
 
 export function assertLibraryState(value: unknown, name = "library"): asserts value is LibraryState {
@@ -115,6 +132,12 @@ export function assertLibraryState(value: unknown, name = "library"): asserts va
           ))
       ) {
         throw new PersistenceValidationError(`${name} folder ${nodeId} has invalid children.`);
+      }
+      if (
+        node.type === "image" &&
+        (!isRecord(node.asset) || !isImageAssetSource(node.asset.source))
+      ) {
+        throw new PersistenceValidationError(`${name} image ${nodeId} has an invalid source.`);
       }
     }
   }
@@ -213,13 +236,84 @@ export function validateExportEnvelope(value: unknown): ExportEnvelope {
   throw new PersistenceValidationError(`Unsupported export kind ${String(value.kind)}.`);
 }
 
-/** Alias for callers that prefer parser terminology. The returned value is safe to use. */
-export const parseExportEnvelope = validateExportEnvelope;
+function migrateImageRecord(value: UnknownRecord): UnknownRecord {
+  if (isImageAssetSource(value.source)) return value;
+  if (typeof value.dataUrl !== "string") return value;
+  const { dataUrl, ...record } = value;
+  return { ...record, source: migrateLegacyImageSource(dataUrl) };
+}
+
+export function migrateLibraryState(value: unknown): unknown {
+  if (!isRecord(value) || !isRecord(value.sections)) return value;
+  const migrated = structuredClone(value);
+  const sections = migrated.sections as UnknownRecord;
+  for (const section of Object.values(sections)) {
+    if (!isRecord(section) || !isRecord(section.nodesById)) continue;
+    for (const node of Object.values(section.nodesById)) {
+      if (isRecord(node) && node.type === "image" && isRecord(node.asset)) {
+        node.asset = migrateImageRecord(node.asset);
+      }
+    }
+  }
+  return migrated;
+}
+
+export function migrateEncounterState(value: unknown): unknown {
+  if (!isRecord(value) || value.schemaVersion !== LEGACY_ENCOUNTER_SCHEMA_VERSION) return value;
+  const migrated = structuredClone(value);
+  migrated.schemaVersion = ENCOUNTER_SCHEMA_VERSION;
+  if (isRecord(migrated.backgroundImage)) {
+    migrated.backgroundImage = migrateImageRecord(migrated.backgroundImage);
+  }
+  if (isRecord(migrated.actors) && isRecord(migrated.actors.byId)) {
+    for (const actor of Object.values(migrated.actors.byId)) {
+      if (isRecord(actor) && typeof actor.image === "string") {
+        actor.image = migrateLegacyImageSource(actor.image);
+      }
+    }
+  }
+  return migrated;
+}
+
+function migrateWorkspace(value: unknown): unknown {
+  if (!isRecord(value) || !isRecord(value.manifest)) return value;
+  const migrated = structuredClone(value);
+  const manifest = migrated.manifest as UnknownRecord;
+  if (manifest.schemaVersion === LEGACY_WORKSPACE_SCHEMA_VERSION) {
+    manifest.schemaVersion = WORKSPACE_SCHEMA_VERSION;
+  }
+  if (Array.isArray(migrated.encounters)) {
+    for (const record of migrated.encounters) {
+      if (isRecord(record)) record.state = migrateEncounterState(record.state);
+    }
+  }
+  if (isRecord(migrated.recoveryDraft)) {
+    migrated.recoveryDraft.state = migrateEncounterState(migrated.recoveryDraft.state);
+  }
+  if (isRecord(migrated.library)) {
+    migrated.library.state = migrateLibraryState(migrated.library.state);
+  }
+  return migrated;
+}
 
 /**
  * Migration is deliberately explicit: silently accepting a newer document can
  * discard fields. Older migrations can be added here without changing callers.
  */
 export function migrateExportEnvelope(value: unknown): ExportEnvelope {
-  return validateExportEnvelope(value);
+  if (!isRecord(value)) return validateExportEnvelope(value);
+  const migrated = structuredClone(value);
+  if (migrated.schemaVersion === LEGACY_EXPORT_SCHEMA_VERSION) {
+    migrated.schemaVersion = EXPORT_SCHEMA_VERSION;
+    if (migrated.kind === "workspace-export") {
+      migrated.workspace = migrateWorkspace(migrated.workspace);
+    } else if (migrated.kind === "encounter-export") {
+      migrated.encounter = migrateEncounterState(migrated.encounter);
+      migrated.library = migrateLibraryState(migrated.library);
+    }
+  }
+  return validateExportEnvelope(migrated);
 }
+
+/** Parses current envelopes and explicitly upgrades every supported legacy form. */
+export const parseExportEnvelope = migrateExportEnvelope;

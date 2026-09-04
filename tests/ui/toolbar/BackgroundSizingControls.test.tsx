@@ -37,7 +37,7 @@ function seedBackgroundEncounter() {
   const encounter = {
     ...createEncounterState({ id: "background-size", name: "Background" }),
     backgroundImage: {
-      dataUrl: "data:image/png;base64,map",
+      source: { kind: "embedded" as const, dataUrl: "data:image/png;base64,map" },
       height: 500,
       mediaType: "image/png",
       name: "map.png",

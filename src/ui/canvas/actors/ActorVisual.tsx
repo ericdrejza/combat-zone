@@ -2,6 +2,7 @@ import { motion, type Transition } from "motion/react";
 
 import type { Actor } from "@entities/actor/types";
 import { getReadableTextColor } from "../canvasLuminance";
+import { useResolvedImageSource } from "@core/assets/ImageAssetResolver";
 
 type ActorVisualProps = {
   actor: Actor;
@@ -34,6 +35,7 @@ export function ActorVisual({
   const innerRadius = Math.max(radius - 3, 1);
   const selectionRadius = radius + 5;
   const factionRadius = radius + 9;
+  const imageUrl = useResolvedImageSource(actor.image);
 
   return (
     <>
@@ -61,7 +63,7 @@ export function ActorVisual({
           transition={transition}
         />
       )}
-      {actor.image ? (
+      {imageUrl ? (
         <>
           <clipPath id={clipId}>
             {actor.shape === "rectangle" ? (
@@ -86,7 +88,7 @@ export function ActorVisual({
           </clipPath>
           <motion.image
             clipPath={`url(#${clipId})`}
-            href={actor.image}
+            href={imageUrl}
             initial={false}
             animate={{
               attrX: -innerRadius,
@@ -165,7 +167,7 @@ export function ActorVisual({
           />
         )
       ) : null}
-      {selected && actor.image ? (
+      {selected && imageUrl ? (
         <motion.text
           className="pointer-events-none text-[10px] font-bold z-10"
           dominantBaseline="middle"

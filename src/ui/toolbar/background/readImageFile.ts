@@ -1,8 +1,11 @@
 import type { EncounterBackgroundImage } from '@core/encounter/types';
 import type { LibraryImageAsset } from '@library/types';
+import { directImageSourceUrl } from '@core/assets/imageAssetSource';
+import type { ImageAssetResolver } from '@core/assets/ImageAssetResolver';
 
 export function readImageAssetDimensions(
-  asset: LibraryImageAsset
+  asset: LibraryImageAsset,
+  resolveRemote?: ImageAssetResolver
 ): Promise<EncounterBackgroundImage> {
   if (asset.width && asset.height) {
     return Promise.resolve({ ...asset, height: asset.height, width: asset.width });
@@ -20,7 +23,25 @@ export function readImageAssetDimensions(
     image.addEventListener('error', () => {
       reject(new Error('Selected image could not be decoded.'));
     });
-    image.src = asset.dataUrl;
+    const sourceUrl = directImageSourceUrl(asset.source);
+    if (sourceUrl) {
+      image.src = sourceUrl;
+      return;
+    }
+    if (!resolveRemote) {
+      reject(new Error('The selected remote image is not cached yet.'));
+      return;
+    }
+    void resolveRemote(asset.source).then((value) => {
+      if (typeof value === 'string') {
+        image.src = value;
+        return;
+      }
+      const objectUrl = URL.createObjectURL(value);
+      image.addEventListener('load', () => URL.revokeObjectURL(objectUrl), { once: true });
+      image.addEventListener('error', () => URL.revokeObjectURL(objectUrl), { once: true });
+      image.src = objectUrl;
+    }, reject);
   });
 }
 
@@ -53,7 +74,7 @@ export function readImageFile(file: File): Promise<EncounterBackgroundImage> {
       }
 
       void readImageAssetDimensions({
-        dataUrl: reader.result,
+        source: { kind: 'embedded', dataUrl: reader.result },
         mediaType: file.type || 'application/octet-stream',
         name: file.name
       }).then(resolve, reject);

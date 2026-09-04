@@ -1,6 +1,7 @@
 import type { RootState } from "@store/store";
 import type { CanvasSize } from "@core/layout/polygonCanvasBounds";
 import { CANVAS_BACKGROUND_COLOR } from "../canvasConstants";
+import { useResolvedImageSource } from "@core/assets/ImageAssetResolver";
 
 type CanvasBackgroundLayerProps = {
   backgroundImage: RootState["encounter"]["present"]["backgroundImage"];
@@ -11,6 +12,8 @@ export function CanvasBackgroundLayer({
   backgroundImage,
   canvasSize
 }: CanvasBackgroundLayerProps) {
+  const backgroundUrl = useResolvedImageSource(backgroundImage?.source);
+
   return (
     <>
       <rect
@@ -18,11 +21,11 @@ export function CanvasBackgroundLayer({
         height={canvasSize.height}
         width={canvasSize.width}
       />
-      {backgroundImage ? (
+      {backgroundImage && backgroundUrl ? (
         <image
           aria-label="Canvas background image"
           height={canvasSize.height}
-          href={backgroundImage.dataUrl}
+          href={backgroundUrl}
           preserveAspectRatio="none"
           width={canvasSize.width}
           x="0"

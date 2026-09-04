@@ -2,7 +2,7 @@ import { act } from "@testing-library/react";
 import { vi } from "vitest";
 
 import { createEncounterState } from "@core/encounter/createEncounterState";
-import { ZONELESS_ACTOR_ZONE_ID } from "@core/encounter/types";
+import { ZONELESS_ACTOR_ZONE_ID, type EncounterBackgroundImage } from "@core/encounter/types";
 import { createEncounterActionRecord } from "@core/history/createEncounterActionRecord";
 import type { EntityCollection } from "@core/state/entityCollection";
 import type { Actor } from "@entities/actor/types";
@@ -59,13 +59,7 @@ export function zone(): Zone {
 export function seedEncounter(
   actors: Actor[],
   zones: Zone[] = [],
-  backgroundImage: {
-    dataUrl: string;
-    height: number;
-    mediaType: string;
-    name: string;
-    width: number;
-  } | null = null
+  backgroundImage: EncounterBackgroundImage | null = null
 ) {
   store.dispatch(
     commitEncounterChange({

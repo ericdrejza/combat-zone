@@ -3,6 +3,11 @@ build/
 
 # Generated files
 dist/
+functions/lib/
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
 
 # Local resources
 resources/

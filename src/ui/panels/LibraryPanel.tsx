@@ -26,6 +26,7 @@ import { LibraryPanelNode } from "./LibraryPanelNode";
 import { commitBackgroundImage } from "@ui/toolbar/background/backgroundCanvasActions";
 import { useCanvasViewport } from "@ui/canvas/CanvasViewportContext";
 import { armCompactCanvasTransfer } from "@ui/canvas/compactCanvasTransfer";
+import { useOptionalCloudSync } from "@ui/cloud_sync";
 
 function getPanelSectionId(activeToolId: ToolId): LibrarySectionId | null {
   if (activeToolId === "actor") {
@@ -92,6 +93,7 @@ export function LibraryPanel({
   viewMode
 }: LibraryPanelProps) {
   const dispatch = useDispatch();
+  const cloud = useOptionalCloudSync();
   const { getViewportSize, zoom: viewportZoom } = useCanvasViewport();
   const encounter = useSelector((state: RootState) => state.encounter.present);
   const library = useSelector((state: RootState) => state.library);
@@ -191,7 +193,7 @@ export function LibraryPanel({
     if (asset.width && asset.height) {
       commitImage({ ...asset, height: asset.height, width: asset.width });
     } else {
-      void readImageAssetDimensions(asset).then(commitImage);
+      void readImageAssetDimensions(asset, cloud?.resolveImageAsset).then(commitImage);
     }
   }
 
@@ -212,7 +214,7 @@ export function LibraryPanel({
     event.dataTransfer.setData("text/plain", node.id);
     dragPreviewCleanupRef.current?.();
     dragPreviewCleanupRef.current = setActorDragImage(event.dataTransfer, {
-      image: asset.dataUrl,
+      image: asset.source,
       layoutGroup: actorTool.layoutGroup,
       name: node.name,
       shape: actorTool.shape,

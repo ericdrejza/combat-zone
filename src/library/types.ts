@@ -3,7 +3,7 @@ export type LibrarySectionId = "encounters" | "backgrounds" | "tokens";
 export type LibraryNodeType = "folder" | "image" | "link";
 
 export type LibraryImageAsset = {
-  dataUrl: string;
+  source: ImageAssetSource;
   height?: number;
   mediaType: string;
   name: string;
@@ -43,3 +43,4 @@ export const LIBRARY_SECTION_LABELS: Record<LibrarySectionId, string> = {
   backgrounds: "Backgrounds",
   tokens: "Tokens"
 };
+import type { ImageAssetSource } from "@core/assets/imageAssetSource";

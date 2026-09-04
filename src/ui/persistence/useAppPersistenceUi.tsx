@@ -11,6 +11,7 @@ import {
 } from "@ui/library/AssetLibraryModal";
 import { SettingsModal } from "@ui/settings/SettingsModal";
 import type { SaveStatus } from "@ui/toolbar/EncounterTitleControls";
+import { useOptionalCloudSync } from "@ui/cloud_sync";
 import { DeletedEncounterDialog } from "./DeletedEncounterDialog";
 import { downloadExport } from "./downloadExport";
 import { ImportTypeMismatchDialog } from "./ImportTypeMismatchDialog";
@@ -37,6 +38,7 @@ export function useAppPersistenceUi({
   onTokenDoubleClick
 }: AppPersistenceUiOptions): AppPersistenceUi {
   const persistence = usePersistence();
+  const cloud = useOptionalCloudSync();
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [libraryMode, setLibraryMode] = useState<AssetLibraryMode>("browse");
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -174,6 +176,8 @@ export function useAppPersistenceUi({
           onClose={() => setSettingsOpen(false)}
           onExportWorkspace={() => {
             void persistence.exportWorkspace().then((envelope) =>
+              cloud ? cloud.prepareWorkspaceExport(envelope) : envelope
+            ).then((envelope) =>
               downloadExport(envelope, "combat-zone-workspace.json")
             );
           }}

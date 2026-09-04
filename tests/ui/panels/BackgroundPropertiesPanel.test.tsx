@@ -17,7 +17,7 @@ describe("BackgroundPropertiesPanel", () => {
     });
     const imageAction = uploadImage({
       asset: {
-        dataUrl: "https://assets.example/ancient-ruins.webp",
+        source: { kind: "url", url: "https://assets.example/ancient-ruins.webp" },
         height: 720,
         mediaType: "image/webp",
         name: "ancient-ruins.webp",
@@ -79,7 +79,7 @@ describe("BackgroundPropertiesPanel", () => {
         nextEncounter: {
           ...encounter,
           backgroundImage: {
-            dataUrl: "data:image/png;base64,bWFw",
+            source: { kind: "embedded", dataUrl: "data:image/png;base64,bWFw" },
             height: 640,
             mediaType: "image/png",
             name: "battle-map.png",

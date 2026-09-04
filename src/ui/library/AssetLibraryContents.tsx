@@ -49,6 +49,7 @@ type AssetLibraryContentsProps = {
   onLoadEncounter?: (id: string) => void;
   onRequestRenameEncounter?: (id: string, name: string) => void;
   readOnly?: boolean;
+  recentEncounterIds?: string[];
 };
 
 export function AssetLibraryContents({
@@ -73,7 +74,8 @@ export function AssetLibraryContents({
   onExportEncounter,
   onLoadEncounter,
   onRequestRenameEncounter,
-  readOnly = false
+  readOnly = false,
+  recentEncounterIds = []
 }: AssetLibraryContentsProps) {
   const time = useTime();
   const [encounterContextMenu, setEncounterContextMenu] =
@@ -111,6 +113,21 @@ export function AssetLibraryContents({
         <Folder aria-hidden="true" className="h-4 w-4" />
         <span className="min-w-0 truncate">{currentFolder.name}</span>
       </div>
+      {activeSection.id === "encounters" && currentFolder.id === activeSection.rootId && recentEncounterIds.length > 0 ? (
+        <div className="mb-4 rounded-2xl border border-canvas-line bg-canvas p-3" aria-label="Recent encounters">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-canvas-muted">Recent</p>
+          <div className="flex flex-wrap gap-2">
+            {recentEncounterIds.flatMap((id) => {
+              const record = encounterRecords.find((item) => item.id === id);
+              return record ? [(
+                <button key={id} className="rounded-xl border border-canvas-line bg-white px-3 py-2 text-sm font-medium" onDoubleClick={() => onLoadEncounter?.(id)} type="button">
+                  {record.state.name}
+                </button>
+              )] : [];
+            })}
+          </div>
+        </div>
+      ) : null}
       <div className="grid grid-cols-[repeat(auto-fill,minmax(8rem,1fr))] gap-3">
         {getAlphabetizedChildren(activeSection, currentFolder.id).map((node) => {
           const selected = selectedNodeId === node.id;
@@ -167,7 +184,7 @@ export function AssetLibraryContents({
                     <AssetImagePreview
                       name={node.name}
                       rotation={loadingRotation}
-                      src={node.asset.dataUrl}
+                      source={node.asset.source}
                     />
                   ) : (
                     <FileImage aria-hidden="true" className="h-8 w-8 text-canvas-muted" />
@@ -215,10 +232,10 @@ export function AssetLibraryContents({
               >
                 <div className="flex aspect-[4/3] items-center justify-center overflow-hidden rounded-xl bg-canvas">
                   {record.state.backgroundImage ? (
-                    <img
-                      alt=""
-                      className="h-full w-full object-cover"
-                      src={record.state.backgroundImage.dataUrl}
+                    <AssetImagePreview
+                      name={record.state.name}
+                      rotation={loadingRotation}
+                      source={record.state.backgroundImage.source}
                     />
                   ) : (
                     <FileText aria-hidden="true" className="h-10 w-10 text-canvas-muted" />

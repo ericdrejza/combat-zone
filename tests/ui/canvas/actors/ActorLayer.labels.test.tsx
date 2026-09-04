@@ -48,7 +48,7 @@ describe('ActorLayer', () => {
     const zone = createZone();
     const actor = {
       ...createActor(zone.id),
-      image: 'data:image/png;base64,actor'
+      image: { kind: 'embedded' as const, dataUrl: 'data:image/png;base64,actor' }
     };
     const encounter = {
       ...createEncounterState({ id: 'encounter-test', name: 'Test' }),

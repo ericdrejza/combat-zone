@@ -20,12 +20,14 @@ import {
 } from "./libraryDrag";
 import { getDroppedImageFiles, getFileRelativePath } from "./libraryFileDrop";
 import { useAssetLibraryModalState } from "./useAssetLibraryModalState";
+import { useOptionalCloudSync } from "@ui/cloud_sync";
 
 const toDroppedFiles = (files: File[]) =>
   files.map((file) => ({ file, relativePath: getFileRelativePath(file) }));
 
 export function useAssetLibraryModalController() {
   const dispatch = useDispatch();
+  const cloud = useOptionalCloudSync();
   const state = useAssetLibraryModalState();
   const {
     activeSection,
@@ -286,10 +288,25 @@ export function useAssetLibraryModalController() {
     state.setUrlDialogOpen(false);
   }
 
+  async function createGoogleDriveAssets() {
+    if (!cloud || activeSectionId === "encounters") return;
+    try {
+      const assets = await cloud.linkDriveImages();
+      for (const asset of assets) {
+        dispatch(uploadImage({ asset, parentId: getAddParentId(), sectionId: activeSectionId }));
+      }
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : "Google Drive could not be opened.");
+    } finally {
+      setAddMenuOpen(false);
+    }
+  }
+
   return {
     ...state,
     createFolderInSelection,
     createLinkToAsset,
+    createGoogleDriveAssets,
     createUrlAsset,
     confirmDeletePendingFolder,
     handleDelete,
@@ -300,6 +317,7 @@ export function useAssetLibraryModalController() {
     handleFileChange,
     handleFolderChange,
     renameLibraryNode,
+    canUseGoogleDrive: Boolean(cloud?.user),
     openContextMenuForNode
   };
 }

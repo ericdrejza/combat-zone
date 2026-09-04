@@ -3,6 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "workspaces": [
+    "packages/*",
+    "functions"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
@@ -10,11 +14,16 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:agent": "vitest run --reporter=agent",
+    "test:emulator": "firebase emulators:exec --project demo-combat-zone --only firestore,storage \"vitest run --config vitest.emulator.config.ts --reporter=agent\"",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit && npm run typecheck --workspace=@combat-zone/firebase-api && npm run typecheck --workspace=@combat-zone/functions",
+    "test:firebase-api": "vitest run --reporter=agent tests/core/persistence/cloud",
+    "build:functions": "npm run build --workspace=@combat-zone/functions"
   },
   "dependencies": {
+    "@combat-zone/firebase-api": "0.1.0",
     "@reduxjs/toolkit": "^2.2.7",
+    "firebase": "^12.2.1",
     "lucide-react": "^1.23.0",
     "motion": "^12.42.2",
     "path-browserify": "^1.0.1",
@@ -23,6 +32,7 @@
     "react-redux": "^9.1.2"
   },
   "devDependencies": {
+    "@firebase/rules-unit-testing": "^5.0.2",
     "@testing-library/jest-dom": "^6.4.8",
     "@testing-library/react": "^16.0.1",
     "@testing-library/user-event": "^14.5.2",
@@ -31,6 +41,7 @@
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.1",
     "autoprefixer": "^10.4.20",
+    "firebase-tools": "^15.29.0",
     "jsdom": "^25.0.1",
     "postcss": "^8.4.45",
     "tailwindcss": "^3.4.10",

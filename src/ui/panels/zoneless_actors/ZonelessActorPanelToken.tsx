@@ -3,6 +3,7 @@ import type { DragEvent, MouseEvent, PointerEvent } from "react";
 import { ACTOR_LAYOUT_GROUP_COLORS, ACTOR_SIZE_MULTIPLIERS } from "@entities/actor/actorVisuals";
 import type { Actor } from "@entities/actor/types";
 import { getReadableTextColor } from "../../canvas/canvasLuminance";
+import { useResolvedImageSource } from "@core/assets/ImageAssetResolver";
 
 function actorSizeClass(actor: Actor): string {
   const size = ACTOR_SIZE_MULTIPLIERS[actor.size ?? "medium"];
@@ -42,6 +43,7 @@ export function ZonelessActorPanelToken({
 }) {
   const selected = selectedIds.includes(actor.id);
   const colors = ACTOR_LAYOUT_GROUP_COLORS[actor.layoutGroup];
+  const imageUrl = useResolvedImageSource(actor.image);
 
   return (
     <button
@@ -65,12 +67,12 @@ export function ZonelessActorPanelToken({
           color: getReadableTextColor(colors.fill)
         }}
       >
-        {actor.image ? (
+        {imageUrl ? (
           <img
             alt=""
             className="h-full w-full object-cover"
             draggable={false}
-            src={actor.image}
+            src={imageUrl}
           />
         ) : (
           actor.name.slice(0, 2).toUpperCase()

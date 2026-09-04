@@ -28,7 +28,7 @@ describe("encounter log store", () => {
         nextEncounter: {
           ...current,
           backgroundImage: {
-            dataUrl: "data:image/png;base64,AA==",
+            source: { kind: "embedded", dataUrl: "data:image/png;base64,AA==" },
             height: 100,
             mediaType: "image/png",
             name: "Battle Map",

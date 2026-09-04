@@ -35,7 +35,7 @@ describe("InMemoryWorkspaceRepository", () => {
     const repository = new InMemoryWorkspaceRepository();
     const encounter = state("complete");
     encounter.backgroundImage = {
-      dataUrl: "data:image/png;base64,bWFw",
+      source: { kind: "embedded", dataUrl: "data:image/png;base64,bWFw" },
       height: 480,
       mediaType: "image/png",
       name: "map.png",
@@ -69,7 +69,7 @@ describe("InMemoryWorkspaceRepository", () => {
           actorType: "creature",
           currentZoneId: "zone",
           id: "actor",
-          image: "data:image/png;base64,dG9rZW4=",
+          image: { kind: "embedded", dataUrl: "data:image/png;base64,dG9rZW4=" },
           layoutGroup: "hero",
           metadata: {},
           name: "Actor",

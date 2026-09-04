@@ -28,6 +28,7 @@ export type PersistenceContextValue = {
   moveEncounter: (id: string, folderId: string | null) => Promise<void>;
   readOnly: boolean;
   renameEncounter: (id: string, name: string) => Promise<void>;
+  reloadFromRepository: () => Promise<void>;
   resetLocalData: () => Promise<void>;
   save: (folderId?: string | null) => Promise<"saved" | "needs-folder">;
   saveStatus: SaveStatus;
@@ -52,6 +53,7 @@ export const PersistenceContext = createContext<PersistenceContextValue>({
   moveEncounter: async () => undefined,
   readOnly: false,
   renameEncounter: async () => undefined,
+  reloadFromRepository: async () => undefined,
   resetLocalData: async () => undefined,
   save: async () => "needs-folder",
   saveStatus: "idle"

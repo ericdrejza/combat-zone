@@ -40,7 +40,7 @@ describe('actor canvas layout', () => {
     const initialPlacement = getActorRenderPlacements(encounter)[0];
     const updatedActor = {
       ...encounter.actors.byId['actor-cache']!,
-      image: 'data:image/png;base64,updated',
+      image: { kind: 'embedded' as const, dataUrl: 'data:image/png;base64,updated' },
       name: 'Updated actor'
     };
     const updatedEncounter = {

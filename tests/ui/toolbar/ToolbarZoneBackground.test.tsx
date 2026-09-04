@@ -135,7 +135,7 @@ describe("Toolbar zone and background", () => {
 
     await waitFor(() => {
       expect(store.getState().encounter.present.backgroundImage).toMatchObject({
-        dataUrl: "https://maps.example/arena.png",
+        source: { kind: "url", url: "https://maps.example/arena.png" },
         height: 450,
         width: 800
       });
@@ -144,8 +144,9 @@ describe("Toolbar zone and background", () => {
     store.dispatch(undoEncounterChange());
     expect(store.getState().encounter.present.backgroundImage).toBeNull();
     store.dispatch(redoEncounterChange());
-    expect(store.getState().encounter.present.backgroundImage?.dataUrl).toBe(
-      "https://maps.example/arena.png"
-    );
+    expect(store.getState().encounter.present.backgroundImage?.source).toEqual({
+      kind: "url",
+      url: "https://maps.example/arena.png"
+    });
   });
 });

@@ -26,7 +26,7 @@ describe('actor mutations', () => {
       currentZoneId: zoneA.id,
       id: 'actor-named-token',
       image: {
-        dataUrl: 'data:image/png;base64,token',
+        source: { kind: 'embedded', dataUrl: 'data:image/png;base64,token' },
         mediaType: 'image/png',
         name: 'Goblin Captain.final.png'
       }
@@ -51,7 +51,7 @@ describe('actor mutations', () => {
       currentZoneId: zoneA.id,
       id: 'actor-token',
       image: {
-        dataUrl: 'data:image/png;base64,token',
+        source: { kind: 'embedded', dataUrl: 'data:image/png;base64,token' },
         mediaType: 'image/png',
         name: 'token.png'
       },
@@ -64,7 +64,7 @@ describe('actor mutations', () => {
 
     expect(state.present.actors.byId['actor-token']).toMatchObject({
       currentZoneId: zoneA.id,
-      image: 'data:image/png;base64,token',
+      image: { kind: 'embedded', dataUrl: 'data:image/png;base64,token' },
       layoutGroup: 'enemy',
       shape: 'rectangle',
       size: 'large'

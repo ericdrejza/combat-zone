@@ -28,6 +28,6 @@
     "jsx": "react-jsx",
     "types": ["vitest/globals", "@testing-library/jest-dom"]
   },
-  "include": ["src", "tests", "vite.config.ts", "vitest.setup.ts"],
+  "include": ["src", "tests", "vite.config.ts", "vitest.emulator.config.ts", "vitest.setup.ts"],
   "references": []
 }

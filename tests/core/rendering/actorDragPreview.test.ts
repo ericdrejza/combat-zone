@@ -8,7 +8,7 @@ describe("actor drag preview", () => {
     const cleanup = setActorDragImage(
       { setDragImage } as unknown as DataTransfer,
       {
-        image: "data:image/png;base64,token",
+        image: { kind: "embedded", dataUrl: "data:image/png;base64,token" },
         layoutGroup: "enemy",
         name: "Goblin",
         shape: "circle",
