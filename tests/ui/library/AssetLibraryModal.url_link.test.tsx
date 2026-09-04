@@ -14,6 +14,7 @@ describe("AssetLibraryModal URL links", () => {
     expect(labels).toEqual([
       "Upload file",
       "Web link",
+      "Link from Google Drive",
       "Link asset",
       "Create folder",
       "Upload folder"
@@ -61,8 +62,9 @@ describe("AssetLibraryModal URL links", () => {
     const linkedNode = Object.values(
       store.getState().library.sections.backgrounds.nodesById
     ).find((node) => node.name === "remote-map.png");
-    expect(linkedNode?.asset?.dataUrl).toBe(
-      "https://assets.example/remote-map.png"
-    );
+    expect(linkedNode?.asset?.source).toEqual({
+      kind: "url",
+      url: "https://assets.example/remote-map.png"
+    });
   });
 });

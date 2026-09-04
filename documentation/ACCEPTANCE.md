@@ -4,6 +4,31 @@ Referenced by `AGENT.md`. Each item below must be independently verifiable
 (manually or via Vitest) before a feature is considered done. This file
 covers `DESIGN.md` §15 "Must have" scope only.
 
+Cloud synchronization remains post-MVP, but its acceptance criteria are
+recorded here so completion can be verified against the same product source of
+truth.
+
+## Cloud synchronization (post-MVP)
+
+- [ ] Google sign-in starts entitlement resolution and synchronization while
+      an unconfigured, signed-out, offline, or failed backend leaves all local
+      features usable.
+- [ ] Existing local and cloud workspaces offer Merge, Use cloud, and Keep this
+      device; backups precede replacement and cloud replacement requires
+      `REPLACE CLOUD DATA`.
+- [ ] Encounter, Library, and draft changes survive offline use and synchronize
+      after reconnect without duplicating mutations; revision conflicts retain
+      every valid version through conflict copies.
+- [ ] Uploaded background and token images use private object storage with
+      server-enforced 25 MB, 10 MB, and 250 MB limits, deduplication, and safe
+      delayed deletion.
+- [ ] Google Drive Picker links selected images without consuming application
+      storage, supports reconnect/relink behavior, and lossless export embeds
+      all resolvable external bytes.
+- [ ] Cloud and local save state remain distinct and accessible in Settings and
+      the toolbar; local reset signs out and clears only application-owned local
+      data without deleting remote data.
+
 ## Zones (polygon draw/edit)
 
 - [x] GM can draw a new polygonal zone with the Zone Tool via sequential

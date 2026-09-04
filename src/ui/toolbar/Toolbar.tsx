@@ -21,6 +21,7 @@ import {
   EncounterTitleControls,
   type SaveStatus
 } from "./EncounterTitleControls";
+import { CloudStatusIndicator } from "@ui/cloud_sync";
 
 type ToolbarProps = {
   encounterName: string;
@@ -149,6 +150,7 @@ export function Toolbar({
           saveStatus={saveStatus}
           showTitle={false}
         />
+        <CloudStatusIndicator />
         <nav
           aria-label="Tools"
           className="scrollbar-hidden flex min-w-0 flex-1 flex-nowrap items-center gap-2 overflow-x-auto"

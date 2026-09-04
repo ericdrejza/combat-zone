@@ -18,7 +18,7 @@ describe("LibraryPanel", () => {
       store.dispatch(
         uploadImage({
           asset: {
-            dataUrl: "data:image/png;base64,scout",
+            source: { kind: "embedded", dataUrl: "data:image/png;base64,scout" },
             mediaType: "image/png",
             name: "Scout"
           },
@@ -50,7 +50,7 @@ describe("LibraryPanel", () => {
     const user = userEvent.setup();
     const backgroundAction = uploadImage({
       asset: {
-        dataUrl: "data:image/png;base64,battle-map",
+        source: { kind: "embedded", dataUrl: "data:image/png;base64,battle-map" },
         height: 640,
         mediaType: "image/png",
         name: "Battle Map",

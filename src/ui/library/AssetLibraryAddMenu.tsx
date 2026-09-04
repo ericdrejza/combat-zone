@@ -3,6 +3,7 @@ import {
   FileUp,
   FolderPlus,
   FolderUp,
+  HardDrive,
   Link,
   Link2,
   Plus,
@@ -15,6 +16,7 @@ type AssetLibraryAddMenuProps = {
   addMenuRef: RefObject<HTMLDivElement>;
   canLinkAssets: boolean;
   canUploadAssets: boolean;
+  canUseGoogleDrive?: boolean;
   encounterSection?: boolean;
   sectionName: string;
   onCreateFolder: () => void;
@@ -23,6 +25,7 @@ type AssetLibraryAddMenuProps = {
   onOpenEncounterImportPicker?: () => void;
   onOpenFolderPicker: () => void;
   onOpenLinkPicker: () => void;
+  onOpenGoogleDrive?: () => void;
   onOpenUrlDialog: () => void;
   onToggleAddMenu: () => void;
 };
@@ -32,6 +35,7 @@ export function AssetLibraryAddMenu({
   addMenuRef,
   canLinkAssets,
   canUploadAssets,
+  canUseGoogleDrive = false,
   encounterSection = false,
   sectionName,
   onCreateFolder,
@@ -40,6 +44,7 @@ export function AssetLibraryAddMenu({
   onOpenEncounterImportPicker,
   onOpenFolderPicker,
   onOpenLinkPicker,
+  onOpenGoogleDrive = () => undefined,
   onOpenUrlDialog,
   onToggleAddMenu
 }: AssetLibraryAddMenuProps) {
@@ -112,6 +117,16 @@ export function AssetLibraryAddMenu({
           >
             <Link2 aria-hidden="true" className="h-4 w-4" />
             Web link
+          </button>
+          <button
+            className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left transition hover:bg-canvas disabled:cursor-not-allowed disabled:text-canvas-muted"
+            disabled={!canUseGoogleDrive}
+            onClick={onOpenGoogleDrive}
+            role="menuitem"
+            type="button"
+          >
+            <HardDrive aria-hidden="true" className="h-4 w-4" />
+            Link from Google Drive
           </button>
           <button
             className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left transition hover:bg-canvas disabled:cursor-not-allowed disabled:text-canvas-muted"

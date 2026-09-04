@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import type { LayoutPoint } from "@core/layout/types";
 import type { Zone } from "@entities/zone/types";
 import type { RootState } from "@store/store";
+import { useResolvedImageSource } from "@core/assets/ImageAssetResolver";
 import type { CanvasSize } from "@core/layout/polygonCanvasBounds";
 import { BACKGROUND_SAMPLE_COUNT } from "./canvasConstants";
 import {
@@ -29,6 +30,7 @@ export function useCanvasBackgroundLuminance(
   canvasSize: CanvasSize
 ): CanvasBackgroundLuminance {
   const fallbackLuminance = getFallbackCanvasLuminance();
+  const sourceUrl = useResolvedImageSource(backgroundImage?.source);
   const [backgroundLuminance, setBackgroundLuminance] =
     useState<CanvasBackgroundLuminance>({
       byZoneId: {},
@@ -107,12 +109,13 @@ export function useCanvasBackgroundLuminance(
         });
       }
     });
-    image.src = backgroundImage.dataUrl;
+    if (!sourceUrl) return;
+    image.src = sourceUrl;
 
     return () => {
       cancelled = true;
     };
-  }, [backgroundImage, canvasSize, zones.allIds, zones.byId]);
+  }, [backgroundImage, canvasSize, sourceUrl, zones.allIds, zones.byId]);
 
   return backgroundLuminance;
 }
@@ -122,6 +125,7 @@ export function usePolygonDraftBackgroundLuminance(
   zoneDraftPoints: LayoutPoint[],
   canvasSize: CanvasSize
 ): number {
+  const sourceUrl = useResolvedImageSource(backgroundImage?.source);
   const [polygonDraftBackgroundLuminance, setPolygonDraftBackgroundLuminance] =
     useState(getFallbackCanvasLuminance());
 
@@ -178,12 +182,13 @@ export function usePolygonDraftBackgroundLuminance(
         setPolygonDraftBackgroundLuminance(fallbackLuminance);
       }
     });
-    image.src = backgroundImage.dataUrl;
+    if (!sourceUrl) return;
+    image.src = sourceUrl;
 
     return () => {
       cancelled = true;
     };
-  }, [backgroundImage, canvasSize, zoneDraftPoints]);
+  }, [backgroundImage, canvasSize, sourceUrl, zoneDraftPoints]);
 
   return polygonDraftBackgroundLuminance;
 }

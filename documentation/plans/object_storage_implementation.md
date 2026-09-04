@@ -2,6 +2,20 @@
 
 ## Summary
 
+**Implementation status (2026-09-03): repository implementation complete;
+production Firebase policy rollout remains.** The shared contract, trusted
+reservation/finalization API, immutable digest paths, reference accounting,
+seven-day delayed deletion, 24-hour reservation cleanup, 30-day encounter
+tombstones, adaptive local cache, rendering resolution, and export embedding
+are implemented. Exact limits remain owned only by this document and the
+object-storage service. Bucket soft-delete, App Check enforcement rollout,
+budgets, and monitoring must be configured in the deployed project.
+
+Deletion cleanup claims an eligible zero-reference asset transactionally
+before deleting its exact generation, preventing a concurrent re-reference
+from racing with object removal. A failed object deletion restores the pending
+state and usage accounting for a later retry.
+
 This document is the sole authority for uploaded-file limits, storage quotas,
 upload validation, object lifecycle, and garbage collection.
 

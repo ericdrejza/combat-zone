@@ -1,5 +1,6 @@
 import { Download, FileUp, Trash2, X } from "lucide-react";
 import { useState } from "react";
+import { CloudSyncSettings, useOptionalCloudSync } from "@ui/cloud_sync";
 
 const RESET_CONFIRMATION = "RESET LOCAL DATA";
 
@@ -18,6 +19,7 @@ export function SettingsModal({
   onImportWorkspaceFile,
   readOnly
 }: SettingsModalProps) {
+  const cloud = useOptionalCloudSync();
   const [resetOpen, setResetOpen] = useState(false);
   const [confirmation, setConfirmation] = useState("");
   const [resetting, setResetting] = useState(false);
@@ -27,6 +29,7 @@ export function SettingsModal({
     setResetting(true);
     setError(null);
     try {
+      await cloud?.signOut();
       await onResetLocalData();
       onClose();
     } catch (reason) {
@@ -54,6 +57,7 @@ export function SettingsModal({
             <X aria-hidden="true" className="h-4 w-4" />
           </button>
         </header>
+        <CloudSyncSettings />
         <section className="p-5" aria-labelledby="settings-data-heading">
           <h3 id="settings-data-heading" className="font-display text-lg font-semibold">
             Data

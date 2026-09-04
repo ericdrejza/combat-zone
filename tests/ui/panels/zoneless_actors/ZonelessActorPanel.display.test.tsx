@@ -113,7 +113,7 @@ describe("ZonelessActorPanel display", () => {
         [actor("actor-a", "Aegis")],
         [],
         {
-          dataUrl: "data:image/png;base64,dark",
+          source: { kind: "embedded", dataUrl: "data:image/png;base64,dark" },
           height: 100,
           mediaType: "image/png",
           name: "dark.png",
@@ -142,7 +142,7 @@ describe("ZonelessActorPanel display", () => {
             ...encounter,
             backgroundImage: {
               ...encounter.backgroundImage!,
-              dataUrl: "data:image/png;base64,light"
+              source: { kind: "embedded", dataUrl: "data:image/png;base64,light" }
             }
           }
         })

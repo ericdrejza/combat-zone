@@ -2,6 +2,7 @@ import { FileImage, Folder, Link } from "lucide-react";
 import type { DragEvent, PointerEvent } from "react";
 
 import type { LibraryImageAsset, LibraryNode } from "@library/types";
+import { useResolvedImageSource } from "@core/assets/ImageAssetResolver";
 import type { LibraryViewMode } from "./LibraryPanel";
 
 type LibraryPanelNodeProps = {
@@ -31,6 +32,7 @@ export function LibraryPanelNode({
   onPointerDown,
   viewMode
 }: LibraryPanelNodeProps) {
+  const imageUrl = useResolvedImageSource(asset?.source);
   if (node.type === "folder") {
     return (
       <button
@@ -81,7 +83,7 @@ export function LibraryPanelNode({
             alt=""
             className="h-full w-full object-cover transition duration-150 ease-out group-hover:scale-[1.2]"
             draggable={false}
-            src={asset.dataUrl}
+            src={imageUrl ?? ""}
           />
         ) : node.type === "link" ? (
           <Link aria-hidden="true" className="h-4 w-4" />

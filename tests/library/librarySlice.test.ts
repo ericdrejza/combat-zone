@@ -19,7 +19,7 @@ function getOnlyChildId(state: LibraryState, parentId: string): string {
 }
 
 const imageAsset = {
-  dataUrl: "data:image/png;base64,ZmFrZQ==",
+  source: { kind: "embedded" as const, dataUrl: "data:image/png;base64,ZmFrZQ==" },
   mediaType: "image/png",
   name: "map.png"
 };

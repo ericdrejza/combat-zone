@@ -1,0 +1,47 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function owns(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    match /users/{uid} {
+      allow read: if owns(uid);
+      allow write: if false;
+
+      match /encounters/{encounterId} {
+        allow read: if owns(uid);
+        allow write: if false;
+      }
+
+      match /singletons/{recordId} {
+        allow read: if owns(uid);
+        allow write: if false;
+      }
+
+      match /assets/{assetId} {
+        allow read: if owns(uid);
+        allow write: if false;
+      }
+
+      match /upload_reservations/{reservationId} {
+        allow read: if owns(uid);
+        allow write: if false;
+      }
+
+      match /usage/{usageId} {
+        allow read: if owns(uid);
+        allow write: if false;
+      }
+
+      match /asset_reference_sets/{referenceId} {
+        allow read, write: if false;
+      }
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

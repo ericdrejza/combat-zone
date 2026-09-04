@@ -33,7 +33,7 @@ function createRecord(): EncounterRecord {
     state: {
       ...state,
       backgroundImage: {
-        dataUrl: "data:image/png;base64,preview",
+        source: { kind: "embedded", dataUrl: "data:image/png;base64,preview" },
         height: 100,
         mediaType: "image/png",
         name: "preview.png",

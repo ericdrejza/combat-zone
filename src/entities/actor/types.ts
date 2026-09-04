@@ -1,4 +1,5 @@
 import type { ActorZoneAssignment } from "@core/encounter/types";
+import type { ImageAssetSource } from "@core/assets/imageAssetSource";
 
 export type ActorType =
   | "creature"
@@ -17,7 +18,7 @@ export type Actor = {
   layoutGroup: ActorLayoutGroup;
   size: ActorSize;
   shape: ActorShape;
-  image?: string;
+  image?: ImageAssetSource;
   currentZoneId: ActorZoneAssignment;
   statusEffects: string[];
   metadata: Record<string, unknown>;

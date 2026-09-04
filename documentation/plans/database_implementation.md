@@ -2,6 +2,36 @@
 
 ## Status and objective
 
+**Implementation status (2026-09-03): implemented in the codebase; production
+project configuration and rollout remain operator tasks.**
+
+Implemented components include the image-source/schema migrations, IndexedDB
+sync/outbox/cache stores, Google-only Firebase authentication, entitlement
+gate, initial reconciliation choices and backups, continuous remote listeners,
+revision conflict preservation, recent encounters, cloud status UI, private
+uploaded-asset references, Google Drive Picker/access, provider-backed image
+rendering, and lossless cloned exports. Local reset signs out before clearing
+application-owned local sync state and does not delete cloud data.
+
+The checked-in application is intentionally inert when Firebase environment
+values are absent. Deployment work still required outside this repository is:
+
+- create/select the Firebase project and populate the documented Vite values;
+- enable Google Authentication, Firestore, Storage, Functions, Drive API, and
+  Picker API in one Google Cloud project;
+- configure authorized origins, OAuth consent, Storage soft-delete policy,
+  production region, App Check monitoring then enforcement, budgets, and
+  operational alerts; and
+- deploy rules, indexes, Functions, and Storage configuration after emulator
+  verification.
+
+Repository verification on 2026-09-03 passed `npm run test:agent` (150 files,
+624 tests), `npm run test:emulator` (3 files, 9 tests), `npm run typecheck`, and
+`npm run build`. The Cloud Sync roadmap and acceptance checkboxes remain open
+until a real Firebase project completes App Check rollout and end-to-end
+multi-device production acceptance; source-code completion alone is not that
+operational milestone.
+
 This document plans the optional cloud-sync phase selected in
 [`database_decision.md`](./database_decision.md). It does not replace local
 persistence: IndexedDB remains the local source of truth, while the Firebase
@@ -16,7 +46,7 @@ document covers only the database and synchronization side of that boundary.
 The application-facing Firebase contract and callable API are defined in
 [`firebase_api_implementation.md`](./firebase_api_implementation.md).
 
-The implementation will provide:
+The implementation provides:
 
 - Google-only Firebase Authentication.
 - Cloud Firestore storage for versioned workspace documents.

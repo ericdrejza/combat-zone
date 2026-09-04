@@ -2,6 +2,7 @@ import { useSelector } from "react-redux";
 
 import { getLibraryNodePath } from "@library/librarySlice";
 import { isWebImageSource } from "@library/webImageAsset";
+import { directImageSourceUrl } from "@core/assets/imageAssetSource";
 import type { RootState } from "@store/store";
 import { getFileNameWithoutExtension } from "@library/fileName";
 
@@ -46,8 +47,9 @@ export function BackgroundPropertiesPanel() {
   const libraryPath = backgroundImage.libraryNodeId
     ? getLibraryNodePath(backgrounds, backgroundImage.libraryNodeId)
     : null;
-  const url = isWebImageSource(backgroundImage.dataUrl)
-    ? backgroundImage.dataUrl
+  const sourceUrl = directImageSourceUrl(backgroundImage.source);
+  const url = sourceUrl && isWebImageSource(sourceUrl)
+    ? sourceUrl
     : null;
 
   return (

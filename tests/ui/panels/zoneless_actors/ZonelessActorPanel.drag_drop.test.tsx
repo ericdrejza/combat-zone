@@ -38,7 +38,7 @@ describe("ZonelessActorPanel drag and drop", () => {
       seedEncounter([
         {
           ...actor("actor-a", "Aegis"),
-          image: "data:image/png;base64,aegis"
+          image: { kind: "embedded", dataUrl: "data:image/png;base64,aegis" }
         }
       ], [zone()]);
       store.dispatch(setActiveTool("actor"));
@@ -101,7 +101,7 @@ describe("ZonelessActorPanel drag and drop", () => {
         seedEncounter([
           {
             ...actor("actor-a", "Aegis"),
-            image: "data:image/png;base64,compact-aegis"
+            image: { kind: "embedded", dataUrl: "data:image/png;base64,compact-aegis" }
           }
         ], [zone()]);
         store.dispatch(setActiveTool("actor"));

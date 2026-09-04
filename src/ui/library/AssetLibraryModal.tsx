@@ -16,6 +16,7 @@ import { WebImageUrlDialog } from "./WebImageUrlDialog";
 import { usePersistence } from "@ui/persistence/PersistenceProvider";
 import { downloadExport } from "@ui/persistence/downloadExport";
 import { RenameModal } from "@ui/RenameModal";
+import { useOptionalCloudSync } from "@ui/cloud_sync";
 
 export type AssetLibraryMode =
   | "browse"
@@ -50,6 +51,7 @@ export function AssetLibraryModal({
 }: AssetLibraryModalProps) {
   const controller = useAssetLibraryModalController();
   const persistence = usePersistence();
+  const cloud = useOptionalCloudSync();
   const encounterOnly = mode !== "browse";
   const pendingDeleteNode = controller.pendingDeleteNode;
   const encounterImportInputRef = useRef<HTMLInputElement>(null);
@@ -185,6 +187,7 @@ export function AssetLibraryModal({
                 addMenuRef={controller.addMenuRef}
                 canLinkAssets={controller.imageNodes.length > 0}
                 canUploadAssets={controller.activeSectionId !== "encounters"}
+                canUseGoogleDrive={controller.canUseGoogleDrive && controller.activeSectionId !== "encounters"}
                 encounterSection={controller.activeSectionId === "encounters"}
                 onCreateEncounter={() => {
                   controller.setAddMenuOpen(false);
@@ -201,6 +204,7 @@ export function AssetLibraryModal({
                   controller.setLinkPickerOpen(true);
                   controller.setAddMenuOpen(false);
                 }}
+                onOpenGoogleDrive={() => void controller.createGoogleDriveAssets()}
                 onOpenUrlDialog={() => {
                   controller.setUrlDialogOpen(true);
                   controller.setAddMenuOpen(false);
@@ -256,6 +260,8 @@ export function AssetLibraryModal({
             onDuplicateEncounter={(id) => void persistence.duplicateEncounter(id)}
             onExportEncounter={(id, name) => {
               void persistence.exportEncounter(id).then((envelope) =>
+                cloud ? cloud.prepareEncounterExport(envelope) : envelope
+              ).then((envelope) =>
                 downloadExport(
                   envelope,
                   `${name.trim().replace(/[^a-z0-9_-]+/gi, "-") || "encounter"}.json`
@@ -273,6 +279,7 @@ export function AssetLibraryModal({
               setRenameTarget({ kind: "encounter", id, name })
             }
             readOnly={persistence.readOnly}
+            recentEncounterIds={(cloud?.recentEncounters ?? []).map(({ encounterId }) => encounterId)}
             onDragOverContents={(event) => {
               if (!handleEncounterDragOver(event, controller.currentFolder.id)) {
                 controller.handleDragOverContents(event);

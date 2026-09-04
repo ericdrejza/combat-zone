@@ -13,6 +13,7 @@ import { commitEncounterChange } from "@store/encounterSlice";
 import { logEncounterValidationBlock } from "@store/encounterLogSlice";
 import type { RootState } from "@store/store";
 import { useZoneResizeApproval } from "../zoneResizeApproval";
+import { directImageSourceUrl } from "@core/assets/imageAssetSource";
 
 const ACTOR_TYPES: ActorType[] = [
   "creature",
@@ -189,7 +190,9 @@ export function ActorPropertiesPanel() {
           className="w-full rounded-xl border border-canvas-line bg-white px-3 py-2 text-canvas-ink"
           onBlur={(event) =>
             commitActorProperties({
-              image: event.currentTarget.value.trim() || undefined
+              image: event.currentTarget.value.trim()
+                ? { kind: "url", url: event.currentTarget.value.trim() }
+                : undefined
             })
           }
           onKeyDown={(event) => {
@@ -198,7 +201,7 @@ export function ActorPropertiesPanel() {
             }
           }}
           type="text"
-          defaultValue={actor.image ?? ""}
+          defaultValue={actor.image ? directImageSourceUrl(actor.image) ?? "" : ""}
         />
       </label>
     </div>

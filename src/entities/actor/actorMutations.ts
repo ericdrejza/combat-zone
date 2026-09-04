@@ -13,9 +13,10 @@ import { ZONELESS_ACTOR_ZONE_ID } from '@core/encounter/types';
 import type { EntityCollection, EntityId } from '@core/state/entityCollection';
 import { removeActorsFromEngagements } from '@entities/engagement/engagementMutations';
 import { removeActorFromInitiative } from '@core/encounter/initiativeMutations';
+import type { ImageAssetSource } from '@core/assets/imageAssetSource';
 
 export type ActorImageInput = {
-  dataUrl: string;
+  source: ImageAssetSource;
   mediaType: string;
   name: string;
 };
@@ -33,7 +34,7 @@ export type CreateActorInput = {
 
 export type UpdateActorPropertiesInput = {
   actorType?: ActorType;
-  image?: string;
+  image?: ImageAssetSource;
   layoutGroup?: ActorLayoutGroup;
   name?: string;
   shape?: ActorShape;
@@ -138,7 +139,7 @@ export function buildActor({
     actorType,
     currentZoneId,
     id,
-    image: image?.dataUrl,
+    image: image?.source,
     layoutGroup,
     metadata: {
       sourceAssetName: image?.name,

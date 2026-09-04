@@ -682,7 +682,24 @@ Redux-managed history architecture:
 
 ### 11.3 Future
 
-Cloud sync (optional monetization)
+Cloud sync is optional monetization and preserves IndexedDB as the local source
+of truth. Signing in with Google starts synchronization after an entitlement
+check. The active encounter remains device-local; saved encounters, the
+Library, the recovery draft, and the five most recently accessed saved
+encounters synchronize through Firebase.
+
+When local and cloud workspaces both exist, the user chooses Merge, Use cloud,
+or Keep this device. Merge is the primary option. Replacement always creates a
+recoverable backup first, and replacing cloud data requires the exact phrase
+`REPLACE CLOUD DATA`. Concurrent valid edits are preserved as clearly named
+conflict-copy encounters rather than silently overwritten.
+
+Uploaded images use private Firebase object storage and count against the
+authenticated user's storage allowance. Google Drive images remain live links
+owned by the user, become accessible after incremental Google authorization,
+and are not copied into application storage unless the user explicitly chooses
+to upload a copy. Local reset signs out and removes local synchronization state
+without deleting cloud data.
 
 ### 12. Validation Pipeline
 

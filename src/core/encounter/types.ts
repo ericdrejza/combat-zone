@@ -6,8 +6,9 @@ import type { Edge } from "@entities/edge/types";
 import type { Engagement } from "@entities/engagement/types";
 import type { Zone } from "@entities/zone/types";
 import type { CanvasSize } from "@core/layout/polygonCanvasBounds";
+import type { ImageAssetSource } from "@core/assets/imageAssetSource";
 
-export const ENCOUNTER_SCHEMA_VERSION = 5;
+export const ENCOUNTER_SCHEMA_VERSION = 6;
 export const ZONELESS_ACTOR_ZONE_ID = "zoneless";
 
 export type EncounterSchemaVersion = typeof ENCOUNTER_SCHEMA_VERSION;
@@ -31,7 +32,7 @@ export type EncounterValidationState = {
 };
 
 export type EncounterBackgroundImage = {
-  dataUrl: string;
+  source: ImageAssetSource;
   height: number;
   libraryNodeId?: string;
   mediaType: string;

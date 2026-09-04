@@ -24,8 +24,10 @@ phase.
 - Keep all storage engines behind `WorkspaceRepository` so this decision can be
   revisited without coupling Redux or UI code to IndexedDB or Firebase.
 
-This reaffirms the current implementation. It does not require a runtime data
-migration, dependency change, or public API change.
+This decision is now implemented by the local schema migration, Firebase
+adapters, callable API, and synchronization coordinator described in the linked
+implementation plans. Production deployment still requires project-specific
+Firebase and Google Cloud configuration.
 
 ## Decision drivers
 

@@ -2,6 +2,17 @@
 
 ## Summary
 
+**Implementation status (2026-09-03): implemented in the codebase.** The
+zero-SDK shared contract package, typed browser client, owner-scoped readers
+and listeners, second-generation callable handlers, stable errors, retry and
+idempotency behavior, schema/revision validation, atomic asset-reference
+updates, Security Rules, indexes, and Emulator Suite configuration are checked
+in. Production App Check enforcement, IAM, budgets, and alerting are deployment
+configuration rather than source-code tasks.
+
+The repository verification commands and remaining production-acceptance gate
+are recorded in [`database_implementation.md`](./database_implementation.md).
+
 Build an internal, strongly typed API for the Combat Zone web application:
 
 - Use direct Firebase Authentication and owner-scoped Firestore reads and

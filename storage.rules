@@ -1,0 +1,37 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    function owns(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    function reservation(uid) {
+      return firestore.get(
+        /databases/(default)/documents/users/$(uid)/upload_reservations/$(request.resource.metadata.reservationId)
+      );
+    }
+
+    match /users/{uid}/assets/{assetId} {
+      allow read: if owns(uid)
+        && firestore.get(
+          /databases/(default)/documents/users/$(uid)/assets/$(assetId)
+        ).data.status in ["ready", "pending_delete"];
+
+      allow create: if owns(uid)
+        && resource == null
+        && request.resource.metadata.assetId == assetId
+        && request.resource.metadata.ownerId == uid
+        && reservation(uid).data.assetId == assetId
+        && reservation(uid).data.status == "reserved"
+        && reservation(uid).data.expectedBytes == request.resource.size
+        && reservation(uid).data.mediaType == request.resource.contentType;
+
+      allow update, delete: if false;
+    }
+
+    match /{object=**} {
+      allow read, write: if false;
+    }
+  }
+}

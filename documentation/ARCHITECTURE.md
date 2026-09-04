@@ -61,10 +61,28 @@ entry-point rules remain in the persistence decision record.
   policy independently of UI affordances. Read-only tabs may read and export;
   they must not commit EncounterState, Library, import, or reset mutations.
   BroadcastChannel notifications cause other tabs to reload saved/reset data.
-- Any future cloud sync belongs in a coordinator/adapter above the repository.
-  Redux and UI modules must never write directly to Firebase or another remote
-  service; IndexedDB remains the local source of truth, with repository
-  revisions used for remote conflict detection and explicit conflict copies.
+- Optional cloud sync is implemented as a coordinator and focused adapters
+  above `WorkspaceRepository`. `CloudSyncCoordinator` drains a coalesced,
+  durable IndexedDB outbox, applies validated remote snapshots through
+  `LocalSyncRepository`, and owns initial reconciliation and conflict copies.
+  `CloudWorkspaceRepository` contains Firestore reads/listeners and callable
+  writes; `CloudAssetRepository` contains private Storage uploads/downloads;
+  `GoogleDriveAssetRepository` contains incremental Drive authorization and
+  selected-file access. Redux and feature UI never write directly to Firebase.
+- IndexedDB version 3 adds `sync_state`, `sync_outbox`, and `asset_cache` stores.
+  Domain writes and their outbox record share an IndexedDB transaction. Only
+  the writer-lock tab runs synchronization. Provider-backed cached blobs are
+  derived, evictable data and never become a second domain source of truth.
+- Image-bearing domain fields use the shared `ImageAssetSource` union:
+  embedded bytes, HTTP(S) URL, Google Drive file ID, or Cloud Storage asset ID
+  plus generation. Encounter schema 6 and export/workspace schema 2 migrate
+  legacy strings explicitly. Rendering resolves remote sources to short-lived
+  object URLs; lossless export embeds provider bytes in a cloned envelope.
+- Firestore stores binary-free, independently revisioned workspace metadata,
+  encounter aggregates, Library state, and recovery draft below the Firebase
+  UID. Callable Functions own validated writes, idempotency, revision checks,
+  tombstones, and atomic asset-reference counts. Uploaded objects use immutable
+  digest paths in private Cloud Storage with reservations and delayed deletion.
 
 ## PROCESS RULES (from original constraints — retained, not duplicated from documentation/DESIGN.md)
 

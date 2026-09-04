@@ -7,9 +7,11 @@ import {
   ACTOR_LAYOUT_GROUP_COLORS,
   ACTOR_SIZE_MULTIPLIERS
 } from '@entities/actor/actorVisuals';
+import type { ImageAssetSource } from '@core/assets/imageAssetSource';
+import { directImageSourceUrl } from '@core/assets/imageAssetSource';
 
 type ActorDragPreviewInput = {
-  image?: string;
+  image?: ImageAssetSource;
   layoutGroup: ActorLayoutGroup;
   name: string;
   shape: ActorShape;
@@ -59,11 +61,13 @@ function createPreviewElement({
   token.style.overflow = 'hidden';
   token.style.width = `${tokenSize}px`;
 
-  if (image) {
+  const imageUrl = image ? directImageSourceUrl(image) : null;
+
+  if (imageUrl) {
     const imageElement = document.createElement('img');
 
     imageElement.alt = '';
-    imageElement.src = image;
+    imageElement.src = imageUrl;
     imageElement.style.height = '100%';
     imageElement.style.objectFit = 'cover';
     imageElement.style.width = '100%';

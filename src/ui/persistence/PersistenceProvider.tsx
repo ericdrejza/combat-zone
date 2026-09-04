@@ -19,6 +19,7 @@ import {
   WORKSPACE_SCHEMA_VERSION,
   type EncounterExportEnvelope,
   type EncounterRecord,
+  type LocalSyncRepository,
   type WorkspaceExportEnvelope,
   type WorkspaceRepository
 } from "@core/persistence";
@@ -62,11 +63,13 @@ function announcePersistenceChange(type: "reset" | "saved"): void {
 }
 
 type PersistenceProviderProps = PropsWithChildren<{
+  localSync?: LocalSyncRepository;
   repository?: WorkspaceRepository;
 }>;
 
 export function PersistenceProvider({
   children,
+  localSync,
   repository = defaultRepository
 }: PersistenceProviderProps) {
   const readOnly = useWorkspaceWriterLock();
@@ -222,6 +225,10 @@ export function PersistenceProvider({
     }
     suspendedRef.current = false;
     installEncounter(record.state, record);
+    await localSync?.recordRecentEncounterAccess({
+      accessedAt: Date.now(),
+      encounterId: record.id
+    });
     setSaveStatus("saved");
   }
 
@@ -386,6 +393,7 @@ export function PersistenceProvider({
     const draft = createDraft();
     const emptyLibrary = createEmptyLibraryState();
     await resetLocalPersistence(repository, draft, [MOTION_OVERRIDE_STORAGE_KEY]);
+    await localSync?.clearSyncData();
     globalThis.dispatchEvent(new Event(LOCAL_PREFERENCES_RESET_EVENT));
     lastLibraryRef.current = emptyLibrary;
     store.dispatch(loadLibraryState(emptyLibrary));
@@ -495,6 +503,7 @@ export function PersistenceProvider({
     loadEncounter,
     moveEncounter,
     readOnly,
+    reloadFromRepository,
     renameEncounter,
     resetLocalData,
     save,

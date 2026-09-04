@@ -5,7 +5,7 @@ describe("createWebImageAsset", () => {
     expect(
       createWebImageAsset("https://images.example/maps/ruins.webp?version=2")
     ).toEqual({
-      dataUrl: "https://images.example/maps/ruins.webp?version=2",
+      source: { kind: "url", url: "https://images.example/maps/ruins.webp?version=2" },
       mediaType: "image/webp",
       name: "ruins.webp"
     });

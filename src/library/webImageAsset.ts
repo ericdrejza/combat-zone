@@ -1,4 +1,5 @@
 import type { LibraryImageAsset } from "./types";
+import { isHttpImageUrl } from "@core/assets/imageAssetSource";
 
 const IMAGE_MEDIA_TYPES: Record<string, string> = {
   avif: "image/avif",
@@ -11,12 +12,7 @@ const IMAGE_MEDIA_TYPES: Record<string, string> = {
 };
 
 export function isWebImageSource(value: string): boolean {
-  try {
-    const url = new URL(value);
-    return url.protocol === "http:" || url.protocol === "https:";
-  } catch {
-    return false;
-  }
+  return isHttpImageUrl(value);
 }
 
 /** Creates an image asset that retains the remote URL instead of copying its bytes. */
@@ -34,7 +30,7 @@ export function createWebImageAsset(value: string): LibraryImageAsset {
   const extension = decodedName.split(".").at(-1)?.toLowerCase() ?? "";
 
   return {
-    dataUrl: url.href,
+    source: { kind: "url", url: url.href },
     mediaType: IMAGE_MEDIA_TYPES[extension] ?? "image/*",
     name: decodedName || "Linked image"
   };

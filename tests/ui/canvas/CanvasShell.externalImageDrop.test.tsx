@@ -115,7 +115,10 @@ describe("CanvasShell external image drops", () => {
 
     expect(actor).toMatchObject({
       currentZoneId: zoneId,
-      image: expect.stringMatching(/^data:image\/png;base64,/),
+      image: {
+        kind: "embedded",
+        dataUrl: expect.stringMatching(/^data:image\/png;base64,/)
+      },
       layoutGroup: "enemy",
       metadata: {
         sourceAssetMediaType: "image/png",
