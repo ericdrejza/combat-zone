@@ -2,10 +2,50 @@ import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
-  createDragDataTransfer,
   createFolder,
   openBackgroundLibrary
 } from "./AssetLibraryModal.test_support";
+
+function pointerDrag(source: Element, target: Element) {
+  const elementFromPoint = Object.getOwnPropertyDescriptor(
+    document,
+    "elementFromPoint"
+  );
+  Object.defineProperty(document, "elementFromPoint", {
+    configurable: true,
+    value: vi.fn(() => target)
+  });
+
+  try {
+    fireEvent.pointerDown(source, {
+      button: 0,
+      clientX: 10,
+      clientY: 10,
+      pointerId: 1,
+      pointerType: "mouse"
+    });
+    fireEvent.pointerMove(window, {
+      buttons: 1,
+      clientX: 30,
+      clientY: 30,
+      pointerId: 1,
+      pointerType: "mouse"
+    });
+    fireEvent.pointerUp(window, {
+      button: 0,
+      clientX: 30,
+      clientY: 30,
+      pointerId: 1,
+      pointerType: "mouse"
+    });
+  } finally {
+    if (elementFromPoint) {
+      Object.defineProperty(document, "elementFromPoint", elementFromPoint);
+    } else {
+      delete (document as Partial<Document>).elementFromPoint;
+    }
+  }
+}
 
 describe("AssetLibraryModal", () => {
   afterEach(() => {
@@ -18,7 +58,7 @@ describe("AssetLibraryModal", () => {
     await createFolder("Maps");
     await user.click(screen.getByRole("button", { name: "Maps" }));
     await user.click(screen.getByRole("button", { name: "Add to Backgrounds" }));
-    await user.click(screen.getByRole("menuitem", { name: "Upload file" }));
+    await user.click(screen.getByRole("menuitem", { name: "Upload Image" }));
 
     fireEvent.change(screen.getByLabelText("Upload library image"), {
       target: {
@@ -44,7 +84,7 @@ describe("AssetLibraryModal", () => {
     const user = await openBackgroundLibrary();
 
     await user.click(screen.getByRole("button", { name: "Add to Backgrounds" }));
-    await user.click(screen.getByRole("menuitem", { name: "Upload file" }));
+    await user.click(screen.getByRole("menuitem", { name: "Upload Image" }));
     fireEvent.change(screen.getByLabelText("Upload library image"), {
       target: {
         files: [new File(["base"], "base-map.png", { type: "image/png" })]
@@ -56,9 +96,16 @@ describe("AssetLibraryModal", () => {
     });
 
     await user.click(screen.getByRole("button", { name: "base-map" }));
-    vi.spyOn(window, "prompt").mockReturnValueOnce("Siblings");
     await user.click(screen.getByRole("button", { name: "Add to Backgrounds" }));
     await user.click(screen.getByRole("menuitem", { name: "Create folder" }));
+    const dialog = screen.getByRole("dialog", { name: "Create folder" });
+    await user.type(
+      within(dialog).getByRole("textbox", { name: "Folder name" }),
+      "Siblings"
+    );
+    await user.click(
+      within(dialog).getByRole("button", { name: "Create folder" })
+    );
 
     expect(screen.getByRole("button", { name: "base-map" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Siblings" })).toBeInTheDocument();
@@ -93,7 +140,7 @@ describe("AssetLibraryModal", () => {
 
     await createFolder("Maps");
     await user.click(screen.getByRole("button", { name: "Add to Backgrounds" }));
-    await user.click(screen.getByRole("menuitem", { name: "Upload file" }));
+    await user.click(screen.getByRole("menuitem", { name: "Upload Image" }));
     fireEvent.change(screen.getByLabelText("Upload library image"), {
       target: {
         files: [new File(["move"], "move-map.png", { type: "image/png" })]
@@ -104,14 +151,10 @@ describe("AssetLibraryModal", () => {
       expect(screen.getByRole("button", { name: "move-map" })).toBeInTheDocument();
     });
 
-    const dataTransfer = createDragDataTransfer();
-
-    fireEvent.dragStart(screen.getByRole("button", { name: "move-map" }), {
-      dataTransfer
-    });
-    fireEvent.drop(screen.getByRole("button", { name: "Maps" }), {
-      dataTransfer
-    });
+    pointerDrag(
+      screen.getByRole("button", { name: "move-map" }),
+      screen.getByRole("button", { name: "Maps" })
+    );
 
     const contents = screen.getByRole("region", {
       name: "Asset library contents"

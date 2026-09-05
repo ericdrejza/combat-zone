@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useDispatch } from "react-redux";
 
 import type { EncounterState } from "@core/encounter/types";
@@ -19,46 +19,18 @@ import {
   commitBackgroundImage,
   commitCanvasResize
 } from "./backgroundCanvasActions";
-import { readImageAssetDimensions, readImageFile } from "./readImageFile";
-
-type BackgroundAction = "add" | "replace";
+import { readImageAssetDimensions } from "./readImageFile";
 
 export function useBackgroundTool(encounter: EncounterState) {
   const dispatch = useDispatch();
   const { getViewportSize, viewportSize, zoom } = useCanvasViewport();
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [preferredFitMode, setPreferredFitMode] =
     useState<BackgroundFitMode | null>("fit");
-  function requestBackgroundUpload(_action: BackgroundAction) {
-    fileInputRef.current?.click();
-  }
 
-  async function handleBackgroundFileChange(
-    event: React.ChangeEvent<HTMLInputElement>
-  ) {
-    const file = event.target.files?.[0];
-
-    event.target.value = "";
-
-    if (!file) {
-      return;
-    }
-
-    const nextBackgroundImage = await readImageFile(file);
-    setPreferredFitMode("fit");
-    commitBackgroundImage({
-      backgroundImage: nextBackgroundImage,
-      dispatch,
-      encounter,
-      viewportSize: getViewportSize(),
-      viewportZoom: zoom
-    });
-    dispatch(setActiveTool("zone"));
-  }
-
-  async function addBackgroundFromUrl(url: string) {
+  async function addBackgroundFromUrl(url: string, name?: string) {
+    const asset = createWebImageAsset(url);
     const nextBackgroundImage = await readImageAssetDimensions(
-      createWebImageAsset(url)
+      name?.trim() ? { ...asset, name: name.trim() } : asset
     );
     setPreferredFitMode("fit");
     commitBackgroundImage({
@@ -148,9 +120,6 @@ export function useBackgroundTool(encounter: EncounterState) {
     activeFitMode,
     addBackgroundFromUrl,
     deleteBackground,
-    fileInputRef,
-    handleBackgroundFileChange,
-    requestBackgroundUpload,
     resizeBackground,
     scaleBackground
   };

@@ -1,12 +1,20 @@
-import { FileImage, FileText, Folder, Link } from "lucide-react";
+import { Folder, Grid2X2, List } from "lucide-react";
 import { useTime, useTransform } from "motion/react";
 import { useEffect, useRef, useState } from "react";
-import type { DragEvent } from "react";
+import type { DragEvent, PointerEvent as ReactPointerEvent } from "react";
 
+import { resolveLibraryAsset } from "@library/librarySlice";
 import type { LibraryNode, LibrarySection } from "@library/types";
-import { LIBRARY_NODE_DRAG_TYPE } from "./libraryDrag";
+import { hasLeftDragSurface } from "./libraryDrag";
 import { getAlphabetizedChildren } from "./libraryUi";
-import { AssetImagePreview } from "./AssetImagePreview";
+import { AssetLibraryContentNode } from "./AssetLibraryContentNode";
+import { AssetLibraryEncounterItem } from "./AssetLibraryEncounterItem";
+import { AssetLibraryPreview } from "./AssetLibraryPreview";
+import type {
+  AssetLibraryPreviewTarget,
+  AssetLibraryViewMode
+} from "./assetLibraryView";
+import { useAssetLibraryPreview } from "./useAssetLibraryPreview";
 import type { EncounterRecord } from "@core/persistence";
 import {
   EncounterContextMenu,
@@ -18,19 +26,25 @@ type AssetLibraryContentsProps = {
   currentFolder: LibraryNode;
   dropFolderId: string | null;
   selectedNodeId: string | undefined;
-  onDragEnd: () => void;
+  viewMode?: AssetLibraryViewMode;
+  onViewModeChange?: (viewMode: AssetLibraryViewMode) => void;
   onDragOverContents: (event: DragEvent<HTMLElement>) => void;
   onDragOverFolder: (
     event: DragEvent<HTMLElement>,
     node: LibraryNode
   ) => void;
-  onDragStart: (event: DragEvent<HTMLElement>, node: LibraryNode) => void;
+  onPointerDownNode: (
+    event: ReactPointerEvent<HTMLElement>,
+    node: LibraryNode
+  ) => void;
   onDropOnContents: (event: DragEvent<HTMLElement>) => void;
   onDropOnFolder: (
     event: DragEvent<HTMLElement>,
     node: LibraryNode
   ) => void;
   onDoubleClickNode: (node: LibraryNode) => void;
+  onEncounterFocused?: () => void;
+  onNodeFocused?: () => void;
   onEnterFolder: (folderId: string) => void;
   onOpenContextMenu: (
     event: {
@@ -50,6 +64,8 @@ type AssetLibraryContentsProps = {
   onRequestRenameEncounter?: (id: string, name: string) => void;
   readOnly?: boolean;
   recentEncounterIds?: string[];
+  focusedEncounterId?: string | null;
+  focusedNodeId?: string | null;
 };
 
 export function AssetLibraryContents({
@@ -57,13 +73,16 @@ export function AssetLibraryContents({
   currentFolder,
   dropFolderId,
   selectedNodeId,
-  onDragEnd,
+  viewMode: controlledViewMode,
+  onViewModeChange,
   onDragOverContents,
   onDragOverFolder,
-  onDragStart,
+  onPointerDownNode,
   onDropOnContents,
   onDropOnFolder,
   onDoubleClickNode,
+  onEncounterFocused,
+  onNodeFocused,
   onEnterFolder,
   onOpenContextMenu,
   onSelectNode,
@@ -75,12 +94,31 @@ export function AssetLibraryContents({
   onLoadEncounter,
   onRequestRenameEncounter,
   readOnly = false,
-  recentEncounterIds = []
+  recentEncounterIds = [],
+  focusedEncounterId = null,
+  focusedNodeId = null
 }: AssetLibraryContentsProps) {
   const time = useTime();
   const [encounterContextMenu, setEncounterContextMenu] =
     useState<EncounterContextMenuState>(null);
   const encounterContextMenuRef = useRef<HTMLDivElement>(null);
+  const encounterCardRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const libraryNodeCardRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const [localViewMode, setLocalViewMode] =
+    useState<AssetLibraryViewMode>("grid");
+  const viewMode = controlledViewMode ?? localViewMode;
+  const {
+    beginPreviewInteraction,
+    clearPreviewClearTimer,
+    consumePreviewHold,
+    endPreviewInteraction,
+    largeHoverPreview,
+    movePreviewInteraction,
+    previewTarget,
+    schedulePreviewClear
+  } = useAssetLibraryPreview({
+    resetKey: `${currentFolder.id}:${viewMode}`
+  });
   const loadingRotation = useTransform(time, (milliseconds) =>
     `rotate(${(milliseconds / 1000) * 360}deg)`
   );
@@ -98,153 +136,250 @@ export function AssetLibraryContents({
     return () => document.removeEventListener("pointerdown", handlePointerDown);
   }, [encounterContextMenu]);
 
+  useEffect(() => {
+    if (!focusedEncounterId) {
+      return;
+    }
+
+    const card = encounterCardRefs.current[focusedEncounterId];
+
+    if (!card) {
+      return;
+    }
+
+    card.scrollIntoView?.({ block: "nearest" });
+    onEncounterFocused?.();
+  }, [currentFolder.id, focusedEncounterId, encounterRecords, onEncounterFocused]);
+
+  useEffect(() => {
+    if (!focusedNodeId) {
+      return;
+    }
+
+    const card = libraryNodeCardRefs.current[focusedNodeId];
+
+    if (!card) {
+      return;
+    }
+
+    card.scrollIntoView?.({ block: "nearest" });
+    onNodeFocused?.();
+  }, [currentFolder.id, focusedNodeId, onNodeFocused]);
+
+  function getNodePreviewTarget(node: LibraryNode): AssetLibraryPreviewTarget | null {
+    const asset = resolveLibraryAsset(activeSection, node.id);
+    return asset ? { asset, name: node.name } : null;
+  }
+
+  function getEncounterPreviewTarget(
+    record: EncounterRecord
+  ): AssetLibraryPreviewTarget | null {
+    const asset = record.state.backgroundImage;
+    return asset ? { asset, name: record.state.name } : null;
+  }
+
+  const children = getAlphabetizedChildren(activeSection, currentFolder.id);
+  const visibleEncounterRecords = encounterRecords
+    .filter(
+      (record) =>
+        record.folderId === currentFolder.id ||
+        (record.folderId === null && currentFolder.id === activeSection.rootId)
+    )
+    .sort((left, right) => left.state.name.localeCompare(right.state.name));
+  const selectedNode = children.find((node) => node.id === selectedNodeId);
+  const selectedEncounter = visibleEncounterRecords.find(
+    (record) => record.id === selectedNodeId
+  );
+  const selectedPreviewTarget =
+    viewMode === "list"
+      ? selectedNode
+        ? getNodePreviewTarget(selectedNode)
+        : selectedEncounter
+          ? getEncounterPreviewTarget(selectedEncounter)
+          : null
+      : null;
+  const displayedPreviewTarget = previewTarget ?? selectedPreviewTarget;
+
+  function toggleViewMode() {
+    const nextViewMode = viewMode === "grid" ? "list" : "grid";
+    onViewModeChange?.(nextViewMode);
+    if (!controlledViewMode) setLocalViewMode(nextViewMode);
+  }
+
   return (
     <section
       aria-label="Asset library contents"
       className="min-h-0 overflow-auto p-5"
-      onDragLeave={() => setDropFolderId(null)}
+      data-library-drop-folder-id={currentFolder.id}
+      onDragLeave={(event) => {
+        if (hasLeftDragSurface(event)) setDropFolderId(null);
+      }}
       onDragOver={onDragOverContents}
       onDrop={onDropOnContents}
     >
       <div
         aria-label="Current asset library folder"
-        className="mb-4 flex items-center gap-2 border-b border-canvas-line pb-3 text-sm font-semibold text-canvas-ink"
+        className="mb-4 flex items-center justify-between gap-3 border-b border-canvas-line pb-3 text-sm font-semibold text-canvas-ink"
       >
-        <Folder aria-hidden="true" className="h-4 w-4" />
-        <span className="min-w-0 truncate">{currentFolder.name}</span>
-      </div>
-      {activeSection.id === "encounters" && currentFolder.id === activeSection.rootId && recentEncounterIds.length > 0 ? (
-        <div className="mb-4 rounded-2xl border border-canvas-line bg-canvas p-3" aria-label="Recent encounters">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-canvas-muted">Recent</p>
-          <div className="flex flex-wrap gap-2">
-            {recentEncounterIds.flatMap((id) => {
-              const record = encounterRecords.find((item) => item.id === id);
-              return record ? [(
-                <button key={id} className="rounded-xl border border-canvas-line bg-white px-3 py-2 text-sm font-medium" onDoubleClick={() => onLoadEncounter?.(id)} type="button">
-                  {record.state.name}
-                </button>
-              )] : [];
-            })}
-          </div>
+        <div className="flex min-w-0 items-center gap-2">
+          <Folder aria-hidden="true" className="h-4 w-4" />
+          <span className="min-w-0 truncate">{currentFolder.name}</span>
         </div>
-      ) : null}
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(8rem,1fr))] gap-3">
-        {getAlphabetizedChildren(activeSection, currentFolder.id).map((node) => {
-          const selected = selectedNodeId === node.id;
-
-          return (
-            <button
-              key={node.id}
-              aria-label={node.name}
-              aria-pressed={selected}
-              className={`rounded-2xl border bg-white p-2 text-left transition hover:bg-canvas ${
-                dropFolderId === node.id
-                  ? "border-canvas-ink bg-canvas ring-2 ring-canvas-ink/20"
-                  : selected
-                    ? "border-canvas-ink ring-2 ring-canvas-ink/20"
-                    : "border-canvas-line"
-              }`}
-              draggable={!readOnly}
-              onClick={() => {
-                if (node.type === "folder") {
-                  onEnterFolder(node.id);
-                  return;
-                }
-
-                onSelectNode(node.id);
-              }}
-              onContextMenu={(event) => onOpenContextMenu(event, node)}
-              onDoubleClick={() => onDoubleClickNode(node)}
-              onDragEnd={onDragEnd}
-              onDragStart={(event) => {
-                event.dataTransfer.effectAllowed = "move";
-                event.dataTransfer.setData(LIBRARY_NODE_DRAG_TYPE, node.id);
-                event.dataTransfer.setData("text/plain", node.id);
-                onDragStart(event, node);
-              }}
-              onDragOver={(event) => {
-                if (node.type === "folder") {
-                  onDragOverFolder(event, node);
-                }
-              }}
-              onDrop={(event) => {
-                if (node.type === "folder") {
-                  onDropOnFolder(event, node);
-                }
-              }}
-              type="button"
-            >
-              <div className="flex aspect-[4/3] items-center justify-center overflow-hidden rounded-xl bg-canvas">
-                {node.type === "folder" ? (
-                  <Folder aria-hidden="true" className="h-10 w-10 text-canvas-muted" />
-                ) : node.type === "link" ? (
-                  <Link aria-hidden="true" className="h-8 w-8 text-canvas-muted" />
-                ) : (
-                  node.asset ? (
-                    <AssetImagePreview
-                      name={node.name}
-                      rotation={loadingRotation}
-                      source={node.asset.source}
-                    />
-                  ) : (
-                    <FileImage aria-hidden="true" className="h-8 w-8 text-canvas-muted" />
-                  )
-                )}
+        <button
+          aria-label={
+            viewMode === "grid"
+              ? "Switch library contents to list view"
+              : "Switch library contents to grid view"
+          }
+          aria-pressed={viewMode === "grid"}
+          className="flex h-8 w-8 flex-none items-center justify-center rounded-full border border-canvas-line bg-white text-canvas-muted transition hover:bg-canvas"
+          onClick={toggleViewMode}
+          title={viewMode === "grid" ? "List view" : "Grid view"}
+          type="button"
+        >
+          {viewMode === "grid" ? (
+            <List aria-hidden="true" className="h-4 w-4" />
+          ) : (
+            <Grid2X2 aria-hidden="true" className="h-4 w-4" />
+          )}
+        </button>
+      </div>
+      <div className={viewMode === "list" ? "lg:grid lg:grid-cols-2 lg:gap-4" : undefined}>
+        <div
+          aria-label="Current directory contents"
+          className={viewMode === "grid" ? "grid grid-cols-[repeat(auto-fill,minmax(8rem,1fr))] gap-3" : "space-y-2"}
+          role="group"
+        >
+          {activeSection.id === "encounters" && currentFolder.id === activeSection.rootId && recentEncounterIds.length > 0 ? (
+            <div className="mb-4 rounded-2xl border border-canvas-line bg-canvas p-3" aria-label="Recent encounters">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-canvas-muted">Recent</p>
+              <div className="flex flex-wrap gap-2">
+                {recentEncounterIds.flatMap((id) => {
+                  const record = encounterRecords.find((item) => item.id === id);
+                  return record ? [(
+                    <button key={id} className="rounded-xl border border-canvas-line bg-white px-3 py-2 text-sm font-medium" onDoubleClick={() => onLoadEncounter?.(id)} type="button">
+                      {record.state.name}
+                    </button>
+                  )] : [];
+                })}
               </div>
-              <p className="mt-2 truncate text-xs font-medium">{node.name}</p>
-            </button>
-          );
-        })}
-        {encounterRecords
-          .filter(
-            (record) =>
-              record.folderId === currentFolder.id ||
-              (record.folderId === null && currentFolder.id === activeSection.rootId)
-          )
-          .sort((left, right) => left.state.name.localeCompare(right.state.name))
-          .map((record) => (
-            <div
-              key={record.id}
-              className="rounded-2xl border border-canvas-line bg-white p-2 transition hover:bg-canvas"
-              draggable={!readOnly}
-              onContextMenu={(event) => {
-                event.preventDefault();
-                setEncounterContextMenu({
-                  encounterId: record.id,
-                  name: record.state.name,
-                  x: event.clientX,
-                  y: event.clientY
-                });
-              }}
-              onDragStart={(event) => {
-                event.dataTransfer.effectAllowed = "move";
-                event.dataTransfer.setData(
-                  "application/x-combat-zone-encounter",
-                  record.id
-                );
-              }}
-            >
-              <button
-                aria-label={record.state.name}
-                className="w-full text-left"
-                onDoubleClick={() => onLoadEncounter?.(record.id)}
-                type="button"
-              >
-                <div className="flex aspect-[4/3] items-center justify-center overflow-hidden rounded-xl bg-canvas">
-                  {record.state.backgroundImage ? (
-                    <AssetImagePreview
-                      name={record.state.name}
-                      rotation={loadingRotation}
-                      source={record.state.backgroundImage.source}
-                    />
-                  ) : (
-                    <FileText aria-hidden="true" className="h-10 w-10 text-canvas-muted" />
-                  )}
-                </div>
-                <p className="mt-2 truncate text-xs font-medium">{record.state.name}</p>
-              </button>
             </div>
-          ))}
+          ) : null}
+          {children.map((node) => {
+            const target = getNodePreviewTarget(node);
+
+            return (
+              <AssetLibraryContentNode
+                key={node.id}
+                asset={target?.asset ?? null}
+                buttonRef={(element) => {
+                  libraryNodeCardRefs.current[node.id] = element;
+                }}
+                dropFolderId={dropFolderId}
+                loadingRotation={loadingRotation}
+                node={node}
+                selected={selectedNodeId === node.id}
+                viewMode={viewMode}
+                onContextMenu={(event) => onOpenContextMenu(event, node)}
+                onDoubleClick={() => {
+                  if (!consumePreviewHold()) onDoubleClickNode(node);
+                }}
+                onDragOverFolder={(event) => {
+                  if (node.type === "folder") onDragOverFolder(event, node);
+                }}
+                onDropOnFolder={(event) => {
+                  if (node.type === "folder") onDropOnFolder(event, node);
+                }}
+                onPointerCancel={endPreviewInteraction}
+                onPointerDown={(event) => {
+                  beginPreviewInteraction(event, target);
+                  if (!readOnly) onPointerDownNode(event, node);
+                }}
+                onPointerEnter={(event) => beginPreviewInteraction(event, target)}
+                onPointerLeave={() => {
+                  if (largeHoverPreview) schedulePreviewClear();
+                }}
+                onPointerMove={movePreviewInteraction}
+                onPointerUp={endPreviewInteraction}
+                onSelect={() => {
+                  if (consumePreviewHold()) return;
+                  if (node.type === "folder") {
+                    onEnterFolder(node.id);
+                  } else {
+                    onSelectNode(node.id);
+                  }
+                }}
+              />
+            );
+          })}
+          {visibleEncounterRecords.map((record) => {
+            const target = getEncounterPreviewTarget(record);
+
+            return (
+              <AssetLibraryEncounterItem
+                key={record.id}
+                itemRef={(element) => {
+                  encounterCardRefs.current[record.id] = element;
+                }}
+                loadingRotation={loadingRotation}
+                readOnly={readOnly}
+                record={record}
+                selected={selectedNodeId === record.id}
+                viewMode={viewMode}
+                onContextMenu={(event) => {
+                  event.preventDefault();
+                  setEncounterContextMenu({
+                    encounterId: record.id,
+                    name: record.state.name,
+                    x: event.clientX,
+                    y: event.clientY
+                  });
+                }}
+                onDoubleClick={() => {
+                  if (!consumePreviewHold()) onLoadEncounter?.(record.id);
+                }}
+                onDragStart={(event) => {
+                  event.dataTransfer.effectAllowed = "move";
+                  event.dataTransfer.setData(
+                    "application/x-combat-zone-encounter",
+                    record.id
+                  );
+                }}
+                onSelect={() => {
+                  if (!consumePreviewHold()) onSelectNode(record.id);
+                }}
+                onPointerCancel={endPreviewInteraction}
+                onPointerDown={(event) => beginPreviewInteraction(event, target)}
+                onPointerEnter={(event) => beginPreviewInteraction(event, target)}
+                onPointerLeave={() => {
+                  if (largeHoverPreview) schedulePreviewClear();
+                }}
+                onPointerMove={movePreviewInteraction}
+                onPointerUp={endPreviewInteraction}
+              />
+            );
+          })}
+        </div>
+        {viewMode === "list" && largeHoverPreview ? (
+          <div
+            className="hidden min-w-0 border-l border-canvas-line pl-4 lg:block"
+            onPointerEnter={clearPreviewClearTimer}
+            onPointerLeave={schedulePreviewClear}
+          >
+            <AssetLibraryPreview
+              rotation={loadingRotation}
+              target={displayedPreviewTarget}
+            />
+          </div>
+        ) : null}
+        {viewMode === "list" && !largeHoverPreview && previewTarget ? (
+          <div className="mt-4 min-w-0">
+            <AssetLibraryPreview
+              rotation={loadingRotation}
+              target={displayedPreviewTarget}
+            />
+          </div>
+        ) : null}
       </div>
       {encounterContextMenu ? (
         <EncounterContextMenu

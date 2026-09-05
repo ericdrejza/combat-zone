@@ -24,6 +24,21 @@ describe("App", () => {
     expect(screen.getByText("Entity detail scaffold.")).toBeInTheDocument();
   });
 
+  it("opens the Library destination picker when saving an unfiled encounter", async () => {
+    const user = userEvent.setup();
+
+    renderApp();
+
+    const saveButton = screen.getByRole("button", { name: "Save encounter" });
+    expect(saveButton.querySelector("svg")).toHaveClass("lucide-save-pen");
+
+    await user.click(saveButton);
+
+    expect(
+      await screen.findByRole("dialog", { name: "Asset Library" })
+    ).toBeInTheDocument();
+  });
+
   it("collapses and expands either sidebar independently", async () => {
     const user = userEvent.setup();
 

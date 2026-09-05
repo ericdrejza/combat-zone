@@ -1,6 +1,7 @@
 import type { LayoutPoint } from '@core/layout/types';
 import type { CanvasSize } from '@core/layout/polygonCanvasBounds';
 import { DEFAULT_CANVAS_SIZE } from '@core/layout/polygonCanvasBounds';
+import type { ImageAssetSource } from '@core/assets/imageAssetSource';
 import type { Zone } from '@entities/zone/types';
 import {
   BACKGROUND_SAMPLE_COUNT,
@@ -123,10 +124,15 @@ export function sampleZoneBackgroundLuminance(
 export function createCanvasBackgroundSamplePoints(
   canvasSize: CanvasSize = DEFAULT_CANVAS_SIZE
 ): LayoutPoint[] {
-  const xPositions = [0.25, 0.5, 0.75].map(
+  // The zoneless panel is centered over the canvas. Keep the sample window
+  // inside that footprint so bright edges of a background do not outweigh
+  // the pixels immediately behind the panel.
+  const xPositions = [0.3, 0.5, 0.7].map(
     (ratio) => canvasSize.width * ratio
   );
-  const yPositions = [canvasSize.height - 60, canvasSize.height - 24];
+  // The collapsed panel is anchored 12px from the bottom and is 48px tall;
+  // sample its visual center instead of mixing in pixels above or below it.
+  const yPositions = [canvasSize.height - 36];
 
   return yPositions.flatMap((y) => xPositions.map((x) => ({ x, y })));
 }
@@ -144,4 +150,15 @@ export function sampleCanvasBackgroundLuminance(
 
 export function getFallbackCanvasLuminance(): number {
   return getHexLuminance(CANVAS_BACKGROUND_COLOR);
+}
+
+/**
+ * Remote images can be displayed without granting the browser permission to
+ * read their pixels. Treat that unreadable case as a dark canvas so the
+ * luminance-derived panel ink remains visible over image-only backgrounds.
+ */
+export function getImageLuminanceFallback(
+  source: ImageAssetSource | null | undefined
+): number {
+  return source?.kind === 'url' ? 0 : getFallbackCanvasLuminance();
 }

@@ -1,3 +1,4 @@
+import userEvent from "@testing-library/user-event";
 import { act, screen, within } from "@testing-library/react";
 
 import { createEncounterActionRecord } from "@core/history/createEncounterActionRecord";
@@ -100,5 +101,57 @@ describe("BackgroundPropertiesPanel", () => {
     expect(
       within(panel).queryByRole("textbox", { name: "URL" })
     ).not.toBeInTheDocument();
+  });
+
+  it("opens the library at the linked asset's directory", async () => {
+    const user = userEvent.setup();
+    renderApp();
+    const folderAction = createFolder({
+      name: "Maps",
+      parentId: "backgrounds-root",
+      sectionId: "backgrounds"
+    });
+    const imageAction = uploadImage({
+      asset: {
+        height: 720,
+        mediaType: "image/png",
+        name: "ancient-ruins.png",
+        source: {
+          dataUrl: "data:image/png;base64,ancient-ruins",
+          kind: "embedded"
+        },
+        width: 1280
+      },
+      parentId: folderAction.payload.id,
+      sectionId: "backgrounds"
+    });
+
+    act(() => {
+      store.dispatch(folderAction);
+      store.dispatch(imageAction);
+      const encounter = store.getState().encounter.present;
+      store.dispatch(commitEncounterChange({
+        action: createEncounterActionRecord("background.add"),
+        nextEncounter: {
+          ...encounter,
+          backgroundImage: {
+            ...imageAction.payload.asset,
+            height: 720,
+            libraryNodeId: imageAction.payload.id,
+            width: 1280
+          }
+        }
+      }));
+      store.dispatch(setActiveTool("background"));
+    });
+
+    await user.click(screen.getByRole("textbox", { name: "Library Path" }));
+
+    expect(screen.getByRole("dialog", { name: "Asset Library" })).toBeInTheDocument();
+    expect(
+      within(
+        screen.getByRole("region", { name: "Asset library contents" })
+      ).getByLabelText("Current asset library folder")
+    ).toHaveTextContent("Maps");
   });
 });

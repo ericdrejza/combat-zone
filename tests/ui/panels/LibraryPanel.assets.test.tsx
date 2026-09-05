@@ -49,6 +49,13 @@ describe("LibraryPanel", () => {
       pointerId: 40,
       pointerType: "mouse"
     });
+    const transferPreview = screen.getByRole("status", {
+      name: "Dragging Pointer Scout"
+    });
+    expect(transferPreview.querySelector("image")).toHaveAttribute(
+      "href",
+      "data:image/png;base64,pointer-scout"
+    );
     fireEvent.pointerUp(window, {
       clientX: 700,
       clientY: 500,
@@ -254,7 +261,7 @@ describe("LibraryPanel", () => {
     await user.click(screen.getByRole("button", { name: "Library" }));
     await user.click(screen.getByRole("tab", { name: "Tokens" }));
     await user.click(screen.getByRole("button", { name: "Add to Tokens" }));
-    await user.click(screen.getByRole("menuitem", { name: "Upload file" }));
+    await user.click(screen.getByRole("menuitem", { name: "Upload Image" }));
 
     fireEvent.change(screen.getByLabelText("Upload library image"), {
       target: {
@@ -300,7 +307,7 @@ describe("LibraryPanel", () => {
     await user.click(screen.getByRole("button", { name: "Library" }));
     await user.click(screen.getByRole("tab", { name: "Backgrounds" }));
     await user.click(screen.getByRole("button", { name: "Add to Backgrounds" }));
-    await user.click(screen.getByRole("menuitem", { name: "Upload file" }));
+    await user.click(screen.getByRole("menuitem", { name: "Upload Image" }));
 
     fireEvent.change(screen.getByLabelText("Upload library image"), {
       target: {
@@ -387,7 +394,7 @@ describe("LibraryPanel", () => {
     await user.click(screen.getByRole("button", { name: "Library" }));
     await user.click(screen.getByRole("tab", { name: "Tokens" }));
     await user.click(screen.getByRole("button", { name: "Add to Tokens" }));
-    await user.click(screen.getByRole("menuitem", { name: "Upload file" }));
+    await user.click(screen.getByRole("menuitem", { name: "Upload Image" }));
 
     fireEvent.change(screen.getByLabelText("Upload library image"), {
       target: {

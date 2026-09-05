@@ -16,6 +16,7 @@ import { removeActorFromInitiative } from '@core/encounter/initiativeMutations';
 import type { ImageAssetSource } from '@core/assets/imageAssetSource';
 
 export type ActorImageInput = {
+  libraryNodeId?: string;
   source: ImageAssetSource;
   mediaType: string;
   name: string;
@@ -35,6 +36,7 @@ export type CreateActorInput = {
 export type UpdateActorPropertiesInput = {
   actorType?: ActorType;
   image?: ImageAssetSource;
+  imageLibraryNodeId?: string | null;
   layoutGroup?: ActorLayoutGroup;
   name?: string;
   shape?: ActorShape;
@@ -142,6 +144,7 @@ export function buildActor({
     image: image?.source,
     layoutGroup,
     metadata: {
+      sourceLibraryNodeId: image?.libraryNodeId,
       sourceAssetName: image?.name,
       sourceAssetMediaType: image?.mediaType
     },
@@ -200,11 +203,20 @@ export function updateActorProperties(
     return state;
   }
 
+  const { imageLibraryNodeId, ...actorProperties } = properties;
+  const metadata = { ...actor.metadata };
+  if (imageLibraryNodeId === null) {
+    delete metadata.sourceLibraryNodeId;
+  } else if (imageLibraryNodeId !== undefined) {
+    metadata.sourceLibraryNodeId = imageLibraryNodeId;
+  }
+
   return {
     ...state,
     actors: upsertEntity(state.actors, {
       ...actor,
-      ...properties
+      ...actorProperties,
+      metadata
     })
   };
 }

@@ -5,7 +5,9 @@ import {
   createDeterministicSamplePoints,
   createCanvasBackgroundSamplePoints,
   getAverageCanvasLuminance,
+  getFallbackCanvasLuminance,
   getHexLuminance,
+  getImageLuminanceFallback,
   getReadableTextColor,
   getTextColorForLuminance,
   getZoneNameTextColor,
@@ -45,6 +47,20 @@ describe('canvas luminance', () => {
     expect(getTextColorForLuminance(128)).toBe('#ffffff');
     expect(getReadableTextColor('#ffffff')).toBe('#111827');
     expect(getReadableTextColor('#000000')).toBe('#ffffff');
+  });
+
+  it('uses light contrast ink when an external image cannot expose pixels', () => {
+    expect(
+      getTextColorForLuminance(
+        getImageLuminanceFallback({
+          kind: 'url',
+          url: 'https://img.magnific.com/background.jpg'
+        })
+      )
+    ).toBe('#ffffff');
+    expect(getImageLuminanceFallback(null)).toBe(
+      getFallbackCanvasLuminance()
+    );
   });
 
   it('samples deterministic points inside a polygon', () => {
@@ -117,10 +133,12 @@ describe('canvas luminance', () => {
   it('samples the canvas area behind the collapsed panel', () => {
     const points = createCanvasBackgroundSamplePoints();
     const context = {
-      getImageData: () => ({ data: [0, 0, 0] })
+      getImageData: (_x: number, y: number) => ({
+        data: y >= 592 && y <= 616 ? [40, 40, 40] : [240, 240, 240]
+      })
     } as unknown as CanvasRenderingContext2D;
 
-    expect(points).toHaveLength(6);
-    expect(sampleCanvasBackgroundLuminance(context)).toBe(0);
+    expect(points).toHaveLength(3);
+    expect(sampleCanvasBackgroundLuminance(context)).toBe(40);
   });
 });

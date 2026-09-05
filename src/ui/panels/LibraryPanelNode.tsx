@@ -13,7 +13,7 @@ type LibraryPanelNodeProps = {
   node: LibraryNode;
   onClick: () => void;
   onDragEnd: () => void;
-  onDragStart: (event: DragEvent<HTMLElement>) => void;
+  onDragStart: (event: DragEvent<HTMLElement>, imageUrl: string | null) => void;
   onNavigate: () => void;
   onPointerDown?: (event: PointerEvent<HTMLButtonElement>) => void;
   viewMode: LibraryViewMode;
@@ -68,7 +68,7 @@ export function LibraryPanelNode({
       draggable={false}
       ref={buttonRef}
       onClick={onClick}
-      onDragStart={onDragStart}
+      onDragStart={(event) => onDragStart(event, imageUrl)}
       onDragEnd={onDragEnd}
       onPointerDown={onPointerDown}
       type="button"

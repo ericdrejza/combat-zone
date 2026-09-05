@@ -1,5 +1,6 @@
 import type { LibraryImageAsset } from "./types";
 import { isHttpImageUrl } from "@core/assets/imageAssetSource";
+import { getFileNameWithoutExtension } from "./fileName";
 
 const IMAGE_MEDIA_TYPES: Record<string, string> = {
   avif: "image/avif",
@@ -32,6 +33,6 @@ export function createWebImageAsset(value: string): LibraryImageAsset {
   return {
     source: { kind: "url", url: url.href },
     mediaType: IMAGE_MEDIA_TYPES[extension] ?? "image/*",
-    name: decodedName || "Linked image"
+    name: getFileNameWithoutExtension(decodedName || "Linked image")
   };
 }

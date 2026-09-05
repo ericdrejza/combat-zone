@@ -30,6 +30,78 @@ type AssetLibraryAddMenuProps = {
   onToggleAddMenu: () => void;
 };
 
+export type AssetSourceType =
+  | "image-upload"
+  | "web-link"
+  | "google-drive"
+  | "asset-link";
+
+type AssetSourceMenuProps = {
+  canLinkAssets: boolean;
+  canUploadAssets: boolean;
+  canUseGoogleDrive?: boolean;
+  onOpenFilePicker: () => void;
+  onOpenLinkPicker: () => void;
+  onOpenGoogleDrive: () => void;
+  onOpenUrlDialog: () => void;
+};
+
+/** Shared source choices keep Add and Change source flows consistent. */
+export function AssetSourceMenu({
+  canLinkAssets,
+  canUploadAssets,
+  canUseGoogleDrive = false,
+  onOpenFilePicker,
+  onOpenLinkPicker,
+  onOpenGoogleDrive,
+  onOpenUrlDialog
+}: AssetSourceMenuProps) {
+  return (
+    <>
+      <button
+        className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left transition hover:bg-canvas disabled:cursor-not-allowed disabled:text-canvas-muted"
+        disabled={!canUploadAssets}
+        onClick={onOpenFilePicker}
+        role="menuitem"
+        type="button"
+      >
+        <Upload aria-hidden="true" className="h-4 w-4" />
+        Upload Image
+      </button>
+      <button
+        className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left transition hover:bg-canvas disabled:cursor-not-allowed disabled:text-canvas-muted"
+        disabled={!canUploadAssets}
+        onClick={onOpenUrlDialog}
+        role="menuitem"
+        type="button"
+      >
+        <Link2 aria-hidden="true" className="h-4 w-4" />
+        Web link
+      </button>
+      <button
+        className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left transition hover:bg-canvas disabled:cursor-not-allowed disabled:text-canvas-muted"
+        disabled={!canUseGoogleDrive}
+        onClick={onOpenGoogleDrive}
+        role="menuitem"
+        type="button"
+      >
+        <HardDrive aria-hidden="true" className="h-4 w-4" />
+        Link from Google Drive
+      </button>
+      <button
+        className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left transition hover:bg-canvas disabled:cursor-not-allowed disabled:text-canvas-muted"
+        disabled={!canLinkAssets}
+        onClick={onOpenLinkPicker}
+        role="menuitem"
+        type="button"
+      >
+        <Link aria-hidden="true" className="h-4 w-4" />
+        Link asset
+      </button>
+    </>
+  );
+}
+
 export function AssetLibraryAddMenu({
   addMenuOpen,
   addMenuRef,
@@ -98,46 +170,15 @@ export function AssetLibraryAddMenu({
             </>
           ) : (
             <>
-          <button
-            className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left transition hover:bg-canvas disabled:cursor-not-allowed disabled:text-canvas-muted"
-            disabled={!canUploadAssets}
-            onClick={onOpenFilePicker}
-            role="menuitem"
-            type="button"
-          >
-            <Upload aria-hidden="true" className="h-4 w-4" />
-            Upload file
-          </button>
-          <button
-            className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left transition hover:bg-canvas disabled:cursor-not-allowed disabled:text-canvas-muted"
-            disabled={!canUploadAssets}
-            onClick={onOpenUrlDialog}
-            role="menuitem"
-            type="button"
-          >
-            <Link2 aria-hidden="true" className="h-4 w-4" />
-            Web link
-          </button>
-          <button
-            className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left transition hover:bg-canvas disabled:cursor-not-allowed disabled:text-canvas-muted"
-            disabled={!canUseGoogleDrive}
-            onClick={onOpenGoogleDrive}
-            role="menuitem"
-            type="button"
-          >
-            <HardDrive aria-hidden="true" className="h-4 w-4" />
-            Link from Google Drive
-          </button>
-          <button
-            className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left transition hover:bg-canvas disabled:cursor-not-allowed disabled:text-canvas-muted"
-            disabled={!canLinkAssets}
-            onClick={onOpenLinkPicker}
-            role="menuitem"
-            type="button"
-          >
-            <Link aria-hidden="true" className="h-4 w-4" />
-            Link asset
-          </button>
+              <AssetSourceMenu
+                canLinkAssets={canLinkAssets}
+                canUploadAssets={canUploadAssets}
+                canUseGoogleDrive={canUseGoogleDrive}
+                onOpenFilePicker={onOpenFilePicker}
+                onOpenLinkPicker={onOpenLinkPicker}
+                onOpenGoogleDrive={onOpenGoogleDrive}
+                onOpenUrlDialog={onOpenUrlDialog}
+              />
           <hr className="my-1 border-canvas-line" />
           <button
             className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left transition hover:bg-canvas"

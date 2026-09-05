@@ -4,7 +4,8 @@ import { useState, type FormEvent } from "react";
 type WebImageUrlDialogProps = {
   description: string;
   onClose: () => void;
-  onSubmit: (url: string) => void | Promise<void>;
+  onSubmit: (url: string, name: string) => void | Promise<void>;
+  showName?: boolean;
   title: string;
 };
 
@@ -12,10 +13,12 @@ export function WebImageUrlDialog({
   description,
   onClose,
   onSubmit,
+  showName = true,
   title
 }: WebImageUrlDialogProps) {
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [name, setName] = useState("");
   const [url, setUrl] = useState("");
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -24,7 +27,7 @@ export function WebImageUrlDialog({
     setPending(true);
 
     try {
-      await onSubmit(url);
+      await onSubmit(url, showName ? name.trim() : "");
     } catch (reason) {
       setError(
         reason instanceof Error ? reason.message : "The image could not be loaded."
@@ -74,6 +77,22 @@ export function WebImageUrlDialog({
           type="url"
           value={url}
         />
+        {showName ? (
+          <>
+            <label className="mt-4 block text-sm font-medium" htmlFor="web-image-name">
+              Image name
+            </label>
+            <input
+              className="mt-1 w-full rounded-xl border border-canvas-line px-3 py-2 text-sm outline-none placeholder:text-canvas-muted focus:border-canvas-ink"
+              disabled={pending}
+              id="web-image-name"
+              onChange={(event) => setName(event.target.value)}
+              placeholder="Name (optional)"
+              type="text"
+              value={name}
+            />
+          </>
+        ) : null}
         {error ? (
           <p className="mt-2 text-sm text-red-700" role="alert">
             {error}

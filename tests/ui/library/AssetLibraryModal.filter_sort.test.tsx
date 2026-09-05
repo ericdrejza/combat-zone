@@ -18,7 +18,7 @@ describe("AssetLibraryModal", () => {
     await createFolder("Maps");
     await user.click(screen.getByRole("button", { name: "Maps" }));
     await user.click(screen.getByRole("button", { name: "Add to Backgrounds" }));
-    await user.click(screen.getByRole("menuitem", { name: "Upload file" }));
+    await user.click(screen.getByRole("menuitem", { name: "Upload Image" }));
     fireEvent.change(screen.getByLabelText("Upload library image"), {
       target: {
         files: [new File(["ice"], "ice-cavern.png", { type: "image/png" })]
@@ -42,7 +42,7 @@ describe("AssetLibraryModal", () => {
     await createFolder("z-folder");
     await createFolder("A-folder");
     await user.click(screen.getByRole("button", { name: "Add to Backgrounds" }));
-    await user.click(screen.getByRole("menuitem", { name: "Upload file" }));
+    await user.click(screen.getByRole("menuitem", { name: "Upload Image" }));
     fireEvent.change(screen.getByLabelText("Upload library image"), {
       target: {
         files: [
@@ -58,7 +58,7 @@ describe("AssetLibraryModal", () => {
     });
 
     const contentButtons = within(
-      screen.getByRole("region", { name: "Asset library contents" })
+      screen.getByRole("group", { name: "Current directory contents" })
     ).getAllByRole("button");
 
     expect(contentButtons.map((button) => button.textContent)).toEqual([

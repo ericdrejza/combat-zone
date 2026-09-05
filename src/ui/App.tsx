@@ -28,6 +28,7 @@ import { commitEncounterChange } from "@store/encounterSlice";
 import { createEncounterActionRecord } from "@core/history/createEncounterActionRecord";
 import { resolveLibraryAsset } from "@library/librarySlice";
 import type { LibraryNode } from "@library/types";
+import type { ActorImageInput } from "@entities/actor/actorMutations";
 import { ActorRenameModal } from "./toolbar/actor/ActorRenameModal";
 import { ZoneResizeApprovalProvider } from "./zoneResizeApproval";
 import { MotionPreferenceProvider } from "./motion_preferences/MotionPreferenceProvider";
@@ -45,6 +46,9 @@ import { useVisualViewportRect } from "@hooks/useVisualViewportRect";
 import { SettingsButton } from "./settings/SettingsButton";
 import { useAppPersistenceUi } from "./persistence/useAppPersistenceUi";
 import { useOptionalCloudSync } from "./cloud_sync";
+import {
+  applyActorTokenFromLibrary as commitActorTokenFromLibrary
+} from "./panels/actorTokenImageChange";
 
 type SidebarCollapsedState = Record<DockSide, boolean>;
 
@@ -106,11 +110,14 @@ function AppContent() {
   const [dropTarget, setDropTarget] = useState<DropTarget | null>(null);
   const [libraryFocusRequest, setLibraryFocusRequest] =
     useState<LibraryPanelFocusRequest | null>(null);
+  const [actorCreationImage, setActorCreationImage] =
+    useState<ActorImageInput | null>(null);
   const [libraryViewMode, setLibraryViewMode] =
     useState<LibraryViewMode>("list");
   const [renameModalOpen, setRenameModalOpen] = useState(false);
   const [encounterRenameOpen, setEncounterRenameOpen] = useState(false);
   const persistenceUi = useAppPersistenceUi({
+    onActorTokenSelect: applyActorTokenFromLibrary,
     onBackgroundDoubleClick: applyBackgroundFromLibrary,
     onTokenDoubleClick: focusTokenInLibrary
   });
@@ -212,6 +219,13 @@ function AppContent() {
 
   function focusTokenInLibrary(node: LibraryNode) {
     const tokens = library.sections.tokens;
+    const asset = resolveLibraryAsset(tokens, node.id);
+
+    if (!asset) {
+      return;
+    }
+
+    setActorCreationImage({ ...asset, libraryNodeId: node.id });
 
     setLibraryFocusRequest({
       folderId: node.parentId ?? tokens.rootId,
@@ -247,6 +261,16 @@ function AppContent() {
     } else {
       void readImageAssetDimensions(asset, cloud?.resolveImageAsset).then(commitImage);
     }
+  }
+
+  function applyActorTokenFromLibrary(actorId: string, node: LibraryNode) {
+    commitActorTokenFromLibrary({
+      actorId,
+      dispatch,
+      encounter,
+      node,
+      tokens: library.sections.tokens
+    });
   }
 
   function handlePanelDrop(target: DropTarget, pointerPanelId?: string) {
@@ -297,7 +321,12 @@ function AppContent() {
     }
 
     if (panel.id === "properties") {
-      return <PropertiesPanel />;
+      return (
+        <PropertiesPanel
+          onOpenLibraryLocation={persistenceUi.openLibrary}
+          onOpenTokenLibraryForActor={persistenceUi.openTokenLibraryForActor}
+        />
+      );
     }
 
     if (panel.id === "log") {
@@ -357,9 +386,20 @@ function AppContent() {
         >
       <ZoneResizeApprovalProvider>
       <Toolbar
+        actorCreationImage={actorCreationImage}
         encounterName={encounter.name}
+        hasSavedEncounter={persistenceUi.hasSavedEncounter}
         onActorToolSelected={expandAutoCollapsedLibraryPanel}
-        onOpenLibrary={persistenceUi.openLibrary}
+        onActorCreationImageHandled={() => setActorCreationImage(null)}
+        onOpenLibrary={() =>
+          persistenceUi.openLibrary(
+            activeToolId === "background"
+              ? "backgrounds"
+              : activeToolId === "actor"
+                ? "tokens"
+                : "encounters"
+          )
+        }
         onOpenSettings={persistenceUi.openSettings}
         onRenameEncounter={() => setEncounterRenameOpen(true)}
         onSaveEncounter={() => void persistenceUi.requestSave()}
@@ -367,7 +407,7 @@ function AppContent() {
         saveStatus={persistenceUi.saveStatus}
       />
       <main
-        className="relative grid min-h-0 flex-1 grid-cols-1 gap-2 overflow-hidden p-2 lg:grid-cols-[var(--workspace-columns)] lg:gap-4 lg:p-4"
+        className="relative isolate grid min-h-0 flex-1 grid-cols-1 gap-2 overflow-hidden p-2 lg:grid-cols-[var(--workspace-columns)] lg:gap-4 lg:p-4"
         style={
           {
             "--workspace-columns": workspaceColumns

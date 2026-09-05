@@ -78,6 +78,12 @@ entry-point rules remain in the persistence decision record.
   plus generation. Encounter schema 6 and export/workspace schema 2 migrate
   legacy strings explicitly. Rendering resolves remote sources to short-lived
   object URLs; lossless export embeds provider bytes in a cloned envelope.
+- The Library is the authoritative catalog for application-managed image
+  objects. Embedded or provider-backed object-storage assets must be created or
+  imported through a Library asset node before an entity can use them; entity
+  creation flows select those Library assets instead of creating standalone
+  stored objects. Explicit HTTP(S) links remain external references and are not
+  application-owned object storage.
 - Firestore stores binary-free, independently revisioned workspace metadata,
   encounter aggregates, Library state, and recovery draft below the Firebase
   UID. Callable Functions own validated writes, idempotency, revision checks,

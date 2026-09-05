@@ -11,6 +11,7 @@ import {
   drawCanvasBackgroundImage,
   getAverageCanvasLuminance,
   getFallbackCanvasLuminance,
+  getImageLuminanceFallback,
   sampleCanvasBackgroundLuminance,
   sampleZoneBackgroundLuminance,
   usesBackgroundLuminanceForZoneName
@@ -29,7 +30,9 @@ export function useCanvasBackgroundLuminance(
   zones: ZoneCollection,
   canvasSize: CanvasSize
 ): CanvasBackgroundLuminance {
-  const fallbackLuminance = getFallbackCanvasLuminance();
+  const fallbackLuminance = getImageLuminanceFallback(
+    backgroundImage?.source
+  );
   const sourceUrl = useResolvedImageSource(backgroundImage?.source);
   const [backgroundLuminance, setBackgroundLuminance] =
     useState<CanvasBackgroundLuminance>({
@@ -59,6 +62,9 @@ export function useCanvasBackgroundLuminance(
 
     let cancelled = false;
     const image = new Image();
+    // Allow CORS-enabled URL images to remain readable by the luminance
+    // canvas. Embedded and blob-backed images are unaffected by this flag.
+    image.crossOrigin = "anonymous";
 
     image.addEventListener("error", () => {
       if (!cancelled) {
@@ -142,7 +148,10 @@ export function usePolygonDraftBackgroundLuminance(
 
     let cancelled = false;
     const image = new Image();
-    const fallbackLuminance = getFallbackCanvasLuminance();
+    const fallbackLuminance = getImageLuminanceFallback(
+      backgroundImage.source
+    );
+    image.crossOrigin = "anonymous";
 
     image.addEventListener("error", () => {
       if (!cancelled) {

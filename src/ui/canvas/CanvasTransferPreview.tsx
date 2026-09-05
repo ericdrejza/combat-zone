@@ -34,15 +34,15 @@ export function CanvasTransferPreview({ preview }: Props) {
 
     return (
       <motion.div
-        animate={{
-          x: preview.clientX - radius,
-          y: preview.clientY - radius
-        }}
         aria-label={`Dragging ${preview.label}`}
         className="pointer-events-none fixed left-0 top-0 z-[90] drop-shadow-lg"
-        initial={false}
         role="status"
-        transition={DIRECT_POINTER_TRANSITION}
+        style={{
+          marginLeft: -radius,
+          marginTop: -radius,
+          x: preview.clientX,
+          y: preview.clientY
+        }}
       >
         <svg
           aria-hidden="true"
@@ -68,11 +68,14 @@ export function CanvasTransferPreview({ preview }: Props) {
 
   return (
     <motion.div
-      animate={{ x: preview.clientX + 12, y: preview.clientY + 12 }}
       className="pointer-events-none fixed left-0 top-0 z-[90] max-w-40 truncate rounded-full border border-canvas-line bg-canvas-panel px-3 py-2 text-sm font-medium shadow-lg"
-      initial={false}
       role="status"
-      transition={DIRECT_POINTER_TRANSITION}
+      style={{
+        marginLeft: 12,
+        marginTop: 12,
+        x: preview.clientX,
+        y: preview.clientY
+      }}
     >
       {preview.label}
     </motion.div>

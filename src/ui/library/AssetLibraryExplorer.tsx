@@ -2,34 +2,44 @@ import {
   ChevronDown,
   ChevronRight,
   FileImage,
+  FileText,
   Folder,
+  FolderOpen,
+  FolderOpenDot,
   Link,
   MoreHorizontal,
   Search
 } from "lucide-react";
-import type { DragEvent } from "react";
+import { useEffect, useRef } from "react";
+import type { DragEvent, PointerEvent, ReactNode } from "react";
 
+import type { EncounterRecord } from "@core/persistence";
 import type { LibraryNode, LibrarySection } from "@library/types";
-import { LIBRARY_NODE_DRAG_TYPE } from "./libraryDrag";
+import { hasLeftDragSurface } from "./libraryDrag";
 import { getAlphabetizedChildren } from "./libraryUi";
 
 type AssetLibraryExplorerProps = {
   activeSection: LibrarySection;
+  currentFolderId: string;
   dropFolderId: string | null;
+  encounterRecords?: EncounterRecord[];
   expandedFolderIds: Set<string>;
   searchQuery: string;
   selectedNodeId: string | undefined;
-  onDragEnd: () => void;
   onDragOverFolder: (
     event: DragEvent<HTMLElement>,
     node: LibraryNode
   ) => void;
-  onDragStart: (event: DragEvent<HTMLElement>, node: LibraryNode) => void;
+  onPointerDownNode: (
+    event: PointerEvent<HTMLElement>,
+    node: LibraryNode
+  ) => void;
   onDropOnFolder: (
     event: DragEvent<HTMLElement>,
     node: LibraryNode
   ) => void;
   onDoubleClickNode: (node: LibraryNode) => void;
+  onFolderFocused?: () => void;
   onOpenContextMenu: (
     event: {
       clientX: number;
@@ -42,7 +52,10 @@ type AssetLibraryExplorerProps = {
   onSelectNode: (nodeId: string) => void;
   onToggleFolder: (folderId: string) => void;
   onEnterFolder: (folderId: string) => void;
+  onSelectEncounter?: (encounterId: string) => void;
+  onDoubleClickEncounter?: (encounterId: string) => void;
   setDropFolderId: (folderId: string | null) => void;
+  focusedFolderId?: string | null;
 };
 
 function normalizeSearchValue(value: string) {
@@ -51,23 +64,55 @@ function normalizeSearchValue(value: string) {
 
 export function AssetLibraryExplorer({
   activeSection,
+  currentFolderId,
   dropFolderId,
+  encounterRecords = [],
   expandedFolderIds,
   searchQuery,
   selectedNodeId,
-  onDragEnd,
   onDragOverFolder,
-  onDragStart,
+  onPointerDownNode,
   onDropOnFolder,
   onDoubleClickNode,
+  onFolderFocused,
   onEnterFolder,
+  onSelectEncounter,
+  onDoubleClickEncounter,
   onOpenContextMenu,
   onSearchQueryChange,
   onSelectNode,
   onToggleFolder,
-  setDropFolderId
+  setDropFolderId,
+  focusedFolderId = null
 }: AssetLibraryExplorerProps) {
-  function nodeMatchesSearch(node: LibraryNode, query: string): boolean {
+  const folderRowRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  useEffect(() => {
+    if (!focusedFolderId) {
+      return;
+    }
+
+    const row = folderRowRefs.current[focusedFolderId];
+
+    if (!row) {
+      return;
+    }
+
+    row.scrollIntoView?.({ block: "nearest" });
+    onFolderFocused?.();
+  }, [activeSection.id, expandedFolderIds, focusedFolderId, onFolderFocused]);
+
+  function nodeMatchesSearch(
+    node: LibraryNode,
+    query: string,
+    visited = new Set<string>()
+  ): boolean {
+    if (visited.has(node.id)) {
+      return false;
+    }
+
+    visited.add(node.id);
+
     if (!query) {
       return true;
     }
@@ -80,8 +125,11 @@ export function AssetLibraryExplorer({
       return false;
     }
 
-    return getAlphabetizedChildren(activeSection, node.id).some((child) =>
-      nodeMatchesSearch(child, query)
+    return (
+      getSearchVisibleEncounters(node.id).length > 0 ||
+      getAlphabetizedChildren(activeSection, node.id).some((child) =>
+        nodeMatchesSearch(child, query, visited)
+      )
     );
   }
 
@@ -93,30 +141,85 @@ export function AssetLibraryExplorer({
     );
   }
 
-  function renderTreeNode(node: LibraryNode, depth: number) {
+  function getSearchVisibleEncounters(folderId: string) {
+    const query = normalizeSearchValue(searchQuery);
+
+    return encounterRecords
+      .filter(
+        (record) =>
+          (record.folderId === folderId ||
+            (record.folderId === null && folderId === activeSection.rootId)) &&
+          (!query || record.state.name.toLowerCase().includes(query))
+      )
+      .sort((left, right) => left.state.name.localeCompare(right.state.name));
+  }
+
+  function renderEncounter(record: EncounterRecord, depth: number) {
+    const selected = selectedNodeId === record.id;
+
+    return (
+      <div
+        key={record.id}
+        aria-selected={selected}
+        className={`flex min-h-9 items-center gap-2 rounded-lg px-2 text-sm transition ${
+          selected
+            ? "bg-canvas text-canvas-ink"
+            : "text-canvas-ink hover:bg-canvas"
+        }`}
+        onClick={() => onSelectEncounter?.(record.id)}
+        onDoubleClick={() => onDoubleClickEncounter?.(record.id)}
+        style={{ paddingLeft: `${8 + depth * 16}px` }}
+      >
+        <span className="h-6 w-6" />
+        <FileText aria-hidden="true" className="h-4 w-4" />
+        <span className="min-w-0 flex-1 truncate">{record.state.name}</span>
+      </div>
+    );
+  }
+
+  function renderTreeNode(
+    node: LibraryNode,
+    depth: number,
+    ancestors = new Set<string>()
+  ): ReactNode {
+    if (ancestors.has(node.id)) {
+      return null;
+    }
+
+    const nextAncestors = new Set(ancestors).add(node.id);
     const isFolder = node.type === "folder";
     const expanded = expandedFolderIds.has(node.id);
     const isRoot = node.id === activeSection.rootId;
+    const current = node.id === currentFolderId;
     const selected = selectedNodeId === node.id;
 
     return (
       <div key={node.id}>
         <div
           aria-selected={selected}
-          className={`group flex min-h-9 items-center gap-2 rounded-lg px-2 text-sm transition ${
+          className={`group flex min-h-9 touch-none select-none items-center gap-2 rounded-lg px-2 text-sm transition ${
             dropFolderId === node.id
               ? "bg-canvas-ink text-white"
               : selected
                 ? "bg-canvas text-canvas-ink"
                 : "text-canvas-ink hover:bg-canvas"
           }`}
-          draggable={!isRoot}
+          data-library-drag-node-id={isRoot ? undefined : node.id}
+          data-library-drop-folder-id={isFolder ? node.id : undefined}
+          draggable={false}
+          ref={(element) => {
+            folderRowRefs.current[node.id] = element;
+          }}
           onClick={() => {
             if (isFolder) {
+              onToggleFolder(node.id);
               onEnterFolder(node.id);
               return;
             }
 
+            if (node.parentId) {
+              onEnterFolder(node.parentId);
+            }
             onSelectNode(node.id);
           }}
           onContextMenu={(event) => onOpenContextMenu(event, node)}
@@ -125,20 +228,14 @@ export function AssetLibraryExplorer({
               onDoubleClickNode(node);
             }
           }}
-          onDragEnd={onDragEnd}
-          onDragStart={(event) => {
-            if (isRoot) {
-              event.preventDefault();
-              return;
-            }
-
-            event.dataTransfer.effectAllowed = "move";
-            event.dataTransfer.setData(LIBRARY_NODE_DRAG_TYPE, node.id);
-            event.dataTransfer.setData("text/plain", node.id);
-            onDragStart(event, node);
+          onPointerDown={(event) => {
+            if (!isRoot) onPointerDownNode(event, node);
           }}
-          onDragLeave={() => {
-            if (dropFolderId === node.id) {
+          onDragLeave={(event) => {
+            if (
+              dropFolderId === node.id &&
+              hasLeftDragSurface(event)
+            ) {
               setDropFolderId(null);
             }
           }}
@@ -162,6 +259,7 @@ export function AssetLibraryExplorer({
                 event.stopPropagation();
                 onToggleFolder(node.id);
               }}
+              onPointerDown={(event) => event.stopPropagation()}
               type="button"
             >
               {expanded ? (
@@ -174,7 +272,13 @@ export function AssetLibraryExplorer({
             <span className="h-6 w-6" />
           )}
           {isFolder ? (
-            <Folder aria-hidden="true" className="h-4 w-4" />
+            current ? (
+              <FolderOpenDot aria-hidden="true" className="h-4 w-4" />
+            ) : expanded ? (
+              <FolderOpen aria-hidden="true" className="h-4 w-4" />
+            ) : (
+              <Folder aria-hidden="true" className="h-4 w-4" />
+            )
           ) : node.type === "link" ? (
             <Link aria-hidden="true" className="h-4 w-4" />
           ) : (
@@ -198,6 +302,7 @@ export function AssetLibraryExplorer({
                   node
                 );
               }}
+              onPointerDown={(event) => event.stopPropagation()}
               type="button"
             >
               <MoreHorizontal aria-hidden="true" className="h-4 w-4" />
@@ -205,9 +310,14 @@ export function AssetLibraryExplorer({
           ) : null}
         </div>
         {isFolder && (expanded || normalizeSearchValue(searchQuery))
-          ? getSearchVisibleChildren(node.id).map((child) =>
-              renderTreeNode(child, depth + 1)
-            )
+          ? [
+              ...getSearchVisibleChildren(node.id).map((child) =>
+                renderTreeNode(child, depth + 1, nextAncestors)
+              ),
+              ...getSearchVisibleEncounters(node.id).map((record) =>
+                renderEncounter(record, depth + 1)
+              )
+            ]
           : null}
       </div>
     );

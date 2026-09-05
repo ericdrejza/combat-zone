@@ -1,7 +1,9 @@
+import { useMotionValue, type MotionValue } from "motion/react";
 import { useEffect, useState } from "react";
 
 import { ZONELESS_ACTOR_ZONE_ID } from "@core/encounter/types";
 import { clearSelection } from "@interaction/interactionState";
+import { resolveLibraryAsset } from "@library/librarySlice";
 import type { AppDispatch, RootState } from "@store/store";
 import { findZoneIdAtPoint } from "./actors/actorCanvasLayout";
 import {
@@ -26,10 +28,32 @@ type UseCompactCanvasTransferInput = {
 
 export type CompactTransferPreview = {
   actor?: ActorTransferVisual;
-  clientX: number;
-  clientY: number;
+  clientX: MotionValue<number>;
+  clientY: MotionValue<number>;
   label: string;
 } | null;
+
+function getLibraryActorPreview(
+  library: RootState["library"],
+  actorTool: RootState["interaction"]["actorTool"],
+  nodeId: string
+): ActorTransferVisual | undefined {
+  const asset = resolveLibraryAsset(library.sections.tokens, nodeId);
+
+  if (!asset) {
+    return undefined;
+  }
+
+  return {
+    image: asset.source,
+    imageMediaType: asset.mediaType,
+    imageName: asset.name,
+    layoutGroup: actorTool.layoutGroup,
+    name: asset.name,
+    shape: actorTool.shape,
+    size: actorTool.size
+  };
+}
 
 /** Owns a pointer transfer after its source surface has safely unmounted. */
 export function useCompactCanvasTransfer({
@@ -41,6 +65,8 @@ export function useCompactCanvasTransfer({
   library
 }: UseCompactCanvasTransferInput): CompactTransferPreview {
   const [preview, setPreview] = useState<CompactTransferPreview>(null);
+  const pointerX = useMotionValue(0);
+  const pointerY = useMotionValue(0);
 
   useEffect(() => {
     function handleTransferStart(event: Event) {
@@ -70,8 +96,10 @@ export function useCompactCanvasTransfer({
       const actor =
         payload.kind === "new-actor" || payload.kind === "zoneless-actors"
           ? payload.actor
-          : undefined;
-      setPreview({ actor, clientX: detail.clientX, clientY: detail.clientY, label });
+          : getLibraryActorPreview(library, actorTool, payload.nodeId);
+      pointerX.set(detail.clientX);
+      pointerY.set(detail.clientY);
+      setPreview({ actor, clientX: pointerX, clientY: pointerY, label });
 
       const mutationContext = { actorTool, dispatch, encounter, library };
       const cleanup = () => {
@@ -83,7 +111,10 @@ export function useCompactCanvasTransfer({
       };
       const handleMove = (moveEvent: PointerEvent) => {
         if (moveEvent.pointerId === pointerId) {
-          setPreview({ actor, clientX: moveEvent.clientX, clientY: moveEvent.clientY, label });
+          // Pointer-frequency movement stays outside React so the canvas tree
+          // is not reconciled for every mouse, touch, or pen event.
+          pointerX.set(moveEvent.clientX);
+          pointerY.set(moveEvent.clientY);
         }
       };
       const handleUp = (upEvent: PointerEvent) => {
@@ -152,7 +183,16 @@ export function useCompactCanvasTransfer({
     window.addEventListener(COMPACT_CANVAS_TRANSFER_EVENT, handleTransferStart);
     return () =>
       window.removeEventListener(COMPACT_CANVAS_TRANSFER_EVENT, handleTransferStart);
-  }, [activeToolId, actorTool, canvasRef, dispatch, encounter, library]);
+  }, [
+    activeToolId,
+    actorTool,
+    canvasRef,
+    dispatch,
+    encounter,
+    library,
+    pointerX,
+    pointerY
+  ]);
 
   return preview;
 }

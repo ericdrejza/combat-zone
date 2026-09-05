@@ -24,6 +24,17 @@ type UploadImagePayload = SectionPayload & {
   parentId: string;
 };
 
+type ReplaceImagePayload = SectionPayload & {
+  asset: LibraryImageAsset;
+  nodeId: string;
+  name?: string;
+};
+
+type ReplaceWithAssetLinkPayload = SectionPayload & {
+  nodeId: string;
+  targetId: string;
+};
+
 type CreateLinkPayload = SectionPayload & {
   name?: string;
   parentId: string;
@@ -111,9 +122,12 @@ function isDescendant(
   possibleDescendantId: string,
   ancestorId: string
 ): boolean {
+  const visited = new Set<string>();
   let current = section.nodesById[possibleDescendantId];
 
-  while (current?.parentId) {
+  while (current?.parentId && !visited.has(current.id)) {
+    visited.add(current.id);
+
     if (current.parentId === ancestorId) {
       return true;
     }
@@ -121,19 +135,27 @@ function isDescendant(
     current = section.nodesById[current.parentId];
   }
 
-  return false;
+  // Persisted or synchronized malformed ancestry must fail closed instead of
+  // trapping the reducer in a synchronous loop or extending the cycle.
+  return Boolean(current?.parentId);
 }
 
-function deleteNodeTree(section: LibrarySection, nodeId: string) {
+function deleteNodeTree(
+  section: LibrarySection,
+  nodeId: string,
+  visited = new Set<string>()
+) {
   const node = section.nodesById[nodeId];
 
-  if (!node || node.id === section.rootId) {
+  if (!node || node.id === section.rootId || visited.has(node.id)) {
     return;
   }
 
+  visited.add(node.id);
+
   if (node.type === "folder") {
     for (const childId of [...(node.childIds ?? [])]) {
-      deleteNodeTree(section, childId);
+      deleteNodeTree(section, childId, visited);
     }
   }
 
@@ -207,6 +229,50 @@ export const librarySlice = createSlice({
           }
         };
       }
+    },
+    replaceImage(state, { payload }: PayloadAction<ReplaceImagePayload>) {
+      const section = state.sections[payload.sectionId];
+      const node = section.nodesById[payload.nodeId];
+
+      if (!node || node.type === "folder") {
+        return;
+      }
+
+      node.type = "image";
+      node.asset = {
+        ...payload.asset,
+        name: payload.name?.trim() || node.name
+      };
+      node.name = node.asset.name;
+      delete node.targetId;
+    },
+    replaceWithAssetLink(
+      state,
+      { payload }: PayloadAction<ReplaceWithAssetLinkPayload>
+    ) {
+      const section = state.sections[payload.sectionId];
+      const node = section.nodesById[payload.nodeId];
+      const target = section.nodesById[payload.targetId];
+
+      if (
+        !node ||
+        node.type === "folder" ||
+        !target ||
+        target.type !== "image" ||
+        node.id === target.id
+      ) {
+        return;
+      }
+
+      for (const candidate of Object.values(section.nodesById)) {
+        if (candidate.type === "link" && candidate.targetId === node.id) {
+          candidate.targetId = target.id;
+        }
+      }
+
+      node.type = "link";
+      node.targetId = target.id;
+      delete node.asset;
     },
     createLink: {
       reducer(state, { payload }: PayloadAction<CreateLinkPayload & { id: string }>) {
@@ -290,6 +356,8 @@ export const {
   deleteNode,
   loadLibraryState,
   moveNode,
+  replaceImage,
+  replaceWithAssetLink,
   renameNode,
   resetLibraryState,
   uploadImage
