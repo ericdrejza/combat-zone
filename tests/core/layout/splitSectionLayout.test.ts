@@ -36,6 +36,7 @@ describe('isolated split section layouts', () => {
       actor('hero-two', 'hero'),
       actor('hero-three', 'hero'),
       actor('hero-four', 'hero'),
+      actor('ally-one', 'ally'),
       actor('neutral-one', 'neutral'),
       actor('neutral-two', 'neutral'),
       actor('enemy', 'enemy', 45)
@@ -49,6 +50,20 @@ describe('isolated split section layouts', () => {
       layoutOrientation: 'LEFT_RIGHT',
       layoutStrategy: 'SPLIT_FLEX',
       polygon
+    });
+    const heroSection = getSplitLayoutSections(
+      { actors, layoutOrientation: 'LEFT_RIGHT', polygon },
+      settings,
+      splitResult.borderSpacing
+    ).find((section) => section.id === 'hero')!;
+    const heroResult = packPolygonActors({
+      actors: heroSection.actors,
+      polygon: heroSection.polygon,
+      settings: {
+        actorGap: settings.actorGap,
+        minimumBorderSpacing: splitResult.borderSpacing,
+        preferredBorderSpacing: splitResult.borderSpacing
+      }
     });
     const neutralSection = getSplitLayoutSections(
       { actors, layoutOrientation: 'LEFT_RIGHT', polygon },
@@ -66,7 +81,12 @@ describe('isolated split section layouts', () => {
     });
 
     expect(splitResult.fits).toBe(true);
+    expect(heroResult.fits).toBe(true);
     expect(neutralResult.fits).toBe(true);
+    expect(heroSection.actors.map((actor) => actor.id)).toContain('ally-one');
+    expect(splitResult.placements['ally-one']).toEqual(
+      heroResult.placements['ally-one']
+    );
     expect(splitResult.placements['neutral-one']).toEqual(
       neutralResult.placements['neutral-one']
     );

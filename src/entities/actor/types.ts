@@ -7,7 +7,8 @@ export type ActorType =
   | "objective"
   | "pointOfInterest";
 
-export type ActorLayoutGroup = "hero" | "enemy" | "neutral";
+/** Visual faction; allies share Hero's section in split Zone layouts. */
+export type ActorLayoutGroup = "hero" | "ally" | "enemy" | "neutral";
 export type ActorSize = "small" | "medium" | "large" | "xLarge";
 export type ActorShape = "circle" | "rectangle";
 

@@ -10,6 +10,8 @@ import {
   selectEntity,
   setActorClipboardActor,
   setActorToolLayoutGroup,
+  setActorToolShape,
+  setActorToolSize,
   setZoneShapeMode
 } from '@interaction/interactionState';
 import { commitEncounterChange } from '@store/encounterSlice';
@@ -214,12 +216,47 @@ export function useCanvasKeyboard({
 
           if (event.key === '2') {
             event.preventDefault();
-            dispatch(setActorToolLayoutGroup('neutral'));
+            dispatch(setActorToolLayoutGroup('ally'));
           }
 
           if (event.key === '3') {
             event.preventDefault();
+            dispatch(setActorToolLayoutGroup('neutral'));
+          }
+
+          if (event.key === '4') {
+            event.preventDefault();
             dispatch(setActorToolLayoutGroup('enemy'));
+          }
+
+          if (event.key === '5') {
+            event.preventDefault();
+            dispatch(setActorToolSize('small'));
+          }
+
+          if (event.key === '6') {
+            event.preventDefault();
+            dispatch(setActorToolSize('medium'));
+          }
+
+          if (event.key === '7') {
+            event.preventDefault();
+            dispatch(setActorToolSize('large'));
+          }
+
+          if (event.key === '8') {
+            event.preventDefault();
+            dispatch(setActorToolSize('xLarge'));
+          }
+
+          if (event.key === '9') {
+            event.preventDefault();
+            dispatch(setActorToolShape('circle'));
+          }
+
+          if (event.key === '0') {
+            event.preventDefault();
+            dispatch(setActorToolShape('rectangle'));
           }
         }
 

@@ -16,8 +16,9 @@ export const ACTOR_FACTION_OPTIONS: Array<{
   value: ActorLayoutGroup;
 }> = [
   { keybind: "1", label: "Hero faction", title: "Hero", value: "hero" },
-  { keybind: "2", label: "Neutral faction", title: "Neutral", value: "neutral" },
-  { keybind: "3", label: "Enemy faction", title: "Enemy", value: "enemy" }
+  { keybind: "2", label: "Ally faction", title: "Ally", value: "ally" },
+  { keybind: "3", label: "Neutral faction", title: "Neutral", value: "neutral" },
+  { keybind: "4", label: "Enemy faction", title: "Enemy", value: "enemy" }
 ];
 
 export const ACTOR_SIZE_OPTIONS: Array<{
@@ -27,10 +28,10 @@ export const ACTOR_SIZE_OPTIONS: Array<{
   title: string;
   value: ActorSize;
 }> = [
-  { Icon: SmallTokenIcon, keybind: "4", label: "Small actor size", title: "Small", value: "small" },
-  { Icon: MediumTokenIcon, keybind: "5", label: "Medium actor size", title: "Medium", value: "medium" },
-  { Icon: LargeTokenIcon, keybind: "6", label: "Large actor size", title: "Large", value: "large" },
-  { Icon: XLargeTokenIcon, keybind: "7", label: "X-large actor size", title: "Huge", value: "xLarge" }
+  { Icon: SmallTokenIcon, keybind: "5", label: "Small actor size", title: "Small", value: "small" },
+  { Icon: MediumTokenIcon, keybind: "6", label: "Medium actor size", title: "Medium", value: "medium" },
+  { Icon: LargeTokenIcon, keybind: "7", label: "Large actor size", title: "Large", value: "large" },
+  { Icon: XLargeTokenIcon, keybind: "8", label: "X-large actor size", title: "Huge", value: "xLarge" }
 ];
 
 export const ACTOR_SHAPE_OPTIONS: Array<{
@@ -40,8 +41,8 @@ export const ACTOR_SHAPE_OPTIONS: Array<{
   title: string;
   value: ActorShape;
 }> = [
-  { Icon: Circle, keybind: "8", label: "Circle actor shape", title: "Circle", value: "circle" },
-  { Icon: Square, keybind: "9", label: "Rectangle actor shape", title: "Rectangle", value: "rectangle" }
+  { Icon: Circle, keybind: "9", label: "Circle actor shape", title: "Circle", value: "circle" },
+  { Icon: Square, keybind: "0", label: "Rectangle actor shape", title: "Rectangle", value: "rectangle" }
 ];
 
 function SmallTokenIcon(props: TokenSizeIconProps) {

@@ -14,7 +14,8 @@
     automatically.
 
   - Add Actor tool controls below/near the toolbar for:
-      - Faction/layout group: hero, neutral, enemy.
+      - Faction/layout group: hero, ally, neutral, enemy. Allies use the hero
+        section in split layouts.
       - Size: small, medium, large, xLarge.
       - Icon-only buttons with accessible names.
 

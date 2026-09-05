@@ -90,6 +90,10 @@ describe("Toolbar tools and options", () => {
       "title",
       "Hero"
     );
+    expect(screen.getByRole("button", { name: "Ally faction" })).toHaveAttribute(
+      "title",
+      "Ally"
+    );
     expect(
       screen.getByRole("button", { name: "Small actor size" })
     ).toHaveAttribute("title", "Small");
@@ -100,6 +104,30 @@ describe("Toolbar tools and options", () => {
       "title",
       "Paint"
     );
+  });
+
+  it("uses sequential actor option keybinds", async () => {
+    const user = userEvent.setup();
+
+    renderApp();
+    await user.click(screen.getByRole("button", { name: "Actor" }));
+    fireEvent.keyDown(window, { key: "2" });
+
+    expect(store.getState().interaction.actorTool.layoutGroup).toBe("ally");
+    expect(screen.getByRole("button", { name: "Ally faction" })).toHaveAttribute(
+      "aria-pressed",
+      "true"
+    );
+
+    fireEvent.keyDown(window, { key: "4" });
+    fireEvent.keyDown(window, { key: "8" });
+    fireEvent.keyDown(window, { key: "0" });
+
+    expect(store.getState().interaction.actorTool).toMatchObject({
+      layoutGroup: "enemy",
+      shape: "rectangle",
+      size: "xLarge"
+    });
   });
 
   it("toggles actor paint mode from the actor toolbar", async () => {

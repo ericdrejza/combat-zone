@@ -24,7 +24,7 @@ export type SplitLayoutSection = {
 };
 
 export function getSplitGroupRank(actor: NestingActor): number {
-  return actor.layoutGroup === 'hero'
+  return actor.layoutGroup === 'ally' || actor.layoutGroup === 'hero'
     ? 0
     : actor.layoutGroup === 'neutral'
       ? 1

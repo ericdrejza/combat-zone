@@ -29,7 +29,7 @@ describe('actor mutations', () => {
     );
     const updatedEncounter = updateActorProperties(state.present, actor.id, {
       actorType: 'objective',
-      layoutGroup: 'neutral',
+      layoutGroup: 'ally',
       name: 'Relic',
       shape: 'rectangle',
       size: 'xLarge'
@@ -38,7 +38,7 @@ describe('actor mutations', () => {
     state = commitState(state, 'actor.updateProperties', updatedEncounter);
     expect(state.present.actors.byId[actor.id]).toMatchObject({
       actorType: 'objective',
-      layoutGroup: 'neutral',
+      layoutGroup: 'ally',
       name: 'Relic',
       shape: 'rectangle',
       size: 'xLarge'

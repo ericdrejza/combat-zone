@@ -15,6 +15,11 @@ export const ACTOR_LAYOUT_GROUP_COLORS: Record<
     outline: string;
   }
 > = {
+  ally: {
+    fill: '#16a34a',
+    iconClassName: 'text-green-600',
+    outline: '#4ade80'
+  },
   enemy: {
     fill: '#dc2626',
     iconClassName: 'text-red-600',

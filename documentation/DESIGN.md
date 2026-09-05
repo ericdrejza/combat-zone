@@ -144,8 +144,8 @@ space permits.
   - Actor order is stable based on collection `allIds`; an actor entering a
     different zone is appended to that collection order
 - SPLIT_FLEX
-  - Zone is split into isolated mini-zone sections for heroes, neutral actors,
-    and enemies
+  - Zone is split into isolated mini-zone sections for heroes (including
+    allies), neutral actors, and enemies
   - `LEFT_RIGHT` orientation renders heroes left and enemies right
   - `TOP_BOTTOM` orientation renders heroes top and enemies bottom
   - Neutral actors render along the axis splitting heroes and enemies
@@ -191,7 +191,8 @@ Properties:
 - id
 - name
 - actorType
-- layoutGroup (hero / enemy / neutral)
+- layoutGroup (hero / ally / enemy / neutral; allies share the hero section
+  in split layouts)
 - image
 - size
 - stats (optional system-specific blob)
