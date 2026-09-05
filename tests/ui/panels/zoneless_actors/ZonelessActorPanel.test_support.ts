@@ -81,6 +81,7 @@ export function mockBackgroundImageLuminance(pixel: [number, number, number]) {
   class MockImage extends EventTarget {
     naturalHeight = 1;
     naturalWidth = 1;
+    crossOrigin = "";
 
     set src(_value: string) {
       queueMicrotask(() => this.dispatchEvent(new Event("load")));

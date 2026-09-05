@@ -1,6 +1,7 @@
-import { act, fireEvent, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
+import { uploadImage } from "@library/librarySlice";
 import { redoEncounterChange, undoEncounterChange } from "@store/encounterSlice";
 import { store } from "@store/store";
 import {
@@ -28,6 +29,81 @@ describe("Toolbar actor creation", () => {
     expect(
       screen.queryByRole("dialog", { name: "Create actor" })
     ).not.toBeInTheDocument();
+  });
+
+  it("opens the token library from the actor image source controls", async () => {
+    const user = userEvent.setup();
+
+    renderApp();
+    act(() => {
+      store.dispatch(
+        uploadImage({
+          asset: {
+            height: 100,
+            mediaType: "image/png",
+            name: "Goblin",
+            source: {
+              dataUrl: "data:image/png;base64,goblin",
+              kind: "embedded"
+            },
+            width: 100
+          },
+          parentId: "tokens-root",
+          sectionId: "tokens"
+        })
+      );
+    });
+    await user.click(screen.getByRole("button", { name: "Actor" }));
+    await user.click(screen.getByRole("button", { name: "Create actor" }));
+
+    expect(
+      screen.getByRole("button", { name: "Choose actor image from library" })
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Upload actor image" })).not.toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole("button", { name: "Choose actor image from library" })
+    );
+    expect(screen.queryByRole("dialog", { name: "Create actor" })).not.toBeInTheDocument();
+    expect(await screen.findByRole("tab", { name: "Tokens" })).toHaveAttribute(
+      "aria-selected",
+      "true"
+    );
+    await user.click(
+      within(
+        screen.getByRole("group", { name: "Current directory contents" })
+      ).getByRole("button", { name: "Goblin" })
+    );
+    await user.click(screen.getByRole("button", { name: "Create Actor" }));
+
+    expect(screen.getByRole("dialog", { name: "Create actor" })).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "Actor image" })).toHaveAttribute(
+      "src",
+      "data:image/png;base64,goblin"
+    );
+  });
+
+  it("keeps the direct web-link option for a toolbar-created actor", async () => {
+    const user = userEvent.setup();
+
+    renderApp();
+    await user.click(screen.getByRole("button", { name: "Actor" }));
+    await user.click(screen.getByRole("button", { name: "Create actor" }));
+    await user.click(screen.getByRole("button", { name: "Link actor image" }));
+    const linkDialog = screen.getByRole("dialog", { name: "Link actor image" });
+    expect(
+      within(linkDialog).queryByRole("textbox", { name: "Image name" })
+    ).not.toBeInTheDocument();
+    await user.type(
+      screen.getByRole("textbox", { name: "Image URL" }),
+      "https://assets.example/goblin.png"
+    );
+    await user.click(screen.getByRole("button", { name: "Add image" }));
+
+    expect(screen.getByRole("img", { name: "Actor image" })).toHaveAttribute(
+      "src",
+      "https://assets.example/goblin.png"
+    );
   });
 
   it("opens the actor creation modal with a target-aware create action and preview", async () => {

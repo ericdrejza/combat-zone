@@ -197,7 +197,11 @@ export function LibraryPanel({
     }
   }
 
-  function startLibraryDrag(event: DragEvent<HTMLElement>, node: LibraryNode) {
+  function startLibraryDrag(
+    event: DragEvent<HTMLElement>,
+    node: LibraryNode,
+    imageUrl: string | null
+  ) {
     if (activeSectionId !== "tokens" || node.type === "folder") {
       return;
     }
@@ -215,6 +219,7 @@ export function LibraryPanel({
     dragPreviewCleanupRef.current?.();
     dragPreviewCleanupRef.current = setActorDragImage(event.dataTransfer, {
       image: asset.source,
+      imageUrl,
       layoutGroup: actorTool.layoutGroup,
       name: node.name,
       shape: actorTool.shape,
@@ -324,7 +329,9 @@ export function LibraryPanel({
                   : void createActorInTargetZone(node)
               }
               onDragEnd={finishLibraryDrag}
-              onDragStart={(event) => startLibraryDrag(event, node)}
+              onDragStart={(event, imageUrl) =>
+                startLibraryDrag(event, node, imageUrl)
+              }
               onNavigate={() => navigateTo(node.id)}
               onPointerDown={(event) => {
                 if (activeSectionId === "tokens" && node.type !== "folder") {

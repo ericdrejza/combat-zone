@@ -54,10 +54,9 @@ function renderContents(overrides: Partial<React.ComponentProps<typeof AssetLibr
       currentFolder={encountersSection.nodesById[encountersSection.rootId]}
       dropFolderId={null}
       encounterRecords={[createRecord()]}
-      onDragEnd={vi.fn()}
       onDragOverContents={vi.fn()}
       onDragOverFolder={vi.fn()}
-      onDragStart={vi.fn()}
+      onPointerDownNode={vi.fn()}
       onDropOnContents={vi.fn()}
       onDropOnFolder={vi.fn()}
       onDoubleClickNode={vi.fn()}

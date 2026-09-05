@@ -1,7 +1,7 @@
 import {
   Expand,
+  BookOpen,
   Image,
-  ImagePlus,
   Link2,
   Minimize2,
   MoveHorizontal,
@@ -36,6 +36,7 @@ type BackgroundToolButtonProps = {
   compactLayout: boolean;
   compactSubtoolHost: HTMLDivElement | null;
   encounter: EncounterState;
+  onOpenLibrary: () => void;
   tool: ToolDefinition;
 };
 
@@ -44,6 +45,7 @@ export function BackgroundToolButton({
   compactLayout,
   compactSubtoolHost,
   encounter,
+  onOpenLibrary,
   tool
 }: BackgroundToolButtonProps) {
   const dispatch = useDispatch();
@@ -53,9 +55,6 @@ export function BackgroundToolButton({
     activeFitMode,
     addBackgroundFromUrl,
     deleteBackground,
-    fileInputRef,
-    handleBackgroundFileChange,
-    requestBackgroundUpload,
     resizeBackground,
     scaleBackground
   } = useBackgroundTool(encounter);
@@ -72,14 +71,14 @@ export function BackgroundToolButton({
       return (
         <ToolbarOptionGroup>
           <ToolbarOptionButton
-            aria-label="Add"
+            aria-label="Add background from library"
             className="w-11 min-w-0 px-0 lg:w-8"
-            onClick={() => requestBackgroundUpload("add")}
+            onClick={onOpenLibrary}
             role="menuitem"
-            title="Add"
+            title="Add background from library"
             type="button"
           >
-            <ImagePlus aria-hidden="true" className="h-4 w-4" />
+            <BookOpen aria-hidden="true" className="h-4 w-4" />
           </ToolbarOptionButton>
           <ToolbarOptionButton
             aria-label="Add background from web"
@@ -99,11 +98,11 @@ export function BackgroundToolButton({
       <>
         <ToolbarOptionGroup>
           <ToolbarOptionButton
-            aria-label="Replace"
+            aria-label="Replace with library asset"
             className="w-11 min-w-0 px-0 lg:w-8"
-            onClick={() => requestBackgroundUpload("replace")}
+            onClick={onOpenLibrary}
             role="menuitem"
-            title="Replace"
+            title="Replace with library asset"
             type="button"
           >
             <RefreshCw aria-hidden="true" className="h-4 w-4" />
@@ -222,22 +221,12 @@ export function BackgroundToolButton({
       {compactLayout && compactSubtoolHost && optionBar
         ? createPortal(optionBar, compactSubtoolHost)
         : null}
-      <input
-        ref={fileInputRef}
-        accept="image/*"
-        aria-label="Upload background image"
-        className="sr-only"
-        onChange={(event) => {
-          void handleBackgroundFileChange(event);
-        }}
-        type="file"
-      />
       {webImageDialogOpen ? (
         <WebImageUrlDialog
           description="The encounter will keep a reference to this URL; the image file will not be copied into the encounter."
           onClose={() => setWebImageDialogOpen(false)}
-          onSubmit={async (url) => {
-            await addBackgroundFromUrl(url);
+          onSubmit={async (url, name) => {
+            await addBackgroundFromUrl(url, name);
             setWebImageDialogOpen(false);
           }}
           title={

@@ -7,7 +7,7 @@ describe("createWebImageAsset", () => {
     ).toEqual({
       source: { kind: "url", url: "https://images.example/maps/ruins.webp?version=2" },
       mediaType: "image/webp",
-      name: "ruins.webp"
+      name: "ruins"
     });
   });
 

@@ -4,6 +4,7 @@ import { useSelector } from "react-redux";
 import { useCompactLayout } from "@hooks/useCompactLayout";
 import { useMobileControls } from "@hooks/useMobileControls";
 import type { RootState } from "@store/store";
+import type { ActorImageInput } from "@entities/actor/actorMutations";
 import { EncounterTitle } from "@ui/encounter/EncounterTitle";
 import { SettingsButton } from "@ui/settings/SettingsButton";
 import { ActorToolButton } from "./actor/ActorToolButton";
@@ -24,7 +25,10 @@ import {
 import { CloudStatusIndicator } from "@ui/cloud_sync";
 
 type ToolbarProps = {
+  actorCreationImage?: ActorImageInput | null;
   encounterName: string;
+  hasSavedEncounter?: boolean;
+  onActorCreationImageHandled?: () => void;
   onActorToolSelected: () => void;
   onOpenLibrary: () => void;
   onOpenSettings: () => void;
@@ -35,7 +39,10 @@ type ToolbarProps = {
 };
 
 export function Toolbar({
+  actorCreationImage = null,
   encounterName,
+  hasSavedEncounter = false,
+  onActorCreationImageHandled,
   onActorToolSelected,
   onOpenLibrary,
   onOpenSettings,
@@ -85,6 +92,7 @@ export function Toolbar({
           compactLayout={compactLayout}
           compactSubtoolHost={compactZoomOpen ? null : compactSubtoolHost}
           tool={tool}
+          onOpenLibrary={onOpenLibrary}
         />
       );
     }
@@ -109,7 +117,10 @@ export function Toolbar({
           activeToolId={activeToolId}
           compactLayout={compactLayout}
           compactSubtoolHost={compactZoomOpen ? null : compactSubtoolHost}
+          onOpenLibrary={onOpenLibrary}
           onSelected={onActorToolSelected}
+          actorCreationImage={actorCreationImage}
+          onActorCreationImageHandled={onActorCreationImageHandled}
           tool={tool}
         />
       );
@@ -145,6 +156,7 @@ export function Toolbar({
           </h1>
         ) : null}
         <EncounterTitleControls
+          hasSavedEncounter={hasSavedEncounter}
           onSave={onSaveEncounter}
           readOnly={persistenceReadOnly}
           saveStatus={saveStatus}

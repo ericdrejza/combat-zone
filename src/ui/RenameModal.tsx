@@ -6,6 +6,7 @@ type RenameModalProps = {
   inputLabel: string;
   onClose: () => void;
   onRename: (name: string) => void;
+  submitLabel?: string;
   title: string;
 };
 
@@ -16,6 +17,7 @@ export function RenameModal({
   inputLabel,
   onClose,
   onRename,
+  submitLabel = "Rename",
   title
 }: RenameModalProps) {
   const [name, setName] = useState(initialName);
@@ -79,7 +81,7 @@ export function RenameModal({
             className="rounded-xl bg-canvas-ink px-4 py-2 text-sm font-medium text-white transition hover:opacity-90"
             type="submit"
           >
-            Rename
+            {submitLabel}
           </button>
         </div>
       </form>

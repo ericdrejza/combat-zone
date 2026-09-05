@@ -1,7 +1,15 @@
-import { Copy, Download, FileImage, Pencil, Trash2, X } from "lucide-react";
-import type { RefObject } from "react";
+import {
+  Copy,
+  Download,
+  FileImage,
+  Pencil,
+  Trash2,
+  X
+} from "lucide-react";
+import { useState, type RefObject } from "react";
 
 import type { LibraryNode } from "@library/types";
+import { AssetSourceMenu, type AssetSourceType } from "./AssetLibraryAddMenu";
 
 export type ContextMenuState = {
   nodeId: string;
@@ -92,6 +100,8 @@ type AssetContextMenuProps = {
   node: LibraryNode;
   onDelete: (node: LibraryNode) => void;
   onRename: (node: LibraryNode) => void;
+  onSelectAssetType: (node: LibraryNode, type: AssetSourceType) => void;
+  canLinkAssets: boolean;
   readOnly?: boolean;
 };
 
@@ -101,8 +111,14 @@ export function AssetContextMenu({
   node,
   onDelete,
   onRename,
+  onSelectAssetType,
+  canLinkAssets,
   readOnly = false
 }: AssetContextMenuProps) {
+  const [assetTypeMenuOpen, setAssetTypeMenuOpen] = useState(false);
+  const isImageAsset = node.type !== "folder" &&
+    (node.sectionId === "backgrounds" || node.sectionId === "tokens");
+
   return (
     <div
       ref={contextMenuRef}
@@ -119,6 +135,35 @@ export function AssetContextMenu({
       >
         Rename
       </button>
+      {isImageAsset ? (
+        <>
+          <button
+            className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left transition hover:bg-canvas disabled:cursor-not-allowed disabled:text-canvas-muted"
+            disabled={readOnly}
+            onClick={() => setAssetTypeMenuOpen((open) => !open)}
+            role="menuitem"
+            type="button"
+          >
+            Change source
+          </button>
+          {assetTypeMenuOpen ? (
+            <div
+              aria-label="Asset types"
+              className="absolute left-full top-10 z-[61] ml-2 w-56 rounded-2xl border border-canvas-line bg-white p-2 text-sm shadow-lg"
+              role="menu"
+            >
+              <AssetSourceMenu
+                canLinkAssets={canLinkAssets}
+                canUploadAssets
+                onOpenFilePicker={() => onSelectAssetType(node, "image-upload")}
+                onOpenLinkPicker={() => onSelectAssetType(node, "asset-link")}
+                onOpenGoogleDrive={() => onSelectAssetType(node, "google-drive")}
+                onOpenUrlDialog={() => onSelectAssetType(node, "web-link")}
+              />
+            </div>
+          ) : null}
+        </>
+      ) : null}
       <button
         className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:text-canvas-muted"
         disabled={readOnly}
@@ -178,26 +223,30 @@ export function ConfirmFolderDeleteDialog({
 }
 
 type AssetLinkPickerDialogProps = {
+  ariaLabel?: string;
   imageNodes: LibraryNode[];
+  title?: string;
   onClose: () => void;
   onSelectAsset: (node: LibraryNode) => void;
 };
 
 export function AssetLinkPickerDialog({
+  ariaLabel = "Select existing asset",
   imageNodes,
   onClose,
-  onSelectAsset
+  onSelectAsset,
+  title = "Select asset"
 }: AssetLinkPickerDialogProps) {
   return (
     <div
-      aria-label="Select existing asset"
+      aria-label={ariaLabel}
       aria-modal="true"
       className="viewport-overlay z-[55] flex items-center justify-center overflow-y-auto bg-black/30 p-6"
       role="dialog"
     >
       <div className="w-[min(24rem,92vw)] rounded-3xl border border-canvas-line bg-white p-4 shadow-2xl">
         <div className="mb-3 flex items-center justify-between">
-          <h3 className="font-display text-lg font-semibold">Select asset</h3>
+          <h3 className="font-display text-lg font-semibold">{title}</h3>
           <button
             aria-label="Close asset picker"
             className="flex h-8 w-8 items-center justify-center rounded-full border border-canvas-line"

@@ -1,34 +1,67 @@
 import type { ChangeEvent, DragEvent } from "react";
 import { useEffect } from "react";
 import { useDispatch } from "react-redux";
+import { useSelector } from "react-redux";
 
 import {
   createFolder,
   createLink,
   deleteNode,
   moveNode,
+  replaceImage,
+  replaceWithAssetLink,
   renameNode,
   uploadImage
 } from "@library/librarySlice";
-import type { LibraryNode } from "@library/types";
+import type { LibraryNode, LibrarySectionId } from "@library/types";
+import { resolveLibraryAsset } from "@library/librarySlice";
 import { createWebImageAsset } from "@library/webImageAsset";
+import type { RootState } from "@store/store";
 import { createImageFilesInFolder } from "./assetLibraryUpload";
+import { readImageFile } from "@ui/toolbar/background/readImageFile";
 import {
   hasExternalFiles,
   hasInternalLibraryNode,
   LIBRARY_NODE_DRAG_TYPE
 } from "./libraryDrag";
 import { getDroppedImageFiles, getFileRelativePath } from "./libraryFileDrop";
-import { useAssetLibraryModalState } from "./useAssetLibraryModalState";
+import {
+  useAssetLibraryModalState,
+  type LibraryFolderBySection,
+  type LibraryViewModeBySection
+} from "./useAssetLibraryModalState";
+import type { AssetLibraryViewMode } from "./assetLibraryView";
 import { useOptionalCloudSync } from "@ui/cloud_sync";
+import { syncLibraryAssetReferences } from "./libraryReferenceSync";
 
 const toDroppedFiles = (files: File[]) =>
   files.map((file) => ({ file, relativePath: getFileRelativePath(file) }));
 
-export function useAssetLibraryModalController() {
+type AssetLibraryModalControllerOptions = {
+  currentFolderBySection: LibraryFolderBySection;
+  initialSectionId?: LibrarySectionId;
+  onCurrentFolderChange: (sectionId: keyof LibraryFolderBySection, folderId: string) => void;
+  onViewModeChange: (sectionId: keyof LibraryViewModeBySection, viewMode: AssetLibraryViewMode) => void;
+  viewModeBySection: LibraryViewModeBySection;
+};
+
+export function useAssetLibraryModalController({
+  currentFolderBySection,
+  initialSectionId,
+  onCurrentFolderChange,
+  onViewModeChange,
+  viewModeBySection
+}: AssetLibraryModalControllerOptions) {
   const dispatch = useDispatch();
+  const encounter = useSelector((state: RootState) => state.encounter.present);
   const cloud = useOptionalCloudSync();
-  const state = useAssetLibraryModalState();
+  const state = useAssetLibraryModalState({
+    currentFolderBySection,
+    initialSectionId,
+    onCurrentFolderChange,
+    onViewModeChange,
+    viewModeBySection
+  });
   const {
     activeSection,
     activeSectionId,
@@ -90,7 +123,24 @@ export function useAssetLibraryModalController() {
     event: DragEvent<HTMLElement>,
     targetFolderId: string
   ) {
+    // An internal drop is owned by the library even when it resolves to a
+    // no-op. Cancelling the browser default also prevents the text/plain
+    // fallback payload from being handled as a native text/URL drop.
+    event.preventDefault();
+    event.stopPropagation();
     const nodeId = getDraggedLibraryNodeId(event);
+
+    if (nodeId) {
+      moveLibraryNodeToFolderById(nodeId, targetFolderId);
+    } else {
+      clearDragState();
+    }
+  }
+
+  function moveLibraryNodeToFolderById(
+    nodeId: string,
+    targetFolderId: string
+  ) {
     const node = nodeId ? activeSection.nodesById[nodeId] : null;
 
     if (
@@ -103,8 +153,6 @@ export function useAssetLibraryModalController() {
       return;
     }
 
-    event.preventDefault();
-    event.stopPropagation();
     dispatch(moveNode({ nodeId: node.id, sectionId: activeSectionId, targetFolderId }));
     clearDragState();
   }
@@ -195,17 +243,13 @@ export function useAssetLibraryModalController() {
     setContextMenu({ nodeId: node.id, x: event.clientX, y: event.clientY });
   }
 
-  function createFolderInSelection() {
-    const name = window.prompt("Folder name");
-
-    if (name) {
-      dispatch(createFolder({
-        name,
-        parentId: getAddParentId(),
-        sectionId: activeSectionId
-      }));
-      setAddMenuOpen(false);
-    }
+  function createFolderInSelection(name: string) {
+    dispatch(createFolder({
+      name,
+      parentId: getAddParentId(),
+      sectionId: activeSectionId
+    }));
+    setAddMenuOpen(false);
   }
 
   async function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
@@ -278,9 +322,75 @@ export function useAssetLibraryModalController() {
     setLinkPickerOpen(false);
   }
 
-  function createUrlAsset(url: string) {
+  async function replaceNodeWithFile(node: LibraryNode, file: File) {
+    if (!file.type.startsWith("image/")) {
+      return;
+    }
+
+    const asset = await readImageFile(file);
+    dispatch(replaceImage({
+      asset,
+      name: node.name,
+      nodeId: node.id,
+      sectionId: activeSectionId
+    }));
+    syncLibraryAssetReferences({
+      asset: { ...asset, name: node.name },
+      dispatch,
+      encounter,
+      nodeId: node.id,
+      section: activeSection
+    });
+  }
+
+  function replaceNodeWithUrl(node: LibraryNode, url: string, name?: string) {
+    const asset = createWebImageAsset(url);
+    const nextAsset = {
+      ...asset,
+      name: name?.trim() || node.name
+    };
+
+    dispatch(replaceImage({
+      asset,
+      name: nextAsset.name,
+      nodeId: node.id,
+      sectionId: activeSectionId
+    }));
+    syncLibraryAssetReferences({
+      asset: nextAsset,
+      dispatch,
+      encounter,
+      nodeId: node.id,
+      section: activeSection
+    });
+  }
+
+  function replaceNodeWithAssetLink(node: LibraryNode, target: LibraryNode) {
+    const asset = resolveLibraryAsset(activeSection, target.id);
+
+    if (!asset) {
+      return;
+    }
+
+    dispatch(replaceWithAssetLink({
+      nodeId: node.id,
+      sectionId: activeSectionId,
+      targetId: target.id
+    }));
+    syncLibraryAssetReferences({
+      asset,
+      dispatch,
+      encounter,
+      nodeId: node.id,
+      section: activeSection
+    });
+  }
+
+  function createUrlAsset(url: string, name?: string) {
+    const asset = createWebImageAsset(url);
+
     dispatch(uploadImage({
-      asset: createWebImageAsset(url),
+      asset: name?.trim() ? { ...asset, name: name.trim() } : asset,
       parentId: getAddParentId(),
       sectionId: activeSectionId
     }));
@@ -317,6 +427,10 @@ export function useAssetLibraryModalController() {
     handleFileChange,
     handleFolderChange,
     renameLibraryNode,
+    replaceNodeWithAssetLink,
+    replaceNodeWithFile,
+    replaceNodeWithUrl,
+    moveLibraryNodeToFolderById,
     canUseGoogleDrive: Boolean(cloud?.user),
     openContextMenuForNode
   };

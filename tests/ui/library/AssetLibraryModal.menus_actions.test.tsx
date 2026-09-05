@@ -1,6 +1,15 @@
-import { fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { createEncounterState } from "@core/encounter/createEncounterState";
+import { createActor } from "@entities/actor/actorMutations";
+import { uploadImage } from "@library/librarySlice";
+import {
+  loadEncounterState,
+  redoEncounterChange,
+  undoEncounterChange
+} from "@store/encounterSlice";
+import { store } from "@store/store";
 import {
   createFolder,
   openBackgroundLibrary
@@ -16,11 +25,11 @@ describe("AssetLibraryModal", () => {
 
     await createFolder("Maps");
     await user.click(screen.getByRole("button", { name: "Add to Backgrounds" }));
-    expect(screen.getByRole("menuitem", { name: "Upload file" })).toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: "Upload Image" })).toBeInTheDocument();
 
     await user.click(screen.getByText("Asset Library"));
     expect(
-      screen.queryByRole("menuitem", { name: "Upload file" })
+      screen.queryByRole("menuitem", { name: "Upload Image" })
     ).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Open Maps actions" }));
@@ -36,7 +45,7 @@ describe("AssetLibraryModal", () => {
     await createFolder("Maps");
     await user.click(screen.getByRole("button", { name: "Maps" }));
     await user.click(screen.getByRole("button", { name: "Add to Backgrounds" }));
-    await user.click(screen.getByRole("menuitem", { name: "Upload file" }));
+    await user.click(screen.getByRole("menuitem", { name: "Upload Image" }));
     fireEvent.change(screen.getByLabelText("Upload library image"), {
       target: {
         files: [new File(["map"], "nested-map.png", { type: "image/png" })]
@@ -101,7 +110,7 @@ describe("AssetLibraryModal", () => {
     );
 
     await user.click(screen.getByRole("button", { name: "Add to Backgrounds" }));
-    await user.click(screen.getByRole("menuitem", { name: "Upload file" }));
+    await user.click(screen.getByRole("menuitem", { name: "Upload Image" }));
     fireEvent.change(screen.getByLabelText("Upload library image"), {
       target: {
         files: [new File(["map"], "card-map.png", { type: "image/png" })]
@@ -134,5 +143,107 @@ describe("AssetLibraryModal", () => {
     expect(
       within(contents).getByLabelText("Current asset library folder")
     ).toHaveTextContent("Backgrounds");
+  });
+
+  it("opens asset type choices beside an image asset", async () => {
+    const user = await openBackgroundLibrary();
+    await user.click(screen.getByRole("button", { name: "Add to Backgrounds" }));
+    await user.click(screen.getByRole("menuitem", { name: "Upload Image" }));
+    fireEvent.change(screen.getByLabelText("Upload library image"), {
+      target: {
+        files: [new File(["map"], "card-map.png", { type: "image/png" })]
+      }
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "card-map" })).toBeInTheDocument();
+    });
+
+    fireEvent.contextMenu(screen.getByRole("button", { name: "card-map" }));
+    await user.click(screen.getByRole("menuitem", { name: "Change source" }));
+
+    const assetTypes = screen.getByRole("menu", { name: "Asset types" });
+    expect(within(assetTypes).getByRole("menuitem", { name: "Upload Image" })).toBeInTheDocument();
+    expect(within(assetTypes).getByRole("menuitem", { name: "Web link" })).toBeInTheDocument();
+    expect(within(assetTypes).getByRole("menuitem", { name: "Link from Google Drive" })).toBeDisabled();
+    expect(within(assetTypes).getByRole("menuitem", { name: "Link asset" })).toBeDisabled();
+
+    await user.click(within(assetTypes).getByRole("menuitem", { name: "Web link" }));
+    const webLinkDialog = screen.getByRole("dialog", { name: "Link image URL" });
+    expect(within(webLinkDialog).queryByLabelText("Image name")).not.toBeInTheDocument();
+  });
+
+  it("updates and history-tracks actors that reference a changed token source", async () => {
+    const user = await openBackgroundLibrary();
+    const originalSource = {
+      kind: "url" as const,
+      url: "https://example.com/original.png"
+    };
+    const addToken = uploadImage({
+      asset: {
+        mediaType: "image/png",
+        name: "Goblin",
+        source: originalSource
+      },
+      parentId: "tokens-root",
+      sectionId: "tokens"
+    });
+
+    act(() => {
+      store.dispatch(addToken);
+      store.dispatch(loadEncounterState(createActor(
+        createEncounterState({ id: "encounter", name: "Encounter" }),
+        {
+          currentZoneId: "zoneless",
+          id: "goblin-actor",
+          image: {
+            libraryNodeId: addToken.payload.id,
+            mediaType: "image/png",
+            name: "Goblin",
+            source: originalSource
+          }
+        }
+      )));
+    });
+
+    await user.click(screen.getByRole("tab", { name: "Tokens" }));
+    fireEvent.contextMenu(screen.getByRole("button", { name: "Goblin" }));
+    await user.click(screen.getByRole("menuitem", { name: "Change source" }));
+    await user.click(
+      within(screen.getByRole("menu", { name: "Asset types" }))
+        .getByRole("menuitem", { name: "Web link" })
+    );
+    await user.type(
+      screen.getByRole("textbox", { name: "Image URL" }),
+      "https://example.com/replacement.webp"
+    );
+    await user.click(
+      within(screen.getByRole("dialog", { name: "Link image URL" }))
+        .getByRole("button", { name: "Add image" })
+    );
+
+    await waitFor(() => {
+      expect(store.getState().encounter.present.actors.byId["goblin-actor"]?.image)
+        .toEqual({
+          kind: "url",
+          url: "https://example.com/replacement.webp"
+        });
+    });
+    expect(store.getState().encounter.past).toHaveLength(1);
+
+    act(() => {
+      store.dispatch(undoEncounterChange());
+    });
+    expect(store.getState().encounter.present.actors.byId["goblin-actor"]?.image)
+      .toEqual(originalSource);
+
+    act(() => {
+      store.dispatch(redoEncounterChange());
+    });
+    expect(store.getState().encounter.present.actors.byId["goblin-actor"]?.image)
+      .toEqual({
+        kind: "url",
+        url: "https://example.com/replacement.webp"
+      });
   });
 });

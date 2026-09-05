@@ -1,7 +1,9 @@
-import { fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { act, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach } from "vitest";
 
+import { createEncounterActionRecord } from "@core/history/createEncounterActionRecord";
+import { commitEncounterChange } from "@store/encounterSlice";
 import { store } from "@store/store";
 import {
   redoEncounterChange,
@@ -65,14 +67,16 @@ describe("Toolbar zone and background", () => {
     ).toBeInTheDocument();
   });
 
-  it("adds and deletes a canvas background image from the Background toolbar menu", async () => {
+  it("opens the Library for adding and replacing a canvas background image", async () => {
     const user = userEvent.setup();
 
     renderApp();
 
     await user.click(screen.getByRole("button", { name: "Background" }));
 
-    expect(screen.getByRole("menuitem", { name: "Add" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("menuitem", { name: "Add background from library" })
+    ).toBeInTheDocument();
     expect(
       screen.queryByRole("menuitem", { name: "Replace" })
     ).not.toBeInTheDocument();
@@ -80,42 +84,43 @@ describe("Toolbar zone and background", () => {
       screen.queryByRole("menuitem", { name: "Delete" })
     ).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole("menuitem", { name: "Add" }));
-
-    fireEvent.change(screen.getByLabelText("Upload background image"), {
-      target: {
-        files: [
-          new File(["background"], "battle-map.png", {
-            type: "image/png"
-          })
-        ]
-      }
-    });
-
-    await waitFor(() => {
-      expect(
-        screen.getByLabelText("Canvas background image")
-      ).toBeInTheDocument();
-    });
-    expect(screen.getByRole("button", { name: "Zone" })).toHaveAttribute(
-      "aria-pressed",
-      "true"
+    await user.click(
+      screen.getByRole("menuitem", { name: "Add background from library" })
     );
+    expect(screen.getByRole("dialog", { name: "Asset Library" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Close Asset Library" }));
 
-    await user.click(screen.getByRole("button", { name: "Background" }));
-
-    expect(screen.getByRole("menuitem", { name: "Replace" })).toBeInTheDocument();
-    expect(screen.getByRole("menuitem", { name: "Delete" })).toBeInTheDocument();
-    expect(screen.queryByRole("menuitem", { name: "Add" })).not.toBeInTheDocument();
-
-    await user.click(screen.getByRole("menuitem", { name: "Delete" }));
-
-    await waitFor(() => {
-      expect(
-        screen.queryByLabelText("Canvas background image")
-      ).not.toBeInTheDocument();
+    act(() => {
+      const encounter = store.getState().encounter.present;
+      store.dispatch(commitEncounterChange({
+        action: createEncounterActionRecord("test.seed"),
+        nextEncounter: {
+          ...encounter,
+          backgroundImage: {
+            source: { kind: "embedded", dataUrl: "data:image/png;base64,map" },
+            height: 100,
+            mediaType: "image/png",
+            name: "Map",
+            width: 100
+          }
+        }
+      }));
     });
-    expect(screen.getByRole("menuitem", { name: "Add" })).toBeInTheDocument();
+
+    expect(
+      screen.getByRole("menuitem", { name: "Replace with library asset" })
+    ).toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: "Delete" })).toBeInTheDocument();
+    expect(
+      screen.queryByRole("menuitem", { name: "Add background from library" })
+    ).not.toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole("menuitem", { name: "Replace with library asset" })
+    );
+    expect(
+      screen.getByRole("dialog", { name: "Asset Library" })
+    ).toBeInTheDocument();
   });
 
   it("adds a URL-backed background from the link-2 action", async () => {

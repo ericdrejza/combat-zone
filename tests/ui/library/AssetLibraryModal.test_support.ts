@@ -1,6 +1,5 @@
-import { screen } from "@testing-library/react";
+import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { vi } from "vitest";
 
 import { renderApp } from "@tests/ui/renderApp";
 
@@ -16,10 +15,13 @@ export async function openBackgroundLibrary() {
 }
 
 export async function createFolder(name: string) {
-  vi.spyOn(window, "prompt").mockReturnValueOnce(name);
+  const user = userEvent.setup();
 
-  await userEvent.click(screen.getByRole("button", { name: "Add to Backgrounds" }));
-  await userEvent.click(screen.getByRole("menuitem", { name: "Create folder" }));
+  await user.click(screen.getByRole("button", { name: "Add to Backgrounds" }));
+  await user.click(screen.getByRole("menuitem", { name: "Create folder" }));
+  const dialog = screen.getByRole("dialog", { name: "Create folder" });
+  await user.type(within(dialog).getByRole("textbox", { name: "Folder name" }), name);
+  await user.click(within(dialog).getByRole("button", { name: "Create folder" }));
 }
 
 export function createDragDataTransfer() {

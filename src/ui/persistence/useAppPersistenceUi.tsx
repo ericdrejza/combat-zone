@@ -5,6 +5,9 @@ import {
   type EncounterExportEnvelope
 } from "@core/persistence";
 import type { LibraryNode } from "@library/types";
+import type { LibrarySectionId } from "@library/types";
+import type { LibraryFolderBySection } from "@ui/library/useAssetLibraryModalState";
+import type { LibraryViewModeBySection } from "@ui/library/useAssetLibraryModalState";
 import {
   AssetLibraryModal,
   type AssetLibraryMode
@@ -19,28 +22,46 @@ import { UnsavedDraftDialog } from "./UnsavedDraftDialog";
 import { usePersistence } from "./PersistenceProvider";
 
 type AppPersistenceUiOptions = {
+  onActorTokenSelect: (actorId: string, node: LibraryNode) => void;
   onBackgroundDoubleClick: (node: LibraryNode) => void;
   onTokenDoubleClick: (node: LibraryNode) => void;
 };
 
 type AppPersistenceUi = {
   dialogs: React.ReactNode;
-  openLibrary: () => void;
+  hasSavedEncounter: boolean;
+  openLibrary: (target?: LibraryOpenTarget) => void;
+  openTokenLibraryForActor: (actorId: string) => void;
   openSettings: () => void;
   readOnly: boolean;
   requestSave: () => Promise<void>;
   saveStatus: SaveStatus;
 };
 
+type LibraryLocation = {
+  folderId: string;
+  sectionId: LibrarySectionId;
+};
+
+type LibraryOpenTarget = LibraryLocation | LibrarySectionId;
+
 /** Owns persistence-specific dialogs and transition guards outside App's shell. */
 export function useAppPersistenceUi({
+  onActorTokenSelect,
   onBackgroundDoubleClick,
   onTokenDoubleClick
 }: AppPersistenceUiOptions): AppPersistenceUi {
   const persistence = usePersistence();
   const cloud = useOptionalCloudSync();
   const [libraryOpen, setLibraryOpen] = useState(false);
+  const [librarySectionId, setLibrarySectionId] =
+    useState<LibrarySectionId>("encounters");
+  const [currentFolderBySection, setCurrentFolderBySection] =
+    useState<LibraryFolderBySection>({});
+  const [viewModeBySection, setViewModeBySection] =
+    useState<LibraryViewModeBySection>({});
   const [libraryMode, setLibraryMode] = useState<AssetLibraryMode>("browse");
+  const [tokenActorId, setTokenActorId] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [draftDialogOpen, setDraftDialogOpen] = useState(false);
   const [deletedDialogOpen, setDeletedDialogOpen] = useState(false);
@@ -128,6 +149,9 @@ export function useAppPersistenceUi({
     <>
       {libraryOpen ? (
         <AssetLibraryModal
+          currentFolderBySection={currentFolderBySection}
+          initialSectionId={librarySectionId}
+          viewModeBySection={viewModeBySection}
           mode={libraryMode}
           onActiveEncounterDeleted={() => {
             setLibraryOpen(false);
@@ -137,7 +161,22 @@ export function useAppPersistenceUi({
             onBackgroundDoubleClick(node);
             setLibraryOpen(false);
           }}
-          onClose={() => setLibraryOpen(false)}
+          onClose={() => {
+            setLibraryOpen(false);
+            setTokenActorId(null);
+          }}
+          onCurrentFolderChange={(sectionId, folderId) => {
+            setCurrentFolderBySection((current) => ({
+              ...current,
+              [sectionId]: folderId
+            }));
+          }}
+          onViewModeChange={(sectionId, viewMode) => {
+            setViewModeBySection((current) => ({
+              ...current,
+              [sectionId]: viewMode
+            }));
+          }}
           onCreateEncounter={() => {
             if (libraryMode === "encounter-only") {
               void persistence.createNewEncounter().then(() => setLibraryOpen(false));
@@ -166,9 +205,15 @@ export function useAppPersistenceUi({
           }}
           onSaveDestinationComplete={runPendingDraftAction}
           onTokenDoubleClick={(node) => {
-            onTokenDoubleClick(node);
+            if (tokenActorId) {
+              onActorTokenSelect(tokenActorId, node);
+              setTokenActorId(null);
+            } else {
+              onTokenDoubleClick(node);
+            }
             setLibraryOpen(false);
           }}
+          tokenSubmitLabel={tokenActorId ? "Set Actor Image" : "Create Actor"}
         />
       ) : null}
       {settingsOpen ? (
@@ -227,7 +272,27 @@ export function useAppPersistenceUi({
 
   return {
     dialogs,
-    openLibrary: () => {
+    hasSavedEncounter: Boolean(persistence.activeRecord),
+    openLibrary: (target) => {
+      setTokenActorId(null);
+      const location =
+        typeof target === "object" && target !== null ? target : undefined;
+      const sectionId =
+        typeof target === "string" ? target : location?.sectionId ?? "encounters";
+
+      setLibrarySectionId(sectionId);
+      if (location) {
+        setCurrentFolderBySection((current) => ({
+          ...current,
+          [location.sectionId]: location.folderId
+        }));
+      }
+      setLibraryMode("browse");
+      setLibraryOpen(true);
+    },
+    openTokenLibraryForActor: (actorId) => {
+      setTokenActorId(actorId);
+      setLibrarySectionId("tokens");
       setLibraryMode("browse");
       setLibraryOpen(true);
     },

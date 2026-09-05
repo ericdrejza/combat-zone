@@ -4,6 +4,8 @@ import reducer, {
   deleteNode,
   getLibraryNodePath,
   moveNode,
+  replaceImage,
+  replaceWithAssetLink,
   renameNode,
   resolveLibraryAsset,
   uploadImage
@@ -98,6 +100,45 @@ describe("librarySlice", () => {
     expect(nextState).toEqual(state);
   });
 
+  it("fails closed instead of looping when persisted folder ancestry is cyclic", () => {
+    let state = reducer(undefined, createFolder({
+      name: "Maps",
+      parentId: "backgrounds-root",
+      sectionId: "backgrounds"
+    }));
+    const mapsId = getOnlyChildId(state, "backgrounds-root");
+
+    state = reducer(state, createFolder({
+      name: "Archive",
+      parentId: "backgrounds-root",
+      sectionId: "backgrounds"
+    }));
+    const archiveId = state.sections.backgrounds.nodesById[
+      "backgrounds-root"
+    ].childIds?.find((id) => id !== mapsId) as string;
+    state = reducer(state, uploadImage({
+      asset: imageAsset,
+      parentId: "backgrounds-root",
+      sectionId: "backgrounds"
+    }));
+    const imageId = state.sections.backgrounds.nodesById[
+      "backgrounds-root"
+    ].childIds?.find((id) => id !== mapsId && id !== archiveId) as string;
+    const malformedState = structuredClone(state);
+    malformedState.sections.backgrounds.nodesById[mapsId].parentId = archiveId;
+    malformedState.sections.backgrounds.nodesById[archiveId].parentId = mapsId;
+
+    const nextState = reducer(malformedState, moveNode({
+      nodeId: imageId,
+      sectionId: "backgrounds",
+      targetFolderId: mapsId
+    }));
+
+    expect(
+      nextState.sections.backgrounds.nodesById[imageId].parentId
+    ).toBe("backgrounds-root");
+  });
+
   it("uploads images and creates same-section links to them", () => {
     let state = reducer(undefined, uploadImage({
       asset: imageAsset,
@@ -129,6 +170,98 @@ describe("librarySlice", () => {
     });
     expect(resolveLibraryAsset(state.sections.backgrounds, linkId)).toEqual(
       imageAsset
+    );
+  });
+
+  it("replaces an image without changing its node id or its links", () => {
+    let state = reducer(undefined, uploadImage({
+      asset: imageAsset,
+      parentId: "backgrounds-root",
+      sectionId: "backgrounds"
+    }));
+    const imageId = getOnlyChildId(state, "backgrounds-root");
+    state = reducer(state, createFolder({
+      name: "Favorites",
+      parentId: "backgrounds-root",
+      sectionId: "backgrounds"
+    }));
+    const folderId = state.sections.backgrounds.nodesById["backgrounds-root"]
+      .childIds?.find((id) => id !== imageId) as string;
+    state = reducer(state, createLink({
+      parentId: folderId,
+      sectionId: "backgrounds",
+      targetId: imageId
+    }));
+    const linkId = getOnlyChildId(state, folderId);
+    const replacement = {
+      ...imageAsset,
+      name: "replacement.png",
+      source: { kind: "embedded" as const, dataUrl: "data:image/png;base64,new" }
+    };
+
+    state = reducer(state, replaceImage({
+      asset: replacement,
+      name: "map.png",
+      nodeId: imageId,
+      sectionId: "backgrounds"
+    }));
+
+    expect(state.sections.backgrounds.nodesById[imageId]).toMatchObject({
+      id: imageId,
+      name: "map.png",
+      type: "image"
+    });
+    expect(resolveLibraryAsset(state.sections.backgrounds, linkId)).toEqual({
+      ...replacement,
+      name: "map.png"
+    });
+  });
+
+  it("changes an asset to an asset link without changing its node id", () => {
+    let state = reducer(undefined, uploadImage({
+      asset: imageAsset,
+      parentId: "tokens-root",
+      sectionId: "tokens"
+    }));
+    const sourceId = state.sections.tokens.nodesById["tokens-root"].childIds?.[0] as string;
+    state = reducer(state, createLink({
+      parentId: "tokens-root",
+      sectionId: "tokens",
+      targetId: sourceId
+    }));
+    const sourceAliasId = state.sections.tokens.nodesById["tokens-root"]
+      .childIds?.[1] as string;
+    state = reducer(state, uploadImage({
+      asset: {
+        ...imageAsset,
+        name: "other.png",
+        source: { kind: "embedded", dataUrl: "data:image/png;base64,other" }
+      },
+      parentId: "tokens-root",
+      sectionId: "tokens"
+    }));
+    const targetId = state.sections.tokens.nodesById["tokens-root"].childIds?.[2] as string;
+
+    state = reducer(state, replaceWithAssetLink({
+      nodeId: sourceId,
+      sectionId: "tokens",
+      targetId
+    }));
+
+    expect(state.sections.tokens.nodesById[sourceId]).toMatchObject({
+      id: sourceId,
+      type: "link",
+      targetId
+    });
+    expect(resolveLibraryAsset(state.sections.tokens, sourceId)).toEqual(
+      state.sections.tokens.nodesById[targetId].asset
+    );
+    expect(state.sections.tokens.nodesById[sourceAliasId]).toMatchObject({
+      targetId,
+      type: "link"
+    });
+    expect(resolveLibraryAsset(state.sections.tokens, sourceAliasId)).toEqual(
+      state.sections.tokens.nodesById[targetId].asset
     );
   });
 

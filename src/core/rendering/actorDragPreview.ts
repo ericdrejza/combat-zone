@@ -12,6 +12,7 @@ import { directImageSourceUrl } from '@core/assets/imageAssetSource';
 
 type ActorDragPreviewInput = {
   image?: ImageAssetSource;
+  imageUrl?: string | null;
   layoutGroup: ActorLayoutGroup;
   name: string;
   shape: ActorShape;
@@ -22,6 +23,7 @@ const PREVIEW_TOKEN_SIZE = 56;
 
 function createPreviewElement({
   image,
+  imageUrl: resolvedImageUrl,
   layoutGroup,
   name,
   shape,
@@ -61,12 +63,13 @@ function createPreviewElement({
   token.style.overflow = 'hidden';
   token.style.width = `${tokenSize}px`;
 
-  const imageUrl = image ? directImageSourceUrl(image) : null;
+  const imageUrl = resolvedImageUrl ?? (image ? directImageSourceUrl(image) : null);
 
   if (imageUrl) {
     const imageElement = document.createElement('img');
 
     imageElement.alt = '';
+    imageElement.draggable = false;
     imageElement.src = imageUrl;
     imageElement.style.height = '100%';
     imageElement.style.objectFit = 'cover';

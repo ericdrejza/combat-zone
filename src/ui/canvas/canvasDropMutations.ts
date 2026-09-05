@@ -105,6 +105,13 @@ export function commitActorFromCreation(
     {
       currentZoneId: destinationZoneId,
       id: actorId,
+      image: data.image
+        ? {
+            mediaType: data.imageMediaType ?? 'image/*',
+            name: data.imageName ?? data.name,
+            source: data.image
+          }
+        : undefined,
       layoutGroup: data.layoutGroup,
       name: data.name,
       shape: data.shape,

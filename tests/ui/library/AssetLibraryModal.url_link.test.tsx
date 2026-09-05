@@ -12,7 +12,7 @@ describe("AssetLibraryModal URL links", () => {
     const labels = within(menu).getAllByRole("menuitem").map((item) => item.textContent);
 
     expect(labels).toEqual([
-      "Upload file",
+      "Upload Image",
       "Web link",
       "Link from Google Drive",
       "Link asset",
@@ -22,16 +22,20 @@ describe("AssetLibraryModal URL links", () => {
     expect(within(menu).getByRole("separator")).toBeInTheDocument();
 
     await user.click(within(menu).getByRole("menuitem", { name: "Web link" }));
+    expect(screen.getByRole("textbox", { name: "Image name" })).toHaveAttribute(
+      "placeholder",
+      "Name (optional)"
+    );
     await user.type(
       screen.getByRole("textbox", { name: "Image URL" }),
       "https://assets.example/remote-map.png"
     );
     await user.click(screen.getByRole("button", { name: "Add image" }));
 
-    const card = screen.getByRole("button", { name: "remote-map.png" });
+    const card = screen.getByRole("button", { name: "remote-map" });
     expect(card).toBeInTheDocument();
     expect(
-      within(card).getByRole("status", { name: "remote-map.png image loading" })
+      within(card).getByRole("status", { name: "remote-map image loading" })
     ).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Add to Backgrounds" }));
@@ -39,6 +43,10 @@ describe("AssetLibraryModal URL links", () => {
     await user.type(
       screen.getByRole("textbox", { name: "Image URL" }),
       "https://assets.example/second-map.png"
+    );
+    await user.type(
+      screen.getByRole("textbox", { name: "Image name" }),
+      "Named second map"
     );
     await user.click(screen.getByRole("button", { name: "Add image" }));
 
@@ -49,6 +57,9 @@ describe("AssetLibraryModal URL links", () => {
     expect(loadingIndicators[0].style.transform).toBe(
       loadingIndicators[1].style.transform
     );
+    expect(
+      screen.getByRole("button", { name: "Named second map" })
+    ).toBeInTheDocument();
 
     const image = card.querySelector("img");
     expect(image).not.toBeNull();
@@ -61,10 +72,15 @@ describe("AssetLibraryModal URL links", () => {
 
     const linkedNode = Object.values(
       store.getState().library.sections.backgrounds.nodesById
-    ).find((node) => node.name === "remote-map.png");
+    ).find((node) => node.name === "remote-map");
     expect(linkedNode?.asset?.source).toEqual({
       kind: "url",
       url: "https://assets.example/remote-map.png"
     });
+    expect(
+      Object.values(store.getState().library.sections.backgrounds.nodesById).some(
+        (node) => node.name === "Named second map"
+      )
+    ).toBe(true);
   });
 });
