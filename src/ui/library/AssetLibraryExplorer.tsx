@@ -166,7 +166,10 @@ export function AssetLibraryExplorer({
             ? "bg-canvas text-canvas-ink"
             : "text-canvas-ink hover:bg-canvas"
         }`}
-        onClick={() => onSelectEncounter?.(record.id)}
+        onClick={() => {
+          onEnterFolder(record.folderId ?? activeSection.rootId);
+          onSelectEncounter?.(record.id);
+        }}
         onDoubleClick={() => onDoubleClickEncounter?.(record.id)}
         style={{ paddingLeft: `${8 + depth * 16}px` }}
       >

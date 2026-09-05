@@ -235,6 +235,26 @@ describe("AssetLibraryModal active encounter locator", () => {
     expect(scrollIntoView).toHaveBeenCalledWith({ block: "nearest" });
   });
 
+  it("navigates to an encounter's folder when selecting it from the explorer", async () => {
+    const user = userEvent.setup();
+
+    renderWithPersistence();
+    await user.click(screen.getByRole("button", { name: "Expand A" }));
+    await user.click(screen.getByRole("button", { name: "Expand B" }));
+
+    await user.click(screen.getAllByText("Active Encounter")[0]);
+
+    const contents = screen.getByRole("region", {
+      name: "Asset library contents"
+    });
+    expect(
+      within(contents).getByLabelText("Current asset library folder")
+    ).toHaveTextContent("B");
+    expect(
+      within(contents).getByRole("button", { name: "Active Encounter" })
+    ).toBeInTheDocument();
+  });
+
   it("locates the active background from the Backgrounds tab", async () => {
     const user = userEvent.setup();
     const backgroundedEncounter = {
