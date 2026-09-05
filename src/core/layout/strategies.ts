@@ -31,7 +31,9 @@ function groupEntities<TEntityId extends string>(
   entities: LayoutEntity<TEntityId>[]
 ): Record<'hero' | 'enemy' | 'neutral', LayoutEntity<TEntityId>[]> {
   return {
-    hero: entities.filter((entity) => entity.layoutGroup === 'hero'),
+    hero: entities.filter(
+      (entity) => entity.layoutGroup === 'ally' || entity.layoutGroup === 'hero'
+    ),
     enemy: entities.filter((entity) => entity.layoutGroup === 'enemy'),
     neutral: entities.filter(
       (entity) => !entity.layoutGroup || entity.layoutGroup === 'neutral'

@@ -41,6 +41,7 @@ export type ActorGroup = {
 
 const GROUPS: Array<{ id: ActorLayoutGroup; label: string }> = [
   { id: "hero", label: "Hero" },
+  { id: "ally", label: "Ally" },
   { id: "neutral", label: "Neutral" },
   { id: "enemy", label: "Enemy" }
 ];

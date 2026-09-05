@@ -13,7 +13,7 @@ export type LayoutPoint = {
 
 export type LayoutEntity<TEntityId extends string = string> = {
   id: TEntityId;
-  layoutGroup?: 'hero' | 'enemy' | 'neutral';
+  layoutGroup?: 'hero' | 'ally' | 'enemy' | 'neutral';
 };
 
 export type LayoutSectionId = string;

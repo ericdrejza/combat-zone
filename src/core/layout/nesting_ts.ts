@@ -7,7 +7,7 @@ export type NestingActor = {
   id: string;
   radius: number;
   shape: 'circle' | 'rectangle';
-  layoutGroup?: 'hero' | 'enemy' | 'neutral';
+  layoutGroup?: 'hero' | 'ally' | 'enemy' | 'neutral';
   /** Optional stable split section supplied by a higher-level layout owner. */
   splitSectionId?: string;
 };
