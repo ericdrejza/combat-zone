@@ -3,8 +3,11 @@ import userEvent from "@testing-library/user-event";
 
 import { store } from "@store/store";
 import { renderApp } from "@tests/ui/renderApp";
+import { DEFAULT_KEYBINDS, KEYBIND_STORAGE_KEY } from "@ui/keybinds";
 
 describe("Toolbar tools and options", () => {
+  afterEach(() => localStorage.removeItem(KEYBIND_STORAGE_KEY));
+
   it("activates toolbar tools from button clicks and keyboard shortcuts", async () => {
     const user = userEvent.setup();
 
@@ -23,6 +26,19 @@ describe("Toolbar tools and options", () => {
       "aria-pressed",
       "true"
     );
+  });
+
+  it("uses a customized letter shortcut instead of its default", () => {
+    localStorage.setItem(
+      KEYBIND_STORAGE_KEY,
+      JSON.stringify({ ...DEFAULT_KEYBINDS, "tool.actor": "g" })
+    );
+    renderApp();
+
+    fireEvent.keyDown(window, { key: "a" });
+    expect(store.getState().interaction.activeToolId).not.toBe("actor");
+    fireEvent.keyDown(window, { key: "g" });
+    expect(store.getState().interaction.activeToolId).toBe("actor");
   });
 
   it("renders distinct token size icons for actor sizes", async () => {

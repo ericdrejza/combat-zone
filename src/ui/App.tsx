@@ -5,7 +5,6 @@ import { useSelector } from "react-redux";
 
 import { setActiveTool } from "@interaction/interactionState";
 import { MVP_TOOLS } from "@interaction/tools/toolRegistry";
-import type { ToolId } from "@interaction/tools/toolRegistry";
 import { CanvasShell } from "./canvas/CanvasShell";
 import { CanvasViewportProvider } from "./canvas/CanvasViewportContext";
 import type { DockPanelDefinition, DockSide, DropTarget } from "./panels/PanelsShell";
@@ -49,6 +48,12 @@ import { useOptionalCloudSync } from "./cloud_sync";
 import {
   applyActorTokenFromLibrary as commitActorTokenFromLibrary
 } from "./panels/actorTokenImageChange";
+import {
+  KeybindProvider,
+  matchesKeybind,
+  useKeybinds,
+  type KeybindActionId
+} from "./keybinds";
 
 type SidebarCollapsedState = Record<DockSide, boolean>;
 
@@ -69,9 +74,9 @@ const initialPanelLayout: PanelLayout = {
   ]
 };
 
-const toolShortcutMap = Object.fromEntries(
-  MVP_TOOLS.map((tool) => [tool.contract.keyboardShortcut.toLowerCase(), tool.id])
-) as Record<string, ToolId>;
+const toolKeybindActions = Object.fromEntries(
+  MVP_TOOLS.map((tool) => [tool.id, `tool.${tool.id}`])
+) as Record<(typeof MVP_TOOLS)[number]["id"], KeybindActionId>;
 
 function shouldIgnoreKeyboardShortcut(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) {
@@ -89,6 +94,7 @@ function shouldIgnoreKeyboardShortcut(target: EventTarget | null): boolean {
 function AppContent() {
   const cloud = useOptionalCloudSync();
   const dispatch = useDispatch();
+  const { bindings } = useKeybinds();
   const { getViewportSize, zoom: viewportZoom } = useCanvasViewport();
   const activeToolId = useSelector(
     (state: RootState) => state.interaction.activeToolId
@@ -127,7 +133,7 @@ function AppContent() {
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
-      if ((event.ctrlKey || event.metaKey) && !event.altKey && event.key.toLowerCase() === "s") {
+      if (matchesKeybind(event, bindings["workspace.save"])) {
         event.preventDefault();
         void persistenceUi.requestSave();
         return;
@@ -141,10 +147,8 @@ function AppContent() {
         return;
       }
 
-      const shortcut = event.key.toLowerCase();
-
       if (
-        shortcut === "r" &&
+        matchesKeybind(event, bindings["actor.rename"]) &&
         selection.selectedEntityType === "actor" &&
         selection.selectedIds.length > 0
       ) {
@@ -153,14 +157,16 @@ function AppContent() {
         return;
       }
 
-      const nextToolId = toolShortcutMap[shortcut];
+      const nextTool = MVP_TOOLS.find((tool) =>
+        matchesKeybind(event, bindings[toolKeybindActions[tool.id]])
+      );
 
-      if (!nextToolId) {
+      if (!nextTool) {
         return;
       }
 
       event.preventDefault();
-      dispatch(setActiveTool(nextToolId));
+      dispatch(setActiveTool(nextTool.id));
     }
 
     window.addEventListener("keydown", handleKeyDown);
@@ -168,7 +174,7 @@ function AppContent() {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [dispatch, selection, persistenceUi]);
+  }, [bindings, dispatch, selection, persistenceUi]);
 
   function mapLibraryPanel(
     layout: PanelLayout,
@@ -494,8 +500,10 @@ function AppContent() {
 
 export function App() {
   return (
-    <CanvasViewportProvider>
-      <AppContent />
-    </CanvasViewportProvider>
+    <KeybindProvider>
+      <CanvasViewportProvider>
+        <AppContent />
+      </CanvasViewportProvider>
+    </KeybindProvider>
   );
 }
