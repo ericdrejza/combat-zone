@@ -117,7 +117,7 @@ describe("CanvasShell actor paint and validation", () => {
       );
     });
 
-    await user.selectOptions(screen.getByRole("combobox", { name: "Size" }), "xLarge");
+    await user.click(screen.getByRole("button", { name: "Set actor size to Huge" }));
 
     expect(screen.getByRole("dialog", { name: "Resize zone approval" })).toBeInTheDocument();
     expect(store.getState().encounter.present.actors.byId["actor-1"]?.size).toBe(
