@@ -186,6 +186,39 @@ describe("InitiativePanel", () => {
     ]);
   });
 
+  it("auto-selects the active actor after turn navigation only while enabled", async () => {
+    const user = userEvent.setup();
+    renderApp();
+    seedActors();
+    await user.click(screen.getByTitle("Add all actors"));
+    await user.click(screen.getByRole("button", { name: "Start combat" }));
+
+    act(() => {
+      store.dispatch(setActiveTool("zone"));
+    });
+    const autoSelect = screen.getByRole("button", {
+      name: "Auto-select active actor"
+    });
+    expect(autoSelect).toHaveAttribute("aria-pressed", "false");
+
+    await user.click(autoSelect);
+    expect(autoSelect).toHaveAttribute("aria-pressed", "true");
+    await user.click(screen.getByRole("button", { name: "Next turn" }));
+    expect(store.getState().interaction.activeToolId).toBe("select");
+    expect(store.getState().interaction.selection).toMatchObject({
+      selectedEntityType: "actor",
+      selectedIds: ["bravo"]
+    });
+
+    await user.click(screen.getByRole("button", { name: "Previous turn" }));
+    expect(store.getState().interaction.selection.selectedIds).toEqual(["alpha"]);
+
+    await user.click(autoSelect);
+    expect(autoSelect).toHaveAttribute("aria-pressed", "false");
+    await user.click(screen.getByRole("button", { name: "Next turn" }));
+    expect(store.getState().interaction.selection.selectedIds).toEqual(["alpha"]);
+  });
+
   it("adjusts an entered initiative value with left and right chevrons", async () => {
     const user = userEvent.setup();
     renderApp();

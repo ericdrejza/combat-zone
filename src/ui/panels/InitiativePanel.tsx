@@ -1,6 +1,7 @@
 import {
   ChevronLeft,
   ChevronRight,
+  Crosshair,
   Play,
   StepBack,
   StepForward,
@@ -13,7 +14,7 @@ import {
 } from "lucide-react";
 import { MotionConfig, Reorder } from "motion/react";
 import { useEffect, useState } from "react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 
 import {
   addActorsToInitiative,
@@ -31,6 +32,8 @@ import {
 } from "@core/encounter/initiativeMutations";
 import { ZONELESS_ACTOR_ZONE_ID } from "@core/encounter/types";
 import type { Actor } from "@entities/actor/types";
+import { selectEntity, setActiveTool } from "@interaction/interactionState";
+import { canToolSelectEntityType } from "@interaction/tools/toolRegistry";
 import type { RootState } from "@store/store";
 import { useMotionPreference } from "@ui/motion_preferences/MotionPreferenceProvider";
 import {
@@ -45,6 +48,8 @@ import { useInitiativeTurnAutoScroll } from "./initiative/useInitiativeTurnAutoS
 
 const actionClass =
   "inline-flex h-9 w-9 items-center justify-center rounded-xl border border-canvas-line bg-white text-canvas-ink disabled:cursor-not-allowed disabled:opacity-40";
+const activeActionClass =
+  "inline-flex h-9 w-9 items-center justify-center rounded-xl border border-canvas-ink bg-canvas-ink text-white";
 
 export function InitiativePanel({
   participantInteractionStrategy = DEFAULT_INITIATIVE_PARTICIPANT_INTERACTION_STRATEGY
@@ -52,14 +57,19 @@ export function InitiativePanel({
   participantInteractionStrategy?: InitiativeParticipantInteractionStrategy;
 } = {}) {
   const { animationsDisabled } = useMotionPreference();
+  const dispatch = useDispatch();
   const { commitInitiativeChange, encounter, logInvalidInitiativeValue } =
     useInitiativeActions();
   const { onParticipantClick, onParticipantDoubleClick } =
     useParticipantInteractions(participantInteractionStrategy);
   const selection = useSelector((state: RootState) => state.interaction.selection);
+  const activeToolId = useSelector(
+    (state: RootState) => state.interaction.activeToolId
+  );
   const initiativeActorIds = getInitiativeActorIds(encounter);
   const [draftOrder, setDraftOrder] = useState(initiativeActorIds);
   const [confirmClear, setConfirmClear] = useState(false);
+  const [autoSelectActiveActor, setAutoSelectActiveActor] = useState(false);
   const { listRef, stopAutoScroll, updateAutoScroll } =
     useInitiativeReorderAutoScroll();
   useInitiativeTurnAutoScroll(
@@ -118,6 +128,23 @@ export function InitiativePanel({
     commitInitiativeChange(type, payload, nextEncounter);
   }
 
+  function navigateInitiative(
+    type: "initiative.next" | "initiative.previous",
+    nextEncounter: typeof encounter
+  ) {
+    commitSimple(type, nextEncounter, {
+      actorId: currentActorId,
+      round: currentRound
+    });
+    const nextActorId = nextEncounter.initiativeTracker.currentActorId;
+    if (!autoSelectActiveActor || !nextActorId) return;
+
+    if (!canToolSelectEntityType(activeToolId, "actor")) {
+      dispatch(setActiveTool("select"));
+    }
+    dispatch(selectEntity({ entityType: "actor", ids: [nextActorId] }));
+  }
+
   return (
     <MotionConfig reducedMotion={animationsDisabled ? "always" : "never"}>
     <div className="space-y-3 text-sm">
@@ -130,13 +157,16 @@ export function InitiativePanel({
       </div>
 
       <div className="flex items-center justify-between border-t border-canvas-line pt-3">
-        <button aria-label="End combat" className={actionClass} disabled={currentRound === null} onClick={() => commitSimple("initiative.end", endInitiative(encounter), { actorId: currentActorId, round: currentRound })} title="End combat" type="button"><TimerReset aria-hidden="true" className="h-4 w-4" /></button>
+        <div className="flex gap-1">
+          <button aria-label="Auto-select active actor" aria-pressed={autoSelectActiveActor} className={autoSelectActiveActor ? activeActionClass : actionClass} onClick={() => setAutoSelectActiveActor((enabled) => !enabled)} title="Auto-select active actor" type="button"><Crosshair aria-hidden="true" className="h-4 w-4" /></button>
+          <button aria-label="End combat" className={actionClass} disabled={currentRound === null} onClick={() => commitSimple("initiative.end", endInitiative(encounter), { actorId: currentActorId, round: currentRound })} title="End combat" type="button"><TimerReset aria-hidden="true" className="h-4 w-4" /></button>
+        </div>
         <span className="font-semibold">{currentRound === null ? "Not Started" : `Round ${currentRound}`}</span>
         <div className="flex gap-1">
           {currentRound !== null ? (
             <>
-              <button aria-label={previousChangesRound ? "Previous round" : "Previous turn"} className={actionClass} disabled={currentRound === 1 && currentIndex <= 0} onClick={() => commitSimple("initiative.previous", retreatInitiative(encounter), { actorId: currentActorId, round: currentRound })} title={previousChangesRound ? "Previous round" : "Previous turn"} type="button">{previousChangesRound ? <StepBack aria-hidden="true" className="h-4 w-4" /> : <ChevronLeft aria-hidden="true" className="h-4 w-4" />}</button>
-              <button aria-label={nextChangesRound ? "Next round" : "Next turn"} className={actionClass} onClick={() => commitSimple("initiative.next", advanceInitiative(encounter), { actorId: currentActorId, round: currentRound })} title={nextChangesRound ? "Next round" : "Next turn"} type="button">{nextChangesRound ? <StepForward aria-hidden="true" className="h-4 w-4" /> : <ChevronRight aria-hidden="true" className="h-4 w-4" />}</button>
+              <button aria-label={previousChangesRound ? "Previous round" : "Previous turn"} className={actionClass} disabled={currentRound === 1 && currentIndex <= 0} onClick={() => navigateInitiative("initiative.previous", retreatInitiative(encounter))} title={previousChangesRound ? "Previous round" : "Previous turn"} type="button">{previousChangesRound ? <StepBack aria-hidden="true" className="h-4 w-4" /> : <ChevronLeft aria-hidden="true" className="h-4 w-4" />}</button>
+              <button aria-label={nextChangesRound ? "Next round" : "Next turn"} className={actionClass} onClick={() => navigateInitiative("initiative.next", advanceInitiative(encounter))} title={nextChangesRound ? "Next round" : "Next turn"} type="button">{nextChangesRound ? <StepForward aria-hidden="true" className="h-4 w-4" /> : <ChevronRight aria-hidden="true" className="h-4 w-4" />}</button>
             </>
           ) : (
             <button aria-label="Start combat" className={actionClass} disabled={!actors.length} onClick={() => commitSimple("initiative.start", startInitiative(encounter))} title="Start combat" type="button"><Play aria-hidden="true" className="h-4 w-4" /></button>
