@@ -71,6 +71,7 @@ describe("persistence import entry points", () => {
     renderApp();
 
     await user.click(screen.getByRole("button", { name: "Open settings" }));
+    await user.click(screen.getByRole("tab", { name: "Data" }));
     fireEvent.change(screen.getByLabelText("Import workspace JSON"), {
       target: { files: [jsonFile(encounterEnvelope())] }
     });

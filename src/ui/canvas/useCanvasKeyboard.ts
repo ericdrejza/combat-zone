@@ -14,6 +14,7 @@ import {
 } from '@interaction/interactionState';
 import { commitEncounterChange } from '@store/encounterSlice';
 import type { RootState } from '@store/store';
+import { matchesKeybind, useKeybinds } from '@ui/keybinds';
 import { sortZoneIdsByPosition } from './zones/zoneGeometry';
 
 type UseCanvasKeyboardInput = {
@@ -41,6 +42,8 @@ export function useCanvasKeyboard({
   selection,
   zonePaintBrush
 }: UseCanvasKeyboardInput) {
+  const { bindings } = useKeybinds();
+
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
       const target = event.target;
@@ -87,8 +90,7 @@ export function useCanvasKeyboard({
       }
 
       if (
-        event.key.toLowerCase() === 'c' &&
-        (event.ctrlKey || event.metaKey) &&
+        matchesKeybind(event, bindings['actor.copy']) &&
         selection.selectedEntityType === 'actor' &&
         selection.selectedIds.length === 1
       ) {
@@ -98,8 +100,7 @@ export function useCanvasKeyboard({
       }
 
       if (
-        event.key.toLowerCase() === 'v' &&
-        (event.ctrlKey || event.metaKey) &&
+        matchesKeybind(event, bindings['actor.paste']) &&
         actorTool.clipboardActorId
       ) {
         event.preventDefault();
@@ -140,8 +141,7 @@ export function useCanvasKeyboard({
       }
 
       if (
-        event.key.toLowerCase() === 'a' &&
-        (event.ctrlKey || event.metaKey) &&
+        matchesKeybind(event, bindings['selection.selectAll']) &&
         (activeToolId === 'actor' || activeToolId === 'select')
       ) {
         event.preventDefault();
@@ -155,8 +155,7 @@ export function useCanvasKeyboard({
       }
 
       if (
-        event.key.toLowerCase() === 'a' &&
-        (event.ctrlKey || event.metaKey) &&
+        matchesKeybind(event, bindings['selection.selectAll']) &&
         activeToolId === 'zone'
       ) {
         event.preventDefault();
@@ -272,6 +271,7 @@ export function useCanvasKeyboard({
     activeToolId,
     actorPaintBrush,
     actorTool,
+    bindings,
     clearShapeDraft,
     clearZoneDraftPoints,
     closeZoneShapeMenu,
