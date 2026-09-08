@@ -40,6 +40,7 @@ const toDroppedFiles = (files: File[]) =>
 type AssetLibraryModalControllerOptions = {
   currentFolderBySection: LibraryFolderBySection;
   initialSectionId?: LibrarySectionId;
+  initialSelectedNodeId?: string;
   onCurrentFolderChange: (sectionId: keyof LibraryFolderBySection, folderId: string) => void;
   onViewModeChange: (sectionId: keyof LibraryViewModeBySection, viewMode: AssetLibraryViewMode) => void;
   viewModeBySection: LibraryViewModeBySection;
@@ -48,6 +49,7 @@ type AssetLibraryModalControllerOptions = {
 export function useAssetLibraryModalController({
   currentFolderBySection,
   initialSectionId,
+  initialSelectedNodeId,
   onCurrentFolderChange,
   onViewModeChange,
   viewModeBySection
@@ -58,6 +60,7 @@ export function useAssetLibraryModalController({
   const state = useAssetLibraryModalState({
     currentFolderBySection,
     initialSectionId,
+    initialSelectedNodeId,
     onCurrentFolderChange,
     onViewModeChange,
     viewModeBySection

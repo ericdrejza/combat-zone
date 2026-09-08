@@ -12,17 +12,17 @@ import { INITIATIVE_MAX, INITIATIVE_MIN } from "@core/encounter/initiativeMutati
 import type { Actor } from "@entities/actor/types";
 
 const activeFactionClasses: Record<Actor["layoutGroup"], string> = {
-  ally: "border-green-500 bg-green-50",
-  enemy: "border-red-500 bg-red-50",
-  hero: "border-blue-500 bg-blue-50",
-  neutral: "border-yellow-500 bg-yellow-50"
+  ally: "border-green-500 bg-green-50 dark:border-green-400 dark:bg-green-950",
+  enemy: "border-red-500 bg-red-50 dark:border-red-400 dark:bg-red-950",
+  hero: "border-blue-500 bg-blue-50 dark:border-blue-400 dark:bg-blue-950",
+  neutral: "border-yellow-500 bg-yellow-50 dark:border-yellow-400 dark:bg-yellow-950"
 };
 
 const activeIndicatorClasses: Record<Actor["layoutGroup"], string> = {
-  ally: "bg-green-600",
-  enemy: "bg-red-600",
-  hero: "bg-blue-600",
-  neutral: "bg-yellow-600"
+  ally: "bg-green-600 dark:bg-green-400",
+  enemy: "bg-red-600 dark:bg-red-400",
+  hero: "bg-blue-600 dark:bg-blue-400",
+  neutral: "bg-yellow-600 dark:bg-yellow-400"
 };
 
 type InitiativeRowProps = {
@@ -216,7 +216,7 @@ export function InitiativeRow({
       </span>
       <button
         aria-label={`Remove ${actor.name} from initiative`}
-        className="text-canvas-muted hover:text-red-700"
+        className="text-canvas-muted hover:text-red-700 dark:hover:text-red-400"
         onClick={(event) => {
           event.stopPropagation();
           onRemove(actor.id);

@@ -17,7 +17,7 @@ describe("AssetLibraryModal explorer", () => {
     vi.restoreAllMocks();
   });
 
-  it("selects and toggles folders from the row while the disclosure only expands them", async () => {
+  it("keeps expanded folders open when their name makes them current", async () => {
     const user = await openBackgroundLibrary();
 
     await createFolder("Maps");
@@ -34,7 +34,7 @@ describe("AssetLibraryModal explorer", () => {
     await user.click(screen.getAllByText("Maps")[0]);
 
     expect(currentFolderName()).toBe("Maps");
-    expect(screen.getByRole("button", { name: "Expand Maps" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Collapse Maps" })).toBeInTheDocument();
     expect(document.querySelector("svg.lucide-folder-open-dot")).toBeInTheDocument();
 
     await createFolder("Nested");

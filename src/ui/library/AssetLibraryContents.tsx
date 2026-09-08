@@ -1,4 +1,4 @@
-import { Folder, Grid2X2, List } from "lucide-react";
+import { Folder, FolderUp, Grid2X2, List } from "lucide-react";
 import { useTime, useTransform } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import type { DragEvent, PointerEvent as ReactPointerEvent } from "react";
@@ -66,6 +66,7 @@ type AssetLibraryContentsProps = {
   recentEncounterIds?: string[];
   focusedEncounterId?: string | null;
   focusedNodeId?: string | null;
+  visibleNodeIds?: Set<string> | null;
 };
 
 export function AssetLibraryContents({
@@ -96,7 +97,8 @@ export function AssetLibraryContents({
   readOnly = false,
   recentEncounterIds = [],
   focusedEncounterId = null,
-  focusedNodeId = null
+  focusedNodeId = null,
+  visibleNodeIds = null
 }: AssetLibraryContentsProps) {
   const time = useTime();
   const [encounterContextMenu, setEncounterContextMenu] =
@@ -178,7 +180,9 @@ export function AssetLibraryContents({
     return asset ? { asset, name: record.state.name } : null;
   }
 
-  const children = getAlphabetizedChildren(activeSection, currentFolder.id);
+  const children = getAlphabetizedChildren(activeSection, currentFolder.id).filter(
+    (node) => !visibleNodeIds || visibleNodeIds.has(node.id)
+  );
   const visibleEncounterRecords = encounterRecords
     .filter(
       (record) =>
@@ -209,7 +213,7 @@ export function AssetLibraryContents({
   return (
     <section
       aria-label="Asset library contents"
-      className="min-h-0 overflow-auto p-5"
+      className="flex min-h-0 flex-col overflow-hidden p-5"
       data-library-drop-folder-id={currentFolder.id}
       onDragLeave={(event) => {
         if (hasLeftDragSurface(event)) setDropFolderId(null);
@@ -222,6 +226,20 @@ export function AssetLibraryContents({
         className="mb-4 flex items-center justify-between gap-3 border-b border-canvas-line pb-3 text-sm font-semibold text-canvas-ink"
       >
         <div className="flex min-w-0 items-center gap-2">
+          <span className="flex flex-none items-center gap-2 text-canvas-muted after:content-['/']">
+            <button
+              aria-label="Go to parent folder"
+              className="flex h-6 w-6 items-center justify-center transition hover:text-canvas-ink disabled:cursor-default disabled:opacity-40"
+              disabled={!currentFolder.parentId}
+              onClick={() => {
+                if (currentFolder.parentId) onEnterFolder(currentFolder.parentId);
+              }}
+              title="Go to parent folder"
+              type="button"
+            >
+              <FolderUp aria-hidden="true" className="h-4 w-4" />
+            </button>
+          </span>
           <Folder aria-hidden="true" className="h-4 w-4" />
           <span className="min-w-0 truncate">{currentFolder.name}</span>
         </div>
@@ -244,10 +262,12 @@ export function AssetLibraryContents({
           )}
         </button>
       </div>
-      <div className={viewMode === "list" ? "lg:grid lg:grid-cols-2 lg:gap-4" : undefined}>
+      <div className={viewMode === "list"
+        ? "min-h-0 flex-1 overflow-auto lg:grid lg:grid-cols-2 lg:gap-4 lg:overflow-hidden"
+        : "min-h-0 flex-1 overflow-auto"}>
         <div
           aria-label="Current directory contents"
-          className={viewMode === "grid" ? "grid grid-cols-[repeat(auto-fill,minmax(8rem,1fr))] gap-3" : "space-y-2"}
+          className={viewMode === "grid" ? "grid grid-cols-[repeat(auto-fill,minmax(8rem,1fr))] gap-3" : "space-y-2 lg:overflow-y-auto"}
           role="group"
         >
           {activeSection.id === "encounters" && currentFolder.id === activeSection.rootId && recentEncounterIds.length > 0 ? (
@@ -362,7 +382,7 @@ export function AssetLibraryContents({
         </div>
         {viewMode === "list" && largeHoverPreview ? (
           <div
-            className="hidden min-w-0 border-l border-canvas-line pl-4 lg:block"
+            className="hidden h-full min-h-0 min-w-0 border-l border-canvas-line pl-4 lg:block"
             onPointerEnter={clearPreviewClearTimer}
             onPointerLeave={schedulePreviewClear}
           >

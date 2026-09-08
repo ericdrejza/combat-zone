@@ -30,7 +30,7 @@ export function useBackgroundTool(encounter: EncounterState) {
   async function addBackgroundFromUrl(url: string, name?: string) {
     const asset = createWebImageAsset(url);
     const nextBackgroundImage = await readImageAssetDimensions(
-      name?.trim() ? { ...asset, name: name.trim() } : asset
+      { ...asset, name: name?.trim() ?? "" }
     );
     setPreferredFitMode("fit");
     commitBackgroundImage({

@@ -1,4 +1,4 @@
-import { Crosshair, Target, X } from "lucide-react";
+import { CircleUserRound, Crosshair, Target, X } from "lucide-react";
 import { useRef, useState } from "react";
 import { useSelector } from "react-redux";
 
@@ -39,6 +39,7 @@ export type AssetLibraryMode =
 type AssetLibraryModalProps = {
   currentFolderBySection: LibraryFolderBySection;
   initialSectionId?: LibrarySectionId;
+  initialFocusedNodeId?: string;
   viewModeBySection?: LibraryViewModeBySection;
   onClose: () => void;
   onCurrentFolderChange: (
@@ -67,6 +68,7 @@ export function AssetLibraryModal({
   onClose,
   onCurrentFolderChange,
   initialSectionId = "encounters",
+  initialFocusedNodeId,
   onViewModeChange = () => undefined,
   onTokenDoubleClick,
   tokenSubmitLabel = "Create Actor",
@@ -82,6 +84,7 @@ export function AssetLibraryModal({
   const controller = useAssetLibraryModalController({
     currentFolderBySection,
     initialSectionId: mode === "browse" ? initialSectionId : "encounters",
+    initialSelectedNodeId: initialFocusedNodeId,
     onCurrentFolderChange,
     onViewModeChange,
     viewModeBySection
@@ -90,6 +93,9 @@ export function AssetLibraryModal({
   const cloud = useOptionalCloudSync();
   const activeBackgroundImage = useSelector(
     (state: RootState) => state.encounter.present.backgroundImage
+  );
+  const encounterActors = useSelector(
+    (state: RootState) => state.encounter.present.actors
   );
   const encounterOnly = mode !== "browse";
   const pendingDeleteNode = controller.pendingDeleteNode;
@@ -100,7 +106,10 @@ export function AssetLibraryModal({
     null
   );
   const [focusedFolderId, setFocusedFolderId] = useState<string | null>(null);
-  const [focusedNodeId, setFocusedNodeId] = useState<string | null>(null);
+  const [focusedNodeId, setFocusedNodeId] = useState<string | null>(
+    initialFocusedNodeId ?? null
+  );
+  const [showEncounterActorTokens, setShowEncounterActorTokens] = useState(false);
   const [renameTarget, setRenameTarget] = useState<
     | { kind: "encounter"; id: string; name: string }
     | { kind: "node"; node: LibraryNode }
@@ -298,6 +307,32 @@ export function AssetLibraryModal({
     }
   }
 
+  async function copyWebLink(node: LibraryNode) {
+    if (node.type !== "image" || node.asset?.source.kind !== "url") return;
+
+    controller.setContextMenu(null);
+    try {
+      await navigator.clipboard.writeText(node.asset.source.url);
+    } catch {
+      window.alert("The web link could not be copied.");
+    }
+  }
+
+  function goToLinkedAsset(node: LibraryNode) {
+    if (node.type !== "link" || !node.targetId) return;
+    const target = controller.activeSection.nodesById[node.targetId];
+    if (!target) return;
+
+    const folderId = target.parentId ?? controller.activeSection.rootId;
+    controller.setContextMenu(null);
+    controller.expandFolders(
+      getFolderAncestorIds(controller.activeSection, folderId)
+    );
+    controller.enterFolder(folderId);
+    controller.selectNode(target.id);
+    setFocusedNodeId(target.id);
+  }
+
   const canLocateActiveTarget =
     controller.activeSectionId === "encounters"
       ? Boolean(persistence.activeRecord)
@@ -317,6 +352,29 @@ export function AssetLibraryModal({
       ? persistence.encounters.find(
           (record) => record.id === controller.selectedNodeId
         )
+      : null;
+  const usedTokenNodeIds = (() => {
+    const visibleIds = new Set<string>([controller.activeSection.rootId]);
+    for (const actorId of encounterActors.allIds) {
+      // Actor image provenance is authoritative for whether a Library token is used.
+      const actor = encounterActors.byId[actorId];
+      const nodeId = actor?.metadata.sourceLibraryNodeId;
+      if (typeof nodeId !== "string") continue;
+
+      let node: LibraryNode | undefined =
+        controller.activeSection.nodesById[nodeId];
+      while (node) {
+        visibleIds.add(node.id);
+        node = node.parentId
+          ? controller.activeSection.nodesById[node.parentId]
+          : undefined;
+      }
+    }
+    return visibleIds;
+  })();
+  const visibleTokenNodeIds =
+    showEncounterActorTokens && controller.activeSectionId === "tokens"
+      ? usedTokenNodeIds
       : null;
 
   function createActorFromSelectedToken() {
@@ -391,6 +449,35 @@ export function AssetLibraryModal({
                 {controller.activeSection.name}
               </h3>
               <div className="flex items-center gap-2">
+                {controller.activeSectionId === "tokens" ? (
+                  <button
+                    aria-label="Show tokens used by encounter actors"
+                    aria-pressed={showEncounterActorTokens}
+                    className={`flex h-8 w-8 items-center justify-center rounded-full border transition ${
+                      showEncounterActorTokens
+                        ? "border-canvas-ink bg-canvas-ink text-canvas-on-ink"
+                        : "border-canvas-line bg-canvas-surface text-canvas-ink hover:bg-canvas"
+                    }`}
+                    onClick={() => {
+                      const enabled = !showEncounterActorTokens;
+                      setShowEncounterActorTokens(enabled);
+                      if (enabled) {
+                        controller.enterFolder(controller.activeSection.rootId);
+                        controller.expandFolders(
+                          [...usedTokenNodeIds].filter(
+                            (nodeId) =>
+                              controller.activeSection.nodesById[nodeId]?.type ===
+                              "folder"
+                          )
+                        );
+                      }
+                    }}
+                    title="Show tokens used by encounter actors"
+                    type="button"
+                  >
+                    <CircleUserRound aria-hidden="true" className="h-4 w-4" />
+                  </button>
+                ) : null}
                 {controller.activeSectionId === "encounters" ||
                 controller.activeSectionId === "backgrounds" ? (
                   <button
@@ -481,6 +568,7 @@ export function AssetLibraryModal({
               selectedNodeId={controller.selectedNodeId}
               setDropFolderId={controller.setDropFolderId}
               focusedFolderId={focusedFolderId}
+              visibleNodeIds={visibleTokenNodeIds}
             />
           </aside>
           <AssetLibraryContents
@@ -549,6 +637,7 @@ export function AssetLibraryModal({
             setDropFolderId={controller.setDropFolderId}
             focusedEncounterId={focusedEncounterId}
             focusedNodeId={focusedNodeId}
+            visibleNodeIds={visibleTokenNodeIds}
           />
         </div>
         {mode === "save-destination" || mode === "import-destination" ? (
@@ -671,6 +760,8 @@ export function AssetLibraryModal({
           contextMenu={controller.contextMenu}
           contextMenuRef={controller.contextMenuRef}
           node={controller.contextNode}
+          onCopyWebLink={(node) => void copyWebLink(node)}
+          onGoToLinkedAsset={goToLinkedAsset}
           onSelectAssetType={selectAssetType}
           onDelete={(node) => {
             if (!preventEncounterOrphan(node)) controller.handleDelete(node);

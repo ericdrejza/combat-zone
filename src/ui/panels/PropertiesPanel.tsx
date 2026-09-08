@@ -10,12 +10,16 @@ import { ZonePropertiesPanel } from "./ZonePropertiesPanel";
 
 export type PropertiesLibraryLocation = {
   folderId: string;
+  nodeId?: string;
   sectionId: LibrarySectionId;
 };
 
 type PropertiesPanelProps = {
   onOpenLibraryLocation?: (location: PropertiesLibraryLocation) => void;
-  onOpenTokenLibraryForActor?: (actorId: string) => void;
+  onOpenTokenLibraryForActor?: (
+    actorId: string,
+    location?: PropertiesLibraryLocation
+  ) => void;
 };
 
 export function PropertiesPanel({
@@ -38,8 +42,11 @@ export function PropertiesPanel({
   if (selection.selectedEntityType === "actor") {
     return (
       <ActorPropertiesPanel
-        onOpenTokenLibrary={() =>
-          onOpenTokenLibraryForActor?.(selection.selectedIds[0] as string)
+        onOpenTokenLibrary={(location) =>
+          onOpenTokenLibraryForActor?.(
+            selection.selectedIds[0] as string,
+            location
+          )
         }
       />
     );

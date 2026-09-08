@@ -12,9 +12,11 @@ import type { RootState } from "@store/store";
 import { useZoneResizeApproval } from "../zoneResizeApproval";
 import { getLibraryNodePath } from "@library/librarySlice";
 import { ActorPropertyOptionGroups } from "./ActorPropertyOptionGroups";
+import { LibraryPathField } from "./LibraryPathField";
+import type { PropertiesLibraryLocation } from "./PropertiesPanel";
 
 type ActorPropertiesPanelProps = {
-  onOpenTokenLibrary?: () => void;
+  onOpenTokenLibrary?: (location?: PropertiesLibraryLocation) => void;
 };
 
 const ACTOR_TYPES: ActorType[] = [
@@ -107,6 +109,14 @@ export function ActorPropertiesPanel({
   const tokenPath = libraryNodeId
     ? getLibraryNodePath(tokens, libraryNodeId)
     : null;
+  const tokenNode = libraryNodeId ? tokens.nodesById[libraryNodeId] : null;
+  const tokenLocation: PropertiesLibraryLocation | null = tokenNode
+    ? {
+        folderId: tokenNode.parentId ?? tokens.rootId,
+        nodeId: tokenNode.id,
+        sectionId: "tokens"
+      }
+    : null;
   const webImageUrl = actor.image?.kind === "url" ? actor.image.url : "";
 
   function activateWebImageSource() {
@@ -119,6 +129,39 @@ export function ActorPropertiesPanel({
       tokenInputRef.current?.select();
     });
   }
+
+  const imageSourceActions = (
+    <div className="flex items-center gap-1">
+      <button
+        aria-label="Choose actor image from library"
+        aria-pressed={Boolean(tokenPath)}
+        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition ${
+          tokenPath
+            ? "border-canvas-ink bg-canvas-ink text-canvas-on-ink"
+            : "border-canvas-line bg-canvas-surface text-canvas-muted hover:bg-canvas"
+        }`}
+        onClick={() => onOpenTokenLibrary?.(tokenLocation ?? undefined)}
+        title="Choose actor image from library"
+        type="button"
+      >
+        <BookOpen aria-hidden="true" className="h-4 w-4" />
+      </button>
+      <button
+        aria-label="Use web link for actor image"
+        aria-pressed={!tokenPath}
+        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition ${
+          tokenPath
+            ? "border-canvas-line bg-canvas-surface text-canvas-muted hover:bg-canvas"
+            : "border-canvas-ink bg-canvas-ink text-canvas-on-ink"
+        }`}
+        onClick={activateWebImageSource}
+        title="Use web link for actor image"
+        type="button"
+      >
+        <Link2 aria-hidden="true" className="h-4 w-4" />
+      </button>
+    </div>
+  );
 
   return (
     <div key={actor.id} className="space-y-3 text-sm">
@@ -155,69 +198,44 @@ export function ActorPropertiesPanel({
         </select>
       </label>
       <ActorPropertyOptionGroups actor={actor} onChange={commitActorProperties} />
-      <div className="space-y-1">
-        <div className="flex items-center justify-between gap-2">
-          <span className="font-semibold text-canvas-ink">
-            {tokenPath ? "Token Path" : "Token image URL"}
-          </span>
-          <div className="flex items-center gap-1">
-            <button
-              aria-label="Choose actor image from library"
-              aria-pressed={Boolean(tokenPath)}
-              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition ${
-                tokenPath
-                  ? "border-canvas-ink bg-canvas-ink text-canvas-on-ink"
-                  : "border-canvas-line bg-canvas-surface text-canvas-muted hover:bg-canvas"
-              }`}
-              onClick={onOpenTokenLibrary}
-              title="Choose actor image from library"
-              type="button"
-            >
-              <BookOpen aria-hidden="true" className="h-4 w-4" />
-            </button>
-            <button
-              aria-label="Use web link for actor image"
-              aria-pressed={!tokenPath}
-              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition ${
-                tokenPath
-                  ? "border-canvas-line bg-canvas-surface text-canvas-muted hover:bg-canvas"
-                  : "border-canvas-ink bg-canvas-ink text-canvas-on-ink"
-              }`}
-              onClick={activateWebImageSource}
-              title="Use web link for actor image"
-              type="button"
-            >
-              <Link2 aria-hidden="true" className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-        <input
-          key={`${actor.id}:${tokenPath ? "library" : "url"}:${tokenPath ?? webImageUrl}`}
-          ref={tokenInputRef}
-          aria-label={tokenPath ? "Token Path" : "Token image URL"}
-          className={`w-full rounded-xl border border-canvas-line px-3 py-1.5 text-canvas-ink ${
-            tokenPath ? "bg-canvas" : "bg-canvas-surface"
-          }`}
-          onBlur={(event) => {
-            if (tokenPath) return;
-            commitActorProperties({
-              image: event.currentTarget.value.trim()
-                ? { kind: "url", url: event.currentTarget.value.trim() }
-                : undefined,
-              imageLibraryNodeId: null
-            });
-          }}
-          onClick={(event) => {
-            if (!tokenPath) event.currentTarget.select();
-          }}
-          onKeyDown={(event) => {
-            if (event.key === "Enter" && !tokenPath) event.currentTarget.blur();
-          }}
-          readOnly={Boolean(tokenPath)}
-          type="text"
-          defaultValue={tokenPath ?? webImageUrl}
+      {tokenPath && tokenLocation ? (
+        <LibraryPathField
+          actions={imageSourceActions}
+          onOpen={() => onOpenTokenLibrary?.(tokenLocation)}
+          value={tokenPath}
         />
-      </div>
+      ) : (
+        <div className="space-y-1">
+          <div className="flex items-center justify-between gap-2">
+            <span className="font-semibold text-canvas-ink">
+              Token image URL
+            </span>
+            {imageSourceActions}
+          </div>
+          <input
+            key={`${actor.id}:url:${webImageUrl}`}
+            ref={tokenInputRef}
+            aria-label="Token image URL"
+            className="w-full rounded-xl border border-canvas-line bg-canvas-surface px-3 py-1.5 text-canvas-ink"
+            onBlur={(event) => {
+              commitActorProperties({
+                image: event.currentTarget.value.trim()
+                  ? { kind: "url", url: event.currentTarget.value.trim() }
+                  : undefined,
+                imageLibraryNodeId: null
+              });
+            }}
+            onClick={(event) => {
+              event.currentTarget.select();
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") event.currentTarget.blur();
+            }}
+            type="text"
+            defaultValue={webImageUrl}
+          />
+        </div>
+      )}
     </div>
   );
 }

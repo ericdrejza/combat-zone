@@ -1,15 +1,19 @@
 import userEvent from "@testing-library/user-event";
-import { act, screen, within } from "@testing-library/react";
+import { act, fireEvent, screen, within } from "@testing-library/react";
 
 import { createEncounterActionRecord } from "@core/history/createEncounterActionRecord";
 import { setActiveTool } from "@interaction/interactionState";
 import { createFolder, uploadImage } from "@library/librarySlice";
-import { commitEncounterChange } from "@store/encounterSlice";
+import {
+  commitEncounterChange,
+  redoEncounterChange,
+  undoEncounterChange
+} from "@store/encounterSlice";
 import { store } from "@store/store";
 import { renderApp } from "@tests/ui/renderApp";
 
 describe("BackgroundPropertiesPanel", () => {
-  it("shows Name, Library Path, and URL in order for a linked Library asset", () => {
+  it("shows Name and Library Path without duplicating a linked asset URL", () => {
     renderApp();
     const folderAction = createFolder({
       name: "Maps",
@@ -52,22 +56,18 @@ describe("BackgroundPropertiesPanel", () => {
     const libraryPath = within(panel).getByRole("textbox", {
       name: "Library Path"
     });
-    const url = within(panel).getByRole("textbox", { name: "URL" });
 
     expect(name).toHaveValue("ancient-ruins");
     expect(libraryPath).toHaveValue(
       "Backgrounds/Maps/ancient-ruins.webp"
     );
-    expect(url).toHaveValue("https://assets.example/ancient-ruins.webp");
     expect(name).toHaveAttribute("readonly");
     expect(libraryPath).toHaveAttribute("readonly");
-    expect(url).toHaveAttribute("readonly");
     expect(name.compareDocumentPosition(libraryPath)).toBe(
       Node.DOCUMENT_POSITION_FOLLOWING
     );
-    expect(libraryPath.compareDocumentPosition(url)).toBe(
-      Node.DOCUMENT_POSITION_FOLLOWING
-    );
+    expect(within(panel).queryByRole("textbox", { name: "URL" }))
+      .not.toBeInTheDocument();
   });
 
   it("hides Library Path and URL for a directly uploaded background", () => {
@@ -101,6 +101,47 @@ describe("BackgroundPropertiesPanel", () => {
     expect(
       within(panel).queryByRole("textbox", { name: "URL" })
     ).not.toBeInTheDocument();
+  });
+
+  it("edits and history-tracks the name of a direct web background", () => {
+    renderApp();
+
+    act(() => {
+      const encounter = store.getState().encounter.present;
+      store.dispatch(commitEncounterChange({
+        action: createEncounterActionRecord("background.add"),
+        nextEncounter: {
+          ...encounter,
+          backgroundImage: {
+            source: { kind: "url", url: "https://example.com/remote-map.png" },
+            height: 640,
+            mediaType: "image/png",
+            name: "remote-map",
+            width: 960
+          }
+        }
+      }));
+      store.dispatch(setActiveTool("background"));
+    });
+
+    const name = screen.getByRole("textbox", { name: "Name" });
+    expect(name).not.toHaveAttribute("readonly");
+    fireEvent.change(name, { target: { value: "Renamed Map" } });
+    fireEvent.blur(name);
+
+    expect(store.getState().encounter.present.backgroundImage?.name)
+      .toBe("Renamed Map");
+    act(() => { store.dispatch(undoEncounterChange()); });
+    expect(store.getState().encounter.present.backgroundImage?.name)
+      .toBe("remote-map");
+    act(() => { store.dispatch(redoEncounterChange()); });
+    expect(store.getState().encounter.present.backgroundImage?.name)
+      .toBe("Renamed Map");
+
+    const renamedName = screen.getByRole("textbox", { name: "Name" });
+    fireEvent.change(renamedName, { target: { value: "   " } });
+    fireEvent.blur(renamedName);
+    expect(store.getState().encounter.present.backgroundImage?.name).toBe("");
   });
 
   it("opens the library at the linked asset's directory", async () => {
@@ -148,6 +189,8 @@ describe("BackgroundPropertiesPanel", () => {
     await user.click(screen.getByRole("textbox", { name: "Library Path" }));
 
     expect(screen.getByRole("dialog", { name: "Asset Library" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "ancient-ruins.png" }))
+      .toHaveAttribute("aria-pressed", "true");
     expect(
       within(
         screen.getByRole("region", { name: "Asset library contents" })

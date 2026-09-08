@@ -1,5 +1,11 @@
-import { fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+
+import { createEncounterState } from "@core/encounter/createEncounterState";
+import { createActor } from "@entities/actor/actorMutations";
+import { uploadImage } from "@library/librarySlice";
+import { loadEncounterState } from "@store/encounterSlice";
+import { store } from "@store/store";
 
 import {
   createFolder,
@@ -67,5 +73,57 @@ describe("AssetLibraryModal", () => {
       "m-map",
       "z-folder"
     ]);
+  });
+
+  it("filters tokens to those used by actors in the current encounter", async () => {
+    const user = await openBackgroundLibrary();
+    const usedToken = uploadImage({
+      asset: {
+        mediaType: "image/png",
+        name: "Used Goblin",
+        source: { kind: "url", url: "https://example.com/goblin.png" }
+      },
+      parentId: "tokens-root",
+      sectionId: "tokens"
+    });
+    const unusedToken = uploadImage({
+      asset: {
+        mediaType: "image/png",
+        name: "Unused Knight",
+        source: { kind: "url", url: "https://example.com/knight.png" }
+      },
+      parentId: "tokens-root",
+      sectionId: "tokens"
+    });
+
+    act(() => {
+      store.dispatch(usedToken);
+      store.dispatch(unusedToken);
+      store.dispatch(loadEncounterState(createActor(
+        createEncounterState({ id: "encounter", name: "Encounter" }),
+        {
+          currentZoneId: "zoneless",
+          id: "goblin",
+          image: {
+            libraryNodeId: usedToken.payload.id,
+            mediaType: "image/png",
+            name: "Used Goblin",
+            source: { kind: "url", url: "https://example.com/goblin.png" }
+          }
+        }
+      )));
+    });
+
+    await user.click(screen.getByRole("tab", { name: "Tokens" }));
+    const filter = screen.getByRole("button", {
+      name: "Show tokens used by encounter actors"
+    });
+    expect(filter).toHaveAttribute("aria-pressed", "false");
+
+    await user.click(filter);
+
+    expect(filter).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getAllByText("Used Goblin").length).toBeGreaterThan(0);
+    expect(screen.queryByText("Unused Knight")).not.toBeInTheDocument();
   });
 });

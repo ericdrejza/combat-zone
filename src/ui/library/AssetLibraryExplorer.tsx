@@ -56,6 +56,7 @@ type AssetLibraryExplorerProps = {
   onDoubleClickEncounter?: (encounterId: string) => void;
   setDropFolderId: (folderId: string | null) => void;
   focusedFolderId?: string | null;
+  visibleNodeIds?: Set<string> | null;
 };
 
 function normalizeSearchValue(value: string) {
@@ -83,7 +84,8 @@ export function AssetLibraryExplorer({
   onSelectNode,
   onToggleFolder,
   setDropFolderId,
-  focusedFolderId = null
+  focusedFolderId = null,
+  visibleNodeIds = null
 }: AssetLibraryExplorerProps) {
   const folderRowRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
@@ -136,8 +138,10 @@ export function AssetLibraryExplorer({
   function getSearchVisibleChildren(folderId: string) {
     const query = normalizeSearchValue(searchQuery);
 
-    return getAlphabetizedChildren(activeSection, folderId).filter((child) =>
-      nodeMatchesSearch(child, query)
+    return getAlphabetizedChildren(activeSection, folderId).filter(
+      (child) =>
+        (!visibleNodeIds || visibleNodeIds.has(child.id)) &&
+        nodeMatchesSearch(child, query)
     );
   }
 
@@ -215,7 +219,7 @@ export function AssetLibraryExplorer({
           }}
           onClick={() => {
             if (isFolder) {
-              onToggleFolder(node.id);
+              if (!expanded) onToggleFolder(node.id);
               onEnterFolder(node.id);
               return;
             }

@@ -3,7 +3,11 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { createEncounterState } from "@core/encounter/createEncounterState";
 import { createActor } from "@entities/actor/actorMutations";
-import { uploadImage } from "@library/librarySlice";
+import {
+  createFolder as createLibraryFolder,
+  createLink,
+  uploadImage
+} from "@library/librarySlice";
 import {
   loadEncounterState,
   redoEncounterChange,
@@ -171,6 +175,68 @@ describe("AssetLibraryModal", () => {
     await user.click(within(assetTypes).getByRole("menuitem", { name: "Web link" }));
     const webLinkDialog = screen.getByRole("dialog", { name: "Link image URL" });
     expect(within(webLinkDialog).queryByLabelText("Image name")).not.toBeInTheDocument();
+  });
+
+  it("copies web URLs and navigates asset links to their targets", async () => {
+    const user = await openBackgroundLibrary();
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText }
+    });
+    const folder = createLibraryFolder({
+      name: "Maps",
+      parentId: "backgrounds-root",
+      sectionId: "backgrounds"
+    });
+    const target = uploadImage({
+      asset: {
+        mediaType: "image/png",
+        name: "Original Map",
+        source: { kind: "embedded", dataUrl: "data:image/png;base64,map" }
+      },
+      parentId: folder.payload.id,
+      sectionId: "backgrounds"
+    });
+    const webLink = uploadImage({
+      asset: {
+        mediaType: "image/png",
+        name: "Remote Map",
+        source: { kind: "url", url: "https://example.com/map.png" }
+      },
+      parentId: "backgrounds-root",
+      sectionId: "backgrounds"
+    });
+    const assetLink = createLink({
+      name: "Original Map Link",
+      parentId: "backgrounds-root",
+      sectionId: "backgrounds",
+      targetId: target.payload.id
+    });
+
+    act(() => {
+      store.dispatch(folder);
+      store.dispatch(target);
+      store.dispatch(webLink);
+      store.dispatch(assetLink);
+    });
+
+    fireEvent.contextMenu(screen.getByRole("button", { name: "Remote Map" }));
+    await user.click(screen.getByRole("menuitem", { name: "Copy web link" }));
+    expect(writeText).toHaveBeenCalledWith("https://example.com/map.png");
+
+    fireEvent.contextMenu(
+      screen.getByRole("button", { name: "Original Map Link" })
+    );
+    await user.click(
+      screen.getByRole("menuitem", { name: "Go to linked asset" })
+    );
+
+    expect(
+      screen.getByLabelText("Current asset library folder")
+    ).toHaveTextContent("Maps");
+    expect(screen.getByRole("button", { name: "Original Map" }))
+      .toHaveAttribute("aria-pressed", "true");
   });
 
   it("updates and history-tracks actors that reference a changed token source", async () => {

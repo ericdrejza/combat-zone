@@ -121,9 +121,12 @@ describe("ActorPropertiesPanel token image source", () => {
     await user.click(within(dialog).getByRole("button", { name: "Goblin token" }));
     await user.click(within(dialog).getByRole("button", { name: "Set Actor Image" }));
 
-    const path = screen.getByRole("textbox", { name: "Token Path" });
+    const path = screen.getByRole("textbox", { name: "Library Path" });
     expect(path).toHaveValue("Tokens/Monsters/Goblin token");
     expect(path).toHaveAttribute("readonly");
+    expect(screen.getByRole("button", {
+      name: "Choose actor image from library"
+    })).toHaveAttribute("aria-pressed", "true");
     expect(store.getState().encounter.present.actors.byId["actor-one"]?.metadata)
       .toMatchObject({ sourceLibraryNodeId: tokenNodeId });
 
@@ -133,9 +136,24 @@ describe("ActorPropertiesPanel token image source", () => {
     );
 
     act(() => { store.dispatch(redoEncounterChange()); });
-    expect(screen.getByRole("textbox", { name: "Token Path" })).toHaveValue(
+    expect(screen.getByRole("textbox", { name: "Library Path" })).toHaveValue(
       "Tokens/Monsters/Goblin token"
     );
+
+    const scrollIntoView = vi.fn();
+    Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+      configurable: true,
+      value: scrollIntoView
+    });
+    await user.click(screen.getByRole("textbox", { name: "Library Path" }));
+    const reopenedLibrary = screen.getByRole("dialog", { name: "Asset Library" });
+    expect(within(reopenedLibrary).getByRole("button", { name: "Goblin token" }))
+      .toHaveAttribute("aria-pressed", "true");
+    expect(scrollIntoView).toHaveBeenCalledWith({ block: "nearest" });
+    await user.click(within(reopenedLibrary).getByRole("button", {
+      name: "Close Asset Library"
+    }));
+    delete (HTMLElement.prototype as Partial<HTMLElement>).scrollIntoView;
 
     await user.click(screen.getByRole("button", {
       name: "Use web link for actor image"
