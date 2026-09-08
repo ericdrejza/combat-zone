@@ -51,7 +51,7 @@ export function AssetLibraryEncounterItem({
 
   return (
     <div
-      className={`${listView ? "rounded-xl" : "rounded-2xl"} border bg-white p-2 transition hover:bg-canvas ${itemClass}`}
+      className={`${listView ? "rounded-xl" : "rounded-2xl"} border bg-canvas-surface p-2 transition hover:bg-canvas ${itemClass}`}
       draggable={!readOnly}
       ref={itemRef}
       onContextMenu={onContextMenu}

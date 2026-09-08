@@ -68,7 +68,7 @@ export function EdgePropertiesPanel() {
   const first = edges[0];
   const fromName = encounter.zones.byId[first.fromZoneId]?.name ?? first.fromZoneId;
   const toName = encounter.zones.byId[first.toZoneId]?.name ?? first.toZoneId;
-  const buttonClass = (active: boolean) => `flex h-9 min-w-9 items-center justify-center rounded-full border px-2 ${active ? "border-canvas-ink bg-canvas-ink text-white" : "border-canvas-line bg-white text-canvas-muted"}`;
+  const buttonClass = (active: boolean) => `flex h-9 min-w-9 items-center justify-center rounded-full border px-2 ${active ? "border-canvas-ink bg-canvas-ink text-canvas-on-ink" : "border-canvas-line bg-canvas-surface text-canvas-muted"}`;
 
   return <div className="space-y-4 text-sm">
     <div><p className="font-semibold text-canvas-ink">Connection</p><p className="text-canvas-muted">{edges.length === 1 ? `${fromName} ${first.directionality === "bilateral" ? "↔" : "→"} ${toName} · ${first.directionality}` : `${edges.length} edges selected`}</p></div>
@@ -92,7 +92,7 @@ export function EdgePropertiesPanel() {
         )}
         tags={first.interactionTags}
       />
-      <label className="block space-y-1"><span className="font-semibold text-canvas-ink">Notes</span><textarea className="w-full rounded-xl border border-canvas-line bg-white px-3 py-2" defaultValue={first.notes ?? ""} onBlur={(event) => { if (event.currentTarget.value !== (first.notes ?? "")) commit(updateEdges(encounter, edgeIds, { notes: event.currentTarget.value }), { notes: event.currentTarget.value }); }} rows={3} /></label>
+      <label className="block space-y-1"><span className="font-semibold text-canvas-ink">Notes</span><textarea className="w-full rounded-xl border border-canvas-line bg-canvas-surface px-3 py-2" defaultValue={first.notes ?? ""} onBlur={(event) => { if (event.currentTarget.value !== (first.notes ?? "")) commit(updateEdges(encounter, edgeIds, { notes: event.currentTarget.value }), { notes: event.currentTarget.value }); }} rows={3} /></label>
     </> : <p className="text-canvas-muted">Select one edge to edit tags and notes.</p>}
     <button className="inline-flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-3 py-2 font-semibold text-red-700" onClick={() => { dispatch(commitEncounterChange({ action: createEncounterActionRecord("edge.delete", { edgeIds }), nextEncounter: deleteEdges(encounter, edgeIds) })); dispatch(clearSelection()); }} type="button"><Trash2 aria-hidden="true" className="h-4 w-4" />Delete {edges.length === 1 ? "edge" : `${edges.length} edges`}</button>
   </div>;

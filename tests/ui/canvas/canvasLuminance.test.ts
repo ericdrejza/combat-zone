@@ -63,6 +63,15 @@ describe('canvas luminance', () => {
     );
   });
 
+  it('uses the active theme canvas color for an empty background', () => {
+    const lightLuminance = getFallbackCanvasLuminance('light');
+    const darkLuminance = getFallbackCanvasLuminance('dark');
+
+    expect(getTextColorForLuminance(lightLuminance)).toBe('#111827');
+    expect(getTextColorForLuminance(darkLuminance)).toBe('#ffffff');
+    expect(getImageLuminanceFallback(null, 'dark')).toBe(darkLuminance);
+  });
+
   it('samples deterministic points inside a polygon', () => {
     const polygon = createZone().polygon;
     const firstRun = createDeterministicSamplePoints(polygon, 5);

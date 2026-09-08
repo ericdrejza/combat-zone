@@ -178,7 +178,7 @@ export function TouchTooltipProvider({ children }: { children: ReactNode }) {
         {tooltip ? (
           <motion.div
             animate={{ opacity: 1 }}
-            className="pointer-events-none fixed z-[100] max-w-[calc(100vw-1.5rem)] rounded-md bg-canvas-ink px-2 py-1 text-center text-xs font-medium text-white shadow-lg"
+            className="pointer-events-none fixed z-[100] max-w-[calc(100vw-1.5rem)] rounded-md bg-canvas-ink px-2 py-1 text-center text-xs font-medium text-canvas-on-ink shadow-lg"
             data-touch-tooltip="true"
             exit={{ opacity: 0 }}
             initial={{ opacity: 0 }}

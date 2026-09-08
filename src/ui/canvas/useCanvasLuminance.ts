@@ -6,6 +6,7 @@ import type { RootState } from "@store/store";
 import { useResolvedImageSource } from "@core/assets/ImageAssetResolver";
 import type { CanvasSize } from "@core/layout/polygonCanvasBounds";
 import { BACKGROUND_SAMPLE_COUNT } from "./canvasConstants";
+import { useTheme } from "@ui/theme/ThemeProvider";
 import {
   createDeterministicSamplePoints,
   drawCanvasBackgroundImage,
@@ -30,8 +31,10 @@ export function useCanvasBackgroundLuminance(
   zones: ZoneCollection,
   canvasSize: CanvasSize
 ): CanvasBackgroundLuminance {
+  const { theme } = useTheme();
   const fallbackLuminance = getImageLuminanceFallback(
-    backgroundImage?.source
+    backgroundImage?.source,
+    theme
   );
   const sourceUrl = useResolvedImageSource(backgroundImage?.source);
   const [backgroundLuminance, setBackgroundLuminance] =
@@ -121,7 +124,14 @@ export function useCanvasBackgroundLuminance(
     return () => {
       cancelled = true;
     };
-  }, [backgroundImage, canvasSize, sourceUrl, zones.allIds, zones.byId]);
+  }, [
+    backgroundImage,
+    canvasSize,
+    fallbackLuminance,
+    sourceUrl,
+    zones.allIds,
+    zones.byId
+  ]);
 
   return backgroundLuminance;
 }
@@ -131,25 +141,27 @@ export function usePolygonDraftBackgroundLuminance(
   zoneDraftPoints: LayoutPoint[],
   canvasSize: CanvasSize
 ): number {
+  const { theme } = useTheme();
   const sourceUrl = useResolvedImageSource(backgroundImage?.source);
   const [polygonDraftBackgroundLuminance, setPolygonDraftBackgroundLuminance] =
-    useState(getFallbackCanvasLuminance());
+    useState(() => getFallbackCanvasLuminance(theme));
 
   useEffect(() => {
     if (zoneDraftPoints.length === 0) {
-      setPolygonDraftBackgroundLuminance(getFallbackCanvasLuminance());
+      setPolygonDraftBackgroundLuminance(getFallbackCanvasLuminance(theme));
       return;
     }
 
     if (!backgroundImage) {
-      setPolygonDraftBackgroundLuminance(getFallbackCanvasLuminance());
+      setPolygonDraftBackgroundLuminance(getFallbackCanvasLuminance(theme));
       return;
     }
 
     let cancelled = false;
     const image = new Image();
     const fallbackLuminance = getImageLuminanceFallback(
-      backgroundImage.source
+      backgroundImage.source,
+      theme
     );
     image.crossOrigin = "anonymous";
 
@@ -197,7 +209,7 @@ export function usePolygonDraftBackgroundLuminance(
     return () => {
       cancelled = true;
     };
-  }, [backgroundImage, canvasSize, sourceUrl, zoneDraftPoints]);
+  }, [backgroundImage, canvasSize, sourceUrl, theme, zoneDraftPoints]);
 
   return polygonDraftBackgroundLuminance;
 }

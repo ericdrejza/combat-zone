@@ -53,14 +53,14 @@ export function ZoneResizeApprovalProvider({
             </p>
             <div className="mt-5 flex justify-end gap-2">
               <button
-                className="rounded-xl border border-canvas-line bg-white px-4 py-2 text-sm font-medium transition hover:bg-canvas"
+                className="rounded-xl border border-canvas-line bg-canvas-surface px-4 py-2 text-sm font-medium transition hover:bg-canvas"
                 onClick={cancel}
                 type="button"
               >
                 Cancel
               </button>
               <button
-                className="rounded-xl bg-canvas-ink px-4 py-2 text-sm font-medium text-white transition hover:opacity-90"
+                className="rounded-xl bg-canvas-ink px-4 py-2 text-sm font-medium text-canvas-on-ink transition hover:opacity-90"
                 onClick={approve}
                 type="button"
               >

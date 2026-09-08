@@ -64,7 +64,7 @@ export function EncounterTitle({ compact = false, name, onRename, readOnly = fal
     const renameButton = (
       <button
         aria-label={`Rename encounter ${name}`}
-        className="flex h-11 min-w-11 shrink-0 items-center justify-center rounded-full border border-canvas-line bg-white px-2 text-canvas-ink shadow-sm transition hover:bg-canvas"
+        className="flex h-11 min-w-11 shrink-0 items-center justify-center rounded-full border border-canvas-line bg-canvas-surface px-2 text-canvas-ink shadow-sm transition hover:bg-canvas"
         disabled={readOnly}
         onClick={onRename}
         title="Rename encounter"
@@ -82,7 +82,7 @@ export function EncounterTitle({ compact = false, name, onRename, readOnly = fal
       <input
         ref={inputRef}
         aria-label="Encounter name"
-        className="relative z-[100] h-11 w-full min-w-32 rounded-lg border border-canvas-ink bg-white px-3 py-2 text-base font-semibold tracking-tight shadow-lg outline-none"
+        className="relative z-[100] h-11 w-full min-w-32 rounded-lg border border-canvas-ink bg-canvas-surface px-3 py-2 text-base font-semibold tracking-tight shadow-lg outline-none"
         onBlur={commitEditing}
         onChange={(event) => setDraftName(event.target.value)}
         onKeyDown={(event) => {
@@ -102,7 +102,7 @@ export function EncounterTitle({ compact = false, name, onRename, readOnly = fal
   return (
     <button
       aria-label={`Edit encounter name ${name}`}
-      className="inline-flex max-w-full min-w-0 items-center rounded-lg px-1 py-1 text-left font-display text-xl font-semibold tracking-tight hover:bg-white/60 lg:text-2xl"
+      className="inline-flex max-w-full min-w-0 items-center rounded-lg px-1 py-1 text-left font-display text-xl font-semibold tracking-tight hover:bg-canvas-surface/60 lg:text-2xl"
       disabled={readOnly}
       onClick={startEditing}
       title="Edit encounter name"

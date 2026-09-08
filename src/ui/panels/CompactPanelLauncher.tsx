@@ -258,8 +258,8 @@ export function CompactPanelLauncher({
       aria-label={`${selectedPanel.title} panel`}
       className={`${inline ? "relative z-40" : "pointer-events-auto absolute bottom-3 right-2"} flex h-11 w-11 items-center justify-center rounded-full border shadow-lg transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-canvas-ink ${
         drawerOpen
-          ? "border-canvas-ink bg-canvas-ink text-white hover:bg-canvas-ink/90"
-          : "border-canvas-line bg-canvas-panel text-canvas-ink hover:bg-white"
+          ? "border-canvas-ink bg-canvas-ink text-canvas-on-ink hover:bg-canvas-ink/90"
+          : "border-canvas-line bg-canvas-panel text-canvas-ink hover:bg-canvas-surface"
       }`}
       onClick={onLauncherClick}
       onKeyDown={onLauncherKeyDown}

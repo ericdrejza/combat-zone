@@ -23,7 +23,7 @@ export function ZoneColorSection({
   zonePaintBrush
 }: ZoneColorSectionProps) {
   return (
-    <section className="rounded-2xl border border-canvas-line bg-white p-3">
+    <section className="rounded-2xl border border-canvas-line bg-canvas-surface p-3">
       <div className="flex items-center justify-between gap-2">
         <button
           aria-expanded={colorSectionOpen}
@@ -42,7 +42,7 @@ export function ZoneColorSection({
           aria-pressed={zonePaintBrush?.sourceZoneId === zone.id}
           className={`inline-flex h-8 w-8 items-center justify-center rounded-full border transition ${
             zonePaintBrush?.sourceZoneId === zone.id
-              ? "border-canvas-ink bg-canvas-ink text-white"
+              ? "border-canvas-ink bg-canvas-ink text-canvas-on-ink"
               : "border-canvas-line text-canvas-ink hover:bg-canvas"
           }`}
           onClick={onActivateZonePaintBrush}

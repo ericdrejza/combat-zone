@@ -14,7 +14,7 @@ export function ZoneNameSection({
   zone
 }: ZoneNameSectionProps) {
   return (
-    <section className="space-y-3 rounded-2xl border border-canvas-line bg-white p-3">
+    <section className="space-y-3 rounded-2xl border border-canvas-line bg-canvas-surface p-3">
       <div className="flex justify-between">
         <h3 className="font-semibold text-canvas-ink">Name</h3>
         <div className="flex">
@@ -23,7 +23,7 @@ export function ZoneNameSection({
               aria-pressed={zone.showName}
               className={`inline-flex h-8 w-8 items-center justify-center rounded-full border border-canvas-line text-canvas-ink hover:bg-canvas-subtle
                 ${zone.showName
-                    ? "bg-canvas-ink text-white"
+                    ? "bg-canvas-ink text-canvas-on-ink"
                     : "text-canvas-muted hover:bg-canvas-subtle"
                 }`
               }
@@ -41,7 +41,7 @@ export function ZoneNameSection({
       </div>
       <label className="block space-y-1">
         <input
-          className="w-full rounded-xl border border-canvas-line bg-white px-3 py-2"
+          className="w-full rounded-xl border border-canvas-line bg-canvas-surface px-3 py-2"
           defaultValue={zone.name}
           onBlur={(event) => {
             const name = event.currentTarget.value.trim() || zone.name;
@@ -62,7 +62,7 @@ export function ZoneNameSection({
         {zone.showName ? (
           <div
             aria-label="Zone name position"
-            className="grid grid-cols-4 overflow-hidden rounded-xl border border-canvas-line bg-white"
+            className="grid grid-cols-4 overflow-hidden rounded-xl border border-canvas-line bg-canvas-surface"
             role="radiogroup"
           >
             {zoneNamePositions.map((position) => {
@@ -76,7 +76,7 @@ export function ZoneNameSection({
                   aria-label={position.label}
                   className={`flex justify-center items-center border-canvas-line p-2 odd:border-r [&:nth-child(-n+2)]:border-b ${
                     selected
-                      ? "bg-canvas-ink text-white"
+                      ? "bg-canvas-ink text-canvas-on-ink"
                       : "text-canvas-muted hover:bg-canvas-subtle"
                   }`}
                   onClick={() =>

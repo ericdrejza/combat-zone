@@ -202,7 +202,7 @@ export function AssetLibraryExplorer({
           aria-selected={selected}
           className={`group flex min-h-9 touch-none select-none items-center gap-2 rounded-lg px-2 text-sm transition ${
             dropFolderId === node.id
-              ? "bg-canvas-ink text-white"
+              ? "bg-canvas-ink text-canvas-on-ink"
               : selected
                 ? "bg-canvas text-canvas-ink"
                 : "text-canvas-ink hover:bg-canvas"
@@ -257,7 +257,7 @@ export function AssetLibraryExplorer({
           {isFolder ? (
             <button
               aria-label={`${expanded ? "Collapse" : "Expand"} ${node.name}`}
-              className="flex h-6 w-6 items-center justify-center rounded-md transition hover:bg-white/60"
+              className="flex h-6 w-6 items-center justify-center rounded-md transition hover:bg-canvas-surface/60"
               onClick={(event) => {
                 event.stopPropagation();
                 onToggleFolder(node.id);
@@ -291,7 +291,7 @@ export function AssetLibraryExplorer({
           {!isRoot ? (
             <button
               aria-label={`Open ${node.name} actions`}
-              className="flex h-7 w-7 items-center justify-center rounded-md opacity-0 transition hover:bg-white/70 group-hover:opacity-100"
+              className="flex h-7 w-7 items-center justify-center rounded-md opacity-0 transition hover:bg-canvas-surface/70 group-hover:opacity-100"
               onClick={(event) => {
                 event.stopPropagation();
                 const bounds = event.currentTarget.getBoundingClientRect();
@@ -332,7 +332,7 @@ export function AssetLibraryExplorer({
         <label className="sr-only" htmlFor="asset-library-search">
           Search asset library
         </label>
-        <div className="flex items-center gap-2 rounded-xl border border-canvas-line bg-white px-3 py-2 text-sm text-canvas-muted">
+        <div className="flex items-center gap-2 rounded-xl border border-canvas-line bg-canvas-surface px-3 py-2 text-sm text-canvas-muted">
           <Search aria-hidden="true" className="h-4 w-4" />
           <input
             className="min-w-0 flex-1 bg-transparent text-canvas-ink outline-none placeholder:text-canvas-muted"

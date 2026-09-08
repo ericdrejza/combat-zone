@@ -203,8 +203,8 @@ export function BackgroundToolButton({
             aria-pressed={selected}
             className={`flex h-11 min-w-11 shrink-0 items-center justify-center gap-2 rounded-full border px-2 text-sm font-medium shadow-sm transition hover:bg-canvas lg:h-auto lg:min-w-0 lg:px-3 lg:py-1.5 ${
               selected
-                ? "border-canvas-ink bg-canvas-ink text-white"
-                : "border-canvas-line bg-white text-canvas-ink"
+                ? "border-canvas-ink bg-canvas-ink text-canvas-on-ink"
+                : "border-canvas-line bg-canvas-surface text-canvas-ink"
             }`}
             onClick={() => {
               dispatch(setActiveTool("background"));

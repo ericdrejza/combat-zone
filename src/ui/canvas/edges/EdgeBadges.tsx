@@ -31,7 +31,7 @@ function EdgeMetadataTooltip({ edge, point, type, edgeColor }: {
       x={point.x - 120}
       y={point.y + 14}
     >
-      <div className="pointer-events-none mx-auto w-fit max-w-56 rounded-full border border-canvas-line bg-white p-1.5 text-canvas-ink text-[10px] shadow-lg">
+      <div className="pointer-events-none mx-auto w-fit max-w-56 rounded-full border border-canvas-line bg-canvas-surface p-1.5 text-canvas-ink text-[10px] shadow-lg">
         {type === "tags" ? (
           <div className="flex flex-wrap gap-2">
             {edge.interactionTags.map((tag) => (

@@ -184,7 +184,7 @@ function DockPanel({
           {renderPanelHeaderActions?.(panel)}
           <button
             aria-label={`Reorder ${panel.title} panel`}
-            className="flex h-8 w-8 touch-none cursor-grab items-center justify-center rounded-full border border-canvas-line bg-white text-canvas-muted transition hover:bg-canvas active:cursor-grabbing"
+            className="flex h-8 w-8 touch-none cursor-grab items-center justify-center rounded-full border border-canvas-line bg-canvas-surface text-canvas-muted transition hover:bg-canvas active:cursor-grabbing"
             draggable={false}
             onDragEnd={onDragEnd}
             onDragStart={(event) => {
@@ -213,7 +213,7 @@ function DockPanel({
                 ? `Expand ${panel.title} panel`
                 : `Collapse ${panel.title} panel`
             }
-            className="flex h-8 w-8 items-center justify-center rounded-full border border-canvas-line bg-white text-canvas-muted transition hover:bg-canvas"
+            className="flex h-8 w-8 items-center justify-center rounded-full border border-canvas-line bg-canvas-surface text-canvas-muted transition hover:bg-canvas"
             onClick={() =>
               onPanelCollapsedChange(panel.id, !panel.collapsed)
             }

@@ -247,7 +247,7 @@ export function ZonelessActorPanel({
         {isResized ? (
           <button
             aria-label="Reset zoneless actors panel size"
-            className="flex h-8 w-8 flex-none items-center justify-center rounded-full border border-canvas-line bg-white text-canvas-ink transition hover:bg-canvas"
+            className="flex h-8 w-8 flex-none items-center justify-center rounded-full border border-canvas-line bg-canvas-surface text-canvas-ink transition hover:bg-canvas"
             onClick={resetSize}
             title="Reset panel size"
             type="button"
@@ -260,7 +260,7 @@ export function ZonelessActorPanel({
           aria-label={expanded ? "Collapse zoneless actors" : "Expand zoneless actors"}
           className={`flex h-8 w-8 flex-none items-center justify-center rounded-full border transition hover:bg-canvas ${
             expanded
-              ? "border-canvas-line bg-white text-canvas-ink"
+              ? "border-canvas-line bg-canvas-surface text-canvas-ink"
               : "border-current bg-transparent text-inherit"
           }`}
           onClick={() => setExpanded((current) => !current)}

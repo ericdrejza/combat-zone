@@ -34,6 +34,7 @@ import {
   MOTION_OVERRIDE_STORAGE_KEY
 } from "@ui/motion_preferences/MotionPreferenceProvider";
 import type { SaveStatus } from "@ui/toolbar/EncounterTitleControls";
+import { THEME_STORAGE_KEY } from "@ui/theme/ThemeProvider";
 import { useWorkspaceWriterLock } from "@hooks/useWorkspaceWriterLock";
 import {
   PersistenceContext,
@@ -392,7 +393,10 @@ export function PersistenceProvider({
     libraryTimerRef.current = null;
     const draft = createDraft();
     const emptyLibrary = createEmptyLibraryState();
-    await resetLocalPersistence(repository, draft, [MOTION_OVERRIDE_STORAGE_KEY]);
+    await resetLocalPersistence(repository, draft, [
+      MOTION_OVERRIDE_STORAGE_KEY,
+      THEME_STORAGE_KEY
+    ]);
     await localSync?.clearSyncData();
     globalThis.dispatchEvent(new Event(LOCAL_PREFERENCES_RESET_EVENT));
     lastLibraryRef.current = emptyLibrary;
@@ -416,7 +420,8 @@ export function PersistenceProvider({
         await repository.initialize();
         if (!readOnly) {
           await recoverInterruptedLocalReset(repository, [
-            MOTION_OVERRIDE_STORAGE_KEY
+            MOTION_OVERRIDE_STORAGE_KEY,
+            THEME_STORAGE_KEY
           ]);
         }
         if (!cancelled) {

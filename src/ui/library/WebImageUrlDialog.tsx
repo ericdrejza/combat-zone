@@ -44,7 +44,7 @@ export function WebImageUrlDialog({
       role="dialog"
     >
       <form
-        className="w-[min(28rem,92vw)] rounded-3xl border border-canvas-line bg-white p-5 shadow-2xl"
+        className="w-[min(28rem,92vw)] rounded-3xl border border-canvas-line bg-canvas-surface p-5 shadow-2xl"
         onSubmit={(event) => void handleSubmit(event)}
       >
         <div className="flex items-center justify-between gap-3">
@@ -108,7 +108,7 @@ export function WebImageUrlDialog({
             Cancel
           </button>
           <button
-            className="rounded-xl bg-canvas-ink px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+            className="rounded-xl bg-canvas-ink px-4 py-2 text-sm font-semibold text-canvas-on-ink disabled:opacity-60"
             disabled={pending}
             type="submit"
           >

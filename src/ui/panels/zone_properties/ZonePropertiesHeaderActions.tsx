@@ -16,7 +16,7 @@ export function ZonePropertiesHeaderActions() {
   return (
     <button
       aria-label="Export first selected zone properties"
-      className="flex h-8 w-8 items-center justify-center rounded-full border border-canvas-line bg-white text-canvas-muted transition hover:bg-canvas"
+      className="flex h-8 w-8 items-center justify-center rounded-full border border-canvas-line bg-canvas-surface text-canvas-muted transition hover:bg-canvas"
       onClick={exportSourcePropertiesToSelection}
       title="Export first selected zone properties"
       type="button"

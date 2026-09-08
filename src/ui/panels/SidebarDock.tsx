@@ -41,7 +41,7 @@ export function SidebarDock({
         aria-label={collapsed ? expandLabel : collapseLabel}
         className={`flex h-10 w-10 shrink-0 items-center justify-center ${
           side === "left" ? "self-start" : "self-end"
-        } rounded-full border border-canvas-line bg-canvas-panel text-canvas-muted shadow-sm transition hover:bg-white`}
+        } rounded-full border border-canvas-line bg-canvas-panel text-canvas-muted shadow-sm transition hover:bg-canvas-surface`}
         onClick={onToggle}
         type="button"
       >

@@ -70,7 +70,7 @@ export function EncounterRenameDialog({ onClose }: EncounterRenameDialogProps) {
           <input
             ref={inputRef}
             aria-label="Encounter name"
-            className="w-full rounded-xl border border-canvas-line bg-white px-3 py-2 font-normal outline-none focus:border-canvas-ink"
+            className="w-full rounded-xl border border-canvas-line bg-canvas-surface px-3 py-2 font-normal outline-none focus:border-canvas-ink"
             id="encounter-name"
             onChange={(event) => setName(event.target.value)}
             value={name}
@@ -78,14 +78,14 @@ export function EncounterRenameDialog({ onClose }: EncounterRenameDialogProps) {
         </label>
         <div className="flex justify-end gap-2">
           <button
-            className="rounded-xl border border-canvas-line bg-white px-4 py-2 text-sm font-medium transition hover:bg-canvas"
+            className="rounded-xl border border-canvas-line bg-canvas-surface px-4 py-2 text-sm font-medium transition hover:bg-canvas"
             onClick={onClose}
             type="button"
           >
             Cancel
           </button>
           <button
-            className="rounded-xl bg-canvas-ink px-4 py-2 text-sm font-medium text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+            className="rounded-xl bg-canvas-ink px-4 py-2 text-sm font-medium text-canvas-on-ink transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
             disabled={!canRename}
             type="submit"
           >

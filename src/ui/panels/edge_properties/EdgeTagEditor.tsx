@@ -23,7 +23,7 @@ export function EdgeTagEditor({ onChange, tags }: Props) {
       <span className="font-semibold text-canvas-ink">Tags</span>
       <input
         aria-label="Add interaction tag"
-        className="w-full rounded-xl border border-canvas-line bg-white px-3 py-2"
+        className="w-full rounded-xl border border-canvas-line bg-canvas-surface px-3 py-2"
         onKeyDown={addTag}
         placeholder="Type a tag and press Enter"
       />
@@ -33,7 +33,7 @@ export function EdgeTagEditor({ onChange, tags }: Props) {
             <button
               key={tag}
               aria-label={`Remove tag ${tag}`}
-              className="group inline-flex items-center gap-1 rounded-full bg-canvas-ink px-2.5 py-1 text-xs font-medium text-white"
+              className="group inline-flex items-center gap-1 rounded-full bg-canvas-ink px-2.5 py-1 text-xs font-medium text-canvas-on-ink"
               onClick={() => onChange(tags.filter((candidate) => candidate !== tag))}
               type="button"
             >

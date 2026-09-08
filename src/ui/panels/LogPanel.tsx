@@ -48,7 +48,7 @@ export function LogPanelHeaderActions() {
   return (
     <button
       aria-label="Clear encounter log"
-      className="flex h-8 w-8 items-center justify-center rounded-full border border-canvas-line bg-white text-canvas-muted transition hover:bg-canvas"
+      className="flex h-8 w-8 items-center justify-center rounded-full border border-canvas-line bg-canvas-surface text-canvas-muted transition hover:bg-canvas"
       onClick={() => dispatch(resetEncounterLog())}
       title="Clear encounter log"
       type="button"
@@ -120,7 +120,7 @@ export function LogPanel() {
     >
       {entries.map((entry) => (
         <li
-          className="rounded-xl border border-canvas-line bg-white px-3 py-2 text-sm"
+          className="rounded-xl border border-canvas-line bg-canvas-surface px-3 py-2 text-sm"
           key={entry.id}
         >
           <div className="mb-1 flex items-center justify-between gap-2 text-xs font-semibold uppercase tracking-wide text-canvas-muted">

@@ -3,6 +3,7 @@ import { useState } from "react";
 
 import { CloudSyncSettings } from "@ui/cloud_sync";
 import { DataSettings } from "./DataSettings";
+import { InterfaceSettings } from "./InterfaceSettings";
 import { KeybindSettings } from "./KeybindSettings";
 import { SettingsSidebar } from "./SettingsSidebar";
 import type { SettingsTabId } from "./settingsTabs";
@@ -13,11 +14,6 @@ type SettingsModalProps = {
   onResetLocalData: () => Promise<void> | void;
   onImportWorkspaceFile: (file: File) => Promise<void> | void;
   readOnly: boolean;
-};
-
-const emptySettingsCopy: Record<"audio" | "interface", string> = {
-  audio: "Audio preferences will appear here.",
-  interface: "Interface preferences will appear here."
 };
 
 export function SettingsModal(props: SettingsModalProps) {
@@ -31,11 +27,12 @@ export function SettingsModal(props: SettingsModalProps) {
       </section>
     );
     if (activeTab === "data") return <DataSettings {...props} />;
+    if (activeTab === "interface") return <InterfaceSettings />;
     if (activeTab === "keybinds") return <KeybindSettings />;
     return (
       <section className="p-5" aria-labelledby={`settings-${activeTab}-heading`}>
         <h3 className="font-display text-lg font-semibold capitalize" id={`settings-${activeTab}-heading`}>{activeTab}</h3>
-        <p className="mt-1 text-sm text-canvas-muted">{emptySettingsCopy[activeTab]}</p>
+        <p className="mt-1 text-sm text-canvas-muted">Audio preferences will appear here.</p>
       </section>
     );
   }
@@ -45,7 +42,7 @@ export function SettingsModal(props: SettingsModalProps) {
       <div className="flex h-[min(42rem,90vh)] w-[min(56rem,94vw)] flex-col overflow-hidden rounded-3xl border border-canvas-line bg-canvas-panel shadow-2xl">
         <header className="flex items-center justify-between border-b border-canvas-line px-5 py-4">
           <h2 className="font-display text-xl font-semibold">Settings</h2>
-          <button aria-label="Close settings" className="flex h-9 w-9 items-center justify-center rounded-full border border-canvas-line bg-white text-canvas-muted transition hover:bg-canvas" onClick={props.onClose} type="button"><X aria-hidden="true" className="h-4 w-4" /></button>
+          <button aria-label="Close settings" className="flex h-9 w-9 items-center justify-center rounded-full border border-canvas-line bg-canvas-surface text-canvas-muted transition hover:bg-canvas" onClick={props.onClose} type="button"><X aria-hidden="true" className="h-4 w-4" /></button>
         </header>
         <div className="flex min-h-0 flex-1">
           <SettingsSidebar activeTab={activeTab} onSelect={setActiveTab} />

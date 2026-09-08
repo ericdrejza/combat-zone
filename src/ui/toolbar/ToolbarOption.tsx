@@ -7,7 +7,7 @@ import { TouchTooltip } from "./TouchTooltip";
 
 const TOOLBAR_OPTION_ROW_CLASS_NAME = "flex shrink-0 items-center gap-2";
 const TOOLBAR_OPTION_GROUP_CLASS_NAME =
-  "flex gap-1 rounded-full border border-canvas-line bg-white/75 p-1 shadow-sm";
+  "flex gap-1 rounded-full border border-canvas-line bg-canvas-surface/75 p-1 shadow-sm";
 
 function joinClassNames(...classNames: Array<string | undefined>) {
   return classNames.filter(Boolean).join(" ");
@@ -54,8 +54,8 @@ export function ToolbarOptionButton({
   ...props
 }: ToolbarOptionButtonProps) {
   const stateClassName = active
-    ? "border-canvas-ink bg-canvas-ink text-white"
-    : "border-canvas-line bg-white text-canvas-muted hover:bg-canvas";
+    ? "border-canvas-ink bg-canvas-ink text-canvas-on-ink"
+    : "border-canvas-line bg-canvas-surface text-canvas-muted hover:bg-canvas";
 
   return (
     <TouchTooltip
@@ -107,7 +107,9 @@ export function ToolbarOptionKeybind({
   active = false,
   children
 }: ToolbarOptionKeybindProps) {
-  const className = active ? "text-white/60" : "text-canvas-muted/70";
+  const className = active
+    ? "text-canvas-on-ink/60"
+    : "text-canvas-muted/70";
 
   return (
     <span

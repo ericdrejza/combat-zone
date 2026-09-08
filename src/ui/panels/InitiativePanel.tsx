@@ -47,9 +47,9 @@ import { useInitiativeReorderAutoScroll } from "./initiative/useInitiativeReorde
 import { useInitiativeTurnAutoScroll } from "./initiative/useInitiativeTurnAutoScroll";
 
 const actionClass =
-  "inline-flex h-9 w-9 items-center justify-center rounded-xl border border-canvas-line bg-white text-canvas-ink disabled:cursor-not-allowed disabled:opacity-40";
+  "inline-flex h-9 w-9 items-center justify-center rounded-xl border border-canvas-line bg-canvas-surface text-canvas-ink disabled:cursor-not-allowed disabled:opacity-40";
 const activeActionClass =
-  "inline-flex h-9 w-9 items-center justify-center rounded-xl border border-canvas-ink bg-canvas-ink text-white";
+  "inline-flex h-9 w-9 items-center justify-center rounded-xl border border-canvas-ink bg-canvas-ink text-canvas-on-ink";
 
 export function InitiativePanel({
   participantInteractionStrategy = DEFAULT_INITIATIVE_PARTICIPANT_INTERACTION_STRATEGY
@@ -242,7 +242,7 @@ export function InitiativePanel({
 
       {confirmClear ? (
         <div aria-label="Confirm remove all initiative actors" aria-modal="true" className="viewport-overlay z-[70] flex items-center justify-center overflow-y-auto bg-black/30 p-6" role="dialog">
-          <div className="w-[min(26rem,92vw)] rounded-3xl border border-canvas-line bg-white p-5 shadow-2xl">
+          <div className="w-[min(26rem,92vw)] rounded-3xl border border-canvas-line bg-canvas-surface p-5 shadow-2xl">
             <h3 className="font-display text-lg font-semibold">Clear initiative?</h3>
             <p className="mt-2 text-sm text-canvas-muted">This removes every participant and scoped initiative value. The active round is preserved, and you can undo this action.</p>
             <div className="mt-5 flex justify-end gap-2">

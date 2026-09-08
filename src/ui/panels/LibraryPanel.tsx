@@ -74,7 +74,7 @@ export function LibraryPanelViewToggle({
           : "Switch Library to grid view"
       }
       aria-pressed={showingGrid}
-      className="flex h-8 w-8 items-center justify-center rounded-full border border-canvas-line bg-white text-canvas-muted transition hover:bg-canvas"
+      className="flex h-8 w-8 items-center justify-center rounded-full border border-canvas-line bg-canvas-surface text-canvas-muted transition hover:bg-canvas"
       onClick={onToggle}
       type="button"
     >

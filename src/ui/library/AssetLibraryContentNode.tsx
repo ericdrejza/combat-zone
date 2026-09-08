@@ -62,8 +62,8 @@ export function AssetLibraryContentNode({
       data-library-drag-node-id={node.id}
       data-library-drop-folder-id={node.type === "folder" ? node.id : undefined}
       className={listView
-        ? `group flex w-full touch-none select-none items-center gap-3 rounded-xl border bg-white p-2 text-left transition hover:bg-canvas ${itemClass}`
-        : `touch-none select-none rounded-2xl border bg-white p-2 text-left transition hover:bg-canvas ${itemClass}`}
+        ? `group flex w-full touch-none select-none items-center gap-3 rounded-xl border bg-canvas-surface p-2 text-left transition hover:bg-canvas ${itemClass}`
+        : `touch-none select-none rounded-2xl border bg-canvas-surface p-2 text-left transition hover:bg-canvas ${itemClass}`}
       draggable={false}
       ref={buttonRef}
       onClick={onSelect}

@@ -12,6 +12,8 @@ import {
   PersistenceProvider,
   usePersistence
 } from "@ui/persistence/PersistenceProvider";
+import { MOTION_OVERRIDE_STORAGE_KEY } from "@ui/motion_preferences/MotionPreferenceProvider";
+import { THEME_STORAGE_KEY } from "@ui/theme/ThemeProvider";
 
 function Probe() {
   const persistence = usePersistence();
@@ -40,6 +42,12 @@ function renderPersistence(repository: InMemoryWorkspaceRepository) {
 }
 
 describe("PersistenceProvider", () => {
+  afterEach(() => {
+    localStorage.removeItem(MOTION_OVERRIDE_STORAGE_KEY);
+    localStorage.removeItem(THEME_STORAGE_KEY);
+    localStorage.removeItem("unrelated-origin-key");
+  });
+
   it("restores the active encounter and autosaves only its current state", async () => {
     const repository = new InMemoryWorkspaceRepository();
     const persisted = createEncounterState({ id: "restored", name: "Restored" });
@@ -81,6 +89,9 @@ describe("PersistenceProvider", () => {
     await repository.createEncounter(
       createEncounterState({ id: "old", name: "Old encounter" })
     );
+    localStorage.setItem(MOTION_OVERRIDE_STORAGE_KEY, "true");
+    localStorage.setItem(THEME_STORAGE_KEY, "dark");
+    localStorage.setItem("unrelated-origin-key", "keep");
     renderPersistence(repository);
     await screen.findByText("Untitled Encounter");
 
@@ -93,6 +104,9 @@ describe("PersistenceProvider", () => {
       expect((await repository.getRecoveryDraft())?.state.name).toBe(
         "Untitled Encounter"
       );
+      expect(localStorage.getItem(MOTION_OVERRIDE_STORAGE_KEY)).toBeNull();
+      expect(localStorage.getItem(THEME_STORAGE_KEY)).toBeNull();
+      expect(localStorage.getItem("unrelated-origin-key")).toBe("keep");
     });
   });
 });

@@ -125,7 +125,7 @@ export function ActorPropertiesPanel({
       <label className="block space-y-1">
         <span className="font-semibold text-canvas-ink">Name</span>
         <input
-          className="w-full rounded-xl border border-canvas-line bg-white px-3 py-1.5 text-canvas-ink"
+          className="w-full rounded-xl border border-canvas-line bg-canvas-surface px-3 py-1.5 text-canvas-ink"
           onBlur={(event) =>
             commitActorProperties({ name: event.currentTarget.value.trim() })
           }
@@ -141,7 +141,7 @@ export function ActorPropertiesPanel({
       <label className="flex items-center justify-between gap-2">
         <span className="font-semibold text-canvas-ink">Type</span>
         <select
-          className="min-w-0 flex-1 rounded-xl border border-canvas-line bg-white px-2 py-1.5 text-canvas-ink"
+          className="min-w-0 flex-1 rounded-xl border border-canvas-line bg-canvas-surface px-2 py-1.5 text-canvas-ink"
           onChange={(event) =>
             commitActorProperties({ actorType: event.currentTarget.value as ActorType })
           }
@@ -166,8 +166,8 @@ export function ActorPropertiesPanel({
               aria-pressed={Boolean(tokenPath)}
               className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition ${
                 tokenPath
-                  ? "border-canvas-ink bg-canvas-ink text-white"
-                  : "border-canvas-line bg-white text-canvas-muted hover:bg-canvas"
+                  ? "border-canvas-ink bg-canvas-ink text-canvas-on-ink"
+                  : "border-canvas-line bg-canvas-surface text-canvas-muted hover:bg-canvas"
               }`}
               onClick={onOpenTokenLibrary}
               title="Choose actor image from library"
@@ -180,8 +180,8 @@ export function ActorPropertiesPanel({
               aria-pressed={!tokenPath}
               className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition ${
                 tokenPath
-                  ? "border-canvas-line bg-white text-canvas-muted hover:bg-canvas"
-                  : "border-canvas-ink bg-canvas-ink text-white"
+                  ? "border-canvas-line bg-canvas-surface text-canvas-muted hover:bg-canvas"
+                  : "border-canvas-ink bg-canvas-ink text-canvas-on-ink"
               }`}
               onClick={activateWebImageSource}
               title="Use web link for actor image"
@@ -196,7 +196,7 @@ export function ActorPropertiesPanel({
           ref={tokenInputRef}
           aria-label={tokenPath ? "Token Path" : "Token image URL"}
           className={`w-full rounded-xl border border-canvas-line px-3 py-1.5 text-canvas-ink ${
-            tokenPath ? "bg-canvas" : "bg-white"
+            tokenPath ? "bg-canvas" : "bg-canvas-surface"
           }`}
           onBlur={(event) => {
             if (tokenPath) return;

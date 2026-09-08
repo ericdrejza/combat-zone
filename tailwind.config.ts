@@ -2,15 +2,19 @@ import type { Config } from 'tailwindcss';
 
 export default {
   content: ['./index.html', './src/**/*.{ts,tsx}'],
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
         canvas: {
-          DEFAULT: '#dcd7cd',
-          ink: '#24211c',
-          muted: '#756f63',
-          panel: '#fffaf0',
-          line: '#d7cbb8'
+          DEFAULT: 'rgb(var(--color-canvas) / <alpha-value>)',
+          ink: 'rgb(var(--color-canvas-ink) / <alpha-value>)',
+          'on-ink': 'rgb(var(--color-canvas-on-ink) / <alpha-value>)',
+          muted: 'rgb(var(--color-canvas-muted) / <alpha-value>)',
+          panel: 'rgb(var(--color-canvas-panel) / <alpha-value>)',
+          line: 'rgb(var(--color-canvas-line) / <alpha-value>)',
+          subtle: 'rgb(var(--color-canvas-subtle) / <alpha-value>)',
+          surface: 'rgb(var(--color-surface) / <alpha-value>)'
         }
       },
       fontFamily: {

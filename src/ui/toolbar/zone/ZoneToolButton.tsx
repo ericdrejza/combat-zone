@@ -38,8 +38,8 @@ export function ZoneToolButton({
   const dispatch = useDispatch();
   const selected = activeToolId === "zone";
   const toolButtonClassName = selected
-    ? "border-canvas-ink bg-canvas-ink text-white"
-    : "border-canvas-line bg-white text-canvas-ink";
+    ? "border-canvas-ink bg-canvas-ink text-canvas-on-ink"
+    : "border-canvas-line bg-canvas-surface text-canvas-ink";
 
   function renderOptions() {
     return (
