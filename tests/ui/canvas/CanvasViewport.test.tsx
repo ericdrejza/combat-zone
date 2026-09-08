@@ -14,10 +14,12 @@ import {
   getZoomToFit
 } from "@ui/canvas/canvasViewportMath";
 import { renderApp } from "@tests/ui/renderApp";
+import { INTERFACE_PREFERENCES_STORAGE_KEY } from "@ui/interface_preferences/InterfacePreferenceProvider";
 
 describe("canvas viewport navigation", () => {
   afterEach(() => {
     vi.useRealTimers();
+    localStorage.removeItem(INTERFACE_PREFERENCES_STORAGE_KEY);
   });
 
   it("calculates fit zoom and center-preserving scroll positions", () => {
@@ -93,7 +95,7 @@ describe("canvas viewport navigation", () => {
     expect(onContextMenu).not.toHaveBeenCalled();
   });
 
-  it("orders controls, changes perception only, and toggles panning", async () => {
+  it("orders controls and changes perception only", async () => {
     const user = userEvent.setup();
     renderApp();
     const navigation = screen.getByLabelText("Canvas navigation");
@@ -104,8 +106,7 @@ describe("canvas viewport navigation", () => {
       "Zoom to fit",
       "Zoom out",
       "Zoom in",
-      "Reset zoom",
-      "Pan with right drag"
+      "More zoom options"
     ]);
     const historyLength = store.getState().encounter.past.length;
     const viewport = screen.getByLabelText("Canvas viewport");
@@ -115,20 +116,85 @@ describe("canvas viewport navigation", () => {
     expect(screen.getByLabelText("Current zoom")).toHaveTextContent("110%");
     expect(store.getState().encounter.past).toHaveLength(historyLength);
 
+    await user.hover(screen.getByRole("button", { name: "More zoom options" }));
     await user.click(screen.getByRole("button", { name: "Reset zoom" }));
     expect(viewport).toHaveAttribute("data-canvas-zoom", "1");
     expect(screen.getByLabelText("Current zoom")).toHaveTextContent("100%");
-
-    const panButton = screen.getByRole("button", { name: "Pan with right drag" });
-    expect(panButton).toHaveAttribute("aria-pressed", "true");
-    await user.click(panButton);
-    expect(panButton).toHaveAttribute("aria-pressed", "false");
 
     await user.click(screen.getByRole("button", { name: "Collapse canvas navigation" }));
     const expandButton = screen.getByRole("button", { name: "Expand canvas navigation" });
     expect(expandButton.querySelector("svg.lucide-search")).not.toBeNull();
     await user.click(expandButton);
     expect(screen.getByRole("button", { name: "Collapse canvas navigation" })).toBeInTheDocument();
+  });
+
+  it("opens fit options immediately on hover and fits either canvas axis", async () => {
+    const user = userEvent.setup();
+    renderApp();
+    const viewport = screen.getByLabelText("Canvas viewport");
+    Object.defineProperties(viewport, {
+      clientHeight: { configurable: true, value: 300 },
+      clientWidth: { configurable: true, value: 600 }
+    });
+
+    const fit = screen.getByRole("button", { name: "More zoom options" });
+    expect(screen.queryByRole("toolbar", { name: "Zoom to fit options" })).not.toBeInTheDocument();
+    await user.hover(fit);
+    const tray = screen.getByRole("toolbar", { name: "Zoom to fit options" });
+    expect(tray).toBeInTheDocument();
+    expect(within(tray).getAllByRole("button").map((button) => button.getAttribute("aria-label"))).toEqual([
+      "Zoom to fit width",
+      "Zoom to fit height",
+      "Reset zoom"
+    ]);
+
+    await user.click(within(tray).getByRole("button", { name: "Zoom to fit width" }));
+    expect(viewport).toHaveAttribute("data-canvas-zoom", "0.625");
+    await user.click(within(tray).getByRole("button", { name: "Zoom to fit height" }));
+    expect(viewport).toHaveAttribute("data-canvas-zoom", "0.469");
+  });
+
+  it("opens fit options when the options control is touched", () => {
+    renderApp();
+    const options = screen.getByRole("button", { name: "More zoom options" });
+
+    fireEvent.pointerDown(options, {
+      button: 0,
+      pointerId: 7,
+      pointerType: "touch"
+    });
+
+    expect(
+      screen.getByRole("toolbar", { name: "Zoom to fit options" })
+    ).toBeInTheDocument();
+  });
+
+  it("pins the zoom options on click until toggled or clicked away", () => {
+    vi.useFakeTimers();
+    renderApp();
+    const options = screen.getByRole("button", { name: "More zoom options" });
+
+    fireEvent.pointerEnter(options, { pointerType: "mouse" });
+    fireEvent.click(options);
+    fireEvent.pointerLeave(options, { pointerType: "mouse" });
+    act(() => vi.advanceTimersByTime(200));
+    expect(
+      screen.getByRole("toolbar", { name: "Zoom to fit options" })
+    ).toBeInTheDocument();
+
+    fireEvent.pointerDown(document.body, { pointerType: "mouse" });
+    expect(
+      screen.queryByRole("toolbar", { name: "Zoom to fit options" })
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(options);
+    expect(
+      screen.getByRole("toolbar", { name: "Zoom to fit options" })
+    ).toBeInTheDocument();
+    fireEvent.click(options);
+    expect(
+      screen.queryByRole("toolbar", { name: "Zoom to fit options" })
+    ).not.toBeInTheDocument();
   });
 
   it("re-reads the current workspace size every time zoom to fit runs", async () => {
@@ -168,6 +234,27 @@ describe("canvas viewport navigation", () => {
     fireEvent.mouseUp(window, { button: 2 });
     expect(viewport.scrollLeft).toBe(150);
     expect(viewport.scrollTop).toBe(150);
+  });
+
+  it("disables right-drag panning from the interface preference", () => {
+    localStorage.setItem(
+      INTERFACE_PREFERENCES_STORAGE_KEY,
+      JSON.stringify({
+        autoSelectActiveActor: true,
+        panWithRightClickDrag: false
+      })
+    );
+    renderApp();
+    const viewport = screen.getByLabelText("Canvas viewport");
+    viewport.scrollLeft = 100;
+    viewport.scrollTop = 80;
+
+    fireEvent.mouseDown(viewport, { button: 2, clientX: 200, clientY: 200 });
+    fireEvent.mouseMove(window, { clientX: 180, clientY: 170 });
+    fireEvent.mouseUp(window, { button: 2 });
+
+    expect(viewport.scrollLeft).toBe(100);
+    expect(viewport.scrollTop).toBe(80);
   });
 
   it("preserves zoom and the proportionally centered point after canvas resize", async () => {

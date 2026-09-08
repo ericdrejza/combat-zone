@@ -21,6 +21,9 @@ import {
 } from "@store/encounterSlice";
 import { store } from "@store/store";
 import { renderApp } from "@tests/ui/renderApp";
+import { INTERFACE_PREFERENCES_STORAGE_KEY } from "@ui/interface_preferences/InterfacePreferenceProvider";
+
+afterEach(() => localStorage.removeItem(INTERFACE_PREFERENCES_STORAGE_KEY));
 
 function collection<TEntity extends { id: string }>(
   entities: TEntity[]
@@ -199,9 +202,6 @@ describe("InitiativePanel", () => {
     const autoSelect = screen.getByRole("button", {
       name: "Auto-select active actor"
     });
-    expect(autoSelect).toHaveAttribute("aria-pressed", "false");
-
-    await user.click(autoSelect);
     expect(autoSelect).toHaveAttribute("aria-pressed", "true");
     await user.click(screen.getByRole("button", { name: "Next turn" }));
     expect(store.getState().interaction.activeToolId).toBe("select");

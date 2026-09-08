@@ -14,6 +14,7 @@ import { useSelector } from "react-redux";
 import type { CanvasSize } from "@core/layout/polygonCanvasBounds";
 import type { LayoutPoint } from "@core/layout/types";
 import type { RootState } from "@store/store";
+import { useInterfacePreferences } from "@ui/interface_preferences/InterfacePreferenceProvider";
 import {
   CANVAS_ZOOM_STEP,
   clampZoom,
@@ -27,7 +28,6 @@ type CanvasViewportValue = {
   getViewportSize: () => CanvasSize;
   panEnabled: boolean;
   registerViewport: (element: HTMLDivElement | null) => void;
-  setPanEnabled: (enabled: boolean) => void;
   viewportSize: CanvasSize;
   zoom: number;
   zoomIn: () => void;
@@ -40,6 +40,8 @@ type CanvasViewportValue = {
     canvasPoint?: LayoutPoint
   ) => void;
   zoomToFit: () => void;
+  zoomToFitHeight: () => void;
+  zoomToFitWidth: () => void;
 };
 
 const CanvasViewportContext = createContext<CanvasViewportValue | null>(null);
@@ -56,13 +58,13 @@ function readViewportSize(
 }
 
 export function CanvasViewportProvider({ children }: PropsWithChildren) {
+  const { panWithRightClickDrag } = useInterfacePreferences();
   const encounterId = useSelector(
     (state: RootState) => state.encounter.present.id
   );
   const canvasSize = useSelector(
     (state: RootState) => state.encounter.present.canvasSize
   );
-  const [panEnabled, setPanEnabled] = useState(true);
   const [viewportElement, setViewportElement] =
     useState<HTMLDivElement | null>(null);
   const [viewportSize, setViewportSize] = useState<CanvasSize>({
@@ -231,6 +233,20 @@ export function CanvasViewportProvider({ children }: PropsWithChildren) {
     [canvasSize, getViewportSize, setCenteredZoom]
   );
 
+  const zoomToFitAxis = useCallback(
+    (axis: "height" | "width") => {
+      const currentViewportSize = getViewportSize();
+      const canvasLength = canvasSize[axis];
+      const viewportLength = currentViewportSize[axis];
+      setCenteredZoom(
+        canvasLength > 0 && viewportLength > 0
+          ? viewportLength / canvasLength
+          : 1
+      );
+    },
+    [canvasSize, getViewportSize, setCenteredZoom]
+  );
+
   useLayoutEffect(() => {
     const pendingResize = pendingResizeRef.current;
     if (!pendingResize || !viewportElement) return;
@@ -257,25 +273,27 @@ export function CanvasViewportProvider({ children }: PropsWithChildren) {
   const value = useMemo<CanvasViewportValue>(
     () => ({
       getViewportSize,
-      panEnabled,
+      panEnabled: panWithRightClickDrag,
       registerViewport: setViewportElement,
       resetZoom: () => setCenteredZoom(1),
-      setPanEnabled,
       setZoomAtPoint,
       viewportSize,
       zoom,
       zoomIn: () => setCenteredZoom(zoomRef.current + CANVAS_ZOOM_STEP),
       zoomOut: () => setCenteredZoom(zoomRef.current - CANVAS_ZOOM_STEP),
-      zoomToFit
+      zoomToFit,
+      zoomToFitHeight: () => zoomToFitAxis("height"),
+      zoomToFitWidth: () => zoomToFitAxis("width")
     }),
     [
       getViewportSize,
-      panEnabled,
+      panWithRightClickDrag,
       setCenteredZoom,
       setZoomAtPoint,
       viewportSize,
       zoom,
-      zoomToFit
+      zoomToFit,
+      zoomToFitAxis
     ]
   );
 

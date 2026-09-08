@@ -125,4 +125,49 @@ describe("TouchTooltipProvider", () => {
 
     expect(screen.getByRole("tooltip")).toHaveTextContent("Explicit help");
   });
+
+  it("uses accessible names for interactables without explicit tooltip metadata", () => {
+    vi.useFakeTimers();
+    render(
+      <TouchTooltipProvider>
+        <button aria-label="Accessible toolbar action" type="button">
+          <span aria-hidden="true">Icon</span>
+        </button>
+      </TouchTooltipProvider>
+    );
+    const button = screen.getByRole("button", {
+      name: "Accessible toolbar action"
+    });
+
+    fireEvent.pointerDown(button.querySelector("span") ?? button, {
+      button: 0,
+      pointerId: 5,
+      pointerType: "touch"
+    });
+    act(() => vi.advanceTimersByTime(500));
+
+    expect(screen.getByRole("tooltip")).toHaveTextContent(
+      "Accessible toolbar action"
+    );
+  });
+
+  it("falls back to associated labels for form controls", () => {
+    vi.useFakeTimers();
+    render(
+      <TouchTooltipProvider>
+        <label htmlFor="toolbar-value">Toolbar value</label>
+        <input id="toolbar-value" />
+      </TouchTooltipProvider>
+    );
+    const input = screen.getByRole("textbox", { name: "Toolbar value" });
+
+    fireEvent.pointerDown(input, {
+      button: 0,
+      pointerId: 6,
+      pointerType: "touch"
+    });
+    act(() => vi.advanceTimersByTime(500));
+
+    expect(screen.getByRole("tooltip")).toHaveTextContent("Toolbar value");
+  });
 });

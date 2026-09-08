@@ -1,8 +1,12 @@
-import { act, render, screen } from "@testing-library/react";
+import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { LOCAL_PREFERENCES_RESET_EVENT } from "@ui/motion_preferences/MotionPreferenceProvider";
 import { InterfaceSettings } from "@ui/settings/InterfaceSettings";
+import {
+  INTERFACE_PREFERENCES_STORAGE_KEY,
+  InterfacePreferenceProvider
+} from "@ui/interface_preferences/InterfacePreferenceProvider";
 import {
   THEME_STORAGE_KEY,
   ThemeProvider
@@ -11,6 +15,7 @@ import {
 describe("InterfaceSettings", () => {
   afterEach(() => {
     localStorage.removeItem(THEME_STORAGE_KEY);
+    localStorage.removeItem(INTERFACE_PREFERENCES_STORAGE_KEY);
     document.documentElement.classList.remove("dark");
     delete document.documentElement.dataset.theme;
   });
@@ -18,7 +23,9 @@ describe("InterfaceSettings", () => {
   function renderSettings() {
     return render(
       <ThemeProvider>
-        <InterfaceSettings />
+        <InterfacePreferenceProvider>
+          <InterfaceSettings />
+        </InterfacePreferenceProvider>
       </ThemeProvider>
     );
   }
@@ -34,6 +41,31 @@ describe("InterfaceSettings", () => {
     expect(document.documentElement).toHaveClass("dark");
     expect(document.documentElement).toHaveAttribute("data-theme", "dark");
     expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe("dark");
+  });
+
+  it("groups enabled interface preferences and persists toggle changes", async () => {
+    const user = userEvent.setup();
+    renderSettings();
+
+    const general = screen.getByRole("group", { name: "General" });
+    const defaults = screen.getByRole("group", { name: "Defaults" });
+    const autoSelect = within(defaults).getByRole("switch", {
+      name: "Auto-select active actor in initiative"
+    });
+    const pan = within(general).getByRole("switch", {
+      name: "Pan with right-click drag"
+    });
+    expect(autoSelect).toBeChecked();
+    expect(pan).toBeChecked();
+
+    await user.click(autoSelect);
+    await user.click(pan);
+    expect(autoSelect).not.toBeChecked();
+    expect(pan).not.toBeChecked();
+    expect(JSON.parse(localStorage.getItem(INTERFACE_PREFERENCES_STORAGE_KEY)!)).toEqual({
+      autoSelectActiveActor: false,
+      panWithRightClickDrag: false
+    });
   });
 
   it("loads the saved theme and returns to light when preferences reset", () => {

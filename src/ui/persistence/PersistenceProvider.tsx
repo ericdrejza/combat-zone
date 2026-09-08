@@ -35,6 +35,7 @@ import {
 } from "@ui/motion_preferences/MotionPreferenceProvider";
 import type { SaveStatus } from "@ui/toolbar/EncounterTitleControls";
 import { THEME_STORAGE_KEY } from "@ui/theme/ThemeProvider";
+import { INTERFACE_PREFERENCES_STORAGE_KEY } from "@ui/interface_preferences/InterfacePreferenceProvider";
 import { useWorkspaceWriterLock } from "@hooks/useWorkspaceWriterLock";
 import {
   PersistenceContext,
@@ -395,6 +396,7 @@ export function PersistenceProvider({
     const emptyLibrary = createEmptyLibraryState();
     await resetLocalPersistence(repository, draft, [
       MOTION_OVERRIDE_STORAGE_KEY,
+      INTERFACE_PREFERENCES_STORAGE_KEY,
       THEME_STORAGE_KEY
     ]);
     await localSync?.clearSyncData();
@@ -421,6 +423,7 @@ export function PersistenceProvider({
         if (!readOnly) {
           await recoverInterruptedLocalReset(repository, [
             MOTION_OVERRIDE_STORAGE_KEY,
+            INTERFACE_PREFERENCES_STORAGE_KEY,
             THEME_STORAGE_KEY
           ]);
         }

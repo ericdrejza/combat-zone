@@ -36,6 +36,7 @@ import { selectEntity, setActiveTool } from "@interaction/interactionState";
 import { canToolSelectEntityType } from "@interaction/tools/toolRegistry";
 import type { RootState } from "@store/store";
 import { useMotionPreference } from "@ui/motion_preferences/MotionPreferenceProvider";
+import { useInterfacePreferences } from "@ui/interface_preferences/InterfacePreferenceProvider";
 import {
   DEFAULT_INITIATIVE_PARTICIPANT_INTERACTION_STRATEGY,
   type InitiativeParticipantInteractionStrategy
@@ -57,6 +58,8 @@ export function InitiativePanel({
   participantInteractionStrategy?: InitiativeParticipantInteractionStrategy;
 } = {}) {
   const { animationsDisabled } = useMotionPreference();
+  const { autoSelectActiveActor, setAutoSelectActiveActor } =
+    useInterfacePreferences();
   const dispatch = useDispatch();
   const { commitInitiativeChange, encounter, logInvalidInitiativeValue } =
     useInitiativeActions();
@@ -69,7 +72,6 @@ export function InitiativePanel({
   const initiativeActorIds = getInitiativeActorIds(encounter);
   const [draftOrder, setDraftOrder] = useState(initiativeActorIds);
   const [confirmClear, setConfirmClear] = useState(false);
-  const [autoSelectActiveActor, setAutoSelectActiveActor] = useState(false);
   const { listRef, stopAutoScroll, updateAutoScroll } =
     useInitiativeReorderAutoScroll();
   useInitiativeTurnAutoScroll(
@@ -158,7 +160,7 @@ export function InitiativePanel({
 
       <div className="flex items-center justify-between border-t border-canvas-line pt-3">
         <div className="flex gap-1">
-          <button aria-label="Auto-select active actor" aria-pressed={autoSelectActiveActor} className={autoSelectActiveActor ? activeActionClass : actionClass} onClick={() => setAutoSelectActiveActor((enabled) => !enabled)} title="Auto-select active actor" type="button"><Crosshair aria-hidden="true" className="h-4 w-4" /></button>
+          <button aria-label="Auto-select active actor" aria-pressed={autoSelectActiveActor} className={autoSelectActiveActor ? activeActionClass : actionClass} onClick={() => setAutoSelectActiveActor(!autoSelectActiveActor)} title="Auto-select active actor" type="button"><Crosshair aria-hidden="true" className="h-4 w-4" /></button>
           <button aria-label="End combat" className={actionClass} disabled={currentRound === null} onClick={() => commitSimple("initiative.end", endInitiative(encounter), { actorId: currentActorId, round: currentRound })} title="End combat" type="button"><TimerReset aria-hidden="true" className="h-4 w-4" /></button>
         </div>
         <span className="font-semibold">{currentRound === null ? "Not Started" : `Round ${currentRound}`}</span>
