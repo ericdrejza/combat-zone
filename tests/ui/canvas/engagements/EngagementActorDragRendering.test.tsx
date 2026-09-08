@@ -110,7 +110,7 @@ describe('Engagement actor drag rendering', () => {
 
     // The routed chain is token→a→b→c, so moving a and b retracts all three
     // settled branches instead of leaving the b→c branch behind.
-    expect(container.querySelectorAll('line')).toHaveLength(0);
+    expect(container.querySelectorAll('line[data-engagement-connector]')).toHaveLength(0);
   });
 
   it('previews a retracting tether for every dragged subset participant', () => {
@@ -152,7 +152,7 @@ describe('Engagement actor drag rendering', () => {
       </svg>
     );
 
-    Array.from(container.querySelectorAll('line')).forEach((line) => {
+    Array.from(container.querySelectorAll('line[data-engagement-connector]')).forEach((line) => {
       expect(line).toHaveAttribute('x1', String(token.x));
       expect(line).toHaveAttribute('x2', String(token.x));
       expect(line).toHaveAttribute('y1', String(token.y));
@@ -176,7 +176,7 @@ describe('Engagement actor drag rendering', () => {
         />
       </svg>
     );
-    const lines = Array.from(container.querySelectorAll('line'));
+    const lines = Array.from(container.querySelectorAll('line[data-engagement-connector]'));
 
     expect(lines).toHaveLength(3);
     expect(lines[0]).toHaveAttribute('x1', '90');
@@ -203,6 +203,6 @@ describe('Engagement actor drag rendering', () => {
       </svg>
     );
 
-    expect(container.querySelector('line')).toBeNull();
+    expect(container.querySelector('line[data-engagement-connector]')).toBeNull();
   });
 });

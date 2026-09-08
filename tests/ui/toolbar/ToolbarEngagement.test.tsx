@@ -101,7 +101,7 @@ describe("Toolbar engagement actions", () => {
     ).toEqual(["a", "b", "c"]);
   });
 
-  it("keeps the crossed-swords image out of the native touch drag path", () => {
+  it("keeps the crossed-swords icon out of the native touch drag path", () => {
     vi.useFakeTimers();
     act(() => {
       store.dispatch(setActiveTool("actor"));
@@ -119,9 +119,9 @@ describe("Toolbar engagement actions", () => {
       const button = screen.getByRole("button", {
         name: "Engage selected actors"
       });
-      const icon = button.querySelector("img");
+      const icon = button.querySelector("[data-crossed-swords-icon]");
 
-      expect(icon).toHaveAttribute("draggable", "false");
+      expect(icon?.tagName.toLowerCase()).toBe("svg");
       expect(icon).toHaveClass("pointer-events-none");
 
       fireEvent.pointerDown(icon ?? button, {

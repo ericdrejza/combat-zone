@@ -46,7 +46,7 @@ describe('EngagementLayer', () => {
         />
       </svg>
     );
-    const lines = Array.from(container.querySelectorAll('line'));
+    const lines = Array.from(container.querySelectorAll('line[data-engagement-connector]'));
 
     expect(lines).toHaveLength(3);
     expect(lines[0]).toHaveAttribute('x1', '50');
@@ -97,7 +97,7 @@ describe('EngagementLayer', () => {
         zoneId: 'zone'
       })
     );
-    const lines = Array.from(container.querySelectorAll('line'));
+    const lines = Array.from(container.querySelectorAll('line[data-engagement-connector]'));
 
     expect(lines).toHaveLength(2);
     lines.forEach((line) => {
@@ -129,8 +129,9 @@ describe('EngagementLayer', () => {
     expect(screen.getByLabelText('Engagement')).toBeInTheDocument();
     expect(container.querySelector('circle[r="12"]')).toHaveAttribute('stroke', '#123456');
     expect(container.querySelector('circle[r="12"]')).toHaveAttribute('fill', '#123456');
-    expect(container.querySelector('image')?.getAttribute('href')).toMatch(/^data:image\/svg\+xml/);
-    expect(container.querySelector('[aria-label="Crossed swords"]')).toHaveStyle({ filter: 'brightness(0) invert(1)' });
+    const swordsIcon = container.querySelector('[aria-label="Crossed swords"]');
+    expect(swordsIcon?.tagName.toLowerCase()).toBe('svg');
+    expect(swordsIcon).toHaveAttribute('stroke', '#ffffff');
     fireEvent.click(container.querySelector('circle[r="12"]')!);
     fireEvent.click(container.querySelector('circle[r="12"]')!, {
       ctrlKey: true
@@ -172,15 +173,15 @@ describe('EngagementLayer', () => {
     const { container, rerender } = render(
       <svg><EngagementLayer {...commonProps} engagementDrag={{ engagementId: 'melee', current: { x: 145, y: 160 }, hasMoved: true, phase: 'dragging', start: { x: 145, y: 100 } }} /></svg>
     );
-    expect(container.querySelector('line')).toHaveAttribute('x1', '145');
-    expect(container.querySelector('line')).toHaveAttribute('y1', '160');
+    expect(container.querySelector('line[data-engagement-connector]')).toHaveAttribute('x1', '145');
+    expect(container.querySelector('line[data-engagement-connector]')).toHaveAttribute('y1', '160');
 
     rerender(
       <svg><EngagementLayer {...commonProps} engagementDrag={{ engagementId: 'melee', current: { x: 145, y: 160 }, hasMoved: true, phase: 'returning', start: { x: 145, y: 100 } }} /></svg>
     );
-    expect(container.querySelector('line')).toHaveAttribute('x1', '145');
-    expect(container.querySelector('line')).toHaveAttribute('y1', '160');
-    expect(container.querySelector('[aria-label="Crossed swords"]')).not.toHaveStyle({ filter: 'brightness(0) invert(1)' });
+    expect(container.querySelector('line[data-engagement-connector]')).toHaveAttribute('x1', '145');
+    expect(container.querySelector('line[data-engagement-connector]')).toHaveAttribute('y1', '160');
+    expect(container.querySelector('[aria-label="Crossed swords"]')).toHaveAttribute('stroke', '#111827');
   });
 
   it('outlines a token in its zone-name color when targeted by a merge drag', () => {
