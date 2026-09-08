@@ -142,6 +142,7 @@ describe("Toolbar zone and background", () => {
       expect(store.getState().encounter.present.backgroundImage).toMatchObject({
         source: { kind: "url", url: "https://maps.example/arena.png" },
         height: 450,
+        name: "",
         width: 800
       });
     });

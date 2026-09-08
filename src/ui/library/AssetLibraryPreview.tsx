@@ -16,10 +16,10 @@ export function AssetLibraryPreview({
   return (
     <div
       aria-label="Asset preview"
-      className="flex min-h-56 items-center justify-center overflow-hidden rounded-2xl border border-canvas-line bg-canvas p-3"
+      className="flex h-full min-h-56 items-center justify-center overflow-hidden rounded-2xl border border-canvas-line bg-canvas p-3 [&_img]:object-contain"
     >
       {target ? (
-        <div className="flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-xl">
+        <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-xl">
           <AssetImagePreview
             imageAlt={target.name}
             name={target.name}

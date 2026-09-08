@@ -1,6 +1,7 @@
 import {
   Copy,
   Download,
+  ExternalLink,
   FileImage,
   Pencil,
   Trash2,
@@ -99,6 +100,8 @@ type AssetContextMenuProps = {
   contextMenuRef: RefObject<HTMLDivElement>;
   node: LibraryNode;
   onDelete: (node: LibraryNode) => void;
+  onCopyWebLink: (node: LibraryNode) => void;
+  onGoToLinkedAsset: (node: LibraryNode) => void;
   onRename: (node: LibraryNode) => void;
   onSelectAssetType: (node: LibraryNode, type: AssetSourceType) => void;
   canLinkAssets: boolean;
@@ -110,6 +113,8 @@ export function AssetContextMenu({
   contextMenuRef,
   node,
   onDelete,
+  onCopyWebLink,
+  onGoToLinkedAsset,
   onRename,
   onSelectAssetType,
   canLinkAssets,
@@ -118,11 +123,12 @@ export function AssetContextMenu({
   const [assetTypeMenuOpen, setAssetTypeMenuOpen] = useState(false);
   const isImageAsset = node.type !== "folder" &&
     (node.sectionId === "backgrounds" || node.sectionId === "tokens");
+  const isWebLink = node.type === "image" && node.asset?.source.kind === "url";
 
   return (
     <div
       ref={contextMenuRef}
-      className="fixed z-[60] w-36 rounded-2xl border border-canvas-line bg-canvas-surface p-2 text-sm shadow-lg"
+      className="fixed z-[60] w-44 rounded-2xl border border-canvas-line bg-canvas-surface p-2 text-sm shadow-lg"
       role="menu"
       style={{ left: contextMenu.x, top: contextMenu.y }}
     >
@@ -163,6 +169,28 @@ export function AssetContextMenu({
             </div>
           ) : null}
         </>
+      ) : null}
+      {isWebLink ? (
+        <button
+          className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left transition hover:bg-canvas"
+          onClick={() => onCopyWebLink(node)}
+          role="menuitem"
+          type="button"
+        >
+          <Copy aria-hidden="true" className="h-4 w-4" />
+          Copy web link
+        </button>
+      ) : null}
+      {node.type === "link" ? (
+        <button
+          className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left transition hover:bg-canvas"
+          onClick={() => onGoToLinkedAsset(node)}
+          role="menuitem"
+          type="button"
+        >
+          <ExternalLink aria-hidden="true" className="h-4 w-4" />
+          Go to linked asset
+        </button>
       ) : null}
       <button
         className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:text-canvas-muted"

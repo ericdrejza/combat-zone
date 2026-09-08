@@ -127,6 +127,27 @@ describe("AssetLibraryContents view modes", () => {
     }
   });
 
+  it("navigates to the parent folder from the unstyled folder-up control", async () => {
+    const onEnterFolder = vi.fn();
+    const nestedFolder: LibrarySection["nodesById"][string] = {
+      childIds: [],
+      id: "maps",
+      name: "Maps",
+      parentId: imageSection.rootId,
+      sectionId: "backgrounds",
+      type: "folder"
+    };
+    const user = userEvent.setup();
+
+    renderContents({ currentFolder: nestedFolder, onEnterFolder });
+    await user.click(screen.getByRole("button", { name: "Go to parent folder" }));
+
+    expect(onEnterFolder).toHaveBeenCalledWith(imageSection.rootId);
+    expect(screen.getByLabelText("Current asset library folder")).toHaveTextContent(
+      "Maps"
+    );
+  });
+
   it("uses a touch hold for preview when large hover preview is unavailable", () => {
     const restoreMatchMedia = mockHoverSupport(false);
     vi.useFakeTimers();

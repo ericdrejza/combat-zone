@@ -8,6 +8,7 @@ import type { LibraryNode } from "@library/types";
 import type { LibrarySectionId } from "@library/types";
 import type { LibraryFolderBySection } from "@ui/library/useAssetLibraryModalState";
 import type { LibraryViewModeBySection } from "@ui/library/useAssetLibraryModalState";
+import type { PropertiesLibraryLocation } from "@ui/panels/PropertiesPanel";
 import {
   AssetLibraryModal,
   type AssetLibraryMode
@@ -31,7 +32,10 @@ type AppPersistenceUi = {
   dialogs: React.ReactNode;
   hasSavedEncounter: boolean;
   openLibrary: (target?: LibraryOpenTarget) => void;
-  openTokenLibraryForActor: (actorId: string) => void;
+  openTokenLibraryForActor: (
+    actorId: string,
+    location?: PropertiesLibraryLocation
+  ) => void;
   openSettings: () => void;
   readOnly: boolean;
   requestSave: () => Promise<void>;
@@ -40,6 +44,7 @@ type AppPersistenceUi = {
 
 type LibraryLocation = {
   folderId: string;
+  nodeId?: string;
   sectionId: LibrarySectionId;
 };
 
@@ -62,6 +67,9 @@ export function useAppPersistenceUi({
     useState<LibraryViewModeBySection>({});
   const [libraryMode, setLibraryMode] = useState<AssetLibraryMode>("browse");
   const [tokenActorId, setTokenActorId] = useState<string | null>(null);
+  const [libraryFocusedNodeId, setLibraryFocusedNodeId] = useState<
+    string | null
+  >(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [draftDialogOpen, setDraftDialogOpen] = useState(false);
   const [deletedDialogOpen, setDeletedDialogOpen] = useState(false);
@@ -150,6 +158,7 @@ export function useAppPersistenceUi({
       {libraryOpen ? (
         <AssetLibraryModal
           currentFolderBySection={currentFolderBySection}
+          initialFocusedNodeId={libraryFocusedNodeId ?? undefined}
           initialSectionId={librarySectionId}
           viewModeBySection={viewModeBySection}
           mode={libraryMode}
@@ -163,6 +172,7 @@ export function useAppPersistenceUi({
           }}
           onClose={() => {
             setLibraryOpen(false);
+            setLibraryFocusedNodeId(null);
             setTokenActorId(null);
           }}
           onCurrentFolderChange={(sectionId, folderId) => {
@@ -281,6 +291,7 @@ export function useAppPersistenceUi({
         typeof target === "string" ? target : location?.sectionId ?? "encounters";
 
       setLibrarySectionId(sectionId);
+      setLibraryFocusedNodeId(location?.nodeId ?? null);
       if (location) {
         setCurrentFolderBySection((current) => ({
           ...current,
@@ -290,9 +301,16 @@ export function useAppPersistenceUi({
       setLibraryMode("browse");
       setLibraryOpen(true);
     },
-    openTokenLibraryForActor: (actorId) => {
+    openTokenLibraryForActor: (actorId, location) => {
       setTokenActorId(actorId);
       setLibrarySectionId("tokens");
+      setLibraryFocusedNodeId(location?.nodeId ?? null);
+      if (location) {
+        setCurrentFolderBySection((current) => ({
+          ...current,
+          tokens: location.folderId
+        }));
+      }
       setLibraryMode("browse");
       setLibraryOpen(true);
     },

@@ -15,6 +15,7 @@ export type LibraryViewModeBySection = Partial<
 type AssetLibraryModalStateOptions = {
   currentFolderBySection: LibraryFolderBySection;
   initialSectionId?: LibrarySectionId;
+  initialSelectedNodeId?: string;
   onViewModeChange: (
     sectionId: LibrarySectionId,
     viewMode: AssetLibraryViewMode
@@ -29,6 +30,7 @@ type AssetLibraryModalStateOptions = {
 export function useAssetLibraryModalState({
   currentFolderBySection,
   initialSectionId = "encounters",
+  initialSelectedNodeId,
   onCurrentFolderChange,
   onViewModeChange,
   viewModeBySection
@@ -66,7 +68,9 @@ export function useAssetLibraryModalState({
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedNodeBySection, setSelectedNodeBySection] = useState<
     Partial<Record<LibrarySectionId, string>>
-  >({});
+  >(() => initialSelectedNodeId
+    ? { [initialSectionId]: initialSelectedNodeId }
+    : {});
   const [pendingDeleteNodeId, setPendingDeleteNodeId] = useState<string | null>(
     null
   );
