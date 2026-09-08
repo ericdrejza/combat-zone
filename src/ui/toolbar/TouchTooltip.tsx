@@ -46,14 +46,34 @@ function findTooltipTarget(target: EventTarget): {
   // This lets controls keep a descriptive desktop title while exposing a
   // context-specific label during a touch hold.
   const labeledWrapper = target.closest<HTMLElement>("[data-touch-tooltip-label]");
-  const element = labeledWrapper ?? target.closest<HTMLElement>("[title]");
+  const wrapperLabel = labeledWrapper?.dataset.touchTooltipLabel?.trim();
+  if (labeledWrapper && wrapperLabel) {
+    return { element: labeledWrapper, label: wrapperLabel };
+  }
+
+  const titledElement = target.closest<HTMLElement>("[title]");
+  if (titledElement?.title.trim()) {
+    return { element: titledElement, label: titledElement.title.trim() };
+  }
+
+  const element = target.closest<HTMLElement>(
+    'button, a[href], input, select, textarea, summary, [role="button"], [role="radio"], [role="switch"]'
+  );
   if (!element) return null;
-  const label = element.dataset.touchTooltipLabel ?? element.title;
-  return label.trim() ? { element, label } : null;
+  const ariaLabel = element.getAttribute("aria-label")?.trim();
+  if (ariaLabel) return { element, label: ariaLabel };
+
+  const formControl = element as HTMLInputElement;
+  const associatedLabel = formControl.labels?.[0]?.textContent?.trim();
+  const fallbackLabel =
+    associatedLabel ||
+    formControl.placeholder?.trim() ||
+    element.textContent?.trim();
+  return fallbackLabel ? { element, label: fallbackLabel } : null;
 }
 
 /**
- * Shows title-equivalent help after a touch-only hold. Mouse pointers are
+ * Shows accessible control help after a touch-only hold. Mouse pointers are
  * deliberately ignored so desktop continues to rely on ordinary hover help.
  */
 export function TouchTooltipProvider({ children }: { children: ReactNode }) {

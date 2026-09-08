@@ -14,6 +14,7 @@ import {
 } from "@ui/persistence/PersistenceProvider";
 import { MOTION_OVERRIDE_STORAGE_KEY } from "@ui/motion_preferences/MotionPreferenceProvider";
 import { THEME_STORAGE_KEY } from "@ui/theme/ThemeProvider";
+import { INTERFACE_PREFERENCES_STORAGE_KEY } from "@ui/interface_preferences/InterfacePreferenceProvider";
 
 function Probe() {
   const persistence = usePersistence();
@@ -45,6 +46,7 @@ describe("PersistenceProvider", () => {
   afterEach(() => {
     localStorage.removeItem(MOTION_OVERRIDE_STORAGE_KEY);
     localStorage.removeItem(THEME_STORAGE_KEY);
+    localStorage.removeItem(INTERFACE_PREFERENCES_STORAGE_KEY);
     localStorage.removeItem("unrelated-origin-key");
   });
 
@@ -91,6 +93,7 @@ describe("PersistenceProvider", () => {
     );
     localStorage.setItem(MOTION_OVERRIDE_STORAGE_KEY, "true");
     localStorage.setItem(THEME_STORAGE_KEY, "dark");
+    localStorage.setItem(INTERFACE_PREFERENCES_STORAGE_KEY, "{}");
     localStorage.setItem("unrelated-origin-key", "keep");
     renderPersistence(repository);
     await screen.findByText("Untitled Encounter");
@@ -106,6 +109,7 @@ describe("PersistenceProvider", () => {
       );
       expect(localStorage.getItem(MOTION_OVERRIDE_STORAGE_KEY)).toBeNull();
       expect(localStorage.getItem(THEME_STORAGE_KEY)).toBeNull();
+      expect(localStorage.getItem(INTERFACE_PREFERENCES_STORAGE_KEY)).toBeNull();
       expect(localStorage.getItem("unrelated-origin-key")).toBe("keep");
     });
   });
