@@ -1,3 +1,4 @@
+import { Swords } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { createEncounterActionRecord } from '@core/history/createEncounterActionRecord';
@@ -6,9 +7,6 @@ import { engageSelectedActors } from '@entities/engagement/engagementMutations';
 import { commitEncounterChange } from '@store/encounterSlice';
 import { logEncounterValidationBlock } from '@store/encounterLogSlice';
 import type { RootState } from '@store/store';
-import crossedSwordsAsset from '@assets/images/crossed-swords.svg';
-
-const CROSSED_SWORDS_ASSET = crossedSwordsAsset;
 
 type EngageActionButtonProps = {
   compact?: boolean;
@@ -58,12 +56,10 @@ export function EngageActionButton({ compact = false }: EngageActionButtonProps)
       title="Engage selected actors in each zone"
       type="button"
     >
-      <img
-        alt=""
+      <Swords
         aria-hidden="true"
-        className={`pointer-events-none h-4 w-4 select-none ${previewActive ? 'brightness-0 invert' : ''}`}
-        draggable={false}
-        src={CROSSED_SWORDS_ASSET}
+        className="pointer-events-none h-4 w-4"
+        data-crossed-swords-icon="true"
       />
     </button>
   );

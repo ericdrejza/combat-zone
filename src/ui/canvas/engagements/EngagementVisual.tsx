@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { Swords } from 'lucide-react';
 import {
   animate,
   motion,
@@ -7,7 +8,6 @@ import {
   type MotionValue
 } from 'motion/react';
 
-import crossedSwordsAsset from '@assets/images/crossed-swords.svg';
 import type { LayoutPoint } from '@core/layout/types';
 import type { RootState } from '@store/store';
 import { getReadableTextColor } from '../canvasLuminance';
@@ -61,6 +61,7 @@ function EngagementConnectorLine({
   });
   return (
     <line
+      data-engagement-connector="true"
       ref={lineRef}
       stroke={color}
       strokeLinecap="round"
@@ -200,16 +201,10 @@ export function EngagementVisual({
           stroke={color}
           strokeWidth={selected ? 3 : 2}
         />
-        <image
+        <Swords
           aria-label="Crossed swords"
           height="14"
-          href={crossedSwordsAsset}
-          style={{
-            filter:
-              getReadableTextColor(color) === '#ffffff'
-                ? 'brightness(0) invert(1)'
-                : undefined
-          }}
+          stroke={getReadableTextColor(color)}
           width="14"
           x="-7"
           y="-7"
