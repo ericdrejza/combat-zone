@@ -5,8 +5,11 @@ import { renderApp } from "@tests/ui/renderApp";
 import { movePanel } from "@ui/panels/panelLayout";
 import { appendEncounterLogEntry } from "@store/encounterLogSlice";
 import { store } from "@store/store";
+import { INTERFACE_PREFERENCES_STORAGE_KEY } from "@ui/interface_preferences/InterfacePreferenceProvider";
 
 describe("PanelsShell", () => {
+  afterEach(() => localStorage.removeItem(INTERFACE_PREFERENCES_STORAGE_KEY));
+
   it("renders categorized action and validation-block entries in the Log panel", () => {
     renderApp();
 
@@ -108,6 +111,48 @@ describe("PanelsShell", () => {
     expect(
       screen.getByRole("button", { name: "Expand Library panel" })
     ).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("hides configured panels and stretches the sole panel in a dock", async () => {
+    const user = userEvent.setup();
+    renderApp();
+
+    await user.click(screen.getByRole("button", { name: "Open settings" }));
+    await user.click(screen.getByRole("tab", { name: "Interface" }));
+    const panels = screen.getByRole("group", { name: "Panels" });
+
+    await user.click(within(panels).getByRole("switch", {
+      name: "Properties panel visibility"
+    }));
+    await user.click(within(panels).getByRole("switch", {
+      name: "Log panel visibility"
+    }));
+    expect(screen.queryByLabelText("Properties panel")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Log panel")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Library panel")).toHaveAttribute(
+      "data-panel-stretch",
+      "true"
+    );
+
+    await user.click(within(panels).getByRole("switch", {
+      name: "Initiative panel visibility"
+    }));
+    expect(screen.getByLabelText("Status panel")).toHaveAttribute(
+      "data-panel-stretch",
+      "true"
+    );
+    await user.click(within(panels).getByRole("switch", {
+      name: "Status panel visibility"
+    }));
+    expect(screen.queryByLabelText("right sidebar")).not.toBeInTheDocument();
+
+    await user.click(within(panels).getByRole("switch", {
+      name: "Library panel visibility"
+    }));
+    expect(screen.queryByLabelText("left docked panels")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Open settings" })
+    ).toBeInTheDocument();
   });
 
   it("moves side panels by dragging the reorder handle to a drop marker", () => {

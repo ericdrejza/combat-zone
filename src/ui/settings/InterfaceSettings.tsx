@@ -1,7 +1,8 @@
-import { Moon, Sun } from "lucide-react";
+import { Eye, EyeOff, Moon, Sun } from "lucide-react";
 import { motion } from "motion/react";
 
 import { useInterfacePreferences } from "@ui/interface_preferences/InterfacePreferenceProvider";
+import { DOCKABLE_PANEL_DEFINITIONS } from "@ui/panels/dockablePanelMetadata";
 import { useTheme, type Theme } from "@ui/theme/ThemeProvider";
 
 const themeOptions: Array<{
@@ -17,9 +18,11 @@ const themeOptions: Array<{
 export function InterfaceSettings() {
   const { setTheme, theme } = useTheme();
   const {
-    autoSelectActiveActor,
+    autoSelectActiveActorDefault,
+    panelVisibility,
     panWithRightClickDrag,
-    setAutoSelectActiveActor,
+    setAutoSelectActiveActorDefault,
+    setPanelVisible,
     setPanWithRightClickDrag
   } = useInterfacePreferences();
 
@@ -78,21 +81,69 @@ export function InterfaceSettings() {
         <legend className="pr-3 text-sm font-semibold">Defaults</legend>
         <div className="mt-1 divide-y divide-canvas-line">
           <PreferenceSwitch
-            checked={autoSelectActiveActor}
+            checked={autoSelectActiveActorDefault}
             label="Auto-select active actor in initiative"
-            onChange={setAutoSelectActiveActor}
+            onChange={setAutoSelectActiveActorDefault}
           />
+        </div>
+      </fieldset>
+      <fieldset className="mt-4 max-w-lg border-t border-canvas-line pt-5">
+        <legend className="pr-3 text-sm font-semibold">Panels</legend>
+        <div className="mt-1 divide-y divide-canvas-line">
+          {DOCKABLE_PANEL_DEFINITIONS.map((panel) => (
+            <PanelVisibilitySwitch
+              key={panel.id}
+              panelTitle={panel.title}
+              visible={panelVisibility[panel.id]}
+              onChange={(visible) => setPanelVisible(panel.id, visible)}
+            />
+          ))}
         </div>
       </fieldset>
     </section>
   );
 }
 
+function PanelVisibilitySwitch({
+  onChange,
+  panelTitle,
+  visible
+}: {
+  onChange: (visible: boolean) => void;
+  panelTitle: string;
+  visible: boolean;
+}) {
+  const Icon = visible ? Eye : EyeOff;
+
+  return (
+    <div className="flex min-h-12 items-center justify-between gap-4 py-3">
+      <span className="text-sm">{panelTitle}</span>
+      <button
+        aria-checked={visible}
+        aria-label={`${panelTitle} panel visibility`}
+        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors ${
+          visible
+            ? "border-canvas-ink bg-canvas-ink text-canvas-on-ink"
+            : "border-canvas-line bg-canvas text-canvas-muted"
+        }`}
+        onClick={() => onChange(!visible)}
+        role="switch"
+        title={visible ? `Hide ${panelTitle} panel` : `Show ${panelTitle} panel`}
+        type="button"
+      >
+        <Icon aria-hidden="true" className="h-4 w-4" />
+      </button>
+    </div>
+  );
+}
+
 function PreferenceSwitch({
+  ariaLabel,
   checked,
   label,
   onChange
 }: {
+  ariaLabel?: string;
   checked: boolean;
   label: string;
   onChange: (checked: boolean) => void;
@@ -102,7 +153,7 @@ function PreferenceSwitch({
       <span className="text-sm">{label}</span>
       <button
         aria-checked={checked}
-        aria-label={label}
+        aria-label={ariaLabel ?? label}
         className={`relative h-6 w-11 shrink-0 rounded-full border transition-colors ${
           checked
             ? "border-canvas-ink bg-canvas-ink"

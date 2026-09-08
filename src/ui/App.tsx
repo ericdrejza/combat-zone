@@ -35,9 +35,7 @@ import { readImageAssetDimensions } from "./toolbar/background/readImageFile";
 import { commitBackgroundImage } from "./toolbar/background/backgroundCanvasActions";
 import { useCanvasViewport } from "./canvas/CanvasViewportContext";
 import { useCompactLayout } from "@hooks/useCompactLayout";
-import type {
-  CompactPanelDefinition
-} from "./panels/compactPanelMetadata";
+import type { CompactPanelDefinition } from "./panels/compactPanelMetadata";
 import { CompactZonelessActorPanel } from "./panels/zoneless_actors/CompactZonelessActorPanel";
 import { EncounterRenameDialog } from "./encounter/EncounterRenameDialog";
 import { TouchTooltipProvider } from "./toolbar/TouchTooltip";
@@ -56,6 +54,13 @@ import {
 } from "./keybinds";
 import { ThemeProvider } from "./theme/ThemeProvider";
 import { InterfacePreferenceProvider } from "./interface_preferences/InterfacePreferenceProvider";
+import { useInterfacePreferences } from "./interface_preferences/InterfacePreferenceProvider";
+import {
+  getVisibleCompactPanels,
+  getVisiblePanelLayout,
+  getWorkspaceColumns,
+  resolveVisibleDropTarget
+} from "./panels/panelVisibilityLayout";
 
 type SidebarCollapsedState = Record<DockSide, boolean>;
 
@@ -98,6 +103,7 @@ function AppContent() {
   const dispatch = useDispatch();
   const { bindings } = useKeybinds();
   const { getViewportSize, zoom: viewportZoom } = useCanvasViewport();
+  const { panelVisibility } = useInterfacePreferences();
   const activeToolId = useSelector(
     (state: RootState) => state.interaction.activeToolId
   );
@@ -129,9 +135,12 @@ function AppContent() {
     onBackgroundDoubleClick: applyBackgroundFromLibrary,
     onTokenDoubleClick: focusTokenInLibrary
   });
-  const workspaceColumns = `${
-    sidebarCollapsed.left ? "3.25rem" : "18rem"
-  } minmax(0,1fr) ${sidebarCollapsed.right ? "3.25rem" : "18rem"}`;
+  const visiblePanelLayout = getVisiblePanelLayout(panelLayout, panelVisibility);
+  const compactPanels = getVisibleCompactPanels(panelVisibility);
+  const workspaceColumns = getWorkspaceColumns(
+    visiblePanelLayout,
+    sidebarCollapsed
+  );
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -287,7 +296,13 @@ function AppContent() {
       return;
     }
 
-    setPanelLayout((layout) => movePanel(layout, panelId, target));
+    setPanelLayout((layout) => {
+      return movePanel(
+        layout,
+        panelId,
+        resolveVisibleDropTarget(layout, panelVisibility, target)
+      );
+    });
     setDraggedPanelId(null);
     setDropTarget(null);
   }
@@ -424,8 +439,9 @@ function AppContent() {
       >
         {!compactLayout ? (
         <SidebarDock
-          collapsed={sidebarCollapsed.left}
+          collapsed={visiblePanelLayout.left.length === 0 || sidebarCollapsed.left}
           footer={<SettingsButton onClick={persistenceUi.openSettings} />}
+          hideToggle={visiblePanelLayout.left.length === 0}
           onToggle={() =>
             setSidebarCollapsed((current) => ({
               ...current,
@@ -434,7 +450,7 @@ function AppContent() {
           }
           side="left"
         >
-          <PanelsShell
+          {visiblePanelLayout.left.length ? <PanelsShell
             draggedPanelId={draggedPanelId}
             dropTarget={dropTarget}
             onDragEnd={() => {
@@ -445,18 +461,19 @@ function AppContent() {
             onPanelCollapsedChange={handlePanelCollapsedChange}
             onDropPanel={handlePanelDrop}
             onPreviewDrop={handlePanelDropPreview}
-            panels={panelLayout.left}
+            panels={visiblePanelLayout.left}
             renderPanelHeaderActions={renderPanelHeaderActions}
             renderPanelContent={renderPanelContent}
             side="left"
-          />
+          /> : null}
         </SidebarDock>
         ) : null}
         <CanvasShell
+          compactPanels={compactPanels}
           renderCompactPanelContent={renderPanelContent}
           renderCompactPanelHeaderActions={renderPanelHeaderActions}
         />
-        {!compactLayout ? (
+        {!compactLayout && visiblePanelLayout.right.length ? (
         <SidebarDock
           collapsed={sidebarCollapsed.right}
           onToggle={() =>
@@ -478,7 +495,7 @@ function AppContent() {
             onPanelCollapsedChange={handlePanelCollapsedChange}
             onDropPanel={handlePanelDrop}
             onPreviewDrop={handlePanelDropPreview}
-            panels={panelLayout.right}
+            panels={visiblePanelLayout.right}
             renderPanelHeaderActions={renderPanelHeaderActions}
             renderPanelContent={renderPanelContent}
             side="right"
