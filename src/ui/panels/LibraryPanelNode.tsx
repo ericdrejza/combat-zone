@@ -74,7 +74,7 @@ export function LibraryPanelNode({
       type="button"
     >
       <span
-        className={`flex items-center justify-center overflow-hidden rounded-lg border border-canvas-line bg-white ${
+        className={`flex items-center justify-center overflow-hidden rounded-lg border border-canvas-line bg-canvas-surface ${
           viewMode === "grid" ? "aspect-square w-full" : "h-16 w-16 flex-none"
         }`}
       >

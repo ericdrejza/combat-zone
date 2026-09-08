@@ -91,7 +91,7 @@ export function EncounterTitleControls({
       /> : null}
       <button
         aria-label="Save encounter"
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-canvas-line bg-white text-canvas-ink transition hover:bg-canvas disabled:cursor-not-allowed disabled:opacity-50"
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-canvas-line bg-canvas-surface text-canvas-ink transition hover:bg-canvas disabled:cursor-not-allowed disabled:opacity-50"
         disabled={readOnly || saveStatus === "saving"}
         onClick={onSave}
         title={

@@ -79,8 +79,8 @@ export function CanvasZoomControls({
               aria-pressed={compactOpen}
               className={`flex h-11 min-w-11 items-center justify-center rounded-full border shadow-sm transition ${
                 compactOpen
-                  ? "border-canvas-ink bg-canvas-ink text-white"
-                  : "border-canvas-line bg-white text-canvas-ink hover:bg-canvas"
+                  ? "border-canvas-ink bg-canvas-ink text-canvas-on-ink"
+                  : "border-canvas-line bg-canvas-surface text-canvas-ink hover:bg-canvas"
               }`}
               onClick={onCompactToggle}
               title="Zoom controls"

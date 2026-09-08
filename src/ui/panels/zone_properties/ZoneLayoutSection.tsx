@@ -18,7 +18,7 @@ export function ZoneLayoutSection({
   zone
 }: ZoneLayoutSectionProps) {
   return (
-    <section className="space-y-4 rounded-2xl border border-canvas-line bg-white p-3">
+    <section className="space-y-4 rounded-2xl border border-canvas-line bg-canvas-surface p-3">
       <div className="flex items-center justify-between">
         <h3 className="font-semibold text-canvas-ink">Layout</h3>
         <button
@@ -30,7 +30,7 @@ export function ZoneLayoutSection({
           aria-pressed={zone.autoResize ?? false}
           className={`inline-flex h-8 w-8 items-center justify-center rounded-full border border-canvas-line text-canvas-ink hover:bg-canvas-subtle ${
             zone.autoResize
-              ? "bg-canvas-ink text-white"
+              ? "bg-canvas-ink text-canvas-on-ink"
               : "text-canvas-muted hover:bg-canvas-subtle"
           }`}
           onClick={() =>
@@ -66,7 +66,7 @@ export function ZoneLayoutSection({
                 aria-label={label}
                 className={`flex min-h-10 items-center justify-center border-canvas-line p-2 last:border-r-0 [&:not(:last-child)]:border-r ${
                   selected
-                    ? "bg-canvas-ink text-white"
+                    ? "bg-canvas-ink text-canvas-on-ink"
                     : "text-canvas-muted hover:bg-canvas-subtle"
                 }`}
                 onClick={() => onCommitZoneProperties({ layoutStrategy: id })}
@@ -93,7 +93,7 @@ export function ZoneLayoutSection({
               aria-pressed={zone.showSectionDividers ?? false}
               className={`inline-flex h-8 w-8 items-center justify-center rounded-full border border-canvas-line hover:bg-canvas-subtle ${
                 zone.showSectionDividers
-                  ? "bg-canvas-ink text-white"
+                  ? "bg-canvas-ink text-canvas-on-ink"
                   : "text-canvas-muted"
               }`}
               onClick={() =>
@@ -130,7 +130,7 @@ export function ZoneLayoutSection({
                   aria-label={label}
                   className={`flex min-h-10 items-center justify-center border-canvas-line p-2 first:border-r ${
                     selected
-                      ? "bg-canvas-ink text-white"
+                      ? "bg-canvas-ink text-canvas-on-ink"
                       : "text-canvas-muted hover:bg-canvas-subtle"
                   }`}
                   onClick={() =>

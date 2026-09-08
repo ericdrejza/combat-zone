@@ -3,6 +3,14 @@
 @tailwind utilities;
 
 :root {
+  --color-canvas: 220 215 205;
+  --color-canvas-ink: 36 33 28;
+  --color-canvas-on-ink: 255 255 255;
+  --color-canvas-muted: 117 111 99;
+  --color-canvas-panel: 255 250 240;
+  --color-canvas-line: 215 203 184;
+  --color-canvas-subtle: 242 237 227;
+  --color-surface: 255 255 255;
   color: theme("colors.canvas.ink");
   background: theme("colors.canvas.DEFAULT");
   height: 100%;
@@ -12,6 +20,18 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+:root.dark {
+  --color-canvas: 62 62 66;
+  --color-canvas-ink: 245 244 240;
+  --color-canvas-on-ink: 39 39 42;
+  --color-canvas-muted: 190 188 181;
+  --color-canvas-panel: 39 39 42;
+  --color-canvas-line: 91 91 97;
+  --color-canvas-subtle: 70 70 74;
+  --color-surface: 52 52 56;
+  color-scheme: dark;
 }
 
 html {

@@ -33,8 +33,8 @@ export function TouchSelectionToggle({ toolId }: TouchSelectionToggleProps) {
         aria-label="Touch multi-select"
         className={`flex h-11 min-w-11 shrink-0 items-center justify-center rounded-full border p-2 shadow-sm transition ${
           enabled
-            ? "border-canvas-ink bg-canvas-ink text-white"
-            : "border-canvas-line bg-white text-canvas-ink hover:bg-canvas"
+            ? "border-canvas-ink bg-canvas-ink text-canvas-on-ink"
+            : "border-canvas-line bg-canvas-surface text-canvas-ink hover:bg-canvas"
         }`}
         onClick={() => dispatch(setTouchMultiSelect(!enabled))}
         role="switch"

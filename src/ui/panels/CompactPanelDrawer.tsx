@@ -35,7 +35,7 @@ export function CompactPanelDrawer({
           <button
             aria-label={`Close ${panel.title} panel`}
             autoFocus
-            className="flex h-9 w-9 items-center justify-center rounded-full text-canvas-muted transition hover:bg-white"
+            className="flex h-9 w-9 items-center justify-center rounded-full text-canvas-muted transition hover:bg-canvas-surface"
             onClick={onClose}
             type="button"
           >

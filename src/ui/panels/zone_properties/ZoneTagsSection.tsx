@@ -15,7 +15,7 @@ export function ZoneTagsSection({
     <label className="block space-y-1">
       <span className="font-semibold text-canvas-ink">Tags</span>
       <input
-        className="w-full rounded-xl border border-canvas-line bg-white px-3 py-2"
+        className="w-full rounded-xl border border-canvas-line bg-canvas-surface px-3 py-2"
         defaultValue={zone.tags.join(", ")}
         onBlur={(event) => {
           const tags = parseTags(event.currentTarget.value);

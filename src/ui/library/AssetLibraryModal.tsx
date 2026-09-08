@@ -353,7 +353,7 @@ export function AssetLibraryModal({
           <h2 className="font-display text-xl font-semibold">Asset Library</h2>
           <button
             aria-label="Close Asset Library"
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-canvas-line bg-white text-canvas-muted transition hover:bg-canvas"
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-canvas-line bg-canvas-surface text-canvas-muted transition hover:bg-canvas"
             onClick={onClose}
             type="button"
           >
@@ -367,7 +367,7 @@ export function AssetLibraryModal({
               aria-selected={controller.activeSectionId === sectionId}
               className={`shrink-0 rounded-t-xl border border-b-0 px-4 py-2 text-sm font-medium transition ${
                 controller.activeSectionId === sectionId
-                  ? "border-canvas-line bg-white text-canvas-ink"
+                  ? "border-canvas-line bg-canvas-surface text-canvas-ink"
                   : "border-transparent text-canvas-muted hover:bg-canvas"
               }`}
               onClick={() => {
@@ -395,7 +395,7 @@ export function AssetLibraryModal({
                 controller.activeSectionId === "backgrounds" ? (
                   <button
                     aria-label={activeTargetLabel}
-                    className="flex h-8 w-8 items-center justify-center rounded-full border border-canvas-line bg-white text-canvas-ink transition hover:bg-canvas disabled:cursor-not-allowed disabled:text-canvas-muted"
+                    className="flex h-8 w-8 items-center justify-center rounded-full border border-canvas-line bg-canvas-surface text-canvas-ink transition hover:bg-canvas disabled:cursor-not-allowed disabled:text-canvas-muted"
                     disabled={!canLocateActiveTarget}
                     onClick={
                       controller.activeSectionId === "encounters"
@@ -410,7 +410,7 @@ export function AssetLibraryModal({
                 ) : null}
                 <button
                   aria-label="Locate current directory"
-                  className="flex h-8 w-8 items-center justify-center rounded-full border border-canvas-line bg-white text-canvas-ink transition hover:bg-canvas"
+                  className="flex h-8 w-8 items-center justify-center rounded-full border border-canvas-line bg-canvas-surface text-canvas-ink transition hover:bg-canvas"
                   onClick={locateCurrentFolder}
                   title="Locate current directory"
                   type="button"
@@ -557,7 +557,7 @@ export function AssetLibraryModal({
               {mode === "save-destination" ? "Save" : "Import"} to {controller.currentFolder.name}
             </p>
             <button
-              className="rounded-xl bg-canvas-ink px-4 py-2 text-sm font-semibold text-white"
+              className="rounded-xl bg-canvas-ink px-4 py-2 text-sm font-semibold text-canvas-on-ink"
               onClick={() => {
                 if (mode === "import-destination") {
                   onImportDestinationSelected?.(controller.currentFolder.id);
@@ -577,7 +577,7 @@ export function AssetLibraryModal({
         ) : controller.activeSectionId === "tokens" ? (
           <footer className="flex justify-end border-t border-canvas-line px-5 py-3">
             <button
-              className="rounded-xl bg-canvas-ink px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-xl bg-canvas-ink px-4 py-2 text-sm font-semibold text-canvas-on-ink disabled:cursor-not-allowed disabled:opacity-50"
               disabled={persistence.readOnly || !selectedLibraryImage}
               onClick={createActorFromSelectedToken}
               type="button"
@@ -588,7 +588,7 @@ export function AssetLibraryModal({
         ) : controller.activeSectionId === "backgrounds" ? (
           <footer className="flex justify-end border-t border-canvas-line px-5 py-3">
             <button
-              className="rounded-xl bg-canvas-ink px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-xl bg-canvas-ink px-4 py-2 text-sm font-semibold text-canvas-on-ink disabled:cursor-not-allowed disabled:opacity-50"
               disabled={persistence.readOnly || !selectedLibraryImage}
               onClick={setSelectedBackground}
               type="button"
@@ -599,7 +599,7 @@ export function AssetLibraryModal({
         ) : controller.activeSectionId === "encounters" ? (
           <footer className="flex justify-end border-t border-canvas-line px-5 py-3">
             <button
-              className="rounded-xl bg-canvas-ink px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-xl bg-canvas-ink px-4 py-2 text-sm font-semibold text-canvas-on-ink disabled:cursor-not-allowed disabled:opacity-50"
               disabled={!selectedEncounter}
               onClick={() => {
                 if (selectedEncounter) {

@@ -126,7 +126,7 @@ export function AssetLibraryAddMenu({
         aria-expanded={addMenuOpen}
         aria-haspopup="menu"
         aria-label={`Add to ${sectionName}`}
-        className="flex h-8 w-8 items-center justify-center rounded-full border border-canvas-line bg-white text-canvas-ink transition hover:bg-canvas"
+        className="flex h-8 w-8 items-center justify-center rounded-full border border-canvas-line bg-canvas-surface text-canvas-ink transition hover:bg-canvas"
         onClick={onToggleAddMenu}
         type="button"
       >
@@ -134,7 +134,7 @@ export function AssetLibraryAddMenu({
       </button>
       {addMenuOpen ? (
         <div
-          className="absolute right-0 top-full z-20 mt-2 w-52 rounded-2xl border border-canvas-line bg-white p-2 text-sm shadow-lg"
+          className="absolute right-0 top-full z-20 mt-2 w-52 rounded-2xl border border-canvas-line bg-canvas-surface p-2 text-sm shadow-lg"
           role="menu"
         >
           {encounterSection ? (

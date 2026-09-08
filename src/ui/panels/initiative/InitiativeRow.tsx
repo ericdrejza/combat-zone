@@ -117,7 +117,7 @@ export function InitiativeRow({
       aria-current={active ? "step" : undefined}
       className={`group/row flex items-center gap-2 rounded-xl border px-2 py-2 text-sm
         cursor-pointer ${
-        active ? activeFactionClasses[actor.layoutGroup] : "border-canvas-line bg-white"
+        active ? activeFactionClasses[actor.layoutGroup] : "border-canvas-line bg-canvas-surface"
       }`}
       dragControls={dragControls}
       dragListener={false}

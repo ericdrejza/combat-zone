@@ -1,6 +1,5 @@
 import type { RootState } from "@store/store";
 import type { CanvasSize } from "@core/layout/polygonCanvasBounds";
-import { CANVAS_BACKGROUND_COLOR } from "../canvasConstants";
 import { useResolvedImageSource } from "@core/assets/ImageAssetResolver";
 
 type CanvasBackgroundLayerProps = {
@@ -17,7 +16,7 @@ export function CanvasBackgroundLayer({
   return (
     <>
       <rect
-        fill={CANVAS_BACKGROUND_COLOR}
+        className="fill-canvas-panel"
         height={canvasSize.height}
         width={canvasSize.width}
       />

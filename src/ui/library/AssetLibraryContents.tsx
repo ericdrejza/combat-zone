@@ -232,7 +232,7 @@ export function AssetLibraryContents({
               : "Switch library contents to grid view"
           }
           aria-pressed={viewMode === "grid"}
-          className="flex h-8 w-8 flex-none items-center justify-center rounded-full border border-canvas-line bg-white text-canvas-muted transition hover:bg-canvas"
+          className="flex h-8 w-8 flex-none items-center justify-center rounded-full border border-canvas-line bg-canvas-surface text-canvas-muted transition hover:bg-canvas"
           onClick={toggleViewMode}
           title={viewMode === "grid" ? "List view" : "Grid view"}
           type="button"
@@ -257,7 +257,7 @@ export function AssetLibraryContents({
                 {recentEncounterIds.flatMap((id) => {
                   const record = encounterRecords.find((item) => item.id === id);
                   return record ? [(
-                    <button key={id} className="rounded-xl border border-canvas-line bg-white px-3 py-2 text-sm font-medium" onDoubleClick={() => onLoadEncounter?.(id)} type="button">
+                    <button key={id} className="rounded-xl border border-canvas-line bg-canvas-surface px-3 py-2 text-sm font-medium" onDoubleClick={() => onLoadEncounter?.(id)} type="button">
                       {record.state.name}
                     </button>
                   )] : [];

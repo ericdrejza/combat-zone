@@ -54,6 +54,7 @@ import {
   useKeybinds,
   type KeybindActionId
 } from "./keybinds";
+import { ThemeProvider } from "./theme/ThemeProvider";
 
 type SidebarCollapsedState = Record<DockSide, boolean>;
 
@@ -500,10 +501,12 @@ function AppContent() {
 
 export function App() {
   return (
-    <KeybindProvider>
-      <CanvasViewportProvider>
-        <AppContent />
-      </CanvasViewportProvider>
-    </KeybindProvider>
+    <ThemeProvider>
+      <KeybindProvider>
+        <CanvasViewportProvider>
+          <AppContent />
+        </CanvasViewportProvider>
+      </KeybindProvider>
+    </ThemeProvider>
   );
 }

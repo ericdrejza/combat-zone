@@ -47,7 +47,7 @@ export function EncounterContextMenu({
   return (
     <div
       ref={contextMenuRef}
-      className="fixed z-[60] w-40 rounded-2xl border border-canvas-line bg-white p-2 text-sm shadow-lg"
+      className="fixed z-[60] w-40 rounded-2xl border border-canvas-line bg-canvas-surface p-2 text-sm shadow-lg"
       role="menu"
       style={{ left: contextMenu.x, top: contextMenu.y }}
     >
@@ -122,7 +122,7 @@ export function AssetContextMenu({
   return (
     <div
       ref={contextMenuRef}
-      className="fixed z-[60] w-36 rounded-2xl border border-canvas-line bg-white p-2 text-sm shadow-lg"
+      className="fixed z-[60] w-36 rounded-2xl border border-canvas-line bg-canvas-surface p-2 text-sm shadow-lg"
       role="menu"
       style={{ left: contextMenu.x, top: contextMenu.y }}
     >
@@ -149,7 +149,7 @@ export function AssetContextMenu({
           {assetTypeMenuOpen ? (
             <div
               aria-label="Asset types"
-              className="absolute left-full top-10 z-[61] ml-2 w-56 rounded-2xl border border-canvas-line bg-white p-2 text-sm shadow-lg"
+              className="absolute left-full top-10 z-[61] ml-2 w-56 rounded-2xl border border-canvas-line bg-canvas-surface p-2 text-sm shadow-lg"
               role="menu"
             >
               <AssetSourceMenu
@@ -196,7 +196,7 @@ export function ConfirmFolderDeleteDialog({
       className="viewport-overlay z-[65] flex items-center justify-center overflow-y-auto bg-black/30 p-6"
       role="dialog"
     >
-      <div className="w-[min(26rem,92vw)] rounded-3xl border border-canvas-line bg-white p-5 shadow-2xl">
+      <div className="w-[min(26rem,92vw)] rounded-3xl border border-canvas-line bg-canvas-surface p-5 shadow-2xl">
         <h3 className="font-display text-lg font-semibold">Delete folder?</h3>
         <p className="mt-2 text-sm text-canvas-muted">
           This folder isn't empty. Delete "{node.name}" and everything inside it?
@@ -244,7 +244,7 @@ export function AssetLinkPickerDialog({
       className="viewport-overlay z-[55] flex items-center justify-center overflow-y-auto bg-black/30 p-6"
       role="dialog"
     >
-      <div className="w-[min(24rem,92vw)] rounded-3xl border border-canvas-line bg-white p-4 shadow-2xl">
+      <div className="w-[min(24rem,92vw)] rounded-3xl border border-canvas-line bg-canvas-surface p-4 shadow-2xl">
         <div className="mb-3 flex items-center justify-between">
           <h3 className="font-display text-lg font-semibold">{title}</h3>
           <button

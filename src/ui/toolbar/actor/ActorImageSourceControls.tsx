@@ -32,7 +32,7 @@ export function ActorImageSourceControls({
       <div className="flex gap-1">
         <button
           aria-label="Choose actor image from library"
-          className="flex h-9 w-9 items-center justify-center rounded-full border border-canvas-line bg-white text-canvas-muted transition hover:bg-canvas"
+          className="flex h-9 w-9 items-center justify-center rounded-full border border-canvas-line bg-canvas-surface text-canvas-muted transition hover:bg-canvas"
           onClick={onOpenLibrary}
           title="Choose actor image from library"
           type="button"
@@ -41,7 +41,7 @@ export function ActorImageSourceControls({
         </button>
         <button
           aria-label="Link actor image"
-          className="flex h-9 w-9 items-center justify-center rounded-full border border-canvas-line bg-white text-canvas-muted transition hover:bg-canvas"
+          className="flex h-9 w-9 items-center justify-center rounded-full border border-canvas-line bg-canvas-surface text-canvas-muted transition hover:bg-canvas"
           onClick={() => setWebImageDialogOpen(true)}
           title="Link actor image"
           type="button"

@@ -74,6 +74,15 @@ describe("SettingsModal local reset", () => {
     ).toEqual(["Account", "Data"]);
   });
 
+  it("shows the Light and Dark theme choices in Interface settings", async () => {
+    const user = userEvent.setup();
+    renderSettings();
+    await user.click(screen.getByRole("tab", { name: "Interface" }));
+
+    expect(screen.getByRole("radio", { name: "Light" })).toBeChecked();
+    expect(screen.getByRole("radio", { name: "Dark" })).not.toBeChecked();
+  });
+
   it("reassigns single-letter shortcuts and documents combinations as read-only", async () => {
     const user = userEvent.setup();
     renderSettings();

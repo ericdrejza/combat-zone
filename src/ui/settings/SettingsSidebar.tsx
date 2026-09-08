@@ -32,7 +32,7 @@ function TabButton({ activeTab, onSelect, tab }: {
   return (
     <button
       aria-selected={selected}
-      className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-medium transition ${selected ? "bg-canvas-ink text-white" : "text-canvas-muted hover:bg-white hover:text-canvas-ink"}`}
+      className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-medium transition ${selected ? "bg-canvas-ink text-canvas-on-ink" : "text-canvas-muted hover:bg-canvas-surface hover:text-canvas-ink"}`}
       onClick={() => onSelect(tab.id)}
       role="tab"
       type="button"

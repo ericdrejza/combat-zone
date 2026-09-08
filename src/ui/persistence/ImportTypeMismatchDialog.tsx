@@ -21,7 +21,7 @@ export function ImportTypeMismatchDialog({
       className="fixed inset-0 z-[90] flex items-center justify-center bg-black/40 p-6"
       role="dialog"
     >
-      <div className="w-[min(30rem,92vw)] rounded-3xl border border-canvas-line bg-white p-5 shadow-2xl">
+      <div className="w-[min(30rem,92vw)] rounded-3xl border border-canvas-line bg-canvas-surface p-5 shadow-2xl">
         <h2 className="font-display text-xl font-semibold">Wrong import file</h2>
         <p className="mt-2 text-sm text-canvas-muted">
           You’re trying to import {article} {actual} file from the {expected} import
@@ -29,7 +29,7 @@ export function ImportTypeMismatchDialog({
         </p>
         <div className="mt-5 flex justify-end">
           <button
-            className="rounded-xl bg-canvas-ink px-4 py-2 text-sm font-semibold text-white"
+            className="rounded-xl bg-canvas-ink px-4 py-2 text-sm font-semibold text-canvas-on-ink"
             onClick={onClose}
             type="button"
           >

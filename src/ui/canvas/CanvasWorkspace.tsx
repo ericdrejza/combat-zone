@@ -22,7 +22,6 @@ import type {
 import { ActorLayer } from "./actors/ActorLayer";
 import { CanvasBackgroundLayer } from "./background/CanvasBackgroundLayer";
 import { CanvasOverlays } from "./CanvasOverlays";
-import { CANVAS_BACKGROUND_COLOR } from "./canvasConstants";
 import type { LocalBoxSelectionState } from "./zones/zoneGeometry";
 import { ZoneLayer } from "./zones/ZoneLayer";
 import { EngagementLayer } from './engagements/EngagementLayer';
@@ -155,7 +154,7 @@ export function CanvasWorkspace({
     <MotionConfig transformPagePoint={createCanvasMotionPointTransform(canvasRef)}>
       <motion.svg
         aria-label="SVG encounter workspace"
-        className={`h-full min-h-0 w-full bg-[${CANVAS_BACKGROUND_COLOR}]`}
+        className="h-full min-h-0 w-full bg-canvas-panel"
         ref={(svg) => {
           canvasRef.current = svg;
         }}

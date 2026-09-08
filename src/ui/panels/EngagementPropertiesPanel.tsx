@@ -41,13 +41,13 @@ export function EngagementPropertiesPanel() {
       <p className="text-canvas-muted">{engagement.participantIds.length} participants</p>
       <label className="block space-y-1">
         <span className="font-semibold text-canvas-ink">Layout</span>
-        <select className="w-full rounded-xl border border-canvas-line bg-white px-3 py-2 text-canvas-ink" onChange={(event) => update({ layoutStrategy: event.currentTarget.value as Engagement['layoutStrategy'] })} value={engagement.layoutStrategy}>
+        <select className="w-full rounded-xl border border-canvas-line bg-canvas-surface px-3 py-2 text-canvas-ink" onChange={(event) => update({ layoutStrategy: event.currentTarget.value as Engagement['layoutStrategy'] })} value={engagement.layoutStrategy}>
           {STRATEGIES.map((strategy) => <option key={strategy} value={strategy}>{strategy}</option>)}
         </select>
       </label>
       <label className="block space-y-1">
         <span className="font-semibold text-canvas-ink">Orientation</span>
-        <select className="w-full rounded-xl border border-canvas-line bg-white px-3 py-2 text-canvas-ink" onChange={(event) => update({ layoutOrientation: event.currentTarget.value as LayoutOrientation })} value={engagement.layoutOrientation}>
+        <select className="w-full rounded-xl border border-canvas-line bg-canvas-surface px-3 py-2 text-canvas-ink" onChange={(event) => update({ layoutOrientation: event.currentTarget.value as LayoutOrientation })} value={engagement.layoutOrientation}>
           {ORIENTATIONS.map((orientation) => <option key={orientation} value={orientation}>{orientation === 'LEFT_RIGHT' ? 'Left to right' : 'Top to bottom'}</option>)}
         </select>
       </label>

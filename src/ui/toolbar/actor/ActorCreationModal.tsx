@@ -184,7 +184,7 @@ export function ActorCreationModal({
           <input
             ref={inputRef}
             aria-label="Actor name"
-            className="w-full rounded-xl border border-canvas-line bg-white px-3 py-2 font-normal outline-none focus:border-canvas-ink"
+            className="w-full rounded-xl border border-canvas-line bg-canvas-surface px-3 py-2 font-normal outline-none focus:border-canvas-ink"
             id="create-actor-name"
             onChange={(event) => setName(event.target.value)}
             placeholder="Name"
@@ -205,7 +205,7 @@ export function ActorCreationModal({
           )}
           <div className="flex gap-2">
             <button
-              className="rounded-xl border border-canvas-line bg-white px-4 py-2 text-sm font-medium transition hover:bg-canvas"
+              className="rounded-xl border border-canvas-line bg-canvas-surface px-4 py-2 text-sm font-medium transition hover:bg-canvas"
               onClick={close}
               type="button"
             >
@@ -213,7 +213,7 @@ export function ActorCreationModal({
             </button>
             {targetZone ? (
               <button
-                className="rounded-xl bg-canvas-ink px-4 py-2 text-sm font-medium text-white transition hover:opacity-90"
+                className="rounded-xl bg-canvas-ink px-4 py-2 text-sm font-medium text-canvas-on-ink transition hover:opacity-90"
                 type="submit"
               >
                 Create

@@ -5,7 +5,8 @@ import type { ImageAssetSource } from '@core/assets/imageAssetSource';
 import type { Zone } from '@entities/zone/types';
 import {
   BACKGROUND_SAMPLE_COUNT,
-  CANVAS_BACKGROUND_COLOR,
+  CANVAS_BACKGROUND_COLORS,
+  type CanvasColorTheme,
   LOW_ZONE_OPACITY_THRESHOLD
 } from './canvasConstants';
 import { getPolygonBounds, isPointInPolygon } from './zones/zoneGeometry';
@@ -148,8 +149,10 @@ export function sampleCanvasBackgroundLuminance(
   );
 }
 
-export function getFallbackCanvasLuminance(): number {
-  return getHexLuminance(CANVAS_BACKGROUND_COLOR);
+export function getFallbackCanvasLuminance(
+  theme: CanvasColorTheme = 'light'
+): number {
+  return getHexLuminance(CANVAS_BACKGROUND_COLORS[theme]);
 }
 
 /**
@@ -158,7 +161,8 @@ export function getFallbackCanvasLuminance(): number {
  * luminance-derived panel ink remains visible over image-only backgrounds.
  */
 export function getImageLuminanceFallback(
-  source: ImageAssetSource | null | undefined
+  source: ImageAssetSource | null | undefined,
+  theme: CanvasColorTheme = 'light'
 ): number {
-  return source?.kind === 'url' ? 0 : getFallbackCanvasLuminance();
+  return source?.kind === 'url' ? 0 : getFallbackCanvasLuminance(theme);
 }

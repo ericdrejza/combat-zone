@@ -27,11 +27,11 @@ export function CloudReconciliationDialog() {
         <h2 id="cloud-reconciliation-title" className="font-display text-xl font-semibold">Choose your starting workspace</h2>
         <p className="mt-2 text-sm text-canvas-muted">This device and your cloud account both contain data. Merge is the safest default.</p>
         <div className="mt-5 grid gap-3">
-          <button className="rounded-xl bg-canvas-ink px-4 py-3 text-left font-semibold text-white disabled:opacity-50" disabled={busy} onClick={() => void choose("merge")} type="button">Merge both workspaces</button>
-          <button className="rounded-xl border border-canvas-line bg-white px-4 py-3 text-left font-semibold disabled:opacity-50" disabled={busy} onClick={() => void choose("use_cloud")} type="button">Use cloud on this device</button>
+          <button className="rounded-xl bg-canvas-ink px-4 py-3 text-left font-semibold text-canvas-on-ink disabled:opacity-50" disabled={busy} onClick={() => void choose("merge")} type="button">Merge both workspaces</button>
+          <button className="rounded-xl border border-canvas-line bg-canvas-surface px-4 py-3 text-left font-semibold disabled:opacity-50" disabled={busy} onClick={() => void choose("use_cloud")} type="button">Use cloud on this device</button>
           <div className="rounded-xl border border-red-300 bg-red-50 p-3">
             <label className="text-sm text-red-900">Type {CONFIRMATION} to keep this device and replace cloud data
-              <input aria-label="Cloud replacement confirmation" className="mt-2 w-full rounded-lg border border-red-300 bg-white px-3 py-2 font-mono" value={confirmation} onChange={(event) => setConfirmation(event.target.value)} />
+              <input aria-label="Cloud replacement confirmation" className="mt-2 w-full rounded-lg border border-red-300 bg-canvas-surface px-3 py-2 font-mono" value={confirmation} onChange={(event) => setConfirmation(event.target.value)} />
             </label>
             <button className="mt-2 rounded-lg bg-red-700 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50" disabled={busy || confirmation !== CONFIRMATION} onClick={() => void choose("keep_device")} type="button">Keep this device</button>
           </div>
