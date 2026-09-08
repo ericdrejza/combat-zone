@@ -73,8 +73,13 @@ export function PanelsShell({
         onDropPanel(dockEndTarget);
       }}
     >
-      {panels.map((panel, index) => (
-        <div key={panel.id}>
+      {panels.map((panel, index) => {
+        const stretch = panels.length === 1 && !panel.collapsed;
+        return (
+        <div
+          className={stretch ? "flex min-h-0 flex-1 flex-col" : undefined}
+          key={panel.id}
+        >
           <PanelDropMarker
             active={
               dropTarget?.side === side &&
@@ -99,9 +104,11 @@ export function PanelsShell({
             renderPanelHeaderActions={renderPanelHeaderActions}
             renderPanelContent={renderPanelContent}
             side={side}
+            stretch={stretch}
           />
         </div>
-      ))}
+        );
+      })}
       <PanelDropMarker
         active={
           dropTarget?.side === side &&
@@ -130,6 +137,7 @@ type DockPanelProps = {
   renderPanelHeaderActions?: (panel: DockPanelDefinition) => ReactNode;
   renderPanelContent?: (panel: DockPanelDefinition) => ReactNode;
   side: DockSide;
+  stretch: boolean;
 };
 
 function DockPanel({
@@ -143,7 +151,8 @@ function DockPanel({
   panel,
   renderPanelHeaderActions,
   renderPanelContent,
-  side
+  side,
+  stretch
 }: DockPanelProps) {
   function getPanelDropTarget(event: React.DragEvent<HTMLElement>): DropTarget {
     const panelBounds = event.currentTarget.getBoundingClientRect();
@@ -158,10 +167,13 @@ function DockPanel({
   return (
     <section
       aria-label={`${panel.title} panel`}
-      className="rounded-3xl border border-canvas-line bg-canvas-panel shadow-sm"
+      className={`rounded-3xl border border-canvas-line bg-canvas-panel shadow-sm ${
+        stretch ? "flex min-h-0 flex-1 flex-col" : ""
+      }`}
       data-panel-drop-index={index}
       data-panel-drop-kind="panel"
       data-panel-drop-side={side}
+      data-panel-stretch={stretch || undefined}
       onDragOver={(event) => {
         if (!draggedPanelId) return;
         event.preventDefault();
@@ -228,7 +240,9 @@ function DockPanel({
         </div>
       </header>
       {!panel.collapsed ? (
-        <div className="border-t border-canvas-line px-4 pb-4 pt-3">
+        <div className={`border-t border-canvas-line px-4 pb-4 pt-3 ${
+          stretch ? "min-h-0 flex-1 overflow-y-auto" : ""
+        }`}>
           {renderPanelContent?.(panel) ?? (
             <p className="text-sm text-canvas-muted">
               {panel.description ??

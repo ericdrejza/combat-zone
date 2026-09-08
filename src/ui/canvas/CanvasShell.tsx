@@ -46,13 +46,16 @@ import {
   CompactPanelLauncher,
   type CompactPanelLauncherProps
 } from "@ui/panels/CompactPanelLauncher";
+import type { CompactPanelDefinition } from "@ui/panels/compactPanelMetadata";
 
 type CanvasShellProps = {
+  compactPanels?: readonly CompactPanelDefinition[];
   renderCompactPanelContent?: CompactPanelLauncherProps["renderPanelContent"];
   renderCompactPanelHeaderActions?: CompactPanelLauncherProps["renderPanelHeaderActions"];
 };
 
 export function CanvasShell({
+  compactPanels,
   renderCompactPanelContent,
   renderCompactPanelHeaderActions
 }: CanvasShellProps) {
@@ -377,6 +380,7 @@ export function CanvasShell({
               <CompactPanelLauncher
                 inline
                 overlayContainer={canvasShellElement}
+                panels={compactPanels}
                 renderPanelContent={renderCompactPanelContent}
                 renderPanelHeaderActions={renderCompactPanelHeaderActions}
               />

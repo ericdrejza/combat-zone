@@ -7,6 +7,7 @@ import {
 } from "@hooks/useCompactLayout";
 import { TOUCH_PRIMARY_INPUT_QUERY } from "@hooks/useMobileControls";
 import { renderApp } from "@tests/ui/renderApp";
+import { INTERFACE_PREFERENCES_STORAGE_KEY } from "@ui/interface_preferences/InterfacePreferenceProvider";
 
 function installCompactMatchMedia() {
   const original = window.matchMedia;
@@ -73,6 +74,8 @@ function installResponsiveMatchMedia(initialCompact: boolean) {
 }
 
 describe("responsive workspace", () => {
+  afterEach(() => localStorage.removeItem(INTERFACE_PREFERENCES_STORAGE_KEY));
+
   it("uses one exact compact-to-desktop transition at 1024 CSS pixels", () => {
     expect(COMPACT_LAYOUT_BREAKPOINT_PX).toBe(1024);
     expect(COMPACT_LAYOUT_QUERY).toBe("(width < 1024px)");
@@ -168,6 +171,34 @@ describe("responsive workspace", () => {
         screen.getByRole("heading", { name: "Library" })
       ).toBeInTheDocument();
       unmount();
+    } finally {
+      restoreMatchMedia();
+    }
+  });
+
+  it("omits hidden dockable panels from the compact launcher", () => {
+    const restoreMatchMedia = installCompactMatchMedia();
+    localStorage.setItem(
+      INTERFACE_PREFERENCES_STORAGE_KEY,
+      JSON.stringify({
+        panelVisibility: {
+          initiative: false,
+          library: false,
+          log: false,
+          properties: false,
+          status: false
+        }
+      })
+    );
+
+    try {
+      renderApp();
+      expect(
+        screen.getByRole("button", { name: "Zoneless panel" })
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: "Library panel" })
+      ).not.toBeInTheDocument();
     } finally {
       restoreMatchMedia();
     }

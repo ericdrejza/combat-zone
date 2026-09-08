@@ -7,6 +7,7 @@ export type SidebarDockProps = {
   children: ReactNode;
   collapsed: boolean;
   footer?: ReactNode;
+  hideToggle?: boolean;
   onToggle: () => void;
   side: DockSide;
 };
@@ -15,6 +16,7 @@ export function SidebarDock({
   children,
   collapsed,
   footer,
+  hideToggle = false,
   onToggle,
   side
 }: SidebarDockProps) {
@@ -36,7 +38,7 @@ export function SidebarDock({
       aria-label={`${side} sidebar`}
       className="flex min-h-0 flex-col gap-2 overflow-hidden"
     >
-      <button
+      {hideToggle ? null : <button
         aria-expanded={!collapsed}
         aria-label={collapsed ? expandLabel : collapseLabel}
         className={`flex h-10 w-10 shrink-0 items-center justify-center ${
@@ -46,7 +48,7 @@ export function SidebarDock({
         type="button"
       >
         <ToggleIcon aria-hidden="true" className="h-5 w-5" />
-      </button>
+      </button>}
       {collapsed ? null : children}
       {footer ? (
         <div className={collapsed ? "mt-auto" : "mt-auto pt-1"}>{footer}</div>

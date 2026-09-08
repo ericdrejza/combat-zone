@@ -215,8 +215,40 @@ describe("InitiativePanel", () => {
 
     await user.click(autoSelect);
     expect(autoSelect).toHaveAttribute("aria-pressed", "false");
+    expect(localStorage.getItem(INTERFACE_PREFERENCES_STORAGE_KEY)).toBeNull();
     await user.click(screen.getByRole("button", { name: "Next turn" }));
     expect(store.getState().interaction.selection.selectedIds).toEqual(["alpha"]);
+  });
+
+  it("keeps the persisted startup default separate from the session toggle", async () => {
+    const user = userEvent.setup();
+    const { unmount } = renderApp();
+    const sessionToggle = screen.getByRole("button", {
+      name: "Auto-select active actor"
+    });
+    expect(sessionToggle).toHaveAttribute("aria-pressed", "true");
+
+    await user.click(screen.getByRole("button", { name: "Open settings" }));
+    await user.click(screen.getByRole("tab", { name: "Interface" }));
+    const startupDefault = screen.getByRole("switch", {
+      name: "Auto-select active actor in initiative"
+    });
+    await user.click(startupDefault);
+
+    expect(startupDefault).not.toBeChecked();
+    expect(sessionToggle).toHaveAttribute("aria-pressed", "true");
+    await user.click(sessionToggle);
+    expect(sessionToggle).toHaveAttribute("aria-pressed", "false");
+    expect(startupDefault).not.toBeChecked();
+    await user.click(sessionToggle);
+    expect(sessionToggle).toHaveAttribute("aria-pressed", "true");
+    expect(startupDefault).not.toBeChecked();
+
+    unmount();
+    renderApp();
+    expect(
+      screen.getByRole("button", { name: "Auto-select active actor" })
+    ).toHaveAttribute("aria-pressed", "false");
   });
 
   it("adjusts an entered initiative value with left and right chevrons", async () => {
