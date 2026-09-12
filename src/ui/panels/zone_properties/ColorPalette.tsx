@@ -1,9 +1,10 @@
 import type { CommitZoneProperties } from "./types";
-import { zoneColorOptions } from "./options";
+import { ZONE_COLOR_PALETTE } from "@entities/zone/zoneColors";
 
-type ZoneColorProperty = "colorFill" | "colorBorder";
+type ZoneColorProperty = "colorFill" | "colorBorder" | "colorEngagement";
 
 type ColorPaletteProps = {
+  disabled?: boolean;
   label: string;
   onCommitZoneProperties: CommitZoneProperties;
   property: ZoneColorProperty;
@@ -11,6 +12,7 @@ type ColorPaletteProps = {
 };
 
 export function ColorPalette({
+  disabled = false,
   label,
   onCommitZoneProperties,
   property,
@@ -25,20 +27,22 @@ export function ColorPalette({
         </span>
       </div>
       <div
+        aria-disabled={disabled}
         aria-label={`${label} palette`}
-        className="grid grid-cols-5 gap-2"
+        className={`grid grid-cols-5 gap-2 ${disabled ? "opacity-40" : ""}`}
         role="group"
       >
-        {zoneColorOptions.map((color) => (
+        {ZONE_COLOR_PALETTE.map((color) => (
           <button
             key={color}
             aria-label={`${label} ${color}`}
             aria-pressed={value === color}
+            disabled={disabled}
             className={`h-8 rounded-full border transition ${
               value === color
                 ? "border-canvas-ink ring-2 ring-canvas-ink/25"
                 : "border-canvas-line"
-            }`}
+            } ${disabled ? "cursor-not-allowed" : ""}`}
             onClick={() => onCommitZoneProperties({ [property]: color })}
             style={{ backgroundColor: color }}
             type="button"

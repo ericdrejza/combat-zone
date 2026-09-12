@@ -3,6 +3,7 @@ import { createEmptyEntityCollection } from "../state/entityCollection";
 import type { EncounterState } from "./types";
 import { ENCOUNTER_SCHEMA_VERSION } from "./types";
 import { DEFAULT_CANVAS_SIZE } from "@core/layout/polygonCanvasBounds";
+import { DEFAULT_ENCOUNTER_PANEL_LAYOUT } from "./panelLayout";
 
 export type CreateEncounterStateInput = {
   id: EntityId;
@@ -29,6 +30,7 @@ export function createEncounterState({
       currentActorId: null,
       currentRound: null
     },
+    panelLayout: structuredClone(DEFAULT_ENCOUNTER_PANEL_LAYOUT),
     validationState: {
       mode: "ADVISORY",
       messages: []

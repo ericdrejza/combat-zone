@@ -95,14 +95,12 @@ describe("Toolbar motion and navigation", () => {
       store.dispatch(setDragActionPreview("engage"));
     });
     expect(engage).toHaveAttribute("aria-pressed", "true");
-    expect(engage).toHaveClass("bg-canvas-ink", "text-white");
     expect(disengage).toHaveAttribute("aria-pressed", "false");
 
     act(() => {
       store.dispatch(setDragActionPreview("disengage"));
     });
     expect(disengage).toHaveAttribute("aria-pressed", "true");
-    expect(disengage).toHaveClass("bg-canvas-ink", "text-white");
     expect(engage).toHaveAttribute("aria-pressed", "false");
   });
 

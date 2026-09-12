@@ -16,9 +16,11 @@ export function ZonePropertiesPanel() {
   const [colorSectionOpen, setColorSectionOpen] = useState(true);
   const {
     activateZonePaintBrush,
+    cancelZoneOpacityPreview,
     commitZoneDelete,
     commitZoneProperties,
     encounter,
+    previewZoneOpacity,
     selectedZone,
     zonePaintBrush
   } = useZonePropertiesActions();
@@ -46,7 +48,9 @@ export function ZonePropertiesPanel() {
       <ZoneColorSection
         colorSectionOpen={colorSectionOpen}
         onActivateZonePaintBrush={activateZonePaintBrush}
+        onCancelZoneOpacityPreview={cancelZoneOpacityPreview}
         onCommitZoneProperties={commitZoneProperties}
+        onPreviewZoneOpacity={previewZoneOpacity}
         onToggleColorSection={() => setColorSectionOpen((isOpen) => !isOpen)}
         zone={selectedZone}
         zonePaintBrush={zonePaintBrush}

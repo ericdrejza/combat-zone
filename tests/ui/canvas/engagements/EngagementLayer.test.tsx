@@ -114,7 +114,7 @@ describe('EngagementLayer', () => {
   it('renders a 24px crossed-swords token in the layer behind actors', () => {
     const encounter = {
       ...createEncounterState({ id: 'test', name: 'Test' }),
-      zones: collection([{ id: 'zone', colorBorder: '#123456', colorFill: '#fff', layoutOrientation: 'LEFT_RIGHT' as const, layoutStrategy: 'FLEX' as const, name: 'Zone', namePosition: 'top-left' as const, opacity: 1, polygon: [{ x: 0, y: 0 }, { x: 300, y: 0 }, { x: 300, y: 300 }, { x: 0, y: 300 }], shape: 'rectangle' as const, showBorder: true, showName: false, tags: [] }]),
+      zones: collection([{ id: 'zone', colorBorder: '#123456', colorEngagement: '#fed7aa', colorFill: '#fff', layoutOrientation: 'LEFT_RIGHT' as const, layoutStrategy: 'FLEX' as const, matchEngagementColorToBorder: false, name: 'Zone', namePosition: 'top-left' as const, opacity: 1, polygon: [{ x: 0, y: 0 }, { x: 300, y: 0 }, { x: 300, y: 300 }, { x: 0, y: 300 }], shape: 'rectangle' as const, showBorder: true, showName: false, tags: [] }]),
       actors: collection([
         { id: 'a', actorType: 'creature' as const, currentZoneId: 'zone', layoutGroup: 'hero' as const, metadata: {}, name: 'A', shape: 'circle' as const, size: 'small' as const, statusEffects: [] },
         { id: 'b', actorType: 'creature' as const, currentZoneId: 'zone', layoutGroup: 'enemy' as const, metadata: {}, name: 'B', shape: 'circle' as const, size: 'small' as const, statusEffects: [] }
@@ -127,11 +127,11 @@ describe('EngagementLayer', () => {
       { actor: encounter.actors.byId.b!, point: { x: 220, y: 100 }, radius: 15 }
     ]} selection={{ selectedEntityType: null, selectedIds: [], overlayTargets: [] }} /></svg>);
     expect(screen.getByLabelText('Engagement')).toBeInTheDocument();
-    expect(container.querySelector('circle[r="12"]')).toHaveAttribute('stroke', '#123456');
-    expect(container.querySelector('circle[r="12"]')).toHaveAttribute('fill', '#123456');
+    expect(container.querySelector('circle[r="12"]')).toHaveAttribute('stroke', '#fed7aa');
+    expect(container.querySelector('circle[r="12"]')).toHaveAttribute('fill', '#fed7aa');
     const swordsIcon = container.querySelector('[aria-label="Crossed swords"]');
     expect(swordsIcon?.tagName.toLowerCase()).toBe('svg');
-    expect(swordsIcon).toHaveAttribute('stroke', '#ffffff');
+    expect(swordsIcon).toHaveAttribute('stroke', '#111827');
     fireEvent.click(container.querySelector('circle[r="12"]')!);
     fireEvent.click(container.querySelector('circle[r="12"]')!, {
       ctrlKey: true

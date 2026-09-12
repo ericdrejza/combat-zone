@@ -1,15 +1,18 @@
 import { ChevronDown, ChevronUp, GripVertical } from "lucide-react";
 import type { ReactNode } from "react";
 
+import type {
+  EncounterDockSide,
+  EncounterPanelState
+} from "@core/encounter/panelLayout";
+import { getDockablePanelDefinition } from "./dockablePanelMetadata";
 import { startPanelPointerDrag } from "./panelPointerDrag";
 
-export type DockSide = "left" | "right";
+export type DockSide = EncounterDockSide;
 
-export type DockPanelDefinition = {
-  collapsed: boolean;
-  id: string;
-  title: string;
+export type DockPanelDefinition = EncounterPanelState & {
   description?: string;
+  title: string;
 };
 
 export type DropTarget = {
@@ -25,7 +28,7 @@ type PanelsShellProps = {
   onPanelCollapsedChange: (panelId: string, collapsed: boolean) => void;
   onDropPanel: (target: DropTarget, panelId?: string) => void;
   onPreviewDrop: (target: DropTarget) => void;
-  panels: DockPanelDefinition[];
+  panels: EncounterPanelState[];
   renderPanelHeaderActions?: (panel: DockPanelDefinition) => ReactNode;
   renderPanelContent?: (panel: DockPanelDefinition) => ReactNode;
   side: DockSide;
@@ -75,6 +78,7 @@ export function PanelsShell({
     >
       {panels.map((panel, index) => {
         const stretch = panels.length === 1 && !panel.collapsed;
+        const definition = getDockablePanelDefinition(panel.id);
         return (
         <div
           className={stretch ? "flex min-h-0 flex-1 flex-col" : undefined}
@@ -100,7 +104,7 @@ export function PanelsShell({
             onPanelCollapsedChange={onPanelCollapsedChange}
             onDropPanel={onDropPanel}
             onPreviewDrop={onPreviewDrop}
-            panel={panel}
+            panel={{ ...panel, ...definition }}
             renderPanelHeaderActions={renderPanelHeaderActions}
             renderPanelContent={renderPanelContent}
             side={side}

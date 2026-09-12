@@ -63,7 +63,7 @@ export class IndexedDbLocalSyncRepository implements LocalSyncRepository {
 
   constructor(
     private readonly databaseName = "combat-zone",
-    private readonly databaseVersion = 3
+    private readonly databaseVersion = 4
   ) {}
 
   private database(): Promise<IDBDatabase> {

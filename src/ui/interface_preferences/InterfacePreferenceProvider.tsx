@@ -16,21 +16,45 @@ import {
 export const INTERFACE_PREFERENCES_STORAGE_KEY =
   "combat-zone.interface-preferences";
 
-type InterfacePreferences = {
+export type ZoneColorDefaults = {
+  border: string | null;
+  engagement: string | null;
+  zone: string | null;
+};
+
+export const DEFAULT_ZONE_COLOR_DEFAULTS: ZoneColorDefaults = {
+  border: null,
+  engagement: null,
+  zone: null
+};
+
+type DurableInterfacePreferences = {
   autoSelectActiveActor: boolean;
-  autoSelectActiveActorDefault: boolean;
   panelVisibility: DockablePanelVisibility;
   panWithRightClickDrag: boolean;
+  zoneColorDefaults: ZoneColorDefaults;
+  zoneOpacityDefault: number;
+  zoneShowBorderDefault: boolean;
+};
+
+type InterfacePreferences = DurableInterfacePreferences & {
+  autoSelectActiveActorDefault: boolean;
   setAutoSelectActiveActor: (enabled: boolean) => void;
   setAutoSelectActiveActorDefault: (enabled: boolean) => void;
   setPanelVisible: (panelId: DockablePanelId, visible: boolean) => void;
   setPanWithRightClickDrag: (enabled: boolean) => void;
+  setZoneColorDefaults: (defaults: ZoneColorDefaults) => void;
+  setZoneOpacityDefault: (opacity: number) => void;
+  setZoneShowBorderDefault: (showBorder: boolean) => void;
 };
 
-const defaultPreferences = {
+const defaultPreferences: DurableInterfacePreferences = {
   autoSelectActiveActor: true,
   panelVisibility: DEFAULT_DOCKABLE_PANEL_VISIBILITY,
-  panWithRightClickDrag: true
+  panWithRightClickDrag: true,
+  zoneColorDefaults: DEFAULT_ZONE_COLOR_DEFAULTS,
+  zoneOpacityDefault: 0.7,
+  zoneShowBorderDefault: true
 };
 
 const defaultValue: InterfacePreferences = {
@@ -39,17 +63,24 @@ const defaultValue: InterfacePreferences = {
   setAutoSelectActiveActor: () => undefined,
   setAutoSelectActiveActorDefault: () => undefined,
   setPanelVisible: () => undefined,
-  setPanWithRightClickDrag: () => undefined
+  setPanWithRightClickDrag: () => undefined,
+  setZoneColorDefaults: () => undefined,
+  setZoneOpacityDefault: () => undefined,
+  setZoneShowBorderDefault: () => undefined
 };
 
 const InterfacePreferenceContext =
   createContext<InterfacePreferences>(defaultValue);
 
-function readPreferences(): typeof defaultPreferences {
+function isHexColor(value: unknown): value is string {
+  return typeof value === "string" && /^#[0-9a-f]{6}$/i.test(value);
+}
+
+function readPreferences(): DurableInterfacePreferences {
   try {
     const stored = JSON.parse(
       localStorage.getItem(INTERFACE_PREFERENCES_STORAGE_KEY) ?? "null"
-    ) as Partial<typeof defaultPreferences> | null;
+    ) as Partial<DurableInterfacePreferences> | null;
     return {
       autoSelectActiveActor:
         typeof stored?.autoSelectActiveActor === "boolean"
@@ -80,6 +111,27 @@ function readPreferences(): typeof defaultPreferences {
       panWithRightClickDrag:
         typeof stored?.panWithRightClickDrag === "boolean"
           ? stored.panWithRightClickDrag
+          : true,
+      zoneColorDefaults: {
+        border: isHexColor(stored?.zoneColorDefaults?.border)
+          ? stored.zoneColorDefaults.border.toLowerCase()
+          : null,
+        engagement: isHexColor(stored?.zoneColorDefaults?.engagement)
+          ? stored.zoneColorDefaults.engagement.toLowerCase()
+          : null,
+        zone: isHexColor(stored?.zoneColorDefaults?.zone)
+          ? stored.zoneColorDefaults.zone.toLowerCase()
+          : null
+      },
+      zoneOpacityDefault:
+        typeof stored?.zoneOpacityDefault === "number" &&
+        stored.zoneOpacityDefault >= 0 &&
+        stored.zoneOpacityDefault <= 1
+          ? stored.zoneOpacityDefault
+          : defaultPreferences.zoneOpacityDefault,
+      zoneShowBorderDefault:
+        typeof stored?.zoneShowBorderDefault === "boolean"
+          ? stored.zoneShowBorderDefault
           : true
     };
   } catch {
@@ -141,7 +193,13 @@ export function InterfacePreferenceProvider({ children }: { children: ReactNode 
             }
           }),
         setPanWithRightClickDrag: (enabled) =>
-          updatePreferences({ panWithRightClickDrag: enabled })
+          updatePreferences({ panWithRightClickDrag: enabled }),
+        setZoneColorDefaults: (zoneColorDefaults) =>
+          updatePreferences({ zoneColorDefaults }),
+        setZoneOpacityDefault: (zoneOpacityDefault) =>
+          updatePreferences({ zoneOpacityDefault }),
+        setZoneShowBorderDefault: (zoneShowBorderDefault) =>
+          updatePreferences({ zoneShowBorderDefault })
       }}
     >
       {children}

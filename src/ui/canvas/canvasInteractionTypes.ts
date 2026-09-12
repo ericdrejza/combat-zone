@@ -4,6 +4,7 @@ import type { LayoutPoint } from '@core/layout/types';
 import type { ZoneShape } from '@entities/zone/types';
 import type { AppDispatch } from '@store/store';
 import type { RootState } from '@store/store';
+import type { ZoneColorDefaults } from '@ui/interface_preferences/InterfacePreferenceProvider';
 import type { ActorRenderPlacement } from './actors/actorCanvasLayout';
 import type { LocalBoxSelectionState } from './zones/zoneGeometry';
 
@@ -92,7 +93,6 @@ export type CanvasInteractionState = {
   encounter: RootState['encounter']['present'];
   edgeDrag: EdgeDragState | null;
   edgeTool: RootState['interaction']['edgeTool'];
-  lastZoneOpacity: RootState['interaction']['lastZoneOpacity'];
   selection: RootState['interaction']['selection'];
   touchMultiSelect?: RootState['interaction']['touchMultiSelect'];
   setActorDrag: Dispatch<SetStateAction<ActorDragState | null>>;
@@ -111,5 +111,8 @@ export type CanvasInteractionState = {
   zoneDraftPoints: LayoutPoint[];
   zoneDrag: ZoneDragState | null;
   zonePaintBrush: RootState['interaction']['zonePaintBrush'];
+  zoneColorDefaults: ZoneColorDefaults;
+  zoneOpacityDefault: number;
+  zoneShowBorderDefault: boolean;
   zoneShapeMode: RootState['interaction']['zoneShapeMode'];
 };

@@ -13,12 +13,16 @@ export type ZoneNamePosition =
 
 export type Zone = {
   colorBorder: string;
+  /** Retained while matching is enabled so a custom selection is not lost. */
+  colorEngagement?: string;
   colorFill: string;
   id: string;
   name: string;
   opacity: number;
   polygon: LayoutPoint[];
   showBorder: boolean;
+  /** Missing on legacy documents means the default matched behavior. */
+  matchEngagementColorToBorder?: boolean;
   showName: boolean;
   showSectionDividers?: boolean;
   namePosition: ZoneNamePosition;

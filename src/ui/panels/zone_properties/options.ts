@@ -38,29 +38,6 @@ export const zoneLayoutOrientations: Array<{
   { icon: MoveVertical, id: 'TOP_BOTTOM', label: 'Top to bottom' }
 ];
 
-export const zoneColorOptions = [
-  '#ffffff',
-  '#d6d3d1',
-  '#AAAAAA',
-  '#765341',
-  '#92400e',
-  '#fef3c7',
-  '#fed7aa',
-  '#fecaca',
-  '#fbcfe8',
-  '#ddd6fe',
-  '#bfdbfe',
-  '#bae6fd',
-  '#bbf7d0',
-  '#d9f99d',
-  '#991b1b',
-  '#fde68a',
-  '#365314',
-  '#047857',
-  '#1d4ed8',
-  '#6d28d9'
-];
-
 export const zoneNamePositions: Array<{
   icon: LucideIcon;
   id: ZoneNamePosition;
@@ -85,9 +62,11 @@ export function getExportableZoneProperties(
   return {
     autoResize: zone.autoResize,
     colorBorder: zone.colorBorder,
+    colorEngagement: zone.colorEngagement,
     colorFill: zone.colorFill,
     layoutOrientation: zone.layoutOrientation,
     layoutStrategy: zone.layoutStrategy,
+    matchEngagementColorToBorder: zone.matchEngagementColorToBorder,
     namePosition: zone.namePosition,
     opacity: zone.opacity,
     showBorder: zone.showBorder,

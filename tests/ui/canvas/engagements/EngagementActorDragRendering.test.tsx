@@ -20,10 +20,12 @@ function collection<TEntity extends { id: string }>(
 
 const zone: Zone = {
   colorBorder: '#123456',
+  colorEngagement: '#fed7aa',
   colorFill: '#ffffff',
   id: 'zone',
   layoutOrientation: 'LEFT_RIGHT',
   layoutStrategy: 'FLEX',
+  matchEngagementColorToBorder: false,
   name: 'Zone',
   namePosition: 'top-left',
   opacity: 1,
@@ -134,6 +136,9 @@ describe('Engagement actor drag rendering', () => {
     expect(
       container.querySelectorAll('[data-engagement-drag-preview]')
     ).toHaveLength(2);
+    Array.from(
+      container.querySelectorAll('[data-engagement-drag-preview]')
+    ).forEach((line) => expect(line).toHaveAttribute('stroke', '#fed7aa'));
 
     rerender(
       <svg>

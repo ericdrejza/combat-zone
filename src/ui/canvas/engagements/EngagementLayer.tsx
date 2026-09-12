@@ -1,5 +1,6 @@
 import type { EncounterState } from '@core/encounter/types';
 import type { LayoutPoint } from '@core/layout/types';
+import { getZoneEngagementColor } from '@entities/zone/zoneColors';
 import type { RootState } from '@store/store';
 import type { ActorRenderPlacement } from '../actors/actorCanvasLayout';
 import type { ActorPlacementTranslation } from '../actors/actorPlacementTranslation';
@@ -125,7 +126,7 @@ export function EngagementLayer({
         )
       }));
       return [{
-        color: zone.colorBorder,
+        color: getZoneEngagementColor(zone),
         engagementId,
         outlineColor: getZoneNameTextColor(
           zone,

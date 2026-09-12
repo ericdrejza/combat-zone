@@ -26,7 +26,7 @@ function encounterCommand(mutationId = "mutation-1", expectedRevision: number | 
       folderId: null,
       assetIds,
       state: {
-        schemaVersion: 6,
+        schemaVersion: 7,
         id: "encounter-1",
         name: "Encounter",
         canvasSize: { width: 960, height: 640 },
@@ -37,6 +37,17 @@ function encounterCommand(mutationId = "mutation-1", expectedRevision: number | 
         engagements: collection,
         annotations: collection,
         initiativeTracker: { entries: [], currentActorId: null, currentRound: null },
+        panelLayout: {
+          left: [
+            { id: "library", collapsed: false },
+            { id: "properties", collapsed: false },
+            { id: "log", collapsed: false }
+          ],
+          right: [
+            { id: "initiative", collapsed: false },
+            { id: "status", collapsed: false }
+          ]
+        },
         validationState: { mode: "ADVISORY", messages: [] }
       }
     }

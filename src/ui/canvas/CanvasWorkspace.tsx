@@ -95,6 +95,7 @@ type CanvasWorkspaceProps = {
   onActorMouseEnter: (actorId: string) => void;
   onActorMouseLeave: (actorId: string) => void;
   zoneDraftPoints: LayoutPoint[];
+  zoneOpacityPreview: RootState["interaction"]["zoneOpacityPreview"];
   zoneShapeMode: RootState["interaction"]["zoneShapeMode"];
   zoneDrag: ZoneDragState | null;
 };
@@ -143,6 +144,7 @@ export function CanvasWorkspace({
   shapeDraft,
   showFactionOutlines,
   zoneDraftPoints,
+  zoneOpacityPreview,
   zoneShapeMode,
   zoneActorTranslation,
   zoneDrag,
@@ -215,6 +217,7 @@ export function CanvasWorkspace({
                 onZoneMotionComplete={onZoneMotionComplete}
                 selection={selection}
                 zoneDrag={zoneDrag}
+                zoneOpacityPreview={zoneOpacityPreview}
               />
             ) : null}
             {layer.id === "edges" ? (

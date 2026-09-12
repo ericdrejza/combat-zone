@@ -116,11 +116,23 @@ Properties:
 - id
 - name
 - polygon
+- colorFill
+- colorBorder
+- colorEngagement
+- matchEngagementColorToBorder
+- opacity
+- showBorder
+- showName
+- namePosition
 - layoutStrategy
 - layoutOrientation
 - showSectionDividers
 - autoResize
 - tags
+
+Zone names trim surrounding whitespace and may be empty.
+Zone opacity previews continuously while its slider is dragged and commits the
+final value on release as one reversible history action.
 
 Zone contents are derived from actor `currentZoneId` values and engagement
 `parentZoneId` values. Points of interest are Actors with the appropriate
@@ -251,10 +263,12 @@ Rules:
   participants must never persist as a visible entity — this happens
   automatically as part of whatever action caused the drop (participant
   leaving, actor deleted, split, etc.), not as a separate manual step.
-- An Engagement renders as a 24px-diameter circular token using
-  `src/assets/images/crossed-swords.svg`. Its fill and border use its parent
-  Zone's border color; the swords use the existing luminance-derived readable
-  black-or-white text color for that fill.
+- An Engagement renders as a 24px-diameter circular token using the Lucide
+  crossed-swords icon. Its fill, border, and connectors use its parent Zone's
+  Engagement color. That color matches the Zone border by default; a Zone can
+  disable matching and retain an independent Engagement color. The swords use
+  the existing luminance-derived readable black-or-white text color for that
+  fill.
 - Participant, token, connector, and cluster positions are derived render
   targets, not persisted EncounterState facts.
 
@@ -590,6 +604,11 @@ Panels:
 - collapsible
 - stackable vertically
 - multiple tabs for panel groups
+- each Encounter persists every panel's dock side, order within that dock, and
+  individual expanded/collapsed state; whole-sidebar collapse remains
+  session-only
+- an empty dock retains a narrow drop target so panels can be moved back to it,
+  while its sidebar expand/collapse control remains hidden
 
 Below 1024px, the canvas owns the workspace and docked panels are replaced by
 a bottom-right launcher and one right-side overlay drawer. The launcher uses
@@ -645,6 +664,22 @@ Context-sensitive editor:
 - Dark
 - System default
 - Extensible theme system (future)
+
+Interface settings optionally persist default Zone fill and border colors as
+six-digit hex values and persist a default Zone opacity from 0–100%. Blank
+Zone fill or border defaults use the first color in the Zone palette. The
+optional default Engagement color is blank by default: new Zones then match
+their Engagement color to their border. Setting an Engagement default creates
+new Zones with matching disabled and that independent color. Empty color
+fields display the effective default hex value as their placeholder. Cloned
+Zones retain the source Zone's opacity instead of applying the new-Zone
+default. A Show border setting, enabled by default, controls border visibility
+for newly created Zones; clones retain their source Zone's setting.
+The Interface panel controls are grouped under General, Defaults (including
+the Colors subsection), and Panel Visibility.
+On layouts narrower than the shared 1024px compact breakpoint, the Settings
+section navigation starts collapsed to icons, can be expanded for selection,
+and collapses again after a section is selected.
 
 ## 9. Selection System
 

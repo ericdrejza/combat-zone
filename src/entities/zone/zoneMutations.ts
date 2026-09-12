@@ -10,6 +10,7 @@ import type { Zone, ZoneNamePosition, ZoneShape } from "./types";
 export type CreateZoneInput = {
   autoResize?: boolean;
   colorBorder?: string;
+  colorEngagement?: string;
   colorFill?: string;
   id: EntityId;
   name?: string;
@@ -19,6 +20,7 @@ export type CreateZoneInput = {
   showBorder?: boolean;
   showName?: boolean;
   showSectionDividers?: boolean;
+  matchEngagementColorToBorder?: boolean;
   shape?: ZoneShape;
   layoutOrientation?: LayoutOrientation;
   layoutStrategy?: Zone["layoutStrategy"];
@@ -28,12 +30,14 @@ export type CreateZoneInput = {
 export type UpdateZonePropertiesInput = {
   autoResize?: boolean;
   colorBorder?: string;
+  colorEngagement?: string;
   colorFill?: string;
   layoutOrientation?: LayoutOrientation;
   layoutStrategy?: Zone["layoutStrategy"];
   name?: string;
   namePosition?: ZoneNamePosition;
   opacity?: number;
+  matchEngagementColorToBorder?: boolean;
   showBorder?: boolean;
   showName?: boolean;
   showSectionDividers?: boolean;
@@ -94,6 +98,7 @@ function updateEntities<TEntity extends { id: EntityId }>(
 export function buildZone({
   autoResize = false,
   colorBorder = "#9b876b",
+  colorEngagement,
   colorFill = "#ffffff",
   id,
   layoutOrientation = "LEFT_RIGHT",
@@ -101,6 +106,7 @@ export function buildZone({
   name = "New Zone",
   namePosition = "top-left",
   opacity = 0.7,
+  matchEngagementColorToBorder = true,
   polygon,
   showBorder = true,
   showName = false,
@@ -111,11 +117,13 @@ export function buildZone({
   return {
     autoResize,
     colorBorder,
+    colorEngagement: colorEngagement ?? colorBorder,
     colorFill,
     id,
     name,
     namePosition,
     opacity,
+    matchEngagementColorToBorder,
     polygon,
     showBorder,
     showName,

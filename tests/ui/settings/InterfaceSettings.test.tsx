@@ -1,9 +1,10 @@
-import { act, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { LOCAL_PREFERENCES_RESET_EVENT } from "@ui/motion_preferences/MotionPreferenceProvider";
 import { InterfaceSettings } from "@ui/settings/InterfaceSettings";
 import {
+  DEFAULT_ZONE_COLOR_DEFAULTS,
   INTERFACE_PREFERENCES_STORAGE_KEY,
   InterfacePreferenceProvider
 } from "@ui/interface_preferences/InterfacePreferenceProvider";
@@ -66,14 +67,91 @@ describe("InterfaceSettings", () => {
     expect(JSON.parse(localStorage.getItem(INTERFACE_PREFERENCES_STORAGE_KEY)!)).toEqual({
       autoSelectActiveActor: false,
       panelVisibility: DEFAULT_DOCKABLE_PANEL_VISIBILITY,
-      panWithRightClickDrag: false
+      panWithRightClickDrag: false,
+      zoneColorDefaults: DEFAULT_ZONE_COLOR_DEFAULTS,
+      zoneOpacityDefault: 0.7,
+      zoneShowBorderDefault: true
     });
+  });
+
+  it("persists valid default colors and allows engagements to match the border", async () => {
+    const user = userEvent.setup();
+    renderSettings();
+
+    const defaults = screen.getByRole("group", { name: "Defaults" });
+    const zoneColor = within(defaults).getByRole("textbox", {
+      name: "Default zone color"
+    });
+    const borderColor = within(defaults).getByRole("textbox", {
+      name: "Default border color"
+    });
+    const zoneOpacity = within(defaults).getByRole("slider", {
+      name: "Default zone opacity"
+    });
+    const engagementColor = within(defaults).getByRole("textbox", {
+      name: "Default engagements color"
+    });
+    const showBorder = within(defaults).getByRole("switch", {
+      name: "Show border"
+    });
+
+    expect(zoneColor).toHaveValue("");
+    expect(zoneColor).toHaveAttribute("placeholder", "#ffffff");
+    expect(zoneOpacity).toHaveValue("0.7");
+    expect(within(defaults).getByText("70%")).toBeInTheDocument();
+    expect(borderColor).toHaveValue("");
+    expect(borderColor).toHaveAttribute("placeholder", "#ffffff");
+    expect(engagementColor).toHaveValue("");
+    expect(engagementColor).toHaveAttribute("placeholder", "#ffffff");
+    expect(showBorder).toBeChecked();
+
+    await user.clear(zoneColor);
+    await user.type(zoneColor, "#ABCDEF{Enter}");
+    fireEvent.change(zoneOpacity, { target: { value: "0.6" } });
+    await user.click(showBorder);
+    await user.type(engagementColor, "#FED7AA{Enter}");
+
+    expect(JSON.parse(localStorage.getItem(INTERFACE_PREFERENCES_STORAGE_KEY)!))
+      .toMatchObject({
+        zoneColorDefaults: {
+          border: null,
+          engagement: "#fed7aa",
+          zone: "#abcdef"
+        },
+        zoneOpacityDefault: 0.6,
+        zoneShowBorderDefault: false
+      });
+
+    await user.clear(engagementColor);
+    await user.type(engagementColor, "{Enter}");
+    expect(JSON.parse(localStorage.getItem(INTERFACE_PREFERENCES_STORAGE_KEY)!))
+      .toMatchObject({ zoneColorDefaults: { engagement: null } });
+
+    await user.type(borderColor, "#123456{Enter}");
+    expect(engagementColor).toHaveAttribute("placeholder", "#123456");
+
+    await user.clear(zoneColor);
+    await user.type(zoneColor, "{Enter}");
+    await user.clear(borderColor);
+    await user.type(borderColor, "{Enter}");
+    expect(zoneColor).toHaveAttribute("placeholder", "#ffffff");
+    expect(borderColor).toHaveAttribute("placeholder", "#ffffff");
+    expect(engagementColor).toHaveAttribute("placeholder", "#ffffff");
+    expect(JSON.parse(localStorage.getItem(INTERFACE_PREFERENCES_STORAGE_KEY)!))
+      .toMatchObject({
+        zoneColorDefaults: { border: null, engagement: null, zone: null }
+      });
+
+    await user.type(borderColor, "invalid{Enter}");
+    expect(screen.getByRole("alert")).toHaveTextContent("six-digit hex color");
+    expect(JSON.parse(localStorage.getItem(INTERFACE_PREFERENCES_STORAGE_KEY)!))
+      .toMatchObject({ zoneColorDefaults: { border: null } });
   });
 
   it("lists panel visibility controls alphabetically with eye icons", async () => {
     const user = userEvent.setup();
     renderSettings();
-    const panels = screen.getByRole("group", { name: "Panels" });
+    const panels = screen.getByRole("group", { name: "Panel Visibility" });
     const switches = within(panels).getAllByRole("switch");
 
     expect(switches.map((control) => control.getAttribute("aria-label"))).toEqual([
