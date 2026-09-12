@@ -31,13 +31,22 @@ describe("CanvasShell paint mode", () => {
     fireEvent.change(screen.getByLabelText("Zone opacity"), {
       target: { value: "0.25" }
     });
-    await user.click(screen.getByRole("checkbox", { name: /Show border/ }));
+    await user.click(screen.getByRole("tab", { name: "Border" }));
+    await user.click(screen.getByRole("switch", { name: /Show border/ }));
+    await user.click(screen.getByRole("tab", { name: "Engagements" }));
+    await user.click(
+      screen.getByRole("checkbox", { name: "Match border color" })
+    );
+    await user.click(
+      screen.getByRole("button", { name: "Engagements color #fed7aa" })
+    );
     await user.click(screen.getByRole("button", { name: "Paint zone colors" }));
 
     expect(store.getState().interaction.zonePaintBrush).toMatchObject({
       sourceZoneId: firstZoneId
     });
 
+    await user.click(screen.getByRole("tab", { name: "Fill" }));
     await user.click(screen.getByRole("button", { name: "Fill color #bbf7d0" }));
     fireEvent.change(screen.getByLabelText("Zone opacity"), {
       target: { value: "0.4" }
@@ -57,6 +66,14 @@ describe("CanvasShell paint mode", () => {
     expect(secondZone).toHaveAttribute("fill", "#bbf7d0");
     expect(secondZone).toHaveAttribute("fill-opacity", "0.4");
     expect(secondZone).toHaveAttribute("stroke", "transparent");
+    expect(
+      store.getState().encounter.present.zones.byId[
+        secondZone.getAttribute("data-entity-id") ?? ""
+      ]
+    ).toMatchObject({
+      colorEngagement: "#fed7aa",
+      matchEngagementColorToBorder: false
+    });
     expect(store.getState().interaction.selection).toMatchObject({
       selectedEntityType: "zone",
       selectedIds: [firstZoneId]

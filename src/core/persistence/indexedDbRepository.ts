@@ -51,7 +51,7 @@ export class IndexedDbWorkspaceRepository implements WorkspaceRepository {
 
   constructor(options: IndexedDbWorkspaceRepositoryOptions = {}) {
     this.databaseName = options.databaseName ?? "combat-zone";
-    this.databaseVersion = options.databaseVersion ?? 3;
+    this.databaseVersion = options.databaseVersion ?? 4;
   }
 
   private database(): Promise<IDBDatabase> {

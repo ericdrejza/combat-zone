@@ -9,8 +9,9 @@ import {
   updateZoneProperties
 } from "@entities/zone/zoneMutations";
 import {
+  clearZoneOpacityPreview,
   clearSelection,
-  setLastZoneOpacity,
+  setZoneOpacityPreview,
   toggleZonePaintBrush
 } from "@interaction/interactionState";
 import { commitEncounterChange } from "@store/encounterSlice";
@@ -34,6 +35,9 @@ function toZonePropertiesInput(
     ...(properties.colorBorder !== undefined
       ? { colorBorder: properties.colorBorder }
       : {}),
+    ...(properties.colorEngagement !== undefined
+      ? { colorEngagement: properties.colorEngagement }
+      : {}),
     ...(properties.colorFill !== undefined
       ? { colorFill: properties.colorFill }
       : {}),
@@ -42,6 +46,12 @@ function toZonePropertiesInput(
       ? { namePosition: properties.namePosition }
       : {}),
     ...(properties.opacity !== undefined ? { opacity: properties.opacity } : {}),
+    ...(properties.matchEngagementColorToBorder !== undefined
+      ? {
+          matchEngagementColorToBorder:
+            properties.matchEngagementColorToBorder
+        }
+      : {}),
     ...(properties.showBorder !== undefined
       ? { showBorder: properties.showBorder }
       : {}),
@@ -93,6 +103,9 @@ export function useZonePropertiesActions() {
     const commitPrepared = (resolved: Awaited<typeof prepared>) => {
       if (resolved.blocked) {
         logEncounterValidationBlock(dispatch, resolved);
+        if (properties.opacity !== undefined) {
+          dispatch(clearZoneOpacityPreview());
+        }
         return;
       }
 
@@ -104,7 +117,7 @@ export function useZonePropertiesActions() {
       );
 
       if (properties.opacity !== undefined) {
-        dispatch(setLastZoneOpacity(properties.opacity));
+        dispatch(clearZoneOpacityPreview());
       }
     };
 
@@ -158,6 +171,16 @@ export function useZonePropertiesActions() {
     dispatch(toggleZonePaintBrush({ sourceZoneId: selectedZone.id }));
   }
 
+  function previewZoneOpacity(opacity: number) {
+    if (selectedZone) {
+      dispatch(setZoneOpacityPreview({ opacity, zoneId: selectedZone.id }));
+    }
+  }
+
+  function cancelZoneOpacityPreview() {
+    dispatch(clearZoneOpacityPreview());
+  }
+
   function exportSourcePropertiesToSelection() {
     if (!selectedZone || selectedZoneIds.length < 2) {
       return;
@@ -197,7 +220,6 @@ export function useZonePropertiesActions() {
           nextEncounter: resolved.nextEncounter
         })
       );
-      dispatch(setLastZoneOpacity(selectedZone.opacity));
     };
 
     if (prepared instanceof Promise) {
@@ -209,10 +231,12 @@ export function useZonePropertiesActions() {
 
   return {
     activateZonePaintBrush,
+    cancelZoneOpacityPreview,
     commitZoneDelete,
     commitZoneProperties,
     encounter,
     exportSourcePropertiesToSelection,
+    previewZoneOpacity,
     selectedZone,
     selectedZoneIds,
     zonePaintBrush

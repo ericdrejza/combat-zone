@@ -10,11 +10,13 @@ import reducer, {
   undoEncounterChange
 } from '@store/encounterSlice';
 import {
+  buildZone,
   createZone,
   deleteZone,
   updateZonePolygon,
   updateZoneProperties
 } from '@entities/zone/zoneMutations';
+import { getZoneEngagementColor } from '@entities/zone/zoneColors';
 import {
   collection,
   commitState,
@@ -41,9 +43,14 @@ describe('zone mutations', () => {
     let state = commitState(initialState, 'zone.create', nextEncounter);
 
     expect(state.present.zones.byId['zone-created']).toMatchObject({
+      colorEngagement: '#9b876b',
+      matchEngagementColorToBorder: true,
       name: 'Created',
       polygon
     });
+    expect(
+      getZoneEngagementColor(state.present.zones.byId['zone-created']!)
+    ).toBe('#9b876b');
 
     state = reducer(state, undoEncounterChange());
     expect(state.present).toEqual(initialState.present);
@@ -84,8 +91,10 @@ describe('zone mutations', () => {
     const baseEncounter = createZoneEncounterState();
     let state = commitState(initialState, 'test.seed', baseEncounter);
     const nextEncounter = updateZoneProperties(state.present, zone.id, {
+      colorEngagement: '#bfdbfe',
       layoutOrientation: 'TOP_BOTTOM',
       layoutStrategy: 'SPLIT_SEQUENTIAL',
+      matchEngagementColorToBorder: false,
       name: 'Updated Room',
       showSectionDividers: true,
       tags: ['difficult', 'lit']
@@ -94,8 +103,10 @@ describe('zone mutations', () => {
     state = commitState(state, 'zone.updateProperties', nextEncounter);
 
     expect(state.present.zones.byId[zone.id]).toMatchObject({
+      colorEngagement: '#bfdbfe',
       layoutOrientation: 'TOP_BOTTOM',
       layoutStrategy: 'SPLIT_SEQUENTIAL',
+      matchEngagementColorToBorder: false,
       name: 'Updated Room',
       showSectionDividers: true,
       tags: ['difficult', 'lit']
@@ -134,10 +145,38 @@ describe('zone mutations', () => {
     expect(
       state.present.zones.byId[zone.id]?.showSectionDividers
     ).toBe(true);
+    expect(getZoneEngagementColor(state.present.zones.byId[zone.id]!)).toBe(
+      '#bfdbfe'
+    );
+    });
+
+    it('uses the border color for legacy and explicitly matched zones', () => {
+      const customColorZone = buildZone({
+        colorBorder: '#123456',
+        colorEngagement: '#abcdef',
+        id: 'colors',
+        matchEngagementColorToBorder: true,
+        polygon: zone.polygon
+      });
+
+      expect(getZoneEngagementColor(customColorZone)).toBe('#123456');
+      expect(
+        getZoneEngagementColor({
+          ...customColorZone,
+          matchEngagementColorToBorder: false
+        })
+      ).toBe('#abcdef');
+      expect(
+        getZoneEngagementColor({
+          ...customColorZone,
+          colorEngagement: undefined,
+          matchEngagementColorToBorder: undefined
+        })
+      ).toBe('#123456');
     });
 
     it.each(['ADVISORY', 'STRICT'] as const)(
-      'allows divider visibility changes in %s validation mode',
+      'allows visual property changes in %s validation mode',
       (mode) => {
       const emptyEncounter = createEncounterState({
         id: 'encounter-divider-validation',
@@ -154,11 +193,19 @@ describe('zone mutations', () => {
       const nextEncounter = updateZoneProperties(
         currentEncounter,
         zone.id,
-        { showSectionDividers: true }
+        {
+          colorEngagement: '#bfdbfe',
+          matchEngagementColorToBorder: false,
+          showSectionDividers: true
+        }
       );
       const result = prepareValidatedEncounterChange({
         action: createEncounterActionRecord('zone.updateProperties', {
-          properties: { showSectionDividers: true },
+          properties: {
+            colorEngagement: '#bfdbfe',
+            matchEngagementColorToBorder: false,
+            showSectionDividers: true
+          },
           zoneId: zone.id
         }),
         currentEncounter,
@@ -169,6 +216,9 @@ describe('zone mutations', () => {
       expect(
         result.nextEncounter.zones.byId[zone.id]?.showSectionDividers
       ).toBe(true);
+      expect(
+        getZoneEngagementColor(result.nextEncounter.zones.byId[zone.id]!)
+      ).toBe('#bfdbfe');
       }
     );
   });

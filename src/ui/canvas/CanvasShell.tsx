@@ -7,6 +7,7 @@ import { useCompactLayout } from "@hooks/useCompactLayout";
 import { useMobileControls } from "@hooks/useMobileControls";
 import { deleteSelectedEntities } from "@interaction/selection/deleteSelectedEntities";
 import type { AppDispatch, RootState } from "@store/store";
+import { useInterfacePreferences } from "@ui/interface_preferences/InterfacePreferenceProvider";
 import { ZonelessActorPanel } from "../panels/zoneless_actors/ZonelessActorPanel";
 import { closeZoneShapeMenu } from "../toolbar/events";
 import { CanvasDragOverlay } from "./CanvasDragOverlay";
@@ -60,6 +61,11 @@ export function CanvasShell({
   renderCompactPanelHeaderActions
 }: CanvasShellProps) {
   const dispatch = useDispatch<AppDispatch>();
+  const {
+    zoneColorDefaults,
+    zoneOpacityDefault,
+    zoneShowBorderDefault
+  } = useInterfacePreferences();
   const encounter = useSelector((state: RootState) => state.encounter.present);
   const library = useSelector((state: RootState) => state.library);
   const activeToolId = useSelector(
@@ -76,8 +82,8 @@ export function CanvasShell({
   const zonePaintBrush = useSelector(
     (state: RootState) => state.interaction.zonePaintBrush
   );
-  const lastZoneOpacity = useSelector(
-    (state: RootState) => state.interaction.lastZoneOpacity
+  const zoneOpacityPreview = useSelector(
+    (state: RootState) => state.interaction.zoneOpacityPreview
   );
   const selection = useSelector((state: RootState) => state.interaction.selection);
   const touchMultiSelect = useSelector(
@@ -206,7 +212,6 @@ export function CanvasShell({
     encounter,
     edgeDrag,
     edgeTool,
-    lastZoneOpacity,
     selection,
     setActorDrag,
     setBoxSelection,
@@ -224,6 +229,9 @@ export function CanvasShell({
     zoneDraftPoints,
     zoneDrag,
     zonePaintBrush,
+    zoneColorDefaults,
+    zoneOpacityDefault,
+    zoneShowBorderDefault,
     zoneShapeMode,
     touchMultiSelect
   });
@@ -271,6 +279,7 @@ export function CanvasShell({
         actorDrag={actorDrag}
         actorRenderPlacements={actorRenderPlacements}
         zoneActorTranslation={zoneActorTranslation}
+        zoneOpacityPreview={zoneOpacityPreview}
         actorTargetZoneId={actorTool.targetZoneId}
         engagementDrag={engagementDrag}
         backgroundImage={backgroundImage}

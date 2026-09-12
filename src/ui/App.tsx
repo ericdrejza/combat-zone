@@ -64,23 +64,6 @@ import {
 
 type SidebarCollapsedState = Record<DockSide, boolean>;
 
-const initialPanelLayout: PanelLayout = {
-  left: [
-    { id: "library", title: "Library", collapsed: false },
-    { id: "properties", title: "Properties", collapsed: false },
-    { id: "log", title: "Log", collapsed: false }
-  ],
-  right: [
-    { id: "initiative", title: "Initiative", collapsed: false },
-    {
-      id: "status",
-      title: "Status",
-      description: "Entity detail scaffold.",
-      collapsed: false
-    },
-  ]
-};
-
 const toolKeybindActions = Object.fromEntries(
   MVP_TOOLS.map((tool) => [tool.id, `tool.${tool.id}`])
 ) as Record<(typeof MVP_TOOLS)[number]["id"], KeybindActionId>;
@@ -112,7 +95,7 @@ function AppContent() {
   const selection = useSelector((state: RootState) => state.interaction.selection);
   const compactLayout = useCompactLayout();
   const visualViewport = useVisualViewportRect();
-  const [panelLayout, setPanelLayout] = useState<PanelLayout>(initialPanelLayout);
+  const panelLayout = encounter.panelLayout;
   const [libraryAutoCollapsedBySelect, setLibraryAutoCollapsedBySelect] =
     useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] =
@@ -135,7 +118,13 @@ function AppContent() {
     onBackgroundDoubleClick: applyBackgroundFromLibrary,
     onTokenDoubleClick: focusTokenInLibrary
   });
-  const visiblePanelLayout = getVisiblePanelLayout(panelLayout, panelVisibility);
+  const effectivePanelLayout = libraryAutoCollapsedBySelect
+    ? mapLibraryPanel(panelLayout, (panel) => ({ ...panel, collapsed: true }))
+    : panelLayout;
+  const visiblePanelLayout = getVisiblePanelLayout(
+    effectivePanelLayout,
+    panelVisibility
+  );
   const compactPanels = getVisibleCompactPanels(panelVisibility);
   const workspaceColumns = getWorkspaceColumns(
     visiblePanelLayout,
@@ -189,7 +178,7 @@ function AppContent() {
 
   function mapLibraryPanel(
     layout: PanelLayout,
-    mapper: (panel: DockPanelDefinition) => DockPanelDefinition
+    mapper: (panel: PanelLayout[DockSide][number]) => PanelLayout[DockSide][number]
   ): PanelLayout {
     return {
       left: layout.left.map((panel) =>
@@ -206,31 +195,17 @@ function AppContent() {
       return;
     }
 
-    setPanelLayout((layout) => {
-      let collapsedOpenLibraryPanel = false;
-
-      const nextLayout = mapLibraryPanel(layout, (panel) => {
-        if (panel.collapsed) {
-          return panel;
-        }
-
-        collapsedOpenLibraryPanel = true;
-        return { ...panel, collapsed: true };
-      });
-
-      setLibraryAutoCollapsedBySelect(collapsedOpenLibraryPanel);
-      return nextLayout;
-    });
-  }, [activeToolId]);
+    const libraryPanel = [...panelLayout.left, ...panelLayout.right].find(
+      (panel) => panel.id === "library"
+    );
+    setLibraryAutoCollapsedBySelect(libraryPanel?.collapsed === false);
+  }, [activeToolId, panelLayout]);
 
   function expandAutoCollapsedLibraryPanel() {
     if (!libraryAutoCollapsedBySelect) {
       return;
     }
 
-    setPanelLayout((layout) =>
-      mapLibraryPanel(layout, (panel) => ({ ...panel, collapsed: false }))
-    );
     setLibraryAutoCollapsedBySelect(false);
   }
 
@@ -249,9 +224,6 @@ function AppContent() {
       nodeId: node.id,
       sectionId: "tokens"
     });
-    setPanelLayout((layout) =>
-      mapLibraryPanel(layout, (panel) => ({ ...panel, collapsed: false }))
-    );
     setLibraryAutoCollapsedBySelect(false);
     dispatch(setActiveTool("actor"));
   }
@@ -296,13 +268,25 @@ function AppContent() {
       return;
     }
 
-    setPanelLayout((layout) => {
-      return movePanel(
-        layout,
-        panelId,
-        resolveVisibleDropTarget(layout, panelVisibility, target)
+    const nextLayout = movePanel(
+      panelLayout,
+      panelId,
+      resolveVisibleDropTarget(panelLayout, panelVisibility, target)
+    );
+    if (nextLayout !== panelLayout) {
+      dispatch(
+        commitEncounterChange({
+          action: {
+            ...createEncounterActionRecord("interface.movePanel", {
+              panelId,
+              side: target.side
+            }),
+            validationResult: undefined
+          },
+          nextEncounter: { ...encounter, panelLayout: nextLayout }
+        })
       );
-    });
+    }
     setDraggedPanelId(null);
     setDropTarget(null);
   }
@@ -320,14 +304,26 @@ function AppContent() {
       setLibraryAutoCollapsedBySelect(false);
     }
 
-    setPanelLayout((layout) => ({
-      left: layout.left.map((panel) =>
+    const nextLayout: PanelLayout = {
+      left: panelLayout.left.map((panel) =>
         panel.id === panelId ? { ...panel, collapsed } : panel
       ),
-      right: layout.right.map((panel) =>
+      right: panelLayout.right.map((panel) =>
         panel.id === panelId ? { ...panel, collapsed } : panel
       )
-    }));
+    };
+    dispatch(
+      commitEncounterChange({
+        action: {
+          ...createEncounterActionRecord("interface.setPanelCollapsed", {
+            collapsed,
+            panelId
+          }),
+          validationResult: undefined
+        },
+        nextEncounter: { ...encounter, panelLayout: nextLayout }
+      })
+    );
   }
 
   function renderPanelContent(
@@ -439,7 +435,9 @@ function AppContent() {
       >
         {!compactLayout ? (
         <SidebarDock
-          collapsed={visiblePanelLayout.left.length === 0 || sidebarCollapsed.left}
+          collapsed={
+            visiblePanelLayout.left.length > 0 && sidebarCollapsed.left
+          }
           footer={<SettingsButton onClick={persistenceUi.openSettings} />}
           hideToggle={visiblePanelLayout.left.length === 0}
           onToggle={() =>
@@ -450,7 +448,7 @@ function AppContent() {
           }
           side="left"
         >
-          {visiblePanelLayout.left.length ? <PanelsShell
+          <PanelsShell
             draggedPanelId={draggedPanelId}
             dropTarget={dropTarget}
             onDragEnd={() => {
@@ -465,7 +463,7 @@ function AppContent() {
             renderPanelHeaderActions={renderPanelHeaderActions}
             renderPanelContent={renderPanelContent}
             side="left"
-          /> : null}
+          />
         </SidebarDock>
         ) : null}
         <CanvasShell
@@ -473,9 +471,12 @@ function AppContent() {
           renderCompactPanelContent={renderPanelContent}
           renderCompactPanelHeaderActions={renderPanelHeaderActions}
         />
-        {!compactLayout && visiblePanelLayout.right.length ? (
+        {!compactLayout ? (
         <SidebarDock
-          collapsed={sidebarCollapsed.right}
+          collapsed={
+            visiblePanelLayout.right.length > 0 && sidebarCollapsed.right
+          }
+          hideToggle={visiblePanelLayout.right.length === 0}
           onToggle={() =>
             setSidebarCollapsed((current) => ({
               ...current,

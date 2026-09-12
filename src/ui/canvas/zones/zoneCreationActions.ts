@@ -2,6 +2,7 @@ import { createEncounterActionRecord } from '@core/history/createEncounterAction
 import type { LayoutPoint } from '@core/layout/types';
 import { prepareValidatedEncounterChangeForRuntime } from '@core/validation/validatedEncounterChange';
 import type { ZoneShape } from '@entities/zone/types';
+import { DEFAULT_ZONE_PALETTE_COLOR } from '@entities/zone/zoneColors';
 import { createZone } from '@entities/zone/zoneMutations';
 import { selectEntity } from '@interaction/interactionState';
 import { commitEncounterChange } from '@store/encounterSlice';
@@ -17,10 +18,12 @@ type CommitZoneCreateInput = Pick<
   CanvasInteractionState,
   | 'dispatch'
   | 'encounter'
-  | 'lastZoneOpacity'
   | 'setZoneDraftPoints'
   | 'suppressNextCanvasClickPointRef'
   | 'suppressNextCanvasClickRef'
+  | 'zoneColorDefaults'
+  | 'zoneOpacityDefault'
+  | 'zoneShowBorderDefault'
 >;
 
 export function commitZoneCreate(
@@ -33,10 +36,12 @@ export function commitZoneCreate(
   const {
     dispatch,
     encounter,
-    lastZoneOpacity,
     setZoneDraftPoints,
     suppressNextCanvasClickPointRef,
-    suppressNextCanvasClickRef
+    suppressNextCanvasClickRef,
+    zoneColorDefaults,
+    zoneOpacityDefault,
+    zoneShowBorderDefault
   } = input;
 
   if (
@@ -61,12 +66,26 @@ export function commitZoneCreate(
   const cloneSourceZone = cloneSourceZoneId
     ? encounter.zones.byId[cloneSourceZoneId]
     : undefined;
+  const defaultColors = {
+    colorBorder: zoneColorDefaults.border ?? DEFAULT_ZONE_PALETTE_COLOR,
+    colorEngagement:
+      zoneColorDefaults.engagement ??
+      zoneColorDefaults.border ??
+      DEFAULT_ZONE_PALETTE_COLOR,
+    colorFill: zoneColorDefaults.zone ?? DEFAULT_ZONE_PALETTE_COLOR,
+    matchEngagementColorToBorder: zoneColorDefaults.engagement === null
+  };
   const nextEncounter = createZone(encounter, {
-    ...(cloneSourceZone ? getCloneableZoneProperties(cloneSourceZone) : {}),
+    ...(cloneSourceZone
+      ? getCloneableZoneProperties(cloneSourceZone)
+      : defaultColors),
     id: zoneId,
     name: `Zone ${encounter.zones.allIds.length + 1}`,
-    opacity: cloneSourceZone ? cloneSourceZone.opacity : lastZoneOpacity,
+    opacity: cloneSourceZone ? cloneSourceZone.opacity : zoneOpacityDefault,
     polygon,
+    showBorder: cloneSourceZone
+      ? cloneSourceZone.showBorder
+      : zoneShowBorderDefault,
     shape
   });
 

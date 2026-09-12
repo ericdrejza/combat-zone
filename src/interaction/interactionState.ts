@@ -50,6 +50,11 @@ export type ZonePaintBrushState = {
   sourceZoneId: string;
 };
 
+export type ZoneOpacityPreview = {
+  opacity: number;
+  zoneId: string;
+};
+
 export type ActorToolState = {
   clipboardActorId: string | null;
   layoutGroup: ActorLayoutGroup;
@@ -69,7 +74,7 @@ export type InteractionState = {
   selection: SelectionState;
   draft: InteractionDraftState;
   contextualActionRequest: ContextualActionRequest | null;
-  lastZoneOpacity: number;
+  zoneOpacityPreview: ZoneOpacityPreview | null;
   zonePaintBrush: ZonePaintBrushState | null;
   zoneShapeMode: ZoneShape;
 };
@@ -109,7 +114,7 @@ const initialState: InteractionState = {
   selection: initialSelection,
   draft: initialDraft,
   contextualActionRequest: null,
-  lastZoneOpacity: 0,
+  zoneOpacityPreview: null,
   zonePaintBrush: null,
   zoneShapeMode: 'rectangle'
 };
@@ -158,6 +163,7 @@ export const interactionSlice = createSlice({
       state.contextualActionRequest = null;
       state.actorPaintBrush = false;
       state.zonePaintBrush = null;
+      state.zoneOpacityPreview = null;
       state.actorTool.targetZoneId = null;
 
       if (
@@ -217,8 +223,14 @@ export const interactionSlice = createSlice({
     resetEdgePreset(state) {
       state.edgeTool = DEFAULT_EDGE_PRESET;
     },
-    setLastZoneOpacity(state, { payload }: PayloadAction<number>) {
-      state.lastZoneOpacity = payload;
+    setZoneOpacityPreview(
+      state,
+      { payload }: PayloadAction<ZoneOpacityPreview>
+    ) {
+      state.zoneOpacityPreview = payload;
+    },
+    clearZoneOpacityPreview(state) {
+      state.zoneOpacityPreview = null;
     },
     toggleZonePaintBrush(
       state,
@@ -239,6 +251,7 @@ export const interactionSlice = createSlice({
       if (!canSelect(state, payload.entityType)) {
         return;
       }
+      state.zoneOpacityPreview = null;
 
       if (!payload.toggle) {
         selectIds(state, payload.entityType, payload.ids, false);
@@ -268,6 +281,7 @@ export const interactionSlice = createSlice({
     clearSelection(state) {
       state.selection = initialSelection;
       state.contextualActionRequest = null;
+      state.zoneOpacityPreview = null;
     },
     setDragActionPreview(
       state,
@@ -338,6 +352,7 @@ export const {
   setActorToolSize,
   setActorToolTargetZone,
   clearZonePaintBrush,
+  clearZoneOpacityPreview,
   clearInteractionDraft,
   clearSelection,
   finishBoxSelection,
@@ -350,7 +365,7 @@ export const {
   setEdgeDirectionality,
   setEdgeShape,
   setEdgeVisibilityRule,
-  setLastZoneOpacity,
+  setZoneOpacityPreview,
   setPolygonDraftPointIds,
   setZoneShapeMode,
   resetEdgePreset,

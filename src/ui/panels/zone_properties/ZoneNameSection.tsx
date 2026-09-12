@@ -41,10 +41,11 @@ export function ZoneNameSection({
       </div>
       <label className="block space-y-1">
         <input
+          aria-label="Zone name"
           className="w-full rounded-xl border border-canvas-line bg-canvas-surface px-3 py-2"
           defaultValue={zone.name}
           onBlur={(event) => {
-            const name = event.currentTarget.value.trim() || zone.name;
+            const name = event.currentTarget.value.trim();
 
             if (name !== zone.name) {
               onCommitZoneProperties({ name });

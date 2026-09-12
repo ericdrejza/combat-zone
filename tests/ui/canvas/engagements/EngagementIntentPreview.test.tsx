@@ -41,10 +41,12 @@ describe('EngagementIntentPreview', () => {
         byId: {
           zone: {
             colorBorder: '#123456',
+            colorEngagement: '#fed7aa',
             colorFill: '#ffffff',
             id: 'zone',
             layoutOrientation: 'LEFT_RIGHT' as const,
             layoutStrategy: 'FLEX' as const,
+            matchEngagementColorToBorder: false,
             name: 'Zone',
             namePosition: 'top-left' as const,
             opacity: 1,
@@ -96,5 +98,9 @@ describe('EngagementIntentPreview', () => {
       expect.stringMatching(/^data:image\/svg\+xml/)
     );
     expect(container.querySelector('mask')).toBeNull();
+    expect(container.querySelector('circle')).toHaveAttribute(
+      'stroke',
+      '#fed7aa'
+    );
   });
 });

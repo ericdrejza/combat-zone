@@ -44,6 +44,7 @@ type ZoneLayerProps = {
   onZoneMotionComplete: () => void;
   selection: RootState["interaction"]["selection"];
   zoneDrag: ZoneDragState | null;
+  zoneOpacityPreview: RootState["interaction"]["zoneOpacityPreview"];
 };
 
 export function ZoneLayer({
@@ -60,7 +61,8 @@ export function ZoneLayer({
   onZoneDragEnd,
   onZoneMotionComplete,
   selection,
-  zoneDrag
+  zoneDrag,
+  zoneOpacityPreview
 }: ZoneLayerProps) {
   const { animationsDisabled } = useMotionPreference();
 
@@ -79,8 +81,13 @@ export function ZoneLayer({
     const selected =
       selection.selectedEntityType === "zone" &&
       selection.selectedIds.includes(zone.id);
+    const previewingOpacity = zoneOpacityPreview?.zoneId === zone.id;
+    const renderedOpacity = previewingOpacity
+      ? zoneOpacityPreview.opacity
+      : zone.opacity;
     const zoneGeometryTransition =
       directManipulationZoneId === zone.id ||
+      previewingOpacity ||
       animationsDisabled
         ? DIRECT_MANIPULATION_TRANSITION
         : CANVAS_SPRING_TRANSITION;
@@ -139,7 +146,7 @@ export function ZoneLayer({
           aria-label={zone.name}
           animate={{
             fill: invalidResizePreview ? "#fecaca" : zone.colorFill,
-            fillOpacity: zone.opacity,
+            fillOpacity: renderedOpacity,
             points: polygonPoints,
             strokeWidth: zone.showBorder ? 2 : 0
           }}

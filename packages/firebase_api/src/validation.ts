@@ -92,6 +92,37 @@ function validateEncounterStateShape(state: JsonObject): void {
     validateEntityCollection(state[key], `encounter.state.${key}`);
   }
   record(state.initiativeTracker, "encounter.state.initiativeTracker");
+  const panelLayout = record(state.panelLayout, "encounter.state.panelLayout");
+  const panelIds = ["initiative", "library", "log", "properties", "status"];
+  const panels = ["left", "right"].flatMap((side) => {
+    const dock = panelLayout[side];
+    if (!Array.isArray(dock)) {
+      throw new ApiContractValidationError(
+        `encounter.state.panelLayout.${side} must be an array.`
+      );
+    }
+    return dock.map((panel, index) => {
+      const entry = record(
+        panel,
+        `encounter.state.panelLayout.${side}[${index}]`
+      );
+      if (!panelIds.includes(entry.id as string) || typeof entry.collapsed !== "boolean") {
+        throw new ApiContractValidationError(
+          `encounter.state.panelLayout.${side}[${index}] is invalid.`
+        );
+      }
+      return entry.id;
+    });
+  });
+  if (
+    panels.length !== panelIds.length ||
+    new Set(panels).size !== panels.length ||
+    panelIds.some((id) => !panels.includes(id))
+  ) {
+    throw new ApiContractValidationError(
+      "encounter.state.panelLayout must contain every panel exactly once."
+    );
+  }
   record(state.validationState, "encounter.state.validationState");
 }
 

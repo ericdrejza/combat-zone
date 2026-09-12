@@ -1,4 +1,8 @@
 import { ENCOUNTER_SCHEMA_VERSION, type EncounterState } from "@core/encounter/types";
+import {
+  DEFAULT_ENCOUNTER_PANEL_LAYOUT,
+  ENCOUNTER_PANEL_IDS
+} from "@core/encounter/panelLayout";
 import type { LibraryState } from "@library/types";
 import { isImageAssetSource, migrateLegacyImageSource } from "@core/assets/imageAssetSource";
 import {
@@ -13,7 +17,8 @@ import {
 
 type UnknownRecord = Record<string, unknown>;
 
-const LEGACY_ENCOUNTER_SCHEMA_VERSION = 5;
+const LEGACY_IMAGE_ENCOUNTER_SCHEMA_VERSION = 5;
+const LEGACY_PANEL_LAYOUT_ENCOUNTER_SCHEMA_VERSION = 6;
 const LEGACY_EXPORT_SCHEMA_VERSION = 1;
 const LEGACY_WORKSPACE_SCHEMA_VERSION = 1;
 
@@ -55,6 +60,31 @@ function validateEntityCollection(value: unknown, name: string): void {
   }
 }
 
+function validatePanelLayout(value: unknown, name: string): void {
+  if (!isRecord(value) || !Array.isArray(value.left) || !Array.isArray(value.right)) {
+    throw new PersistenceValidationError(`${name} must contain left and right panel arrays.`);
+  }
+  const panels = [...value.left, ...value.right];
+  if (
+    panels.some(
+      (panel) =>
+        !isRecord(panel) ||
+        !ENCOUNTER_PANEL_IDS.some((id) => id === panel.id) ||
+        typeof panel.collapsed !== "boolean"
+    )
+  ) {
+    throw new PersistenceValidationError(`${name} contains an invalid panel.`);
+  }
+  const ids = panels.map((panel) => (panel as UnknownRecord).id);
+  if (
+    ids.length !== ENCOUNTER_PANEL_IDS.length ||
+    new Set(ids).size !== ids.length ||
+    ENCOUNTER_PANEL_IDS.some((id) => !ids.includes(id))
+  ) {
+    throw new PersistenceValidationError(`${name} must contain every panel exactly once.`);
+  }
+}
+
 /** Performs the inexpensive structural checks needed before data reaches Redux. */
 export function assertEncounterState(value: unknown, name = "encounter"): asserts value is EncounterState {
   if (!isRecord(value)) {
@@ -78,6 +108,7 @@ export function assertEncounterState(value: unknown, name = "encounter"): assert
   if (!isRecord(value.validationState) || typeof value.validationState.mode !== "string" || !Array.isArray(value.validationState.messages)) {
     throw new PersistenceValidationError(`${name}.validationState is invalid.`);
   }
+  validatePanelLayout(value.panelLayout, `${name}.panelLayout`);
   if (!isRecord(value.canvasSize) || typeof value.canvasSize.width !== "number" || typeof value.canvasSize.height !== "number") {
     throw new PersistenceValidationError(`${name}.canvasSize is invalid.`);
   }
@@ -259,18 +290,24 @@ export function migrateLibraryState(value: unknown): unknown {
 }
 
 export function migrateEncounterState(value: unknown): unknown {
-  if (!isRecord(value) || value.schemaVersion !== LEGACY_ENCOUNTER_SCHEMA_VERSION) return value;
+  if (!isRecord(value)) return value;
   const migrated = structuredClone(value);
-  migrated.schemaVersion = ENCOUNTER_SCHEMA_VERSION;
-  if (isRecord(migrated.backgroundImage)) {
-    migrated.backgroundImage = migrateImageRecord(migrated.backgroundImage);
-  }
-  if (isRecord(migrated.actors) && isRecord(migrated.actors.byId)) {
-    for (const actor of Object.values(migrated.actors.byId)) {
-      if (isRecord(actor) && typeof actor.image === "string") {
-        actor.image = migrateLegacyImageSource(actor.image);
+  if (migrated.schemaVersion === LEGACY_IMAGE_ENCOUNTER_SCHEMA_VERSION) {
+    migrated.schemaVersion = LEGACY_PANEL_LAYOUT_ENCOUNTER_SCHEMA_VERSION;
+    if (isRecord(migrated.backgroundImage)) {
+      migrated.backgroundImage = migrateImageRecord(migrated.backgroundImage);
+    }
+    if (isRecord(migrated.actors) && isRecord(migrated.actors.byId)) {
+      for (const actor of Object.values(migrated.actors.byId)) {
+        if (isRecord(actor) && typeof actor.image === "string") {
+          actor.image = migrateLegacyImageSource(actor.image);
+        }
       }
     }
+  }
+  if (migrated.schemaVersion === LEGACY_PANEL_LAYOUT_ENCOUNTER_SCHEMA_VERSION) {
+    migrated.schemaVersion = ENCOUNTER_SCHEMA_VERSION;
+    migrated.panelLayout = structuredClone(DEFAULT_ENCOUNTER_PANEL_LAYOUT);
   }
   return migrated;
 }
@@ -305,12 +342,12 @@ export function migrateExportEnvelope(value: unknown): ExportEnvelope {
   const migrated = structuredClone(value);
   if (migrated.schemaVersion === LEGACY_EXPORT_SCHEMA_VERSION) {
     migrated.schemaVersion = EXPORT_SCHEMA_VERSION;
-    if (migrated.kind === "workspace-export") {
-      migrated.workspace = migrateWorkspace(migrated.workspace);
-    } else if (migrated.kind === "encounter-export") {
-      migrated.encounter = migrateEncounterState(migrated.encounter);
-      migrated.library = migrateLibraryState(migrated.library);
-    }
+  }
+  if (migrated.kind === "workspace-export") {
+    migrated.workspace = migrateWorkspace(migrated.workspace);
+  } else if (migrated.kind === "encounter-export") {
+    migrated.encounter = migrateEncounterState(migrated.encounter);
+    migrated.library = migrateLibraryState(migrated.library);
   }
   return validateExportEnvelope(migrated);
 }

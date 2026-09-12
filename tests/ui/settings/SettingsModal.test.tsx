@@ -3,9 +3,15 @@ import userEvent from "@testing-library/user-event";
 
 import { KeybindProvider, KEYBIND_STORAGE_KEY } from "@ui/keybinds";
 import { SettingsModal } from "@ui/settings/SettingsModal";
+import { COMPACT_LAYOUT_QUERY } from "@hooks/useCompactLayout";
 
 describe("SettingsModal local reset", () => {
-  afterEach(() => localStorage.removeItem(KEYBIND_STORAGE_KEY));
+  const originalMatchMedia = window.matchMedia;
+
+  afterEach(() => {
+    localStorage.removeItem(KEYBIND_STORAGE_KEY);
+    window.matchMedia = originalMatchMedia;
+  });
 
   function renderSettings() {
     return render(
@@ -72,6 +78,35 @@ describe("SettingsModal local reset", () => {
         .getAllByRole("tab")
         .map((tab) => tab.textContent)
     ).toEqual(["Account", "Data"]);
+  });
+
+  it("expands compact navigation for selection and collapses after selecting", async () => {
+    window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+      addEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+      matches: query === COMPACT_LAYOUT_QUERY,
+      media: query,
+      onchange: null,
+      removeEventListener: vi.fn()
+    }));
+    const user = userEvent.setup();
+    renderSettings();
+
+    const expand = screen.getByRole("button", {
+      name: "Expand settings navigation"
+    });
+    expect(expand).toHaveAttribute("aria-expanded", "false");
+
+    await user.click(expand);
+    expect(screen.getByRole("button", {
+      name: "Collapse settings navigation"
+    })).toHaveAttribute("aria-expanded", "true");
+
+    await user.click(screen.getByRole("tab", { name: "Interface" }));
+    expect(screen.getByRole("button", {
+      name: "Expand settings navigation"
+    })).toHaveAttribute("aria-expanded", "false");
+    expect(screen.getByRole("heading", { name: "Interface" })).toBeInTheDocument();
   });
 
   it("shows the Light and Dark theme choices in Interface settings", async () => {

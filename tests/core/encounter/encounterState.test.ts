@@ -190,6 +190,17 @@ describe('EncounterState foundation', () => {
         currentActorId: null,
         currentRound: null
       },
+      panelLayout: {
+        left: [
+          { id: 'library', collapsed: false },
+          { id: 'properties', collapsed: false },
+          { id: 'log', collapsed: false }
+        ],
+        right: [
+          { id: 'initiative', collapsed: false },
+          { id: 'status', collapsed: false }
+        ]
+      },
       validationState: {
         mode: 'ADVISORY',
         messages: []

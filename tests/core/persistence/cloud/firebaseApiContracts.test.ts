@@ -23,7 +23,7 @@ function encounter(id = "encounter-1") {
     folderId: null,
     schemaVersion: CLOUD_RECORD_SCHEMA_VERSION,
     state: {
-      schemaVersion: 6,
+      schemaVersion: 7,
       id,
       name: "Encounter",
       backgroundImage: null,
@@ -34,6 +34,17 @@ function encounter(id = "encounter-1") {
       engagements: collection,
       annotations: collection,
       initiativeTracker: { entries: [], currentActorId: null, currentRound: null },
+      panelLayout: {
+        left: [
+          { id: "library", collapsed: false },
+          { id: "properties", collapsed: false },
+          { id: "log", collapsed: false }
+        ],
+        right: [
+          { id: "initiative", collapsed: false },
+          { id: "status", collapsed: false }
+        ]
+      },
       validationState: { mode: "ADVISORY", messages: [] }
     }
   };

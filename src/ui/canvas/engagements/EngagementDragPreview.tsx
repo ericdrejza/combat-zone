@@ -4,6 +4,7 @@ import type { EncounterState } from '@core/encounter/types';
 import type { ActorDragState } from '../canvasInteractionTypes';
 import type { ActorRenderPlacement } from '../actors/actorCanvasLayout';
 import type { LayoutPoint } from '@core/layout/types';
+import { getZoneEngagementColor } from '@entities/zone/zoneColors';
 import { isWithinEngagementTether } from './engagementDragRules';
 
 type PartialEngagementPreview = {
@@ -59,7 +60,7 @@ export function EngagementDragPreview({
         return source
           ? [{
               actorId,
-              color: zone.colorBorder,
+              color: getZoneEngagementColor(zone),
               draggedPoint: {
                 x: source.point.x + offset.x,
                 y: source.point.y + offset.y

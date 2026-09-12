@@ -4,8 +4,8 @@ import {
   COMPACT_PANEL_DEFINITIONS,
   type CompactPanelDefinition
 } from "./compactPanelMetadata";
-import type { DockSide, DropTarget } from "./PanelsShell";
-import type { PanelLayout } from "./panelLayout";
+import type { DropTarget } from "./PanelsShell";
+import type { DockSide, PanelLayout } from "./panelLayout";
 
 export function getVisiblePanelLayout(
   layout: PanelLayout,
@@ -33,10 +33,10 @@ export function getWorkspaceColumns(
   const leftWidth = visibleLayout.left.length === 0 || sidebarCollapsed.left
     ? "3.25rem"
     : "18rem";
-  if (visibleLayout.right.length === 0) {
-    return `${leftWidth} minmax(0,1fr)`;
-  }
-  const rightWidth = sidebarCollapsed.right ? "3.25rem" : "18rem";
+  const rightWidth =
+    visibleLayout.right.length === 0 || sidebarCollapsed.right
+      ? "3.25rem"
+      : "18rem";
   return `${leftWidth} minmax(0,1fr) ${rightWidth}`;
 }
 

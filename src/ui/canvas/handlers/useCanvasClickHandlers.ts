@@ -7,7 +7,6 @@ import {
   clearZonePaintBrush,
   selectEntity,
   setActorToolTargetZone,
-  setLastZoneOpacity
 } from '@interaction/interactionState';
 import type { SelectableEntityType } from '@interaction/selection/types';
 import { commitEncounterChange } from '@store/encounterSlice';
@@ -35,7 +34,6 @@ type ClickHandlerInput = Pick<
   | 'boxSelection'
   | 'dispatch'
   | 'encounter'
-  | 'lastZoneOpacity'
   | 'selection'
   | 'setZoneDraftPoints'
   | 'shapeDraft'
@@ -48,6 +46,9 @@ type ClickHandlerInput = Pick<
   | 'zoneDraftPoints'
   | 'zoneDrag'
   | 'zonePaintBrush'
+  | 'zoneColorDefaults'
+  | 'zoneOpacityDefault'
+  | 'zoneShowBorderDefault'
   | 'zoneShapeMode'
 >;
 
@@ -149,7 +150,6 @@ export function useCanvasClickHandlers(input: ClickHandlerInput) {
             nextEncounter
           })
         );
-        dispatch(setLastZoneOpacity(sourceZone.opacity));
       }
       return;
     }

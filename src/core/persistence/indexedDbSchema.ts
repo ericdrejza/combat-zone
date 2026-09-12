@@ -70,6 +70,12 @@ export function openWorkspaceDatabase(name: string, version: number): Promise<ID
           ...(value as object),
           schemaVersion: WORKSPACE_SCHEMA_VERSION
         }));
+        migrateCursor(transaction.objectStore(STORE_LIBRARY), (value) => {
+          const record = value as Record<string, unknown>;
+          return { ...record, state: migrateLibraryState(record.state) };
+        });
+      }
+      if ((event.oldVersion ?? 0) > 0 && (event.oldVersion ?? 0) < 4) {
         migrateCursor(transaction.objectStore(STORE_ENCOUNTERS), (value) => {
           const record = value as Record<string, unknown>;
           return { ...record, state: migrateEncounterState(record.state) };
@@ -77,10 +83,6 @@ export function openWorkspaceDatabase(name: string, version: number): Promise<ID
         migrateCursor(transaction.objectStore(STORE_RECOVERY), (value) => {
           const record = value as Record<string, unknown>;
           return { ...record, state: migrateEncounterState(record.state) };
-        });
-        migrateCursor(transaction.objectStore(STORE_LIBRARY), (value) => {
-          const record = value as Record<string, unknown>;
-          return { ...record, state: migrateLibraryState(record.state) };
         });
         migrateCursor(transaction.objectStore(STORE_BACKUPS), migrateExportEnvelope);
       }

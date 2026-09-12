@@ -3,8 +3,13 @@ import userEvent from "@testing-library/user-event";
 
 import { renderApp } from "@tests/ui/renderApp";
 import { movePanel } from "@ui/panels/panelLayout";
+import type { PanelLayout } from "@ui/panels/panelLayout";
 import { appendEncounterLogEntry } from "@store/encounterLogSlice";
 import { store } from "@store/store";
+import {
+  redoEncounterChange,
+  undoEncounterChange
+} from "@store/encounterSlice";
 import { INTERFACE_PREFERENCES_STORAGE_KEY } from "@ui/interface_preferences/InterfacePreferenceProvider";
 
 describe("PanelsShell", () => {
@@ -111,6 +116,18 @@ describe("PanelsShell", () => {
     expect(
       screen.getByRole("button", { name: "Expand Library panel" })
     ).toHaveAttribute("aria-expanded", "false");
+    expect(
+      store.getState().encounter.present.panelLayout.left[0]
+    ).toMatchObject({ id: "library", collapsed: true });
+
+    act(() => store.dispatch(undoEncounterChange()));
+    expect(
+      screen.getByRole("button", { name: "Collapse Library panel" })
+    ).toBeInTheDocument();
+    act(() => store.dispatch(redoEncounterChange()));
+    expect(
+      screen.getByRole("button", { name: "Expand Library panel" })
+    ).toBeInTheDocument();
   });
 
   it("hides configured panels and stretches the sole panel in a dock", async () => {
@@ -119,7 +136,7 @@ describe("PanelsShell", () => {
 
     await user.click(screen.getByRole("button", { name: "Open settings" }));
     await user.click(screen.getByRole("tab", { name: "Interface" }));
-    const panels = screen.getByRole("group", { name: "Panels" });
+    const panels = screen.getByRole("group", { name: "Panel Visibility" });
 
     await user.click(within(panels).getByRole("switch", {
       name: "Properties panel visibility"
@@ -144,12 +161,16 @@ describe("PanelsShell", () => {
     await user.click(within(panels).getByRole("switch", {
       name: "Status panel visibility"
     }));
-    expect(screen.queryByLabelText("right sidebar")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("right sidebar")).toBeInTheDocument();
+    expect(screen.getByLabelText("right docked panels")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Expand right sidebar" })
+    ).not.toBeInTheDocument();
 
     await user.click(within(panels).getByRole("switch", {
       name: "Library panel visibility"
     }));
-    expect(screen.queryByLabelText("left docked panels")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("left docked panels")).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Open settings" })
     ).toBeInTheDocument();
@@ -181,6 +202,41 @@ describe("PanelsShell", () => {
         .getAllByRole("heading")
         .map((heading) => heading.textContent)
     ).toEqual(["Status", "Library", "Properties", "Log"]);
+    expect(
+      store.getState().encounter.present.panelLayout.left.map(
+        (panel) => panel.id
+      )
+    ).toEqual(["status", "library", "properties", "log"]);
+  });
+
+  it("keeps an empty dock available so a panel can be moved back", async () => {
+    const user = userEvent.setup();
+    renderApp();
+
+    await user.click(screen.getByRole("button", { name: "Open settings" }));
+    await user.click(screen.getByRole("tab", { name: "Interface" }));
+    const visibility = screen.getByRole("group", { name: "Panel Visibility" });
+    await user.click(within(visibility).getByRole("switch", {
+      name: "Initiative panel visibility"
+    }));
+    await user.click(within(visibility).getByRole("switch", {
+      name: "Status panel visibility"
+    }));
+    await user.click(screen.getByRole("button", { name: "Close settings" }));
+
+    const rightDock = screen.getByLabelText("right docked panels");
+    const rightDropTarget = screen.getByLabelText(
+      "Drop panel 0 in right docked panels"
+    );
+    const dataTransfer = { effectAllowed: "", setData() {} };
+    fireEvent.dragStart(
+      screen.getByRole("button", { name: "Reorder Library panel" }),
+      { dataTransfer }
+    );
+    fireEvent.drop(rightDropTarget, { dataTransfer });
+
+    expect(within(rightDock).getByRole("heading", { name: "Library" }))
+      .toBeInTheDocument();
   });
 
   it("moves side panels with a touch pointer drag", () => {
@@ -359,15 +415,15 @@ describe("PanelsShell", () => {
   });
 
   it("keeps a panel in place when dropping it into the lower half of itself", () => {
-    const layout = {
+    const layout: PanelLayout = {
       left: [
-        { id: "library", title: "Library", collapsed: false },
-        { id: "initiative", title: "Initiative", collapsed: false }
+        { id: "library", collapsed: false },
+        { id: "initiative", collapsed: false }
       ],
       right: [
-        { id: "properties", title: "Properties", collapsed: false },
-        { id: "status", title: "Status", collapsed: false },
-        { id: "log", title: "Log", collapsed: false }
+        { id: "properties", collapsed: false },
+        { id: "status", collapsed: false },
+        { id: "log", collapsed: false }
       ]
     };
 

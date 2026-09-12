@@ -1,4 +1,5 @@
 import { createEncounterState } from "@core/encounter/createEncounterState";
+import { DEFAULT_ENCOUNTER_PANEL_LAYOUT } from "@core/encounter/panelLayout";
 import {
   EXPORT_SCHEMA_VERSION,
   PersistenceValidationError,
@@ -41,6 +42,28 @@ describe("persistence export envelopes", () => {
     expect(() => validateExportEnvelope(value)).toThrow(/byId and allIds/);
   });
 
+  it("rejects panel layouts with missing or duplicated panels", () => {
+    const value = validEnvelope();
+    value.encounter.panelLayout.right = [
+      { id: "initiative", collapsed: false },
+      { id: "initiative", collapsed: true }
+    ];
+
+    expect(() => validateExportEnvelope(value)).toThrow(/every panel exactly once/);
+  });
+
+  it("adds the default panel layout when migrating schema version 6", () => {
+    const value = validEnvelope() as unknown as Record<string, unknown>;
+    const legacyEncounter = value.encounter as Record<string, unknown>;
+    legacyEncounter.schemaVersion = 6;
+    delete legacyEncounter.panelLayout;
+
+    const migrated = parseExportEnvelope(value) as EncounterExportEnvelope;
+    expect(migrated.encounter.panelLayout).toEqual(
+      DEFAULT_ENCOUNTER_PANEL_LAYOUT
+    );
+  });
+
   it("migrates legacy embedded and HTTP image strings losslessly", () => {
     const value = validEnvelope() as unknown as Record<string, unknown>;
     value.schemaVersion = 1;
@@ -64,6 +87,7 @@ describe("persistence export envelopes", () => {
     const migrated = parseExportEnvelope(value) as EncounterExportEnvelope;
     expect(migrated.encounter.backgroundImage?.source).toEqual({ kind: "url", url: "https://example.com/map.png" });
     expect(migrated.encounter.actors.byId["actor-1"].image).toEqual({ kind: "embedded", dataUrl: "data:image/png;base64,AA==" });
+    expect(migrated.encounter.panelLayout).toEqual(DEFAULT_ENCOUNTER_PANEL_LAYOUT);
     expect(migrated.encounter.id).toBe("encounter-1");
   });
 });

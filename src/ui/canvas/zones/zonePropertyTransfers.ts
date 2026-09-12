@@ -9,7 +9,9 @@ export function getPaintableZoneProperties(
 ): UpdateZonePropertiesInput {
   return {
     colorBorder: zone.colorBorder,
+    colorEngagement: zone.colorEngagement,
     colorFill: zone.colorFill,
+    matchEngagementColorToBorder: zone.matchEngagementColorToBorder,
     opacity: zone.opacity,
     showBorder: zone.showBorder
   };
@@ -19,9 +21,11 @@ export function getCloneableZoneProperties(zone: Zone): Pick<
   CreateZoneInput,
   | "autoResize"
   | "colorBorder"
+  | "colorEngagement"
   | "colorFill"
   | "layoutOrientation"
   | "layoutStrategy"
+  | "matchEngagementColorToBorder"
   | "namePosition"
   | "opacity"
   | "showBorder"
@@ -32,9 +36,11 @@ export function getCloneableZoneProperties(zone: Zone): Pick<
   return {
     autoResize: zone.autoResize,
     colorBorder: zone.colorBorder,
+    colorEngagement: zone.colorEngagement,
     colorFill: zone.colorFill,
     layoutOrientation: zone.layoutOrientation,
     layoutStrategy: zone.layoutStrategy,
+    matchEngagementColorToBorder: zone.matchEngagementColorToBorder,
     namePosition: zone.namePosition,
     opacity: zone.opacity,
     showBorder: zone.showBorder,

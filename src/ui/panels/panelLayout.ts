@@ -1,6 +1,11 @@
-import type { DockPanelDefinition, DockSide, DropTarget } from "./PanelsShell";
+import type {
+  EncounterDockSide,
+  EncounterPanelLayout
+} from "@core/encounter/panelLayout";
+import type { DropTarget } from "./PanelsShell";
 
-export type PanelLayout = Record<DockSide, DockPanelDefinition[]>;
+export type PanelLayout = EncounterPanelLayout;
+export type DockSide = EncounterDockSide;
 
 export function movePanel(
   layout: PanelLayout,

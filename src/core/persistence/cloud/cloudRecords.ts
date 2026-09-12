@@ -1,5 +1,9 @@
 import { CLOUD_RECORD_SCHEMA_VERSION } from "@combat-zone/firebase-api";
-import { assertEncounterState, assertLibraryState } from "../envelope";
+import {
+  assertEncounterState,
+  assertLibraryState,
+  migrateEncounterState
+} from "../envelope";
 import { WORKSPACE_SCHEMA_VERSION, type WorkspaceSnapshot } from "../types";
 import type { CloudWorkspaceSnapshot } from "./cloudWorkspaceRepository";
 
@@ -34,11 +38,12 @@ export function parseCloudWorkspace(value: CloudWorkspaceSnapshot): WorkspaceSna
     const source = record(item, `cloud encounter ${index}`);
     schema(source, `cloud encounter ${index}`);
     if (source.deleted === true) return [];
-    assertEncounterState(source.state, `cloud encounter ${index}.state`);
-    if (source.encounterId !== source.state.id) throw new Error("Cloud encounter IDs do not agree.");
+    const state = migrateEncounterState(source.state);
+    assertEncounterState(state, `cloud encounter ${index}.state`);
+    if (source.encounterId !== state.id) throw new Error("Cloud encounter IDs do not agree.");
     return [{
       id: source.encounterId as string,
-      state: source.state,
+      state,
       folderId: source.folderId === null ? null : String(source.folderId),
       revision: revision(source.revision, `cloud encounter ${index}`),
       createdAt: number(source.createdAt, `cloud encounter ${index}.createdAt`),
@@ -51,6 +56,7 @@ export function parseCloudWorkspace(value: CloudWorkspaceSnapshot): WorkspaceSna
   const draftSource = value.recoveryDraft ? record(value.recoveryDraft, "cloud recovery draft") : null;
   if (draftSource && draftSource.deleted !== true) {
     schema(draftSource, "cloud recovery draft");
+    draftSource.state = migrateEncounterState(draftSource.state);
     assertEncounterState(draftSource.state, "cloud recovery draft.state");
   }
   return {

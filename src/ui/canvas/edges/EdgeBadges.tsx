@@ -3,8 +3,11 @@ import { useState } from "react";
 
 import type { LayoutPoint } from "@core/layout/types";
 import type { Edge, EdgeMovementRule } from "@entities/edge/types";
+import { getReadableTextColor } from "../canvasLuminance";
 
 type MetadataTooltip = "notes" | "tags";
+
+const EDGE_BADGE_FILL_COLOR = "#ffffff";
 
 function movementIcon(rule: EdgeMovementRule) {
   return rule === "blocked"
@@ -70,10 +73,11 @@ export function EdgeBadges({ edge, edgeColor, point }: {
   ];
   if (icons.length === 0) return null;
   const width = icons.length * 18 + 6;
+  const iconColor = getReadableTextColor(EDGE_BADGE_FILL_COLOR);
 
   return (
     <g aria-label={`${edge.visibilityRule} visibility${edge.movementRules.length ? `; ${edge.movementRules.join(", ")}` : ""}`}>
-      <rect className="pointer-events-none" fill="white" height="20" opacity="0.9" rx="10" width={width} x={point.x - width / 2} y={point.y - 10} />
+      <rect className="pointer-events-none" fill={EDGE_BADGE_FILL_COLOR} height="20" opacity="0.9" rx="10" width={width} x={point.x - width / 2} y={point.y - 10} />
       {icons.map(({ Icon, label, tooltip: iconTooltip }, index) => (
         <g
           key={label}
@@ -99,6 +103,7 @@ export function EdgeBadges({ edge, edgeColor, point }: {
           />
           <Icon
             aria-hidden="true"
+            color={iconColor}
             height={14}
             width={14}
             x={point.x - (icons.length * 18) / 2 + index * 18}

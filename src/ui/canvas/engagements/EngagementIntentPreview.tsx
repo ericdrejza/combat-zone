@@ -2,6 +2,7 @@ import type { EncounterState } from '@core/encounter/types';
 import type { ActorDragState } from '../canvasInteractionTypes';
 import type { ActorRenderPlacement } from '../actors/actorCanvasLayout';
 import crossedSwordsAsset from '@assets/images/crossed-swords.svg';
+import { getZoneEngagementColor } from '@entities/zone/zoneColors';
 
 /** Renders above the dragged overlay actor once the hold-to-engage intent fires. */
 export function EngagementIntentPreview({ actorDrag, encounter, placements }: {
@@ -25,7 +26,7 @@ export function EngagementIntentPreview({ actorDrag, encounter, placements }: {
   if (!source || !zone) return null;
   const point = { x: source.point.x + actorDrag.current.x - actorDrag.start.x, y: source.point.y + actorDrag.current.y - actorDrag.start.y };
   return <g aria-label="Engagement drop intent" transform={`translate(${point.x} ${point.y})`}>
-    <circle fill="rgba(255,255,255,0.75)" r="12" stroke={zone.colorBorder} strokeWidth="2" />
+    <circle fill="rgba(255,255,255,0.75)" r="12" stroke={getZoneEngagementColor(zone)} strokeWidth="2" />
     <image
       aria-label="Crossed swords"
       height="14"
