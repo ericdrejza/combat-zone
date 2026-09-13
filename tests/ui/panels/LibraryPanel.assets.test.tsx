@@ -190,6 +190,7 @@ describe("LibraryPanel", () => {
 
   it("deselects existing actors and selects an actor created by library drag", () => {
     const transfer = dataTransfer();
+    let tokenNodeId = "";
 
     renderApp();
     act(() => {
@@ -212,8 +213,7 @@ describe("LibraryPanel", () => {
       store.dispatch(
         selectEntity({ entityType: "actor", ids: ["existing-actor"] })
       );
-      store.dispatch(
-        uploadImage({
+      const token = uploadImage({
           asset: {
             source: { kind: "embedded", dataUrl: "data:image/png;base64,scout" },
             mediaType: "image/png",
@@ -221,8 +221,9 @@ describe("LibraryPanel", () => {
           },
           parentId: "tokens-root",
           sectionId: "tokens"
-        })
-      );
+        });
+      tokenNodeId = token.payload.id;
+      store.dispatch(token);
     });
 
     const token = screen.getByRole("button", { name: "Scout" });
@@ -247,6 +248,7 @@ describe("LibraryPanel", () => {
     ).find((actor) => actor.name === "Scout");
 
     expect(createdActor).toBeDefined();
+    expect(createdActor?.metadata.sourceLibraryNodeId).toBe(tokenNodeId);
     expect(store.getState().interaction.selection).toMatchObject({
       selectedEntityType: "actor",
       selectedIds: [createdActor!.id]
@@ -346,6 +348,7 @@ describe("LibraryPanel", () => {
 
   it("creates a tapped library actor in the previously selected target zone", async () => {
     const user = userEvent.setup();
+    let tokenNodeId = "";
 
     renderApp();
     const canvas = getCanvas();
@@ -359,8 +362,7 @@ describe("LibraryPanel", () => {
     fireEvent.click(screen.getByLabelText("Zone 1"));
 
     act(() => {
-      store.dispatch(
-        uploadImage({
+      const token = uploadImage({
           asset: {
             source: { kind: "embedded", dataUrl: "data:image/png;base64,tap-actor" },
             mediaType: "image/png",
@@ -368,8 +370,9 @@ describe("LibraryPanel", () => {
           },
           parentId: "tokens-root",
           sectionId: "tokens"
-        })
-      );
+        });
+      tokenNodeId = token.payload.id;
+      store.dispatch(token);
     });
 
     const tokenAsset = screen.getByRole("button", { name: "Tap Actor" });
@@ -384,6 +387,10 @@ describe("LibraryPanel", () => {
         )
       ).toBe(true);
     });
+    const createdActor = Object.values(
+      store.getState().encounter.present.actors.byId
+    ).find((actor) => actor.name === "Tap Actor");
+    expect(createdActor?.metadata.sourceLibraryNodeId).toBe(tokenNodeId);
   });
 
   it("shows token assets when Actor is active and collapses them for Select", async () => {

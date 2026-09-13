@@ -249,7 +249,9 @@ export function LibraryPanel({
     const nextEncounter = createActor(encounter, {
       currentZoneId: actorTool.targetZoneId,
       id: actorId,
-      image: asset,
+      // Keep the selected node's identity, including when it is a Library link.
+      // The resolved asset alone does not retain provenance for the actor inspector.
+      image: { ...asset, libraryNodeId: node.id },
       layoutGroup: actorTool.layoutGroup,
       shape: actorTool.shape,
       size: actorTool.size

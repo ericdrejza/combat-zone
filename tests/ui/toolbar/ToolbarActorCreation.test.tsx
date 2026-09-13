@@ -83,6 +83,63 @@ describe("Toolbar actor creation", () => {
     );
   });
 
+  it("retains a Library web-link asset when its creation preview is dragged", async () => {
+    const user = userEvent.setup();
+    let tokenNodeId = "";
+
+    renderApp();
+    const canvas = getCanvas();
+    mockCanvasBounds(canvas);
+    await user.click(screen.getByRole("button", { name: "Zone" }));
+    createRectangleZone(canvas);
+    act(() => {
+      const token = uploadImage({
+        asset: {
+          mediaType: "image/png",
+          name: "Remote Goblin",
+          source: { kind: "url", url: "https://assets.example/goblin.png" }
+        },
+        parentId: "tokens-root",
+        sectionId: "tokens"
+      });
+      tokenNodeId = token.payload.id;
+      store.dispatch(token);
+    });
+    await user.click(screen.getByRole("button", { name: "Actor" }));
+    await user.click(screen.getByRole("button", { name: "Create actor" }));
+    await user.click(
+      screen.getByRole("button", { name: "Choose actor image from library" })
+    );
+    await user.click(screen.getByRole("button", { name: "Remote Goblin" }));
+    await user.click(screen.getByRole("button", { name: "Create Actor" }));
+
+    const preview = screen.getByLabelText("Actor preview");
+    fireEvent.pointerDown(preview, {
+      button: 0, clientX: 10, clientY: 10, pointerId: 17, pointerType: "mouse"
+    });
+    fireEvent.pointerMove(window, {
+      clientX: 20, clientY: 10, pointerId: 17, pointerType: "mouse"
+    });
+    fireEvent.pointerUp(window, {
+      clientX: 100, clientY: 100, pointerId: 17, pointerType: "mouse"
+    });
+
+    await waitFor(() => {
+      expect(store.getState().encounter.present.actors.allIds).toHaveLength(1);
+    });
+    const actorId = store.getState().encounter.present.actors.allIds[0]!;
+    expect(
+      store.getState().encounter.present.actors.byId[actorId]?.metadata
+        .sourceLibraryNodeId
+    ).toBe(tokenNodeId);
+    expect(screen.getByRole("textbox", { name: "Library Path" })).toHaveValue(
+      "Tokens/Remote Goblin"
+    );
+    expect(screen.getByRole("button", {
+      name: "Choose actor image from library"
+    })).toHaveAttribute("aria-pressed", "true");
+  });
+
   it("keeps the direct web-link option for a toolbar-created actor", async () => {
     const user = userEvent.setup();
 

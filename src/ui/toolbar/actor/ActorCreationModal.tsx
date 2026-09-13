@@ -108,6 +108,7 @@ export function ActorCreationModal({
     return {
       layoutGroup: actorTool.layoutGroup,
       imageAnimated: image?.animated,
+      imageLibraryNodeId: image?.libraryNodeId,
       imageMediaType: image?.mediaType,
       imageName: image?.name,
       image: image?.source,

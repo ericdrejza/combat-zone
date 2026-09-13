@@ -83,7 +83,9 @@ export function commitActorFromLibraryNode(
     {
       currentZoneId: destinationZoneId,
       id: actorId,
-      image: asset,
+      // A resolved asset has no node identity; retain the dragged node so the
+      // actor remains linked to its Library path rather than becoming a URL-only token.
+      image: { ...asset, libraryNodeId: nodeId },
       layoutGroup: context.actorTool.layoutGroup,
       shape: context.actorTool.shape,
       size: context.actorTool.size
@@ -108,6 +110,7 @@ export function commitActorFromCreation(
       image: data.image
         ? {
             animated: data.imageAnimated,
+            libraryNodeId: data.imageLibraryNodeId,
             mediaType: data.imageMediaType ?? 'image/*',
             name: data.imageName ?? data.name,
             source: data.image
