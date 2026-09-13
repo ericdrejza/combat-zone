@@ -28,7 +28,14 @@ export function CanvasTransferPreview({ preview }: Props) {
       actorType: "creature",
       currentZoneId: ZONELESS_ACTOR_ZONE_ID,
       id: "actor-transfer-preview",
-      metadata: {},
+      metadata: {
+        sourceAssetAnimated:
+          preview.actor.imageAnimated ??
+          preview.actor.metadata?.sourceAssetAnimated,
+        sourceAssetMediaType:
+          preview.actor.imageMediaType ??
+          preview.actor.metadata?.sourceAssetMediaType
+      },
       statusEffects: []
     };
 

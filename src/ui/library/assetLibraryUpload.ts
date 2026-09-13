@@ -1,8 +1,11 @@
 import type { Dispatch, UnknownAction } from '@reduxjs/toolkit';
 
 import { createFolder, uploadImage } from '@library/librarySlice';
+import {
+  isSupportedLibraryMediaFile,
+  readLibraryMediaFile
+} from '@library/mediaAsset';
 import type { LibrarySectionId } from '@library/types';
-import { readImageFile } from '../toolbar/background/readImageFile';
 import type { DroppedImageFile } from './libraryFileDrop';
 import { getFileNameWithoutExtension } from '@library/fileName';
 
@@ -22,7 +25,7 @@ export async function createImageFilesInFolder({
   const folderIdsByPath = new Map<string, string>();
 
   for (const { file, relativePath } of files) {
-    if (!file.type.startsWith('image/')) {
+    if (!isSupportedLibraryMediaFile(file)) {
       continue;
     }
 
@@ -54,7 +57,7 @@ export async function createImageFilesInFolder({
       parentId = action.payload.id;
     }
 
-    const asset = await readImageFile(file);
+    const asset = await readLibraryMediaFile(file);
 
     dispatch(
       uploadImage({

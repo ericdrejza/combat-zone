@@ -9,6 +9,7 @@ import type {
   LibraryState
 } from "./types";
 import { LIBRARY_SECTION_IDS, LIBRARY_SECTION_LABELS } from "./types";
+import { isSupportedLibraryMediaType } from "./mediaAsset";
 
 type SectionPayload = {
   sectionId: LibrarySectionId;
@@ -207,7 +208,11 @@ export const librarySlice = createSlice({
         const section = state.sections[payload.sectionId];
         const parent = getFolder(section, payload.parentId);
 
-        if (!parent || payload.sectionId === "encounters") {
+        if (
+          !parent ||
+          payload.sectionId === "encounters" ||
+          !isSupportedLibraryMediaType(payload.asset.mediaType)
+        ) {
           return;
         }
 
@@ -234,7 +239,11 @@ export const librarySlice = createSlice({
       const section = state.sections[payload.sectionId];
       const node = section.nodesById[payload.nodeId];
 
-      if (!node || node.type === "folder") {
+      if (
+        !node ||
+        node.type === "folder" ||
+        !isSupportedLibraryMediaType(payload.asset.mediaType)
+      ) {
         return;
       }
 

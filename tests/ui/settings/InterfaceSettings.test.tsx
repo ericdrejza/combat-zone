@@ -49,23 +49,31 @@ describe("InterfaceSettings", () => {
     const user = userEvent.setup();
     renderSettings();
 
-    const general = screen.getByRole("group", { name: "General" });
+    const accessibility = screen.getByRole("group", { name: "Accessibility" });
+    const navigation = screen.getByRole("group", { name: "Navigation" });
     const defaults = screen.getByRole("group", { name: "Defaults" });
     const autoSelect = within(defaults).getByRole("switch", {
       name: "Auto-select active actor in initiative"
     });
-    const pan = within(general).getByRole("switch", {
+    const pan = within(navigation).getByRole("switch", {
       name: "Pan with right-click drag"
     });
+    const assetAnimation = within(accessibility).getByRole("switch", {
+      name: "Enable token animations"
+    });
     expect(autoSelect).toBeChecked();
+    expect(assetAnimation).toBeChecked();
     expect(pan).toBeChecked();
 
     await user.click(autoSelect);
+    await user.click(assetAnimation);
     await user.click(pan);
     expect(autoSelect).not.toBeChecked();
+    expect(assetAnimation).not.toBeChecked();
     expect(pan).not.toBeChecked();
     expect(JSON.parse(localStorage.getItem(INTERFACE_PREFERENCES_STORAGE_KEY)!)).toEqual({
       autoSelectActiveActor: false,
+      enableAssetAnimation: false,
       panelVisibility: DEFAULT_DOCKABLE_PANEL_VISIBILITY,
       panWithRightClickDrag: false,
       zoneColorDefaults: DEFAULT_ZONE_COLOR_DEFAULTS,

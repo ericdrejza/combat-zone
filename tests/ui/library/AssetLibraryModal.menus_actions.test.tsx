@@ -29,11 +29,11 @@ describe("AssetLibraryModal", () => {
 
     await createFolder("Maps");
     await user.click(screen.getByRole("button", { name: "Add to Backgrounds" }));
-    expect(screen.getByRole("menuitem", { name: "Upload Image" })).toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: "Upload" })).toBeInTheDocument();
 
     await user.click(screen.getByText("Asset Library"));
     expect(
-      screen.queryByRole("menuitem", { name: "Upload Image" })
+      screen.queryByRole("menuitem", { name: "Upload" })
     ).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Open Maps actions" }));
@@ -49,7 +49,7 @@ describe("AssetLibraryModal", () => {
     await createFolder("Maps");
     await user.click(screen.getByRole("button", { name: "Maps" }));
     await user.click(screen.getByRole("button", { name: "Add to Backgrounds" }));
-    await user.click(screen.getByRole("menuitem", { name: "Upload Image" }));
+    await user.click(screen.getByRole("menuitem", { name: "Upload" }));
     fireEvent.change(screen.getByLabelText("Upload library image"), {
       target: {
         files: [new File(["map"], "nested-map.png", { type: "image/png" })]
@@ -59,6 +59,9 @@ describe("AssetLibraryModal", () => {
     await waitFor(() => {
       expect(screen.getByText("nested-map")).toBeInTheDocument();
     });
+    expect(screen.queryByText("1 KB")).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Show uploaded asset sizes" }));
+    expect(screen.getByText("1 KB")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Open Maps actions" }));
     await user.click(screen.getByRole("menuitem", { name: "Delete" }));
@@ -114,7 +117,7 @@ describe("AssetLibraryModal", () => {
     );
 
     await user.click(screen.getByRole("button", { name: "Add to Backgrounds" }));
-    await user.click(screen.getByRole("menuitem", { name: "Upload Image" }));
+    await user.click(screen.getByRole("menuitem", { name: "Upload" }));
     fireEvent.change(screen.getByLabelText("Upload library image"), {
       target: {
         files: [new File(["map"], "card-map.png", { type: "image/png" })]
@@ -152,7 +155,7 @@ describe("AssetLibraryModal", () => {
   it("opens asset type choices beside an image asset", async () => {
     const user = await openBackgroundLibrary();
     await user.click(screen.getByRole("button", { name: "Add to Backgrounds" }));
-    await user.click(screen.getByRole("menuitem", { name: "Upload Image" }));
+    await user.click(screen.getByRole("menuitem", { name: "Upload" }));
     fireEvent.change(screen.getByLabelText("Upload library image"), {
       target: {
         files: [new File(["map"], "card-map.png", { type: "image/png" })]
@@ -167,7 +170,7 @@ describe("AssetLibraryModal", () => {
     await user.click(screen.getByRole("menuitem", { name: "Change source" }));
 
     const assetTypes = screen.getByRole("menu", { name: "Asset types" });
-    expect(within(assetTypes).getByRole("menuitem", { name: "Upload Image" })).toBeInTheDocument();
+    expect(within(assetTypes).getByRole("menuitem", { name: "Upload" })).toBeInTheDocument();
     expect(within(assetTypes).getByRole("menuitem", { name: "Web link" })).toBeInTheDocument();
     expect(within(assetTypes).getByRole("menuitem", { name: "Link from Google Drive" })).toBeDisabled();
     expect(within(assetTypes).getByRole("menuitem", { name: "Link asset" })).toBeDisabled();

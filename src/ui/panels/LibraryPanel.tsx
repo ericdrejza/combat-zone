@@ -200,7 +200,8 @@ export function LibraryPanel({
   function startLibraryDrag(
     event: DragEvent<HTMLElement>,
     node: LibraryNode,
-    imageUrl: string | null
+    imageUrl: string | null,
+    mediaType?: string
   ) {
     if (activeSectionId !== "tokens" || node.type === "folder") {
       return;
@@ -221,6 +222,7 @@ export function LibraryPanel({
       image: asset.source,
       imageUrl,
       layoutGroup: actorTool.layoutGroup,
+      mediaType: mediaType ?? asset.mediaType,
       name: node.name,
       shape: actorTool.shape,
       size: actorTool.size
@@ -330,7 +332,12 @@ export function LibraryPanel({
               }
               onDragEnd={finishLibraryDrag}
               onDragStart={(event, imageUrl) =>
-                startLibraryDrag(event, node, imageUrl)
+                startLibraryDrag(
+                  event,
+                  node,
+                  imageUrl,
+                  resolveLibraryAsset(section, node.id)?.mediaType
+                )
               }
               onNavigate={() => navigateTo(node.id)}
               onPointerDown={(event) => {

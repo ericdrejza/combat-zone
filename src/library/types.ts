@@ -3,6 +3,7 @@ export type LibrarySectionId = "encounters" | "backgrounds" | "tokens";
 export type LibraryNodeType = "folder" | "image" | "link";
 
 export type LibraryImageAsset = {
+  animated?: boolean;
   source: ImageAssetSource;
   height?: number;
   mediaType: string;

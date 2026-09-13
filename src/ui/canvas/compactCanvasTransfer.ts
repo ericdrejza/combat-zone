@@ -3,7 +3,9 @@ import type { NewActorDragData } from "@ui/toolbar/actor/actorCreationDrag";
 
 export const COMPACT_CANVAS_TRANSFER_EVENT = "combat-zone:compact-canvas-transfer";
 
-export type ActorTransferVisual = NewActorDragData & Pick<Actor, "image">;
+export type ActorTransferVisual = NewActorDragData &
+  Pick<Actor, "image"> &
+  Partial<Pick<Actor, "metadata">>;
 
 export type CompactCanvasTransferPayload =
   | {

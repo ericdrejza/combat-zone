@@ -4,6 +4,8 @@ import type { MotionValue } from "motion/react";
 
 import type { LibraryImageAsset, LibraryNode } from "@library/types";
 import { AssetImagePreview } from "./AssetImagePreview";
+import { AssetLibraryAssetTypeIcon } from "./AssetLibraryAssetTypeIcon";
+import { getUploadedAssetSizeLabel } from "./assetFileSize";
 import type { AssetLibraryViewMode } from "./assetLibraryView";
 
 type AssetLibraryContentNodeProps = {
@@ -13,6 +15,8 @@ type AssetLibraryContentNodeProps = {
   loadingRotation: MotionValue<string>;
   node: LibraryNode;
   selected: boolean;
+  playAnimations: boolean;
+  showAssetSize: boolean;
   viewMode: AssetLibraryViewMode;
   onContextMenu: (event: React.MouseEvent<HTMLButtonElement>) => void;
   onDoubleClick: () => void;
@@ -34,6 +38,8 @@ export function AssetLibraryContentNode({
   loadingRotation,
   node,
   selected,
+  playAnimations,
+  showAssetSize,
   viewMode,
   onContextMenu,
   onDoubleClick,
@@ -48,6 +54,7 @@ export function AssetLibraryContentNode({
   onSelect
 }: AssetLibraryContentNodeProps) {
   const listView = viewMode === "list";
+  const sizeLabel = showAssetSize ? getUploadedAssetSizeLabel(node, asset) : null;
   const itemClass =
     dropFolderId === node.id
       ? "border-canvas-ink bg-canvas ring-2 ring-canvas-ink/20"
@@ -91,6 +98,8 @@ export function AssetLibraryContentNode({
             {asset ? (
               <AssetImagePreview
                 name={node.name}
+                mediaType={asset.mediaType}
+                playAnimations={playAnimations}
                 rotation={loadingRotation}
                 source={asset.source}
               />
@@ -101,6 +110,8 @@ export function AssetLibraryContentNode({
         ) : asset ? (
           <AssetImagePreview
             name={node.name}
+            mediaType={asset.mediaType}
+            playAnimations={playAnimations}
             rotation={loadingRotation}
             source={asset.source}
           />
@@ -108,9 +119,21 @@ export function AssetLibraryContentNode({
           <FileImage aria-hidden="true" className={listView ? "h-5 w-5" : "h-8 w-8"} />
         )}
       </span>
-      <span className={listView ? "min-w-0 flex-1 truncate text-sm font-medium" : "mt-2 block truncate text-xs font-medium"}>
-        {node.name}
-      </span>
+      {listView ? (
+        <span className="flex min-w-0 flex-1 items-center gap-1 text-sm font-medium">
+          <span className="min-w-0 flex-1 truncate">{node.name}</span>
+          {sizeLabel ? <span className="flex-none text-xs text-canvas-muted">{sizeLabel}</span> : null}
+          <AssetLibraryAssetTypeIcon asset={asset} node={node} />
+        </span>
+      ) : (
+        <span className="mt-2 block min-w-0 text-xs font-medium">
+          <span className="flex items-center gap-1">
+            <span className="min-w-0 flex-1 truncate">{node.name}</span>
+            <AssetLibraryAssetTypeIcon asset={asset} node={node} />
+          </span>
+          {sizeLabel ? <span className="block text-canvas-muted">{sizeLabel}</span> : null}
+        </span>
+      )}
     </button>
   );
 }

@@ -1,4 +1,4 @@
-import { Folder, FolderUp, Grid2X2, List } from "lucide-react";
+import { Folder, FolderUp, Grid2X2, HardDrive, List, Play } from "lucide-react";
 import { useTime, useTransform } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import type { DragEvent, PointerEvent as ReactPointerEvent } from "react";
@@ -20,6 +20,7 @@ import {
   EncounterContextMenu,
   type EncounterContextMenuState
 } from "./AssetLibraryMenus";
+import { useInterfacePreferences } from "@ui/interface_preferences/InterfacePreferenceProvider";
 
 type AssetLibraryContentsProps = {
   activeSection: LibrarySection;
@@ -108,6 +109,9 @@ export function AssetLibraryContents({
   const libraryNodeCardRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const [localViewMode, setLocalViewMode] =
     useState<AssetLibraryViewMode>("grid");
+  const [showAssetSizes, setShowAssetSizes] = useState(false);
+  const [playAnimations, setPlayAnimations] = useState(false);
+  const { enableAssetAnimation } = useInterfacePreferences();
   const viewMode = controlledViewMode ?? localViewMode;
   const {
     beginPreviewInteraction,
@@ -243,24 +247,51 @@ export function AssetLibraryContents({
           <Folder aria-hidden="true" className="h-4 w-4" />
           <span className="min-w-0 truncate">{currentFolder.name}</span>
         </div>
-        <button
-          aria-label={
-            viewMode === "grid"
-              ? "Switch library contents to list view"
-              : "Switch library contents to grid view"
-          }
-          aria-pressed={viewMode === "grid"}
-          className="flex h-8 w-8 flex-none items-center justify-center rounded-full border border-canvas-line bg-canvas-surface text-canvas-muted transition hover:bg-canvas"
-          onClick={toggleViewMode}
-          title={viewMode === "grid" ? "List view" : "Grid view"}
-          type="button"
-        >
-          {viewMode === "grid" ? (
-            <List aria-hidden="true" className="h-4 w-4" />
-          ) : (
-            <Grid2X2 aria-hidden="true" className="h-4 w-4" />
-          )}
-        </button>
+        <div className="flex items-center gap-2">
+          {activeSection.id !== "encounters" ? (
+            <>
+              <button
+                aria-label="Play animated assets"
+                aria-pressed={playAnimations}
+                className={`flex h-8 w-8 flex-none items-center justify-center rounded-full border transition ${playAnimations ? "border-canvas-ink bg-canvas-ink text-canvas-on-ink" : "border-canvas-line bg-canvas-surface text-canvas-muted hover:bg-canvas"} disabled:cursor-not-allowed disabled:border-canvas-line disabled:bg-canvas disabled:text-canvas-muted disabled:opacity-50`}
+                disabled={!enableAssetAnimation}
+                onClick={() => setPlayAnimations((playing) => !playing)}
+                title={enableAssetAnimation ? "Play animated assets" : "Animations are disabled in Interface settings."}
+                type="button"
+              >
+                <Play aria-hidden="true" className="h-4 w-4" />
+              </button>
+              <button
+            aria-label="Show uploaded asset sizes"
+            aria-pressed={showAssetSizes}
+            className={`flex h-8 w-8 flex-none items-center justify-center rounded-full border transition ${showAssetSizes ? "border-canvas-ink bg-canvas-ink text-canvas-on-ink" : "border-canvas-line bg-canvas-surface text-canvas-muted hover:bg-canvas"}`}
+            onClick={() => setShowAssetSizes((shown) => !shown)}
+            title="Show uploaded asset sizes"
+            type="button"
+          >
+            <HardDrive aria-hidden="true" className="h-4 w-4" />
+          </button>
+            </>
+          ) : null}
+          <button
+            aria-label={
+              viewMode === "grid"
+                ? "Switch library contents to list view"
+                : "Switch library contents to grid view"
+            }
+            aria-pressed={viewMode === "grid"}
+            className="flex h-8 w-8 flex-none items-center justify-center rounded-full border border-canvas-line bg-canvas-surface text-canvas-muted transition hover:bg-canvas"
+            onClick={toggleViewMode}
+            title={viewMode === "grid" ? "List view" : "Grid view"}
+            type="button"
+          >
+            {viewMode === "grid" ? (
+              <List aria-hidden="true" className="h-4 w-4" />
+            ) : (
+              <Grid2X2 aria-hidden="true" className="h-4 w-4" />
+            )}
+          </button>
+        </div>
       </div>
       <div className={viewMode === "list"
         ? "min-h-0 flex-1 overflow-auto lg:grid lg:grid-cols-2 lg:gap-4 lg:overflow-hidden"
@@ -299,6 +330,8 @@ export function AssetLibraryContents({
                 loadingRotation={loadingRotation}
                 node={node}
                 selected={selectedNodeId === node.id}
+                playAnimations={playAnimations}
+                showAssetSize={showAssetSizes}
                 viewMode={viewMode}
                 onContextMenu={(event) => onOpenContextMenu(event, node)}
                 onDoubleClick={() => {
@@ -387,6 +420,7 @@ export function AssetLibraryContents({
             onPointerLeave={schedulePreviewClear}
           >
             <AssetLibraryPreview
+              playAnimations={playAnimations}
               rotation={loadingRotation}
               target={displayedPreviewTarget}
             />
@@ -395,6 +429,7 @@ export function AssetLibraryContents({
         {viewMode === "list" && !largeHoverPreview && previewTarget ? (
           <div className="mt-4 min-w-0">
             <AssetLibraryPreview
+              playAnimations={playAnimations}
               rotation={loadingRotation}
               target={displayedPreviewTarget}
             />

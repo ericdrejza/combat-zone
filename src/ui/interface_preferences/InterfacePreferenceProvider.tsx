@@ -30,6 +30,7 @@ export const DEFAULT_ZONE_COLOR_DEFAULTS: ZoneColorDefaults = {
 
 type DurableInterfacePreferences = {
   autoSelectActiveActor: boolean;
+  enableAssetAnimation: boolean;
   panelVisibility: DockablePanelVisibility;
   panWithRightClickDrag: boolean;
   zoneColorDefaults: ZoneColorDefaults;
@@ -40,6 +41,7 @@ type DurableInterfacePreferences = {
 type InterfacePreferences = DurableInterfacePreferences & {
   autoSelectActiveActorDefault: boolean;
   setAutoSelectActiveActor: (enabled: boolean) => void;
+  setEnableAssetAnimation: (enabled: boolean) => void;
   setAutoSelectActiveActorDefault: (enabled: boolean) => void;
   setPanelVisible: (panelId: DockablePanelId, visible: boolean) => void;
   setPanWithRightClickDrag: (enabled: boolean) => void;
@@ -50,6 +52,7 @@ type InterfacePreferences = DurableInterfacePreferences & {
 
 const defaultPreferences: DurableInterfacePreferences = {
   autoSelectActiveActor: true,
+  enableAssetAnimation: true,
   panelVisibility: DEFAULT_DOCKABLE_PANEL_VISIBILITY,
   panWithRightClickDrag: true,
   zoneColorDefaults: DEFAULT_ZONE_COLOR_DEFAULTS,
@@ -61,6 +64,7 @@ const defaultValue: InterfacePreferences = {
   ...defaultPreferences,
   autoSelectActiveActorDefault: true,
   setAutoSelectActiveActor: () => undefined,
+  setEnableAssetAnimation: () => undefined,
   setAutoSelectActiveActorDefault: () => undefined,
   setPanelVisible: () => undefined,
   setPanWithRightClickDrag: () => undefined,
@@ -85,6 +89,10 @@ function readPreferences(): DurableInterfacePreferences {
       autoSelectActiveActor:
         typeof stored?.autoSelectActiveActor === "boolean"
           ? stored.autoSelectActiveActor
+          : true,
+      enableAssetAnimation:
+        typeof stored?.enableAssetAnimation === "boolean"
+          ? stored.enableAssetAnimation
           : true,
       panelVisibility: {
         initiative:
@@ -185,6 +193,8 @@ export function InterfacePreferenceProvider({ children }: { children: ReactNode 
         setAutoSelectActiveActor,
         setAutoSelectActiveActorDefault: (enabled) =>
           updatePreferences({ autoSelectActiveActor: enabled }),
+        setEnableAssetAnimation: (enabled) =>
+          updatePreferences({ enableAssetAnimation: enabled }),
         setPanelVisible: (panelId, visible) =>
           updatePreferences({
             panelVisibility: {

@@ -5,6 +5,7 @@ export const ACTOR_CREATION_DRAG_TYPE = "combat-zone/new-actor";
 
 export type NewActorDragData = {
   image?: ImageAssetSource;
+  imageAnimated?: boolean;
   imageMediaType?: string;
   imageName?: string;
   layoutGroup: ActorLayoutGroup;

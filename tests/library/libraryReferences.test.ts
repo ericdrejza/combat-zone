@@ -59,13 +59,14 @@ describe("replaceEncounterLibraryAssetReferences", () => {
       encounter,
       tokens,
       "token-node",
-      replacementAsset
+      { ...replacementAsset, animated: true }
     );
 
     expect(next.actors.byId["linked-actor"]?.image).toEqual(
       replacementAsset.source
     );
     expect(next.actors.byId["linked-actor"]?.metadata).toMatchObject({
+      sourceAssetAnimated: true,
       sourceAssetMediaType: replacementAsset.mediaType,
       sourceAssetName: replacementAsset.name,
       sourceLibraryNodeId: "token-node"

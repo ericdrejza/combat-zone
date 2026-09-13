@@ -21,9 +21,11 @@ export function InterfaceSettings() {
   const { setTheme, theme } = useTheme();
   const {
     autoSelectActiveActorDefault,
+    enableAssetAnimation,
     panelVisibility,
     panWithRightClickDrag,
     setAutoSelectActiveActorDefault,
+    setEnableAssetAnimation,
     setPanelVisible,
     setPanWithRightClickDrag
   } = useInterfacePreferences();
@@ -70,7 +72,17 @@ export function InterfaceSettings() {
         </div>
       </fieldset>
       <fieldset className="mt-7 max-w-lg border-t border-canvas-line pt-5">
-        <legend className="pr-3 text-sm font-semibold">General</legend>
+        <legend className="pr-3 text-sm font-semibold">Accessibility</legend>
+        <div className="mt-1 divide-y divide-canvas-line">
+          <PreferenceSwitch
+            checked={enableAssetAnimation}
+            label="Enable token animations"
+            onChange={setEnableAssetAnimation}
+          />
+        </div>
+      </fieldset>
+      <fieldset className="mt-4 max-w-lg border-t border-canvas-line pt-5">
+        <legend className="pr-3 text-sm font-semibold">Navigation</legend>
         <div className="mt-1 divide-y divide-canvas-line">
           <PreferenceSwitch
             checked={panWithRightClickDrag}

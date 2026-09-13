@@ -5,11 +5,13 @@ import { AssetImagePreview } from "./AssetImagePreview";
 import type { AssetLibraryPreviewTarget } from "./assetLibraryView";
 
 type AssetLibraryPreviewProps = {
+  playAnimations: boolean;
   rotation: MotionValue<string>;
   target: AssetLibraryPreviewTarget | null;
 };
 
 export function AssetLibraryPreview({
+  playAnimations,
   rotation,
   target
 }: AssetLibraryPreviewProps) {
@@ -23,6 +25,8 @@ export function AssetLibraryPreview({
           <AssetImagePreview
             imageAlt={target.name}
             name={target.name}
+            mediaType={target.asset.mediaType}
+            playAnimations={playAnimations}
             rotation={rotation}
             source={target.asset.source}
           />

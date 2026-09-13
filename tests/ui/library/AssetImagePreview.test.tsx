@@ -5,6 +5,20 @@ import { describe, expect, it } from "vitest";
 import { AssetImagePreview } from "@ui/library/AssetImagePreview";
 
 describe("AssetImagePreview", () => {
+  it("does not mount a video decoder while preview playback is paused", () => {
+    const { container } = render(
+      <AssetImagePreview
+        mediaType="video/webm"
+        name="Flame"
+        playAnimations={false}
+        rotation={motionValue("0deg")}
+        source={{ kind: "url", url: "https://example.com/flame.webm" }}
+      />
+    );
+
+    expect(container.querySelector("video")).not.toBeInTheDocument();
+  });
+
   it("shows a replacement image after its new source loads", () => {
     const rotation = motionValue("0deg");
     const { rerender } = render(

@@ -7,6 +7,7 @@ import { useResolvedImageSource } from "@core/assets/ImageAssetResolver";
 import type { CanvasSize } from "@core/layout/polygonCanvasBounds";
 import { BACKGROUND_SAMPLE_COUNT } from "./canvasConstants";
 import { useTheme } from "@ui/theme/ThemeProvider";
+import { isVideoMediaType } from "@library/mediaAsset";
 import {
   createDeterministicSamplePoints,
   drawCanvasBackgroundImage,
@@ -20,6 +21,14 @@ import {
 
 type BackgroundImage = RootState["encounter"]["present"]["backgroundImage"];
 type ZoneCollection = RootState["encounter"]["present"]["zones"];
+
+function releaseCanvasMedia(media: HTMLImageElement | HTMLVideoElement) {
+  if (media instanceof HTMLVideoElement) {
+    media.pause();
+    media.removeAttribute("src");
+    media.load();
+  }
+}
 
 export type CanvasBackgroundLuminance = {
   byZoneId: Record<string, number>;
@@ -64,7 +73,8 @@ export function useCanvasBackgroundLuminance(
     }
 
     let cancelled = false;
-    const image = new Image();
+    const isVideo = isVideoMediaType(backgroundImage.mediaType);
+    const image = isVideo ? document.createElement("video") : new Image();
     // Allow CORS-enabled URL images to remain readable by the luminance
     // canvas. Embedded and blob-backed images are unaffected by this flag.
     image.crossOrigin = "anonymous";
@@ -76,12 +86,18 @@ export function useCanvasBackgroundLuminance(
           canvas: fallbackLuminance
         });
       }
+      releaseCanvasMedia(image);
     });
 
-    image.addEventListener("load", () => {
+    image.addEventListener(isVideo ? "loadeddata" : "load", () => {
       if (cancelled) {
+        releaseCanvasMedia(image);
         return;
       }
+
+      // Drawing and sampling below are synchronous, so the decoder can be
+      // released immediately after this event handler completes.
+      queueMicrotask(() => releaseCanvasMedia(image));
 
       const canvas = document.createElement("canvas");
       canvas.width = canvasSize.width;
@@ -118,11 +134,17 @@ export function useCanvasBackgroundLuminance(
         });
       }
     });
+    if (image instanceof HTMLVideoElement) {
+      image.muted = true;
+      image.playsInline = true;
+      image.preload = "auto";
+    }
     if (!sourceUrl) return;
     image.src = sourceUrl;
 
     return () => {
       cancelled = true;
+      releaseCanvasMedia(image);
     };
   }, [
     backgroundImage,
@@ -158,7 +180,8 @@ export function usePolygonDraftBackgroundLuminance(
     }
 
     let cancelled = false;
-    const image = new Image();
+    const isVideo = isVideoMediaType(backgroundImage.mediaType);
+    const image = isVideo ? document.createElement("video") : new Image();
     const fallbackLuminance = getImageLuminanceFallback(
       backgroundImage.source,
       theme
@@ -169,12 +192,16 @@ export function usePolygonDraftBackgroundLuminance(
       if (!cancelled) {
         setPolygonDraftBackgroundLuminance(fallbackLuminance);
       }
+      releaseCanvasMedia(image);
     });
 
-    image.addEventListener("load", () => {
+    image.addEventListener(isVideo ? "loadeddata" : "load", () => {
       if (cancelled) {
+        releaseCanvasMedia(image);
         return;
       }
+
+      queueMicrotask(() => releaseCanvasMedia(image));
 
       const canvas = document.createElement("canvas");
       canvas.width = canvasSize.width;
@@ -203,11 +230,17 @@ export function usePolygonDraftBackgroundLuminance(
         setPolygonDraftBackgroundLuminance(fallbackLuminance);
       }
     });
+    if (image instanceof HTMLVideoElement) {
+      image.muted = true;
+      image.playsInline = true;
+      image.preload = "auto";
+    }
     if (!sourceUrl) return;
     image.src = sourceUrl;
 
     return () => {
       cancelled = true;
+      releaseCanvasMedia(image);
     };
   }, [backgroundImage, canvasSize, sourceUrl, theme, zoneDraftPoints]);
 

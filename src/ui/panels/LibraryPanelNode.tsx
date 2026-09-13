@@ -3,6 +3,11 @@ import type { DragEvent, PointerEvent } from "react";
 
 import type { LibraryImageAsset, LibraryNode } from "@library/types";
 import { useResolvedImageSource } from "@core/assets/ImageAssetResolver";
+import { isAnimatedAsset, isVideoAsset } from "@library/mediaAsset";
+import { AssetLibraryAssetTypeIcon } from "@ui/library/AssetLibraryAssetTypeIcon";
+import { useInterfacePreferences } from "@ui/interface_preferences/InterfacePreferenceProvider";
+import { ControlledVideo } from "@core/rendering/ControlledVideo";
+import { useStillImageSource } from "@core/assets/useStillImageSource";
 import type { LibraryViewMode } from "./LibraryPanel";
 
 type LibraryPanelNodeProps = {
@@ -33,6 +38,18 @@ export function LibraryPanelNode({
   viewMode
 }: LibraryPanelNodeProps) {
   const imageUrl = useResolvedImageSource(asset?.source);
+  const { enableAssetAnimation } = useInterfacePreferences();
+  const videoAsset = Boolean(asset && isVideoAsset(asset));
+  const animatedAsset = Boolean(
+    asset && (videoAsset || isAnimatedAsset(asset))
+  );
+  const freezeAsset = animatedAsset && !enableAssetAnimation;
+  const stillImageUrl = useStillImageSource(
+    imageUrl,
+    freezeAsset,
+    videoAsset ? "video" : "image"
+  );
+  const displayedImageUrl = freezeAsset ? stillImageUrl : imageUrl;
   if (node.type === "folder") {
     return (
       <button
@@ -79,12 +96,20 @@ export function LibraryPanelNode({
         }`}
       >
         {asset ? (
-          <img
-            alt=""
-            className="h-full w-full object-cover transition duration-150 ease-out group-hover:scale-[1.2]"
-            draggable={false}
-            src={imageUrl ?? ""}
-          />
+          videoAsset && enableAssetAnimation ? (
+            <ControlledVideo
+              className="h-full w-full object-cover transition duration-150 ease-out group-hover:scale-[1.2]"
+              play={enableAssetAnimation}
+              src={imageUrl ?? ""}
+            />
+          ) : (
+            <img
+              alt=""
+              className="h-full w-full object-cover transition duration-150 ease-out group-hover:scale-[1.2]"
+              draggable={false}
+              src={displayedImageUrl ?? ""}
+            />
+          )
         ) : node.type === "link" ? (
           <Link aria-hidden="true" className="h-4 w-4" />
         ) : (
@@ -92,9 +117,10 @@ export function LibraryPanelNode({
         )}
       </span>
       <span
-        className={`min-w-0 truncate ${viewMode === "list" ? "flex-1" : ""}`}
+        className={`flex min-w-0 items-center gap-1 ${viewMode === "list" ? "flex-1" : ""}`}
       >
-        {node.name}
+        <span className="min-w-0 flex-1 truncate">{node.name}</span>
+        <AssetLibraryAssetTypeIcon asset={asset} node={node} />
       </span>
     </button>
   );

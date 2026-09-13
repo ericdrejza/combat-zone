@@ -26,6 +26,7 @@ import { useOptionalCloudSync } from "@ui/cloud_sync";
 import type { LibraryFolderBySection } from "./useAssetLibraryModalState";
 import type { LibraryViewModeBySection } from "./useAssetLibraryModalState";
 import type { AssetLibraryViewMode } from "./assetLibraryView";
+import { LIBRARY_MEDIA_ACCEPT } from "@library/mediaAsset";
 import { getFolderAncestorIds } from "./libraryUi";
 import { LibraryPointerDragPreview } from "./LibraryPointerDragPreview";
 import { useLibraryNodePointerDrag } from "./useLibraryNodePointerDrag";
@@ -716,7 +717,7 @@ export function AssetLibraryModal({
       />
       <input
         ref={controller.fileInputRef}
-        accept="image/*"
+        accept={LIBRARY_MEDIA_ACCEPT}
         aria-label="Upload library image"
         className="sr-only"
         multiple
@@ -727,7 +728,7 @@ export function AssetLibraryModal({
       />
       <input
         ref={replaceFileInputRef}
-        accept="image/*"
+        accept={LIBRARY_MEDIA_ACCEPT}
         aria-label="Replace library image"
         className="sr-only"
         onChange={(event) => {
@@ -743,7 +744,7 @@ export function AssetLibraryModal({
       />
       <input
         ref={controller.folderInputRef}
-        accept="image/*"
+        accept={LIBRARY_MEDIA_ACCEPT}
         aria-label="Upload library folder"
         className="sr-only"
         onChange={(event) => {
