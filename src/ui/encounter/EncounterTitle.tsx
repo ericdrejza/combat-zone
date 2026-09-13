@@ -10,13 +10,22 @@ import { TouchTooltip } from "@ui/toolbar/TouchTooltip";
 
 type EncounterTitleProps = {
   compact?: boolean;
+  compactOpen?: boolean;
   name: string;
+  onCompactToggle?: () => void;
   onRename?: () => void;
   readOnly?: boolean;
 };
 
 /** Provides an inline, history-tracked rename without letting the toolbar cover the title. */
-export function EncounterTitle({ compact = false, name, onRename, readOnly = false }: EncounterTitleProps) {
+export function EncounterTitle({
+  compact = false,
+  compactOpen = false,
+  name,
+  onCompactToggle,
+  onRename,
+  readOnly = false
+}: EncounterTitleProps) {
   const dispatch = useDispatch();
   const encounter = useSelector((state: RootState) => state.encounter.present);
   const [editing, setEditing] = useState(false);
@@ -64,9 +73,15 @@ export function EncounterTitle({ compact = false, name, onRename, readOnly = fal
     const renameButton = (
       <button
         aria-label={`Rename encounter ${name}`}
-        className="flex h-11 min-w-11 shrink-0 items-center justify-center rounded-full border border-canvas-line bg-canvas-surface px-2 text-canvas-ink shadow-sm transition hover:bg-canvas"
+        aria-expanded={onCompactToggle ? compactOpen : undefined}
+        className={`flex h-11 min-w-11 shrink-0 items-center justify-center rounded-full border px-2 shadow-sm transition ${
+          compactOpen
+            ? "border-canvas-ink bg-canvas-ink text-canvas-on-ink"
+            : "border-canvas-line bg-canvas-surface text-canvas-ink hover:bg-canvas"
+        }`}
+        data-compact-encounter-toggle={onCompactToggle ? "true" : undefined}
         disabled={readOnly}
-        onClick={onRename}
+        onClick={onCompactToggle ?? onRename}
         title="Rename encounter"
         type="button"
       >

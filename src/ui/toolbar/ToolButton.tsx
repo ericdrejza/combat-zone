@@ -9,7 +9,7 @@ import { TOOL_ICONS } from "./toolbarItems";
 import { TouchTooltip } from "./TouchTooltip";
 
 type ToolButtonProps = {
-  activeToolId: ToolId;
+  activeToolId: ToolId | null;
   onSelected?: () => void;
   tool: ToolDefinition;
 };

@@ -30,7 +30,7 @@ import {
 
 type ActorToolButtonProps = {
   actorCreationImage?: ActorImageInput | null;
-  activeToolId: ToolId;
+  activeToolId: ToolId | null;
   compactLayout: boolean;
   compactSubtoolHost: HTMLDivElement | null;
   onOpenLibrary: () => void;

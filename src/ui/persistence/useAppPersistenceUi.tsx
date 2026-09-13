@@ -31,6 +31,7 @@ type AppPersistenceUiOptions = {
 type AppPersistenceUi = {
   dialogs: React.ReactNode;
   hasSavedEncounter: boolean;
+  libraryOpen: boolean;
   openLibrary: (target?: LibraryOpenTarget) => void;
   openTokenLibraryForActor: (
     actorId: string,
@@ -283,6 +284,7 @@ export function useAppPersistenceUi({
   return {
     dialogs,
     hasSavedEncounter: Boolean(persistence.activeRecord),
+    libraryOpen,
     openLibrary: (target) => {
       setTokenActorId(null);
       const location =

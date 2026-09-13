@@ -21,7 +21,7 @@ import { TOOL_ICONS, ZONE_SHAPE_OPTIONS } from "../toolbarItems";
 import { TouchTooltip } from "../TouchTooltip";
 
 type ZoneToolButtonProps = {
-  activeToolId: ToolId;
+  activeToolId: ToolId | null;
   compactLayout: boolean;
   compactSubtoolHost: HTMLDivElement | null;
   tool: ToolDefinition;
