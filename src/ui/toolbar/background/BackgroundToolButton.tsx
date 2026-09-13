@@ -32,7 +32,7 @@ import { TouchTooltip } from "../TouchTooltip";
 import { useBackgroundTool } from "./useBackgroundTool";
 
 type BackgroundToolButtonProps = {
-  activeToolId: ToolId;
+  activeToolId: ToolId | null;
   compactLayout: boolean;
   compactSubtoolHost: HTMLDivElement | null;
   encounter: EncounterState;

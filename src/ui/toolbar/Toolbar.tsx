@@ -28,6 +28,7 @@ type ToolbarProps = {
   actorCreationImage?: ActorImageInput | null;
   encounterName: string;
   hasSavedEncounter?: boolean;
+  libraryOpen?: boolean;
   onActorCreationImageHandled?: () => void;
   onActorToolSelected: () => void;
   onOpenLibrary: () => void;
@@ -42,6 +43,7 @@ export function Toolbar({
   actorCreationImage = null,
   encounterName,
   hasSavedEncounter = false,
+  libraryOpen = false,
   onActorCreationImageHandled,
   onActorToolSelected,
   onOpenLibrary,
@@ -55,6 +57,7 @@ export function Toolbar({
   const showMobileControls = useMobileControls(compactLayout);
   const [compactSubtoolHost, setCompactSubtoolHost] =
     useState<HTMLDivElement | null>(null);
+  const [compactEncounterOpen, setCompactEncounterOpen] = useState(false);
   const [compactZoomOpen, setCompactZoomOpen] = useState(false);
   const encounter = useSelector((state: RootState) => state.encounter.present);
   const activeToolId = useSelector(
@@ -64,9 +67,11 @@ export function Toolbar({
     (state: RootState) => state.interaction.zoneShapeMode
   );
   const edgeTool = useSelector((state: RootState) => state.interaction.edgeTool);
+  const visibleActiveToolId = compactEncounterOpen ? null : activeToolId;
 
   useEffect(() => {
     setCompactZoomOpen(false);
+    setCompactEncounterOpen(false);
   }, [activeToolId]);
 
   function renderTool(item: (typeof TOOLBAR_ITEMS)[number]) {
@@ -87,10 +92,10 @@ export function Toolbar({
       return (
         <BackgroundToolButton
           key={tool.id}
-          activeToolId={activeToolId}
+          activeToolId={visibleActiveToolId}
           encounter={encounter}
           compactLayout={compactLayout}
-          compactSubtoolHost={compactZoomOpen ? null : compactSubtoolHost}
+          compactSubtoolHost={compactZoomOpen || compactEncounterOpen ? null : compactSubtoolHost}
           tool={tool}
           onOpenLibrary={onOpenLibrary}
         />
@@ -101,9 +106,9 @@ export function Toolbar({
       return (
         <ZoneToolButton
           key={tool.id}
-          activeToolId={activeToolId}
+          activeToolId={visibleActiveToolId}
           compactLayout={compactLayout}
-          compactSubtoolHost={compactZoomOpen ? null : compactSubtoolHost}
+          compactSubtoolHost={compactZoomOpen || compactEncounterOpen ? null : compactSubtoolHost}
           tool={tool}
           zoneShapeMode={zoneShapeMode}
         />
@@ -114,9 +119,9 @@ export function Toolbar({
       return (
         <ActorToolButton
           key={tool.id}
-          activeToolId={activeToolId}
+          activeToolId={visibleActiveToolId}
           compactLayout={compactLayout}
-          compactSubtoolHost={compactZoomOpen ? null : compactSubtoolHost}
+          compactSubtoolHost={compactZoomOpen || compactEncounterOpen ? null : compactSubtoolHost}
           onOpenLibrary={onOpenLibrary}
           onSelected={onActorToolSelected}
           actorCreationImage={actorCreationImage}
@@ -127,13 +132,13 @@ export function Toolbar({
     }
 
     if (tool.id === "edge") {
-      return <EdgeToolButton key={tool.id} activeToolId={activeToolId} compactLayout={compactLayout} compactSubtoolHost={compactZoomOpen ? null : compactSubtoolHost} edgeTool={edgeTool} encounter={encounter} tool={tool} />;
+      return <EdgeToolButton key={tool.id} activeToolId={visibleActiveToolId} compactLayout={compactLayout} compactSubtoolHost={compactZoomOpen || compactEncounterOpen ? null : compactSubtoolHost} edgeTool={edgeTool} encounter={encounter} tool={tool} />;
     }
 
     return (
       <ToolButton
         key={tool.id}
-        activeToolId={activeToolId}
+        activeToolId={visibleActiveToolId}
         tool={tool}
       />
     );
@@ -155,13 +160,15 @@ export function Toolbar({
             />
           </h1>
         ) : null}
-        <EncounterTitleControls
-          hasSavedEncounter={hasSavedEncounter}
-          onSave={onSaveEncounter}
-          readOnly={persistenceReadOnly}
-          saveStatus={saveStatus}
-          showTitle={false}
-        />
+        {!compactLayout ? (
+          <EncounterTitleControls
+            hasSavedEncounter={hasSavedEncounter}
+            onSave={onSaveEncounter}
+            readOnly={persistenceReadOnly}
+            saveStatus={saveStatus}
+            showTitle={false}
+          />
+        ) : null}
         <CloudStatusIndicator />
         <nav
           aria-label="Tools"
@@ -172,20 +179,29 @@ export function Toolbar({
               return;
             }
             const button = target.closest("button");
-            if (button?.getAttribute("aria-label") !== "Zoom controls") {
+            if (
+              button?.getAttribute("aria-label") !== "Zoom controls" &&
+              !button?.hasAttribute("data-compact-encounter-toggle")
+            ) {
               setCompactZoomOpen(false);
+              setCompactEncounterOpen(false);
             }
           }}
         >
           {compactLayout ? (
             <EncounterTitle
               compact
+              compactOpen={compactEncounterOpen}
               name={encounterName}
+              onCompactToggle={() => {
+                setCompactZoomOpen(false);
+                setCompactEncounterOpen((open) => !open);
+              }}
               onRename={onRenameEncounter}
               readOnly={persistenceReadOnly}
             />
           ) : null}
-          <LibraryToolbarButton onOpenLibrary={onOpenLibrary} />
+          <LibraryToolbarButton active={libraryOpen} onOpenLibrary={onOpenLibrary} />
           <span
             aria-orientation="vertical"
             className="mx-1 hidden h-8 w-px shrink-0 self-center bg-canvas-line lg:block"
@@ -197,8 +213,11 @@ export function Toolbar({
           {compactLayout ? (
           <CanvasZoomControls
             compactOpen={compactZoomOpen}
-            compactSubtoolHost={compactSubtoolHost}
-            onCompactToggle={() => setCompactZoomOpen((open) => !open)}
+            compactSubtoolHost={compactEncounterOpen ? null : compactSubtoolHost}
+            onCompactToggle={() => {
+              setCompactEncounterOpen(false);
+              setCompactZoomOpen((open) => !open);
+            }}
           />
           ) : null}
         </nav>
@@ -216,6 +235,31 @@ export function Toolbar({
           className="scrollbar-hidden flex min-h-0 w-full items-center gap-2 overflow-x-auto empty:hidden lg:hidden"
           data-toolbar-subtools="true"
         >
+          {compactLayout && compactEncounterOpen ? (
+            <div
+              aria-label="Encounter controls"
+              className="flex min-w-full items-center gap-2"
+            >
+              <button
+                aria-label={`Rename encounter ${encounterName}`}
+                className="min-w-0 truncate px-1 text-left font-display text-base font-semibold tracking-tight hover:underline disabled:cursor-not-allowed"
+                disabled={persistenceReadOnly}
+                onClick={onRenameEncounter}
+                type="button"
+              >
+                {encounterName}
+              </button>
+              <div className="ml-auto shrink-0">
+                <EncounterTitleControls
+                  hasSavedEncounter={hasSavedEncounter}
+                  onSave={onSaveEncounter}
+                  readOnly={persistenceReadOnly}
+                  saveStatus={saveStatus}
+                  showTitle={false}
+                />
+              </div>
+            </div>
+          ) : null}
         </div>
       </div>
     </header>

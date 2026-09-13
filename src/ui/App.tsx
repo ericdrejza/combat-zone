@@ -408,6 +408,7 @@ function AppContent() {
         actorCreationImage={actorCreationImage}
         encounterName={encounter.name}
         hasSavedEncounter={persistenceUi.hasSavedEncounter}
+        libraryOpen={persistenceUi.libraryOpen}
         onActorToolSelected={expandAutoCollapsedLibraryPanel}
         onActorCreationImageHandled={() => setActorCreationImage(null)}
         onOpenLibrary={() =>

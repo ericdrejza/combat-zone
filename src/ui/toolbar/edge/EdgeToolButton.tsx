@@ -43,7 +43,7 @@ import { TOOL_ICONS } from "../toolbarItems";
 import { TouchTooltip } from "../TouchTooltip";
 
 type Props = {
-  activeToolId: ToolId;
+  activeToolId: ToolId | null;
   compactLayout: boolean;
   compactSubtoolHost: HTMLDivElement | null;
   edgeTool: RootState["interaction"]["edgeTool"];

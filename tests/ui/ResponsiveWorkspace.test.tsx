@@ -136,6 +136,14 @@ describe("responsive workspace", () => {
       });
       expect(renameButton).toBeInTheDocument();
       expect(renameButton.querySelector("svg")).not.toBeNull();
+      expect(screen.queryByRole("button", { name: "Save encounter" })).not.toBeInTheDocument();
+
+      await user.click(renameButton);
+      expect(renameButton).toHaveAttribute("aria-expanded", "true");
+      expect(within(tools).queryAllByRole("button", { pressed: true })).toHaveLength(0);
+      const encounterControls = screen.getByLabelText("Encounter controls");
+      expect(within(encounterControls).getByText("Untitled Encounter")).toBeInTheDocument();
+      expect(within(encounterControls).getByRole("button", { name: "Save encounter" })).toBeInTheDocument();
 
       await user.click(within(tools).getByRole("button", { name: "Zone" }));
       expect(
@@ -170,6 +178,12 @@ describe("responsive workspace", () => {
       expect(
         screen.getByRole("heading", { name: "Library" })
       ).toBeInTheDocument();
+
+      const libraryButton = within(tools).getByRole("button", { name: "Library" });
+      expect(libraryButton).toHaveAttribute("aria-expanded", "false");
+      await user.click(libraryButton);
+      expect(libraryButton).toHaveAttribute("aria-expanded", "true");
+      expect(screen.getByRole("dialog", { name: "Asset Library" })).toBeInTheDocument();
       unmount();
     } finally {
       restoreMatchMedia();
