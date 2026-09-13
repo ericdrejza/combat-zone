@@ -5,3 +5,4 @@ export * from "./indexedDbRepository";
 export * from "./localDataReset";
 export * from "./syncTypes";
 export * from "./indexedDbSyncRepository";
+export * from "./localAssets";

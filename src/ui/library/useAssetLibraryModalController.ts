@@ -36,6 +36,7 @@ import {
 import type { AssetLibraryViewMode } from "./assetLibraryView";
 import { useOptionalCloudSync } from "@ui/cloud_sync";
 import { syncLibraryAssetReferences } from "./libraryReferenceSync";
+import { usePersistence } from "@ui/persistence/PersistenceProvider";
 
 const toDroppedFiles = (files: File[]) =>
   files.map((file) => ({ file, relativePath: getFileRelativePath(file) }));
@@ -60,6 +61,7 @@ export function useAssetLibraryModalController({
   const dispatch = useDispatch();
   const encounter = useSelector((state: RootState) => state.encounter.present);
   const cloud = useOptionalCloudSync();
+  const persistence = usePersistence();
   const state = useAssetLibraryModalState({
     currentFolderBySection,
     initialSectionId,
@@ -177,7 +179,8 @@ export function useAssetLibraryModalController({
       dispatch,
       files: await getDroppedImageFiles(event.dataTransfer),
       rootParentId: parentId,
-      sectionId: activeSectionId
+      sectionId: activeSectionId,
+      storeLocalAsset: persistence.storeLocalAsset
     });
     setDropFolderId(null);
   }
@@ -269,7 +272,8 @@ export function useAssetLibraryModalController({
       dispatch,
       files: toDroppedFiles(files),
       rootParentId: parentId,
-      sectionId: activeSectionId
+      sectionId: activeSectionId,
+      storeLocalAsset: persistence.storeLocalAsset
     });
     setAddMenuOpen(false);
   }
@@ -281,7 +285,8 @@ export function useAssetLibraryModalController({
       dispatch,
       files: toDroppedFiles(files),
       rootParentId: getAddParentId(),
-      sectionId: activeSectionId
+      sectionId: activeSectionId,
+      storeLocalAsset: persistence.storeLocalAsset
     });
     setAddMenuOpen(false);
   }
@@ -333,7 +338,7 @@ export function useAssetLibraryModalController({
       return;
     }
 
-    const asset = await readLibraryMediaFile(file);
+    const asset = await readLibraryMediaFile(file, persistence.storeLocalAsset);
     dispatch(replaceImage({
       asset,
       name: node.name,

@@ -43,4 +43,22 @@ describe("cloud serialization", () => {
     expect(ensureUploaded).toHaveBeenCalledOnce();
     expect(result.assetIds).toEqual([assetId]);
   });
+
+  it("uploads repository-backed local sources before cloud persistence", async () => {
+    const state = createEncounterState({ id: "encounter-1", name: "Encounter" });
+    state.backgroundImage = {
+      source: { kind: "local_asset", assetId: "b".repeat(64), byteLength: 5 },
+      height: 10, mediaType: "video/webm", name: "Map", width: 10
+    };
+    const cloudAssetId = "c".repeat(64);
+    const ensureUploaded = vi.fn().mockResolvedValue({
+      kind: "cloud_storage", assetId: cloudAssetId, generation: "1"
+    });
+    const assets = { ensureUploaded, download: vi.fn(), getUsage: vi.fn() } as unknown as CloudAssetRepository;
+
+    const result = await serializeEncounterForCloud({ state, updatedAt: 1 }, assets);
+
+    expect(ensureUploaded).toHaveBeenCalledOnce();
+    expect(result.assetIds).toEqual([cloudAssetId]);
+  });
 });

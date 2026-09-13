@@ -43,7 +43,19 @@ entire workspace:
 - One versioned record per saved encounter.
 - At most one unfiled recovery-draft record.
 - Library folders, encounter entries, backgrounds, and tokens.
+- Content-addressed local asset blobs, referenced from Library and encounter
+  records by digest and byte length.
 - Recoverable pre-import backups.
+
+Local asset blobs are authoritative application data, unlike the evictable
+provider asset cache. A startup migration replaces legacy embedded data URLs
+with repository references. Startup orphan collection retains every blob
+referenced by the Library, a saved encounter, or the recovery draft; running
+collection only between sessions preserves references held solely by current
+undo/redo history. This maintenance requires the writer lock so opening a
+read-only tab cannot collect assets used by the active editor. JSON exports
+resolve those local references back to embedded data URLs so workspace and
+encounter files remain complete and portable.
 
 Every persisted `EncounterState` retains its encounter `schemaVersion`. The
 workspace/export envelope has its own schema version and a `kind` discriminator.

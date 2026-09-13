@@ -1,12 +1,18 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   getSupportedLibraryMediaType,
   isAnimatedAsset,
   isSupportedLibraryMediaFile,
-  isVideoMediaType
+  isVideoMediaType,
+  readLibraryMediaFile
 } from "@library/mediaAsset";
 import reducer, { uploadImage } from "@library/librarySlice";
+
+afterEach(() => {
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+});
 
 describe("library media assets", () => {
   it("accepts MP4 and WebM uploads, including files without a browser MIME type", () => {
@@ -57,5 +63,37 @@ describe("library media assets", () => {
       name: "flame.webp",
       source: { dataUrl, kind: "embedded" }
     })).toBe(true);
+  });
+
+  it("stores uploaded bytes through the repository without creating a data URL", async () => {
+    class LoadedImage extends EventTarget {
+      naturalHeight = 600;
+      naturalWidth = 800;
+
+      set src(_value: string) {
+        queueMicrotask(() => this.dispatchEvent(new Event("load")));
+      }
+    }
+    const createObjectURL = vi.spyOn(URL, "createObjectURL")
+      .mockReturnValue("blob:upload-preview");
+    const revokeObjectURL = vi.spyOn(URL, "revokeObjectURL")
+      .mockImplementation(() => undefined);
+    vi.stubGlobal("Image", LoadedImage);
+    const file = new File(["image bytes"], "map.png", { type: "image/png" });
+    const source = {
+      kind: "local_asset" as const,
+      assetId: "a".repeat(64),
+      byteLength: file.size
+    };
+    const storeLocalAsset = vi.fn(async () => source);
+
+    await expect(readLibraryMediaFile(file, storeLocalAsset)).resolves.toMatchObject({
+      height: 600,
+      width: 800,
+      source
+    });
+    expect(storeLocalAsset).toHaveBeenCalledWith(file);
+    expect(createObjectURL).toHaveBeenCalledWith(file);
+    expect(revokeObjectURL).toHaveBeenCalledWith("blob:upload-preview");
   });
 });

@@ -73,11 +73,23 @@ entry-point rules remain in the persistence decision record.
   Domain writes and their outbox record share an IndexedDB transaction. Only
   the writer-lock tab runs synchronization. Provider-backed cached blobs are
   derived, evictable data and never become a second domain source of truth.
+- IndexedDB version 5 adds the authoritative `assets` store for local upload
+  bytes. Domain documents reference these content-addressed blobs with a
+  `local_asset` descriptor, so large media is not duplicated through Redux,
+  JSON serialization, or every persisted encounter. The store is distinct
+  from the derived `asset_cache`: referenced local blobs are durable, while
+  cached provider blobs remain evictable. Startup migrates legacy embedded
+  data URLs and removes blobs not referenced by the Library, a saved
+  encounter, or the recovery draft. Deferring collection until the next
+  writer-tab startup keeps session undo/redo references valid and prevents a
+  read-only tab from collecting assets used by the active editor.
 - Image-bearing domain fields use the shared `ImageAssetSource` union:
-  embedded bytes, HTTP(S) URL, Google Drive file ID, or Cloud Storage asset ID
-  plus generation. Encounter schema 6 and export/workspace schema 2 migrate
-  legacy strings explicitly. Rendering resolves remote sources to short-lived
-  object URLs; lossless export embeds provider bytes in a cloned envelope.
+  embedded bytes, repository-backed local asset ID and byte length, HTTP(S)
+  URL, Google Drive file ID, or Cloud Storage asset ID plus generation.
+  Encounter schema 6 and export/workspace schema 2 migrate legacy strings
+  explicitly. Rendering shares short-lived object URLs between consumers;
+  lossless exports replace local and provider references with embedded bytes
+  in a cloned envelope so exported files remain portable.
 - The Library is the authoritative catalog for application-managed image
   objects. Embedded or provider-backed object-storage assets must be created or
   imported through a Library asset node before an entity can use them; entity

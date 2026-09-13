@@ -125,8 +125,9 @@ acceptance requirement in this plan passes.
 
 ## Interfaces and module boundaries
 
-Keep `WorkspaceRepository` unchanged as the interface used by Redux and UI
-orchestration. Add focused companion interfaces under `core/persistence`:
+Keep `WorkspaceRepository` as the interface used by Redux and UI orchestration.
+Local binary persistence adds Blob save/resolve/collection operations there;
+cloud concerns remain in focused companion interfaces under `core/persistence`:
 
 ### Shared image-source contract
 
@@ -136,6 +137,7 @@ type used by Library assets, actor images, and encounter backgrounds:
 ```ts
 type ImageAssetSource =
   | { kind: "embedded"; dataUrl: string }
+  | { kind: "local_asset"; assetId: string; byteLength: number }
   | { kind: "url"; url: string }
   | { kind: "google_drive"; fileId: string }
   | {
@@ -354,7 +356,8 @@ Google Drive without signing the user out of Combat Zone.
 If the user has no cloud workspace:
 
 1. Flush local persistence.
-2. Resolve embedded uploads through `CloudAssetRepository`.
+2. Resolve repository-backed local uploads and legacy embedded uploads through
+   `CloudAssetRepository`.
 3. Upload the latest local records and mark their remote revisions acknowledged.
 
 If cloud data already exists, pause remote writes while local editing remains

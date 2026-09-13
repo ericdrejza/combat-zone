@@ -8,6 +8,7 @@ import {
   type EncounterRecord,
   type EncounterExportEnvelope,
   type LibraryRecord,
+  type LocalAssetRecord,
   type RecoveryDraftRecord,
   type RepositorySaveOptions,
   type WorkspaceExportEnvelope,
@@ -31,9 +32,19 @@ import {
   STORE_RECOVERY,
   STORE_SYNC_OUTBOX,
   STORE_SYNC_STATE,
-  STORE_ASSET_CACHE
+  STORE_ASSET_CACHE,
+  STORE_LOCAL_ASSETS
 } from "./indexedDbSchema";
 import { journalSyncMutation } from "./indexedDbSyncRepository";
+import type { ImageAssetSource } from "@core/assets/imageAssetSource";
+import {
+  collectLocalAssetIds,
+  createLocalAssetRecord,
+  embedLocalAssets,
+  internalizeEncounter,
+  internalizeLibrary,
+  internalizeWorkspace
+} from "./localAssets";
 
 const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
 const now = () => Date.now();
@@ -51,7 +62,7 @@ export class IndexedDbWorkspaceRepository implements WorkspaceRepository {
 
   constructor(options: IndexedDbWorkspaceRepositoryOptions = {}) {
     this.databaseName = options.databaseName ?? "combat-zone";
-    this.databaseVersion = options.databaseVersion ?? 4;
+    this.databaseVersion = options.databaseVersion ?? 5;
   }
 
   private database(): Promise<IDBDatabase> {
@@ -97,6 +108,7 @@ export class IndexedDbWorkspaceRepository implements WorkspaceRepository {
 
   async createEncounter(state: EncounterState, folderId: string | null = null): Promise<EncounterRecord> {
     assertEncounterState(state);
+    const internalized = await internalizeEncounter(state);
     if (
       folderId !== null &&
       (await this.getLibrary()).state.sections.encounters.nodesById[folderId]?.type !==
@@ -107,8 +119,9 @@ export class IndexedDbWorkspaceRepository implements WorkspaceRepository {
     const existing = await this.getEncounter(state.id);
     if (existing) throw new PersistenceValidationError(`Encounter ${state.id} already exists.`);
     const timestamp = now();
-    const record: EncounterRecord = { id: state.id, state: clone(state), folderId, revision: 0, createdAt: timestamp, updatedAt: timestamp };
-    await this.write([STORE_ENCOUNTERS, STORE_SYNC_STATE, STORE_SYNC_OUTBOX], async (transaction) => {
+    const record: EncounterRecord = { id: state.id, state: internalized.value, folderId, revision: 0, createdAt: timestamp, updatedAt: timestamp };
+    await this.write([STORE_ENCOUNTERS, STORE_LOCAL_ASSETS, STORE_SYNC_STATE, STORE_SYNC_OUTBOX], async (transaction) => {
+      for (const asset of internalized.assets) transaction.objectStore(STORE_LOCAL_ASSETS).put(asset);
       transaction.objectStore(STORE_ENCOUNTERS).add(record);
       await journalSyncMutation(transaction, `encounter:${record.id}`, record.revision, "upsert");
       return undefined;
@@ -128,8 +141,9 @@ export class IndexedDbWorkspaceRepository implements WorkspaceRepository {
 
   async saveEncounter(state: EncounterState, options: RepositorySaveOptions = {}): Promise<EncounterRecord> {
     assertEncounterState(state);
+    const internalized = await internalizeEncounter(state);
     const database = await this.database();
-    const transaction = database.transaction([STORE_ENCOUNTERS, STORE_SYNC_STATE, STORE_SYNC_OUTBOX], "readwrite");
+    const transaction = database.transaction([STORE_ENCOUNTERS, STORE_LOCAL_ASSETS, STORE_SYNC_STATE, STORE_SYNC_OUTBOX], "readwrite");
     const store = transaction.objectStore(STORE_ENCOUNTERS);
     const existing = (await request(store.get(state.id))) as EncounterRecord | undefined;
     if (!existing) {
@@ -141,7 +155,8 @@ export class IndexedDbWorkspaceRepository implements WorkspaceRepository {
       transaction.abort();
       throw new RevisionConflictError(state.id, expected, existing.revision);
     }
-    const record: EncounterRecord = { ...existing, state: clone(state), folderId: options.folderId === undefined ? existing.folderId : options.folderId, revision: existing.revision + 1, updatedAt: now() };
+    const record: EncounterRecord = { ...existing, state: internalized.value, folderId: options.folderId === undefined ? existing.folderId : options.folderId, revision: existing.revision + 1, updatedAt: now() };
+    for (const asset of internalized.assets) transaction.objectStore(STORE_LOCAL_ASSETS).put(asset);
     store.put(record);
     await journalSyncMutation(transaction, `encounter:${record.id}`, record.revision, "upsert");
     await transactionComplete(transaction);
@@ -191,8 +206,10 @@ export class IndexedDbWorkspaceRepository implements WorkspaceRepository {
 
   async saveRecoveryDraft(state: EncounterState): Promise<RecoveryDraftRecord> {
     assertEncounterState(state);
-    const record: RecoveryDraftRecord = { state: clone(state), updatedAt: now() };
-    await this.write([STORE_RECOVERY, STORE_SYNC_STATE, STORE_SYNC_OUTBOX], async (transaction) => {
+    const internalized = await internalizeEncounter(state);
+    const record: RecoveryDraftRecord = { state: internalized.value, updatedAt: now() };
+    await this.write([STORE_RECOVERY, STORE_LOCAL_ASSETS, STORE_SYNC_STATE, STORE_SYNC_OUTBOX], async (transaction) => {
+      for (const asset of internalized.assets) transaction.objectStore(STORE_LOCAL_ASSETS).put(asset);
       transaction.objectStore(STORE_RECOVERY).put(record, RECOVERY_KEY);
       await journalSyncMutation(transaction, "recovery_draft", record.updatedAt, "upsert");
       return undefined;
@@ -212,8 +229,10 @@ export class IndexedDbWorkspaceRepository implements WorkspaceRepository {
 
   async saveLibrary(state: LibraryState): Promise<LibraryRecord> {
     const previous = await this.getLibrary();
-    const record: LibraryRecord = { state: clone(state), revision: previous.revision + 1, updatedAt: now() };
-    await this.write([STORE_LIBRARY, STORE_SYNC_STATE, STORE_SYNC_OUTBOX], async (transaction) => {
+    const internalized = await internalizeLibrary(state);
+    const record: LibraryRecord = { state: internalized.value, revision: previous.revision + 1, updatedAt: now() };
+    await this.write([STORE_LIBRARY, STORE_LOCAL_ASSETS, STORE_SYNC_STATE, STORE_SYNC_OUTBOX], async (transaction) => {
+      for (const asset of internalized.assets) transaction.objectStore(STORE_LOCAL_ASSETS).put(asset);
       transaction.objectStore(STORE_LIBRARY).put(record, LIBRARY_KEY);
       await journalSyncMutation(transaction, "library", record.revision, "upsert");
       return undefined;
@@ -221,9 +240,72 @@ export class IndexedDbWorkspaceRepository implements WorkspaceRepository {
     return clone(record);
   }
 
-  private async snapshot() {
+  async saveLocalAsset(blob: Blob): Promise<ImageAssetSource> {
+    const record = await createLocalAssetRecord(blob);
+    await this.write(STORE_LOCAL_ASSETS, async (transaction) => {
+      transaction.objectStore(STORE_LOCAL_ASSETS).put(record);
+      return undefined;
+    });
+    return { kind: "local_asset", assetId: record.assetId, byteLength: blob.size };
+  }
+
+  async getLocalAsset(assetId: string): Promise<Blob | null> {
+    return (await this.read<LocalAssetRecord>(STORE_LOCAL_ASSETS, assetId))?.blob ?? null;
+  }
+
+  async maintainLocalAssets(): Promise<void> {
+    await this.migrateEmbeddedAssets();
+    await this.collectOrphanedLocalAssets();
+  }
+
+  async collectOrphanedLocalAssets(): Promise<number> {
+    const snapshot = await this.rawSnapshot();
+    const referenced = collectLocalAssetIds(snapshot);
+    const database = await this.database();
+    const transaction = database.transaction(STORE_LOCAL_ASSETS, "readwrite");
+    const store = transaction.objectStore(STORE_LOCAL_ASSETS);
+    const assets = await request<LocalAssetRecord[]>(store.getAll());
+    let deleted = 0;
+    for (const asset of assets) {
+      if (!referenced.has(asset.assetId)) {
+        store.delete(asset.assetId);
+        deleted += 1;
+      }
+    }
+    await transactionComplete(transaction);
+    return deleted;
+  }
+
+  private async rawSnapshot() {
     const [manifest, encounters, recoveryDraft, library] = await Promise.all([this.getManifest(), this.listEncounters(), this.getRecoveryDraft(), this.getLibrary()]);
     return { manifest, encounters, recoveryDraft, library };
+  }
+
+  private async snapshot() {
+    return embedLocalAssets(await this.rawSnapshot(), (assetId) => this.getLocalAsset(assetId));
+  }
+
+  private async migrateEmbeddedAssets(): Promise<void> {
+    const current = await this.rawSnapshot();
+    const internalized = await internalizeWorkspace(current);
+    if (!internalized.changed) return;
+    await this.write(
+      [STORE_ENCOUNTERS, STORE_RECOVERY, STORE_LIBRARY, STORE_LOCAL_ASSETS],
+      async (transaction) => {
+        const encounters = transaction.objectStore(STORE_ENCOUNTERS);
+        for (const record of internalized.value.encounters) encounters.put(record);
+        const recovery = transaction.objectStore(STORE_RECOVERY);
+        recovery.clear();
+        if (internalized.value.recoveryDraft) {
+          recovery.put(internalized.value.recoveryDraft, RECOVERY_KEY);
+        }
+        transaction.objectStore(STORE_LIBRARY).put(internalized.value.library, LIBRARY_KEY);
+        for (const asset of internalized.assets) {
+          transaction.objectStore(STORE_LOCAL_ASSETS).put(asset);
+        }
+        return undefined;
+      }
+    );
   }
 
   async exportWorkspace(): Promise<WorkspaceExportEnvelope> {
@@ -233,7 +315,13 @@ export class IndexedDbWorkspaceRepository implements WorkspaceRepository {
   async exportEncounter(id: string): Promise<EncounterExportEnvelope> {
     const record = await this.getEncounter(id);
     if (!record) throw new PersistenceValidationError(`Encounter ${id} does not exist.`);
-    return validateExportEnvelope({ kind: "encounter-export", schemaVersion: EXPORT_SCHEMA_VERSION, exportedAt: now(), encounter: record.state, library: (await this.getLibrary()).state }) as EncounterExportEnvelope;
+    const snapshot = await embedLocalAssets({
+      manifest: await this.getManifest(),
+      encounters: [record],
+      recoveryDraft: null,
+      library: await this.getLibrary()
+    }, (assetId) => this.getLocalAsset(assetId));
+    return validateExportEnvelope({ kind: "encounter-export", schemaVersion: EXPORT_SCHEMA_VERSION, exportedAt: now(), encounter: snapshot.encounters[0].state, library: snapshot.library.state }) as EncounterExportEnvelope;
   }
 
   async importWorkspace(envelope: WorkspaceExportEnvelope, mode: "overwrite" | "merge"): Promise<WorkspaceManifest> {
@@ -244,9 +332,12 @@ export class IndexedDbWorkspaceRepository implements WorkspaceRepository {
     const memory = new InMemoryWorkspaceRepository();
     await memory.importWorkspace({ kind: "workspace-export", schemaVersion: EXPORT_SCHEMA_VERSION, exportedAt: now(), workspace: current }, "overwrite");
     const nextManifest = await memory.importWorkspace(envelope, mode);
-    const next = await memory.exportWorkspace();
+    const portableNext = await memory.exportWorkspace();
+    const internalized = await internalizeWorkspace(portableNext.workspace);
+    const next = { ...portableNext, workspace: internalized.value };
     const existing = mode === "overwrite" ? await this.listEncounters() : [];
-    await this.write([STORE_MANIFEST, STORE_ENCOUNTERS, STORE_RECOVERY, STORE_LIBRARY, STORE_SYNC_STATE, STORE_SYNC_OUTBOX], async (transaction) => {
+    await this.write([STORE_MANIFEST, STORE_ENCOUNTERS, STORE_RECOVERY, STORE_LIBRARY, STORE_LOCAL_ASSETS, STORE_SYNC_STATE, STORE_SYNC_OUTBOX], async (transaction) => {
+      for (const asset of internalized.assets) transaction.objectStore(STORE_LOCAL_ASSETS).put(asset);
       const encounters = transaction.objectStore(STORE_ENCOUNTERS);
       if (mode === "overwrite") for (const record of existing as EncounterRecord[]) encounters.delete(record.id);
       for (const record of next.workspace.encounters) encounters.put(record);
@@ -297,7 +388,8 @@ export class IndexedDbWorkspaceRepository implements WorkspaceRepository {
         STORE_BACKUPS,
         STORE_SYNC_STATE,
         STORE_SYNC_OUTBOX,
-        STORE_ASSET_CACHE
+        STORE_ASSET_CACHE,
+        STORE_LOCAL_ASSETS
       ],
       async (transaction) => {
         for (const storeName of [
@@ -308,7 +400,8 @@ export class IndexedDbWorkspaceRepository implements WorkspaceRepository {
           STORE_BACKUPS,
           STORE_SYNC_STATE,
           STORE_SYNC_OUTBOX,
-          STORE_ASSET_CACHE
+          STORE_ASSET_CACHE,
+          STORE_LOCAL_ASSETS
         ]) {
           transaction.objectStore(storeName).clear();
         }

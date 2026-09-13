@@ -58,14 +58,18 @@ export class FirebaseCloudAssetRepository implements CloudAssetRepository {
 
   constructor(
     private readonly services: FirebaseBackendServices,
-    private readonly localSync: LocalSyncRepository
+    private readonly localSync: LocalSyncRepository,
+    private readonly resolveLocalAsset?: (assetId: string) => Promise<Blob | null>
   ) {
     this.api = new FirebaseApiClient(services);
   }
 
   async ensureUploaded(source: ImageAssetSource, assetType: CloudAssetType, mediaType: string, onProgress?: UploadProgress): Promise<ImageAssetSource> {
-    if (source.kind !== "embedded") return source;
-    const blob = await fetch(source.dataUrl).then((response) => response.blob());
+    if (source.kind !== "embedded" && source.kind !== "local_asset") return source;
+    const blob = source.kind === "embedded"
+      ? await fetch(source.dataUrl).then((response) => response.blob())
+      : await this.resolveLocalAsset?.(source.assetId);
+    if (!blob) throw new Error("The local asset is missing.");
     const uploadMediaType = blob.type || mediaType;
     const assetId = await sha256(blob);
     const reservation = await this.api.reserveAssetUpload({ assetId, assetType, expectedBytes: blob.size, mediaType: uploadMediaType });

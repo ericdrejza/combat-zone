@@ -19,6 +19,10 @@ describe("getUploadedAssetSizeLabel", () => {
     };
 
     expect(getUploadedAssetSizeLabel(node, asset)).toBe("1 KB");
+    expect(getUploadedAssetSizeLabel(node, {
+      ...asset,
+      source: { kind: "local_asset", assetId: "a".repeat(64), byteLength: 2_000_000 }
+    })).toBe("1.9 MB");
     expect(getUploadedAssetSizeLabel({ ...node, type: "link" }, asset)).toBeNull();
   });
 });

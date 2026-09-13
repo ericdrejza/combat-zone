@@ -19,7 +19,7 @@ function cloudSource(
   mediaType: string,
   assets: CloudAssetRepository
 ): Promise<ImageAssetSource> {
-  return source.kind === "embedded"
+  return source.kind === "embedded" || source.kind === "local_asset"
     ? assets.ensureUploaded(source, type, mediaType)
     : Promise.resolve(source);
 }

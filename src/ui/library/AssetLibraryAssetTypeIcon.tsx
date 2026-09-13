@@ -24,6 +24,7 @@ export function AssetLibraryAssetTypeIcon({
 
   switch (asset?.source.kind) {
     case "embedded":
+    case "local_asset":
       return null;
     case "url":
       return <Link2 aria-label="Web link" className="h-3.5 w-3.5 flex-none" />;

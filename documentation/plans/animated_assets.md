@@ -8,8 +8,8 @@ introduced for local Library assets.
 ## Asset support
 
 - Library uploads accept images plus MP4 and WebM files for Backgrounds and
-  Tokens. Embedded uploads record intrinsic dimensions so video backgrounds
-  use the existing canvas-sizing workflow.
+  Tokens. Uploads record intrinsic dimensions so video backgrounds use the
+  existing canvas-sizing workflow.
 - Animated WebP files are detected from their RIFF animation metadata and are
   marked with the Video icon. The same icon identifies MP4 and WebM assets.
 - Library cards identify non-default asset sources. Standard uploaded still
@@ -35,26 +35,25 @@ introduced for local Library assets.
 
 - Background and Token tabs offer a size toggle beside the Play control. The
   Encounters tab does not display this control.
-- Size labels apply only to direct embedded uploads. They are derived from the
-  base64 data URL rather than persisted separately, avoiding redundant state.
+- Size labels apply to local uploads. Repository-backed sources retain their
+  byte length in the source descriptor; legacy embedded sources derive it from
+  the base64 data URL.
 - Grid cards show size below the name; list rows place it after the name and
   before a source-type icon.
 
-## Outstanding performance work
+## Performance implementation
 
-Performance issues are still present and need investigation. In particular,
-large embedded media assets can increase memory pressure through data URLs,
-decoded image/video frames, library previews, canvas captures, and concurrent
-media elements. Profile upload, Library navigation, preview, and canvas paths
-with realistic asset sizes before choosing optimizations. Potential follow-up
-areas include object-URL lifecycle management, preview virtualization,
-thumbnail/first-frame caching, limiting simultaneous decoders, and moving
-large local asset bytes behind the repository/storage boundary.
-
-The first performance pass now pauses videos outside the viewport and while the
+The first performance pass pauses videos outside the viewport and while the
 document is hidden, releases media resources on unmount and after luminance
 sampling, and renders shared bounded first-frame posters instead of retaining
 paused video decoders. Animated WebP inspection and poster capture are cached,
-and actor metadata preserves the upload-time animation result. Moving embedded
-video bytes behind the repository boundary and establishing a simultaneous
-canvas playback budget remain outstanding.
+and actor metadata preserves the upload-time animation result.
+
+New uploads store bytes once in the repository's content-addressed `assets`
+store and keep only a small `local_asset` descriptor in Library and encounter
+state. Rendering shares resolved object URLs, legacy embedded assets migrate on
+startup, and orphan cleanup is delayed until a later startup so undo/redo stays
+safe for the current session. Workspace and encounter exports embed the bytes
+again, preserving portable, lossless files. A simultaneous canvas playback
+budget remains an optional follow-up if real-world profiling shows that many
+visible animations can still exhaust decoder resources.

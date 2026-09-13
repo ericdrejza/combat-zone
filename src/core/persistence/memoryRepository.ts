@@ -7,6 +7,7 @@ import {
   type EncounterRecord,
   type EncounterExportEnvelope,
   type LibraryRecord,
+  type LocalAssetRecord,
   type RecoveryDraftRecord,
   type RepositorySaveOptions,
   type WorkspaceExportEnvelope,
@@ -16,6 +17,12 @@ import {
 } from "./types";
 import type { EncounterState } from "@core/encounter/types";
 import type { LibraryState } from "@library/types";
+import type { ImageAssetSource } from "@core/assets/imageAssetSource";
+import {
+  collectLocalAssetIds,
+  createLocalAssetRecord,
+  embedLocalAssets
+} from "./localAssets";
 
 const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
 
@@ -52,6 +59,7 @@ export class InMemoryWorkspaceRepository implements WorkspaceRepository {
   private readonly encounters = new Map<string, EncounterRecord>();
   private recoveryDraft: RecoveryDraftRecord | null = null;
   private latestBackup: WorkspaceExportEnvelope | null = null;
+  private readonly localAssets = new Map<string, LocalAssetRecord>();
   private library: LibraryRecord = { state: createEmptyLibraryState(), revision: 0, updatedAt: now() };
 
   async initialize(): Promise<WorkspaceManifest> {
@@ -160,19 +168,56 @@ export class InMemoryWorkspaceRepository implements WorkspaceRepository {
     return clone(record);
   }
 
+  async saveLocalAsset(blob: Blob): Promise<ImageAssetSource> {
+    const record = await createLocalAssetRecord(blob);
+    if (!this.localAssets.has(record.assetId)) this.localAssets.set(record.assetId, record);
+    return { kind: "local_asset", assetId: record.assetId, byteLength: blob.size };
+  }
+
+  async getLocalAsset(assetId: string): Promise<Blob | null> {
+    return this.localAssets.get(assetId)?.blob ?? null;
+  }
+
+  async maintainLocalAssets(): Promise<void> {
+    await this.collectOrphanedLocalAssets();
+  }
+
+  async collectOrphanedLocalAssets(): Promise<number> {
+    await this.ready();
+    const referenced = collectLocalAssetIds(this.snapshot());
+    let deleted = 0;
+    for (const assetId of this.localAssets.keys()) {
+      if (!referenced.has(assetId)) {
+        this.localAssets.delete(assetId);
+        deleted += 1;
+      }
+    }
+    return deleted;
+  }
+
   private snapshot(): WorkspaceSnapshot {
     return { manifest: this.manifest as WorkspaceManifest, encounters: [...this.encounters.values()], recoveryDraft: this.recoveryDraft, library: this.library };
   }
 
   async exportWorkspace(): Promise<WorkspaceExportEnvelope> {
     await this.ready();
-    return validateExportEnvelope({ kind: "workspace-export", schemaVersion: EXPORT_SCHEMA_VERSION, exportedAt: now(), workspace: clone(this.snapshot()) }) as WorkspaceExportEnvelope;
+    const workspace = await embedLocalAssets(
+      clone(this.snapshot()),
+      (assetId) => this.getLocalAsset(assetId)
+    );
+    return validateExportEnvelope({ kind: "workspace-export", schemaVersion: EXPORT_SCHEMA_VERSION, exportedAt: now(), workspace }) as WorkspaceExportEnvelope;
   }
 
   async exportEncounter(id: string): Promise<EncounterExportEnvelope> {
     const record = await this.getEncounter(id);
     if (!record) throw new PersistenceValidationError(`Encounter ${id} does not exist.`);
-    return validateExportEnvelope({ kind: "encounter-export", schemaVersion: EXPORT_SCHEMA_VERSION, exportedAt: now(), encounter: record.state, library: (await this.getLibrary()).state }) as EncounterExportEnvelope;
+    const snapshot = await embedLocalAssets({
+      manifest: await this.getManifest(),
+      encounters: [record],
+      recoveryDraft: null,
+      library: await this.getLibrary()
+    }, (assetId) => this.getLocalAsset(assetId));
+    return validateExportEnvelope({ kind: "encounter-export", schemaVersion: EXPORT_SCHEMA_VERSION, exportedAt: now(), encounter: snapshot.encounters[0].state, library: snapshot.library.state }) as EncounterExportEnvelope;
   }
 
   async importWorkspace(envelope: WorkspaceExportEnvelope, mode: "overwrite" | "merge"): Promise<WorkspaceManifest> {
@@ -265,6 +310,7 @@ export class InMemoryWorkspaceRepository implements WorkspaceRepository {
     this.encounters.clear();
     this.recoveryDraft = null;
     this.latestBackup = null;
+    this.localAssets.clear();
     this.library = {
       state: createEmptyLibraryState(),
       revision: 0,
