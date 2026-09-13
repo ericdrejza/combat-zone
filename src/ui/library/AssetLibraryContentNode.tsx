@@ -11,6 +11,7 @@ import type { AssetLibraryViewMode } from "./assetLibraryView";
 type AssetLibraryContentNodeProps = {
   asset: LibraryImageAsset | null;
   buttonRef: (button: HTMLButtonElement | null) => void;
+  dragging: boolean;
   dropFolderId: string | null;
   loadingRotation: MotionValue<string>;
   node: LibraryNode;
@@ -34,6 +35,7 @@ type AssetLibraryContentNodeProps = {
 export function AssetLibraryContentNode({
   asset,
   buttonRef,
+  dragging,
   dropFolderId,
   loadingRotation,
   node,
@@ -56,7 +58,7 @@ export function AssetLibraryContentNode({
   const listView = viewMode === "list";
   const sizeLabel = showAssetSize ? getUploadedAssetSizeLabel(node, asset) : null;
   const itemClass =
-    dropFolderId === node.id
+    dropFolderId === node.id || dragging
       ? "border-canvas-ink bg-canvas ring-2 ring-canvas-ink/20"
       : selected
         ? "border-canvas-ink ring-2 ring-canvas-ink/20"
@@ -67,6 +69,7 @@ export function AssetLibraryContentNode({
       aria-label={node.name}
       aria-pressed={selected}
       data-library-drag-node-id={node.id}
+      data-dragging={dragging || undefined}
       data-library-drop-folder-id={node.type === "folder" ? node.id : undefined}
       className={listView
         ? `group flex w-full touch-none select-none items-center gap-3 rounded-xl border bg-canvas-surface p-2 text-left transition hover:bg-canvas ${itemClass}`

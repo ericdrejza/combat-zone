@@ -11,7 +11,7 @@ import {
   Search
 } from "lucide-react";
 import { useEffect, useRef } from "react";
-import type { DragEvent, PointerEvent, ReactNode } from "react";
+import type { DragEvent, MouseEvent, PointerEvent, ReactNode } from "react";
 
 import type { EncounterRecord } from "@core/persistence";
 import type { LibraryNode, LibrarySection } from "@library/types";
@@ -21,6 +21,7 @@ import { getAlphabetizedChildren } from "./libraryUi";
 type AssetLibraryExplorerProps = {
   activeSection: LibrarySection;
   currentFolderId: string;
+  draggedItemId?: string | null;
   dropFolderId: string | null;
   encounterRecords?: EncounterRecord[];
   expandedFolderIds: Set<string>;
@@ -33,6 +34,14 @@ type AssetLibraryExplorerProps = {
   onPointerDownNode: (
     event: PointerEvent<HTMLElement>,
     node: LibraryNode
+  ) => void;
+  onPointerDownEncounter?: (
+    event: PointerEvent<HTMLElement>,
+    record: EncounterRecord
+  ) => void;
+  onOpenEncounterContextMenu?: (
+    event: MouseEvent<HTMLElement>,
+    record: EncounterRecord
   ) => void;
   onDropOnFolder: (
     event: DragEvent<HTMLElement>,
@@ -66,6 +75,7 @@ function normalizeSearchValue(value: string) {
 export function AssetLibraryExplorer({
   activeSection,
   currentFolderId,
+  draggedItemId = null,
   dropFolderId,
   encounterRecords = [],
   expandedFolderIds,
@@ -73,6 +83,8 @@ export function AssetLibraryExplorer({
   selectedNodeId,
   onDragOverFolder,
   onPointerDownNode,
+  onPointerDownEncounter,
+  onOpenEncounterContextMenu,
   onDropOnFolder,
   onDoubleClickNode,
   onFolderFocused,
@@ -159,27 +171,48 @@ export function AssetLibraryExplorer({
   }
 
   function renderEncounter(record: EncounterRecord, depth: number) {
-    const selected = selectedNodeId === record.id;
+    const selected = !draggedItemId && selectedNodeId === record.id;
+    const dragging = draggedItemId === record.id;
 
     return (
       <div
         key={record.id}
         aria-selected={selected}
-        className={`flex min-h-9 items-center gap-2 rounded-lg px-2 text-sm transition ${
-          selected
+        className={`group flex min-h-9 items-center gap-2 rounded-lg px-2 text-sm transition ${
+          dragging
+            ? "outline outline-2 outline-canvas-ink"
+            : selected
             ? "bg-canvas text-canvas-ink"
             : "text-canvas-ink hover:bg-canvas"
         }`}
+        data-library-drag-encounter-id={record.id}
+        draggable={false}
         onClick={() => {
           onEnterFolder(record.folderId ?? activeSection.rootId);
           onSelectEncounter?.(record.id);
         }}
         onDoubleClick={() => onDoubleClickEncounter?.(record.id)}
+        onContextMenu={(event) => onOpenEncounterContextMenu?.(event, record)}
+        onPointerDown={(event) => onPointerDownEncounter?.(event, record)}
         style={{ paddingLeft: `${8 + depth * 16}px` }}
       >
         <span className="h-6 w-6" />
         <FileText aria-hidden="true" className="h-4 w-4" />
         <span className="min-w-0 flex-1 truncate">{record.state.name}</span>
+        {onOpenEncounterContextMenu ? (
+          <button
+            aria-label={`Open ${record.state.name} actions`}
+            className="flex h-7 w-7 items-center justify-center rounded-md opacity-0 transition hover:bg-canvas-surface/70 group-hover:opacity-100"
+            onClick={(event) => {
+              event.stopPropagation();
+              onOpenEncounterContextMenu(event, record);
+            }}
+            onPointerDown={(event) => event.stopPropagation()}
+            type="button"
+          >
+            <MoreHorizontal aria-hidden="true" className="h-4 w-4" />
+          </button>
+        ) : null}
       </div>
     );
   }
@@ -198,7 +231,8 @@ export function AssetLibraryExplorer({
     const expanded = expandedFolderIds.has(node.id);
     const isRoot = node.id === activeSection.rootId;
     const current = node.id === currentFolderId;
-    const selected = selectedNodeId === node.id;
+    const selected = !draggedItemId && selectedNodeId === node.id;
+    const dragging = draggedItemId === node.id;
 
     return (
       <div key={node.id}>
@@ -207,6 +241,8 @@ export function AssetLibraryExplorer({
           className={`group flex min-h-9 touch-none select-none items-center gap-2 rounded-lg px-2 text-sm transition ${
             dropFolderId === node.id
               ? "bg-canvas-ink text-canvas-on-ink"
+              : dragging
+                ? "outline outline-2 outline-canvas-ink"
               : selected
                 ? "bg-canvas text-canvas-ink"
                 : "text-canvas-ink hover:bg-canvas"

@@ -11,24 +11,25 @@ import { AssetLibraryContentNode } from "./AssetLibraryContentNode";
 import { AssetLibraryEncounterItem } from "./AssetLibraryEncounterItem";
 import { AssetLibraryPreview } from "./AssetLibraryPreview";
 import type {
+  AssetLibraryContextButtonState,
   AssetLibraryPreviewTarget,
   AssetLibraryViewMode
 } from "./assetLibraryView";
+import { DEFAULT_ASSET_LIBRARY_CONTEXT_BUTTON_STATE } from "./assetLibraryView";
 import { useAssetLibraryPreview } from "./useAssetLibraryPreview";
 import type { EncounterRecord } from "@core/persistence";
-import {
-  EncounterContextMenu,
-  type EncounterContextMenuState
-} from "./AssetLibraryMenus";
 import { useInterfacePreferences } from "@ui/interface_preferences/InterfacePreferenceProvider";
 
 type AssetLibraryContentsProps = {
   activeSection: LibrarySection;
   currentFolder: LibraryNode;
+  draggedItemId?: string | null;
   dropFolderId: string | null;
   selectedNodeId: string | undefined;
   viewMode?: AssetLibraryViewMode;
   onViewModeChange?: (viewMode: AssetLibraryViewMode) => void;
+  contextButtonState?: AssetLibraryContextButtonState;
+  onContextButtonStateChange?: (state: AssetLibraryContextButtonState) => void;
   onDragOverContents: (event: DragEvent<HTMLElement>) => void;
   onDragOverFolder: (
     event: DragEvent<HTMLElement>,
@@ -37,6 +38,14 @@ type AssetLibraryContentsProps = {
   onPointerDownNode: (
     event: ReactPointerEvent<HTMLElement>,
     node: LibraryNode
+  ) => void;
+  onPointerDownEncounter?: (
+    event: ReactPointerEvent<HTMLElement>,
+    record: EncounterRecord
+  ) => void;
+  onOpenEncounterContextMenu?: (
+    event: React.MouseEvent<HTMLElement>,
+    record: EncounterRecord
   ) => void;
   onDropOnContents: (event: DragEvent<HTMLElement>) => void;
   onDropOnFolder: (
@@ -58,11 +67,7 @@ type AssetLibraryContentsProps = {
   onSelectNode: (nodeId: string) => void;
   setDropFolderId: (folderId: string | null) => void;
   encounterRecords?: EncounterRecord[];
-  onDeleteEncounter?: (id: string) => void;
-  onDuplicateEncounter?: (id: string) => void;
-  onExportEncounter?: (id: string, name: string) => void;
   onLoadEncounter?: (id: string) => void;
-  onRequestRenameEncounter?: (id: string, name: string) => void;
   readOnly?: boolean;
   recentEncounterIds?: string[];
   focusedEncounterId?: string | null;
@@ -73,13 +78,18 @@ type AssetLibraryContentsProps = {
 export function AssetLibraryContents({
   activeSection,
   currentFolder,
+  draggedItemId = null,
   dropFolderId,
   selectedNodeId,
   viewMode: controlledViewMode,
   onViewModeChange,
+  contextButtonState: controlledContextButtonState,
+  onContextButtonStateChange,
   onDragOverContents,
   onDragOverFolder,
   onPointerDownNode,
+  onPointerDownEncounter,
+  onOpenEncounterContextMenu,
   onDropOnContents,
   onDropOnFolder,
   onDoubleClickNode,
@@ -90,11 +100,7 @@ export function AssetLibraryContents({
   onSelectNode,
   setDropFolderId,
   encounterRecords = [],
-  onDeleteEncounter,
-  onDuplicateEncounter,
-  onExportEncounter,
   onLoadEncounter,
-  onRequestRenameEncounter,
   readOnly = false,
   recentEncounterIds = [],
   focusedEncounterId = null,
@@ -102,17 +108,26 @@ export function AssetLibraryContents({
   visibleNodeIds = null
 }: AssetLibraryContentsProps) {
   const time = useTime();
-  const [encounterContextMenu, setEncounterContextMenu] =
-    useState<EncounterContextMenuState>(null);
-  const encounterContextMenuRef = useRef<HTMLDivElement>(null);
   const encounterCardRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const libraryNodeCardRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const [localViewMode, setLocalViewMode] =
     useState<AssetLibraryViewMode>("grid");
-  const [showAssetSizes, setShowAssetSizes] = useState(false);
-  const [playAnimations, setPlayAnimations] = useState(false);
+  const [localContextButtonState, setLocalContextButtonState] = useState(
+    DEFAULT_ASSET_LIBRARY_CONTEXT_BUTTON_STATE
+  );
+  const contextButtonState =
+    controlledContextButtonState ?? localContextButtonState;
+  const { playAnimations, showAssetSizes } = contextButtonState;
   const { enableAssetAnimation } = useInterfacePreferences();
   const viewMode = controlledViewMode ?? localViewMode;
+
+  function updateContextButtonState(
+    update: Partial<AssetLibraryContextButtonState>
+  ) {
+    const nextState = { ...contextButtonState, ...update };
+    onContextButtonStateChange?.(nextState);
+    if (!controlledContextButtonState) setLocalContextButtonState(nextState);
+  }
   const {
     beginPreviewInteraction,
     clearPreviewClearTimer,
@@ -128,19 +143,6 @@ export function AssetLibraryContents({
   const loadingRotation = useTransform(time, (milliseconds) =>
     `rotate(${(milliseconds / 1000) * 360}deg)`
   );
-
-  useEffect(() => {
-    if (!encounterContextMenu) return;
-
-    function handlePointerDown(event: PointerEvent) {
-      if (!encounterContextMenuRef.current?.contains(event.target as Node)) {
-        setEncounterContextMenu(null);
-      }
-    }
-
-    document.addEventListener("pointerdown", handlePointerDown);
-    return () => document.removeEventListener("pointerdown", handlePointerDown);
-  }, [encounterContextMenu]);
 
   useEffect(() => {
     if (!focusedEncounterId) {
@@ -255,7 +257,9 @@ export function AssetLibraryContents({
                 aria-pressed={playAnimations}
                 className={`flex h-8 w-8 flex-none items-center justify-center rounded-full border transition ${playAnimations ? "border-canvas-ink bg-canvas-ink text-canvas-on-ink" : "border-canvas-line bg-canvas-surface text-canvas-muted hover:bg-canvas"} disabled:cursor-not-allowed disabled:border-canvas-line disabled:bg-canvas disabled:text-canvas-muted disabled:opacity-50`}
                 disabled={!enableAssetAnimation}
-                onClick={() => setPlayAnimations((playing) => !playing)}
+                onClick={() =>
+                  updateContextButtonState({ playAnimations: !playAnimations })
+                }
                 title={enableAssetAnimation ? "Play animated assets" : "Animations are disabled in Interface settings."}
                 type="button"
               >
@@ -265,7 +269,9 @@ export function AssetLibraryContents({
             aria-label="Show uploaded asset sizes"
             aria-pressed={showAssetSizes}
             className={`flex h-8 w-8 flex-none items-center justify-center rounded-full border transition ${showAssetSizes ? "border-canvas-ink bg-canvas-ink text-canvas-on-ink" : "border-canvas-line bg-canvas-surface text-canvas-muted hover:bg-canvas"}`}
-            onClick={() => setShowAssetSizes((shown) => !shown)}
+            onClick={() =>
+              updateContextButtonState({ showAssetSizes: !showAssetSizes })
+            }
             title="Show uploaded asset sizes"
             type="button"
           >
@@ -326,10 +332,11 @@ export function AssetLibraryContents({
                 buttonRef={(element) => {
                   libraryNodeCardRefs.current[node.id] = element;
                 }}
+                dragging={draggedItemId === node.id}
                 dropFolderId={dropFolderId}
                 loadingRotation={loadingRotation}
                 node={node}
-                selected={selectedNodeId === node.id}
+                selected={!draggedItemId && selectedNodeId === node.id}
                 playAnimations={playAnimations}
                 showAssetSize={showAssetSizes}
                 viewMode={viewMode}
@@ -371,38 +378,28 @@ export function AssetLibraryContents({
             return (
               <AssetLibraryEncounterItem
                 key={record.id}
+                dragging={draggedItemId === record.id}
                 itemRef={(element) => {
                   encounterCardRefs.current[record.id] = element;
                 }}
                 loadingRotation={loadingRotation}
-                readOnly={readOnly}
                 record={record}
-                selected={selectedNodeId === record.id}
+                selected={!draggedItemId && selectedNodeId === record.id}
                 viewMode={viewMode}
                 onContextMenu={(event) => {
-                  event.preventDefault();
-                  setEncounterContextMenu({
-                    encounterId: record.id,
-                    name: record.state.name,
-                    x: event.clientX,
-                    y: event.clientY
-                  });
+                  onOpenEncounterContextMenu?.(event, record);
                 }}
                 onDoubleClick={() => {
                   if (!consumePreviewHold()) onLoadEncounter?.(record.id);
-                }}
-                onDragStart={(event) => {
-                  event.dataTransfer.effectAllowed = "move";
-                  event.dataTransfer.setData(
-                    "application/x-combat-zone-encounter",
-                    record.id
-                  );
                 }}
                 onSelect={() => {
                   if (!consumePreviewHold()) onSelectNode(record.id);
                 }}
                 onPointerCancel={endPreviewInteraction}
-                onPointerDown={(event) => beginPreviewInteraction(event, target)}
+                onPointerDown={(event) => {
+                  beginPreviewInteraction(event, target);
+                  if (!readOnly) onPointerDownEncounter?.(event, record);
+                }}
                 onPointerEnter={(event) => beginPreviewInteraction(event, target)}
                 onPointerLeave={() => {
                   if (largeHoverPreview) schedulePreviewClear();
@@ -436,31 +433,6 @@ export function AssetLibraryContents({
           </div>
         ) : null}
       </div>
-      {encounterContextMenu ? (
-        <EncounterContextMenu
-          contextMenu={encounterContextMenu}
-          contextMenuRef={encounterContextMenuRef}
-          onDelete={(id, name) => {
-            setEncounterContextMenu(null);
-            if (window.confirm(`Delete "${name}"?`)) {
-              onDeleteEncounter?.(id);
-            }
-          }}
-          onDuplicate={(id) => {
-            setEncounterContextMenu(null);
-            onDuplicateEncounter?.(id);
-          }}
-          onExport={(id, name) => {
-            setEncounterContextMenu(null);
-            onExportEncounter?.(id, name);
-          }}
-          onRename={(id, name) => {
-            setEncounterContextMenu(null);
-            onRequestRenameEncounter?.(id, name);
-          }}
-          readOnly={readOnly}
-        />
-      ) : null}
     </section>
   );
 }

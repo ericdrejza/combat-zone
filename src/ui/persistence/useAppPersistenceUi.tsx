@@ -8,6 +8,9 @@ import type { LibraryNode } from "@library/types";
 import type { LibrarySectionId } from "@library/types";
 import type { LibraryFolderBySection } from "@ui/library/useAssetLibraryModalState";
 import type { LibraryViewModeBySection } from "@ui/library/useAssetLibraryModalState";
+import type {
+  AssetLibraryContextButtonState
+} from "@ui/library/assetLibraryView";
 import type { PropertiesLibraryLocation } from "@ui/panels/PropertiesPanel";
 import {
   AssetLibraryModal,
@@ -30,6 +33,7 @@ type AppPersistenceUiOptions = {
 
 type AppPersistenceUi = {
   dialogs: React.ReactNode;
+  encounterToolSelectionRequest: number;
   hasSavedEncounter: boolean;
   libraryOpen: boolean;
   openLibrary: (target?: LibraryOpenTarget) => void;
@@ -66,11 +70,15 @@ export function useAppPersistenceUi({
     useState<LibraryFolderBySection>({});
   const [viewModeBySection, setViewModeBySection] =
     useState<LibraryViewModeBySection>({});
+  const [contextButtonState, setContextButtonState] =
+    useState<AssetLibraryContextButtonState>();
   const [libraryMode, setLibraryMode] = useState<AssetLibraryMode>("browse");
   const [tokenActorId, setTokenActorId] = useState<string | null>(null);
   const [libraryFocusedNodeId, setLibraryFocusedNodeId] = useState<
     string | null
   >(null);
+  const [encounterToolSelectionRequest, setEncounterToolSelectionRequest] =
+    useState(0);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [draftDialogOpen, setDraftDialogOpen] = useState(false);
   const [deletedDialogOpen, setDeletedDialogOpen] = useState(false);
@@ -80,6 +88,10 @@ export function useAppPersistenceUi({
     "encounter" | "workspace" | null
   >(null);
   const pendingDraftActionRef = useRef<(() => Promise<void>) | null>(null);
+
+  function requestEncounterToolSelection() {
+    setEncounterToolSelectionRequest((current) => current + 1);
+  }
 
   async function requestSave() {
     const result = await persistence.save();
@@ -159,6 +171,7 @@ export function useAppPersistenceUi({
       {libraryOpen ? (
         <AssetLibraryModal
           currentFolderBySection={currentFolderBySection}
+          contextButtonState={contextButtonState}
           initialFocusedNodeId={libraryFocusedNodeId ?? undefined}
           initialSectionId={librarySectionId}
           viewModeBySection={viewModeBySection}
@@ -182,6 +195,7 @@ export function useAppPersistenceUi({
               [sectionId]: folderId
             }));
           }}
+          onContextButtonStateChange={setContextButtonState}
           onViewModeChange={(sectionId, viewMode) => {
             setViewModeBySection((current) => ({
               ...current,
@@ -190,27 +204,39 @@ export function useAppPersistenceUi({
           }}
           onCreateEncounter={() => {
             if (libraryMode === "encounter-only") {
-              void persistence.createNewEncounter().then(() => setLibraryOpen(false));
+              void persistence.createNewEncounter().then(() => {
+                requestEncounterToolSelection();
+                setLibraryOpen(false);
+              });
               return;
             }
             requestEncounterTransition(async () => {
               await persistence.createNewEncounter();
+              requestEncounterToolSelection();
               setLibraryOpen(false);
             });
           }}
           onImportDestinationSelected={(folderId) => {
             const envelope = pendingImport;
             setPendingImport(null);
-            if (envelope) void persistence.importEncounter(envelope, folderId);
+            if (envelope) {
+              void persistence
+                .importEncounter(envelope, folderId)
+                .then(requestEncounterToolSelection);
+            }
           }}
           onImportEncounterFile={(file) => void importEncounterFile(file)}
           onRequestLoadEncounter={(id) => {
             if (libraryMode === "encounter-only") {
-              void persistence.loadEncounter(id).then(() => setLibraryOpen(false));
+              void persistence.loadEncounter(id).then(() => {
+                requestEncounterToolSelection();
+                setLibraryOpen(false);
+              });
               return;
             }
             requestEncounterTransition(async () => {
               await persistence.loadEncounter(id);
+              requestEncounterToolSelection();
               setLibraryOpen(false);
             });
           }}
@@ -263,7 +289,9 @@ export function useAppPersistenceUi({
         <DeletedEncounterDialog
           onCreate={() => {
             setDeletedDialogOpen(false);
-            void persistence.createNewEncounter();
+            void persistence.createNewEncounter().then(
+              requestEncounterToolSelection
+            );
           }}
           onLoad={() => {
             setDeletedDialogOpen(false);
@@ -283,6 +311,7 @@ export function useAppPersistenceUi({
 
   return {
     dialogs,
+    encounterToolSelectionRequest,
     hasSavedEncounter: Boolean(persistence.activeRecord),
     libraryOpen,
     openLibrary: (target) => {

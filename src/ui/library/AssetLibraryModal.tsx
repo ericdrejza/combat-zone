@@ -13,23 +13,30 @@ import { AssetLibraryExplorer } from "./AssetLibraryExplorer";
 import {
   AssetContextMenu,
   AssetLinkPickerDialog,
-  ConfirmFolderDeleteDialog
+  ConfirmFolderDeleteDialog,
+  EncounterContextMenu
 } from "./AssetLibraryMenus";
 import { useAssetLibraryModalController } from "./useAssetLibraryModalController";
 import type { LibraryNode, LibrarySectionId } from "@library/types";
 import type { RootState } from "@store/store";
 import { WebImageUrlDialog } from "./WebImageUrlDialog";
 import { usePersistence } from "@ui/persistence/PersistenceProvider";
+import { useInterfacePreferences } from "@ui/interface_preferences/InterfacePreferenceProvider";
 import { downloadExport } from "@ui/persistence/downloadExport";
 import { RenameModal } from "@ui/RenameModal";
 import { useOptionalCloudSync } from "@ui/cloud_sync";
 import type { LibraryFolderBySection } from "./useAssetLibraryModalState";
 import type { LibraryViewModeBySection } from "./useAssetLibraryModalState";
-import type { AssetLibraryViewMode } from "./assetLibraryView";
+import type {
+  AssetLibraryContextButtonState,
+  AssetLibraryViewMode
+} from "./assetLibraryView";
+import { DEFAULT_ASSET_LIBRARY_CONTEXT_BUTTON_STATE } from "./assetLibraryView";
 import { LIBRARY_MEDIA_ACCEPT } from "@library/mediaAsset";
 import { getFolderAncestorIds } from "./libraryUi";
 import { LibraryPointerDragPreview } from "./LibraryPointerDragPreview";
 import { useLibraryNodePointerDrag } from "./useLibraryNodePointerDrag";
+import { useEncounterContextMenu } from "./useEncounterContextMenu";
 
 export type AssetLibraryMode =
   | "browse"
@@ -39,6 +46,7 @@ export type AssetLibraryMode =
 
 type AssetLibraryModalProps = {
   currentFolderBySection: LibraryFolderBySection;
+  contextButtonState?: AssetLibraryContextButtonState;
   initialSectionId?: LibrarySectionId;
   initialFocusedNodeId?: string;
   viewModeBySection?: LibraryViewModeBySection;
@@ -47,6 +55,7 @@ type AssetLibraryModalProps = {
     sectionId: keyof LibraryFolderBySection,
     folderId: string
   ) => void;
+  onContextButtonStateChange?: (state: AssetLibraryContextButtonState) => void;
   onViewModeChange?: (
     sectionId: keyof LibraryViewModeBySection,
     viewMode: AssetLibraryViewMode
@@ -65,9 +74,11 @@ type AssetLibraryModalProps = {
 
 export function AssetLibraryModal({
   currentFolderBySection,
+  contextButtonState,
   onBackgroundDoubleClick,
   onClose,
   onCurrentFolderChange,
+  onContextButtonStateChange,
   initialSectionId = "encounters",
   initialFocusedNodeId,
   onViewModeChange = () => undefined,
@@ -91,6 +102,8 @@ export function AssetLibraryModal({
     viewModeBySection
   });
   const persistence = usePersistence();
+  const encounterContextMenu = useEncounterContextMenu();
+  const { enableAssetAnimation } = useInterfacePreferences();
   const cloud = useOptionalCloudSync();
   const activeBackgroundImage = useSelector(
     (state: RootState) => state.encounter.present.backgroundImage
@@ -134,6 +147,18 @@ export function AssetLibraryModal({
       onDrop: controller.moveLibraryNodeToFolderById,
       onTargetChange: controller.setDropFolderId
     });
+  const {
+    preview: encounterPointerDragPreview,
+    startPointerDrag: startEncounterPointerDrag
+  } = useLibraryNodePointerDrag({
+    enabled: !persistence.readOnly,
+    onDragEnd: controller.clearDragState,
+    onDragStart: controller.setDraggedNodeId,
+    onDrop: (encounterId, folderId) => {
+      void persistence.moveEncounter(encounterId, folderId);
+    },
+    onTargetChange: controller.setDropFolderId
+  });
 
   function folderContainsEncounters(folder: LibraryNode): boolean {
     if (controller.activeSectionId !== "encounters" || folder.type !== "folder") {
@@ -542,6 +567,7 @@ export function AssetLibraryModal({
             <AssetLibraryExplorer
               activeSection={controller.activeSection}
               currentFolderId={controller.currentFolder.id}
+              draggedItemId={controller.draggedNodeId}
               dropFolderId={controller.dropFolderId}
               encounterRecords={persistence.encounters}
               expandedFolderIds={controller.expandedFolderIds}
@@ -551,6 +577,13 @@ export function AssetLibraryModal({
                 }
               }}
               onPointerDownNode={startPointerDrag}
+              onPointerDownEncounter={(event, record) =>
+                startEncounterPointerDrag(event, {
+                  id: record.id,
+                  name: record.state.name
+                })
+              }
+              onOpenEncounterContextMenu={encounterContextMenu.openContextMenu}
               onDoubleClickNode={handleDoubleClick}
               onFolderFocused={() => setFocusedFolderId(null)}
               onDropOnFolder={(event, node) => {
@@ -572,39 +605,28 @@ export function AssetLibraryModal({
               visibleNodeIds={visibleTokenNodeIds}
             />
           </aside>
-          <AssetLibraryContents
-            activeSection={controller.activeSection}
+            <AssetLibraryContents
+              activeSection={controller.activeSection}
+              contextButtonState={
+                contextButtonState ?? {
+                  ...DEFAULT_ASSET_LIBRARY_CONTEXT_BUTTON_STATE,
+                  playAnimations: enableAssetAnimation
+                }
+            }
             currentFolder={controller.currentFolder}
+            draggedItemId={controller.draggedNodeId}
             dropFolderId={controller.dropFolderId}
             viewMode={controller.viewMode}
             onViewModeChange={controller.setViewMode}
+            onContextButtonStateChange={onContextButtonStateChange}
             encounterRecords={
               controller.activeSectionId === "encounters"
                 ? persistence.encounters
                 : []
             }
-            onDeleteEncounter={(id) => {
-              void persistence.deleteEncounter(id).then((deletedActive) => {
-                if (deletedActive) onActiveEncounterDeleted?.();
-              });
-            }}
-            onDuplicateEncounter={(id) => void persistence.duplicateEncounter(id)}
-            onExportEncounter={(id, name) => {
-              void persistence.exportEncounter(id).then((envelope) =>
-                cloud ? cloud.prepareEncounterExport(envelope) : envelope
-              ).then((envelope) =>
-                downloadExport(
-                  envelope,
-                  `${name.trim().replace(/[^a-z0-9_-]+/gi, "-") || "encounter"}.json`
-                )
-              );
-            }}
             onLoadEncounter={(id) => {
               loadEncounter(id);
             }}
-            onRequestRenameEncounter={(id, name) =>
-              setRenameTarget({ kind: "encounter", id, name })
-            }
             readOnly={persistence.readOnly}
             recentEncounterIds={(cloud?.recentEncounters ?? []).map(({ encounterId }) => encounterId)}
             onDragOverContents={(event) => {
@@ -618,6 +640,13 @@ export function AssetLibraryModal({
               }
             }}
             onPointerDownNode={startPointerDrag}
+            onPointerDownEncounter={(event, record) =>
+              startEncounterPointerDrag(event, {
+                id: record.id,
+                name: record.state.name
+              })
+            }
+            onOpenEncounterContextMenu={encounterContextMenu.openContextMenu}
             onDoubleClickNode={handleDoubleClick}
             onEncounterFocused={() => setFocusedEncounterId(null)}
             onNodeFocused={() => setFocusedNodeId(null)}
@@ -774,6 +803,40 @@ export function AssetLibraryModal({
           readOnly={persistence.readOnly}
         />
       ) : null}
+      {encounterContextMenu.contextMenu ? (
+        <EncounterContextMenu
+          contextMenu={encounterContextMenu.contextMenu}
+          contextMenuRef={encounterContextMenu.contextMenuRef}
+          onDelete={(id, name) => {
+            encounterContextMenu.closeContextMenu();
+            if (window.confirm(`Delete "${name}"?`)) {
+              void persistence.deleteEncounter(id).then((deletedActive) => {
+                if (deletedActive) onActiveEncounterDeleted?.();
+              });
+            }
+          }}
+          onDuplicate={(id) => {
+            encounterContextMenu.closeContextMenu();
+            void persistence.duplicateEncounter(id);
+          }}
+          onExport={(id, name) => {
+            encounterContextMenu.closeContextMenu();
+            void persistence.exportEncounter(id).then((envelope) =>
+              cloud ? cloud.prepareEncounterExport(envelope) : envelope
+            ).then((envelope) =>
+              downloadExport(
+                envelope,
+                `${name.trim().replace(/[^a-z0-9_-]+/gi, "-") || "encounter"}.json`
+              )
+            );
+          }}
+          onRename={(id, name) => {
+            encounterContextMenu.closeContextMenu();
+            setRenameTarget({ kind: "encounter", id, name });
+          }}
+          readOnly={persistence.readOnly}
+        />
+      ) : null}
       {pendingDeleteNode ? (
         <ConfirmFolderDeleteDialog
           node={pendingDeleteNode}
@@ -855,8 +918,10 @@ export function AssetLibraryModal({
           title="Create folder"
         />
       ) : null}
-      {pointerDragPreview ? (
-        <LibraryPointerDragPreview preview={pointerDragPreview} />
+      {(pointerDragPreview ?? encounterPointerDragPreview) ? (
+        <LibraryPointerDragPreview
+          preview={(pointerDragPreview ?? encounterPointerDragPreview)!}
+        />
       ) : null}
     </div>
   );

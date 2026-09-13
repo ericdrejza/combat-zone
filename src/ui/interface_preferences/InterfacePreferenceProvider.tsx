@@ -22,6 +22,8 @@ export type ZoneColorDefaults = {
   zone: string | null;
 };
 
+export type EncounterCreationTool = "background" | "zone";
+
 export const DEFAULT_ZONE_COLOR_DEFAULTS: ZoneColorDefaults = {
   border: null,
   engagement: null,
@@ -31,6 +33,7 @@ export const DEFAULT_ZONE_COLOR_DEFAULTS: ZoneColorDefaults = {
 type DurableInterfacePreferences = {
   autoSelectActiveActor: boolean;
   enableAssetAnimation: boolean;
+  encounterCreationTool: EncounterCreationTool;
   panelVisibility: DockablePanelVisibility;
   panWithRightClickDrag: boolean;
   zoneColorDefaults: ZoneColorDefaults;
@@ -41,6 +44,7 @@ type DurableInterfacePreferences = {
 type InterfacePreferences = DurableInterfacePreferences & {
   autoSelectActiveActorDefault: boolean;
   setAutoSelectActiveActor: (enabled: boolean) => void;
+  setEncounterCreationTool: (tool: EncounterCreationTool) => void;
   setEnableAssetAnimation: (enabled: boolean) => void;
   setAutoSelectActiveActorDefault: (enabled: boolean) => void;
   setPanelVisible: (panelId: DockablePanelId, visible: boolean) => void;
@@ -53,6 +57,7 @@ type InterfacePreferences = DurableInterfacePreferences & {
 const defaultPreferences: DurableInterfacePreferences = {
   autoSelectActiveActor: true,
   enableAssetAnimation: true,
+  encounterCreationTool: "zone",
   panelVisibility: DEFAULT_DOCKABLE_PANEL_VISIBILITY,
   panWithRightClickDrag: true,
   zoneColorDefaults: DEFAULT_ZONE_COLOR_DEFAULTS,
@@ -64,6 +69,7 @@ const defaultValue: InterfacePreferences = {
   ...defaultPreferences,
   autoSelectActiveActorDefault: true,
   setAutoSelectActiveActor: () => undefined,
+  setEncounterCreationTool: () => undefined,
   setEnableAssetAnimation: () => undefined,
   setAutoSelectActiveActorDefault: () => undefined,
   setPanelVisible: () => undefined,
@@ -94,6 +100,11 @@ function readPreferences(): DurableInterfacePreferences {
         typeof stored?.enableAssetAnimation === "boolean"
           ? stored.enableAssetAnimation
           : true,
+      encounterCreationTool:
+        stored?.encounterCreationTool === "background" ||
+        stored?.encounterCreationTool === "zone"
+          ? stored.encounterCreationTool
+          : defaultPreferences.encounterCreationTool,
       panelVisibility: {
         initiative:
           typeof stored?.panelVisibility?.initiative === "boolean"
@@ -193,6 +204,8 @@ export function InterfacePreferenceProvider({ children }: { children: ReactNode 
         setAutoSelectActiveActor,
         setAutoSelectActiveActorDefault: (enabled) =>
           updatePreferences({ autoSelectActiveActor: enabled }),
+        setEncounterCreationTool: (encounterCreationTool) =>
+          updatePreferences({ encounterCreationTool }),
         setEnableAssetAnimation: (enabled) =>
           updatePreferences({ enableAssetAnimation: enabled }),
         setPanelVisible: (panelId, visible) =>

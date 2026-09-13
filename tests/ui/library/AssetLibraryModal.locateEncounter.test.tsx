@@ -1,4 +1,4 @@
-import { act, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -167,6 +167,52 @@ function ModalHarness() {
   );
 }
 
+function pointerDrag(
+  source: Element,
+  target: Element,
+  whileDragging?: () => void
+) {
+  const elementFromPoint = Object.getOwnPropertyDescriptor(
+    document,
+    "elementFromPoint"
+  );
+  Object.defineProperty(document, "elementFromPoint", {
+    configurable: true,
+    value: vi.fn(() => target)
+  });
+
+  try {
+    fireEvent.pointerDown(source, {
+      button: 0,
+      clientX: 10,
+      clientY: 10,
+      pointerId: 1,
+      pointerType: "mouse"
+    });
+    fireEvent.pointerMove(window, {
+      buttons: 1,
+      clientX: 30,
+      clientY: 30,
+      pointerId: 1,
+      pointerType: "mouse"
+    });
+    whileDragging?.();
+    fireEvent.pointerUp(window, {
+      button: 0,
+      clientX: 30,
+      clientY: 30,
+      pointerId: 1,
+      pointerType: "mouse"
+    });
+  } finally {
+    if (elementFromPoint) {
+      Object.defineProperty(document, "elementFromPoint", elementFromPoint);
+    } else {
+      delete (document as Partial<Document>).elementFromPoint;
+    }
+  }
+}
+
 describe("AssetLibraryModal active encounter locator", () => {
   let scrollIntoView: ReturnType<typeof vi.fn>;
   let originalScrollDescriptor: PropertyDescriptor | undefined;
@@ -255,6 +301,85 @@ describe("AssetLibraryModal active encounter locator", () => {
     ).toBeInTheDocument();
   });
 
+  it("opens the shared encounter actions from an encounter tree item", async () => {
+    const user = userEvent.setup();
+    const duplicateEncounter = vi.fn().mockResolvedValue(undefined);
+
+    renderWithPersistence({
+      ...createPersistenceValue(),
+      duplicateEncounter
+    });
+    await user.click(screen.getByRole("button", { name: "Expand A" }));
+    await user.click(screen.getByRole("button", { name: "Expand B" }));
+
+    const actionsButton = screen.getByRole("button", {
+      name: "Open Active Encounter actions"
+    });
+    await user.click(actionsButton);
+
+    expect(screen.getByRole("menuitem", { name: "Rename" })).toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: "Duplicate" })).toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: "Export" })).toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: "Delete" })).toBeInTheDocument();
+    await user.click(screen.getByRole("menuitem", { name: "Duplicate" }));
+    expect(duplicateEncounter).toHaveBeenCalledWith("active-encounter");
+  });
+
+  it("moves an encounter card to a folder with the shared pointer drag", async () => {
+    const user = userEvent.setup();
+    const moveEncounter = vi.fn().mockResolvedValue(undefined);
+
+    renderWithPersistence({
+      ...createPersistenceValue(),
+      moveEncounter
+    });
+    await user.click(screen.getByRole("button", { name: "Locate active encounter" }));
+
+    const card = screen.getByRole("button", { name: "Active Encounter" });
+    const targetFolder = screen.getAllByText("A")[0].closest(
+      "[data-library-drop-folder-id]"
+    );
+
+    expect(card.closest("[draggable]")).toHaveAttribute("draggable", "false");
+    expect(targetFolder).not.toBeNull();
+    await user.click(card);
+    expect(card).toHaveAttribute("aria-pressed", "true");
+    pointerDrag(card, targetFolder as Element, () => {
+      expect(card.closest("[data-dragging]")).toHaveAttribute(
+        "data-dragging",
+        "true"
+      );
+      expect(card).toHaveAttribute("aria-pressed", "false");
+    });
+
+    expect(moveEncounter).toHaveBeenCalledWith("active-encounter", "folder-a");
+    expect(card.closest("[data-dragging]")).not.toBeInTheDocument();
+  });
+
+  it("moves an encounter tree item with the shared pointer drag", async () => {
+    const user = userEvent.setup();
+    const moveEncounter = vi.fn().mockResolvedValue(undefined);
+
+    renderWithPersistence({
+      ...createPersistenceValue(),
+      moveEncounter
+    });
+    await user.click(screen.getByRole("button", { name: "Locate active encounter" }));
+
+    const treeItem = document.querySelector(
+      '[data-library-drag-encounter-id="active-encounter"]'
+    );
+    const targetFolder = screen.getAllByText("A")[0].closest(
+      "[data-library-drop-folder-id]"
+    );
+
+    expect(treeItem).toHaveAttribute("draggable", "false");
+    expect(targetFolder).not.toBeNull();
+    pointerDrag(treeItem as Element, targetFolder as Element);
+
+    expect(moveEncounter).toHaveBeenCalledWith("active-encounter", "folder-a");
+  });
+
   it("locates the active background from the Backgrounds tab", async () => {
     const user = userEvent.setup();
     const backgroundedEncounter = {
@@ -291,10 +416,12 @@ describe("AssetLibraryModal active encounter locator", () => {
   });
 });
 
-function renderWithPersistence() {
+function renderWithPersistence(
+  persistence: PersistenceContextValue = createPersistenceValue()
+) {
   return render(
     <Provider store={store}>
-      <PersistenceContext.Provider value={createPersistenceValue()}>
+      <PersistenceContext.Provider value={persistence}>
         <ModalHarness />
       </PersistenceContext.Provider>
     </Provider>

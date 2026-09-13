@@ -59,7 +59,7 @@ describe("InterfaceSettings", () => {
       name: "Pan with right-click drag"
     });
     const assetAnimation = within(accessibility).getByRole("switch", {
-      name: "Enable token animations"
+      name: "Enable animations"
     });
     expect(autoSelect).toBeChecked();
     expect(assetAnimation).toBeChecked();
@@ -74,12 +74,30 @@ describe("InterfaceSettings", () => {
     expect(JSON.parse(localStorage.getItem(INTERFACE_PREFERENCES_STORAGE_KEY)!)).toEqual({
       autoSelectActiveActor: false,
       enableAssetAnimation: false,
+      encounterCreationTool: "zone",
       panelVisibility: DEFAULT_DOCKABLE_PANEL_VISIBILITY,
       panWithRightClickDrag: false,
       zoneColorDefaults: DEFAULT_ZONE_COLOR_DEFAULTS,
       zoneOpacityDefault: 0.7,
       zoneShowBorderDefault: true
     });
+  });
+
+  it("persists the default tool for newly created encounters", async () => {
+    const user = userEvent.setup();
+    renderSettings();
+
+    const defaults = screen.getByRole("group", { name: "Defaults" });
+    const toolSelect = within(defaults).getByRole("combobox", {
+      name: "Tool auto-select upon encounter creation"
+    });
+
+    expect(toolSelect).toHaveValue("zone");
+    await user.selectOptions(toolSelect, "background");
+
+    expect(toolSelect).toHaveValue("background");
+    expect(JSON.parse(localStorage.getItem(INTERFACE_PREFERENCES_STORAGE_KEY)!))
+      .toMatchObject({ encounterCreationTool: "background" });
   });
 
   it("persists valid default colors and allows engagements to match the border", async () => {

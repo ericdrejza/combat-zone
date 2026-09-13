@@ -2,10 +2,14 @@ import { useMotionValue, type MotionValue } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
 
-import type { LibraryNode } from "@library/types";
-
 const DRAG_THRESHOLD_PX = 8;
 const DROP_FOLDER_SELECTOR = "[data-library-drop-folder-id]";
+
+/** The minimal source data needed for a pointer-driven library move. */
+export type LibraryPointerDragItem = {
+  id: string;
+  name: string;
+};
 
 export type LibraryPointerDragPreview = {
   label: string;
@@ -61,7 +65,7 @@ export function useLibraryNodePointerDrag({
 
   function startPointerDrag(
     event: ReactPointerEvent<HTMLElement>,
-    node: LibraryNode
+    item: LibraryPointerDragItem
   ) {
     if (!enabled || event.button !== 0) return;
 
@@ -83,7 +87,7 @@ export function useLibraryNodePointerDrag({
       if (!dragging) return;
 
       if (commit && targetFolderId) {
-        onDrop(node.id, targetFolderId);
+        onDrop(item.id, targetFolderId);
       }
       onTargetChange(null);
       onDragEnd();
@@ -102,8 +106,8 @@ export function useLibraryNodePointerDrag({
         dragging = true;
         x.set(moveEvent.clientX);
         y.set(moveEvent.clientY);
-        setPreview({ label: node.name, x, y });
-        onDragStart(node.id);
+        setPreview({ label: item.name, x, y });
+        onDragStart(item.id);
       }
 
       moveEvent.preventDefault();
