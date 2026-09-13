@@ -142,6 +142,50 @@ describe("AssetLibraryModal session state", () => {
     );
   });
 
+  it("shares asset context button state between asset tabs and modal reopens", async () => {
+    const user = await openBackgroundLibrary();
+
+    expect(screen.getByRole("button", { name: "Play animated assets" })).toHaveAttribute(
+      "aria-pressed",
+      "true"
+    );
+
+    await user.click(screen.getByRole("button", { name: "Play animated assets" }));
+    await user.click(screen.getByRole("button", { name: "Show uploaded asset sizes" }));
+
+    expect(screen.getByRole("button", { name: "Play animated assets" })).toHaveAttribute(
+      "aria-pressed",
+      "false"
+    );
+    expect(screen.getByRole("button", { name: "Show uploaded asset sizes" })).toHaveAttribute(
+      "aria-pressed",
+      "true"
+    );
+
+    await user.click(screen.getByRole("tab", { name: "Tokens" }));
+    expect(screen.getByRole("button", { name: "Play animated assets" })).toHaveAttribute(
+      "aria-pressed",
+      "false"
+    );
+    expect(screen.getByRole("button", { name: "Show uploaded asset sizes" })).toHaveAttribute(
+      "aria-pressed",
+      "true"
+    );
+
+    await user.click(screen.getByRole("button", { name: "Close Asset Library" }));
+    await user.click(screen.getByRole("button", { name: "Library" }));
+    await user.click(screen.getByRole("tab", { name: "Backgrounds" }));
+
+    expect(screen.getByRole("button", { name: "Play animated assets" })).toHaveAttribute(
+      "aria-pressed",
+      "false"
+    );
+    expect(screen.getByRole("button", { name: "Show uploaded asset sizes" })).toHaveAttribute(
+      "aria-pressed",
+      "true"
+    );
+  });
+
   it("expands only the remembered folder path when reopened", async () => {
     const user = await openBackgroundLibrary();
 

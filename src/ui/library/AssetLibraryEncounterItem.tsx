@@ -1,5 +1,5 @@
 import { FileText } from "lucide-react";
-import type { DragEvent, PointerEvent } from "react";
+import type { PointerEvent } from "react";
 import type { MotionValue } from "motion/react";
 
 import type { EncounterRecord } from "@core/persistence";
@@ -7,13 +7,12 @@ import { AssetImagePreview } from "./AssetImagePreview";
 import type { AssetLibraryViewMode } from "./assetLibraryView";
 
 type AssetLibraryEncounterItemProps = {
+  dragging: boolean;
   loadingRotation: MotionValue<string>;
-  readOnly: boolean;
   record: EncounterRecord;
   selected: boolean;
   viewMode: AssetLibraryViewMode;
   onContextMenu: (event: React.MouseEvent<HTMLDivElement>) => void;
-  onDragStart: (event: DragEvent<HTMLElement>) => void;
   onDoubleClick: () => void;
   onPointerCancel: (event: PointerEvent<HTMLButtonElement>) => void;
   onPointerDown: (event: PointerEvent<HTMLButtonElement>) => void;
@@ -26,13 +25,12 @@ type AssetLibraryEncounterItemProps = {
 };
 
 export function AssetLibraryEncounterItem({
+  dragging,
   loadingRotation,
-  readOnly,
   record,
   selected,
   viewMode,
   onContextMenu,
-  onDragStart,
   onDoubleClick,
   onPointerCancel,
   onPointerDown,
@@ -45,17 +43,17 @@ export function AssetLibraryEncounterItem({
 }: AssetLibraryEncounterItemProps) {
   const listView = viewMode === "list";
   const backgroundImage = record.state.backgroundImage;
-  const itemClass = selected
+  const itemClass = selected || dragging
     ? "border-canvas-ink ring-2 ring-canvas-ink/20"
     : "border-canvas-line";
 
   return (
     <div
       className={`${listView ? "rounded-xl" : "rounded-2xl"} border bg-canvas-surface p-2 transition hover:bg-canvas ${itemClass}`}
-      draggable={!readOnly}
+      data-dragging={dragging || undefined}
+      draggable={false}
       ref={itemRef}
       onContextMenu={onContextMenu}
-      onDragStart={onDragStart}
     >
       <button
         aria-label={record.state.name}

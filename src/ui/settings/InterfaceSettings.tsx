@@ -22,10 +22,12 @@ export function InterfaceSettings() {
   const {
     autoSelectActiveActorDefault,
     enableAssetAnimation,
+    encounterCreationTool,
     panelVisibility,
     panWithRightClickDrag,
     setAutoSelectActiveActorDefault,
     setEnableAssetAnimation,
+    setEncounterCreationTool,
     setPanelVisible,
     setPanWithRightClickDrag
   } = useInterfacePreferences();
@@ -76,7 +78,7 @@ export function InterfaceSettings() {
         <div className="mt-1 divide-y divide-canvas-line">
           <PreferenceSwitch
             checked={enableAssetAnimation}
-            label="Enable token animations"
+            label="Enable animations"
             onChange={setEnableAssetAnimation}
           />
         </div>
@@ -94,6 +96,22 @@ export function InterfaceSettings() {
       <fieldset className="mt-4 max-w-lg border-t border-canvas-line pt-5">
         <legend className="pr-3 text-sm font-semibold">Defaults</legend>
         <div className="mt-1 divide-y divide-canvas-line">
+          <label className="flex min-h-12 items-center justify-between gap-4 py-3">
+            <span className="text-sm">Tool auto-select upon encounter creation</span>
+            <select
+              aria-label="Tool auto-select upon encounter creation"
+              className="rounded-xl border border-canvas-line bg-canvas-surface px-3 py-2 text-sm"
+              onChange={(event) =>
+                setEncounterCreationTool(
+                  event.currentTarget.value as "background" | "zone"
+                )
+              }
+              value={encounterCreationTool}
+            >
+              <option value="background">Background</option>
+              <option value="zone">Zone</option>
+            </select>
+          </label>
           <PreferenceSwitch
             checked={autoSelectActiveActorDefault}
             label="Auto-select active actor in initiative"

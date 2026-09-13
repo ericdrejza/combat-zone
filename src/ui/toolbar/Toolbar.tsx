@@ -1,8 +1,10 @@
-import { useEffect, useState } from "react";
-import { useSelector } from "react-redux";
+import { useEffect, useRef, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 
+import { getEncounterLoadTool } from "@core/encounter";
 import { useCompactLayout } from "@hooks/useCompactLayout";
 import { useMobileControls } from "@hooks/useMobileControls";
+import { setActiveTool } from "@interaction/interactionState";
 import type { RootState } from "@store/store";
 import type { ActorImageInput } from "@entities/actor/actorMutations";
 import { EncounterTitle } from "@ui/encounter/EncounterTitle";
@@ -23,10 +25,12 @@ import {
   type SaveStatus
 } from "./EncounterTitleControls";
 import { CloudStatusIndicator } from "@ui/cloud_sync";
+import { useInterfacePreferences } from "@ui/interface_preferences/InterfacePreferenceProvider";
 
 type ToolbarProps = {
   actorCreationImage?: ActorImageInput | null;
   encounterName: string;
+  encounterToolSelectionRequest?: number;
   hasSavedEncounter?: boolean;
   libraryOpen?: boolean;
   onActorCreationImageHandled?: () => void;
@@ -42,6 +46,7 @@ type ToolbarProps = {
 export function Toolbar({
   actorCreationImage = null,
   encounterName,
+  encounterToolSelectionRequest = 0,
   hasSavedEncounter = false,
   libraryOpen = false,
   onActorCreationImageHandled,
@@ -55,10 +60,13 @@ export function Toolbar({
 }: ToolbarProps) {
   const compactLayout = useCompactLayout();
   const showMobileControls = useMobileControls(compactLayout);
+  const { encounterCreationTool } = useInterfacePreferences();
+  const dispatch = useDispatch();
   const [compactSubtoolHost, setCompactSubtoolHost] =
     useState<HTMLDivElement | null>(null);
   const [compactEncounterOpen, setCompactEncounterOpen] = useState(false);
   const [compactZoomOpen, setCompactZoomOpen] = useState(false);
+  const lastToolSelectionRequest = useRef<number | null>(null);
   const encounter = useSelector((state: RootState) => state.encounter.present);
   const activeToolId = useSelector(
     (state: RootState) => state.interaction.activeToolId
@@ -68,6 +76,33 @@ export function Toolbar({
   );
   const edgeTool = useSelector((state: RootState) => state.interaction.edgeTool);
   const visibleActiveToolId = compactEncounterOpen ? null : activeToolId;
+
+  useEffect(() => {
+    if (lastToolSelectionRequest.current === encounterToolSelectionRequest) {
+      return;
+    }
+
+    lastToolSelectionRequest.current = encounterToolSelectionRequest;
+    if (
+      encounterToolSelectionRequest === 0 &&
+      !hasSavedEncounter &&
+      activeToolId !== "zone"
+    ) {
+      return;
+    }
+
+    const nextTool = hasSavedEncounter
+      ? getEncounterLoadTool(encounter)
+      : encounterCreationTool;
+    dispatch(setActiveTool(nextTool));
+  }, [
+    dispatch,
+    encounter,
+    encounterCreationTool,
+    encounterToolSelectionRequest,
+    hasSavedEncounter,
+    activeToolId
+  ]);
 
   useEffect(() => {
     setCompactZoomOpen(false);

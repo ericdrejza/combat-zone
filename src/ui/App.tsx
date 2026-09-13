@@ -406,6 +406,9 @@ function AppContent() {
       <ZoneResizeApprovalProvider>
       <Toolbar
         actorCreationImage={actorCreationImage}
+        encounterToolSelectionRequest={
+          persistenceUi.encounterToolSelectionRequest
+        }
         encounterName={encounter.name}
         hasSavedEncounter={persistenceUi.hasSavedEncounter}
         libraryOpen={persistenceUi.libraryOpen}

@@ -5,6 +5,8 @@ import { createEncounterState } from "@core/encounter/createEncounterState";
 import type { EncounterRecord } from "@core/persistence";
 import type { LibrarySection } from "@library/types";
 import { AssetLibraryContents } from "@ui/library/AssetLibraryContents";
+import { EncounterContextMenu } from "@ui/library/AssetLibraryMenus";
+import { useEncounterContextMenu } from "@ui/library/useEncounterContextMenu";
 
 const encountersSection: LibrarySection = {
   id: "encounters",
@@ -47,9 +49,58 @@ function createRecord(): EncounterRecord {
   };
 }
 
-function renderContents(overrides: Partial<React.ComponentProps<typeof AssetLibraryContents>> = {}) {
+type EncounterContentsProps = React.ComponentProps<typeof AssetLibraryContents> & {
+  onDeleteEncounter?: (id: string) => void;
+  onDuplicateEncounter?: (id: string) => void;
+  onExportEncounter?: (id: string, name: string) => void;
+  onRequestRenameEncounter?: (id: string, name: string) => void;
+};
+
+function EncounterContents({
+  onDeleteEncounter,
+  onDuplicateEncounter,
+  onExportEncounter,
+  onRequestRenameEncounter,
+  ...contentsProps
+}: EncounterContentsProps) {
+  const encounterContextMenu = useEncounterContextMenu();
+
+  return (
+    <>
+      <AssetLibraryContents
+        {...contentsProps}
+        onOpenEncounterContextMenu={encounterContextMenu.openContextMenu}
+      />
+      {encounterContextMenu.contextMenu ? (
+        <EncounterContextMenu
+          contextMenu={encounterContextMenu.contextMenu}
+          contextMenuRef={encounterContextMenu.contextMenuRef}
+          onDelete={(id) => {
+            encounterContextMenu.closeContextMenu();
+            onDeleteEncounter?.(id);
+          }}
+          onDuplicate={(id) => {
+            encounterContextMenu.closeContextMenu();
+            onDuplicateEncounter?.(id);
+          }}
+          onExport={(id, name) => {
+            encounterContextMenu.closeContextMenu();
+            onExportEncounter?.(id, name);
+          }}
+          onRename={(id, name) => {
+            encounterContextMenu.closeContextMenu();
+            onRequestRenameEncounter?.(id, name);
+          }}
+          readOnly={contentsProps.readOnly ?? false}
+        />
+      ) : null}
+    </>
+  );
+}
+
+function renderContents(overrides: Partial<EncounterContentsProps> = {}) {
   return render(
-    <AssetLibraryContents
+    <EncounterContents
       activeSection={encountersSection}
       currentFolder={encountersSection.nodesById[encountersSection.rootId]}
       dropFolderId={null}
