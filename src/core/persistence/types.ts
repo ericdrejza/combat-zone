@@ -1,5 +1,6 @@
 import type { EncounterState } from "@core/encounter/types";
 import type { LibraryState } from "@library/types";
+import type { ImageAssetSource } from "@core/assets/imageAssetSource";
 
 /** Current versions describe the persisted wrapper, not the encounter model. */
 export const WORKSPACE_SCHEMA_VERSION = 2 as const;
@@ -33,6 +34,12 @@ export type LibraryRecord = {
   state: LibraryState;
   revision: number;
   updatedAt: number;
+};
+
+export type LocalAssetRecord = {
+  assetId: string;
+  blob: Blob;
+  createdAt: number;
 };
 
 export type WorkspaceSnapshot = {
@@ -87,6 +94,10 @@ export type WorkspaceRepository = {
   deleteRecoveryDraft(): Promise<void>;
   getLibrary(): Promise<LibraryRecord>;
   saveLibrary(state: LibraryState): Promise<LibraryRecord>;
+  saveLocalAsset(blob: Blob): Promise<ImageAssetSource>;
+  getLocalAsset(assetId: string): Promise<Blob | null>;
+  maintainLocalAssets(): Promise<void>;
+  collectOrphanedLocalAssets(): Promise<number>;
   exportWorkspace(): Promise<WorkspaceExportEnvelope>;
   exportEncounter(id: string): Promise<EncounterExportEnvelope>;
   importWorkspace(

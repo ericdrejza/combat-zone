@@ -13,6 +13,7 @@ export const STORE_BACKUPS = "backups";
 export const STORE_SYNC_STATE = "sync_state";
 export const STORE_SYNC_OUTBOX = "sync_outbox";
 export const STORE_ASSET_CACHE = "asset_cache";
+export const STORE_LOCAL_ASSETS = "assets";
 export const MANIFEST_KEY = "workspace";
 export const RECOVERY_KEY = "draft";
 export const LIBRARY_KEY = "library";
@@ -64,6 +65,7 @@ export function openWorkspaceDatabase(name: string, version: number): Promise<ID
       if (!database.objectStoreNames.contains(STORE_SYNC_STATE)) database.createObjectStore(STORE_SYNC_STATE);
       if (!database.objectStoreNames.contains(STORE_SYNC_OUTBOX)) database.createObjectStore(STORE_SYNC_OUTBOX, { keyPath: "key" });
       if (!database.objectStoreNames.contains(STORE_ASSET_CACHE)) database.createObjectStore(STORE_ASSET_CACHE, { keyPath: "key" });
+      if (!database.objectStoreNames.contains(STORE_LOCAL_ASSETS)) database.createObjectStore(STORE_LOCAL_ASSETS, { keyPath: "assetId" });
 
       if ((event.oldVersion ?? 0) > 0 && (event.oldVersion ?? 0) < 3) {
         migrateCursor(transaction.objectStore(STORE_MANIFEST), (value) => ({

@@ -253,15 +253,49 @@ function assertEnvelopeHeader(value: unknown): asserts value is UnknownRecord {
   requiredFiniteNumber(value.exportedAt, "exportedAt");
 }
 
+function assertPortableEncounter(state: EncounterState, name: string) {
+  const sources = [
+    state.backgroundImage?.source,
+    ...Object.values(state.actors.byId).map((actor) => actor.image)
+  ];
+  if (sources.some((source) => source?.kind === "local_asset")) {
+    throw new PersistenceValidationError(
+      `${name} contains a device-local asset reference instead of embedded export data.`
+    );
+  }
+}
+
+function assertPortableLibrary(state: LibraryState, name: string) {
+  for (const sectionId of ["backgrounds", "tokens"] as const) {
+    for (const node of Object.values(state.sections[sectionId].nodesById)) {
+      if (node.type === "image" && node.asset?.source.kind === "local_asset") {
+        throw new PersistenceValidationError(
+          `${name} contains a device-local asset reference instead of embedded export data.`
+        );
+      }
+    }
+  }
+}
+
 export function validateExportEnvelope(value: unknown): ExportEnvelope {
   assertEnvelopeHeader(value);
   if (value.kind === "workspace-export") {
     assertWorkspaceSnapshot(value.workspace);
+    const workspace = value.workspace as unknown as WorkspaceSnapshot;
+    for (const record of workspace.encounters) {
+      assertPortableEncounter(record.state, `workspace encounter ${record.id}`);
+    }
+    if (workspace.recoveryDraft) {
+      assertPortableEncounter(workspace.recoveryDraft.state, "workspace recovery draft");
+    }
+    assertPortableLibrary(workspace.library.state, "workspace library");
     return value as unknown as WorkspaceExportEnvelope;
   }
   if (value.kind === "encounter-export") {
     assertEncounterState(value.encounter);
     assertLibraryState(value.library);
+    assertPortableEncounter(value.encounter as unknown as EncounterState, "encounter export");
+    assertPortableLibrary(value.library as unknown as LibraryState, "encounter library");
     return value as unknown as EncounterExportEnvelope;
   }
   throw new PersistenceValidationError(`Unsupported export kind ${String(value.kind)}.`);

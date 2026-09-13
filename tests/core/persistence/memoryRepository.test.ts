@@ -122,6 +122,33 @@ describe("InMemoryWorkspaceRepository", () => {
     expect((await repository.getEncounter(encounter.id))?.state).toEqual(encounter);
   });
 
+  it("stores local blobs once, exports embedded bytes, and collects only orphans", async () => {
+    const repository = new InMemoryWorkspaceRepository();
+    const source = await repository.saveLocalAsset(
+      new Blob(["video"], { type: "video/webm" })
+    );
+    const encounter = state("local-asset");
+    encounter.backgroundImage = {
+      source,
+      height: 10,
+      mediaType: "video/webm",
+      name: "map.webm",
+      width: 10
+    };
+    await repository.createEncounter(encounter);
+
+    expect((await repository.getEncounter(encounter.id))?.state.backgroundImage?.source)
+      .toEqual(source);
+    expect((await repository.exportEncounter(encounter.id)).encounter.backgroundImage?.source)
+      .toMatchObject({ kind: "embedded" });
+    expect(await repository.collectOrphanedLocalAssets()).toBe(0);
+
+    await repository.deleteEncounter(encounter.id);
+    expect(await repository.collectOrphanedLocalAssets()).toBe(1);
+    expect(await repository.getLocalAsset(source.kind === "local_asset" ? source.assetId : ""))
+      .toBeNull();
+  });
+
   it("retains an import backup until a complete local reset", async () => {
     const repository = new InMemoryWorkspaceRepository();
     await repository.createEncounter(state("backup"));

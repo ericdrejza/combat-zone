@@ -53,6 +53,7 @@ Extend the shared image-source contract:
 ```ts
 type ImageAssetSource =
   | { kind: "embedded"; dataUrl: string }
+  | { kind: "local_asset"; assetId: string; byteLength: number }
   | { kind: "url"; url: string }
   | { kind: "google_drive"; fileId: string }
   | {

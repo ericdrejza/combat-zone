@@ -6,6 +6,7 @@ import type {
   WorkspaceExportEnvelope
 } from "@core/persistence";
 import type { SaveStatus } from "@ui/toolbar/EncounterTitleControls";
+import type { ImageAssetSource } from "@core/assets/imageAssetSource";
 
 export type PersistenceContextValue = {
   activeRecord: EncounterRecord | null;
@@ -32,6 +33,7 @@ export type PersistenceContextValue = {
   resetLocalData: () => Promise<void>;
   save: (folderId?: string | null) => Promise<"saved" | "needs-folder">;
   saveStatus: SaveStatus;
+  storeLocalAsset?: ((blob: Blob) => Promise<ImageAssetSource>) | null;
 };
 
 const uninitializedExport = async (): Promise<never> => {
@@ -56,5 +58,6 @@ export const PersistenceContext = createContext<PersistenceContextValue>({
   reloadFromRepository: async () => undefined,
   resetLocalData: async () => undefined,
   save: async () => "needs-folder",
-  saveStatus: "idle"
+  saveStatus: "idle",
+  storeLocalAsset: null
 });

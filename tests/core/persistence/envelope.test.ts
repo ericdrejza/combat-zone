@@ -52,6 +52,19 @@ describe("persistence export envelopes", () => {
     expect(() => validateExportEnvelope(value)).toThrow(/every panel exactly once/);
   });
 
+  it("rejects device-local asset references in portable envelopes", () => {
+    const value = validEnvelope();
+    value.encounter.backgroundImage = {
+      source: { kind: "local_asset", assetId: "a".repeat(64), byteLength: 10 },
+      height: 10,
+      mediaType: "image/png",
+      name: "Map",
+      width: 10
+    };
+
+    expect(() => validateExportEnvelope(value)).toThrow(/device-local asset/);
+  });
+
   it("adds the default panel layout when migrating schema version 6", () => {
     const value = validEnvelope() as unknown as Record<string, unknown>;
     const legacyEncounter = value.encounter as Record<string, unknown>;

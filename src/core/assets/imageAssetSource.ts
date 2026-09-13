@@ -1,5 +1,6 @@
 export type ImageAssetSource =
   | { kind: "embedded"; dataUrl: string }
+  | { kind: "local_asset"; assetId: string; byteLength: number }
   | { kind: "url"; url: string }
   | { kind: "google_drive"; fileId: string }
   | { kind: "cloud_storage"; assetId: string; generation: string };
@@ -34,6 +35,11 @@ export function isImageAssetSource(value: unknown): value is ImageAssetSource {
   }
   if (source.kind === "url") {
     return typeof source.url === "string" && isHttpImageUrl(source.url);
+  }
+  if (source.kind === "local_asset") {
+    return typeof source.assetId === "string" && /^[a-f0-9]{64}$/.test(source.assetId) &&
+      typeof source.byteLength === "number" && Number.isSafeInteger(source.byteLength) &&
+      source.byteLength >= 0;
   }
   if (source.kind === "google_drive") {
     return typeof source.fileId === "string" && source.fileId.length > 0;

@@ -410,6 +410,11 @@ export function PersistenceProvider({
     announcePersistenceChange("reset");
   }
 
+  async function storeLocalAsset(blob: Blob) {
+    requireWritable();
+    return repository.saveLocalAsset(blob);
+  }
+
   useEffect(() => {
     setPersistenceWritable(!readOnly);
     return () => setPersistenceWritable(true);
@@ -426,6 +431,7 @@ export function PersistenceProvider({
             INTERFACE_PREFERENCES_STORAGE_KEY,
             THEME_STORAGE_KEY
           ]);
+          await repository.maintainLocalAssets();
         }
         if (!cancelled) {
           await reloadFromRepository();
@@ -515,7 +521,8 @@ export function PersistenceProvider({
     renameEncounter,
     resetLocalData,
     save,
-    saveStatus
+    saveStatus,
+    storeLocalAsset
   };
 
   if (!initialized) {

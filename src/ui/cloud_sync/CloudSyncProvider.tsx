@@ -73,7 +73,11 @@ export function CloudSyncProvider({ children, localSync, workspaceRepository }: 
       updateStatus("entitlementRequired");
       return;
     }
-    const assets = new FirebaseCloudAssetRepository(backend, localSync);
+    const assets = new FirebaseCloudAssetRepository(
+      backend,
+      localSync,
+      (assetId) => workspaceRepository.getLocalAsset(assetId)
+    );
     const drive = new GoogleDriveAssetRepository(() => backend.auth.currentUser?.email ?? null, localSync);
     assetRepository.current = assets;
     driveRepository.current = drive;
@@ -195,6 +199,11 @@ export function CloudSyncProvider({ children, localSync, workspaceRepository }: 
   }
 
   const resolveAsset = useCallback<ImageAssetResolver>(async (source) => {
+    if (source.kind === "local_asset") {
+      const blob = await workspaceRepository.getLocalAsset(source.assetId);
+      if (!blob) throw new Error("This local asset is no longer available.");
+      return blob;
+    }
     if (source.kind === "cloud_storage") {
       const assets = assetRepository.current;
       if (!assets) throw new Error("Sign in to load this cloud image.");
@@ -206,7 +215,7 @@ export function CloudSyncProvider({ children, localSync, workspaceRepository }: 
       return drive.download(source.fileId);
     }
     return source.kind === "embedded" ? source.dataUrl : source.url;
-  }, []);
+  }, [workspaceRepository]);
 
   const value = {
     backendAvailable: Boolean(backend), driveConfigured: driveRepository.current?.configured ?? false,

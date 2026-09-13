@@ -6,6 +6,7 @@ import {
   readLibraryMediaFile
 } from '@library/mediaAsset';
 import type { LibrarySectionId } from '@library/types';
+import type { ImageAssetSource } from '@core/assets/imageAssetSource';
 import type { DroppedImageFile } from './libraryFileDrop';
 import { getFileNameWithoutExtension } from '@library/fileName';
 
@@ -14,13 +15,15 @@ type CreateImageFilesOptions = {
   files: DroppedImageFile[];
   rootParentId: string;
   sectionId: LibrarySectionId;
+  storeLocalAsset?: ((blob: Blob) => Promise<ImageAssetSource>) | null;
 };
 
 export async function createImageFilesInFolder({
   dispatch,
   files,
   rootParentId,
-  sectionId
+  sectionId,
+  storeLocalAsset
 }: CreateImageFilesOptions) {
   const folderIdsByPath = new Map<string, string>();
 
@@ -57,7 +60,7 @@ export async function createImageFilesInFolder({
       parentId = action.payload.id;
     }
 
-    const asset = await readLibraryMediaFile(file);
+    const asset = await readLibraryMediaFile(file, storeLocalAsset);
 
     dispatch(
       uploadImage({

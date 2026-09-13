@@ -1,4 +1,5 @@
 import type { LibraryImageAsset } from "./types";
+import type { ImageAssetSource } from "@core/assets/imageAssetSource";
 
 const VIDEO_MEDIA_TYPES = new Set(["video/mp4", "video/webm"]);
 const animatedWebpCache = new Map<string, boolean>();
@@ -127,24 +128,40 @@ function readImageDimensions(source: string): Promise<{ height: number; width: n
 }
 
 /** Reads uploadable library media and records intrinsic dimensions when available. */
-export async function readLibraryMediaFile(file: File): Promise<LibraryImageAsset> {
+export async function readLibraryMediaFile(
+  file: File,
+  storeLocalAsset?: ((blob: Blob) => Promise<ImageAssetSource>) | null
+): Promise<LibraryImageAsset> {
   const mediaType = getSupportedLibraryMediaType(file);
   if (!mediaType) throw new Error("Only images, MP4, and WebM files are supported.");
 
-  const dataUrl = await readDataUrl(file);
-  const fileBytes = "arrayBuffer" in file ? await file.arrayBuffer() : null;
+  const dataUrl = storeLocalAsset ? null : await readDataUrl(file);
+  const dimensionSource = dataUrl ?? URL.createObjectURL(file);
+  const fileBytes = mediaType === "image/webp" && "arrayBuffer" in file
+    ? await file.arrayBuffer()
+    : null;
   const animated = mediaType === "image/webp" && fileBytes
     ? isAnimatedWebpBytes(new Uint8Array(fileBytes))
-    : mediaType === "image/webp" && isAnimatedEmbeddedWebp(dataUrl);
-  const dimensions = isVideoMediaType(mediaType)
-    ? await readVideoDimensions(dataUrl)
-    : await readImageDimensions(dataUrl);
+    : mediaType === "image/webp" && dataUrl
+      ? isAnimatedEmbeddedWebp(dataUrl)
+      : false;
+  let dimensions: { height: number; width: number };
+  try {
+    dimensions = isVideoMediaType(mediaType)
+      ? await readVideoDimensions(dimensionSource)
+      : await readImageDimensions(dimensionSource);
+  } finally {
+    if (!dataUrl) URL.revokeObjectURL(dimensionSource);
+  }
+  const source = storeLocalAsset
+    ? await storeLocalAsset(file)
+    : { kind: "embedded" as const, dataUrl: dataUrl as string };
 
   return {
     ...dimensions,
     ...(animated ? { animated: true } : {}),
     mediaType,
     name: file.name,
-    source: { kind: "embedded", dataUrl }
+    source
   };
 }
