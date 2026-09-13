@@ -18,6 +18,7 @@ export default defineConfig({
       '@tests': fileURLToPath(new URL('./tests', import.meta.url)),
       '@ui': fileURLToPath(new URL('./src/ui', import.meta.url)),
       '@assets': fileURLToPath(new URL('./src/assets', import.meta.url)),
+      '@icons': fileURLToPath(new URL('./src/icons', import.meta.url)),
       path: 'path-browserify'
     }
   },

@@ -2,6 +2,7 @@ import type { EncounterBackgroundImage } from '@core/encounter/types';
 import type { LibraryImageAsset } from '@library/types';
 import { directImageSourceUrl } from '@core/assets/imageAssetSource';
 import type { ImageAssetResolver } from '@core/assets/ImageAssetResolver';
+import { isVideoMediaType } from '@library/mediaAsset';
 
 export function readImageAssetDimensions(
   asset: LibraryImageAsset,
@@ -12,17 +13,23 @@ export function readImageAssetDimensions(
   }
 
   return new Promise((resolve, reject) => {
-    const image = new Image();
-    image.addEventListener('load', () => {
+    const isVideo = isVideoMediaType(asset.mediaType);
+    const image = isVideo ? document.createElement('video') : new Image();
+    image.addEventListener(isVideo ? 'loadedmetadata' : 'load', () => {
       resolve({
         ...asset,
-        height: image.naturalHeight || image.height,
-        width: image.naturalWidth || image.width
+        height: image instanceof HTMLVideoElement
+          ? image.videoHeight
+          : image.naturalHeight || image.height,
+        width: image instanceof HTMLVideoElement
+          ? image.videoWidth
+          : image.naturalWidth || image.width
       });
     });
     image.addEventListener('error', () => {
-      reject(new Error('Selected image could not be decoded.'));
+      reject(new Error('Selected media could not be decoded.'));
     });
+    if (image instanceof HTMLVideoElement) image.preload = 'metadata';
     const sourceUrl = directImageSourceUrl(asset.source);
     if (sourceUrl) {
       image.src = sourceUrl;

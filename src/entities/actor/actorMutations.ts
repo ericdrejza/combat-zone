@@ -16,6 +16,7 @@ import { removeActorFromInitiative } from '@core/encounter/initiativeMutations';
 import type { ImageAssetSource } from '@core/assets/imageAssetSource';
 
 export type ActorImageInput = {
+  animated?: boolean;
   libraryNodeId?: string;
   source: ImageAssetSource;
   mediaType: string;
@@ -36,6 +37,9 @@ export type CreateActorInput = {
 export type UpdateActorPropertiesInput = {
   actorType?: ActorType;
   image?: ImageAssetSource;
+  imageAssetAnimated?: boolean | null;
+  imageAssetMediaType?: string | null;
+  imageAssetName?: string | null;
   imageLibraryNodeId?: string | null;
   layoutGroup?: ActorLayoutGroup;
   name?: string;
@@ -146,7 +150,8 @@ export function buildActor({
     metadata: {
       sourceLibraryNodeId: image?.libraryNodeId,
       sourceAssetName: image?.name,
-      sourceAssetMediaType: image?.mediaType
+      sourceAssetMediaType: image?.mediaType,
+      sourceAssetAnimated: image?.animated
     },
     name: name ?? getDefaultActorName(image),
     shape,
@@ -203,12 +208,33 @@ export function updateActorProperties(
     return state;
   }
 
-  const { imageLibraryNodeId, ...actorProperties } = properties;
+  const {
+    imageAssetAnimated,
+    imageAssetMediaType,
+    imageAssetName,
+    imageLibraryNodeId,
+    ...actorProperties
+  } = properties;
   const metadata = { ...actor.metadata };
+  if (imageAssetAnimated === null) {
+    delete metadata.sourceAssetAnimated;
+  } else if (imageAssetAnimated !== undefined) {
+    metadata.sourceAssetAnimated = imageAssetAnimated;
+  }
   if (imageLibraryNodeId === null) {
     delete metadata.sourceLibraryNodeId;
   } else if (imageLibraryNodeId !== undefined) {
     metadata.sourceLibraryNodeId = imageLibraryNodeId;
+  }
+  if (imageAssetMediaType === null) {
+    delete metadata.sourceAssetMediaType;
+  } else if (imageAssetMediaType !== undefined) {
+    metadata.sourceAssetMediaType = imageAssetMediaType;
+  }
+  if (imageAssetName === null) {
+    delete metadata.sourceAssetName;
+  } else if (imageAssetName !== undefined) {
+    metadata.sourceAssetName = imageAssetName;
   }
 
   return {

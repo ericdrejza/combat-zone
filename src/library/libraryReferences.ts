@@ -76,6 +76,7 @@ export function replaceEncounterLibraryAssetReferences(
       image: asset.source,
       metadata: {
         ...actor.metadata,
+        sourceAssetAnimated: asset.animated === true,
         sourceAssetMediaType: asset.mediaType,
         sourceAssetName: asset.name
       }

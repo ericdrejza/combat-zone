@@ -1,8 +1,14 @@
 import { motion, type Transition } from "motion/react";
+import { memo } from "react";
 
 import type { Actor } from "@entities/actor/types";
 import { getReadableTextColor } from "../canvasLuminance";
 import { useResolvedImageSource } from "@core/assets/ImageAssetResolver";
+import { isVideoMediaType } from "@library/mediaAsset";
+import { useInterfacePreferences } from "@ui/interface_preferences/InterfacePreferenceProvider";
+import { ControlledVideo } from "@core/rendering/ControlledVideo";
+import { useStillImageSource } from "@core/assets/useStillImageSource";
+import { isAnimatedAsset } from "@library/mediaAsset";
 
 type ActorVisualProps = {
   actor: Actor;
@@ -21,7 +27,7 @@ type ActorVisualProps = {
  * Radius-derived attributes share the placement transition so resizing and
  * layout changes remain visually synchronized.
  */
-export function ActorVisual({
+export const ActorVisual = memo(function ActorVisual({
   actor,
   fillColor,
   outlineColor,
@@ -36,6 +42,25 @@ export function ActorVisual({
   const selectionRadius = radius + 5;
   const factionRadius = radius + 9;
   const imageUrl = useResolvedImageSource(actor.image);
+  const isVideo = isVideoMediaType(
+    typeof actor.metadata.sourceAssetMediaType === "string"
+      ? actor.metadata.sourceAssetMediaType
+      : undefined
+  );
+  const { enableAssetAnimation } = useInterfacePreferences();
+  const isAnimatedWebp = Boolean(actor.image) && isAnimatedAsset({
+    animated: actor.metadata.sourceAssetAnimated === true,
+    mediaType: typeof actor.metadata.sourceAssetMediaType === "string"
+      ? actor.metadata.sourceAssetMediaType
+      : "image/*",
+    name: actor.name,
+    source: actor.image as NonNullable<typeof actor.image>
+  });
+  const renderedImageUrl = useStillImageSource(
+    imageUrl,
+    !enableAssetAnimation && (isAnimatedWebp || isVideo),
+    isVideo ? "video" : "image"
+  );
 
   return (
     <>
@@ -86,19 +111,38 @@ export function ActorVisual({
               />
             )}
           </clipPath>
-          <motion.image
-            clipPath={`url(#${clipId})`}
-            href={imageUrl}
-            initial={false}
-            animate={{
-              attrX: -innerRadius,
-              attrY: -innerRadius,
-              height: innerRadius * 2,
-              width: innerRadius * 2
-            }}
-            preserveAspectRatio="xMidYMid slice"
-            transition={transition}
-          />
+          {isVideo && enableAssetAnimation ? (
+            <motion.foreignObject
+              height={innerRadius * 2}
+              initial={false}
+              animate={{ attrX: -innerRadius, attrY: -innerRadius }}
+              pointerEvents="none"
+              transition={transition}
+              width={innerRadius * 2}
+              x={-innerRadius}
+              y={-innerRadius}
+            >
+              <ControlledVideo
+                className={`h-full w-full object-cover ${actor.shape === "circle" ? "rounded-full" : "rounded"}`}
+                play={enableAssetAnimation}
+                src={imageUrl}
+              />
+            </motion.foreignObject>
+          ) : (
+            <motion.image
+              clipPath={`url(#${clipId})`}
+              href={renderedImageUrl ?? undefined}
+              initial={false}
+              animate={{
+                attrX: -innerRadius,
+                attrY: -innerRadius,
+                height: innerRadius * 2,
+                width: innerRadius * 2
+              }}
+              preserveAspectRatio="xMidYMid slice"
+              transition={transition}
+            />
+          )}
         </>
       ) : (
         <text
@@ -182,4 +226,4 @@ export function ActorVisual({
       ) : null}
     </>
   );
-}
+});

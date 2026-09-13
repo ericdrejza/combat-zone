@@ -79,6 +79,7 @@ export function AssetLibraryEncounterItem({
           {backgroundImage ? (
             <AssetImagePreview
               name={record.state.name}
+              mediaType={backgroundImage.mediaType}
               rotation={loadingRotation}
               source={backgroundImage.source}
             />

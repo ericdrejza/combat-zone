@@ -261,7 +261,7 @@ describe("LibraryPanel", () => {
     await user.click(screen.getByRole("button", { name: "Library" }));
     await user.click(screen.getByRole("tab", { name: "Tokens" }));
     await user.click(screen.getByRole("button", { name: "Add to Tokens" }));
-    await user.click(screen.getByRole("menuitem", { name: "Upload Image" }));
+    await user.click(screen.getByRole("menuitem", { name: "Upload" }));
 
     fireEvent.change(screen.getByLabelText("Upload library image"), {
       target: {
@@ -307,7 +307,7 @@ describe("LibraryPanel", () => {
     await user.click(screen.getByRole("button", { name: "Library" }));
     await user.click(screen.getByRole("tab", { name: "Backgrounds" }));
     await user.click(screen.getByRole("button", { name: "Add to Backgrounds" }));
-    await user.click(screen.getByRole("menuitem", { name: "Upload Image" }));
+    await user.click(screen.getByRole("menuitem", { name: "Upload" }));
 
     fireEvent.change(screen.getByLabelText("Upload library image"), {
       target: {
@@ -394,7 +394,7 @@ describe("LibraryPanel", () => {
     await user.click(screen.getByRole("button", { name: "Library" }));
     await user.click(screen.getByRole("tab", { name: "Tokens" }));
     await user.click(screen.getByRole("button", { name: "Add to Tokens" }));
-    await user.click(screen.getByRole("menuitem", { name: "Upload Image" }));
+    await user.click(screen.getByRole("menuitem", { name: "Upload" }));
 
     fireEvent.change(screen.getByLabelText("Upload library image"), {
       target: {

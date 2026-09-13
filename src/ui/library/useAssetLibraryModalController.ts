@@ -18,7 +18,10 @@ import { resolveLibraryAsset } from "@library/librarySlice";
 import { createWebImageAsset } from "@library/webImageAsset";
 import type { RootState } from "@store/store";
 import { createImageFilesInFolder } from "./assetLibraryUpload";
-import { readImageFile } from "@ui/toolbar/background/readImageFile";
+import {
+  isSupportedLibraryMediaFile,
+  readLibraryMediaFile
+} from "@library/mediaAsset";
 import {
   hasExternalFiles,
   hasInternalLibraryNode,
@@ -326,11 +329,11 @@ export function useAssetLibraryModalController({
   }
 
   async function replaceNodeWithFile(node: LibraryNode, file: File) {
-    if (!file.type.startsWith("image/")) {
+    if (!isSupportedLibraryMediaFile(file)) {
       return;
     }
 
-    const asset = await readImageFile(file);
+    const asset = await readLibraryMediaFile(file);
     dispatch(replaceImage({
       asset,
       name: node.name,

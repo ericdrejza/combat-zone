@@ -12,7 +12,7 @@ describe("AssetLibraryModal URL links", () => {
     const labels = within(menu).getAllByRole("menuitem").map((item) => item.textContent);
 
     expect(labels).toEqual([
-      "Upload Image",
+      "Upload",
       "Web link",
       "Link from Google Drive",
       "Link asset",

@@ -30,6 +30,9 @@ export function applyActorTokenFromLibrary({
 
   const properties = {
     image: asset.source,
+    imageAssetAnimated: asset.animated === true,
+    imageAssetMediaType: asset.mediaType,
+    imageAssetName: asset.name,
     imageLibraryNodeId: node.id
   };
   const prepared = prepareValidatedEncounterChangeForRuntime({

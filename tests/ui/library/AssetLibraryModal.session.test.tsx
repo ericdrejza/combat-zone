@@ -162,5 +162,15 @@ describe("AssetLibraryModal session state", () => {
     expect(screen.getByRole("button", { name: "Collapse Maps" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Collapse Nested" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Expand Other" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Collapse Nested" }).parentElement).toHaveAttribute(
+      "aria-selected",
+      "true"
+    );
+
+    await createFolderInActiveSection(user, "Backgrounds", "Returned folder");
+    expect(
+      within(screen.getByRole("group", { name: "Current directory contents" }))
+        .getByRole("button", { name: "Returned folder" })
+    ).toBeInTheDocument();
   });
 });

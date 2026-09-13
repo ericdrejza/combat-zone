@@ -9,10 +9,12 @@ import {
 } from '@entities/actor/actorVisuals';
 import type { ImageAssetSource } from '@core/assets/imageAssetSource';
 import { directImageSourceUrl } from '@core/assets/imageAssetSource';
+import { isVideoMediaType } from '@library/mediaAsset';
 
 type ActorDragPreviewInput = {
   image?: ImageAssetSource;
   imageUrl?: string | null;
+  mediaType?: string;
   layoutGroup: ActorLayoutGroup;
   name: string;
   shape: ActorShape;
@@ -24,6 +26,7 @@ const PREVIEW_TOKEN_SIZE = 56;
 function createPreviewElement({
   image,
   imageUrl: resolvedImageUrl,
+  mediaType,
   layoutGroup,
   name,
   shape,
@@ -66,14 +69,23 @@ function createPreviewElement({
   const imageUrl = resolvedImageUrl ?? (image ? directImageSourceUrl(image) : null);
 
   if (imageUrl) {
-    const imageElement = document.createElement('img');
+    const imageElement = document.createElement(
+      isVideoMediaType(mediaType) ? 'video' : 'img'
+    );
 
-    imageElement.alt = '';
-    imageElement.draggable = false;
+    imageElement.setAttribute('alt', '');
     imageElement.src = imageUrl;
     imageElement.style.height = '100%';
     imageElement.style.objectFit = 'cover';
     imageElement.style.width = '100%';
+    if (imageElement instanceof HTMLVideoElement) {
+      imageElement.autoplay = true;
+      imageElement.loop = true;
+      imageElement.muted = true;
+      imageElement.playsInline = true;
+    } else {
+      imageElement.draggable = false;
+    }
     token.append(imageElement);
   } else {
     token.textContent = name.slice(0, 2).toUpperCase();

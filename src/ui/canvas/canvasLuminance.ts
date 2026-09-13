@@ -85,7 +85,7 @@ export function createDeterministicSamplePoints(
 
 export function drawCanvasBackgroundImage(
   context: CanvasRenderingContext2D,
-  image: HTMLImageElement,
+  image: CanvasImageSource,
   canvasSize: CanvasSize = DEFAULT_CANVAS_SIZE
 ) {
   context.drawImage(image, 0, 0, canvasSize.width, canvasSize.height);

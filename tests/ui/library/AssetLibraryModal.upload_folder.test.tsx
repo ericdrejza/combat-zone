@@ -58,7 +58,7 @@ describe("AssetLibraryModal", () => {
     await createFolder("Maps");
     await user.click(screen.getByRole("button", { name: "Maps" }));
     await user.click(screen.getByRole("button", { name: "Add to Backgrounds" }));
-    await user.click(screen.getByRole("menuitem", { name: "Upload Image" }));
+    await user.click(screen.getByRole("menuitem", { name: "Upload" }));
 
     fireEvent.change(screen.getByLabelText("Upload library image"), {
       target: {
@@ -84,7 +84,7 @@ describe("AssetLibraryModal", () => {
     const user = await openBackgroundLibrary();
 
     await user.click(screen.getByRole("button", { name: "Add to Backgrounds" }));
-    await user.click(screen.getByRole("menuitem", { name: "Upload Image" }));
+    await user.click(screen.getByRole("menuitem", { name: "Upload" }));
     fireEvent.change(screen.getByLabelText("Upload library image"), {
       target: {
         files: [new File(["base"], "base-map.png", { type: "image/png" })]
@@ -140,7 +140,7 @@ describe("AssetLibraryModal", () => {
 
     await createFolder("Maps");
     await user.click(screen.getByRole("button", { name: "Add to Backgrounds" }));
-    await user.click(screen.getByRole("menuitem", { name: "Upload Image" }));
+    await user.click(screen.getByRole("menuitem", { name: "Upload" }));
     fireEvent.change(screen.getByLabelText("Upload library image"), {
       target: {
         files: [new File(["move"], "move-map.png", { type: "image/png" })]

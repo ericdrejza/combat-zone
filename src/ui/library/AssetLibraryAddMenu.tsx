@@ -3,13 +3,14 @@ import {
   FileUp,
   FolderPlus,
   FolderUp,
-  HardDrive,
   Link,
   Link2,
   Plus,
   Upload
 } from "lucide-react";
 import type { RefObject } from "react";
+
+import googleDriveIcon from "@icons/google-drive-2026.svg";
 
 type AssetLibraryAddMenuProps = {
   addMenuOpen: boolean;
@@ -66,7 +67,7 @@ export function AssetSourceMenu({
         type="button"
       >
         <Upload aria-hidden="true" className="h-4 w-4" />
-        Upload Image
+        Upload
       </button>
       <button
         className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left transition hover:bg-canvas disabled:cursor-not-allowed disabled:text-canvas-muted"
@@ -85,7 +86,7 @@ export function AssetSourceMenu({
         role="menuitem"
         type="button"
       >
-        <HardDrive aria-hidden="true" className="h-4 w-4" />
+        <img alt="" aria-hidden="true" className="h-4 w-4" src={googleDriveIcon} />
         Link from Google Drive
       </button>
       <button

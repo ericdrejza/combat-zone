@@ -68,9 +68,9 @@ export function useAssetLibraryModalState({
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedNodeBySection, setSelectedNodeBySection] = useState<
     Partial<Record<LibrarySectionId, string>>
-  >(() => initialSelectedNodeId
-    ? { [initialSectionId]: initialSelectedNodeId }
-    : {});
+  >(() => ({
+    [initialSectionId]: initialSelectedNodeId ?? getRememberedFolderId(initialSectionId)
+  }));
   const [pendingDeleteNodeId, setPendingDeleteNodeId] = useState<string | null>(
     null
   );
@@ -168,6 +168,10 @@ export function useAssetLibraryModalState({
     clearDragState();
     setActiveSectionId(sectionId);
     setExpandedFolderIds(getExpandedFolderIds(sectionId));
+    setSelectedNodeBySection((current) => ({
+      ...current,
+      [sectionId]: getRememberedFolderId(sectionId)
+    }));
   }
 
   function expandFolders(folderIds: string[]) {

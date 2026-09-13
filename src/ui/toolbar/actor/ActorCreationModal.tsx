@@ -107,6 +107,7 @@ export function ActorCreationModal({
   function getDragData(): NewActorDragData {
     return {
       layoutGroup: actorTool.layoutGroup,
+      imageAnimated: image?.animated,
       imageMediaType: image?.mediaType,
       imageName: image?.name,
       image: image?.source,

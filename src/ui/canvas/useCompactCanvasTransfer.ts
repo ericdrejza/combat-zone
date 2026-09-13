@@ -46,6 +46,7 @@ function getLibraryActorPreview(
 
   return {
     image: asset.source,
+    imageAnimated: asset.animated,
     imageMediaType: asset.mediaType,
     imageName: asset.name,
     layoutGroup: actorTool.layoutGroup,

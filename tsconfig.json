@@ -20,7 +20,8 @@
       "@store/*": ["./src/store/*"],
       "@tests/*": ["./tests/*"],
       "@ui/*": ["./src/ui/*"],
-      "@assets/*": ["./src/assets/*"]
+      "@assets/*": ["./src/assets/*"],
+      "@icons/*": ["./src/icons/*"]
     },
     "resolveJsonModule": true,
     "isolatedModules": true,

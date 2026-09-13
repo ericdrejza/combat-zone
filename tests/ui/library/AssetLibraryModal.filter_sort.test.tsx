@@ -24,7 +24,7 @@ describe("AssetLibraryModal", () => {
     await createFolder("Maps");
     await user.click(screen.getByRole("button", { name: "Maps" }));
     await user.click(screen.getByRole("button", { name: "Add to Backgrounds" }));
-    await user.click(screen.getByRole("menuitem", { name: "Upload Image" }));
+    await user.click(screen.getByRole("menuitem", { name: "Upload" }));
     fireEvent.change(screen.getByLabelText("Upload library image"), {
       target: {
         files: [new File(["ice"], "ice-cavern.png", { type: "image/png" })]
@@ -48,7 +48,7 @@ describe("AssetLibraryModal", () => {
     await createFolder("z-folder");
     await createFolder("A-folder");
     await user.click(screen.getByRole("button", { name: "Add to Backgrounds" }));
-    await user.click(screen.getByRole("menuitem", { name: "Upload Image" }));
+    await user.click(screen.getByRole("menuitem", { name: "Upload" }));
     fireEvent.change(screen.getByLabelText("Upload library image"), {
       target: {
         files: [
