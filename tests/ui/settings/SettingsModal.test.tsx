@@ -4,12 +4,14 @@ import userEvent from "@testing-library/user-event";
 import { KeybindProvider, KEYBIND_STORAGE_KEY } from "@ui/keybinds";
 import { SettingsModal } from "@ui/settings/SettingsModal";
 import { COMPACT_LAYOUT_QUERY } from "@hooks/useCompactLayout";
+import { IMAGE_COMPRESSION_STORAGE_KEY } from "@library/imageCompressionPreference";
 
 describe("SettingsModal local reset", () => {
   const originalMatchMedia = window.matchMedia;
 
   afterEach(() => {
     localStorage.removeItem(KEYBIND_STORAGE_KEY);
+    localStorage.removeItem(IMAGE_COMPRESSION_STORAGE_KEY);
     window.matchMedia = originalMatchMedia;
   });
 
@@ -35,6 +37,20 @@ describe("SettingsModal local reset", () => {
       screen.getByRole("button", { name: "Export workspace" })
     ).toBeInTheDocument();
     expect(screen.getByText("Import workspace")).toBeInTheDocument();
+  });
+
+  it("defaults image compression to none and explains the selected strategy", async () => {
+    const user = userEvent.setup();
+    renderSettings();
+    await user.click(screen.getByRole("tab", { name: "Data" }));
+
+    const strategy = screen.getByRole("combobox", { name: "Image compression strategy" });
+    expect(strategy).toHaveValue("none");
+    expect(screen.getByText("Stores uploaded PNG and JPEG files unchanged.")).toBeInTheDocument();
+
+    await user.selectOptions(strategy, "maximum_quality_webp");
+    expect(screen.getByText("Uses smaller WebP files at the browser's maximum quality.")).toBeInTheDocument();
+    expect(localStorage.getItem(IMAGE_COMPRESSION_STORAGE_KEY)).toBe("maximum_quality_webp");
   });
 
   it("requires the exact destructive confirmation phrase", async () => {

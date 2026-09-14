@@ -8,6 +8,7 @@ import {
   readLibraryMediaFile
 } from "@library/mediaAsset";
 import reducer, { uploadImage } from "@library/librarySlice";
+import { IMAGE_COMPRESSION_STRATEGIES } from "@library/imageCompression";
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -65,7 +66,7 @@ describe("library media assets", () => {
     })).toBe(true);
   });
 
-  it("stores uploaded bytes through the repository without creating a data URL", async () => {
+  it("compresses PNG uploads before repository storage without creating a data URL", async () => {
     class LoadedImage extends EventTarget {
       naturalHeight = 600;
       naturalWidth = 800;
@@ -79,20 +80,32 @@ describe("library media assets", () => {
     const revokeObjectURL = vi.spyOn(URL, "revokeObjectURL")
       .mockImplementation(() => undefined);
     vi.stubGlobal("Image", LoadedImage);
+    const drawImage = vi.fn();
+    vi.spyOn(HTMLCanvasElement.prototype, "getContext")
+      .mockReturnValue({ drawImage } as unknown as CanvasRenderingContext2D);
+    vi.spyOn(HTMLCanvasElement.prototype, "toBlob")
+      .mockImplementation((callback, type) => callback(new Blob(["webp"], { type: type ?? "" })));
     const file = new File(["image bytes"], "map.png", { type: "image/png" });
     const source = {
       kind: "local_asset" as const,
       assetId: "a".repeat(64),
-      byteLength: file.size
+      byteLength: 4
     };
     const storeLocalAsset = vi.fn(async () => source);
 
-    await expect(readLibraryMediaFile(file, storeLocalAsset)).resolves.toMatchObject({
+    await expect(readLibraryMediaFile(
+      file,
+      storeLocalAsset,
+      IMAGE_COMPRESSION_STRATEGIES.lossy_webp
+    )).resolves.toMatchObject({
       height: 600,
+      mediaType: "image/webp",
+      name: "map.webp",
       width: 800,
       source
     });
-    expect(storeLocalAsset).toHaveBeenCalledWith(file);
+    expect(storeLocalAsset).toHaveBeenCalledWith(expect.objectContaining({ type: "image/webp" }));
+    expect(drawImage).toHaveBeenCalledOnce();
     expect(createObjectURL).toHaveBeenCalledWith(file);
     expect(revokeObjectURL).toHaveBeenCalledWith("blob:upload-preview");
   });

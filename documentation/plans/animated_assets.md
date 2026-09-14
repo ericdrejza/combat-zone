@@ -57,3 +57,15 @@ safe for the current session. Workspace and encounter exports embed the bytes
 again, preserving portable, lossless files. A simultaneous canvas playback
 budget remains an optional follow-up if real-world profiling shows that many
 visible animations can still exhaust decoder resources.
+
+Settings → Data starts with an **Image compression strategy** preference.
+**None** is the default and preserves uploads byte-for-byte. **WebP (maximum
+quality)** uses canvas quality 1.0, while **WebP (balanced compression)** uses
+quality 0.88. Both keep the result only when smaller. Compression happens
+before the repository, so
+IndexedDB, portable exports, content hashes, and Firebase all use the same
+bytes and matching MIME metadata. Codec failures preserve the original, and
+animated PNG bypasses the single-frame canvas encoder.
+Browser-side MP4-to-WebM transcoding is intentionally excluded: browser codec
+availability varies, MediaRecorder is real-time rather than a deterministic
+file transcoder, and it can change or omit audio and animation timing.

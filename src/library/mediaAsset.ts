@@ -1,5 +1,7 @@
 import type { LibraryImageAsset } from "./types";
 import type { ImageAssetSource } from "@core/assets/imageAssetSource";
+import type { ImageCompressionStrategy } from "./imageCompression";
+import { getSelectedImageCompressionStrategy } from "./imageCompressionPreference";
 
 const VIDEO_MEDIA_TYPES = new Set(["video/mp4", "video/webm"]);
 const animatedWebpCache = new Map<string, boolean>();
@@ -92,7 +94,7 @@ export function isSupportedLibraryMediaFile(file: File): boolean {
   return getSupportedLibraryMediaType(file) !== null;
 }
 
-function readDataUrl(file: File): Promise<string> {
+function readDataUrl(file: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.addEventListener("load", () => {
@@ -130,38 +132,47 @@ function readImageDimensions(source: string): Promise<{ height: number; width: n
 /** Reads uploadable library media and records intrinsic dimensions when available. */
 export async function readLibraryMediaFile(
   file: File,
-  storeLocalAsset?: ((blob: Blob) => Promise<ImageAssetSource>) | null
+  storeLocalAsset?: ((blob: Blob) => Promise<ImageAssetSource>) | null,
+  compressionStrategy: ImageCompressionStrategy = getSelectedImageCompressionStrategy()
 ): Promise<LibraryImageAsset> {
   const mediaType = getSupportedLibraryMediaType(file);
   if (!mediaType) throw new Error("Only images, MP4, and WebM files are supported.");
 
-  const dataUrl = storeLocalAsset ? null : await readDataUrl(file);
-  const dimensionSource = dataUrl ?? URL.createObjectURL(file);
-  const fileBytes = mediaType === "image/webp" && "arrayBuffer" in file
-    ? await file.arrayBuffer()
+  const compressed = await compressionStrategy.compress(file, mediaType, file.name);
+  const storedBlob = compressed?.blob ?? file;
+  const storedMediaType = compressed?.mediaType ?? mediaType;
+  const storedName = compressed?.name ?? file.name;
+  const dataUrl = storeLocalAsset ? null : await readDataUrl(storedBlob);
+  const dimensionSource = compressed ? null : dataUrl ?? URL.createObjectURL(storedBlob);
+  const fileBytes = storedMediaType === "image/webp" && "arrayBuffer" in storedBlob
+    ? await storedBlob.arrayBuffer()
     : null;
-  const animated = mediaType === "image/webp" && fileBytes
+  const animated = storedMediaType === "image/webp" && fileBytes
     ? isAnimatedWebpBytes(new Uint8Array(fileBytes))
-    : mediaType === "image/webp" && dataUrl
+    : storedMediaType === "image/webp" && dataUrl
       ? isAnimatedEmbeddedWebp(dataUrl)
       : false;
   let dimensions: { height: number; width: number };
-  try {
-    dimensions = isVideoMediaType(mediaType)
-      ? await readVideoDimensions(dimensionSource)
-      : await readImageDimensions(dimensionSource);
-  } finally {
-    if (!dataUrl) URL.revokeObjectURL(dimensionSource);
+  if (compressed) {
+    dimensions = compressed;
+  } else {
+    try {
+      dimensions = isVideoMediaType(storedMediaType)
+        ? await readVideoDimensions(dimensionSource as string)
+        : await readImageDimensions(dimensionSource as string);
+    } finally {
+      if (!dataUrl) URL.revokeObjectURL(dimensionSource as string);
+    }
   }
   const source = storeLocalAsset
-    ? await storeLocalAsset(file)
+    ? await storeLocalAsset(storedBlob)
     : { kind: "embedded" as const, dataUrl: dataUrl as string };
 
   return {
     ...dimensions,
     ...(animated ? { animated: true } : {}),
-    mediaType,
-    name: file.name,
+    mediaType: storedMediaType,
+    name: storedName,
     source
   };
 }
