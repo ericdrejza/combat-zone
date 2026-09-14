@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type PropsWithChildren } from "react";
+import { createContext, useContext, useEffect, useRef, useState, type PropsWithChildren } from "react";
 import { directImageSourceUrl, type ImageAssetSource } from "./imageAssetSource";
 
 export type ImageAssetResolver = (source: ImageAssetSource) => Promise<Blob | string>;
@@ -82,13 +82,17 @@ export function ImageAssetResolverProvider({
 export function useResolvedImageSource(source: ImageAssetSource | null | undefined): string | null {
   const resolver = useContext(ResolverContext);
   const direct = source ? directImageSourceUrl(source) : null;
+  const resolutionKey = source ? sourceKey(source) : null;
+  const sourceRef = useRef(source);
+  sourceRef.current = source;
   const [resolved, setResolved] = useState<string | null>(direct);
 
   useEffect(() => {
     let cancelled = false;
     setResolved(direct);
-    if (!source || direct || !resolver) return;
-    const acquired = acquireResolvedSource(resolver, source);
+    const currentSource = sourceRef.current;
+    if (!currentSource || direct || !resolver) return;
+    const acquired = acquireResolvedSource(resolver, currentSource);
     void acquired.promise.then((value) => {
       if (cancelled) return;
       setResolved(value);
@@ -99,7 +103,7 @@ export function useResolvedImageSource(source: ImageAssetSource | null | undefin
       cancelled = true;
       acquired.release();
     };
-  }, [direct, resolver, source]);
+  }, [direct, resolutionKey, resolver]);
 
   return resolved;
 }
