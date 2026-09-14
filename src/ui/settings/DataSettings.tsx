@@ -2,6 +2,12 @@ import { Download, FileUp, Trash2 } from "lucide-react";
 import { useState } from "react";
 
 import { useOptionalCloudSync } from "@ui/cloud_sync";
+import {
+  IMAGE_COMPRESSION_OPTIONS,
+  readImageCompressionStrategyId,
+  writeImageCompressionStrategyId
+} from "@library/imageCompressionPreference";
+import type { ImageCompressionStrategyId } from "@library/imageCompression";
 
 const RESET_CONFIRMATION = "RESET LOCAL DATA";
 
@@ -19,6 +25,15 @@ export function DataSettings({ onClose, onExportWorkspace, onResetLocalData, onI
   const [confirmation, setConfirmation] = useState("");
   const [resetting, setResetting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [compressionStrategy, setCompressionStrategy] = useState(readImageCompressionStrategyId);
+  const compressionDescription = IMAGE_COMPRESSION_OPTIONS.find(
+    ({ value }) => value === compressionStrategy
+  )?.description;
+
+  function updateCompressionStrategy(strategy: ImageCompressionStrategyId) {
+    setCompressionStrategy(strategy);
+    writeImageCompressionStrategyId(strategy);
+  }
 
   async function handleReset() {
     setResetting(true);
@@ -37,6 +52,20 @@ export function DataSettings({ onClose, onExportWorkspace, onResetLocalData, onI
     <section className="p-5" aria-labelledby="settings-data-heading">
       <h3 id="settings-data-heading" className="font-display text-lg font-semibold">Data</h3>
       <p className="mt-1 text-sm text-canvas-muted">Export a backup or permanently remove this application's local data.</p>
+      <label className="mt-5 flex max-w-lg items-start justify-between gap-4 border-b border-canvas-line pb-5">
+        <span className="pt-2 text-sm font-medium">Image compression strategy</span>
+        <span className="w-60">
+          <select
+            aria-label="Image compression strategy"
+            className="w-full rounded-xl border border-canvas-line bg-canvas-surface px-3 py-2 text-sm"
+            onChange={(event) => updateCompressionStrategy(event.currentTarget.value as ImageCompressionStrategyId)}
+            value={compressionStrategy}
+          >
+            {IMAGE_COMPRESSION_OPTIONS.map(({ label, value }) => <option key={value} value={value}>{label}</option>)}
+          </select>
+          <span className="mt-1 block text-xs text-canvas-muted">{compressionDescription}</span>
+        </span>
+      </label>
       <div className="mt-4 flex flex-wrap gap-2">
         <button className="flex items-center gap-2 rounded-xl border border-canvas-line bg-canvas-surface px-4 py-2 text-sm font-medium transition hover:bg-canvas" onClick={onExportWorkspace} type="button"><Download aria-hidden="true" className="h-4 w-4" />Export workspace</button>
         <label className={`flex items-center gap-2 rounded-xl border border-canvas-line bg-canvas-surface px-4 py-2 text-sm font-medium transition ${readOnly ? "cursor-not-allowed opacity-50" : "cursor-pointer hover:bg-canvas"}`}>

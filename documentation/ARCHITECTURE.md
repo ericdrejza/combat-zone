@@ -83,6 +83,13 @@ entry-point rules remain in the persistence decision record.
   encounter, or the recovery draft. Deferring collection until the next
   writer-tab startup keeps session undo/redo references valid and prevents a
   read-only tab from collecting assets used by the active editor.
+- A persisted image-compression strategy runs before PNG/JPEG Library uploads
+  enter the authoritative asset store. The default stores original bytes;
+  opt-in maximum-quality and balanced WebP strategies keep only smaller valid
+  results.
+  This boundary keeps the local Blob, digest, exported bytes, MIME metadata,
+  and eventual Cloud Storage object identical. Codec failures preserve the
+  original upload, and animated PNGs bypass the single-frame canvas encoder.
 - Image-bearing domain fields use the shared `ImageAssetSource` union:
   embedded bytes, repository-backed local asset ID and byte length, HTTP(S)
   URL, Google Drive file ID, or Cloud Storage asset ID plus generation.
