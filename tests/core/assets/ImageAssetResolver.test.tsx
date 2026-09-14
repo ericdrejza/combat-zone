@@ -36,4 +36,33 @@ describe("ImageAssetResolver", () => {
     second.unmount();
     expect(revokeObjectURL).toHaveBeenCalledWith("blob:shared");
   });
+
+  it("keeps the resolved URL when an equivalent source object replaces the original", async () => {
+    const source: ImageAssetSource = {
+      kind: "local_asset",
+      assetId: "b".repeat(64),
+      byteLength: 5
+    };
+    const resolver = vi.fn(async () => new Blob(["asset"]));
+    vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:stable");
+    const revokeObjectURL = vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => undefined);
+    const wrapper = ({ children }: PropsWithChildren) => (
+      <ImageAssetResolverProvider resolve={resolver}>{children}</ImageAssetResolverProvider>
+    );
+    const hook = renderHook(
+      ({ imageSource }: { imageSource: ImageAssetSource }) =>
+        useResolvedImageSource(imageSource),
+      { initialProps: { imageSource: source }, wrapper }
+    );
+
+    await waitFor(() => expect(hook.result.current).toBe("blob:stable"));
+    hook.rerender({ imageSource: { ...source } });
+
+    expect(hook.result.current).toBe("blob:stable");
+    expect(resolver).toHaveBeenCalledTimes(1);
+    expect(revokeObjectURL).not.toHaveBeenCalled();
+
+    hook.unmount();
+    expect(revokeObjectURL).toHaveBeenCalledWith("blob:stable");
+  });
 });
