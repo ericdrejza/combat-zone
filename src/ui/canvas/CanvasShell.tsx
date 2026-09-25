@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 import type { LayoutPoint } from "@core/layout/types";
-import { useAltKey } from "@hooks/useAltKey";
+import { useHeldKeybind } from "@hooks/useHeldKeybind";
 import { useCompactLayout } from "@hooks/useCompactLayout";
 import { useMobileControls } from "@hooks/useMobileControls";
 import { deleteSelectedEntities } from "@interaction/selection/deleteSelectedEntities";
@@ -43,6 +43,7 @@ import { useActorRenderPlacements } from "./actors/useActorRenderPlacements";
 import { useCompactCanvasTransfer } from "./useCompactCanvasTransfer";
 import { TOUCH_NAVIGATION_START_EVENT } from "./useCanvasTouchGestures";
 import { TouchSelectionToggle } from "@ui/toolbar/TouchSelectionToggle";
+import { useKeybinds } from "@ui/keybinds";
 import {
   CompactPanelLauncher,
   type CompactPanelLauncherProps
@@ -79,6 +80,7 @@ export function CanvasShell({
   const zoneShapeMode = useSelector(
     (state: RootState) => state.interaction.zoneShapeMode
   );
+  const { bindings } = useKeybinds();
   const zonePaintBrush = useSelector(
     (state: RootState) => state.interaction.zonePaintBrush
   );
@@ -108,7 +110,9 @@ export function CanvasShell({
   const suppressNextCanvasClickUnconditionallyRef = useRef(false);
   const suppressNextCanvasClickPointRef = useRef<LayoutPoint | null>(null);
   const suppressNextEntityClickRef = useRef<string | null>(null);
-  const altKeyDown = useAltKey();
+  const showFactionOutlinesKeyDown = useHeldKeybind(
+    bindings["actor.showFactionOutlines"]
+  );
   const compactTransferPreview = useCompactCanvasTransfer({
     activeToolId,
     actorTool,
@@ -253,7 +257,8 @@ export function CanvasShell({
     polygonDraftBackgroundLuminance
   );
   const showFactionOutlines =
-    altKeyDown && (activeToolId === "actor" || activeToolId === "select");
+    showFactionOutlinesKeyDown &&
+    (activeToolId === "actor" || activeToolId === "select");
   const canvasStatus = getCanvasStatus(encounter, selection, hoveredActorId);
   const isDraggingCanvasEntity = Boolean(
     actorDrag?.phase === "dragging" ||

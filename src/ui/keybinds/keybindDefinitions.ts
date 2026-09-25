@@ -4,6 +4,7 @@ export const KEYBIND_DEFINITIONS = [
   { id: "actor.copy", label: "Copy selected actor", defaultBinding: "mod+c", editable: false },
   { id: "actor.paste", label: "Paste copied actor", defaultBinding: "mod+v", editable: false },
   { id: "actor.rename", label: "Rename selected actor", defaultBinding: "r", editable: true },
+  { id: "actor.showFactionOutlines", label: "Show actor faction outlines and names", defaultBinding: "o", editable: true },
   { id: "selection.selectAll", label: "Select all", defaultBinding: "mod+a", editable: false },
   { id: "tool.actor", label: "Activate Actor tool", defaultBinding: TOOL_DEFINITIONS_BY_ID.actor.contract.keyboardShortcut, editable: true },
   { id: "tool.annotation", label: "Activate Annotation tool", defaultBinding: TOOL_DEFINITIONS_BY_ID.annotation.contract.keyboardShortcut, editable: true },
@@ -22,7 +23,6 @@ export const DEFAULT_KEYBINDS = Object.fromEntries(
 ) as KeybindMap;
 
 export const FIXED_SHORTCUT_REFERENCES = [
-  { binding: "Hold Alt", label: "Show actor faction outlines" },
   { binding: "Ctrl/Cmd + Left-click", label: "Toggle a canvas or initiative selection" },
   { binding: "Ctrl/Cmd + Left-drag", label: "Clone a zone or drag selected actors together" },
   { binding: "Ctrl/Cmd + A", label: "Select all" },

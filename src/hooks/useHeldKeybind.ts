@@ -1,24 +1,28 @@
 import { useEffect, useState } from "react";
 
-/** Tracks Alt globally because the key changes canvas visuals without focus. */
-export function useAltKey() {
-  const [altKeyDown, setAltKeyDown] = useState(false);
+import { matchesKeybind } from "@ui/keybinds";
+
+/** Tracks a configurable shortcut while its key is held for transient canvas visuals. */
+export function useHeldKeybind(binding: string): boolean {
+  const [isHeld, setIsHeld] = useState(false);
 
   useEffect(() => {
+    setIsHeld(false);
+
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Alt") {
-        setAltKeyDown(true);
+      if (matchesKeybind(event, binding)) {
+        setIsHeld(true);
       }
     }
 
     function handleKeyUp(event: KeyboardEvent) {
-      if (event.key === "Alt") {
-        setAltKeyDown(false);
+      if (matchesKeybind(event, binding)) {
+        setIsHeld(false);
       }
     }
 
     function handleWindowBlur() {
-      setAltKeyDown(false);
+      setIsHeld(false);
     }
 
     window.addEventListener("keydown", handleKeyDown);
@@ -30,7 +34,7 @@ export function useAltKey() {
       window.removeEventListener("keyup", handleKeyUp);
       window.removeEventListener("blur", handleWindowBlur);
     };
-  }, []);
+  }, [binding]);
 
-  return altKeyDown;
+  return isHeld;
 }
