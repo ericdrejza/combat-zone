@@ -50,7 +50,7 @@ describe("CanvasShell rendering", () => {
     });
   });
 
-  it("outlines all actors by faction color while Alt is held in Actor or Select tool", () => {
+  it("outlines all actors and shows their names while O is held in Actor or Select tool", () => {
     store.dispatch(resetEncounterState());
     const zone: Zone = {
       colorBorder: "#9b876b",
@@ -99,6 +99,18 @@ describe("CanvasShell rendering", () => {
       {
         actorType: "creature",
         currentZoneId: zone.id,
+        id: "actor-ally",
+        image: { kind: "embedded", dataUrl: "data:image/png;base64,ally" },
+        layoutGroup: "ally",
+        metadata: {},
+        name: "Ally",
+        shape: "circle",
+        size: "medium",
+        statusEffects: []
+      },
+      {
+        actorType: "creature",
+        currentZoneId: zone.id,
         id: "actor-enemy",
         layoutGroup: "enemy",
         metadata: {},
@@ -136,7 +148,7 @@ describe("CanvasShell rendering", () => {
       </Provider>
     );
 
-    fireEvent.keyDown(window, { key: "Alt" });
+    fireEvent.keyDown(window, { key: "o" });
 
     expect(
       container.querySelector(
@@ -150,11 +162,20 @@ describe("CanvasShell rendering", () => {
     ).toBeInTheDocument();
     expect(
       container.querySelector(
+        `[stroke="${ACTOR_LAYOUT_GROUP_COLORS.ally.outline}"]`
+      )
+    ).toBeInTheDocument();
+    expect(
+      container.querySelector(
         `[stroke="${ACTOR_LAYOUT_GROUP_COLORS.enemy.outline}"]`
       )
     ).toBeInTheDocument();
+    expect(container.textContent).toContain("HERO");
+    expect(container.textContent).toContain("NEUTRAL");
+    expect(container.textContent).toContain("ALLY");
+    expect(container.textContent).toContain("ENEMY");
 
-    fireEvent.keyUp(window, { key: "Alt" });
+    fireEvent.keyUp(window, { key: "o" });
 
     expect(
       container.querySelector(

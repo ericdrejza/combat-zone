@@ -82,4 +82,41 @@ describe('ActorLayer', () => {
       '#ffffff'
     );
   });
+
+  it('shows names for every image actor while faction outlines are highlighted', () => {
+    const zone = createZone();
+    const actors = [
+      createActor(zone.id),
+      { ...createActor(zone.id), id: 'actor-2', name: 'Bastion' }
+    ];
+    const encounter = {
+      ...createEncounterState({ id: 'encounter-faction-labels', name: 'Test' }),
+      actors: collection(actors),
+      zones: collection([zone])
+    };
+
+    const { container } = render(
+      <svg>
+        <ActorLayer
+          actorDrag={null}
+          backgroundLuminanceByZoneId={{ [zone.id]: 0 }}
+          canvasBackgroundLuminance={255}
+          encounter={encounter}
+          placements={getActorRenderPlacements(encounter)}
+          onActorMouseEnter={() => undefined}
+          onActorMouseLeave={() => undefined}
+          selection={{
+            overlayTargets: [],
+            selectedEntityType: null,
+            selectedIds: []
+          }}
+          showFactionOutlines
+        />
+      </svg>
+    );
+
+    expect(container.querySelector('text')?.textContent).toBe('AEGIS');
+    expect(container.querySelectorAll('text[dy="46"]')).toHaveLength(2);
+    expect(container.textContent).toContain('BASTION');
+  });
 });

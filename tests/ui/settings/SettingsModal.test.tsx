@@ -142,6 +142,10 @@ describe("SettingsModal local reset", () => {
     const actorTool = screen.getByRole("button", {
       name: "Change Activate Actor tool keybind"
     });
+    const factionOutlineKeybind = screen.getByRole("button", {
+      name: "Change Show actor faction outlines and names keybind"
+    });
+    expect(factionOutlineKeybind).toHaveTextContent("O");
     await user.click(actorTool);
     fireEvent.keyDown(actorTool, { key: "g" });
     expect(actorTool).toHaveTextContent("G");

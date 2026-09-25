@@ -61,6 +61,7 @@ export const ActorVisual = memo(function ActorVisual({
     !enableAssetAnimation && (isAnimatedWebp || isVideo),
     isVideo ? "video" : "image"
   );
+  const showExternalActorName = Boolean(imageUrl) && (showFactionOutline || selected);
 
   return (
     <>
@@ -211,7 +212,7 @@ export const ActorVisual = memo(function ActorVisual({
           />
         )
       ) : null}
-      {selected && imageUrl ? (
+      {showExternalActorName ? (
         <motion.text
           className="pointer-events-none text-[10px] font-bold z-10"
           dominantBaseline="middle"
