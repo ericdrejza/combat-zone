@@ -13,6 +13,7 @@ import type {
 } from './selection/types';
 import { canToolSelectEntityType, type ToolId } from './tools/toolRegistry';
 import type { ZoneShape } from '@entities/zone/types';
+import type { AudioCueType, AudioSectionType } from '@entities/audio/types';
 import {
   DEFAULT_EDGE_PRESET,
   type EdgePreset
@@ -66,6 +67,10 @@ export type ActorToolState = {
 export type InteractionState = {
   actorPaintBrush: boolean;
   actorTool: ActorToolState;
+  audioTool: {
+    sectionType: AudioSectionType;
+    cueTypeBySection: Record<AudioSectionType, AudioCueType>;
+  };
   activeToolId: ToolId;
   /** Session-only modifier used by touch selection controls. */
   touchMultiSelect: boolean;
@@ -81,6 +86,7 @@ export type InteractionState = {
 
 export type SelectEntityPayload = EntitySelection & {
   toggle?: boolean;
+  userInitiated?: boolean;
 };
 
 export type FinishBoxSelectionPayload = EntitySelection & {
@@ -107,6 +113,14 @@ const initialState: InteractionState = {
     size: 'medium',
     targetZoneId: null
   },
+  audioTool: {
+    sectionType: 'encounter',
+    cueTypeBySection: {
+      encounter: 'loop',
+      zone: 'one_shot',
+      actor: 'one_shot'
+    },
+  },
   activeToolId: 'zone',
   touchMultiSelect: false,
   dragActionPreview: null,
@@ -127,6 +141,12 @@ function canSelect(
   state: InteractionState,
   entityType: SelectableEntityType
 ): boolean {
+  if (
+    state.activeToolId === 'audio' &&
+    (state.audioTool.sectionType === 'encounter' || state.audioTool.sectionType !== entityType)
+  ) {
+    return false;
+  }
   return canToolSelectEntityType(state.activeToolId, entityType);
 }
 
@@ -172,6 +192,27 @@ export const interactionSlice = createSlice({
       ) {
         state.selection = initialSelection;
       }
+    },
+    setAudioSectionType(state, { payload }: PayloadAction<AudioSectionType>) {
+      state.audioTool.sectionType = payload;
+      if (
+        (payload === 'zone' && state.selection.selectedEntityType !== 'zone') ||
+        (payload === 'actor' && state.selection.selectedEntityType !== 'actor') ||
+        payload === 'encounter'
+      ) {
+        state.selection = initialSelection;
+      }
+    },
+    setAudioCueType(state, { payload }: PayloadAction<AudioCueType>) {
+      if ((state.audioTool.sectionType === 'actor' || state.audioTool.sectionType === 'zone') && payload === 'loop') return;
+      state.audioTool.cueTypeBySection[state.audioTool.sectionType] = payload;
+    },
+    setAudioCueTypePresets(state, { payload }: PayloadAction<Record<AudioSectionType, AudioCueType>>) {
+      state.audioTool.cueTypeBySection = {
+        ...payload,
+        actor: payload.actor === 'loop' ? 'one_shot' : payload.actor,
+        zone: payload.zone === 'loop' ? 'one_shot' : payload.zone
+      };
     },
     setTouchMultiSelect(state, { payload }: PayloadAction<boolean>) {
       state.touchMultiSelect = payload;
@@ -346,6 +387,9 @@ export const interactionSlice = createSlice({
 
 export const {
   clearActorPaintBrush,
+  setAudioCueType,
+  setAudioCueTypePresets,
+  setAudioSectionType,
   setActorClipboardActor,
   setActorToolLayoutGroup,
   setActorToolShape,

@@ -85,8 +85,8 @@ export async function libraryPayload(
 ): Promise<LibraryPayload> {
   const state: LibraryState = clone(record.state);
   const ids = new Set<string>();
-  for (const sectionId of ["backgrounds", "tokens"] as const) {
-    for (const node of Object.values(state.sections[sectionId].nodesById)) {
+  for (const sectionId of ["backgrounds", "tokens", "audio"] as const) {
+    for (const node of Object.values(state.sections[sectionId]?.nodesById ?? {})) {
       if (node.type !== "image" || !node.asset) continue;
       node.asset.source = await cloudSource(node.asset.source, sectionId === "backgrounds" ? "background" : "token", node.asset.mediaType, assets);
       const id = assetId(node.asset.source);

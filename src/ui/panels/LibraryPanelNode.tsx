@@ -1,4 +1,5 @@
 import { FileImage, Folder, Link } from "lucide-react";
+import { AudioAssetIcon } from "@ui/library/AudioAssetIcon";
 import type { DragEvent, PointerEvent } from "react";
 
 import type { LibraryImageAsset, LibraryNode } from "@library/types";
@@ -14,9 +15,11 @@ type LibraryPanelNodeProps = {
   asset?: LibraryImageAsset | null;
   buttonRef?: (button: HTMLButtonElement | null) => void;
   isBackground: boolean;
+  isAudio?: boolean;
   isToken: boolean;
   node: LibraryNode;
   onClick: () => void;
+  onDoubleClick?: () => void;
   onDragEnd: () => void;
   onDragStart: (event: DragEvent<HTMLElement>, imageUrl: string | null) => void;
   onNavigate: () => void;
@@ -28,9 +31,11 @@ export function LibraryPanelNode({
   asset,
   buttonRef,
   isBackground,
+  isAudio,
   isToken,
   node,
   onClick,
+  onDoubleClick,
   onDragEnd,
   onDragStart,
   onNavigate,
@@ -71,6 +76,7 @@ export function LibraryPanelNode({
 
   return (
     <button
+      aria-label={isAudio ? node.name : undefined}
       className={`group flex w-full touch-none select-none rounded-xl px-3 py-2 text-left text-sm transition hover:bg-canvas ${
         viewMode === "grid"
           ? "min-w-0 flex-col items-stretch gap-1"
@@ -82,9 +88,10 @@ export function LibraryPanelNode({
             ? "cursor-pointer"
             : "cursor-default"
       }`}
-      draggable={false}
+      draggable={isAudio}
       ref={buttonRef}
       onClick={onClick}
+      onDoubleClick={onDoubleClick}
       onDragStart={(event) => onDragStart(event, imageUrl)}
       onDragEnd={onDragEnd}
       onPointerDown={onPointerDown}
@@ -95,7 +102,9 @@ export function LibraryPanelNode({
           viewMode === "grid" ? "aspect-square w-full" : "h-16 w-16 flex-none"
         }`}
       >
-        {asset ? (
+        {isAudio ? (
+          <AudioAssetIcon asset={asset} className="h-7 w-7" />
+        ) : asset ? (
           videoAsset && enableAssetAnimation ? (
             <ControlledVideo
               className="h-full w-full object-cover transition duration-150 ease-out group-hover:scale-[1.2]"

@@ -94,7 +94,7 @@ export function ZoneToolButton({
             aria-pressed={selected}
             className={`flex h-11 min-w-11 shrink-0 items-center justify-center gap-2 rounded-full border px-2 text-sm font-medium shadow-sm transition hover:bg-canvas lg:h-auto lg:min-w-0 lg:px-3 lg:py-1.5 ${toolButtonClassName}`}
             onClick={() => {
-              dispatch(setActiveTool("zone"));
+              dispatch(setActiveTool(selected ? "select" : "zone"));
             }}
             title={tool.tooltip}
             type="button"

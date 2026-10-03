@@ -95,7 +95,7 @@ describe("PanelsShell", () => {
 
     renderApp();
 
-    expect(screen.getByText("Actor or Background tools show library assets here.")).toBeInTheDocument();
+    expect(screen.getByText("Actor, Background, or Audio tools show library assets here.")).toBeInTheDocument();
     expect(
       screen.getByText("Add actors to begin tracking initiative.")
     ).toBeInTheDocument();
@@ -111,7 +111,7 @@ describe("PanelsShell", () => {
       screen.getByText("Add actors to begin tracking initiative.")
     ).toBeInTheDocument();
     expect(
-      screen.queryByText("Actor or Background tools show library assets here.")
+      screen.queryByText("Actor, Background, or Audio tools show library assets here.")
     ).not.toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Expand Library panel" })
@@ -136,7 +136,7 @@ describe("PanelsShell", () => {
 
     await user.click(screen.getByRole("button", { name: "Open settings" }));
     await user.click(screen.getByRole("tab", { name: "Interface" }));
-    const panels = screen.getByRole("group", { name: "Panel Visibility" });
+    const panels = screen.getByRole("group", { name: "Visibility" });
 
     await user.click(within(panels).getByRole("switch", {
       name: "Properties panel visibility"
@@ -153,6 +153,9 @@ describe("PanelsShell", () => {
 
     await user.click(within(panels).getByRole("switch", {
       name: "Initiative panel visibility"
+    }));
+    await user.click(within(panels).getByRole("switch", {
+      name: "Audio panel visibility"
     }));
     expect(screen.getByLabelText("Status panel")).toHaveAttribute(
       "data-panel-stretch",
@@ -199,7 +202,7 @@ describe("PanelsShell", () => {
 
     expect(
       within(leftDock)
-        .getAllByRole("heading")
+        .getAllByRole("heading", { level: 2 })
         .map((heading) => heading.textContent)
     ).toEqual(["Status", "Library", "Properties", "Log"]);
     expect(
@@ -215,7 +218,7 @@ describe("PanelsShell", () => {
 
     await user.click(screen.getByRole("button", { name: "Open settings" }));
     await user.click(screen.getByRole("tab", { name: "Interface" }));
-    const visibility = screen.getByRole("group", { name: "Panel Visibility" });
+    const visibility = screen.getByRole("group", { name: "Visibility" });
     await user.click(within(visibility).getByRole("switch", {
       name: "Initiative panel visibility"
     }));
@@ -409,7 +412,7 @@ describe("PanelsShell", () => {
 
     expect(
       within(leftDock)
-        .getAllByRole("heading")
+        .getAllByRole("heading", { level: 2 })
         .map((heading) => heading.textContent)
     ).toEqual(["Library", "Status", "Properties", "Log"]);
   });
@@ -485,7 +488,7 @@ describe("PanelsShell", () => {
     });
     const rightDock = screen.getByLabelText("right docked panels");
     const rightBottomDropZone = screen.getByLabelText(
-      "Drop panel 2 in right docked panels"
+      "Drop panel 3 in right docked panels"
     );
 
     fireEvent.dragStart(libraryHandle, { dataTransfer });
@@ -497,9 +500,9 @@ describe("PanelsShell", () => {
 
     expect(
       within(rightDock)
-        .getAllByRole("heading")
+        .getAllByRole("heading", { level: 2 })
         .map((heading) => heading.textContent)
-    ).toEqual(["Initiative", "Status", "Library"]);
+    ).toEqual(["Initiative", "Status", "Audio", "Library"]);
   });
 
   it("uses open dock space as a drop target and keeps the bottom insertion marker visible", () => {
@@ -513,7 +516,7 @@ describe("PanelsShell", () => {
     });
     const rightDock = screen.getByLabelText("right docked panels");
     const rightBottomDropZone = screen.getByLabelText(
-      "Drop panel 2 in right docked panels"
+      "Drop panel 3 in right docked panels"
     );
 
     fireEvent.dragStart(libraryHandle, { dataTransfer });
@@ -525,8 +528,8 @@ describe("PanelsShell", () => {
 
     expect(
       within(rightDock)
-        .getAllByRole("heading")
+        .getAllByRole("heading", { level: 2 })
         .map((heading) => heading.textContent)
-    ).toEqual(["Initiative", "Status", "Library"]);
+    ).toEqual(["Initiative", "Status", "Audio", "Library"]);
   });
 });

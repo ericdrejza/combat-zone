@@ -12,7 +12,7 @@ import {
 import { uploadImage } from "@library/librarySlice";
 import { commitEncounterChange } from "@store/encounterSlice";
 import { store } from "@store/store";
-import { getCanvas, mockCanvasBounds, renderApp } from "@tests/ui/renderApp";
+import { getCanvas, mockCanvasBounds, renderApp, selectZoneTool } from "@tests/ui/renderApp";
 import { dataTransfer, dropOnCanvas } from "./LibraryPanel.test_support";
 
 describe("LibraryPanel", () => {
@@ -353,7 +353,7 @@ describe("LibraryPanel", () => {
     renderApp();
     const canvas = getCanvas();
     mockCanvasBounds(canvas);
-    await user.click(screen.getByRole("button", { name: "Zone" }));
+    await selectZoneTool(user);
     fireEvent.mouseDown(canvas, { button: 0, clientX: 100, clientY: 100 });
     fireEvent.mouseMove(canvas, { clientX: 320, clientY: 280 });
     fireEvent.mouseUp(canvas);

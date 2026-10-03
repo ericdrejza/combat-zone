@@ -7,6 +7,7 @@ export const KEYBIND_DEFINITIONS = [
   { id: "actor.showFactionOutlines", label: "Show actor faction outlines and names", defaultBinding: "o", editable: true },
   { id: "selection.selectAll", label: "Select all", defaultBinding: "mod+a", editable: false },
   { id: "tool.actor", label: "Activate Actor tool", defaultBinding: TOOL_DEFINITIONS_BY_ID.actor.contract.keyboardShortcut, editable: true },
+  { id: "tool.audio", label: "Activate Audio tool", defaultBinding: TOOL_DEFINITIONS_BY_ID.audio.contract.keyboardShortcut, editable: true },
   { id: "tool.annotation", label: "Activate Annotation tool", defaultBinding: TOOL_DEFINITIONS_BY_ID.annotation.contract.keyboardShortcut, editable: true },
   { id: "tool.background", label: "Activate Background tool", defaultBinding: TOOL_DEFINITIONS_BY_ID.background.contract.keyboardShortcut, editable: true },
   { id: "tool.edge", label: "Activate Edge tool", defaultBinding: TOOL_DEFINITIONS_BY_ID.edge.contract.keyboardShortcut, editable: true },

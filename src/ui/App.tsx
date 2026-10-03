@@ -61,6 +61,13 @@ import {
   getWorkspaceColumns,
   resolveVisibleDropTarget
 } from "./panels/panelVisibilityLayout";
+import { AudioPlaybackProvider } from "./audio/AudioPlaybackProvider";
+import { AudioTriggerBridge } from "./audio/AudioTriggerBridge";
+import { AudioPanel, AudioPanelHeaderActions } from "./panels/AudioPanel";
+import { SoundboardProvider } from "./audio/SoundboardProvider";
+import { useAudioCueAssignment } from "./audio/useAudioCueAssignment";
+import type { AudioCuePlacement } from "@entities/audio/types";
+import { OPEN_AUDIO_LIBRARY_EVENT } from "./audio/audioLibraryEvents";
 
 type SidebarCollapsedState = Record<DockSide, boolean>;
 
@@ -113,11 +120,22 @@ function AppContent() {
     useState<LibraryViewMode>("list");
   const [renameModalOpen, setRenameModalOpen] = useState(false);
   const [encounterRenameOpen, setEncounterRenameOpen] = useState(false);
+  const [showAudioCueVolumes, setShowAudioCueVolumes] = useState(false);
+  const audioAssignment = useAudioCueAssignment();
   const persistenceUi = useAppPersistenceUi({
+    onAudioDoubleClick: addAudioCueFromLibrary,
     onActorTokenSelect: applyActorTokenFromLibrary,
     onBackgroundDoubleClick: applyBackgroundFromLibrary,
     onTokenDoubleClick: focusTokenInLibrary
   });
+
+  useEffect(() => {
+    const openAudioLibrary = (event: Event) => {
+      persistenceUi.openAudioLibraryForCue((event as CustomEvent<AudioCuePlacement>).detail);
+    };
+    window.addEventListener(OPEN_AUDIO_LIBRARY_EVENT, openAudioLibrary);
+    return () => window.removeEventListener(OPEN_AUDIO_LIBRARY_EVENT, openAudioLibrary);
+  }, [persistenceUi.openAudioLibraryForCue]);
   const effectivePanelLayout = libraryAutoCollapsedBySelect
     ? mapLibraryPanel(panelLayout, (panel) => ({ ...panel, collapsed: true }))
     : panelLayout;
@@ -226,6 +244,11 @@ function AppContent() {
     });
     setLibraryAutoCollapsedBySelect(false);
     dispatch(setActiveTool("actor"));
+  }
+
+  function addAudioCueFromLibrary(node: LibraryNode, placement?: AudioCuePlacement) {
+    if (placement) audioAssignment.addToGroup(node, placement);
+    else audioAssignment.requestDestination(node);
   }
 
   function applyBackgroundFromLibrary(node: LibraryNode) {
@@ -356,6 +379,8 @@ function AppContent() {
       return <InitiativePanel />;
     }
 
+    if (panel.id === "audio") return <AudioPanel showVolume={showAudioCueVolumes} />;
+
     if (panel.id === "zoneless") {
       return <CompactZonelessActorPanel />;
     }
@@ -383,6 +408,10 @@ function AppContent() {
 
     if (panel.id === "log") {
       return <LogPanelHeaderActions />;
+    }
+
+    if (panel.id === "audio") {
+      return <AudioPanelHeaderActions onToggleVolume={() => setShowAudioCueVolumes((shown) => !shown)} showVolume={showAudioCueVolumes} />;
     }
 
     return undefined;
@@ -420,6 +449,8 @@ function AppContent() {
               ? "backgrounds"
               : activeToolId === "actor"
                 ? "tokens"
+                : activeToolId === "audio"
+                  ? "audio"
                 : "encounters"
           )
         }
@@ -509,6 +540,7 @@ function AppContent() {
         ) : null}
       </main>
       {persistenceUi.dialogs}
+      {audioAssignment.dialog}
       {renameModalOpen ? (
         <ActorRenameModal onClose={() => setRenameModalOpen(false)} />
       ) : null}
@@ -526,11 +558,16 @@ export function App() {
   return (
     <ThemeProvider>
       <InterfacePreferenceProvider>
-        <KeybindProvider>
-          <CanvasViewportProvider>
-            <AppContent />
-          </CanvasViewportProvider>
-        </KeybindProvider>
+        <AudioPlaybackProvider>
+          <SoundboardProvider>
+            <AudioTriggerBridge />
+            <KeybindProvider>
+              <CanvasViewportProvider>
+                <AppContent />
+              </CanvasViewportProvider>
+            </KeybindProvider>
+          </SoundboardProvider>
+        </AudioPlaybackProvider>
       </InterfacePreferenceProvider>
     </ThemeProvider>
   );

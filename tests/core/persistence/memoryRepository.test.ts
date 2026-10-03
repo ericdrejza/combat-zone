@@ -45,6 +45,7 @@ describe("InMemoryWorkspaceRepository", () => {
       allIds: ["zone"],
       byId: {
         zone: {
+          audioGroupIds: [],
           autoResize: false,
           colorBorder: "#000000",
           colorFill: "#ffffff",
@@ -66,6 +67,7 @@ describe("InMemoryWorkspaceRepository", () => {
       allIds: ["actor"],
       byId: {
         actor: {
+          audioGroupIds: [],
           actorType: "creature",
           currentZoneId: "zone",
           id: "actor",

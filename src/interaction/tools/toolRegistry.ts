@@ -6,7 +6,8 @@ export type ToolId =
   | "edge"
   | "actor"
   | "annotation"
-  | "background";
+  | "background"
+  | "audio";
 
 export type ToolInteractionContract = {
   selectableEntityTypes: SelectableEntityType[];
@@ -87,6 +88,17 @@ export const MVP_TOOLS: ToolDefinition[] = [
       dragBehavior: "Accept native image drops to add or replace the canvas background.",
       clickBehavior: "Open background image actions.",
       keyboardShortcut: "b"
+    }
+  },
+  {
+    id: "audio",
+    label: "Audio",
+    tooltip: "Assign and configure encounter audio.",
+    contract: {
+      selectableEntityTypes: ["zone", "actor"],
+      dragBehavior: "Assign audio cues to the selected owner type.",
+      clickBehavior: "Select a zone or actor audio owner.",
+      keyboardShortcut: "m"
     }
   }
 ];

@@ -13,6 +13,7 @@ import {
   ThemeProvider
 } from "@ui/theme/ThemeProvider";
 import { DEFAULT_DOCKABLE_PANEL_VISIBILITY } from "@ui/panels/dockablePanelMetadata";
+import { DEFAULT_ENCOUNTER_PANEL_ORDER } from "@core/encounter/panelLayout";
 
 describe("InterfaceSettings", () => {
   afterEach(() => {
@@ -72,9 +73,22 @@ describe("InterfaceSettings", () => {
     expect(assetAnimation).not.toBeChecked();
     expect(pan).not.toBeChecked();
     expect(JSON.parse(localStorage.getItem(INTERFACE_PREFERENCES_STORAGE_KEY)!)).toEqual({
+      audioMasterVolume: 1,
+      audioCueVolumeDefault: 0.5,
+      audioMediaKeyScope: "music",
+      audioCueTypeDefaults: {
+        encounter: "loop",
+        zone: "one_shot",
+        actor: "one_shot"
+      },
+      audioRepeatDelayDefaults: {
+        minimumDelaySeconds: 0,
+        maximumDelaySeconds: 0
+      },
       autoSelectActiveActor: false,
       enableAssetAnimation: false,
       encounterCreationTool: "zone",
+      panelOrder: DEFAULT_ENCOUNTER_PANEL_ORDER,
       panelVisibility: DEFAULT_DOCKABLE_PANEL_VISIBILITY,
       panWithRightClickDrag: false,
       zoneColorDefaults: DEFAULT_ZONE_COLOR_DEFAULTS,
@@ -174,13 +188,15 @@ describe("InterfaceSettings", () => {
       .toMatchObject({ zoneColorDefaults: { border: null } });
   });
 
-  it("lists panel visibility controls alphabetically with eye icons", async () => {
+  it("groups panel visibility under Panels and lists controls alphabetically", async () => {
     const user = userEvent.setup();
     renderSettings();
-    const panels = screen.getByRole("group", { name: "Panel Visibility" });
-    const switches = within(panels).getAllByRole("switch");
+    const panels = screen.getByRole("region", { name: "Panels" });
+    const visibility = within(panels).getByRole("group", { name: "Visibility" });
+    const switches = within(visibility).getAllByRole("switch");
 
     expect(switches.map((control) => control.getAttribute("aria-label"))).toEqual([
+      "Audio panel visibility",
       "Initiative panel visibility",
       "Library panel visibility",
       "Log panel visibility",
@@ -190,14 +206,44 @@ describe("InterfaceSettings", () => {
     expect(switches.every((control) => control.getAttribute("aria-checked") === "true")).toBe(true);
     expect(switches.every((control) => control.querySelector(".lucide-eye"))).toBe(true);
 
-    await user.click(within(panels).getByRole("switch", {
+    await user.click(within(visibility).getByRole("switch", {
       name: "Library panel visibility"
     }));
-    const libraryVisibility = within(panels).getByRole("switch", {
+    const libraryVisibility = within(visibility).getByRole("switch", {
       name: "Library panel visibility"
     });
     expect(libraryVisibility).toHaveAttribute("aria-checked", "false");
     expect(libraryVisibility.querySelector(".lucide-eye-off")).not.toBeNull();
+  });
+
+  it("persists panel order separately from encounter layouts", async () => {
+    const user = userEvent.setup();
+    renderSettings();
+    const order = screen.getByRole("group", { name: "Order" });
+    const left = within(order).getByRole("list", { name: "Default left panel order" });
+    const right = within(order).getByRole("list", { name: "Default right panel order" });
+
+    expect(within(left).getAllByRole("listitem").map((item) => item.textContent)).toEqual([
+      expect.stringContaining("Library"),
+      expect.stringContaining("Properties"),
+      expect.stringContaining("Log")
+    ]);
+    expect(within(right).getAllByRole("listitem").map((item) => item.textContent)).toEqual([
+      expect.stringContaining("Initiative"),
+      expect.stringContaining("Status"),
+      expect.stringContaining("Audio")
+    ]);
+
+    await user.click(within(order).getByRole("button", { name: "Move Audio to left" }));
+    await user.click(within(order).getByRole("button", { name: "Move Audio up" }));
+
+    expect(JSON.parse(localStorage.getItem(INTERFACE_PREFERENCES_STORAGE_KEY)!))
+      .toMatchObject({
+        panelOrder: {
+          left: ["library", "properties", "audio", "log"],
+          right: ["initiative", "status"]
+        }
+      });
   });
 
   it("loads the saved theme and returns to light when preferences reset", () => {

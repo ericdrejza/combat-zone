@@ -13,9 +13,16 @@ describe("Toolbar tools and options", () => {
 
     renderApp();
 
+    await user.click(screen.getByRole("button", { name: "Background" }));
     await user.click(screen.getByRole("button", { name: "Zone" }));
 
     expect(screen.getByRole("button", { name: "Zone" })).toHaveAttribute(
+      "aria-pressed",
+      "true"
+    );
+
+    await user.click(screen.getByRole("button", { name: "Zone" }));
+    expect(screen.getByRole("button", { name: "Select" })).toHaveAttribute(
       "aria-pressed",
       "true"
     );

@@ -7,6 +7,8 @@ import { AssetImagePreview } from "./AssetImagePreview";
 import { AssetLibraryAssetTypeIcon } from "./AssetLibraryAssetTypeIcon";
 import { getUploadedAssetSizeLabel } from "./assetFileSize";
 import type { AssetLibraryViewMode } from "./assetLibraryView";
+import { isAudioMediaType } from "@library/mediaAsset";
+import { AudioAssetIcon } from "./AudioAssetIcon";
 
 type AssetLibraryContentNodeProps = {
   asset: LibraryImageAsset | null;
@@ -96,6 +98,8 @@ export function AssetLibraryContentNode({
       >
         {node.type === "folder" ? (
           <Folder aria-hidden="true" className={listView ? "h-5 w-5" : "h-10 w-10"} />
+        ) : asset && isAudioMediaType(asset.mediaType) ? (
+          <AudioAssetIcon asset={asset} className={listView ? "h-5 w-5" : "h-10 w-10"} />
         ) : node.type === "link" ? (
           <>
             {asset ? (

@@ -6,12 +6,20 @@ import {
   useState
 } from "react";
 
+import { isAudioCueType, readAudioCueVolumeDefault, readAudioRepeatDelayDefaults } from "./audioPreferences";
+
 import { LOCAL_PREFERENCES_RESET_EVENT } from "@ui/motion_preferences/MotionPreferenceProvider";
 import {
   DEFAULT_DOCKABLE_PANEL_VISIBILITY,
   type DockablePanelId,
   type DockablePanelVisibility
 } from "@ui/panels/dockablePanelMetadata";
+import { DEFAULT_AUDIO_REPEAT_DELAY_SETTINGS, type AudioCueType, type AudioRepeatDelaySettings } from "@entities/audio/types";
+import {
+  DEFAULT_ENCOUNTER_PANEL_ORDER,
+  isEncounterPanelOrder,
+  type EncounterPanelOrder
+} from "@core/encounter/panelLayout";
 
 export const INTERFACE_PREFERENCES_STORAGE_KEY =
   "combat-zone.interface-preferences";
@@ -31,9 +39,15 @@ export const DEFAULT_ZONE_COLOR_DEFAULTS: ZoneColorDefaults = {
 };
 
 type DurableInterfacePreferences = {
+  audioCueVolumeDefault: number;
+  audioMediaKeyScope: "all" | "music";
+  audioMasterVolume: number;
+  audioCueTypeDefaults: Record<"encounter" | "zone" | "actor", AudioCueType>;
+  audioRepeatDelayDefaults: AudioRepeatDelaySettings;
   autoSelectActiveActor: boolean;
   enableAssetAnimation: boolean;
   encounterCreationTool: EncounterCreationTool;
+  panelOrder: EncounterPanelOrder;
   panelVisibility: DockablePanelVisibility;
   panWithRightClickDrag: boolean;
   zoneColorDefaults: ZoneColorDefaults;
@@ -42,9 +56,15 @@ type DurableInterfacePreferences = {
 };
 
 type InterfacePreferences = DurableInterfacePreferences & {
+  setAudioCueVolumeDefault: (volume: number) => void;
+  setAudioMediaKeyScope: (scope: "all" | "music") => void;
+  setAudioMasterVolume: (volume: number) => void;
+  setAudioCueTypeDefault: (owner: "encounter" | "zone" | "actor", type: AudioCueType) => void;
+  setAudioRepeatDelayDefaults: (settings: AudioRepeatDelaySettings) => void;
   autoSelectActiveActorDefault: boolean;
   setAutoSelectActiveActor: (enabled: boolean) => void;
   setEncounterCreationTool: (tool: EncounterCreationTool) => void;
+  setPanelOrder: (order: EncounterPanelOrder) => void;
   setEnableAssetAnimation: (enabled: boolean) => void;
   setAutoSelectActiveActorDefault: (enabled: boolean) => void;
   setPanelVisible: (panelId: DockablePanelId, visible: boolean) => void;
@@ -55,9 +75,15 @@ type InterfacePreferences = DurableInterfacePreferences & {
 };
 
 const defaultPreferences: DurableInterfacePreferences = {
+  audioCueVolumeDefault: 0.5,
+  audioMediaKeyScope: "music",
+  audioMasterVolume: 1,
+  audioCueTypeDefaults: { encounter: "loop", zone: "one_shot", actor: "one_shot" },
+  audioRepeatDelayDefaults: { ...DEFAULT_AUDIO_REPEAT_DELAY_SETTINGS },
   autoSelectActiveActor: true,
   enableAssetAnimation: true,
   encounterCreationTool: "zone",
+  panelOrder: DEFAULT_ENCOUNTER_PANEL_ORDER,
   panelVisibility: DEFAULT_DOCKABLE_PANEL_VISIBILITY,
   panWithRightClickDrag: true,
   zoneColorDefaults: DEFAULT_ZONE_COLOR_DEFAULTS,
@@ -68,8 +94,14 @@ const defaultPreferences: DurableInterfacePreferences = {
 const defaultValue: InterfacePreferences = {
   ...defaultPreferences,
   autoSelectActiveActorDefault: true,
+  setAudioCueVolumeDefault: () => undefined,
+  setAudioMediaKeyScope: () => undefined,
+  setAudioMasterVolume: () => undefined,
+  setAudioCueTypeDefault: () => undefined,
+  setAudioRepeatDelayDefaults: () => undefined,
   setAutoSelectActiveActor: () => undefined,
   setEncounterCreationTool: () => undefined,
+  setPanelOrder: () => undefined,
   setEnableAssetAnimation: () => undefined,
   setAutoSelectActiveActorDefault: () => undefined,
   setPanelVisible: () => undefined,
@@ -92,6 +124,18 @@ function readPreferences(): DurableInterfacePreferences {
       localStorage.getItem(INTERFACE_PREFERENCES_STORAGE_KEY) ?? "null"
     ) as Partial<DurableInterfacePreferences> | null;
     return {
+      audioCueVolumeDefault: readAudioCueVolumeDefault(stored?.audioCueVolumeDefault),
+      audioMediaKeyScope: stored?.audioMediaKeyScope === "all" ? "all" : "music",
+      audioMasterVolume:
+        typeof stored?.audioMasterVolume === "number" && stored.audioMasterVolume >= 0 && stored.audioMasterVolume <= 1
+          ? stored.audioMasterVolume
+          : 1,
+      audioCueTypeDefaults: {
+        encounter: isAudioCueType(stored?.audioCueTypeDefaults?.encounter) ? stored.audioCueTypeDefaults.encounter : "loop",
+        zone: "one_shot",
+        actor: "one_shot"
+      },
+      audioRepeatDelayDefaults: readAudioRepeatDelayDefaults(stored?.audioRepeatDelayDefaults),
       autoSelectActiveActor:
         typeof stored?.autoSelectActiveActor === "boolean"
           ? stored.autoSelectActiveActor
@@ -105,6 +149,9 @@ function readPreferences(): DurableInterfacePreferences {
         stored?.encounterCreationTool === "zone"
           ? stored.encounterCreationTool
           : defaultPreferences.encounterCreationTool,
+      panelOrder: isEncounterPanelOrder(stored?.panelOrder)
+        ? stored.panelOrder
+        : DEFAULT_ENCOUNTER_PANEL_ORDER,
       panelVisibility: {
         initiative:
           typeof stored?.panelVisibility?.initiative === "boolean"
@@ -125,6 +172,10 @@ function readPreferences(): DurableInterfacePreferences {
         status:
           typeof stored?.panelVisibility?.status === "boolean"
             ? stored.panelVisibility.status
+            : true,
+        audio:
+          typeof stored?.panelVisibility?.audio === "boolean"
+            ? stored.panelVisibility.audio
             : true
       },
       panWithRightClickDrag:
@@ -156,6 +207,11 @@ function readPreferences(): DurableInterfacePreferences {
   } catch {
     return defaultPreferences;
   }
+}
+
+/** Reads the durable creation default for code paths outside the React provider. */
+export function readPanelOrderPreference(): EncounterPanelOrder {
+  return readPreferences().panelOrder;
 }
 
 /** Owns durable interface defaults that must not enter encounter history. */
@@ -199,13 +255,21 @@ export function InterfacePreferenceProvider({ children }: { children: ReactNode 
     <InterfacePreferenceContext.Provider
       value={{
         ...preferences,
+        setAudioCueVolumeDefault: (volume) => updatePreferences({ audioCueVolumeDefault: readAudioCueVolumeDefault(volume) }),
+        setAudioMediaKeyScope: (audioMediaKeyScope) => updatePreferences({ audioMediaKeyScope }),
         autoSelectActiveActor,
         autoSelectActiveActorDefault: preferences.autoSelectActiveActor,
+        setAudioMasterVolume: (audioMasterVolume) => updatePreferences({ audioMasterVolume }),
+        setAudioCueTypeDefault: (owner, type) => updatePreferences({
+          audioCueTypeDefaults: { ...preferences.audioCueTypeDefaults, [owner]: owner === "zone" || owner === "actor" ? "one_shot" : type }
+        }),
+        setAudioRepeatDelayDefaults: (settings) => updatePreferences({ audioRepeatDelayDefaults: readAudioRepeatDelayDefaults(settings) }),
         setAutoSelectActiveActor,
         setAutoSelectActiveActorDefault: (enabled) =>
           updatePreferences({ autoSelectActiveActor: enabled }),
         setEncounterCreationTool: (encounterCreationTool) =>
           updatePreferences({ encounterCreationTool }),
+        setPanelOrder: (panelOrder) => updatePreferences({ panelOrder }),
         setEnableAssetAnimation: (enabled) =>
           updatePreferences({ enableAssetAnimation: enabled }),
         setPanelVisible: (panelId, visible) =>

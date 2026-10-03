@@ -8,6 +8,7 @@ import { InterfaceSettings } from "./InterfaceSettings";
 import { KeybindSettings } from "./KeybindSettings";
 import { SettingsSidebar } from "./SettingsSidebar";
 import type { SettingsTabId } from "./settingsTabs";
+import { AudioSettings } from "./AudioSettings";
 
 type SettingsModalProps = {
   onClose: () => void;
@@ -38,6 +39,7 @@ export function SettingsModal(props: SettingsModalProps) {
         <CloudSyncSettings />
       </section>
     );
+    if (activeTab === "audio") return <AudioSettings />;
     if (activeTab === "data") return <DataSettings {...props} />;
     if (activeTab === "interface") return <InterfaceSettings />;
     if (activeTab === "keybinds") return <KeybindSettings />;

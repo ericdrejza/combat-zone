@@ -1,4 +1,10 @@
 import { assertEncounterState, validateExportEnvelope } from "./envelope";
+import {
+  hydrateEncounterRecord,
+  hydrateLibraryRecord,
+  hydrateManifest,
+  hydrateRecoveryDraft
+} from "./hydratePersistedRecords";
 import { InMemoryWorkspaceRepository, createEmptyLibraryState } from "./memoryRepository";
 import {
   EXPORT_SCHEMA_VERSION,
@@ -87,7 +93,7 @@ export class IndexedDbWorkspaceRepository implements WorkspaceRepository {
 
   async initialize(): Promise<WorkspaceManifest> {
     const manifest = await this.read<WorkspaceManifest>(STORE_MANIFEST, MANIFEST_KEY);
-    if (manifest) return clone(manifest);
+    if (manifest) return clone(hydrateManifest(manifest));
     const timestamp = now();
     const initial: WorkspaceManifest = { schemaVersion: WORKSPACE_SCHEMA_VERSION, activeEncounterId: null, revision: 0, updatedAt: timestamp };
     await this.write([STORE_MANIFEST, STORE_LIBRARY], async (transaction) => {
@@ -98,7 +104,10 @@ export class IndexedDbWorkspaceRepository implements WorkspaceRepository {
     return clone(initial);
   }
 
-  async getManifest(): Promise<WorkspaceManifest> { return clone((await this.read<WorkspaceManifest>(STORE_MANIFEST, MANIFEST_KEY)) ?? (await this.initialize())); }
+  async getManifest(): Promise<WorkspaceManifest> {
+    const manifest = await this.read<WorkspaceManifest>(STORE_MANIFEST, MANIFEST_KEY);
+    return clone(manifest ? hydrateManifest(manifest) : await this.initialize());
+  }
 
   async saveManifest(manifest: WorkspaceManifest): Promise<WorkspaceManifest> {
     if (manifest.schemaVersion !== WORKSPACE_SCHEMA_VERSION || manifest.revision < 0) throw new PersistenceValidationError("Invalid workspace manifest.");
@@ -134,10 +143,16 @@ export class IndexedDbWorkspaceRepository implements WorkspaceRepository {
     const transaction = database.transaction(STORE_ENCOUNTERS, "readonly");
     const records = await request(transaction.objectStore(STORE_ENCOUNTERS).getAll());
     await transactionComplete(transaction);
-    return (records as EncounterRecord[]).sort((a, b) => a.updatedAt - b.updatedAt).map(clone);
+    return (records as EncounterRecord[])
+      .sort((a, b) => a.updatedAt - b.updatedAt)
+      .map(hydrateEncounterRecord)
+      .map(clone);
   }
 
-  async getEncounter(id: string): Promise<EncounterRecord | null> { return clone((await this.read<EncounterRecord>(STORE_ENCOUNTERS, id)) ?? null); }
+  async getEncounter(id: string): Promise<EncounterRecord | null> {
+    const record = await this.read<EncounterRecord>(STORE_ENCOUNTERS, id);
+    return record ? clone(hydrateEncounterRecord(record)) : null;
+  }
 
   async saveEncounter(state: EncounterState, options: RepositorySaveOptions = {}): Promise<EncounterRecord> {
     assertEncounterState(state);
@@ -202,7 +217,10 @@ export class IndexedDbWorkspaceRepository implements WorkspaceRepository {
     });
   }
 
-  async getRecoveryDraft(): Promise<RecoveryDraftRecord | null> { return clone((await this.read<RecoveryDraftRecord>(STORE_RECOVERY, RECOVERY_KEY)) ?? null); }
+  async getRecoveryDraft(): Promise<RecoveryDraftRecord | null> {
+    const record = await this.read<RecoveryDraftRecord>(STORE_RECOVERY, RECOVERY_KEY);
+    return record ? clone(hydrateRecoveryDraft(record)) : null;
+  }
 
   async saveRecoveryDraft(state: EncounterState): Promise<RecoveryDraftRecord> {
     assertEncounterState(state);
@@ -225,7 +243,14 @@ export class IndexedDbWorkspaceRepository implements WorkspaceRepository {
     });
   }
 
-  async getLibrary(): Promise<LibraryRecord> { return clone((await this.read<LibraryRecord>(STORE_LIBRARY, LIBRARY_KEY)) ?? { state: createEmptyLibraryState(), revision: 0, updatedAt: now() }); }
+  async getLibrary(): Promise<LibraryRecord> {
+    const record = await this.read<LibraryRecord>(STORE_LIBRARY, LIBRARY_KEY) ?? {
+      state: createEmptyLibraryState(),
+      revision: 0,
+      updatedAt: now()
+    };
+    return clone(hydrateLibraryRecord(record));
+  }
 
   async saveLibrary(state: LibraryState): Promise<LibraryRecord> {
     const previous = await this.getLibrary();

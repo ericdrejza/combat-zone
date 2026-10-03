@@ -263,6 +263,7 @@ export function useCanvasPointerHandlers(input: PointerHandlerInput) {
         selectEntity({
           entityType: 'actor',
           ids: [actorId],
+          userInitiated: true,
           toggle: multiSelect
         })
       );

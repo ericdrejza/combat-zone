@@ -37,8 +37,8 @@ async function embedEncounter(state: EncounterState, resolve: ResolveAsset, fail
 }
 
 async function embedLibrary(state: LibraryState, resolve: ResolveAsset, failures: string[]) {
-  for (const sectionId of ["backgrounds", "tokens"] as const) {
-    for (const node of Object.values(state.sections[sectionId].nodesById)) {
+  for (const sectionId of ["backgrounds", "tokens", "audio"] as const) {
+    for (const node of Object.values(state.sections[sectionId]?.nodesById ?? {})) {
       if (node.type !== "image" || !node.asset) continue;
       try { node.asset.source = await embedded(node.asset.source, resolve); }
       catch { failures.push(node.name); }

@@ -1,4 +1,4 @@
-import { Folder, FolderUp, Grid2X2, HardDrive, List, Play } from "lucide-react";
+import { Folder, FolderUp, Grid2X2, HardDrive, Headphones, List, Play } from "lucide-react";
 import { useTime, useTransform } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import type { DragEvent, PointerEvent as ReactPointerEvent } from "react";
@@ -17,10 +17,12 @@ import type {
 } from "./assetLibraryView";
 import { DEFAULT_ASSET_LIBRARY_CONTEXT_BUTTON_STATE } from "./assetLibraryView";
 import { useAssetLibraryPreview } from "./useAssetLibraryPreview";
+import { PersistentLibraryPreview } from "./PersistentLibraryPreview";
 import type { EncounterRecord } from "@core/persistence";
 import { useInterfacePreferences } from "@ui/interface_preferences/InterfacePreferenceProvider";
 
 type AssetLibraryContentsProps = {
+  audioPreviewContainer?: HTMLElement | null;
   activeSection: LibrarySection;
   currentFolder: LibraryNode;
   draggedItemId?: string | null;
@@ -76,6 +78,7 @@ type AssetLibraryContentsProps = {
 };
 
 export function AssetLibraryContents({
+  audioPreviewContainer,
   activeSection,
   currentFolder,
   draggedItemId = null,
@@ -117,7 +120,7 @@ export function AssetLibraryContents({
   );
   const contextButtonState =
     controlledContextButtonState ?? localContextButtonState;
-  const { playAnimations, showAssetSizes } = contextButtonState;
+  const { playAnimations, previewAudio, showAssetSizes } = contextButtonState;
   const { enableAssetAnimation } = useInterfacePreferences();
   const viewMode = controlledViewMode ?? localViewMode;
 
@@ -138,7 +141,7 @@ export function AssetLibraryContents({
     previewTarget,
     schedulePreviewClear
   } = useAssetLibraryPreview({
-    resetKey: `${currentFolder.id}:${viewMode}`
+    resetKey: `${currentFolder.id}:${activeSection.id === "audio" ? "audio" : viewMode}`
   });
   const loadingRotation = useTransform(time, (milliseconds) =>
     `rotate(${(milliseconds / 1000) * 360}deg)`
@@ -201,14 +204,14 @@ export function AssetLibraryContents({
     (record) => record.id === selectedNodeId
   );
   const selectedPreviewTarget =
-    viewMode === "list"
+    viewMode === "list" || activeSection.id === "audio"
       ? selectedNode
         ? getNodePreviewTarget(selectedNode)
         : selectedEncounter
           ? getEncounterPreviewTarget(selectedEncounter)
           : null
       : null;
-  const displayedPreviewTarget = previewTarget ?? selectedPreviewTarget;
+  const displayedPreviewTarget = activeSection.id === "audio" ? selectedPreviewTarget : previewTarget ?? selectedPreviewTarget;
 
   function toggleViewMode() {
     const nextViewMode = viewMode === "grid" ? "list" : "grid";
@@ -253,17 +256,18 @@ export function AssetLibraryContents({
           {activeSection.id !== "encounters" ? (
             <>
               <button
-                aria-label="Play animated assets"
-                aria-pressed={playAnimations}
-                className={`flex h-8 w-8 flex-none items-center justify-center rounded-full border transition ${playAnimations ? "border-canvas-ink bg-canvas-ink text-canvas-on-ink" : "border-canvas-line bg-canvas-surface text-canvas-muted hover:bg-canvas"} disabled:cursor-not-allowed disabled:border-canvas-line disabled:bg-canvas disabled:text-canvas-muted disabled:opacity-50`}
-                disabled={!enableAssetAnimation}
-                onClick={() =>
-                  updateContextButtonState({ playAnimations: !playAnimations })
+                aria-label={activeSection.id === "audio" ? "Preview audio" : "Play animated assets"}
+                aria-pressed={activeSection.id === "audio" ? previewAudio : playAnimations}
+                className={`flex h-8 w-8 flex-none items-center justify-center rounded-full border transition ${(activeSection.id === "audio" ? previewAudio : playAnimations) ? "border-canvas-ink bg-canvas-ink text-canvas-on-ink" : "border-canvas-line bg-canvas-surface text-canvas-muted hover:bg-canvas"} disabled:cursor-not-allowed disabled:border-canvas-line disabled:bg-canvas disabled:text-canvas-muted disabled:opacity-50`}
+                disabled={activeSection.id !== "audio" && !enableAssetAnimation}
+                onClick={() => activeSection.id === "audio"
+                  ? updateContextButtonState({ previewAudio: !previewAudio })
+                  : updateContextButtonState({ playAnimations: !playAnimations })
                 }
-                title={enableAssetAnimation ? "Play animated assets" : "Animations are disabled in Interface settings."}
+                title={activeSection.id === "audio" ? "Preview audio" : enableAssetAnimation ? "Play animated assets" : "Animations are disabled in Interface settings."}
                 type="button"
               >
-                <Play aria-hidden="true" className="h-4 w-4" />
+                {activeSection.id === "audio" ? <Headphones aria-hidden="true" className="h-4 w-4" /> : <Play aria-hidden="true" className="h-4 w-4" />}
               </button>
               <button
             aria-label="Show uploaded asset sizes"
@@ -352,10 +356,10 @@ export function AssetLibraryContents({
                 }}
                 onPointerCancel={endPreviewInteraction}
                 onPointerDown={(event) => {
-                  beginPreviewInteraction(event, target);
+                  if (activeSection.id !== "audio") beginPreviewInteraction(event, target);
                   if (!readOnly) onPointerDownNode(event, node);
                 }}
-                onPointerEnter={(event) => beginPreviewInteraction(event, target)}
+                onPointerEnter={(event) => { if (activeSection.id !== "audio") beginPreviewInteraction(event, target); }}
                 onPointerLeave={() => {
                   if (largeHoverPreview) schedulePreviewClear();
                 }}
@@ -410,27 +414,21 @@ export function AssetLibraryContents({
             );
           })}
         </div>
-        {viewMode === "list" && largeHoverPreview ? (
-          <div
-            className="hidden h-full min-h-0 min-w-0 border-l border-canvas-line pl-4 lg:block"
+        {(activeSection.id === "audio" ? Boolean(displayedPreviewTarget) : viewMode === "list" && (largeHoverPreview || Boolean(previewTarget))) ? (
+          <PersistentLibraryPreview
+            container={activeSection.id === "audio" && viewMode === "grid" ? audioPreviewContainer : null}
+            className={viewMode === "list" && largeHoverPreview ? "hidden h-full min-h-0 min-w-0 border-l border-canvas-line pl-4 lg:block" : "mt-4 min-w-0"}
             onPointerEnter={clearPreviewClearTimer}
-            onPointerLeave={schedulePreviewClear}
+            onPointerLeave={largeHoverPreview ? schedulePreviewClear : undefined}
           >
             <AssetLibraryPreview
+              compact={activeSection.id === "audio" && viewMode === "grid" && Boolean(audioPreviewContainer)}
+              playAudio={previewAudio}
               playAnimations={playAnimations}
               rotation={loadingRotation}
               target={displayedPreviewTarget}
             />
-          </div>
-        ) : null}
-        {viewMode === "list" && !largeHoverPreview && previewTarget ? (
-          <div className="mt-4 min-w-0">
-            <AssetLibraryPreview
-              playAnimations={playAnimations}
-              rotation={loadingRotation}
-              target={displayedPreviewTarget}
-            />
-          </div>
+          </PersistentLibraryPreview>
         ) : null}
       </div>
     </section>

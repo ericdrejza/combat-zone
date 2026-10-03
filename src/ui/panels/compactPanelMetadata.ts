@@ -1,5 +1,6 @@
 import {
   Activity,
+  AudioLines,
   BookOpen,
   CircleOff,
   Library,
@@ -15,6 +16,7 @@ export const COMPACT_PANEL_IDS = [
   'properties',
   'log',
   'status',
+  'audio',
   'initiative',
   'zoneless'
 ] as const;
@@ -33,6 +35,7 @@ export const COMPACT_PANEL_DEFINITIONS: readonly CompactPanelDefinition[] = [
   { id: 'zoneless', title: 'Zoneless', Icon: CircleOff },
   { id: 'properties', title: 'Properties', Icon: SlidersHorizontal },
   { id: 'status', title: 'Status', Icon: Activity },
+  { id: 'audio', title: 'Audio', Icon: AudioLines },
   { id: 'initiative', title: 'Initiative', Icon: ListOrdered }
 ];
 

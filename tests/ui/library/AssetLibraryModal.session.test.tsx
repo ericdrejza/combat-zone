@@ -186,6 +186,25 @@ describe("AssetLibraryModal session state", () => {
     );
   });
 
+  it("keeps Audio preview independent from visual asset animation previews", async () => {
+    const user = await openBackgroundLibrary();
+    const visualPreview = screen.getByRole("button", { name: "Play animated assets" });
+    expect(visualPreview).toHaveAttribute("aria-pressed", "true");
+
+    await user.click(screen.getByRole("tab", { name: "Audio" }));
+    const audioPreview = screen.getByRole("button", { name: "Preview audio" });
+    expect(audioPreview).toHaveAttribute("aria-pressed", "false");
+    expect(audioPreview).toHaveAttribute("title", "Preview audio");
+    await user.click(audioPreview);
+    expect(audioPreview).toHaveAttribute("aria-pressed", "true");
+
+    await user.click(screen.getByRole("tab", { name: "Backgrounds" }));
+    expect(screen.getByRole("button", { name: "Play animated assets" })).toHaveAttribute("aria-pressed", "true");
+    await user.click(screen.getByRole("button", { name: "Play animated assets" }));
+    await user.click(screen.getByRole("tab", { name: "Audio" }));
+    expect(screen.getByRole("button", { name: "Preview audio" })).toHaveAttribute("aria-pressed", "true");
+  });
+
   it("expands only the remembered folder path when reopened", async () => {
     const user = await openBackgroundLibrary();
 

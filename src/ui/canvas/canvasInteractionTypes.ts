@@ -87,6 +87,7 @@ export type CanvasInteractionState = {
   actorRenderPlacements: ActorRenderPlacement[];
   actorPaintBrush: RootState['interaction']['actorPaintBrush'];
   actorTool: RootState['interaction']['actorTool'];
+  audioTool: RootState['interaction']['audioTool'];
   boxSelection: LocalBoxSelectionState | null;
   canvasRef: MutableRefValue<SVGSVGElement | null>;
   dispatch: AppDispatch;

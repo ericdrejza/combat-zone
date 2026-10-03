@@ -28,7 +28,8 @@ describe("interaction engine", () => {
       "edge",
       "actor",
       "annotation",
-      "background"
+      "background",
+      "audio"
     ]);
 
     for (const tool of MVP_TOOLS) {

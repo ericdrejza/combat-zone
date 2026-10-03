@@ -3,8 +3,8 @@ import type { LibraryState } from "@library/types";
 import type { ImageAssetSource } from "@core/assets/imageAssetSource";
 
 /** Current versions describe the persisted wrapper, not the encounter model. */
-export const WORKSPACE_SCHEMA_VERSION = 2 as const;
-export const EXPORT_SCHEMA_VERSION = 2 as const;
+export const WORKSPACE_SCHEMA_VERSION = 3 as const;
+export const EXPORT_SCHEMA_VERSION = 3 as const;
 
 export type WorkspaceSchemaVersion = typeof WORKSPACE_SCHEMA_VERSION;
 export type ExportSchemaVersion = typeof EXPORT_SCHEMA_VERSION;

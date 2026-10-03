@@ -1,4 +1,4 @@
-import type { DragEvent } from 'react';
+import { useState, type DragEvent } from 'react';
 
 import { ZONELESS_ACTOR_ZONE_ID } from '@core/encounter/types';
 import type { AppDispatch } from '@store/store';
@@ -27,10 +27,23 @@ import {
 } from '../../panels/zoneless_actors/zonelessActorDrag';
 import { toSvgPoint } from '../zones/zoneGeometry';
 import { useCanvasViewport } from '../CanvasViewportContext';
+import { createAudioCue } from '@entities/audio/audioMutations';
+import { createEncounterActionRecord } from '@core/history/createEncounterActionRecord';
+import { commitEncounterChange } from '@store/encounterSlice';
+import { resolveLibraryAsset } from '@library/librarySlice';
+import { useInterfacePreferences } from '@ui/interface_preferences/InterfacePreferenceProvider';
+import { useAudioCueAssignment } from '@ui/audio/useAudioCueAssignment';
+import type { AudioCuePlacement } from '@entities/audio/types';
+
+type PendingAudioDrop = {
+  groupIds: string[];
+  nodeId: string;
+};
 
 type UseCanvasDropHandlersInput = {
   activeToolId: RootState['interaction']['activeToolId'];
   actorTool: RootState['interaction']['actorTool'];
+  audioTool: RootState['interaction']['audioTool'];
   dispatch: AppDispatch;
   encounter: RootState['encounter']['present'];
   library: RootState['library'];
@@ -39,10 +52,14 @@ type UseCanvasDropHandlersInput = {
 export function useCanvasDropHandlers({
   activeToolId,
   actorTool,
+  audioTool,
   dispatch,
   encounter,
   library
 }: UseCanvasDropHandlersInput) {
+  const { audioRepeatDelayDefaults, audioCueVolumeDefault } = useInterfacePreferences();
+  const audioAssignment = useAudioCueAssignment();
+  const [pendingAudioDrop, setPendingAudioDrop] = useState<PendingAudioDrop | null>(null);
   const { getViewportSize, zoom: viewportZoom } = useCanvasViewport();
   const mutationContext = {
     actorTool,
@@ -50,6 +67,31 @@ export function useCanvasDropHandlers({
     encounter,
     library
   };
+
+  function commitAudioDrop(nodeId: string, placement: AudioCuePlacement) {
+    const cueId = `audio-${crypto.randomUUID?.() ?? Date.now()}`;
+    dispatch(commitEncounterChange({
+      action: createEncounterActionRecord('audio.createCue', { cueId, libraryNodeId: nodeId }),
+      nextEncounter: createAudioCue(encounter, {
+        id: cueId,
+        repeatDelay: { ...audioRepeatDelayDefaults },
+        volume: audioCueVolumeDefault,
+        libraryNodeId: nodeId,
+        placement,
+        type: encounter.audioCueGroups.byId[placement.groupId]?.section === 'music'
+          ? 'loop'
+          : audioTool.cueTypeBySection[encounter.audioCueGroups.byId[placement.groupId]?.section === 'ambiance'
+            ? 'encounter'
+            : encounter.audioCueGroups.byId[placement.groupId]?.section === 'actor' ? 'actor' : 'zone']
+      })
+    }));
+  }
+
+  function choosePendingAudioGroup(groupId: string) {
+    if (!pendingAudioDrop) return;
+    if (pendingAudioDrop.groupIds.includes(groupId)) commitAudioDrop(pendingAudioDrop.nodeId, { type: 'group', groupId });
+    setPendingAudioDrop(null);
+  }
 
   function handleActorCreationDropToZoneless(event: DragEvent<HTMLElement>) {
     if (activeToolId !== 'actor') {
@@ -96,6 +138,12 @@ export function useCanvasDropHandlers({
       externalFiles &&
       (activeToolId === 'background' || activeToolId === 'actor')
     ) {
+      event.preventDefault();
+      event.dataTransfer.dropEffect = 'copy';
+      return;
+    }
+
+    if (activeToolId === 'audio' && Array.from(event.dataTransfer.types).includes(LIBRARY_NODE_DRAG_TYPE)) {
       event.preventDefault();
       event.dataTransfer.dropEffect = 'copy';
       return;
@@ -148,6 +196,39 @@ export function useCanvasDropHandlers({
           viewportZoom
         );
       }
+      return;
+    }
+
+    if (activeToolId === 'audio') {
+      const nodeId = event.dataTransfer.getData(LIBRARY_NODE_DRAG_TYPE);
+      if (!nodeId || !resolveLibraryAsset(library.sections.audio, nodeId)) return;
+      const entity = (event.target as Element).closest<SVGElement>('[data-entity-id]');
+      const actorId = entity?.dataset.entityType === 'actor'
+        ? entity.dataset.entityId
+        : undefined;
+      const point = toSvgPoint(event, event.currentTarget);
+      const zoneId = entity?.dataset.entityType === 'zone'
+        ? entity.dataset.entityId
+        : entity?.dataset.entityType === 'actor'
+          ? encounter.actors.byId[entity.dataset.entityId as string]?.currentZoneId
+          : findZoneIdAtPoint(encounter, point);
+      if (audioTool.sectionType === 'encounter') {
+        event.preventDefault();
+        audioAssignment.requestDestination(library.sections.audio.nodesById[nodeId], {
+          sectionType: 'encounter', cueType: audioTool.cueTypeBySection.encounter
+        });
+        return;
+      }
+      const entityId = audioTool.sectionType === 'actor' ? actorId : zoneId && zoneId !== ZONELESS_ACTOR_ZONE_ID ? zoneId : undefined;
+      const groupIds = entityId
+        ? audioTool.sectionType === 'actor'
+          ? encounter.actors.byId[entityId]?.audioGroupIds ?? []
+          : encounter.zones.byId[entityId]?.audioGroupIds ?? []
+        : [];
+      if (!groupIds.length) return;
+      event.preventDefault();
+      if (groupIds.length > 1) setPendingAudioDrop({ groupIds, nodeId });
+      else commitAudioDrop(nodeId, { type: 'group', groupId: groupIds[0] });
       return;
     }
 
@@ -230,9 +311,13 @@ export function useCanvasDropHandlers({
   }
 
   return {
+    cancelPendingAudioDrop: () => setPendingAudioDrop(null),
+    choosePendingAudioGroup,
     handleActorCreationDragOverZoneless,
     handleActorCreationDropToZoneless,
     handleCanvasDragOver,
-    handleCanvasDrop
+    handleCanvasDrop,
+    pendingAudioDrop,
+    audioDestinationDialog: audioAssignment.dialog
   };
 }

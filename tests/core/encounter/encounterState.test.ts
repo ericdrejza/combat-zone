@@ -185,6 +185,9 @@ describe('EncounterState foundation', () => {
       actors: { byId: {}, allIds: [] },
       engagements: { byId: {}, allIds: [] },
       annotations: { byId: {}, allIds: [] },
+      audioCues: { byId: {}, allIds: [] },
+      audioCueGroups: { byId: {}, allIds: [] },
+      musicGroupIds: [],
       initiativeTracker: {
         entries: [],
         currentActorId: null,
@@ -198,7 +201,8 @@ describe('EncounterState foundation', () => {
         ],
         right: [
           { id: 'initiative', collapsed: false },
-          { id: 'status', collapsed: false }
+          { id: 'status', collapsed: false },
+          { id: 'audio', collapsed: false }
         ]
       },
       validationState: {

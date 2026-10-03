@@ -70,6 +70,7 @@ describe("Toolbar motion and navigation", () => {
       "Edge",
       "Annotation",
       "Actor",
+      "Audio",
       "Select",
       "",
       ""
@@ -79,7 +80,7 @@ describe("Toolbar motion and navigation", () => {
     expect(screen.getByRole("button", { name: "Engage selected actors" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Disengage selected actors" })).toBeDisabled();
     expect(screen.queryByRole("button", { name: "Delete" })).not.toBeInTheDocument();
-    expect(within(tools).getAllByRole("separator")).toHaveLength(6);
+    expect(within(tools).getAllByRole("separator")).toHaveLength(7);
   });
 
   it("shows drag action previews with the activated toolbar color", () => {

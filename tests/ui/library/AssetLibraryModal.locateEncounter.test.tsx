@@ -114,6 +114,21 @@ function createLibraryState(): LibraryState {
             childIds: []
           }
         }
+      },
+      audio: {
+        id: "audio",
+        name: "Audio",
+        rootId: "audio-root",
+        nodesById: {
+          "audio-root": {
+            id: "audio-root",
+            name: "Audio",
+            parentId: null,
+            sectionId: "audio",
+            type: "folder",
+            childIds: []
+          }
+        }
       }
     }
   };

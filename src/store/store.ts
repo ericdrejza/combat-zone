@@ -6,6 +6,7 @@ import encounterLogReducer from "./encounterLogSlice";
 import { encounterLogMiddleware } from "./encounterLogMiddleware";
 import libraryReducer from "@library/librarySlice";
 import { persistenceWriteGuardMiddleware } from "./persistenceWriteGuardMiddleware";
+import { audioTriggerMiddleware } from "./audioTriggerMiddleware";
 
 export const store = configureStore({
   reducer: {
@@ -17,6 +18,7 @@ export const store = configureStore({
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(
       persistenceWriteGuardMiddleware,
+      audioTriggerMiddleware,
       encounterLogMiddleware
     )
 });

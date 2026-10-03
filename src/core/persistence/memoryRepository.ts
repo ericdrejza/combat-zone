@@ -27,7 +27,12 @@ import {
 const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
 
 export function createEmptyLibraryState(): LibraryState {
-  const labels = { encounters: "Encounters", backgrounds: "Backgrounds", tokens: "Tokens" } as const;
+  const labels = {
+    encounters: "Encounters",
+    backgrounds: "Backgrounds",
+    tokens: "Tokens",
+    audio: "Audio"
+  } as const;
   const sections = Object.fromEntries(
     (Object.keys(labels) as Array<keyof typeof labels>).map((id) => {
       const rootId = `${id}-root`;
@@ -243,9 +248,10 @@ export class InMemoryWorkspaceRepository implements WorkspaceRepository {
     const importedLibrary = clone(envelope.workspace.library.state);
     const libraryIdMap = new Map<string, string>();
     const mergedLibrary = clone(this.library.state);
-    for (const sectionId of ["encounters", "backgrounds", "tokens"] as const) {
+    for (const sectionId of ["encounters", "backgrounds", "tokens", "audio"] as const) {
       const destination = mergedLibrary.sections[sectionId];
       const source = importedLibrary.sections[sectionId];
+      if (!destination || !source) continue;
       const usedNodeIds = new Set(Object.keys(destination.nodesById));
       for (const sourceNode of Object.values(source.nodesById)) {
         if (sourceNode.id === source.rootId) {

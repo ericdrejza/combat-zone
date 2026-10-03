@@ -73,6 +73,7 @@ export function CanvasShell({
     (state: RootState) => state.interaction.activeToolId
   );
   const actorTool = useSelector((state: RootState) => state.interaction.actorTool);
+  const audioTool = useSelector((state: RootState) => state.interaction.audioTool);
   const edgeTool = useSelector((state: RootState) => state.interaction.edgeTool);
   const actorPaintBrush = useSelector(
     (state: RootState) => state.interaction.actorPaintBrush
@@ -210,6 +211,7 @@ export function CanvasShell({
     actorRenderPlacements,
     actorPaintBrush,
     actorTool,
+    audioTool,
     boxSelection,
     canvasRef,
     dispatch,
@@ -241,13 +243,18 @@ export function CanvasShell({
   });
 
   const {
+    cancelPendingAudioDrop,
+    choosePendingAudioGroup,
     handleActorCreationDragOverZoneless,
     handleActorCreationDropToZoneless,
     handleCanvasDragOver,
-    handleCanvasDrop
+    handleCanvasDrop,
+    pendingAudioDrop,
+    audioDestinationDialog
   } = useCanvasDropHandlers({
     activeToolId,
     actorTool,
+    audioTool,
     dispatch,
     encounter,
     library
@@ -415,6 +422,20 @@ export function CanvasShell({
       ) : null}
       {compactTransferPreview ? (
         <CanvasTransferPreview preview={compactTransferPreview} />
+      ) : null}
+      {audioDestinationDialog}
+      {pendingAudioDrop ? (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/30 p-4" role="presentation">
+          <div aria-label="Choose audio group" aria-modal="true" className="w-full max-w-sm space-y-4 rounded-2xl border border-canvas-line bg-canvas-panel p-5 shadow-xl" role="dialog">
+            <div><h2 className="font-display text-lg font-semibold">Choose an audio group</h2><p className="mt-1 text-sm text-canvas-muted">This entity inherits multiple groups. Choose the destination.</p></div>
+            <div className="space-y-2">{pendingAudioDrop.groupIds.map((groupId) => {
+              const group = encounter.audioCueGroups.byId[groupId];
+              const cueNames = encounter.audioCues.allIds.filter((id) => encounter.audioCues.byId[id].placement.type === 'group' && encounter.audioCues.byId[id].placement.groupId === groupId).map((id) => library.sections.audio.nodesById[encounter.audioCues.byId[id].libraryNodeId]?.name).filter(Boolean);
+              return <button className="block w-full rounded-xl border border-canvas-line p-3 text-left" key={groupId} onClick={() => choosePendingAudioGroup(groupId)} type="button"><span className="block font-semibold">{group?.name ?? "Missing group"}</span><span className="block text-xs text-canvas-muted">{cueNames.join(", ") || "No cues"}</span></button>;
+            })}</div>
+            <div className="flex justify-end"><button className="rounded-full border border-canvas-line px-4 py-2 text-sm" onClick={cancelPendingAudioDrop} type="button">Cancel</button></div>
+          </div>
+        </div>
       ) : null}
     </section>
   );

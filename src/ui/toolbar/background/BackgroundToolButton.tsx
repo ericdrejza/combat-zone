@@ -207,7 +207,7 @@ export function BackgroundToolButton({
                 : "border-canvas-line bg-canvas-surface text-canvas-ink"
             }`}
             onClick={() => {
-              dispatch(setActiveTool("background"));
+              dispatch(setActiveTool(selected ? "select" : "background"));
             }}
             title={tool.tooltip}
             type="button"

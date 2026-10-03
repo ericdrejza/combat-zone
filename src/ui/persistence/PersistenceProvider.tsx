@@ -35,7 +35,10 @@ import {
 } from "@ui/motion_preferences/MotionPreferenceProvider";
 import type { SaveStatus } from "@ui/toolbar/EncounterTitleControls";
 import { THEME_STORAGE_KEY } from "@ui/theme/ThemeProvider";
-import { INTERFACE_PREFERENCES_STORAGE_KEY } from "@ui/interface_preferences/InterfacePreferenceProvider";
+import {
+  INTERFACE_PREFERENCES_STORAGE_KEY,
+  readPanelOrderPreference
+} from "@ui/interface_preferences/InterfacePreferenceProvider";
 import { IMAGE_COMPRESSION_STORAGE_KEY } from "@library/imageCompressionPreference";
 import { useWorkspaceWriterLock } from "@hooks/useWorkspaceWriterLock";
 import {
@@ -54,7 +57,8 @@ function createEncounterId(): string {
 function createDraft(): EncounterState {
   return createEncounterState({
     id: createEncounterId(),
-    name: "Untitled Encounter"
+    name: "Untitled Encounter",
+    panelOrder: readPanelOrderPreference()
   });
 }
 

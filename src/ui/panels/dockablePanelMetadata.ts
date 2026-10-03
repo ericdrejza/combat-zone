@@ -1,6 +1,7 @@
 import type { EncounterPanelId } from "@core/encounter/panelLayout";
 
 export const DOCKABLE_PANEL_DEFINITIONS = [
+  { id: "audio", title: "Audio", description: "Encounter audio controls." },
   { id: "initiative", title: "Initiative" },
   { id: "library", title: "Library" },
   { id: "log", title: "Log" },
@@ -17,7 +18,8 @@ export const DEFAULT_DOCKABLE_PANEL_VISIBILITY: DockablePanelVisibility = {
   library: true,
   log: true,
   properties: true,
-  status: true
+  status: true,
+  audio: true
 };
 
 export function isDockablePanelId(value: string): value is DockablePanelId {

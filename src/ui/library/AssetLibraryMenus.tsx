@@ -1,5 +1,7 @@
 import {
   Copy,
+  AudioLines,
+  Music,
   Download,
   ExternalLink,
   FileImage,
@@ -9,7 +11,8 @@ import {
 } from "lucide-react";
 import { useState, type RefObject } from "react";
 
-import type { LibraryNode } from "@library/types";
+import type { LibraryImageAsset, LibraryNode } from "@library/types";
+import { isAudioMediaType } from "@library/mediaAsset";
 import { AssetSourceMenu, type AssetSourceType } from "./AssetLibraryAddMenu";
 
 export type ContextMenuState = {
@@ -96,6 +99,8 @@ export function EncounterContextMenu({
 }
 
 type AssetContextMenuProps = {
+  audioAsset?: LibraryImageAsset | null;
+  onSetAudioIcon?: (node: LibraryNode, icon: "audio" | "music") => void;
   contextMenu: NonNullable<ContextMenuState>;
   contextMenuRef: RefObject<HTMLDivElement>;
   node: LibraryNode;
@@ -109,6 +114,8 @@ type AssetContextMenuProps = {
 };
 
 export function AssetContextMenu({
+  audioAsset,
+  onSetAudioIcon,
   contextMenu,
   contextMenuRef,
   node,
@@ -141,6 +148,13 @@ export function AssetContextMenu({
       >
         Rename
       </button>
+      {audioAsset && isAudioMediaType(audioAsset.mediaType) && onSetAudioIcon ? (
+        <button className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left transition hover:bg-canvas disabled:cursor-not-allowed disabled:text-canvas-muted" disabled={readOnly}
+          onClick={() => onSetAudioIcon(node, audioAsset.audioIcon === "music" ? "audio" : "music")} role="menuitem" type="button">
+          {audioAsset.audioIcon === "music" ? <AudioLines aria-hidden="true" className="h-4 w-4" /> : <Music aria-hidden="true" className="h-4 w-4" />}
+          {audioAsset.audioIcon === "music" ? "Set icon to audio" : "Set icon to music"}
+        </button>
+      ) : null}
       {isImageAsset ? (
         <>
           <button

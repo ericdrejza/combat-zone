@@ -11,6 +11,7 @@ import {
   replaceImage,
   replaceWithAssetLink,
   renameNode,
+  setAudioAssetIcon,
   uploadImage
 } from "@library/librarySlice";
 import type { LibraryNode, LibrarySectionId } from "@library/types";
@@ -438,6 +439,10 @@ export function useAssetLibraryModalController({
     handleFileChange,
     handleFolderChange,
     renameLibraryNode,
+    setAudioIcon: (node: LibraryNode, icon: "audio" | "music") => {
+      dispatch(setAudioAssetIcon({ sectionId: activeSectionId, nodeId: node.id, icon }));
+      setContextMenu(null);
+    },
     replaceNodeWithAssetLink,
     replaceNodeWithFile,
     replaceNodeWithUrl,

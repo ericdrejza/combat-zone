@@ -214,6 +214,7 @@ export function useCanvasClickHandlers(input: ClickHandlerInput) {
       selectEntity({
         entityType,
         ids: [entityId],
+        userInitiated: true,
         toggle:
           event.shiftKey || event.ctrlKey || event.metaKey || touchMultiSelect
       })

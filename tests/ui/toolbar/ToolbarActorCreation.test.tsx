@@ -8,7 +8,8 @@ import {
   createRectangleZone,
   getCanvas,
   mockCanvasBounds,
-  renderApp
+  renderApp,
+  selectZoneTool
 } from "@tests/ui/renderApp";
 
 describe("Toolbar actor creation", () => {
@@ -90,7 +91,7 @@ describe("Toolbar actor creation", () => {
     renderApp();
     const canvas = getCanvas();
     mockCanvasBounds(canvas);
-    await user.click(screen.getByRole("button", { name: "Zone" }));
+    await selectZoneTool(user);
     createRectangleZone(canvas);
     act(() => {
       const token = uploadImage({
@@ -176,7 +177,7 @@ describe("Toolbar actor creation", () => {
 
     const canvas = getCanvas();
     mockCanvasBounds(canvas);
-    await user.click(screen.getByRole("button", { name: "Zone" }));
+    await selectZoneTool(user);
     createRectangleZone(canvas);
     await user.click(screen.getByRole("button", { name: "Actor" }));
     fireEvent.click(screen.getByLabelText("Zone 1"));
@@ -206,7 +207,7 @@ describe("Toolbar actor creation", () => {
     renderApp();
     const canvas = getCanvas();
     mockCanvasBounds(canvas);
-    await user.click(screen.getByRole("button", { name: "Zone" }));
+    await selectZoneTool(user);
     createRectangleZone(canvas);
 
     const zone = await screen.findByLabelText("Zone 1");
@@ -280,7 +281,7 @@ describe("Toolbar actor creation", () => {
     const canvas = getCanvas();
     mockCanvasBounds(canvas);
 
-    await user.click(screen.getByRole("button", { name: "Zone" }));
+    await selectZoneTool(user);
     createRectangleZone(canvas, { x: 80, y: 80 }, { x: 420, y: 400 });
     await user.click(screen.getByRole("button", { name: "Actor" }));
     fireEvent.click(screen.getByLabelText("Zone 1"));
@@ -318,7 +319,7 @@ describe("Toolbar actor creation", () => {
     renderApp();
     const canvas = getCanvas();
     mockCanvasBounds(canvas);
-    await user.click(screen.getByRole("button", { name: "Zone" }));
+    await selectZoneTool(user);
     createRectangleZone(canvas);
     await user.click(screen.getByRole("button", { name: "Actor" }));
     await user.click(screen.getByRole("button", { name: "Create actor" }));
@@ -378,7 +379,7 @@ describe("Toolbar actor creation", () => {
     renderApp();
     const canvas = getCanvas();
     mockCanvasBounds(canvas);
-    await user.click(screen.getByRole("button", { name: "Zone" }));
+    await selectZoneTool(user);
     createRectangleZone(canvas);
     await user.click(screen.getByRole("button", { name: "Actor" }));
     await user.click(screen.getByRole("button", { name: "Create actor" }));
