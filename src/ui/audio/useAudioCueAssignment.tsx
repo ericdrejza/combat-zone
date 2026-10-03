@@ -63,10 +63,10 @@ export function useAudioCueAssignment() {
     setPending(null);
   }
 
-  function createGroup(section: AudioCueGroupSection) {
+  function createGroup(section: AudioCueGroupSection, name: string) {
     if (!pending || pending.encounterId !== encounter.id || !getAudioDestinationSections(pending.sectionType, pending.cueType).includes(section)) return;
     const groupId = `audio-group-${crypto.randomUUID?.() ?? Date.now()}`;
-    let nextEncounter = createAudioCueGroup(encounter, { id: groupId, section });
+    let nextEncounter = createAudioCueGroup(encounter, { id: groupId, name, section });
     if (pending.selectedEntityId && (section === "zone" || section === "actor")) {
       const entity = section === "zone" ? encounter.zones.byId[pending.selectedEntityId] : encounter.actors.byId[pending.selectedEntityId];
       if (!entity) return;

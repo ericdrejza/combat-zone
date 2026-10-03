@@ -18,7 +18,7 @@ function request(cueId: string, sourceId: string): AudioTriggerRequest {
 function requestsForTrigger(state: EncounterState, actorId: string, zoneId: string, trigger: AudioCueTrigger): AudioTriggerRequest[] {
   return state.audioCues.allIds.flatMap((cueId) => {
     const cue = state.audioCues.byId[cueId];
-    if (cue.type !== "one_shot" || !cue.triggers.includes(trigger)) return [];
+    if (cue.type !== "one_shot" || !cue.triggersEnabled || !cue.triggers.includes(trigger)) return [];
     const group = state.audioCueGroups.byId[cue.placement.groupId];
     const inherited = group?.section === "zone"
       ? (state.zones.byId[zoneId]?.audioGroupIds ?? []).includes(group.id)

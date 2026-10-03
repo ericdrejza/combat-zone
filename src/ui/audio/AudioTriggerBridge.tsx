@@ -11,8 +11,10 @@ import { useAudioPlayback } from "./AudioPlaybackProvider";
 function TriggeredCue({ cue }: { cue: AudioCue }) {
   const section = useSelector((state: RootState) => state.library.sections.audio);
   const sourceUrl = useResolvedImageSource(resolveLibraryAsset(section, cue.libraryNodeId)?.source);
+  const node = section.nodesById[cue.libraryNodeId];
+  const assetId = node?.type === "link" && node.targetId ? node.targetId : cue.libraryNodeId;
   const playback = useAudioPlayback();
-  useEffect(() => sourceUrl ? playback.registerCueSource(cue, sourceUrl) : undefined, [cue, playback.registerCueSource, sourceUrl]);
+  useEffect(() => sourceUrl ? playback.registerCueSource(cue, sourceUrl, assetId) : undefined, [assetId, cue, playback.registerCueSource, sourceUrl]);
   useEffect(() => () => playback.stop(cue.id), [cue.id, playback.stop]);
   return null;
 }
@@ -36,11 +38,11 @@ export function AudioTriggerBridge() {
   }, [encounterId, playback.stopAll]);
   useEffect(() => {
     const listener = (event: Event) => {
-      for (const request of (event as CustomEvent<AudioTriggerRequest[]>).detail) playback.playRegistered(request.cueId, request.instanceId);
+      playback.playTriggeredBatch((event as CustomEvent<AudioTriggerRequest[]>).detail);
     };
     window.addEventListener(AUDIO_TRIGGER_EVENT, listener);
     return () => window.removeEventListener(AUDIO_TRIGGER_EVENT, listener);
-  }, [playback.playRegistered]);
+  }, [playback.playTriggeredBatch]);
   useEffect(() => {
     playback.setAudioGroupSections(groups.allIds.map((id) => groups.byId[id]));
   }, [groups, playback.setAudioGroupSections]);

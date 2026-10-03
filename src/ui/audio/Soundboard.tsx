@@ -15,6 +15,8 @@ import { AudioCueRow } from "./AudioCueRow";
 import { getAudioSections, type AudioDisplayGroup } from "./audioGroups";
 import { openAudioLibraryForCue } from "./audioLibraryEvents";
 import { useAudioPlayback } from "./AudioPlaybackProvider";
+import type { SoundboardNavigationRequest } from "./soundboardNavigation";
+import { useSoundboardNavigation } from "./useSoundboardNavigation";
 
 type Commit = (next: RootState["encounter"]["present"], type: string, payload: Parameters<typeof createEncounterActionRecord>[1]) => void;
 type Dragged = { id: string; kind: "cue" | "group" } | null;
@@ -25,7 +27,7 @@ function getGroupDropSide(event: DragEvent<HTMLElement>): "before" | "after" {
   return !Number.isFinite(event.clientY) || event.clientY < bounds.top + bounds.height / 2 ? "before" : "after";
 }
 
-export function Soundboard({ isPopout = false, onToggleWindow }: { isPopout?: boolean; onToggleWindow: () => void }) {
+export function Soundboard({ isPopout = false, navigation, onToggleWindow }: { isPopout?: boolean; navigation?: SoundboardNavigationRequest | null; onToggleWindow: () => void }) {
   const dispatch = useDispatch();
   const encounter = useSelector((state: RootState) => state.encounter.present);
   const playback = useAudioPlayback();
@@ -36,6 +38,7 @@ export function Soundboard({ isPopout = false, onToggleWindow }: { isPopout?: bo
   const [dropTarget, setDropTarget] = useState<DropTarget>(null);
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(() => new Set());
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(() => new Set());
+  useSoundboardNavigation({ navigation, encounter, scrollRef, collapsedSections, collapsedGroups, setCollapsedSections, setCollapsedGroups });
   const sections = getAudioSections(encounter);
 
   function commit(nextEncounter: typeof encounter, type: string, payload: Parameters<typeof createEncounterActionRecord>[1]) {
@@ -94,7 +97,7 @@ export function Soundboard({ isPopout = false, onToggleWindow }: { isPopout?: bo
       </section>
       {sections.filter((section) => section.id !== "encounter").map((section) => {
         const groupSection = section.id as "zone" | "actor";
-        return <section className="space-y-4 rounded-2xl border border-canvas-line bg-canvas-panel p-4" key={section.id}><SectionHeading collapsed={collapsedSections.has(section.id)} label={section.label} scope={groupSection} onToggle={() => toggle(setCollapsedSections, section.id)} />{!collapsedSections.has(section.id) ? <GroupList {...common} groups={section.groups} onAdd={() => addGroup(groupSection)} section={groupSection} /> : null}</section>;
+        return <section data-audio-section-id={section.id} className="space-y-4 rounded-2xl border border-canvas-line bg-canvas-panel p-4" key={section.id}><SectionHeading collapsed={collapsedSections.has(section.id)} label={section.label} scope={groupSection} onToggle={() => toggle(setCollapsedSections, section.id)} />{!collapsedSections.has(section.id) ? <GroupList {...common} groups={section.groups} onAdd={() => addGroup(groupSection)} section={groupSection} /> : null}</section>;
       })}
     </main>
     {deleteGroupId ? <div aria-label="Delete audio group" aria-modal="true" className="fixed inset-0 z-[85] flex items-center justify-center bg-black/40 p-4" role="dialog"><div className="max-w-sm rounded-2xl bg-canvas-panel p-5 shadow-xl"><h3 className="font-semibold">Delete audio group?</h3><p className="mt-2 text-sm text-canvas-muted">This removes its cues and unassigns it from every inheriting entity.</p><div className="mt-4 flex justify-end gap-2"><button onClick={() => setDeleteGroupId(null)} type="button">Cancel</button><button className="rounded-xl bg-red-600 px-3 py-2 text-white" onClick={() => { commit(deleteAudioCueGroup(encounter, deleteGroupId), "audio.deleteGroup", { groupId: deleteGroupId }); setDeleteGroupId(null); }} type="button">Delete</button></div></div></div> : null}

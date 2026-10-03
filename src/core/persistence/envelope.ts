@@ -169,6 +169,8 @@ export function assertEncounterState(value: unknown, name = "encounter"): assert
       !Array.isArray(cue.triggers) ||
       cue.triggers.some((trigger) => !["zone_enter", "zone_leave", "actor_enter_zone", "actor_leave_zone"].includes(String(trigger))) ||
       typeof cue.repeat !== "boolean" ||
+      typeof cue.triggersEnabled !== "boolean" ||
+      (cue.triggersEnabled && cue.repeat) ||
       !isRecord(cue.repeatDelay) ||
       [cue.repeatDelay.minimumDelaySeconds, cue.repeatDelay.maximumDelaySeconds]
         .some((delay) => typeof delay !== "number" || !Number.isFinite(delay) || delay < 0) ||
@@ -183,7 +185,7 @@ export function assertEncounterState(value: unknown, name = "encounter"): assert
     const group = typeof cue.placement.groupId === "string" ? groups.byId[cue.placement.groupId] : undefined;
     const groupSection = isRecord(group) ? group.section : undefined;
     const legalTriggers = groupSection === "zone" ? ["zone_enter", "zone_leave"] : groupSection === "actor" ? ["actor_enter_zone", "actor_leave_zone"] : [];
-    if (!isRecord(group) || (groupSection === "music" && cue.type !== "loop") || (["actor", "zone"].includes(String(groupSection)) && cue.type === "loop") || cue.triggers.some((trigger) => cue.type !== "one_shot" || !legalTriggers.includes(String(trigger)))) {
+    if (!isRecord(group) || (groupSection === "music" && cue.type !== "loop") || (["actor", "zone"].includes(String(groupSection)) && cue.type === "loop") || (cue.triggersEnabled && !["actor", "zone"].includes(String(groupSection))) || cue.triggers.some((trigger) => cue.type !== "one_shot" || !legalTriggers.includes(String(trigger)))) {
       throw new PersistenceValidationError(`${name}.audioCues.${cueId} has an invalid group placement.`);
     }
   }
@@ -409,6 +411,14 @@ export function migrateLibraryState(value: unknown): unknown {
 export function migrateEncounterState(value: unknown): unknown {
   if (!isRecord(value)) return value;
   const migrated = structuredClone(value);
+  if (migrated.schemaVersion === 9) {
+    migrated.schemaVersion = ENCOUNTER_SCHEMA_VERSION;
+    if (isRecord(migrated.audioCues) && isRecord(migrated.audioCues.byId)) {
+      for (const cue of Object.values(migrated.audioCues.byId)) {
+        if (isRecord(cue)) cue.triggersEnabled = cue.repeat === false && Array.isArray(cue.triggers) && cue.triggers.length > 0;
+      }
+    }
+  }
   if (migrated.schemaVersion === LEGACY_IMAGE_ENCOUNTER_SCHEMA_VERSION) {
     migrated.schemaVersion = LEGACY_PANEL_LAYOUT_ENCOUNTER_SCHEMA_VERSION;
     if (isRecord(migrated.backgroundImage)) {

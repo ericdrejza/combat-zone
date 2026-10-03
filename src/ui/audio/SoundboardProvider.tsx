@@ -3,13 +3,15 @@ import { createContext, type PropsWithChildren, useCallback, useContext, useEffe
 
 import { useTheme } from "@ui/theme/ThemeProvider";
 import { Soundboard } from "./Soundboard";
+import type { SoundboardEntityTarget, SoundboardNavigationRequest } from "./soundboardNavigation";
 
-type Value = { soundboardOpen: boolean; openSoundboard: () => void };
+type Value = { soundboardOpen: boolean; openSoundboard: (target?: SoundboardEntityTarget) => void };
 const SoundboardContext = createContext<Value | null>(null);
 
 export function SoundboardProvider({ children }: PropsWithChildren) {
   const [modalOpen, setModalOpen] = useState(false);
   const [popup, setPopup] = useState<Window | null>(null);
+  const [navigation, setNavigation] = useState<SoundboardNavigationRequest | null>(null);
   const { theme } = useTheme();
 
   useEffect(() => {
@@ -38,7 +40,8 @@ export function SoundboardProvider({ children }: PropsWithChildren) {
     setModalOpen(true);
   }, [popup]);
 
-  const openSoundboard = useCallback(() => {
+  const openSoundboard = useCallback((target?: SoundboardEntityTarget) => {
+    setNavigation((previous) => target ? { ...target, requestId: (previous?.requestId ?? 0) + 1 } : null);
     if (popup && !popup.closed) { popup.focus(); return; }
     setModalOpen(true);
   }, [popup]);
@@ -47,8 +50,8 @@ export function SoundboardProvider({ children }: PropsWithChildren) {
   const soundboardRoot = popup?.document.getElementById("soundboard-root");
 
   return <SoundboardContext.Provider value={value}>{children}
-    {modalOpen ? createPortal(<div aria-label="Soundboard modal" aria-modal="true" className="viewport-overlay z-[70] flex items-center justify-center bg-black/40 p-3 lg:p-6" onMouseDown={(event) => { if (event.target === event.currentTarget) setModalOpen(false); }} role="dialog"><div className="h-[min(90vh,60rem)] w-full max-w-7xl overflow-hidden rounded-3xl border border-canvas-line bg-canvas-panel shadow-2xl"><Soundboard onToggleWindow={createPopup} /></div></div>, document.querySelector("[data-app-shell]") ?? document.body) : null}
-    {soundboardRoot ? createPortal(<Soundboard isPopout onToggleWindow={popIn} />, soundboardRoot) : null}
+    {modalOpen ? createPortal(<div aria-label="Soundboard modal" aria-modal="true" className="viewport-overlay z-[70] flex items-center justify-center bg-black/40 p-3 lg:p-6" onMouseDown={(event) => { if (event.target === event.currentTarget) setModalOpen(false); }} role="dialog"><div className="h-[min(90vh,60rem)] w-full max-w-7xl overflow-hidden rounded-3xl border border-canvas-line bg-canvas-panel shadow-2xl"><Soundboard navigation={navigation} onToggleWindow={createPopup} /></div></div>, document.querySelector("[data-app-shell]") ?? document.body) : null}
+    {soundboardRoot ? createPortal(<Soundboard isPopout navigation={navigation} onToggleWindow={popIn} />, soundboardRoot) : null}
   </SoundboardContext.Provider>;
 }
 

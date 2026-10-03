@@ -36,6 +36,7 @@ const loopCue: AudioCue = {
   placement: { type: "group", groupId: "ambience" },
   repeat: true,
   triggers: [],
+  triggersEnabled: false,
   type: "loop",
   volume: 0.8
 };

@@ -71,7 +71,7 @@ Keep audio normalized in `EncounterState`:
 
 - `audioCues` is a normalized, ordered collection. A cue contains its stable
   ID, Audio Library node ID, placement, Loop/Effect type, volume, repeat flag,
-  Effect repeat-delay range, and a list of movement triggers. Cue volume
+  Effect repeat-delay range, movement-trigger selections, and their enabled state. Cue volume
   defaults to 50% and is constrained to 0–100%. `allIds` determines order
   within each filtered group.
 - Every cue placement references a normalized group ID. Cue membership is
@@ -85,7 +85,9 @@ Keep audio normalized in `EncounterState`:
 
 Validate collection integrity, cue placement, section/type compatibility,
 repeat-delay ranges, trigger legality, group references, and Music
-order before data reaches Redux. Schema 9 explicitly versions the group model.
+order before data reaches Redux. Schema 10 adds the trigger-enabled state to the
+schema-9 group model. Schema-9 records retain all settings during migration;
+Repeat remains active if previously enabled, otherwise configured triggers activate.
 The earlier schema-8 audio model is development-only and unsupported; use fresh
 browser data rather than migrating it. Pre-audio schema migrations remain supported.
 
@@ -106,6 +108,9 @@ editing, movement, deletion, assignment, and ordering participates in history.
 - When multiple destinations are legal, show cards with group and cue names.
   A new-group option for each compatible section creates, assigns when needed,
   and adds the cue as one undoable action.
+  Choosing that option first opens a naming dialog with Back and Create.
+  Back returns to destination choices without mutations. Create uses the
+  trimmed entered name, or the displayed default placeholder when left blank.
 - Group membership for Zones and Actors is edited only in Properties.
   Properties shows the selected entity's name and its current group selection.
 - Audio/Status does not create groups, delete groups, or edit entity membership.
@@ -133,11 +138,21 @@ editing, movement, deletion, assignment, and ordering participates in history.
 - Zone Effects independently offer `Entering zone` and `Leaving zone` trigger
   choices. Actor Effects independently offer `Actor enters zone` and `Actor
   leaves zone`. Choices appear side by side when card width permits.
+  Zone and Actor cards place a Flag toggle beside Repeat. Repeat and Flag are
+  mutually exclusive, and toggling the selected behavior off permits neither.
+  Repeat shows replay-delay settings; Flag shows movement-trigger settings.
+  Inactive repeat delays and trigger selections remain persisted for reuse,
+  but inactive triggers never fire or show active movement indicators.
   Enabled triggers also appear beside the cue's duration in Soundboard and
   docked cards: MoveLeft indicates entering, and MoveRight indicates leaving.
 - One move may emit several triggers. Playback requests are ordered as Zone
-  leaving, Actor leaving, Zone entering, then Actor entering. Shared cues use
-  independent playback instances so simultaneous triggers may overlap.
+  leaving, Actor leaving, Zone entering, then Actor entering. Within one move,
+  all cues referencing the same Library asset (including links) share one sound
+  at the highest participating cue volume. Every participating card shows its
+  playing state and progress; completion clears them together. Stop on any
+  participating card stops that shared sound and all its participating cards,
+  without stopping unrelated assets. Later movement batches remain independent
+  and may overlap earlier playback. Manually started cues are not deduplicated.
 - Global Pause rewinds non-repeating Effects. It pauses repeating Effects and
   preserves their remaining wait. Global Play resumes only retained playback.
 
@@ -191,7 +206,7 @@ editing, movement, deletion, assignment, and ordering participates in history.
   movement uses MoveUp/MoveDown controls, dimmed and disabled at order boundaries.
   Music section headers have an independent Music-only Play/Pause control
   immediately to the left of their info tooltip.
-  Soundboard Ambience, Zones, and Actors headers have independent section
+  Soundboard and docked Audio panel Ambience, Zones, and Actors headers have independent section
   Play/Pause controls too. Encounter controls both Ambience and Music without
   affecting Zones or Actors. A paused section also queues newly selected cues
   until it resumes; global Resume clears every section's pause.
@@ -220,6 +235,15 @@ leaves or the volume slider opens.
 The value commits to history when the slider is released. Cue controls place
 the Repeat icon beside the type choices with a separator and place Play at the trailing
 control position. Cue Repeat uses `repeat-1`; Music group Repeat keeps `repeat`.
+
+The docked transport uses equal compact spacing above and below its controls.
+Audio Properties group ordering uses the same MoveUp/MoveDown icons as the Audio panel.
+Audio Properties also has an active-state Soundboard launcher at its heading,
+including when showing the Encounter or selection guidance.
+Launching from a selected Actor or Zone expands its section and assigned groups,
+then scrolls its first assigned group below the sticky transport header. An entity
+with no assigned groups opens its section instead. This also works when the
+Soundboard is already open or popped out and does not change encounter history.
 
 The sticky transport header centers rewind, global Stop, one Play/Pause button,
 and forward controls. Master volume, current playback state, and the pop-out/pop-in

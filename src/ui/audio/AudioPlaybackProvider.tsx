@@ -12,10 +12,13 @@ import {
 import type { AudioCue, AudioCueGroupSection } from "@entities/audio/types";
 import { useInterfacePreferences } from "@ui/interface_preferences/InterfacePreferenceProvider";
 
-import type { AudioPlaybackScope, AudioPlaybackStatus, MusicGroupPlayback, PlaybackEntry } from "./audioPlaybackTypes";
+import type { AudioPlaybackScope, AudioPlaybackStatus, MusicGroupPlayback, PlaybackEntry, RegisteredAudioCue } from "./audioPlaybackTypes";
+import type { AudioTriggerRequest } from "./audioTriggerEvents";
 import { useAudioTransport } from "./useAudioTransport";
 import { useAudioMediaControls } from "./useAudioMediaControls";
 import { useMusicNavigation } from "./useMusicNavigation";
+import { useTriggeredAudioBatch } from "./useTriggeredAudioBatch";
+import { updatePlaybackVolumes } from "./audioPlaybackVolumes";
 export type { AudioPlaybackStatus } from "./audioPlaybackTypes";
 
 type AudioPlaybackContextValue = {
@@ -39,8 +42,9 @@ type AudioPlaybackContextValue = {
   pauseAll: () => void;
   play: (cue: AudioCue, sourceUrl: string, instanceId?: string) => Promise<void>;
   playRegistered: (cueId: string, instanceId?: string) => void;
+  playTriggeredBatch: (requests: AudioTriggerRequest[]) => void;
   resumeAll: () => void;
-  registerCueSource: (cue: AudioCue, sourceUrl: string) => () => void;
+  registerCueSource: (cue: AudioCue, sourceUrl: string, assetId?: string) => () => void;
   setMusicGroups: (groups: Array<{ cueIds: string[]; groupId: string; repeat: boolean }>) => void;
   setCueVolume: (cueId: string, volume: number) => void;
   seek: (cueId: string, time: number) => void;
@@ -49,6 +53,7 @@ type AudioPlaybackContextValue = {
 };
 
 const AudioPlaybackContext = createContext<AudioPlaybackContextValue | null>(null);
+type StartPlayback = (cue: AudioCue, sourceUrl: string, instanceId?: string, startDelay?: number) => Promise<void>;
 
 function nextDelay(cue: AudioCue): number {
   const range = cue.repeatDelay.maximumDelaySeconds - cue.repeatDelay.minimumDelaySeconds;
@@ -58,20 +63,26 @@ function nextDelay(cue: AudioCue): number {
 export function AudioPlaybackProvider({ children }: PropsWithChildren) {
   const { audioMasterVolume, audioMediaKeyScope } = useInterfacePreferences();
   const entries = useRef(new Map<string, PlaybackEntry>());
-  const cueSources = useRef(new Map<string, { cue: AudioCue; sourceUrl: string }>());
+  const cueSources = useRef(new Map<string, RegisteredAudioCue>());
   const musicGroups = useRef(new Map<string, MusicGroupPlayback>());
   const groupSections = useRef(new Map<string, AudioCueGroupSection>());
-  const playRef = useRef<AudioPlaybackContextValue["play"]>(async () => undefined);
+  const playRef = useRef<StartPlayback>(async () => undefined);
+  const masterVolumeRef = useRef(audioMasterVolume);
+  masterVolumeRef.current = audioMasterVolume;
   const [version, setVersion] = useState(0);
   const refresh = useCallback(() => setVersion((current) => current + 1), []);
 
   const stop = useCallback((cueId: string) => {
+    // Stop each physical sound once, including every cue sharing that sound.
+    const audioToStop = new Set([...entries.current.values()].filter((entry) => entry.cue.id === cueId).map((entry) => entry.audio));
     for (const [key, entry] of entries.current) {
-      if (entry.cue.id !== cueId) continue;
+      if (!audioToStop.has(entry.audio)) continue;
       if (entry.timer) clearTimeout(entry.timer);
-      entry.audio.pause();
-      try { entry.audio.currentTime = 0; } catch { /* Metadata may not be ready. */ }
       entries.current.delete(key);
+    }
+    for (const audio of audioToStop) {
+      audio.pause();
+      try { audio.currentTime = 0; } catch { /* Metadata may not be ready. */ }
     }
     refresh();
   }, [refresh]);
@@ -98,8 +109,13 @@ export function AudioPlaybackProvider({ children }: PropsWithChildren) {
   }, [refresh]);
 
   const { globallyPaused, hasPausedPlayback, isCuePaused, musicPaused, pauseAll, pauseMusic, resumeAll, resumeMusic, stopAll, pauseSection, resumeSection, isSectionPaused, hasSectionPlayback } = useAudioTransport({ entries, musicGroups, groupSections, refresh, scheduleInterval, stop });
+  const restartRepeatedTrigger = useCallback((key: string, entry: PlaybackEntry) => {
+    const registered = cueSources.current.get(entry.cue.id);
+    if (registered) void playRef.current(entry.cue, registered.sourceUrl, key.slice(entry.cue.id.length + 1), nextDelay(entry.cue));
+  }, []);
+  const playTriggeredBatch = useTriggeredAudioBatch({ audioMasterVolume, cueSources, entries, isCuePaused, refresh, restartRepeatedTrigger });
 
-  const play = useCallback(async (cue: AudioCue, sourceUrl: string, instanceId?: string) => {
+  const play = useCallback(async (cue: AudioCue, sourceUrl: string, instanceId?: string, startDelay?: number) => {
     const key = instanceId ? `${cue.id}:${instanceId}` : cue.id;
     if (entries.current.has(key) || (instanceId && isCuePaused(cue))) return;
     const musicGroupId = musicGroups.current.has(cue.placement.groupId) ? cue.placement.groupId : null;
@@ -143,6 +159,7 @@ export function AudioPlaybackProvider({ children }: PropsWithChildren) {
     audio.addEventListener("durationchange", refresh);
     refresh();
     if (entry.status === "paused") return;
+    if (startDelay !== undefined) { scheduleInterval(entry, startDelay); return; }
     try {
       await audio.play();
     } catch (error) {
@@ -156,8 +173,8 @@ export function AudioPlaybackProvider({ children }: PropsWithChildren) {
   }, [audioMasterVolume, isCuePaused, refresh, scheduleInterval, stop]);
   playRef.current = play;
 
-  const registerCueSource = useCallback((cue: AudioCue, sourceUrl: string) => {
-    cueSources.current.set(cue.id, { cue, sourceUrl });
+  const registerCueSource = useCallback((cue: AudioCue, sourceUrl: string, assetId = cue.libraryNodeId) => {
+    cueSources.current.set(cue.id, { cue, sourceUrl, assetId });
     // Configuration edits (including undo/redo) also apply to every live instance.
     for (const [key, entry] of entries.current) {
       if (entry.cue.id !== cue.id) continue;
@@ -171,6 +188,7 @@ export function AudioPlaybackProvider({ children }: PropsWithChildren) {
         refresh();
       }
     }
+    updatePlaybackVolumes(entries.current.values(), masterVolumeRef.current);
     return () => {
       const registered = cueSources.current.get(cue.id);
       if (registered?.sourceUrl === sourceUrl) cueSources.current.delete(cue.id);
@@ -194,8 +212,8 @@ export function AudioPlaybackProvider({ children }: PropsWithChildren) {
     for (const entry of entries.current.values()) {
       if (entry.cue.id !== cueId) continue;
       entry.cue = { ...entry.cue, volume };
-      entry.audio.volume = Math.max(0, Math.min(1, volume * audioMasterVolume));
     }
+    updatePlaybackVolumes(entries.current.values(), audioMasterVolume);
   }, [audioMasterVolume]);
 
   const seek = useCallback((cueId: string, time: number) => {
@@ -207,9 +225,7 @@ export function AudioPlaybackProvider({ children }: PropsWithChildren) {
   }, [refresh]);
 
   useEffect(() => {
-    for (const entry of entries.current.values()) {
-      entry.audio.volume = Math.max(0, Math.min(1, entry.cue.volume * audioMasterVolume));
-    }
+    updatePlaybackVolumes(entries.current.values(), audioMasterVolume);
   }, [audioMasterVolume]);
 
   useEffect(() => stopAll, [stopAll]);
@@ -235,6 +251,7 @@ export function AudioPlaybackProvider({ children }: PropsWithChildren) {
     pauseMusic,
     play,
     playRegistered,
+    playTriggeredBatch,
     registerCueSource,
     resumeAll,
     resumeMusic,
@@ -243,7 +260,7 @@ export function AudioPlaybackProvider({ children }: PropsWithChildren) {
     setMusicGroups,
     stop,
     stopAll
-  }), [pauseSection, resumeSection, isSectionPaused, hasSectionPlayback, setAudioGroupSections, globallyPaused, hasPausedPlayback, musicPaused, pauseAll, pauseMusic, resumeMusic, play, playRegistered, registerCueSource, resumeAll, seek, setCueVolume, setMusicGroups, skipMusic, stop, stopAll, version]);
+  }), [pauseSection, resumeSection, isSectionPaused, hasSectionPlayback, setAudioGroupSections, globallyPaused, hasPausedPlayback, musicPaused, pauseAll, pauseMusic, resumeMusic, play, playRegistered, playTriggeredBatch, registerCueSource, resumeAll, seek, setCueVolume, setMusicGroups, skipMusic, stop, stopAll, version]);
 
   useAudioMediaControls(value, audioMediaKeyScope, version);
   return <AudioPlaybackContext.Provider value={value}>{children}</AudioPlaybackContext.Provider>;

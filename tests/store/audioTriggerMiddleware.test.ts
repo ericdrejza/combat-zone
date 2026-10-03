@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { createEncounterState } from "@core/encounter/createEncounterState";
 import { createEncounterActionRecord } from "@core/history/createEncounterActionRecord";
 import { createActor, moveActor } from "@entities/actor/actorMutations";
-import { createAudioCue, createAudioCueGroup, setEntityAudioGroups } from "@entities/audio/audioMutations";
+import { createAudioCue, createAudioCueGroup, setEntityAudioGroups, updateAudioCue } from "@entities/audio/audioMutations";
 import { createZone } from "@entities/zone/zoneMutations";
 import interactionReducer from "@interaction/interactionState";
 import { audioTriggerMiddleware } from "@store/audioTriggerMiddleware";
@@ -37,6 +37,26 @@ describe("audio trigger middleware", () => {
   const events: AudioTriggerRequest[][] = [];
   const listener = (event: Event) => events.push((event as CustomEvent<AudioTriggerRequest[]>).detail);
   afterEach(() => { window.removeEventListener(AUDIO_TRIGGER_EVENT, listener); events.length = 0; });
+
+  it("ignores retained trigger settings in repeat or disabled mode and restores them when Flag is enabled", () => {
+    window.addEventListener(AUDIO_TRIGGER_EVENT, listener);
+    const store = makeStore();
+    let encounter = automaticEncounter();
+    encounter = updateAudioCue(encounter, "zone-enter", { repeat: true });
+    encounter = updateAudioCue(encounter, "actor-enter", { triggersEnabled: false });
+    store.dispatch(loadEncounterState(encounter));
+    const commit = (nextEncounter: typeof encounter) => store.dispatch(commitEncounterChange({ action: createEncounterActionRecord("test.change", {}), nextEncounter }));
+    commit(moveActor(encounter, "actor-a", "hall"));
+    expect(events.flat().map((item) => item.cueId)).toEqual(["zone-leave", "actor-leave"]);
+    expect(store.getState().encounter.present.audioCues.byId["zone-enter"].triggers).toEqual(["zone_enter"]);
+    events.length = 0;
+    encounter = updateAudioCue(store.getState().encounter.present, "zone-enter", { triggersEnabled: true });
+    encounter = updateAudioCue(encounter, "actor-enter", { triggersEnabled: true });
+    commit(encounter);
+    expect(events).toEqual([]);
+    commit(moveActor(encounter, "actor-a", "room"));
+    expect(events.flat().map((item) => item.cueId)).toEqual(["zone-leave", "actor-leave", "zone-enter", "actor-enter"]);
+  });
 
   it("orders leaving triggers before entering triggers and remains silent for undo", () => {
     window.addEventListener(AUDIO_TRIGGER_EVENT, listener);

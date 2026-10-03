@@ -22,6 +22,18 @@ function groupedState() {
 }
 
 describe("audio cue groups", () => {
+  it("enforces exclusive repeat/trigger behavior without discarding either configuration", () => {
+    const state = groupedState();
+    const repeated = updateAudioCue(state, "zone-cue", { repeat: true, repeatDelay: { minimumDelaySeconds: 5, maximumDelaySeconds: 10 } });
+    expect(repeated.audioCues.byId["zone-cue"]).toMatchObject({ repeat: true, triggersEnabled: false, triggers: ["zone_enter"] });
+    const triggered = updateAudioCue(repeated, "zone-cue", { triggersEnabled: true });
+    expect(triggered.audioCues.byId["zone-cue"]).toMatchObject({ repeat: false, triggersEnabled: true, repeatDelay: { minimumDelaySeconds: 5, maximumDelaySeconds: 10 } });
+    expect(updateAudioCue(triggered, "zone-cue", { repeat: true, triggersEnabled: true })).toBe(triggered);
+    expect(createAudioCue(triggered, { id: "invalid", libraryNodeId: "sound", placement: { type: "group", groupId: "zone-group" }, type: "one_shot", repeat: true, triggersEnabled: true })).toBe(triggered);
+    const ambience = createAudioCueGroup(triggered, { id: "ambience", section: "ambiance" });
+    expect(createAudioCue(ambience, { id: "invalid", libraryNodeId: "sound", placement: { type: "group", groupId: "ambience" }, type: "one_shot", triggersEnabled: true })).toBe(ambience);
+  });
+
   it("shares group configuration and constrains cue types", () => {
     const state = groupedState();
     const updated = updateAudioCue(state, "actor-cue", { volume: 0.75 });

@@ -8,7 +8,7 @@ import {
   type EncounterExportEnvelope
 } from "@core/persistence";
 import { createEmptyLibraryState } from "@core/persistence/memoryRepository";
-import { createAudioCue, createAudioCueGroup } from "@entities/audio/audioMutations";
+import { createAudioCue, createAudioCueGroup, updateAudioCue } from "@entities/audio/audioMutations";
 
 function encounter(id = "encounter-1") {
   return createEncounterState({ id, name: "Test encounter" });
@@ -25,6 +25,29 @@ function validEnvelope(): EncounterExportEnvelope {
 }
 
 describe("persistence export envelopes", () => {
+  it.each(["repeat", "triggers", "none"] as const)("round trips inactive settings with %s behavior active", (behavior) => {
+    const value = validEnvelope();
+    value.encounter = createAudioCue(createAudioCueGroup(value.encounter, { id: "zone", section: "zone" }), {
+      id: "effect", libraryNodeId: "sound", placement: { type: "group", groupId: "zone" }, type: "one_shot",
+      triggers: ["zone_enter", "zone_leave"], triggersEnabled: false,
+      repeatDelay: { minimumDelaySeconds: 5, maximumDelaySeconds: 10 }
+    });
+    value.encounter = updateAudioCue(value.encounter, "effect", { repeat: behavior === "repeat", triggersEnabled: behavior === "triggers" });
+    expect(parseExportEnvelope(JSON.parse(JSON.stringify(value)))).toEqual(value);
+    expect(value.encounter.audioCues.byId.effect).toMatchObject({ triggers: ["zone_enter", "zone_leave"], repeatDelay: { minimumDelaySeconds: 5, maximumDelaySeconds: 10 } });
+  });
+
+  it("rejects simultaneous repeat and trigger behavior and triggers in unsupported sections", () => {
+    const value = validEnvelope();
+    value.encounter = createAudioCue(createAudioCueGroup(value.encounter, { id: "ambience", section: "ambiance" }), {
+      id: "effect", libraryNodeId: "sound", placement: { type: "group", groupId: "ambience" }, type: "one_shot", repeat: true
+    });
+    value.encounter.audioCues.byId.effect.triggersEnabled = true;
+    expect(() => validateExportEnvelope(value)).toThrow(/audioCues/);
+    value.encounter.audioCues.byId.effect.repeat = false;
+    expect(() => validateExportEnvelope(value)).toThrow(/invalid group placement/);
+  });
+
   it("round trips muted cues and rejects volumes outside 0–100%", () => {
     const value = validEnvelope();
     value.encounter = createAudioCue(createAudioCueGroup(value.encounter, { id: "ambience", section: "ambiance" }), {

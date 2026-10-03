@@ -22,7 +22,7 @@ class FakeAudio extends EventTarget {
 const music: AudioCue[] = ["first", "second", "last"].map((id) => ({
   id, libraryNodeId: id, placement: { type: "group", groupId: "music" },
   repeat: false, repeatDelay: { minimumDelaySeconds: 5, maximumDelaySeconds: 5 },
-  triggers: [], type: "loop", volume: 0.5
+  triggers: [], triggersEnabled: false, type: "loop", volume: 0.5
 }));
 const ambience: AudioCue = { ...music[0], id: "ambience", placement: { type: "group", groupId: "ambience" }, repeat: true };
 const effect: AudioCue = { ...ambience, id: "effect", type: "one_shot", repeat: false };
