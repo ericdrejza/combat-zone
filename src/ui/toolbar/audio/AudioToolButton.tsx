@@ -41,7 +41,7 @@ export function AudioToolButton({ activeToolId, compactLayout, compactSubtoolHos
 
   const optionBar = activeToolId === "audio" ? <ToolbarSubtoolBar aria-label="Audio options">
     <ToolbarOptionGroup aria-label="Audio utilities" role="group">
-      <ToolbarOptionButton active={soundboardOpen} aria-label="Open Soundboard" aria-pressed={soundboardOpen} onClick={openSoundboard} title={soundboardOpen ? "Soundboard open" : "Soundboard"} type="button"><BookHeadphones aria-hidden="true" className="h-4 w-4" /></ToolbarOptionButton>
+      <ToolbarOptionButton active={soundboardOpen} aria-label="Open Soundboard" aria-pressed={soundboardOpen} onClick={() => openSoundboard()} title={soundboardOpen ? "Soundboard open" : "Soundboard"} type="button"><BookHeadphones aria-hidden="true" className="h-4 w-4" /></ToolbarOptionButton>
       <ToolbarOptionButton aria-label="Stop all audio" disabled={!playback.hasPlayback} onClick={playback.stopAll} title="Stop all audio" type="button"><Square aria-hidden="true" className="h-4 w-4 fill-current" /></ToolbarOptionButton>
       <ToolbarOptionButton aria-label={playback.hasPausedPlayback ? "Resume paused audio" : "Pause all audio"} disabled={!playback.hasPlayback} onClick={playback.hasPausedPlayback ? playback.resumeAll : playback.pauseAll} title={playback.hasPausedPlayback ? "Resume paused audio" : "Pause all audio"} type="button">{playback.hasPausedPlayback ? <Play aria-hidden="true" className="h-4 w-4" /> : <Pause aria-hidden="true" className="h-4 w-4" />}</ToolbarOptionButton>
     </ToolbarOptionGroup>

@@ -21,6 +21,8 @@ export type AudioCue = {
   volume: number;
   repeatDelay: AudioRepeatDelaySettings;
   triggers: AudioCueTrigger[];
+  /** Retains trigger selections independently of the active behavior. */
+  triggersEnabled: boolean;
   repeat: boolean;
 };
 

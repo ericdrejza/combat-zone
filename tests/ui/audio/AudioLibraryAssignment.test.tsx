@@ -40,11 +40,22 @@ describe("normal Library audio assignment", () => {
     expect(within(dialog).getByRole("button", { name: "Playlist" })).toBeInTheDocument();
     expect(within(dialog).getByRole("button", { name: "Create new Ambience group" })).toBeInTheDocument();
     const before = store.getState().encounter.present;
+    const historyLength = store.getState().encounter.past.length;
     fireEvent.click(within(dialog).getByRole("button", { name: "Create new Music group" }));
+    const naming = screen.getByRole("dialog", { name: "Name new cue group" });
+    expect(screen.queryByRole("dialog", { name: "Choose audio destination" })).not.toBeInTheDocument();
+    expect(store.getState().encounter.present).toBe(before);
+    const name = within(naming).getByRole("textbox", { name: "Group name" });
+    expect(name).toHaveAttribute("placeholder", "New Music Group");
+    expect(name).toHaveFocus();
+    fireEvent.change(name, { target: { value: "  Battle tracks  " } });
+    fireEvent.click(within(naming).getByRole("button", { name: "Create" }));
+    expect(screen.queryByRole("dialog", { name: "Name new cue group" })).not.toBeInTheDocument();
     const added = store.getState().encounter.present;
     const cue = added.audioCues.byId[added.audioCues.allIds[0]];
     expect(cue).toMatchObject({ type: "loop", volume: 0, repeatDelay: { minimumDelaySeconds: 0, maximumDelaySeconds: 120 } });
-    expect(added.audioCueGroups.byId[cue.placement.groupId].section).toBe("music");
+    expect(added.audioCueGroups.byId[cue.placement.groupId]).toMatchObject({ section: "music", name: "Battle tracks" });
+    expect(store.getState().encounter.past).toHaveLength(historyLength + 1);
     act(() => store.dispatch(undoEncounterChange()));
     expect(store.getState().encounter.present).toEqual(before);
     act(() => store.dispatch(redoEncounterChange()));
@@ -60,5 +71,32 @@ describe("normal Library audio assignment", () => {
     expect(encounter.audioCues.byId[encounter.audioCues.allIds[0]]).toMatchObject({
       placement: { type: "group", groupId: "ambience" }, type: "one_shot", volume: 0
     });
+  });
+  it.each(["", "   "])("uses the placeholder name when Create is submitted with %j", (name) => {
+    const dialog = openLibrary("one_shot");
+    fireEvent.click(within(dialog).getByRole("button", { name: "Create new Ambience group" }));
+    const naming = screen.getByRole("dialog", { name: "Name new cue group" });
+    const field = within(naming).getByRole("textbox", { name: "Group name" });
+    const defaultName = field.getAttribute("placeholder");
+    expect(field).toHaveValue("");
+    fireEvent.change(field, { target: { value: name } });
+    fireEvent.click(within(naming).getByRole("button", { name: "Create" }));
+    const encounter = store.getState().encounter.present;
+    const cue = encounter.audioCues.byId[encounter.audioCues.allIds[0]];
+    expect(encounter.audioCueGroups.byId[cue.placement.groupId]).toMatchObject({ name: defaultName, section: "ambiance" });
+  });
+  it("returns Back to destination choices without creating anything", () => {
+    const dialog = openLibrary("loop");
+    const before = store.getState().encounter;
+    fireEvent.click(within(dialog).getByRole("button", { name: "Create new Music group" }));
+    const naming = screen.getByRole("dialog", { name: "Name new cue group" });
+    fireEvent.change(within(naming).getByRole("textbox", { name: "Group name" }), { target: { value: "Draft name" } });
+    fireEvent.click(within(naming).getByRole("button", { name: "Back" }));
+    const destinations = screen.getByRole("dialog", { name: "Choose audio destination" });
+    expect(store.getState().encounter).toBe(before);
+    fireEvent.click(within(destinations).getByRole("button", { name: "Weather" }));
+    const encounter = store.getState().encounter.present;
+    expect(encounter.audioCueGroups.allIds).toEqual(before.present.audioCueGroups.allIds);
+    expect(encounter.audioCues.byId[encounter.audioCues.allIds[0]].placement.groupId).toBe("ambience");
   });
 });

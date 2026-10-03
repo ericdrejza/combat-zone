@@ -1,8 +1,9 @@
 import type { EncounterState } from "@core/encounter/types";
 import type { EntityCollection, EntityId } from "@core/state/entityCollection";
 import { DEFAULT_AUDIO_REPEAT_DELAY_SETTINGS, type AudioCue, type AudioCueGroup, type AudioCueGroupSection, type AudioCueTrigger } from "./types";
+import { getDefaultAudioCueGroupName } from "./audioGroupNames";
 
-export type CreateAudioCueInput = Pick<AudioCue, "id" | "libraryNodeId" | "placement" | "type"> & Partial<Pick<AudioCue, "repeat" | "repeatDelay" | "triggers" | "volume">>;
+export type CreateAudioCueInput = Pick<AudioCue, "id" | "libraryNodeId" | "placement" | "type"> & Partial<Pick<AudioCue, "repeat" | "repeatDelay" | "triggers" | "triggersEnabled" | "volume">>;
 
 function upsert<TEntity extends { id: EntityId }>(collection: EntityCollection<TEntity>, entity: TEntity): EntityCollection<TEntity> {
   return { byId: { ...collection.byId, [entity.id]: entity }, allIds: collection.allIds.includes(entity.id) ? collection.allIds : [...collection.allIds, entity.id] };
@@ -13,9 +14,10 @@ const SECTION_TRIGGERS: Partial<Record<AudioCueGroupSection, AudioCueTrigger[]>>
   zone: ["zone_enter", "zone_leave"]
 };
 
-function cueAllowed(state: EncounterState, cue: Pick<AudioCue, "placement" | "triggers" | "type">) {
+function cueAllowed(state: EncounterState, cue: Pick<AudioCue, "placement" | "triggers" | "triggersEnabled" | "repeat" | "type">) {
   const section = state.audioCueGroups.byId[cue.placement.groupId]?.section;
   return Boolean(section) &&
+    (!cue.triggersEnabled || !cue.repeat && (section === "actor" || section === "zone")) &&
     (section !== "music" || cue.type === "loop") &&
     ((section !== "actor" && section !== "zone") || cue.type === "one_shot") &&
     cue.triggers.every((trigger) => cue.type === "one_shot" && SECTION_TRIGGERS[section!]?.includes(trigger));
@@ -24,7 +26,7 @@ function cueAllowed(state: EncounterState, cue: Pick<AudioCue, "placement" | "tr
 function normalizeCueForSection(cue: AudioCue, section: AudioCueGroupSection): AudioCue {
   const type = section === "music" ? "loop" : section === "zone" || section === "actor" ? "one_shot" : cue.type;
   const allowedTriggers = SECTION_TRIGGERS[section] ?? [];
-  return { ...cue, triggers: cue.triggers.filter((trigger) => allowedTriggers.includes(trigger)), type };
+  return { ...cue, triggers: cue.triggers.filter((trigger) => allowedTriggers.includes(trigger)), triggersEnabled: allowedTriggers.length > 0 && cue.triggersEnabled, type };
 }
 
 export function createAudioCue(state: EncounterState, input: CreateAudioCueInput): EncounterState {
@@ -36,6 +38,7 @@ export function createAudioCue(state: EncounterState, input: CreateAudioCueInput
     placement: input.placement,
     repeat: input.repeat ?? input.type === "loop",
     triggers: input.triggers ?? [],
+    triggersEnabled: input.triggersEnabled ?? (!(input.repeat ?? input.type === "loop") && Boolean(input.triggers?.length)),
     type: input.type,
     volume: Math.max(0, Math.min(1, input.volume ?? 0.5))
   };
@@ -46,12 +49,15 @@ export function createAudioCue(state: EncounterState, input: CreateAudioCueInput
 export function updateAudioCue(state: EncounterState, cueId: string, update: Partial<Omit<AudioCue, "id" | "placement">>): EncounterState {
   const cue = state.audioCues.byId[cueId];
   if (!cue) return state;
+  if (update.repeat === true && update.triggersEnabled === true) return state;
   const nextType = update.type ?? cue.type;
+  const triggersEnabled = nextType === "one_shot" && (update.repeat === true ? false : update.triggersEnabled ?? cue.triggersEnabled);
   const nextCue = {
     ...cue,
     ...update,
     triggers: nextType === "one_shot" ? update.triggers ?? cue.triggers : [],
-    repeat: update.repeat ?? cue.repeat,
+    repeat: update.triggersEnabled === true ? false : update.repeat ?? cue.repeat,
+    triggersEnabled,
     volume: update.volume === undefined ? cue.volume : Math.max(0, Math.min(1, update.volume))
   };
   if (!cueAllowed(state, nextCue)) return state;
@@ -67,8 +73,7 @@ export function deleteAudioCue(state: EncounterState, cueId: string): EncounterS
 
 export function createAudioCueGroup(state: EncounterState, input: { id: string; name?: string; section: AudioCueGroupSection }): EncounterState {
   if (state.audioCueGroups.byId[input.id]) return state;
-  const names: Record<AudioCueGroupSection, string> = { actor: "New Actor Group", ambiance: "New Ambience Group", music: "New Music Group", zone: "New Zone Group" };
-  const group: AudioCueGroup = { id: input.id, name: input.name?.trim() || names[input.section], repeat: false, section: input.section };
+  const group: AudioCueGroup = { id: input.id, name: input.name?.trim() || getDefaultAudioCueGroupName(input.section), repeat: false, section: input.section };
   return {
     ...state,
     audioCueGroups: upsert(state.audioCueGroups, group),

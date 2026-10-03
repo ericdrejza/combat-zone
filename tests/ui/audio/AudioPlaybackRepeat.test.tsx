@@ -25,7 +25,7 @@ class FakeAudio extends EventTarget {
 const effect: AudioCue = {
   id: "effect", libraryNodeId: "effect-node", placement: { type: "group", groupId: "ambience" },
   repeat: true, repeatDelay: { minimumDelaySeconds: 5, maximumDelaySeconds: 5 },
-  triggers: [], type: "one_shot", volume: 0.5
+  triggers: [], triggersEnabled: false, type: "one_shot", volume: 0.5
 };
 
 function Harness() {

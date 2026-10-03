@@ -98,6 +98,8 @@ describe("Audio canvas assignment", () => {
     const createGroup = within(dialog).getByRole("button", { name: "Create new Music group" });
     expect(within(dialog).getByRole("button", { name: "Create new Ambience group" })).toBeInTheDocument();
     await user.click(createGroup);
+    const naming = screen.getByRole("dialog", { name: "Name new cue group" });
+    await user.click(within(naming).getByRole("button", { name: "Create" }));
 
     const encounter = store.getState().encounter.present;
     const group = encounter.audioCueGroups.byId[encounter.musicGroupIds[0]];
@@ -127,6 +129,7 @@ describe("Audio canvas assignment", () => {
     const dialog = screen.getByRole("dialog", { name: "Choose audio destination" });
     expect(within(dialog).queryByRole("button", { name: "Create new Music group" })).not.toBeInTheDocument();
     fireEvent.click(within(dialog).getByRole("button", { name: "Create new Ambience group" }));
+    fireEvent.click(within(screen.getByRole("dialog", { name: "Name new cue group" })).getByRole("button", { name: "Create" }));
     const encounter = store.getState().encounter.present;
     const cue = encounter.audioCues.byId[encounter.audioCues.allIds[0]];
     expect(cue).toMatchObject({ libraryNodeId: nodeId, type: "one_shot", volume: 0.5 });

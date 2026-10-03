@@ -43,6 +43,38 @@ describe("Audio group and section controls", () => {
   beforeEach(() => { FakeAudio.instances = []; vi.stubGlobal("Audio", FakeAudio); });
   afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
+  it.each(["zone-cue", "actor-cue"])("switches exclusive behaviors on %s while preserving settings and undo/redo", (id) => {
+    const { board } = setup();
+    const card = within(board.querySelector(`[data-audio-cue-id="${id}"]`) as HTMLElement);
+    const enter = id === "zone-cue" ? "Entering zone" : "Actor enters zone";
+    const cue = () => store.getState().encounter.present.audioCues.byId[id];
+    // Setup starts with repeat enabled; switching to Flag must turn it off.
+    fireEvent.change(card.getByRole("combobox", { name: "Repeat delay from" }), { target: { value: "5" } });
+    fireEvent.change(card.getByRole("combobox", { name: "Repeat delay to" }), { target: { value: "10" } });
+    fireEvent.click(card.getByRole("button", { name: "Enable triggers" }));
+    expect(card.getByRole("button", { name: "Enable repeat" })).toHaveAttribute("aria-pressed", "false");
+    expect(card.queryByRole("combobox", { name: "Repeat delay from" })).not.toBeInTheDocument();
+    fireEvent.click(card.getByRole("checkbox", { name: enter }));
+    const savedTriggers = [...cue().triggers];
+    fireEvent.click(card.getByRole("button", { name: "Enable repeat" }));
+    expect(cue()).toMatchObject({ repeat: true, triggersEnabled: false, triggers: savedTriggers, repeatDelay: { minimumDelaySeconds: 5, maximumDelaySeconds: 10 } });
+    expect(card.queryByRole("checkbox", { name: enter })).not.toBeInTheDocument();
+    expect(card.queryByRole("img", { name: enter })).not.toBeInTheDocument();
+    expect(card.getByRole("combobox", { name: "Repeat delay from" })).toHaveValue("5");
+    act(() => store.dispatch(undoEncounterChange()));
+    expect(cue()).toMatchObject({ repeat: false, triggersEnabled: true });
+    expect(card.getByRole("checkbox", { name: enter })).toBeChecked();
+    act(() => store.dispatch(redoEncounterChange()));
+    expect(cue()).toMatchObject({ repeat: true, triggersEnabled: false });
+    fireEvent.click(card.getByRole("button", { name: "Disable repeat" }));
+    expect(cue()).toMatchObject({ repeat: false, triggersEnabled: false, triggers: savedTriggers });
+    fireEvent.click(card.getByRole("button", { name: "Enable triggers" }));
+    expect(card.getByRole("checkbox", { name: enter })).toBeChecked();
+    fireEvent.click(card.getByRole("button", { name: "Disable triggers" }));
+    expect(cue()).toMatchObject({ repeat: false, triggersEnabled: false, triggers: savedTriggers });
+    expect(card.queryByRole("checkbox", { name: enter })).not.toBeInTheDocument();
+  });
+
   it.each([
     { source: "c", target: "a", y: 120, side: "before", order: ["c", "a", "b"] },
     { source: "a", target: "b", y: 280, side: "after", order: ["b", "a", "c"] }
@@ -112,8 +144,9 @@ describe("Audio group and section controls", () => {
     expect(within(panel).getByRole("button", { name: "Next music track" })).toBeDisabled();
   });
 
-  it("pauses each Soundboard section independently, including waits and queued cues", async () => {
+  it.each(["panel", "board"] as const)("pauses each %s section independently, including waits and queued cues", async (surface) => {
     const { panel, board } = setup();
+    const controls = within(surface === "panel" ? panel : board);
     const card = (id: string) => within(panel.querySelector(`[data-audio-cue-id="${id}"]`) as HTMLElement);
     for (const id of ["rain", "a-cue", "zone-cue", "actor-cue"]) {
       await act(async () => fireEvent.click(card(id).getByRole("button", { name: "Play Track" })));
@@ -122,30 +155,30 @@ describe("Audio group and section controls", () => {
     const actorAudio = FakeAudio.instances.at(-1)!;
     act(() => zoneAudio.dispatchEvent(new Event("ended")));
     expect(card("zone-cue").getByText(/waiting/)).toBeInTheDocument();
-    fireEvent.click(within(board).getByRole("button", { name: "Pause zones" }));
+    fireEvent.click(controls.getByRole("button", { name: "Pause zones" }));
     expect(card("zone-cue").getByText(/paused/)).toBeInTheDocument();
     expect(actorAudio.pause).not.toHaveBeenCalled();
-    fireEvent.click(within(board).getByRole("button", { name: "Pause actors" }));
+    fireEvent.click(controls.getByRole("button", { name: "Pause actors" }));
     expect(actorAudio.pause).toHaveBeenCalledOnce();
-    fireEvent.click(within(board).getByRole("button", { name: "Pause ambience" }));
+    fireEvent.click(controls.getByRole("button", { name: "Pause ambience" }));
     expect(card("rain").getByText(/paused/)).toBeInTheDocument();
     expect(card("a-cue").queryByText(/paused/)).not.toBeInTheDocument();
-    await act(async () => fireEvent.click(within(board).getByRole("button", { name: "Resume ambience" })));
-    fireEvent.click(within(board).getByRole("button", { name: "Pause encounter" }));
+    await act(async () => fireEvent.click(controls.getByRole("button", { name: "Resume ambience" })));
+    fireEvent.click(controls.getByRole("button", { name: "Pause encounter" }));
     expect(card("a-cue").getByText(/paused/)).toBeInTheDocument();
     await act(async () => fireEvent.click(card("b-cue").getByRole("button", { name: "Play Track" })));
     const queued = FakeAudio.instances.at(-1)!;
     expect(queued.play).not.toHaveBeenCalled();
-    await act(async () => fireEvent.click(within(board).getByRole("button", { name: "Resume encounter" })));
+    await act(async () => fireEvent.click(controls.getByRole("button", { name: "Resume encounter" })));
     expect(queued.play).toHaveBeenCalledOnce();
     expect(card("rain").queryByText(/paused/)).not.toBeInTheDocument();
     expect(card("zone-cue").getByText(/paused/)).toBeInTheDocument();
     expect(card("actor-cue").getByText(/paused/)).toBeInTheDocument();
-    fireEvent.click(within(board).getByRole("button", { name: "Resume zones" }));
+    fireEvent.click(controls.getByRole("button", { name: "Resume zones" }));
     expect(card("zone-cue").getByText(/waiting/)).toBeInTheDocument();
-    await act(async () => fireEvent.click(within(board).getByRole("button", { name: "Resume actors" })));
+    await act(async () => fireEvent.click(controls.getByRole("button", { name: "Resume actors" })));
     expect(actorAudio.play).toHaveBeenCalledTimes(2);
-    fireEvent.click(within(board).getByRole("button", { name: "Stop all audio" }));
+    fireEvent.click(controls.getByRole("button", { name: "Stop all audio" }));
   });
 
   it("shows Effect duration beside its type, once, in both card presentations", () => {
@@ -172,6 +205,7 @@ describe("Audio group and section controls", () => {
       }
     };
     expectIndicators(false, false);
+    fireEvent.click(within(boardCard).getByRole("button", { name: "Enable triggers" }));
     fireEvent.click(within(boardCard).getByRole("checkbox", { name: enter }));
     expectIndicators(true, false);
     const indicator = within(panelCard).getByRole("img", { name: enter });

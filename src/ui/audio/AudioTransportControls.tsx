@@ -15,10 +15,12 @@ export function AudioTransportControls() {
   </div>;
 }
 
-export function MusicSectionControls() {
+export function MusicSectionControls({ infoFirst = false }: { infoFirst?: boolean }) {
+  const information = <button aria-label="Music playback information" className="flex h-8 w-8 items-center justify-center text-canvas-muted" title="Only one track can play across the entire Music section. Starting another track stops the current track, including tracks in other groups." type="button"><Info aria-hidden="true" className="h-4 w-4" /></button>;
   return <>
+    {infoFirst ? information : null}
     <SectionPlaybackButton label="music" scope="music" />
-    <button aria-label="Music playback information" className="flex h-8 w-8 items-center justify-center text-canvas-muted" title="Only one track can play across the entire Music section. Starting another track stops the current track, including tracks in other groups." type="button"><Info aria-hidden="true" className="h-4 w-4" /></button>
+    {infoFirst ? null : information}
   </>;
 }
 
