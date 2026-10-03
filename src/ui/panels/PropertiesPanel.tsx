@@ -7,6 +7,7 @@ import { BackgroundPropertiesPanel } from "./BackgroundPropertiesPanel";
 import { EdgePropertiesPanel } from "./EdgePropertiesPanel";
 import { EngagementPropertiesPanel } from "./EngagementPropertiesPanel";
 import { ZonePropertiesPanel } from "./ZonePropertiesPanel";
+import { AudioPropertiesPanel } from "./AudioPropertiesPanel";
 
 export type PropertiesLibraryLocation = {
   folderId: string;
@@ -38,6 +39,8 @@ export function PropertiesPanel({
       />
     );
   }
+
+  if (activeToolId === "audio") return <AudioPropertiesPanel />;
 
   if (selection.selectedEntityType === "actor") {
     return (

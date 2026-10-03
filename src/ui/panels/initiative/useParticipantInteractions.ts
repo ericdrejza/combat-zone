@@ -67,13 +67,14 @@ export function useParticipantInteractions(
               )
             : [actorId];
         const ids = [...new Set([...existingActorIds, ...rangeIds])];
-        dispatch(selectEntity({ entityType: "actor", ids }));
+        dispatch(selectEntity({ entityType: "actor", ids, userInitiated: true }));
       } else {
         dispatch(
           selectEntity({
             entityType: "actor",
             ids: [actorId],
-            toggle: modifiers.ctrlKey || modifiers.metaKey
+            toggle: modifiers.ctrlKey || modifiers.metaKey,
+            userInitiated: true
           })
         );
       }

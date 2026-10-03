@@ -27,6 +27,7 @@ import { commitBackgroundImage } from "@ui/toolbar/background/backgroundCanvasAc
 import { useCanvasViewport } from "@ui/canvas/CanvasViewportContext";
 import { armCompactCanvasTransfer } from "@ui/canvas/compactCanvasTransfer";
 import { useOptionalCloudSync } from "@ui/cloud_sync";
+import { useAudioCueAssignment } from "@ui/audio/useAudioCueAssignment";
 
 function getPanelSectionId(activeToolId: ToolId): LibrarySectionId | null {
   if (activeToolId === "actor") {
@@ -36,6 +37,8 @@ function getPanelSectionId(activeToolId: ToolId): LibrarySectionId | null {
   if (activeToolId === "background") {
     return "backgrounds";
   }
+
+  if (activeToolId === "audio") return "audio";
 
   return null;
 }
@@ -94,6 +97,7 @@ export function LibraryPanel({
 }: LibraryPanelProps) {
   const dispatch = useDispatch();
   const cloud = useOptionalCloudSync();
+  const audioAssignment = useAudioCueAssignment();
   const { getViewportSize, zoom: viewportZoom } = useCanvasViewport();
   const encounter = useSelector((state: RootState) => state.encounter.present);
   const library = useSelector((state: RootState) => state.library);
@@ -151,7 +155,7 @@ export function LibraryPanel({
   if (!sectionId) {
     return (
       <p className="text-sm text-canvas-muted">
-        Actor or Background tools show library assets here.
+        Actor, Background, or Audio tools show library assets here.
       </p>
     );
   }
@@ -203,7 +207,7 @@ export function LibraryPanel({
     imageUrl: string | null,
     mediaType?: string
   ) {
-    if (activeSectionId !== "tokens" || node.type === "folder") {
+    if ((activeSectionId !== "tokens" && activeSectionId !== "audio") || node.type === "folder") {
       return;
     }
 
@@ -213,10 +217,11 @@ export function LibraryPanel({
       return;
     }
 
-    dispatch(clearSelection());
+    if (activeSectionId === "tokens") dispatch(clearSelection());
     event.dataTransfer.effectAllowed = "copy";
     event.dataTransfer.setData(LIBRARY_NODE_DRAG_TYPE, node.id);
     event.dataTransfer.setData("text/plain", node.id);
+    if (activeSectionId !== "tokens") return;
     dragPreviewCleanupRef.current?.();
     dragPreviewCleanupRef.current = setActorDragImage(event.dataTransfer, {
       image: asset.source,
@@ -287,6 +292,10 @@ export function LibraryPanel({
     }
   }
 
+  function createAudioCueForTarget(node: LibraryNode) {
+    if (activeSectionId === "audio") audioAssignment.requestDestination(node);
+  }
+
   return (
     <div className="space-y-2">
       <div
@@ -325,13 +334,17 @@ export function LibraryPanel({
                 assetButtonRefs.current[node.id] = button;
               }}
               isBackground={activeSectionId === "backgrounds"}
+              isAudio={activeSectionId === "audio"}
               isToken={activeSectionId === "tokens"}
               node={node}
               onClick={() =>
                 activeSectionId === "backgrounds"
                   ? applyBackground(node)
-                  : void createActorInTargetZone(node)
+                  : activeSectionId === "tokens"
+                    ? void createActorInTargetZone(node)
+                    : undefined
               }
+              onDoubleClick={() => createAudioCueForTarget(node)}
               onDragEnd={finishLibraryDrag}
               onDragStart={(event, imageUrl) =>
                 startLibraryDrag(
@@ -355,6 +368,7 @@ export function LibraryPanel({
           );
         })}
       </div>
+      {audioAssignment.dialog}
     </div>
   );
 }

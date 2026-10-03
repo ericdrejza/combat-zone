@@ -3,16 +3,22 @@ import { createEmptyEntityCollection } from "../state/entityCollection";
 import type { EncounterState } from "./types";
 import { ENCOUNTER_SCHEMA_VERSION } from "./types";
 import { DEFAULT_CANVAS_SIZE } from "@core/layout/polygonCanvasBounds";
-import { DEFAULT_ENCOUNTER_PANEL_LAYOUT } from "./panelLayout";
+import {
+  createPanelLayoutFromOrder,
+  DEFAULT_ENCOUNTER_PANEL_ORDER,
+  type EncounterPanelOrder
+} from "./panelLayout";
 
 export type CreateEncounterStateInput = {
   id: EntityId;
   name: string;
+  panelOrder?: EncounterPanelOrder;
 };
 
 export function createEncounterState({
   id,
-  name
+  name,
+  panelOrder = DEFAULT_ENCOUNTER_PANEL_ORDER
 }: CreateEncounterStateInput): EncounterState {
   return {
     schemaVersion: ENCOUNTER_SCHEMA_VERSION,
@@ -25,12 +31,15 @@ export function createEncounterState({
     actors: createEmptyEntityCollection(),
     engagements: createEmptyEntityCollection(),
     annotations: createEmptyEntityCollection(),
+    audioCues: createEmptyEntityCollection(),
+    audioCueGroups: createEmptyEntityCollection(),
+    musicGroupIds: [],
     initiativeTracker: {
       entries: [],
       currentActorId: null,
       currentRound: null
     },
-    panelLayout: structuredClone(DEFAULT_ENCOUNTER_PANEL_LAYOUT),
+    panelLayout: createPanelLayoutFromOrder(panelOrder),
     validationState: {
       mode: "ADVISORY",
       messages: []

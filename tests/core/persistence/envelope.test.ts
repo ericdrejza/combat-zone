@@ -8,6 +8,7 @@ import {
   type EncounterExportEnvelope
 } from "@core/persistence";
 import { createEmptyLibraryState } from "@core/persistence/memoryRepository";
+import { createAudioCue, createAudioCueGroup } from "@entities/audio/audioMutations";
 
 function encounter(id = "encounter-1") {
   return createEncounterState({ id, name: "Test encounter" });
@@ -24,6 +25,17 @@ function validEnvelope(): EncounterExportEnvelope {
 }
 
 describe("persistence export envelopes", () => {
+  it("round trips muted cues and rejects volumes outside 0–100%", () => {
+    const value = validEnvelope();
+    value.encounter = createAudioCue(createAudioCueGroup(value.encounter, { id: "ambience", section: "ambiance" }), {
+      id: "muted", libraryNodeId: "audio-node", placement: { type: "group", groupId: "ambience" }, type: "loop", volume: 0
+    });
+    expect(parseExportEnvelope(JSON.parse(JSON.stringify(value)))).toEqual(value);
+    for (const volume of [-0.1, 1.1]) {
+      value.encounter.audioCues.byId.muted.volume = volume;
+      expect(() => validateExportEnvelope(value)).toThrow(/audioCues/);
+    }
+  });
   it("accepts a current encounter envelope without changing EncounterState", () => {
     const value = validEnvelope();
     expect(validateExportEnvelope(value)).toEqual(value);
@@ -75,6 +87,49 @@ describe("persistence export envelopes", () => {
     expect(migrated.encounter.panelLayout).toEqual(
       DEFAULT_ENCOUNTER_PANEL_LAYOUT
     );
+  });
+
+  it("adds an empty audio collection and panel when migrating schema version 7", () => {
+    const value = validEnvelope() as unknown as Record<string, unknown>;
+    value.schemaVersion = 2;
+    const legacyEncounter = value.encounter as Record<string, unknown>;
+    legacyEncounter.schemaVersion = 7;
+    delete legacyEncounter.audioCues;
+    const panelLayout = legacyEncounter.panelLayout as { right: unknown[] };
+    panelLayout.right = panelLayout.right.slice(0, -1);
+    const library = value.library as { sections: Record<string, unknown> };
+    delete library.sections.audio;
+
+    const migrated = parseExportEnvelope(value) as EncounterExportEnvelope;
+
+    expect(migrated.encounter.audioCues).toEqual({ byId: {}, allIds: [] });
+    expect(migrated.encounter.audioCueGroups).toEqual({ byId: {}, allIds: [] });
+    expect(migrated.encounter.panelLayout.right.at(-1)).toEqual({
+      collapsed: false,
+      id: "audio"
+    });
+    expect(migrated.library.sections.audio.rootId).toBe("audio-root");
+  });
+
+  it("rejects invalid cue ranges and dangling group placements", () => {
+    const value = validEnvelope();
+    value.encounter = createAudioCue(createAudioCueGroup(value.encounter, {
+      id: "zone-group",
+      section: "zone"
+    }), {
+      id: "invalid-cue",
+      libraryNodeId: "audio-node",
+      placement: { type: "group", groupId: "zone-group" },
+      type: "one_shot"
+    });
+    value.encounter.audioCues.byId["invalid-cue"].placement = { type: "group", groupId: "missing-group" };
+
+    expect(() => validateExportEnvelope(value)).toThrow(/invalid group placement/);
+
+    value.encounter.audioCues.byId["invalid-cue"].placement = { type: "group", groupId: "zone-group" };
+    value.encounter.audioCues.byId["invalid-cue"].repeatDelay.maximumDelaySeconds = 2;
+    value.encounter.audioCues.byId["invalid-cue"].repeatDelay.minimumDelaySeconds = 3;
+    expect(() => validateExportEnvelope(value)).toThrow(/audioCues/);
   });
 
   it("migrates legacy embedded and HTTP image strings losslessly", () => {

@@ -4,9 +4,17 @@ import type { ImageCompressionStrategy } from "./imageCompression";
 import { getSelectedImageCompressionStrategy } from "./imageCompressionPreference";
 
 const VIDEO_MEDIA_TYPES = new Set(["video/mp4", "video/webm"]);
+const AUDIO_MEDIA_TYPES = new Set([
+  "audio/mpeg", "audio/mp3", "audio/aac", "audio/mp4", "audio/ogg",
+  "audio/opus", "audio/flac", "audio/x-flac", "audio/wav", "audio/x-wav"
+]);
 const animatedWebpCache = new Map<string, boolean>();
 
-export const LIBRARY_MEDIA_ACCEPT = "image/*,video/mp4,video/webm,.mp4,.webm";
+export const LIBRARY_MEDIA_ACCEPT = "image/*,video/mp4,video/webm,audio/mpeg,audio/aac,audio/mp4,audio/ogg,audio/opus,audio/flac,audio/wav,.mp4,.webm,.mp3,.aac,.m4a,.opus,.ogg,.flac,.wav";
+
+export function isAudioMediaType(mediaType: string | undefined): boolean {
+  return Boolean(mediaType && AUDIO_MEDIA_TYPES.has(mediaType.toLowerCase()));
+}
 
 /** True when an asset is one of the locally supported video formats. */
 export function isVideoMediaType(mediaType: string | undefined): boolean {
@@ -14,7 +22,7 @@ export function isVideoMediaType(mediaType: string | undefined): boolean {
 }
 
 export function isSupportedLibraryMediaType(mediaType: string | undefined): boolean {
-  return Boolean(mediaType?.startsWith("image/") || isVideoMediaType(mediaType));
+  return Boolean(mediaType?.startsWith("image/") || isVideoMediaType(mediaType) || isAudioMediaType(mediaType));
 }
 
 export function isVideoAsset(asset: Pick<LibraryImageAsset, "mediaType">): boolean {
@@ -81,6 +89,13 @@ function mediaTypeFromName(name: string): string | null {
 
   if (extension === "mp4") return "video/mp4";
   if (extension === "webm") return "video/webm";
+  if (extension === "mp3") return "audio/mpeg";
+  if (extension === "aac") return "audio/aac";
+  if (extension === "m4a") return "audio/mp4";
+  if (extension === "opus") return "audio/opus";
+  if (extension === "ogg") return "audio/ogg";
+  if (extension === "flac") return "audio/flac";
+  if (extension === "wav") return "audio/wav";
   return null;
 }
 
@@ -120,6 +135,22 @@ function readVideoDimensions(source: string): Promise<{ height: number; width: n
   });
 }
 
+function verifyAudioDecodes(blob: Blob): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const source = URL.createObjectURL(blob);
+    const audio = document.createElement("audio");
+    const finish = (error?: Error) => {
+      audio.removeAttribute("src");
+      URL.revokeObjectURL(source);
+      error ? reject(error) : resolve();
+    };
+    audio.preload = "metadata";
+    audio.addEventListener("loadedmetadata", () => finish(), { once: true });
+    audio.addEventListener("error", () => finish(new Error("Selected audio could not be decoded by this browser.")), { once: true });
+    audio.src = source;
+  });
+}
+
 function readImageDimensions(source: string): Promise<{ height: number; width: number }> {
   return new Promise((resolve, reject) => {
     const image = new Image();
@@ -136,7 +167,7 @@ export async function readLibraryMediaFile(
   compressionStrategy: ImageCompressionStrategy = getSelectedImageCompressionStrategy()
 ): Promise<LibraryImageAsset> {
   const mediaType = getSupportedLibraryMediaType(file);
-  if (!mediaType) throw new Error("Only images, MP4, and WebM files are supported.");
+  if (!mediaType) throw new Error("This image, video, or audio format is not supported.");
 
   const compressed = await compressionStrategy.compress(file, mediaType, file.name);
   const storedBlob = compressed?.blob ?? file;
@@ -152,8 +183,11 @@ export async function readLibraryMediaFile(
     : storedMediaType === "image/webp" && dataUrl
       ? isAnimatedEmbeddedWebp(dataUrl)
       : false;
-  let dimensions: { height: number; width: number };
-  if (compressed) {
+  let dimensions: { height?: number; width?: number };
+  if (isAudioMediaType(storedMediaType)) {
+    await verifyAudioDecodes(storedBlob);
+    dimensions = {};
+  } else if (compressed) {
     dimensions = compressed;
   } else {
     try {

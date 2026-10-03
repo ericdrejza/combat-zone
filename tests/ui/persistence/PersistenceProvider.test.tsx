@@ -116,4 +116,30 @@ describe("PersistenceProvider", () => {
       expect(localStorage.getItem("unrelated-origin-key")).toBe("keep");
     });
   });
+
+  it("copies the global panel order into a newly created encounter only", async () => {
+    localStorage.setItem(INTERFACE_PREFERENCES_STORAGE_KEY, JSON.stringify({
+      panelOrder: {
+        left: ["audio", "library", "log"],
+        right: ["properties", "status", "initiative"]
+      }
+    }));
+    const repository = new InMemoryWorkspaceRepository();
+
+    renderPersistence(repository);
+    await screen.findByText("Untitled Encounter");
+
+    expect(store.getState().encounter.present.panelLayout).toEqual({
+      left: [
+        { collapsed: false, id: "audio" },
+        { collapsed: false, id: "library" },
+        { collapsed: false, id: "log" }
+      ],
+      right: [
+        { collapsed: false, id: "properties" },
+        { collapsed: false, id: "status" },
+        { collapsed: false, id: "initiative" }
+      ]
+    });
+  });
 });

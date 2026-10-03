@@ -115,6 +115,7 @@ export function buildZone({
   tags = []
 }: CreateZoneInput): Zone {
   return {
+    audioGroupIds: [],
     autoResize,
     colorBorder,
     colorEngagement: colorEngagement ?? colorBorder,
@@ -208,7 +209,7 @@ export function deleteZone(
     )
   );
 
-  return {
+  const next = {
     ...state,
     zones: removeEntities(state.zones, new Set([zoneId])),
     edges: removeEntities<Edge>(state.edges, connectedEdgeIds),
@@ -225,4 +226,6 @@ export function deleteZone(
         : actor
     )
   };
+
+  return next;
 }

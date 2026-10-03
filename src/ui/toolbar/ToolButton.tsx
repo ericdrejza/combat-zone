@@ -35,7 +35,7 @@ export function ToolButton({
             : "border-canvas-line bg-canvas-surface text-canvas-ink"
         }`}
         onClick={() => {
-          dispatch(setActiveTool(tool.id));
+          dispatch(setActiveTool(selected && tool.id !== "select" ? "select" : tool.id));
           onSelected?.();
         }}
         title={tool.tooltip}

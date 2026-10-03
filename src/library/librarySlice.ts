@@ -9,7 +9,7 @@ import type {
   LibraryState
 } from "./types";
 import { LIBRARY_SECTION_IDS, LIBRARY_SECTION_LABELS } from "./types";
-import { isSupportedLibraryMediaType } from "./mediaAsset";
+import { isAudioMediaType, isSupportedLibraryMediaType } from "./mediaAsset";
 
 type SectionPayload = {
   sectionId: LibrarySectionId;
@@ -211,7 +211,8 @@ export const librarySlice = createSlice({
         if (
           !parent ||
           payload.sectionId === "encounters" ||
-          !isSupportedLibraryMediaType(payload.asset.mediaType)
+          !isSupportedLibraryMediaType(payload.asset.mediaType) ||
+          (payload.sectionId === "audio") !== isAudioMediaType(payload.asset.mediaType)
         ) {
           return;
         }
@@ -242,7 +243,8 @@ export const librarySlice = createSlice({
       if (
         !node ||
         node.type === "folder" ||
-        !isSupportedLibraryMediaType(payload.asset.mediaType)
+        !isSupportedLibraryMediaType(payload.asset.mediaType) ||
+        (payload.sectionId === "audio") !== isAudioMediaType(payload.asset.mediaType)
       ) {
         return;
       }
@@ -326,6 +328,14 @@ export const librarySlice = createSlice({
         node.asset.name = name;
       }
     },
+    setAudioAssetIcon(state, { payload }: PayloadAction<NodePayload & { icon: "audio" | "music" }>) {
+      if (payload.sectionId !== "audio" || !["audio", "music"].includes(payload.icon)) return;
+      const asset = resolveLibraryAsset(state.sections.audio, payload.nodeId);
+      if (!asset || !isAudioMediaType(asset.mediaType)) return;
+      // Links resolve the original asset, so there is only one icon preference.
+      if (payload.icon === "audio") delete asset.audioIcon;
+      else asset.audioIcon = payload.icon;
+    },
     deleteNode(state, { payload }: PayloadAction<NodePayload>) {
       const section = state.sections[payload.sectionId];
 
@@ -368,6 +378,7 @@ export const {
   replaceImage,
   replaceWithAssetLink,
   renameNode,
+  setAudioAssetIcon,
   resetLibraryState,
   uploadImage
 } = librarySlice.actions;

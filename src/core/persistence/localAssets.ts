@@ -78,8 +78,8 @@ function visitLibrarySources(
   library: LibraryState,
   visit: (source: ImageAssetSource) => void
 ) {
-  for (const sectionId of ["backgrounds", "tokens"] as const) {
-    for (const node of Object.values(library.sections[sectionId].nodesById)) {
+  for (const sectionId of ["backgrounds", "tokens", "audio"] as const) {
+    for (const node of Object.values(library.sections[sectionId]?.nodesById ?? {})) {
       if (node.type === "image" && node.asset) visit(node.asset.source);
     }
   }
@@ -137,8 +137,8 @@ async function internalizeSources(
     }
   }
   if (library) {
-    for (const sectionId of ["backgrounds", "tokens"] as const) {
-      for (const node of Object.values(library.sections[sectionId].nodesById)) {
+    for (const sectionId of ["backgrounds", "tokens", "audio"] as const) {
+      for (const node of Object.values(library.sections[sectionId]?.nodesById ?? {})) {
         if (node.type === "image" && node.asset) {
           node.asset.source = await internalize(node.asset.source);
         }
@@ -224,8 +224,8 @@ export async function embedLocalAssets(
       if (actor.image) actor.image = await embed(actor.image);
     }
   };
-  for (const sectionId of ["backgrounds", "tokens"] as const) {
-    for (const node of Object.values(value.library.state.sections[sectionId].nodesById)) {
+  for (const sectionId of ["backgrounds", "tokens", "audio"] as const) {
+    for (const node of Object.values(value.library.state.sections[sectionId]?.nodesById ?? {})) {
       if (node.type === "image" && node.asset) node.asset.source = await embed(node.asset.source);
     }
   }

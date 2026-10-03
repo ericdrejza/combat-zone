@@ -34,12 +34,10 @@ describe("Toolbar zone and background", () => {
     }
   }
 
-  it("opens Zone shape radios from the Zone toolbar button", async () => {
+  it("shows Zone shape radios while active and toggles the active tool to Select", async () => {
     const user = userEvent.setup();
 
     renderApp();
-
-    await user.click(screen.getByRole("button", { name: "Zone" }));
 
     const shapeOptions = screen.getByRole("radiogroup", {
       name: "Zone shape options"
@@ -65,6 +63,10 @@ describe("Toolbar zone and background", () => {
     expect(
       screen.getByRole("radiogroup", { name: "Zone shape options" })
     ).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Zone" }));
+    expect(screen.getByRole("button", { name: "Select" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.queryByRole("radiogroup", { name: "Zone shape options" })).not.toBeInTheDocument();
   });
 
   it("opens the Library for adding and replacing a canvas background image", async () => {

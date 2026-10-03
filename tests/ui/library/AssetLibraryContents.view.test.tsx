@@ -52,6 +52,16 @@ const imageSection: LibrarySection = {
   }
 };
 
+const audioSection: LibrarySection = {
+  id: "audio",
+  name: "Audio",
+  rootId: "audio-root",
+  nodesById: {
+    "audio-root": { childIds: ["rain"], id: "audio-root", name: "Audio", parentId: null, sectionId: "audio", type: "folder" },
+    rain: { asset: { mediaType: "audio/mpeg", name: "rain.mp3", source: { dataUrl: "data:audio/mpeg;base64,AA==", kind: "embedded" } }, id: "rain", name: "Rain", parentId: "audio-root", sectionId: "audio", type: "image" }
+  }
+};
+
 function mockHoverSupport(matches: boolean) {
   const originalMatchMedia = window.matchMedia;
   window.matchMedia = vi.fn().mockImplementation((query: string) => ({
@@ -101,6 +111,8 @@ describe("AssetLibraryContents view modes", () => {
     try {
       renderContents();
 
+      expect(screen.getByRole("button", { name: "Play animated assets" }).querySelector(".lucide-play")).not.toBeNull();
+
       await user.click(
         screen.getByRole("button", {
           name: "Switch library contents to list view"
@@ -125,6 +137,22 @@ describe("AssetLibraryContents view modes", () => {
     } finally {
       restoreMatchMedia();
     }
+  });
+
+  it("enables audio preview only from the independent headphones toggle", async () => {
+    const user = userEvent.setup();
+    renderContents({
+      activeSection: audioSection,
+      currentFolder: audioSection.nodesById[audioSection.rootId],
+      selectedNodeId: "rain"
+    });
+    await user.click(screen.getByRole("button", { name: "Switch library contents to list view" }));
+    expect(screen.getByRole("button", { name: "Preview audio" }).querySelector(".lucide-headphones")).not.toBeNull();
+    expect(screen.getByText("Audio preview is off.")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Preview Rain")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Preview audio" }));
+    expect(screen.getByLabelText("Preview Rain")).toBeInTheDocument();
   });
 
   it("navigates to the parent folder from the unstyled folder-up control", async () => {

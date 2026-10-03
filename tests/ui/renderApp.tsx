@@ -51,7 +51,9 @@ export function getCanvas(): HTMLElement {
 export async function selectZoneTool(
   user: ReturnType<typeof userEvent.setup>
 ) {
-  await user.click(screen.getByRole("button", { name: "Zone" }));
+  if (store.getState().interaction.activeToolId !== "zone") {
+    await user.click(screen.getByRole("button", { name: "Zone" }));
+  }
 }
 
 export function createRectangleZone(

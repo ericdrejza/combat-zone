@@ -13,6 +13,7 @@ export type ActorSize = "small" | "medium" | "large" | "xLarge";
 export type ActorShape = "circle" | "rectangle";
 
 export type Actor = {
+  audioGroupIds?: string[];
   id: string;
   name: string;
   actorType: ActorType;

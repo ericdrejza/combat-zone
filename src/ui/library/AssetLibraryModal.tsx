@@ -49,6 +49,7 @@ type AssetLibraryModalProps = {
   contextButtonState?: AssetLibraryContextButtonState;
   initialSectionId?: LibrarySectionId;
   initialFocusedNodeId?: string;
+  lockedSectionId?: LibrarySectionId;
   viewModeBySection?: LibraryViewModeBySection;
   onClose: () => void;
   onCurrentFolderChange: (
@@ -61,6 +62,7 @@ type AssetLibraryModalProps = {
     viewMode: AssetLibraryViewMode
   ) => void;
   onBackgroundDoubleClick: (node: LibraryNode) => void;
+  onAudioDoubleClick?: (node: LibraryNode) => void;
   onTokenDoubleClick: (node: LibraryNode) => void;
   tokenSubmitLabel?: string;
   mode?: AssetLibraryMode;
@@ -76,11 +78,13 @@ export function AssetLibraryModal({
   currentFolderBySection,
   contextButtonState,
   onBackgroundDoubleClick,
+  onAudioDoubleClick,
   onClose,
   onCurrentFolderChange,
   onContextButtonStateChange,
   initialSectionId = "encounters",
   initialFocusedNodeId,
+  lockedSectionId,
   onViewModeChange = () => undefined,
   onTokenDoubleClick,
   tokenSubmitLabel = "Create Actor",
@@ -95,7 +99,7 @@ export function AssetLibraryModal({
 }: AssetLibraryModalProps) {
   const controller = useAssetLibraryModalController({
     currentFolderBySection,
-    initialSectionId: mode === "browse" ? initialSectionId : "encounters",
+    initialSectionId: lockedSectionId ?? (mode === "browse" ? initialSectionId : "encounters"),
     initialSelectedNodeId: initialFocusedNodeId,
     onCurrentFolderChange,
     onViewModeChange,
@@ -124,6 +128,7 @@ export function AssetLibraryModal({
     initialFocusedNodeId ?? null
   );
   const [showEncounterActorTokens, setShowEncounterActorTokens] = useState(false);
+  const [audioPreviewContainer, setAudioPreviewContainer] = useState<HTMLDivElement | null>(null);
   const [renameTarget, setRenameTarget] = useState<
     | { kind: "encounter"; id: string; name: string }
     | { kind: "node"; node: LibraryNode }
@@ -233,6 +238,10 @@ export function AssetLibraryModal({
 
     if (controller.activeSectionId === "backgrounds") {
       onBackgroundDoubleClick(node);
+    }
+
+    if (controller.activeSectionId === "audio") {
+      onAudioDoubleClick?.(node);
     }
   }
 
@@ -429,7 +438,7 @@ export function AssetLibraryModal({
     <div
       aria-label="Asset Library"
       aria-modal="true"
-      className="viewport-overlay z-50 flex items-center justify-center bg-black/40 p-2 lg:p-6"
+      className="viewport-overlay z-[100] flex items-center justify-center bg-black/40 p-2 lg:p-6"
       role="dialog"
     >
       <div className="flex h-full max-h-[44rem] w-full max-w-[68rem] flex-col overflow-hidden rounded-2xl border border-canvas-line bg-canvas-panel shadow-2xl lg:rounded-3xl">
@@ -445,7 +454,7 @@ export function AssetLibraryModal({
           </button>
         </header>
         <div className="scrollbar-hidden flex shrink-0 overflow-x-auto border-b border-canvas-line px-3 pt-3 lg:px-5" role="tablist">
-          {(encounterOnly ? (["encounters"] as const) : LIBRARY_SECTION_IDS).map((sectionId) => (
+          {(lockedSectionId ? [lockedSectionId] : encounterOnly ? (["encounters"] as const) : LIBRARY_SECTION_IDS).map((sectionId) => (
             <button
               key={sectionId}
               aria-selected={controller.activeSectionId === sectionId}
@@ -606,6 +615,7 @@ export function AssetLibraryModal({
             />
           </aside>
             <AssetLibraryContents
+              audioPreviewContainer={audioPreviewContainer}
               activeSection={controller.activeSection}
               contextButtonState={
                 contextButtonState ?? {
@@ -715,6 +725,20 @@ export function AssetLibraryModal({
               Set Background
             </button>
           </footer>
+        ) : controller.activeSectionId === "audio" && onAudioDoubleClick ? (
+          <footer className="flex items-center justify-end gap-6 border-t border-canvas-line px-5 py-3">
+            <div aria-label="Audio preview controls" className="min-w-0 flex-1" ref={setAudioPreviewContainer} />
+            <button
+              className="shrink-0 rounded-xl bg-canvas-ink px-4 py-2 text-sm font-semibold text-canvas-on-ink disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={persistence.readOnly || !selectedLibraryImage}
+              onClick={() => {
+                if (selectedLibraryImage) onAudioDoubleClick(selectedLibraryImage);
+              }}
+              type="button"
+            >
+              Add Cue
+            </button>
+          </footer>
         ) : controller.activeSectionId === "encounters" ? (
           <footer className="flex justify-end border-t border-canvas-line px-5 py-3">
             <button
@@ -790,6 +814,8 @@ export function AssetLibraryModal({
           contextMenu={controller.contextMenu}
           contextMenuRef={controller.contextMenuRef}
           node={controller.contextNode}
+          audioAsset={resolveLibraryAsset(controller.activeSection, controller.contextNode.id)}
+          onSetAudioIcon={controller.setAudioIcon}
           onCopyWebLink={(node) => void copyWebLink(node)}
           onGoToLinkedAsset={goToLinkedAsset}
           onSelectAssetType={selectAssetType}

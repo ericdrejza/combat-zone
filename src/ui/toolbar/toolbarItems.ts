@@ -1,5 +1,6 @@
 import {
   ArrowRightFromLine,
+  AudioLines,
   Bookmark,
   CircleUserRound,
   Circle,
@@ -21,6 +22,7 @@ import type { ToolId } from '@interaction/tools/toolRegistry';
 
 /** Primary tool iconography stays centralized so compact and desktop controls match. */
 export const TOOL_ICONS: Record<ToolId, LucideIcon> = {
+  audio: AudioLines,
   actor: CircleUserRound,
   annotation: Bookmark,
   background: Image,
@@ -56,7 +58,9 @@ export const TOOLBAR_ITEMS: ToolbarItem[] = [
   { type: 'tool', tool: TOOL_DEFINITIONS_BY_ID.annotation },
   { id: 'annotation-actor', type: 'separator' },
   { type: 'tool', tool: TOOL_DEFINITIONS_BY_ID.actor },
-  { id: 'actor-select', type: 'separator' },
+  { id: 'actor-audio', type: 'separator' },
+  { type: 'tool', tool: TOOL_DEFINITIONS_BY_ID.audio },
+  { id: 'audio-select', type: 'separator' },
   { type: 'tool', tool: TOOL_DEFINITIONS_BY_ID.select }
 ];
 

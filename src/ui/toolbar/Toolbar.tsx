@@ -26,6 +26,7 @@ import {
 } from "./EncounterTitleControls";
 import { CloudStatusIndicator } from "@ui/cloud_sync";
 import { useInterfacePreferences } from "@ui/interface_preferences/InterfacePreferenceProvider";
+import { AudioToolButton } from "./audio/AudioToolButton";
 
 type ToolbarProps = {
   actorCreationImage?: ActorImageInput | null;
@@ -169,6 +170,8 @@ export function Toolbar({
     if (tool.id === "edge") {
       return <EdgeToolButton key={tool.id} activeToolId={visibleActiveToolId} compactLayout={compactLayout} compactSubtoolHost={compactZoomOpen || compactEncounterOpen ? null : compactSubtoolHost} edgeTool={edgeTool} encounter={encounter} tool={tool} />;
     }
+
+    if (tool.id === "audio") return <AudioToolButton key={tool.id} activeToolId={visibleActiveToolId} compactLayout={compactLayout} compactSubtoolHost={compactZoomOpen || compactEncounterOpen ? null : compactSubtoolHost} encounterId={encounter.id} tool={tool} />;
 
     return (
       <ToolButton

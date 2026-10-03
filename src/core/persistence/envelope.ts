@@ -5,6 +5,7 @@ import {
 } from "@core/encounter/panelLayout";
 import type { LibraryState } from "@library/types";
 import { isImageAssetSource, migrateLegacyImageSource } from "@core/assets/imageAssetSource";
+import { isAudioMediaType } from "@library/mediaAsset";
 import {
   EXPORT_SCHEMA_VERSION,
   PersistenceValidationError,
@@ -19,8 +20,11 @@ type UnknownRecord = Record<string, unknown>;
 
 const LEGACY_IMAGE_ENCOUNTER_SCHEMA_VERSION = 5;
 const LEGACY_PANEL_LAYOUT_ENCOUNTER_SCHEMA_VERSION = 6;
+const LEGACY_AUDIO_ENCOUNTER_SCHEMA_VERSION = 7;
 const LEGACY_EXPORT_SCHEMA_VERSION = 1;
+const LEGACY_MEDIA_EXPORT_SCHEMA_VERSION = 2;
 const LEGACY_WORKSPACE_SCHEMA_VERSION = 1;
+const LEGACY_MEDIA_WORKSPACE_SCHEMA_VERSION = 2;
 
 function isRecord(value: unknown): value is UnknownRecord {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -99,7 +103,7 @@ export function assertEncounterState(value: unknown, name = "encounter"): assert
   if (typeof value.name !== "string") {
     throw new PersistenceValidationError(`${name}.name must be a string.`);
   }
-  for (const collection of ["zones", "edges", "actors", "engagements", "annotations"] as const) {
+  for (const collection of ["zones", "edges", "actors", "engagements", "annotations", "audioCues", "audioCueGroups"] as const) {
     validateEntityCollection(value[collection], `${name}.${collection}`);
   }
   if (!isRecord(value.initiativeTracker) || !Array.isArray(value.initiativeTracker.entries)) {
@@ -127,13 +131,69 @@ export function assertEncounterState(value: unknown, name = "encounter"): assert
       throw new PersistenceValidationError(`${name}.actors.${actorId}.image is invalid.`);
     }
   }
+  const groups = value.audioCueGroups as { allIds: string[]; byId: UnknownRecord };
+  if (!Array.isArray(value.musicGroupIds)) throw new PersistenceValidationError(`${name}.musicGroupIds is invalid.`);
+  for (const groupId of groups.allIds) {
+    const group = groups.byId[groupId];
+    if (!isRecord(group) || group.id !== groupId || typeof group.name !== "string" || typeof group.repeat !== "boolean" || !["ambiance", "music", "zone", "actor"].includes(String(group.section))) {
+      throw new PersistenceValidationError(`${name}.audioCueGroups.${groupId} is invalid.`);
+    }
+  }
+  const musicIds = value.musicGroupIds as unknown[];
+  const everyMusicGroup = groups.allIds.filter((id) => (groups.byId[id] as UnknownRecord | undefined)?.section === "music");
+  if (new Set(musicIds).size !== musicIds.length || musicIds.length !== everyMusicGroup.length || musicIds.some((id) => typeof id !== "string" || !everyMusicGroup.includes(id))) {
+    throw new PersistenceValidationError(`${name}.musicGroupIds contains invalid groups.`);
+  }
+  for (const entityType of ["zones", "actors"] as const) {
+    const section = entityType === "zones" ? "zone" : "actor";
+    const entities = value[entityType] as { allIds: string[]; byId: UnknownRecord };
+    for (const entityId of entities.allIds) {
+      const entity = entities.byId[entityId];
+      if (!isRecord(entity) || !Array.isArray(entity.audioGroupIds) || new Set(entity.audioGroupIds).size !== entity.audioGroupIds.length || entity.audioGroupIds.some((id) => typeof id !== "string" || (groups.byId[id] as UnknownRecord | undefined)?.section !== section)) {
+        throw new PersistenceValidationError(`${name}.${entityType}.${entityId}.audioGroupIds is invalid.`);
+      }
+    }
+  }
+  const cues = value.audioCues as { allIds: string[]; byId: UnknownRecord };
+  for (const cueId of cues.allIds) {
+    const cue = cues.byId[cueId];
+    if (
+      !isRecord(cue) ||
+      cue.id !== cueId ||
+      typeof cue.libraryNodeId !== "string" ||
+      !["loop", "one_shot"].includes(String(cue.type)) ||
+      typeof cue.volume !== "number" ||
+      !Number.isFinite(cue.volume) ||
+      cue.volume < 0 ||
+      cue.volume > 1 ||
+      !Array.isArray(cue.triggers) ||
+      cue.triggers.some((trigger) => !["zone_enter", "zone_leave", "actor_enter_zone", "actor_leave_zone"].includes(String(trigger))) ||
+      typeof cue.repeat !== "boolean" ||
+      !isRecord(cue.repeatDelay) ||
+      [cue.repeatDelay.minimumDelaySeconds, cue.repeatDelay.maximumDelaySeconds]
+        .some((delay) => typeof delay !== "number" || !Number.isFinite(delay) || delay < 0) ||
+      (typeof cue.repeatDelay.minimumDelaySeconds === "number" &&
+        typeof cue.repeatDelay.maximumDelaySeconds === "number" &&
+        cue.repeatDelay.maximumDelaySeconds < cue.repeatDelay.minimumDelaySeconds) ||
+      !isRecord(cue.placement) ||
+      cue.placement.type !== "group"
+    ) {
+      throw new PersistenceValidationError(`${name}.audioCues.${cueId} is invalid.`);
+    }
+    const group = typeof cue.placement.groupId === "string" ? groups.byId[cue.placement.groupId] : undefined;
+    const groupSection = isRecord(group) ? group.section : undefined;
+    const legalTriggers = groupSection === "zone" ? ["zone_enter", "zone_leave"] : groupSection === "actor" ? ["actor_enter_zone", "actor_leave_zone"] : [];
+    if (!isRecord(group) || (groupSection === "music" && cue.type !== "loop") || (["actor", "zone"].includes(String(groupSection)) && cue.type === "loop") || cue.triggers.some((trigger) => cue.type !== "one_shot" || !legalTriggers.includes(String(trigger)))) {
+      throw new PersistenceValidationError(`${name}.audioCues.${cueId} has an invalid group placement.`);
+    }
+  }
 }
 
 export function assertLibraryState(value: unknown, name = "library"): asserts value is LibraryState {
   if (!isRecord(value) || !isRecord(value.sections)) {
     throw new PersistenceValidationError(`${name} must contain sections.`);
   }
-  for (const sectionId of ["encounters", "backgrounds", "tokens"] as const) {
+  for (const sectionId of ["encounters", "backgrounds", "tokens", "audio"] as const) {
     const section = value.sections[sectionId];
     if (!isRecord(section) || typeof section.rootId !== "string" || !isRecord(section.nodesById)) {
       throw new PersistenceValidationError(`${name}.sections.${sectionId} is invalid.`);
@@ -169,6 +229,12 @@ export function assertLibraryState(value: unknown, name = "library"): asserts va
         (!isRecord(node.asset) || !isImageAssetSource(node.asset.source))
       ) {
         throw new PersistenceValidationError(`${name} image ${nodeId} has an invalid source.`);
+      }
+      if (isRecord(node.asset) && node.asset.audioIcon !== undefined &&
+        (node.type !== "image" || sectionId !== "audio" ||
+          typeof node.asset.mediaType !== "string" || !isAudioMediaType(node.asset.mediaType) ||
+          (node.asset.audioIcon !== "audio" && node.asset.audioIcon !== "music"))) {
+        throw new PersistenceValidationError(`${name} asset ${nodeId} has an invalid audio icon.`);
       }
     }
   }
@@ -266,7 +332,7 @@ function assertPortableEncounter(state: EncounterState, name: string) {
 }
 
 function assertPortableLibrary(state: LibraryState, name: string) {
-  for (const sectionId of ["backgrounds", "tokens"] as const) {
+  for (const sectionId of ["backgrounds", "tokens", "audio"] as const) {
     for (const node of Object.values(state.sections[sectionId].nodesById)) {
       if (node.type === "image" && node.asset?.source.kind === "local_asset") {
         throw new PersistenceValidationError(
@@ -312,6 +378,23 @@ export function migrateLibraryState(value: unknown): unknown {
   if (!isRecord(value) || !isRecord(value.sections)) return value;
   const migrated = structuredClone(value);
   const sections = migrated.sections as UnknownRecord;
+  if (!isRecord(sections.audio)) {
+    sections.audio = {
+      id: "audio",
+      name: "Audio",
+      rootId: "audio-root",
+      nodesById: {
+        "audio-root": {
+          id: "audio-root",
+          name: "Audio",
+          parentId: null,
+          sectionId: "audio",
+          type: "folder",
+          childIds: []
+        }
+      }
+    };
+  }
   for (const section of Object.values(sections)) {
     if (!isRecord(section) || !isRecord(section.nodesById)) continue;
     for (const node of Object.values(section.nodesById)) {
@@ -340,8 +423,27 @@ export function migrateEncounterState(value: unknown): unknown {
     }
   }
   if (migrated.schemaVersion === LEGACY_PANEL_LAYOUT_ENCOUNTER_SCHEMA_VERSION) {
+    migrated.schemaVersion = LEGACY_AUDIO_ENCOUNTER_SCHEMA_VERSION;
+    const panelLayout = structuredClone(DEFAULT_ENCOUNTER_PANEL_LAYOUT);
+    panelLayout.right = panelLayout.right.filter(
+      (panel) => !isRecord(panel) || panel.id !== "audio"
+    );
+    migrated.panelLayout = panelLayout;
+  }
+  if (migrated.schemaVersion === LEGACY_AUDIO_ENCOUNTER_SCHEMA_VERSION) {
     migrated.schemaVersion = ENCOUNTER_SCHEMA_VERSION;
-    migrated.panelLayout = structuredClone(DEFAULT_ENCOUNTER_PANEL_LAYOUT);
+    migrated.audioCues = { byId: {}, allIds: [] };
+    migrated.audioCueGroups = { byId: {}, allIds: [] };
+    migrated.musicGroupIds = [];
+    if (isRecord(migrated.zones) && isRecord(migrated.zones.byId)) {
+      for (const zone of Object.values(migrated.zones.byId)) if (isRecord(zone)) zone.audioGroupIds = [];
+    }
+    if (isRecord(migrated.actors) && isRecord(migrated.actors.byId)) {
+      for (const actor of Object.values(migrated.actors.byId)) if (isRecord(actor)) actor.audioGroupIds = [];
+    }
+    if (isRecord(migrated.panelLayout) && Array.isArray(migrated.panelLayout.right)) {
+      migrated.panelLayout.right.push({ id: "audio", collapsed: false });
+    }
   }
   return migrated;
 }
@@ -350,7 +452,10 @@ function migrateWorkspace(value: unknown): unknown {
   if (!isRecord(value) || !isRecord(value.manifest)) return value;
   const migrated = structuredClone(value);
   const manifest = migrated.manifest as UnknownRecord;
-  if (manifest.schemaVersion === LEGACY_WORKSPACE_SCHEMA_VERSION) {
+  if (
+    manifest.schemaVersion === LEGACY_WORKSPACE_SCHEMA_VERSION ||
+    manifest.schemaVersion === LEGACY_MEDIA_WORKSPACE_SCHEMA_VERSION
+  ) {
     manifest.schemaVersion = WORKSPACE_SCHEMA_VERSION;
   }
   if (Array.isArray(migrated.encounters)) {
@@ -374,7 +479,10 @@ function migrateWorkspace(value: unknown): unknown {
 export function migrateExportEnvelope(value: unknown): ExportEnvelope {
   if (!isRecord(value)) return validateExportEnvelope(value);
   const migrated = structuredClone(value);
-  if (migrated.schemaVersion === LEGACY_EXPORT_SCHEMA_VERSION) {
+  if (
+    migrated.schemaVersion === LEGACY_EXPORT_SCHEMA_VERSION ||
+    migrated.schemaVersion === LEGACY_MEDIA_EXPORT_SCHEMA_VERSION
+  ) {
     migrated.schemaVersion = EXPORT_SCHEMA_VERSION;
   }
   if (migrated.kind === "workspace-export") {

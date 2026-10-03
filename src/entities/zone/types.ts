@@ -12,6 +12,7 @@ export type ZoneNamePosition =
   | "bottom-left";
 
 export type Zone = {
+  audioGroupIds?: string[];
   colorBorder: string;
   /** Retained while matching is enabled so a custom selection is not lost. */
   colorEngagement?: string;

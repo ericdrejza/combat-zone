@@ -6,6 +6,7 @@ import { DOCKABLE_PANEL_DEFINITIONS } from "@ui/panels/dockablePanelMetadata";
 import { useTheme, type Theme } from "@ui/theme/ThemeProvider";
 import { DefaultColorSettings } from "./DefaultColorSettings";
 import { PreferenceSwitch } from "./PreferenceSwitch";
+import { PanelOrderSettings } from "./PanelOrderSettings";
 
 const themeOptions: Array<{
   icon: typeof Sun;
@@ -23,11 +24,13 @@ export function InterfaceSettings() {
     autoSelectActiveActorDefault,
     enableAssetAnimation,
     encounterCreationTool,
+    panelOrder,
     panelVisibility,
     panWithRightClickDrag,
     setAutoSelectActiveActorDefault,
     setEnableAssetAnimation,
     setEncounterCreationTool,
+    setPanelOrder,
     setPanelVisible,
     setPanWithRightClickDrag
   } = useInterfacePreferences();
@@ -120,19 +123,30 @@ export function InterfaceSettings() {
           <DefaultColorSettings />
         </div>
       </fieldset>
-      <fieldset className="mt-4 max-w-lg border-t border-canvas-line pt-5">
-        <legend className="pr-3 text-sm font-semibold">Panel Visibility</legend>
-        <div className="mt-1 divide-y divide-canvas-line">
-          {DOCKABLE_PANEL_DEFINITIONS.map((panel) => (
-            <PanelVisibilitySwitch
-              key={panel.id}
-              panelTitle={panel.title}
-              visible={panelVisibility[panel.id]}
-              onChange={(visible) => setPanelVisible(panel.id, visible)}
-            />
-          ))}
+      <section aria-labelledby="interface-panels-heading" className="mt-4 border-t border-canvas-line pt-5">
+        <h4 className="text-sm font-semibold" id="interface-panels-heading">Panels</h4>
+        <div className="mt-3 grid gap-5 lg:grid-cols-[minmax(0,1fr)_1px_minmax(0,1fr)] lg:gap-6">
+          <fieldset className="min-w-0">
+            <legend className="text-sm font-semibold">Visibility</legend>
+            <div className="mt-1 divide-y divide-canvas-line">
+              {DOCKABLE_PANEL_DEFINITIONS.map((panel) => (
+                <PanelVisibilitySwitch
+                  key={panel.id}
+                  panelTitle={panel.title}
+                  visible={panelVisibility[panel.id]}
+                  onChange={(visible) => setPanelVisible(panel.id, visible)}
+                />
+              ))}
+            </div>
+          </fieldset>
+          <div aria-hidden="true" className="hidden w-px bg-canvas-line lg:block" />
+          <fieldset className="min-w-0">
+            <legend className="text-sm font-semibold">Order</legend>
+            <p className="mb-3 mt-1 text-xs text-canvas-muted">Default sides and order for new encounters.</p>
+            <PanelOrderSettings onChange={setPanelOrder} order={panelOrder} />
+          </fieldset>
         </div>
-      </fieldset>
+      </section>
     </section>
   );
 }

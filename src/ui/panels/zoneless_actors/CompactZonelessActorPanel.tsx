@@ -44,7 +44,8 @@ export function CompactZonelessActorPanel() {
         entityType: "actor",
         ids: [actorId],
         toggle:
-          touchMultiSelect || event.shiftKey || event.ctrlKey || event.metaKey
+          touchMultiSelect || event.shiftKey || event.ctrlKey || event.metaKey,
+        userInitiated: true
       })
     );
   }

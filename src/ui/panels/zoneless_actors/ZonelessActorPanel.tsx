@@ -123,7 +123,8 @@ export function ZonelessActorPanel({
       selectEntity({
         entityType: "actor",
         ids: [actorId],
-        toggle: event.shiftKey || event.ctrlKey || event.metaKey
+        toggle: event.shiftKey || event.ctrlKey || event.metaKey,
+        userInitiated: true
       })
     );
   }

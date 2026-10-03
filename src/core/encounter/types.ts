@@ -8,8 +8,9 @@ import type { Zone } from "@entities/zone/types";
 import type { CanvasSize } from "@core/layout/polygonCanvasBounds";
 import type { ImageAssetSource } from "@core/assets/imageAssetSource";
 import type { EncounterPanelLayout } from "./panelLayout";
+import type { AudioCue, AudioCueGroup } from "@entities/audio/types";
 
-export const ENCOUNTER_SCHEMA_VERSION = 7;
+export const ENCOUNTER_SCHEMA_VERSION = 9;
 export const ZONELESS_ACTOR_ZONE_ID = "zoneless";
 
 export type EncounterSchemaVersion = typeof ENCOUNTER_SCHEMA_VERSION;
@@ -52,6 +53,9 @@ export type EncounterState = {
   actors: EntityCollection<Actor>;
   engagements: EntityCollection<Engagement>;
   annotations: EntityCollection<Annotation>;
+  audioCues: EntityCollection<AudioCue>;
+  audioCueGroups: EntityCollection<AudioCueGroup>;
+  musicGroupIds: EntityId[];
   initiativeTracker: InitiativeTrackerState;
   panelLayout: EncounterPanelLayout;
   validationState: EncounterValidationState;

@@ -142,6 +142,7 @@ export function buildActor({
   size = 'medium'
 }: CreateActorInput): Actor {
   return {
+    audioGroupIds: [],
     actorType,
     currentZoneId,
     id,

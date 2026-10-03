@@ -6,6 +6,7 @@ import {
 } from "@core/persistence";
 import type { LibraryNode } from "@library/types";
 import type { LibrarySectionId } from "@library/types";
+import type { AudioCuePlacement } from "@entities/audio/types";
 import type { LibraryFolderBySection } from "@ui/library/useAssetLibraryModalState";
 import type { LibraryViewModeBySection } from "@ui/library/useAssetLibraryModalState";
 import type {
@@ -26,6 +27,7 @@ import { UnsavedDraftDialog } from "./UnsavedDraftDialog";
 import { usePersistence } from "./PersistenceProvider";
 
 type AppPersistenceUiOptions = {
+  onAudioDoubleClick: (node: LibraryNode, placement?: AudioCuePlacement) => void;
   onActorTokenSelect: (actorId: string, node: LibraryNode) => void;
   onBackgroundDoubleClick: (node: LibraryNode) => void;
   onTokenDoubleClick: (node: LibraryNode) => void;
@@ -37,6 +39,7 @@ type AppPersistenceUi = {
   hasSavedEncounter: boolean;
   libraryOpen: boolean;
   openLibrary: (target?: LibraryOpenTarget) => void;
+  openAudioLibraryForCue: (placement: AudioCuePlacement) => void;
   openTokenLibraryForActor: (
     actorId: string,
     location?: PropertiesLibraryLocation
@@ -57,6 +60,7 @@ type LibraryOpenTarget = LibraryLocation | LibrarySectionId;
 
 /** Owns persistence-specific dialogs and transition guards outside App's shell. */
 export function useAppPersistenceUi({
+  onAudioDoubleClick,
   onActorTokenSelect,
   onBackgroundDoubleClick,
   onTokenDoubleClick
@@ -77,6 +81,7 @@ export function useAppPersistenceUi({
   const [libraryFocusedNodeId, setLibraryFocusedNodeId] = useState<
     string | null
   >(null);
+  const [audioCuePlacement, setAudioCuePlacement] = useState<AudioCuePlacement | null>(null);
   const [encounterToolSelectionRequest, setEncounterToolSelectionRequest] =
     useState(0);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -174,6 +179,7 @@ export function useAppPersistenceUi({
           contextButtonState={contextButtonState}
           initialFocusedNodeId={libraryFocusedNodeId ?? undefined}
           initialSectionId={librarySectionId}
+          lockedSectionId={audioCuePlacement ? "audio" : undefined}
           viewModeBySection={viewModeBySection}
           mode={libraryMode}
           onActiveEncounterDeleted={() => {
@@ -184,10 +190,16 @@ export function useAppPersistenceUi({
             onBackgroundDoubleClick(node);
             setLibraryOpen(false);
           }}
+          onAudioDoubleClick={(node) => {
+            onAudioDoubleClick(node, audioCuePlacement ?? undefined);
+            setAudioCuePlacement(null);
+            setLibraryOpen(false);
+          }}
           onClose={() => {
             setLibraryOpen(false);
             setLibraryFocusedNodeId(null);
             setTokenActorId(null);
+            setAudioCuePlacement(null);
           }}
           onCurrentFolderChange={(sectionId, folderId) => {
             setCurrentFolderBySection((current) => ({
@@ -315,6 +327,7 @@ export function useAppPersistenceUi({
     hasSavedEncounter: Boolean(persistence.activeRecord),
     libraryOpen,
     openLibrary: (target) => {
+      setAudioCuePlacement(null);
       setTokenActorId(null);
       const location =
         typeof target === "object" && target !== null ? target : undefined;
@@ -329,6 +342,14 @@ export function useAppPersistenceUi({
           [location.sectionId]: location.folderId
         }));
       }
+      setLibraryMode("browse");
+      setLibraryOpen(true);
+    },
+    openAudioLibraryForCue: (placement) => {
+      setTokenActorId(null);
+      setAudioCuePlacement(placement);
+      setLibrarySectionId("audio");
+      setLibraryFocusedNodeId(null);
       setLibraryMode("browse");
       setLibraryOpen(true);
     },

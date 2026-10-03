@@ -1,8 +1,9 @@
-export type LibrarySectionId = "encounters" | "backgrounds" | "tokens";
+export type LibrarySectionId = "encounters" | "backgrounds" | "tokens" | "audio";
 
 export type LibraryNodeType = "folder" | "image" | "link";
 
 export type LibraryImageAsset = {
+  audioIcon?: "audio" | "music";
   animated?: boolean;
   source: ImageAssetSource;
   height?: number;
@@ -36,12 +37,14 @@ export type LibraryState = {
 export const LIBRARY_SECTION_IDS: LibrarySectionId[] = [
   "encounters",
   "backgrounds",
-  "tokens"
+  "tokens",
+  "audio"
 ];
 
 export const LIBRARY_SECTION_LABELS: Record<LibrarySectionId, string> = {
   encounters: "Encounters",
   backgrounds: "Backgrounds",
-  tokens: "Tokens"
+  tokens: "Tokens",
+  audio: "Audio"
 };
 import type { ImageAssetSource } from "@core/assets/imageAssetSource";

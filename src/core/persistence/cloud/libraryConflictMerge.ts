@@ -43,7 +43,8 @@ export function mergeLibraryStates(
   const state = clone(remote);
   const localConflictIds = new Map<string, string>();
 
-  for (const sectionId of ["encounters", "backgrounds", "tokens"] as const) {
+  for (const sectionId of ["encounters", "backgrounds", "tokens", "audio"] as const) {
+    if (!base.sections[sectionId] || !local.sections[sectionId] || !remote.sections[sectionId] || !state.sections[sectionId]) continue;
     const baseNodes = base.sections[sectionId].nodesById;
     const localNodes = local.sections[sectionId].nodesById;
     const remoteNodes = remote.sections[sectionId].nodesById;

@@ -28,7 +28,7 @@ function workspaceWithSharedEmbeddedAsset(): WorkspaceSnapshot {
   };
   library.sections.backgrounds.nodesById["backgrounds-root"].childIds = ["asset"];
   return {
-    manifest: { activeEncounterId: "encounter", revision: 0, schemaVersion: 2, updatedAt: 1 },
+    manifest: { activeEncounterId: "encounter", revision: 0, schemaVersion: 3, updatedAt: 1 },
     encounters: [{ createdAt: 1, folderId: null, id: "encounter", revision: 0, state: encounter, updatedAt: 1 }],
     library: { revision: 0, state: library, updatedAt: 1 },
     recoveryDraft: { state: structuredClone(encounter), updatedAt: 1 }
