@@ -38,6 +38,7 @@ import type { AssetLibraryViewMode } from "./assetLibraryView";
 import { useOptionalCloudSync } from "@ui/cloud_sync";
 import { syncLibraryAssetReferences } from "./libraryReferenceSync";
 import { usePersistence } from "@ui/persistence/PersistenceProvider";
+import { getAudioDeletionImpact } from "./audioDeletionImpact";
 
 const toDroppedFiles = (files: File[]) =>
   files.map((file) => ({ file, relativePath: getFileRelativePath(file) }));
@@ -298,6 +299,12 @@ export function useAssetLibraryModalController({
   }
 
   function handleDelete(node: LibraryNode) {
+    const impact = activeSectionId === "audio" ? getAudioDeletionImpact(activeSection, node, encounter, persistence.encounters) : null;
+    if (impact && (impact.cueCount || impact.linkCount)) {
+      setPendingDeleteNodeId(node.id);
+      setContextMenu(null);
+      return;
+    }
     if (node.type === "folder" && (node.childIds?.length ?? 0) > 0) {
       setPendingDeleteNodeId(node.id);
       setContextMenu(null);

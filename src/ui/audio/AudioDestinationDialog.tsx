@@ -11,6 +11,7 @@ type Props = {
   cueType: AudioCueType;
   encounter: EncounterState;
   node: LibraryNode;
+  cueCount?: number;
   onCancel: () => void;
   onChoose: (placement: AudioCuePlacement) => void;
   onCreateGroup: (section: AudioCueGroupSection, name: string) => void;
@@ -19,7 +20,7 @@ type Props = {
 };
 
 /** A destination remains explicit even when there is only one compatible group. */
-export function AudioDestinationDialog({ audioLibrary, cueType, encounter, node, onCancel, onChoose, onCreateGroup, sectionType, selectedEntityId }: Props) {
+export function AudioDestinationDialog({ audioLibrary, cueType, encounter, node, cueCount = 1, onCancel, onChoose, onCreateGroup, sectionType, selectedEntityId }: Props) {
   const [newGroupSection, setNewGroupSection] = useState<AudioCueGroupSection | null>(null);
   const sections = getAudioDestinationSections(sectionType, cueType);
   const groupIds = sectionType === "encounter" ? encounter.audioCueGroups.allIds
@@ -28,7 +29,7 @@ export function AudioDestinationDialog({ audioLibrary, cueType, encounter, node,
   return <div className="viewport-overlay z-[80] flex items-center justify-center bg-black/40 p-4">
     <div aria-label="Choose audio destination" aria-modal="true" className="max-h-full w-full max-w-sm overflow-y-auto rounded-2xl bg-canvas-panel p-5 shadow-xl" role="dialog">
       <h3 className="font-display text-lg font-semibold">Add {node.name}</h3>
-      <p className="mt-1 text-sm text-canvas-muted">Choose where this cue is configured.</p>
+      <p className="mt-1 text-sm text-canvas-muted">{node.type === "folder" ? `Choose where all ${cueCount} cues are configured.` : "Choose where this cue is configured."}</p>
       <div className="mt-4 space-y-4">{sections.map((section) => {
         const label = section === "ambiance" ? "Ambience" : section === "music" ? "Music" : section === "zone" ? "Zone" : "Actor";
         return <section aria-label={`${label} groups`} className="space-y-2" key={section}>
