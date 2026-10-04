@@ -34,7 +34,7 @@ describe("Audio panel volume controls", () => {
           id: "rain-cue",
           libraryNodeId: nodeId,
           placement: { type: "group", groupId: "ambience" },
-          type: "loop"
+          type: "track"
         })
       }));
     });
@@ -95,8 +95,8 @@ describe("Audio panel volume controls", () => {
     const nodeId = store.getState().library.sections.audio.nodesById["audio-root"].childIds?.[0] as string;
     let encounter = createAudioCueGroup(store.getState().encounter.present, { id: "zone-fx", name: "Zone FX", section: "zone" });
     encounter = createAudioCueGroup(encounter, { id: "actor-fx", name: "Actor FX", section: "actor" });
-    encounter = createAudioCue(encounter, { id: "zone-step", libraryNodeId: nodeId, placement: { type: "group", groupId: "zone-fx" }, type: "one_shot" });
-    encounter = createAudioCue(encounter, { id: "actor-step", libraryNodeId: nodeId, placement: { type: "group", groupId: "actor-fx" }, type: "one_shot" });
+    encounter = createAudioCue(encounter, { id: "zone-step", libraryNodeId: nodeId, placement: { type: "group", groupId: "zone-fx" }, type: "effect" });
+    encounter = createAudioCue(encounter, { id: "actor-step", libraryNodeId: nodeId, placement: { type: "group", groupId: "actor-fx" }, type: "effect" });
     act(() => store.dispatch(commitEncounterChange({ action: { id: "setup-triggers", payload: {}, timestamp: 1, type: "test.setup" }, nextEncounter: encounter })));
 
     fireEvent.click(within(screen.getByLabelText("Audio panel")).getByRole("button", { name: "Open Soundboard" }));
@@ -106,7 +106,7 @@ describe("Audio panel volume controls", () => {
     const actorCard = within(modal).getByLabelText("Name for Actor FX").closest("article") as HTMLElement;
     for (const card of [zoneCard, actorCard]) {
       expect(within(card).getByRole("radio", { name: "Effect" })).toBeInTheDocument();
-      expect(within(card).queryByRole("radio", { name: "Loop" })).not.toBeInTheDocument();
+      expect(within(card).queryByRole("radio", { name: "Track" })).not.toBeInTheDocument();
       expect(within(card).getByRole("button", { name: "Enable repeat" }).querySelector(".lucide-repeat-1")).not.toBeNull();
       fireEvent.click(within(card).getByRole("button", { name: "Enable triggers" }));
     }

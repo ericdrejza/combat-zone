@@ -28,7 +28,7 @@ class FakeAudio extends EventTarget {
 const zoneCue: AudioCue = {
   id: "zone", libraryNodeId: "asset", placement: { type: "group", groupId: "zone-group" },
   repeat: false, repeatDelay: { minimumDelaySeconds: 0, maximumDelaySeconds: 0 },
-  triggers: ["zone_enter", "zone_leave"], triggersEnabled: true, type: "one_shot", volume: 0.2
+  triggers: ["zone_enter", "zone_leave"], triggersEnabled: true, type: "effect", volume: 0.2
 };
 const actorCue: AudioCue = { ...zoneCue, id: "actor", libraryNodeId: "linked-asset", placement: { type: "group", groupId: "actor-group" }, triggers: ["actor_enter_zone"], volume: 0.8 };
 // Distinct Library assets remain distinct even if their source URLs match.

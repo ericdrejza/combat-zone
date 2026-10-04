@@ -9,6 +9,17 @@ import { AUDIO_REPEAT_DELAYS } from "@ui/audio/audioRepeatDelay";
 const renderSettings = () => render(<InterfacePreferenceProvider><AudioSettings /></InterfacePreferenceProvider>);
 describe("new cue defaults", () => {
   afterEach(() => localStorage.removeItem(INTERFACE_PREFERENCES_STORAGE_KEY));
+  it("omits cue-type settings and their persisted data", () => {
+    renderSettings();
+    expect(screen.queryByText("Default cue types")).not.toBeInTheDocument();
+    expect(screen.queryByRole("combobox", { name: /default cue type/ })).not.toBeInTheDocument();
+    fireEvent.change(screen.getByRole("slider", { name: "Default cue volume" }), { target: { value: "20" } });
+    const stored = JSON.parse(localStorage.getItem(INTERFACE_PREFERENCES_STORAGE_KEY)!);
+    expect(stored).not.toHaveProperty("audioCueTypeDefaults");
+    act(() => window.dispatchEvent(new Event(LOCAL_PREFERENCES_RESET_EVENT)));
+    fireEvent.change(screen.getByRole("slider", { name: "Default cue volume" }), { target: { value: "20" } });
+    expect(JSON.parse(localStorage.getItem(INTERFACE_PREFERENCES_STORAGE_KEY)!)).not.toHaveProperty("audioCueTypeDefaults");
+  });
   it("persists muted volume and allowed delays, normalizes the range, and resets defaults", () => {
     const first = renderSettings();
     const minimum = screen.getByRole("combobox", { name: "Default Effect repeat delay from" });

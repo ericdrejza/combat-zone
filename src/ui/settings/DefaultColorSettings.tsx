@@ -141,7 +141,7 @@ export function DefaultColorSettings() {
         />
         <PreferenceSwitch
           checked={zoneShowBorderDefault}
-          label="Show border"
+          label="Show border by default"
           onChange={setZoneShowBorderDefault}
         />
         <HexColorInput

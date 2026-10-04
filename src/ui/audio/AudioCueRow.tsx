@@ -46,11 +46,11 @@ export function AudioCueRow({ configurable = false, cue, dropSide, onDragStart, 
     commit({ volume: nextVolume }, "audio.setVolume");
   }
   const typeChoices: Array<{ Icon: typeof Repeat2; label: string; type: AudioCueType }> = [
-    { Icon: Repeat2, label: "Loop", type: "loop" },
-    { Icon: Music3, label: "Effect", type: "one_shot" }
+    { Icon: Repeat2, label: "Track", type: "track" },
+    { Icon: Music3, label: "Effect", type: "effect" }
   ];
   const VolumeIcon = volume === 0 ? VolumeX : volume < 0.3 ? Volume : volume <= 0.7 ? Volume1 : Volume2;
-  const repeatIndicator = cue.repeat ? <span aria-label={`Repeating ${name}`} className="inline-flex text-canvas-muted" role="img" title={cue.type === "one_shot" ? `This sound repeats every ${delayLabel(cue.repeatDelay.minimumDelaySeconds)} to ${delayLabel(cue.repeatDelay.maximumDelaySeconds)}` : "Repeating"}><Repeat1 aria-hidden="true" className="h-3.5 w-3.5" /></span> : null;
+  const repeatIndicator = cue.repeat ? <span aria-label={`Repeating ${name}`} className="inline-flex text-canvas-muted" role="img" title={cue.type === "effect" ? `This sound repeats every ${delayLabel(cue.repeatDelay.minimumDelaySeconds)} to ${delayLabel(cue.repeatDelay.maximumDelaySeconds)}` : "Repeating"}><Repeat1 aria-hidden="true" className="h-3.5 w-3.5" /></span> : null;
   const showCueVolume = configurable || showVolume;
   const playButton = <PlayButton active={active} disabled={!active && !sourceUrl} name={name} onClick={() => active ? playback.stop(cue.id) : sourceUrl && void playback.play(cue, sourceUrl)} />;
 
@@ -58,23 +58,23 @@ export function AudioCueRow({ configurable = false, cue, dropSide, onDragStart, 
     {dropSide ? <div aria-label={`Insert cue ${dropSide} ${name}`} aria-orientation="vertical" role="separator" className={`absolute bottom-1 top-1 w-0.5 bg-canvas-ink ${dropSide === "before" ? "-left-1.5" : "-right-1.5"}`} data-testid="cue-drop-preview" /> : null}
     <header className="flex items-center gap-1.5">
       {onDragStart ? <button aria-label={`Reorder ${name}`} className="cursor-grab text-canvas-muted active:cursor-grabbing" draggable onDragStart={(event) => onDragStart(event, cue.id)} title="Drag to reorder cue" type="button"><GripVertical aria-hidden="true" className="h-4 w-4" /></button> : null}
-      <div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold">{name}</p><p className="flex items-center gap-1 text-[11px] text-canvas-muted">{cue.type === "one_shot" ? <>Effect · {formatTime(duration)}<TriggerIndicators cue={cue} owner={group?.section === "zone" || group?.section === "actor" ? group.section : undefined} /></> : "Loop"}{!configurable && cue.type === "loop" ? repeatIndicator : null}{status === "paused" ? " · paused" : status === "waiting" ? " · waiting" : ""}</p></div>
+      <div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold">{name}</p><p className="flex items-center gap-1 text-[11px] text-canvas-muted">{cue.type === "effect" ? <>Effect · {formatTime(duration)}<TriggerIndicators cue={cue} owner={group?.section === "zone" || group?.section === "actor" ? group.section : undefined} /></> : "Track"}{!configurable && cue.type === "track" ? repeatIndicator : null}{status === "paused" ? " · paused" : status === "waiting" ? " · waiting" : ""}</p></div>
       {configurable ? <button aria-label="Delete audio cue" className="flex h-7 w-7 items-center justify-center text-red-600 opacity-0 transition-opacity group-hover/cue:opacity-100 focus:opacity-100" onClick={() => { playback.stop(cue.id); dispatch(commitEncounterChange({ action: createEncounterActionRecord("audio.deleteCue", { cueId: cue.id }), nextEncounter: deleteAudioCue(encounter, cue.id) })); }} type="button"><Trash2 aria-hidden="true" className="h-3.5 w-3.5" /></button> : null}
       {!configurable ? playButton : null}
     </header>
-    {cue.type === "loop" ? <label className="block text-[11px] text-canvas-muted"><span className="flex justify-between"><span>{formatTime(progress.currentTime)}</span><span>{formatTime(duration)}</span></span><input aria-label={`Playback progress for ${name}`} className="w-full" disabled={!active || duration <= 0} max={Math.max(1, duration)} min="0" onChange={(event) => playback.seek(cue.id, Number(event.currentTarget.value))} step="0.1" type="range" value={Math.min(progress.currentTime, Math.max(1, duration))} /></label> : null}
+    {cue.type === "track" ? <label className="block text-[11px] text-canvas-muted"><span className="flex justify-between"><span>{formatTime(progress.currentTime)}</span><span>{formatTime(duration)}</span></span><input aria-label={`Playback progress for ${name}`} className="w-full" disabled={!active || duration <= 0} max={Math.max(1, duration)} min="0" onChange={(event) => playback.seek(cue.id, Number(event.currentTarget.value))} step="0.1" type="range" value={Math.min(progress.currentTime, Math.max(1, duration))} /></label> : null}
     {configurable ? <div className="space-y-1.5 text-xs">
       <div className="flex items-center gap-1">
-        <div aria-label={`Type for ${name}`} className="flex gap-1" role="radiogroup">{typeChoices.filter(({ type }) => group?.section === "music" ? type === "loop" : group?.section === "zone" || group?.section === "actor" ? type === "one_shot" : true).map(({ Icon, label, type }) => <button aria-checked={cue.type === type} aria-label={label} className={`flex h-7 w-7 items-center justify-center rounded-lg border ${cue.type === type ? "border-canvas-ink bg-canvas-ink text-canvas-on-ink" : "border-canvas-line text-canvas-muted"}`} key={type} onClick={() => { playback.stop(cue.id); commit({ type }, "audio.setType"); }} role="radio" title={label} type="button"><Icon aria-hidden="true" className="h-3.5 w-3.5" /></button>)}</div>
+        <div aria-label={`Type for ${name}`} className="flex gap-1" role="radiogroup">{typeChoices.filter(({ type }) => group?.section === "music" ? type === "track" : group?.section === "zone" || group?.section === "actor" ? type === "effect" : true).map(({ Icon, label, type }) => <button aria-checked={cue.type === type} aria-label={label} className={`flex h-7 w-7 items-center justify-center rounded-lg border ${cue.type === type ? "border-canvas-ink bg-canvas-ink text-canvas-on-ink" : "border-canvas-line text-canvas-muted"}`} key={type} onClick={() => { playback.stop(cue.id); commit({ type }, "audio.setType"); }} role="radio" title={label} type="button"><Icon aria-hidden="true" className="h-3.5 w-3.5" /></button>)}</div>
         <span aria-hidden="true" className="mx-1 h-5 border-l border-canvas-line" />
         <CueBehaviorButtons cue={cue} name={name} onCommit={commit} showTriggers={group?.section === "zone" || group?.section === "actor"} />
         <span className="flex-1" />
         {showCueVolume ? <VolumeControl VolumeIcon={VolumeIcon} commitVolume={commitVolume} name={name} onClose={() => setVolumeOpen(false)} onOpen={() => setVolumeOpen(true)} open={volumeOpen} playbackVolume={(next) => playback.setCueVolume(cue.id, next)} setVolume={setVolume} volume={volume} /> : null}
         {playButton}
       </div>
-      {cue.type === "one_shot" && cue.repeat ? <RepeatDelay cue={cue} onCommit={commit} /> : null}
-      {cue.type === "one_shot" && cue.triggersEnabled && (group?.section === "zone" || group?.section === "actor") ? <TriggerChoices cue={cue} onCommit={commit} owner={group.section} /> : null}
-    </div> : showCueVolume || cue.type === "one_shot" && cue.repeat ? <footer className="flex items-center gap-1">{cue.type === "one_shot" ? repeatIndicator : null}<span className="flex-1" />{showCueVolume ? <VolumeControl VolumeIcon={VolumeIcon} commitVolume={commitVolume} name={name} onClose={() => setVolumeOpen(false)} onOpen={() => setVolumeOpen(true)} open={volumeOpen} playbackVolume={(next) => playback.setCueVolume(cue.id, next)} setVolume={setVolume} volume={volume} /> : null}</footer> : null}
+      {cue.type === "effect" && cue.repeat ? <RepeatDelay cue={cue} onCommit={commit} /> : null}
+      {cue.type === "effect" && cue.triggersEnabled && (group?.section === "zone" || group?.section === "actor") ? <TriggerChoices cue={cue} onCommit={commit} owner={group.section} /> : null}
+    </div> : showCueVolume || cue.type === "effect" && cue.repeat ? <footer className="flex items-center gap-1">{cue.type === "effect" ? repeatIndicator : null}<span className="flex-1" />{showCueVolume ? <VolumeControl VolumeIcon={VolumeIcon} commitVolume={commitVolume} name={name} onClose={() => setVolumeOpen(false)} onOpen={() => setVolumeOpen(true)} open={volumeOpen} playbackVolume={(next) => playback.setCueVolume(cue.id, next)} setVolume={setVolume} volume={volume} /> : null}</footer> : null}
     {!asset ? <p className="text-xs text-red-600">The referenced Library audio is missing. Relink or remove this cue.</p> : null}
   </motion.article>;
 }
@@ -115,7 +115,7 @@ function getTriggerChoices(owner: "zone" | "actor"): Array<{ Icon: typeof MoveLe
 }
 
 function TriggerIndicators({ cue, owner }: { cue: AudioCue; owner?: "zone" | "actor" }) {
-  if (!owner || cue.type !== "one_shot" || !cue.triggersEnabled) return null;
+  if (!owner || cue.type !== "effect" || !cue.triggersEnabled) return null;
   return <>{getTriggerChoices(owner).filter(({ trigger }) => cue.triggers.includes(trigger)).map(({ Icon, label, trigger }) => <span aria-label={label} className="inline-flex shrink-0" key={trigger} role="img" title={label}><Icon aria-hidden="true" className="h-3.5 w-3.5" /></span>)}</>;
 }
 

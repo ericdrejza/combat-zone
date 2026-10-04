@@ -13,7 +13,7 @@ import { createAudioCue, createAudioCueGroup } from "@entities/audio/audioMutati
 describe("persisted record hydration", () => {
   it.each([true, false])("migrates schema-9 cue behavior without losing subsettings (repeat=%s)", (repeat) => {
     const encounter = createAudioCue(createAudioCueGroup(createEncounterState({ id: "audio", name: "Audio" }), { id: "zone", section: "zone" }), {
-      id: "effect", libraryNodeId: "sound", placement: { type: "group", groupId: "zone" }, type: "one_shot", repeat,
+      id: "effect", libraryNodeId: "sound", placement: { type: "group", groupId: "zone" }, type: "effect", repeat,
       triggers: ["zone_enter"], repeatDelay: { minimumDelaySeconds: 5, maximumDelaySeconds: 10 }
     });
     const state = { ...encounter, schemaVersion: 9 } as unknown as Record<string, unknown>;
@@ -21,7 +21,7 @@ describe("persisted record hydration", () => {
     const before = structuredClone(state);
     const record = { createdAt: 1, folderId: null, id: "audio", revision: 0, state, updatedAt: 1 };
     const migrated = hydrateEncounterRecord(record as never);
-    expect(migrated.state.schemaVersion).toBe(10);
+    expect(migrated.state.schemaVersion).toBe(11);
     expect(migrated.state.audioCues.byId.effect).toMatchObject({ repeat, triggersEnabled: !repeat, triggers: ["zone_enter"], repeatDelay: { minimumDelaySeconds: 5, maximumDelaySeconds: 10 } });
     expect(hydrateRecoveryDraft({ state, updatedAt: 1 } as never).state).toEqual(migrated.state);
     expect(state).toEqual(before);
@@ -30,7 +30,7 @@ describe("persisted record hydration", () => {
   it("validates fresh records using the explicitly versioned cue-group schema", () => {
     const state = createEncounterState({ id: "fresh", name: "Fresh" });
     const record = { createdAt: 1, folderId: null, id: state.id, revision: 0, state, updatedAt: 1 };
-    expect(ENCOUNTER_SCHEMA_VERSION).toBe(10);
+    expect(ENCOUNTER_SCHEMA_VERSION).toBe(11);
     expect(hydrateEncounterRecord(record)).toEqual(record);
     expect(hydrateRecoveryDraft({ state, updatedAt: 1 }).state).toEqual(state);
     expect(state.audioCueGroups).toEqual({ allIds: [], byId: {} });

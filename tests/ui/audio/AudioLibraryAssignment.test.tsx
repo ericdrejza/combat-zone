@@ -2,19 +2,25 @@ import { act, fireEvent, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { createAudioCueGroup } from "@entities/audio/audioMutations";
+import { setActiveTool, setAudioCueType, setAudioSectionType } from "@interaction/interactionState";
 import { uploadImage } from "@library/librarySlice";
 import { commitEncounterChange, redoEncounterChange, undoEncounterChange } from "@store/encounterSlice";
 import { store } from "@store/store";
 import { renderApp } from "@tests/ui/renderApp";
 import { INTERFACE_PREFERENCES_STORAGE_KEY } from "@ui/interface_preferences/InterfacePreferenceProvider";
 
-function openLibrary(type: "loop" | "one_shot") {
+function openLibrary(type: "track" | "effect") {
   localStorage.setItem(INTERFACE_PREFERENCES_STORAGE_KEY, JSON.stringify({
-    audioCueTypeDefaults: { encounter: type }, audioCueVolumeDefault: 0,
+    audioCueVolumeDefault: 0,
     audioRepeatDelayDefaults: { minimumDelaySeconds: 0, maximumDelaySeconds: 120 }
   }));
   renderApp();
   act(() => {
+    if (type === "effect") {
+      store.dispatch(setActiveTool("audio"));
+      store.dispatch(setAudioSectionType("encounter"));
+      store.dispatch(setAudioCueType("effect"));
+    }
     store.dispatch(uploadImage({
       asset: { mediaType: "audio/mpeg", name: "Theme", source: { dataUrl: "data:audio/mpeg;base64,AA==", kind: "embedded" } },
       parentId: "audio-root", sectionId: "audio"
@@ -34,8 +40,8 @@ function openLibrary(type: "loop" | "one_shot") {
 
 describe("normal Library audio assignment", () => {
   afterEach(() => localStorage.removeItem(INTERFACE_PREFERENCES_STORAGE_KEY));
-  it("offers existing and new Ambience and Music groups for Loops, with atomic undo/redo", () => {
-    const dialog = openLibrary("loop");
+  it("offers existing and new Ambience and Music groups for Tracks, with atomic undo/redo", () => {
+    const dialog = openLibrary("track");
     expect(within(dialog).getByRole("button", { name: "Weather" })).toBeInTheDocument();
     expect(within(dialog).getByRole("button", { name: "Playlist" })).toBeInTheDocument();
     expect(within(dialog).getByRole("button", { name: "Create new Ambience group" })).toBeInTheDocument();
@@ -53,7 +59,7 @@ describe("normal Library audio assignment", () => {
     expect(screen.queryByRole("dialog", { name: "Name new cue group" })).not.toBeInTheDocument();
     const added = store.getState().encounter.present;
     const cue = added.audioCues.byId[added.audioCues.allIds[0]];
-    expect(cue).toMatchObject({ type: "loop", volume: 0, repeatDelay: { minimumDelaySeconds: 0, maximumDelaySeconds: 120 } });
+    expect(cue).toMatchObject({ type: "track", volume: 0, repeatDelay: { minimumDelaySeconds: 0, maximumDelaySeconds: 120 } });
     expect(added.audioCueGroups.byId[cue.placement.groupId]).toMatchObject({ section: "music", name: "Battle tracks" });
     expect(store.getState().encounter.past).toHaveLength(historyLength + 1);
     act(() => store.dispatch(undoEncounterChange()));
@@ -62,18 +68,18 @@ describe("normal Library audio assignment", () => {
     expect(store.getState().encounter.present).toEqual(added);
   });
   it("offers only Ambience destinations for Effects and applies defaults to an existing group", () => {
-    const dialog = openLibrary("one_shot");
+    const dialog = openLibrary("effect");
     expect(within(dialog).queryByRole("button", { name: "Playlist" })).not.toBeInTheDocument();
     expect(within(dialog).queryByRole("button", { name: "Create new Music group" })).not.toBeInTheDocument();
     expect(within(dialog).getByRole("button", { name: "Create new Ambience group" })).toBeInTheDocument();
     fireEvent.click(within(dialog).getByRole("button", { name: "Weather" }));
     const encounter = store.getState().encounter.present;
     expect(encounter.audioCues.byId[encounter.audioCues.allIds[0]]).toMatchObject({
-      placement: { type: "group", groupId: "ambience" }, type: "one_shot", volume: 0
+      placement: { type: "group", groupId: "ambience" }, type: "effect", volume: 0
     });
   });
   it.each(["", "   "])("uses the placeholder name when Create is submitted with %j", (name) => {
-    const dialog = openLibrary("one_shot");
+    const dialog = openLibrary("effect");
     fireEvent.click(within(dialog).getByRole("button", { name: "Create new Ambience group" }));
     const naming = screen.getByRole("dialog", { name: "Name new cue group" });
     const field = within(naming).getByRole("textbox", { name: "Group name" });
@@ -86,7 +92,7 @@ describe("normal Library audio assignment", () => {
     expect(encounter.audioCueGroups.byId[cue.placement.groupId]).toMatchObject({ name: defaultName, section: "ambiance" });
   });
   it("returns Back to destination choices without creating anything", () => {
-    const dialog = openLibrary("loop");
+    const dialog = openLibrary("track");
     const before = store.getState().encounter;
     fireEvent.click(within(dialog).getByRole("button", { name: "Create new Music group" }));
     const naming = screen.getByRole("dialog", { name: "Name new cue group" });

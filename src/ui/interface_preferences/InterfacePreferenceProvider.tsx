@@ -6,7 +6,7 @@ import {
   useState
 } from "react";
 
-import { isAudioCueType, readAudioCueVolumeDefault, readAudioRepeatDelayDefaults } from "./audioPreferences";
+import { readAudioCueVolumeDefault, readAudioRepeatDelayDefaults } from "./audioPreferences";
 
 import { LOCAL_PREFERENCES_RESET_EVENT } from "@ui/motion_preferences/MotionPreferenceProvider";
 import {
@@ -14,7 +14,7 @@ import {
   type DockablePanelId,
   type DockablePanelVisibility
 } from "@ui/panels/dockablePanelMetadata";
-import { DEFAULT_AUDIO_REPEAT_DELAY_SETTINGS, type AudioCueType, type AudioRepeatDelaySettings } from "@entities/audio/types";
+import { DEFAULT_AUDIO_REPEAT_DELAY_SETTINGS, type AudioRepeatDelaySettings } from "@entities/audio/types";
 import {
   DEFAULT_ENCOUNTER_PANEL_ORDER,
   isEncounterPanelOrder,
@@ -42,7 +42,6 @@ type DurableInterfacePreferences = {
   audioCueVolumeDefault: number;
   audioMediaKeyScope: "all" | "music";
   audioMasterVolume: number;
-  audioCueTypeDefaults: Record<"encounter" | "zone" | "actor", AudioCueType>;
   audioRepeatDelayDefaults: AudioRepeatDelaySettings;
   autoSelectActiveActor: boolean;
   enableAssetAnimation: boolean;
@@ -59,7 +58,6 @@ type InterfacePreferences = DurableInterfacePreferences & {
   setAudioCueVolumeDefault: (volume: number) => void;
   setAudioMediaKeyScope: (scope: "all" | "music") => void;
   setAudioMasterVolume: (volume: number) => void;
-  setAudioCueTypeDefault: (owner: "encounter" | "zone" | "actor", type: AudioCueType) => void;
   setAudioRepeatDelayDefaults: (settings: AudioRepeatDelaySettings) => void;
   autoSelectActiveActorDefault: boolean;
   setAutoSelectActiveActor: (enabled: boolean) => void;
@@ -78,7 +76,6 @@ const defaultPreferences: DurableInterfacePreferences = {
   audioCueVolumeDefault: 0.5,
   audioMediaKeyScope: "music",
   audioMasterVolume: 1,
-  audioCueTypeDefaults: { encounter: "loop", zone: "one_shot", actor: "one_shot" },
   audioRepeatDelayDefaults: { ...DEFAULT_AUDIO_REPEAT_DELAY_SETTINGS },
   autoSelectActiveActor: true,
   enableAssetAnimation: true,
@@ -97,7 +94,6 @@ const defaultValue: InterfacePreferences = {
   setAudioCueVolumeDefault: () => undefined,
   setAudioMediaKeyScope: () => undefined,
   setAudioMasterVolume: () => undefined,
-  setAudioCueTypeDefault: () => undefined,
   setAudioRepeatDelayDefaults: () => undefined,
   setAutoSelectActiveActor: () => undefined,
   setEncounterCreationTool: () => undefined,
@@ -130,11 +126,6 @@ function readPreferences(): DurableInterfacePreferences {
         typeof stored?.audioMasterVolume === "number" && stored.audioMasterVolume >= 0 && stored.audioMasterVolume <= 1
           ? stored.audioMasterVolume
           : 1,
-      audioCueTypeDefaults: {
-        encounter: isAudioCueType(stored?.audioCueTypeDefaults?.encounter) ? stored.audioCueTypeDefaults.encounter : "loop",
-        zone: "one_shot",
-        actor: "one_shot"
-      },
       audioRepeatDelayDefaults: readAudioRepeatDelayDefaults(stored?.audioRepeatDelayDefaults),
       autoSelectActiveActor:
         typeof stored?.autoSelectActiveActor === "boolean"
@@ -260,9 +251,6 @@ export function InterfacePreferenceProvider({ children }: { children: ReactNode 
         autoSelectActiveActor,
         autoSelectActiveActorDefault: preferences.autoSelectActiveActor,
         setAudioMasterVolume: (audioMasterVolume) => updatePreferences({ audioMasterVolume }),
-        setAudioCueTypeDefault: (owner, type) => updatePreferences({
-          audioCueTypeDefaults: { ...preferences.audioCueTypeDefaults, [owner]: owner === "zone" || owner === "actor" ? "one_shot" : type }
-        }),
         setAudioRepeatDelayDefaults: (settings) => updatePreferences({ audioRepeatDelayDefaults: readAudioRepeatDelayDefaults(settings) }),
         setAutoSelectActiveActor,
         setAutoSelectActiveActorDefault: (enabled) =>

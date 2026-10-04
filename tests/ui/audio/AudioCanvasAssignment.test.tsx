@@ -76,7 +76,7 @@ describe("Audio canvas assignment", () => {
     expect(cue).toMatchObject({
       libraryNodeId: nodeId,
       placement: { type: "group", groupId: "weather" },
-      type: "one_shot"
+      type: "effect"
     });
   });
 
@@ -105,7 +105,7 @@ describe("Audio canvas assignment", () => {
     const group = encounter.audioCueGroups.byId[encounter.musicGroupIds[0]];
     const cue = encounter.audioCues.byId[encounter.audioCues.allIds[0]];
     expect(group.section).toBe("music");
-    expect(cue).toMatchObject({ placement: { type: "group", groupId: group.id }, type: "loop" });
+    expect(cue).toMatchObject({ placement: { type: "group", groupId: group.id }, type: "track" });
   });
 
   it("offers a new Ambience group for encounter Effect drops even without existing groups", () => {
@@ -119,7 +119,7 @@ describe("Audio canvas assignment", () => {
       }));
       store.dispatch(setActiveTool("audio"));
       store.dispatch(setAudioSectionType("encounter"));
-      store.dispatch(setAudioCueType("one_shot"));
+      store.dispatch(setAudioCueType("effect"));
     });
     const nodeId = store.getState().library.sections.audio.nodesById["audio-root"].childIds![0];
     fireEvent.drop(canvas, {
@@ -132,7 +132,7 @@ describe("Audio canvas assignment", () => {
     fireEvent.click(within(screen.getByRole("dialog", { name: "Name new cue group" })).getByRole("button", { name: "Create" }));
     const encounter = store.getState().encounter.present;
     const cue = encounter.audioCues.byId[encounter.audioCues.allIds[0]];
-    expect(cue).toMatchObject({ libraryNodeId: nodeId, type: "one_shot", volume: 0.5 });
+    expect(cue).toMatchObject({ libraryNodeId: nodeId, type: "effect", volume: 0.5 });
     expect(encounter.audioCueGroups.byId[cue.placement.groupId].section).toBe("ambiance");
   });
 });

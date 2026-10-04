@@ -125,7 +125,7 @@ export function AudioPlaybackProvider({ children }: PropsWithChildren) {
       }
     }
     const audio = new Audio(sourceUrl);
-    audio.loop = cue.type === "loop" && cue.repeat;
+    audio.loop = cue.type === "track" && cue.repeat;
     audio.volume = Math.max(0, Math.min(1, cue.volume * audioMasterVolume));
     const entry: PlaybackEntry = {
       audio,
@@ -142,7 +142,7 @@ export function AudioPlaybackProvider({ children }: PropsWithChildren) {
     };
     audio.addEventListener("ended", () => {
       if (entries.current.get(key) !== entry) return;
-      if (entry.cue.type === "one_shot" && entry.cue.repeat) {
+      if (entry.cue.type === "effect" && entry.cue.repeat) {
         scheduleInterval(entry, nextDelay(entry.cue));
       } else {
         removeEntry();
@@ -179,8 +179,8 @@ export function AudioPlaybackProvider({ children }: PropsWithChildren) {
     for (const [key, entry] of entries.current) {
       if (entry.cue.id !== cue.id) continue;
       entry.cue = cue;
-      entry.audio.loop = cue.type === "loop" && cue.repeat;
-      if (cue.type === "one_shot" && !cue.repeat && entry.remainingDelay !== null) {
+      entry.audio.loop = cue.type === "track" && cue.repeat;
+      if (cue.type === "effect" && !cue.repeat && entry.remainingDelay !== null) {
         if (entry.timer) clearTimeout(entry.timer);
         entry.audio.pause();
         entry.audio.currentTime = 0;

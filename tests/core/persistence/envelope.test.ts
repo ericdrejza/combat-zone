@@ -28,7 +28,7 @@ describe("persistence export envelopes", () => {
   it.each(["repeat", "triggers", "none"] as const)("round trips inactive settings with %s behavior active", (behavior) => {
     const value = validEnvelope();
     value.encounter = createAudioCue(createAudioCueGroup(value.encounter, { id: "zone", section: "zone" }), {
-      id: "effect", libraryNodeId: "sound", placement: { type: "group", groupId: "zone" }, type: "one_shot",
+      id: "effect", libraryNodeId: "sound", placement: { type: "group", groupId: "zone" }, type: "effect",
       triggers: ["zone_enter", "zone_leave"], triggersEnabled: false,
       repeatDelay: { minimumDelaySeconds: 5, maximumDelaySeconds: 10 }
     });
@@ -40,7 +40,7 @@ describe("persistence export envelopes", () => {
   it("rejects simultaneous repeat and trigger behavior and triggers in unsupported sections", () => {
     const value = validEnvelope();
     value.encounter = createAudioCue(createAudioCueGroup(value.encounter, { id: "ambience", section: "ambiance" }), {
-      id: "effect", libraryNodeId: "sound", placement: { type: "group", groupId: "ambience" }, type: "one_shot", repeat: true
+      id: "effect", libraryNodeId: "sound", placement: { type: "group", groupId: "ambience" }, type: "effect", repeat: true
     });
     value.encounter.audioCues.byId.effect.triggersEnabled = true;
     expect(() => validateExportEnvelope(value)).toThrow(/audioCues/);
@@ -51,7 +51,7 @@ describe("persistence export envelopes", () => {
   it("round trips muted cues and rejects volumes outside 0–100%", () => {
     const value = validEnvelope();
     value.encounter = createAudioCue(createAudioCueGroup(value.encounter, { id: "ambience", section: "ambiance" }), {
-      id: "muted", libraryNodeId: "audio-node", placement: { type: "group", groupId: "ambience" }, type: "loop", volume: 0
+      id: "muted", libraryNodeId: "audio-node", placement: { type: "group", groupId: "ambience" }, type: "track", volume: 0
     });
     expect(parseExportEnvelope(JSON.parse(JSON.stringify(value)))).toEqual(value);
     for (const volume of [-0.1, 1.1]) {
@@ -143,7 +143,7 @@ describe("persistence export envelopes", () => {
       id: "invalid-cue",
       libraryNodeId: "audio-node",
       placement: { type: "group", groupId: "zone-group" },
-      type: "one_shot"
+      type: "effect"
     });
     value.encounter.audioCues.byId["invalid-cue"].placement = { type: "group", groupId: "missing-group" };
 

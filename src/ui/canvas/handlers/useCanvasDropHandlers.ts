@@ -79,7 +79,7 @@ export function useCanvasDropHandlers({
         libraryNodeId: nodeId,
         placement,
         type: encounter.audioCueGroups.byId[placement.groupId]?.section === 'music'
-          ? 'loop'
+          ? 'track'
           : audioTool.cueTypeBySection[encounter.audioCueGroups.byId[placement.groupId]?.section === 'ambiance'
             ? 'encounter'
             : encounter.audioCueGroups.byId[placement.groupId]?.section === 'actor' ? 'actor' : 'zone']
