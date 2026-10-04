@@ -219,6 +219,13 @@ one undoable action while retaining groups and valid-source cues.
 - Focusing a group-name input selects its entire name. Pressing Enter commits
   the edit and blurs the input. Neither Soundboard nor docked Music cards display
   playlist indices.
+- Soundboard group headers prioritize the group name. Their member summary is
+  capped at 14rem and 30% of the header width. Show all names when they fit;
+  otherwise show one name and `and N others` when possible, or just a member
+  count. Count duplicate names as `Name xM`, with remaining counts based on
+  entities rather than unique names. Hidden names appear in a hover/focus
+  tooltip. Use `All` when every entity of the group's section is assigned,
+  but do not abbreviate members by faction.
 - Soundboard owns named group creation in Ambience, Music, Zones, and Actors,
   and owns confirmed group deletion. Each section reserves a bottom row for an
   `Add new group` control that becomes visible on section hover without changing
@@ -249,6 +256,9 @@ Soundboard into a named popup window; the popup uses
 Both launchers show an active state while either presentation is open. Browser
 chrome such as the download affordance or address header is not application-
 controlled; request minimal popup chrome where browser policy allows it.
+Opening the Audio Library from a popped-out Soundboard keeps it in its own
+window; cue selection happens in the main window without closing or redocking
+the Soundboard, and the added cue appears in the existing popup.
 The Audio Library modal uses a higher overlay layer than the Soundboard modal,
 so it remains visible and interactive when launched from a cue shell.
 
