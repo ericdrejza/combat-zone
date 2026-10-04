@@ -11,6 +11,7 @@ export type ActorType =
 export type ActorLayoutGroup = "hero" | "ally" | "enemy" | "neutral";
 export type ActorSize = "small" | "medium" | "large" | "xLarge";
 export type ActorShape = "circle" | "rectangle";
+export type ActorStatus = 0 | 1 | 2 | 3;
 
 export type Actor = {
   audioGroupIds?: string[];
@@ -23,6 +24,8 @@ export type Actor = {
   image?: ImageAssetSource;
   currentZoneId: ActorZoneAssignment;
   statusEffects: string[];
+  /** Overall health; absent legacy/session values resolve to healthy (3). */
+  status?: ActorStatus;
   metadata: Record<string, unknown>;
   stats?: Record<string, unknown>;
 };

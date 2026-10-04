@@ -334,6 +334,22 @@ truth.
 
 ## Initiative tracker
 
+- [x] A default-on standard switch at the bottom of Interface > Panels toggles
+      strikethrough on dead Actor names in the list and popout; the preference
+      persists independently of encounter history and resets to enabled.
+- [x] Initiative opens from the ContactRound header control before the drag
+      button and toggles with the customizable I shortcut in either window.
+      Clicking the active launcher focuses the existing window; its own close
+      control closes it.
+- [x] The docked Initiative list remains usable while its popout is open;
+      both views synchronize edits and undo/redo. Narrow popout windows provide
+      horizontal scrolling so controls remain accessible.
+- [x] Row status choices use Delete, Skull, BoneFracture, HeartCrack and
+      HeartPulse icons with tooltips; removing membership preserves Actor health.
+- [x] Dead participants have muted text and are skipped on Start and stepping;
+      a newly dead active participant retains the turn until stepping. All-dead
+      controls are disabled with an explanation. Health persists and restores
+      exactly through undo/redo, including from the popout.
 - [x] Actors can be added to and reordered within an initiative list.
 - [x] Advancing to the next turn updates the "current actor" indicator.
 - [x] Initiative order survives undo/redo of unrelated actions (e.g. moving

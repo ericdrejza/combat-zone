@@ -28,12 +28,14 @@ export function InterfaceSettings() {
     panelOrder,
     panelVisibility,
     panWithRightClickDrag,
+    strikethroughDeadInitiativeNames,
     setAutoSelectActiveActorDefault,
     setEnableAssetAnimation,
     setEncounterCreationTool,
     setPanelOrder,
     setPanelVisible,
-    setPanWithRightClickDrag
+    setPanWithRightClickDrag,
+    setStrikethroughDeadInitiativeNames
   } = useInterfacePreferences();
 
   return (
@@ -147,6 +149,13 @@ export function InterfaceSettings() {
             <PanelOrderSettings onChange={setPanelOrder} order={panelOrder} />
             <ApplyPanelOrderButton order={panelOrder} />
           </fieldset>
+        </div>
+        <div className="mt-5 max-w-lg border-t border-canvas-line">
+          <PreferenceSwitch
+            checked={strikethroughDeadInitiativeNames}
+            label="Strikethrough dead actor names in initiative"
+            onChange={setStrikethroughDeadInitiativeNames}
+          />
         </div>
       </section>
     </section>

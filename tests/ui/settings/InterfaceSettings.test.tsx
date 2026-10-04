@@ -90,6 +90,7 @@ describe("InterfaceSettings", () => {
       panelOrder: DEFAULT_ENCOUNTER_PANEL_ORDER,
       panelVisibility: DEFAULT_DOCKABLE_PANEL_VISIBILITY,
       panWithRightClickDrag: false,
+      strikethroughDeadInitiativeNames: true,
       zoneColorDefaults: DEFAULT_ZONE_COLOR_DEFAULTS,
       zoneOpacityDefault: 0.7,
       zoneShowBorderDefault: true

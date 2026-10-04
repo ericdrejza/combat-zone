@@ -1,6 +1,7 @@
 import { TOOL_DEFINITIONS_BY_ID } from "@interaction/tools/toolRegistry";
 
 export const KEYBIND_DEFINITIONS = [
+  { id: "initiative.toggle", label: "Toggle Initiative popout", defaultBinding: "i", editable: true },
   { id: "actor.copy", label: "Copy selected actor", defaultBinding: "mod+c", editable: false },
   { id: "actor.paste", label: "Paste copied actor", defaultBinding: "mod+v", editable: false },
   { id: "actor.rename", label: "Rename selected actor", defaultBinding: "r", editable: true },

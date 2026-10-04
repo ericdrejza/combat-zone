@@ -9,6 +9,7 @@ import { MovementValidator } from "./movementValidator";
 import { ZoneIntegrityValidator } from "./zoneIntegrityValidator";
 import { ZoneSizeValidator } from "./zoneSizeValidator";
 import { InitiativeValidator } from "./initiativeValidator";
+import { ActorStatusValidator } from "@entities/actor/actorStatusValidator";
 
 export {
   CanvasBoundsValidator,
@@ -22,6 +23,7 @@ export {
 };
 
 export const MVP_VALIDATORS: Validator<EncounterState>[] = [
+  ActorStatusValidator,
   MovementValidator,
   ZoneSizeValidator,
   ZoneOverlapValidator,

@@ -210,6 +210,8 @@ Properties:
 - stats (optional system-specific blob)
 - currentZoneId | zoneless
 - statusEffects[]
+- status (ordinal overall health: 0 dead, 1 unconscious / severely injured,
+  2 injured, 3 healthy; defaults to healthy)
 - metadata
 
 Engagement membership is owned by Engagement `participants[]`; Actors do not
@@ -219,6 +221,20 @@ Initiative membership and values are owned by ordered Initiative Tracker
 entries. Each entry is the composite relationship between the tracker, an
 Actor ID, and that participant's optional initiative value. Removing an entry
 discards its value; adding that Actor again creates a blank entry.
+
+The initiative row's status control opens a row-width choice strip ordered:
+remove from initiative, dead, unconscious / severely injured, injured, healthy.
+Each icon has a descriptive tooltip. Removing an entry preserves Actor status.
+Dead participants have muted row text and are skipped when starting combat or
+stepping forward/backward. Their names also have a strikethrough by default;
+the standard switch at the bottom of Interface settings > Panels toggles this
+decoration. This durable interface preference applies in the docked list and
+popout and does not change Actor status or encounter history.
+Marking the current Actor dead retains its turn
+until the user steps. When every participant is dead, Start and step controls
+are disabled with a tooltip explaining that an Actor's status must change to
+continue; these commands do nothing. Round wrapping counts skipped participants
+and backward navigation never precedes round 1.
 
 When `autoResize` is enabled, adding an actor to a FLEX zone automatically
 enlarges the zone to the smallest size that fits all of its actors. Expansion
@@ -635,6 +651,18 @@ side panels are hidden.
 - Status
 
 Panels update based on selection context.
+
+Initiative can open in its own browser window through a ContactRound launcher
+in the panel header immediately left of its drag control,
+or the customizable I shortcut, which toggles the window from either window.
+Clicking the launcher while the window is open focuses that existing window.
+The window can be closed using its own close control or the I shortcut.
+While open, its docked panel retains the full Initiative list and controls;
+the user can collapse it independently. Both views share the current encounter,
+history and selection, and the popout
+is session-only, following the Soundboard's portal, stylesheet and theme pattern.
+The popout supports horizontal scrolling below its content's minimum width,
+keeping controls accessible when the browser window becomes narrow.
 
 The Zoneless actors presentation remains the collapsible, resizable
 bottom-center overlay on larger screens and becomes a panel in the compact

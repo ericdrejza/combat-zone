@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, GripVertical, Skull } from "lucide-react";
+import { ChevronLeft, ChevronRight, GripVertical } from "lucide-react";
 import { Reorder, motion, useDragControls } from "motion/react";
 import {
   useEffect,
@@ -9,7 +9,10 @@ import {
 } from "react";
 
 import { INITIATIVE_MAX, INITIATIVE_MIN } from "@core/encounter/initiativeMutations";
-import type { Actor } from "@entities/actor/types";
+import type { Actor, ActorStatus } from "@entities/actor/types";
+import { getActorStatus } from "@entities/actor/actorStatus";
+import { useInterfacePreferences } from "@ui/interface_preferences/InterfacePreferenceProvider";
+import { InitiativeStatusControl } from "./InitiativeStatusControl";
 
 const activeFactionClasses: Record<Actor["layoutGroup"], string> = {
   ally: "border-green-500 bg-green-50 dark:border-green-400 dark:bg-green-950",
@@ -37,6 +40,7 @@ type InitiativeRowProps = {
   onInitiativeChange: (actorId: string, initiative: number | undefined) => void;
   onInvalidInitiative: (actorId: string, input: string) => void;
   onRemove: (actorId: string) => void;
+  onStatusChange: (actorId: string, status: ActorStatus) => void;
 };
 
 /** Renders one selectable, reorderable initiative participant. */
@@ -51,9 +55,11 @@ export function InitiativeRow({
   onDragEnd,
   onInitiativeChange,
   onInvalidInitiative,
-  onRemove
+  onRemove,
+  onStatusChange
 }: InitiativeRowProps) {
   const dragControls = useDragControls();
+  const { strikethroughDeadInitiativeNames } = useInterfacePreferences();
   const [draftValue, setDraftValue] = useState(initiativeValue?.toString() ?? "");
   const editSourceRef = useRef<"chevron" | "manual" | null>(null);
 
@@ -98,7 +104,7 @@ export function InitiativeRow({
 
   function handleEditorBlur(event: FocusEvent<HTMLSpanElement>) {
     if (
-      event.relatedTarget instanceof Node &&
+      event.relatedTarget &&
       event.currentTarget.contains(event.relatedTarget)
     ) {
       return;
@@ -115,7 +121,7 @@ export function InitiativeRow({
   return (
     <Reorder.Item
       aria-current={active ? "step" : undefined}
-      className={`group/row flex items-center gap-2 rounded-xl border px-2 py-2 text-sm
+      className={`group/row relative flex items-center gap-2 rounded-xl border px-2 py-2 text-sm ${getActorStatus(actor) === 0 ? "text-canvas-muted" : ""}
         cursor-pointer ${
         active ? activeFactionClasses[actor.layoutGroup] : "border-canvas-line bg-canvas-surface"
       }`}
@@ -134,8 +140,7 @@ export function InitiativeRow({
       onMouseDown={(event) => {
         if (
           event.shiftKey &&
-          !(event.target instanceof HTMLInputElement) &&
-          !(event.target instanceof HTMLButtonElement)
+          !(event.target as Element).closest("input,button")
         ) {
           event.preventDefault();
         }
@@ -152,7 +157,9 @@ export function InitiativeRow({
       >
         <GripVertical aria-hidden="true" className="h-4 w-4" />
       </button>
-      <span className={`min-w-0 flex-1 truncate ${selected ? "font-bold" : "font-medium"}`}>{actor.name}</span>
+      <span className={`min-w-0 flex-1 truncate ${selected ? "font-bold" : "font-medium"}`}>
+        {getActorStatus(actor) === 0 && strikethroughDeadInitiativeNames ? <s>{actor.name}</s> : actor.name}
+      </span>
       {active ? (
         <motion.span
           aria-label="Current actor"
@@ -214,18 +221,7 @@ export function InitiativeRow({
           <ChevronRight aria-hidden="true" className="h-4 w-4" />
         </button>
       </span>
-      <button
-        aria-label={`Remove ${actor.name} from initiative`}
-        className="text-canvas-muted hover:text-red-700 dark:hover:text-red-400"
-        onClick={(event) => {
-          event.stopPropagation();
-          onRemove(actor.id);
-        }}
-        onDoubleClick={(event) => event.stopPropagation()}
-        type="button"
-      >
-        <Skull aria-hidden="true" className="h-4 w-4" />
-      </button>
+      <InitiativeStatusControl actor={actor} onRemove={onRemove} onStatusChange={onStatusChange} />
     </Reorder.Item>
   );
 }

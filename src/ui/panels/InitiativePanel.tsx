@@ -12,8 +12,8 @@ import {
   Users,
   View
 } from "lucide-react";
-import { MotionConfig, Reorder } from "motion/react";
-import { useEffect, useState } from "react";
+import { LayoutGroup, MotionConfig, Reorder } from "motion/react";
+import { useEffect, useId, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 import {
@@ -32,6 +32,7 @@ import {
 } from "@core/encounter/initiativeMutations";
 import { ZONELESS_ACTOR_ZONE_ID } from "@core/encounter/types";
 import type { Actor } from "@entities/actor/types";
+import { getActorStatus, updateActorStatus } from "@entities/actor/actorStatus";
 import { selectEntity, setActiveTool } from "@interaction/interactionState";
 import { canToolSelectEntityType } from "@interaction/tools/toolRegistry";
 import type { RootState } from "@store/store";
@@ -53,11 +54,15 @@ const activeActionClass =
   "inline-flex h-9 w-9 items-center justify-center rounded-xl border border-canvas-ink bg-canvas-ink text-canvas-on-ink";
 
 export function InitiativePanel({
+  isPopout = false,
   participantInteractionStrategy = DEFAULT_INITIATIVE_PARTICIPANT_INTERACTION_STRATEGY
 }: {
+  isPopout?: boolean;
   participantInteractionStrategy?: InitiativeParticipantInteractionStrategy;
 } = {}) {
   const { animationsDisabled } = useMotionPreference();
+  // Each window owns its active-turn indicator animation.
+  const motionScopeId = useId();
   const { autoSelectActiveActor, setAutoSelectActiveActor } =
     useInterfacePreferences();
   const dispatch = useDispatch();
@@ -100,15 +105,16 @@ export function InitiativePanel({
   );
   const allIds = encounter.actors.allIds.filter((actorId) => !listedIds.has(actorId));
   const { currentActorId, currentRound } = encounter.initiativeTracker;
-  const currentIndex = currentActorId
-    ? initiativeActorIds.indexOf(currentActorId)
-    : -1;
+  const allDead = actors.length > 0 && actors.every((actor) => getActorStatus(actor) === 0);
+  const disabledReason = "All initiative participants are dead. Change an actor's status to continue.";
+  const previousEncounter = retreatInitiative(encounter);
+  const nextEncounter = advanceInitiative(encounter);
   const previousChangesRound =
     currentRound !== null &&
-    (actors.length === 0 || (currentRound > 1 && currentIndex === 0));
+    previousEncounter.initiativeTracker.currentRound !== currentRound;
   const nextChangesRound =
     currentRound !== null &&
-    (actors.length === 0 || currentIndex === actors.length - 1);
+    nextEncounter.initiativeTracker.currentRound !== currentRound;
 
   useEffect(() => {
     setDraftOrder(initiativeActorIds);
@@ -149,6 +155,7 @@ export function InitiativePanel({
 
   return (
     <MotionConfig reducedMotion={animationsDisabled ? "always" : "never"}>
+    <LayoutGroup id={motionScopeId}>
     <div className="space-y-3 text-sm">
       <div className="flex gap-1">
         <button aria-label="Add selected actors" className={actionClass} disabled={!selectedIds.length} onClick={() => commitAdd(selectedIds, "selected")} title="Add selected actors" type="button"><UserPlus aria-hidden="true" className="h-4 w-4" /></button>
@@ -167,11 +174,11 @@ export function InitiativePanel({
         <div className="flex gap-1">
           {currentRound !== null ? (
             <>
-              <button aria-label={previousChangesRound ? "Previous round" : "Previous turn"} className={actionClass} disabled={currentRound === 1 && currentIndex <= 0} onClick={() => navigateInitiative("initiative.previous", retreatInitiative(encounter))} title={previousChangesRound ? "Previous round" : "Previous turn"} type="button">{previousChangesRound ? <StepBack aria-hidden="true" className="h-4 w-4" /> : <ChevronLeft aria-hidden="true" className="h-4 w-4" />}</button>
-              <button aria-label={nextChangesRound ? "Next round" : "Next turn"} className={actionClass} onClick={() => navigateInitiative("initiative.next", advanceInitiative(encounter))} title={nextChangesRound ? "Next round" : "Next turn"} type="button">{nextChangesRound ? <StepForward aria-hidden="true" className="h-4 w-4" /> : <ChevronRight aria-hidden="true" className="h-4 w-4" />}</button>
+              <button aria-label={previousChangesRound ? "Previous round" : "Previous turn"} className={actionClass} disabled={allDead || previousEncounter === encounter} onClick={() => navigateInitiative("initiative.previous", previousEncounter)} title={allDead ? disabledReason : previousChangesRound ? "Previous round" : "Previous turn"} type="button">{previousChangesRound ? <StepBack aria-hidden="true" className="h-4 w-4" /> : <ChevronLeft aria-hidden="true" className="h-4 w-4" />}</button>
+              <button aria-label={nextChangesRound ? "Next round" : "Next turn"} className={actionClass} disabled={allDead || nextEncounter === encounter} onClick={() => navigateInitiative("initiative.next", nextEncounter)} title={allDead ? disabledReason : nextChangesRound ? "Next round" : "Next turn"} type="button">{nextChangesRound ? <StepForward aria-hidden="true" className="h-4 w-4" /> : <ChevronRight aria-hidden="true" className="h-4 w-4" />}</button>
             </>
           ) : (
-            <button aria-label="Start combat" className={actionClass} disabled={!actors.length} onClick={() => commitSimple("initiative.start", startInitiative(encounter))} title="Start combat" type="button"><Play aria-hidden="true" className="h-4 w-4" /></button>
+            <button aria-label="Start combat" className={actionClass} disabled={!actors.length || allDead} onClick={() => commitSimple("initiative.start", startInitiative(encounter))} title={allDead ? disabledReason : "Start combat"} type="button"><Play aria-hidden="true" className="h-4 w-4" /></button>
           )}
         </div>
       </div>
@@ -180,7 +187,7 @@ export function InitiativePanel({
         <Reorder.Group
           as="ol"
           axis="y"
-          className="max-h-72 space-y-2 overflow-y-auto pr-1"
+          className={`${isPopout ? "max-h-[calc(100vh-12rem)]" : "max-h-72"} space-y-2 overflow-y-auto pr-1`}
           onReorder={setDraftOrder}
           ref={listRef}
           values={draftOrder}
@@ -226,6 +233,7 @@ export function InitiativePanel({
                   );
                 }}
                 onInvalidInitiative={logInvalidInitiativeValue}
+                onStatusChange={(actorId, status) => commitSimple("actor.updateStatus", updateActorStatus(encounter, actorId, status), { actorId, status })}
                 onRemove={(removedActorId) =>
                   commitSimple(
                     "initiative.removeActor",
@@ -255,6 +263,7 @@ export function InitiativePanel({
         </div>
       ) : null}
     </div>
+    </LayoutGroup>
     </MotionConfig>
   );
 }

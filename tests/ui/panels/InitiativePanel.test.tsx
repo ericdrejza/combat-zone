@@ -153,6 +153,7 @@ describe("InitiativePanel", () => {
     expect(screen.queryByLabelText("Current actor")).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Start combat" }));
 
+    await user.click(screen.getByRole("button", { name: "Alpha status: Healthy" }));
     await user.click(
       screen.getByRole("button", { name: "Remove Alpha from initiative" })
     );

@@ -11,6 +11,8 @@ import type { DockPanelDefinition, DockSide, DropTarget } from "./panels/PanelsS
 import { LibraryPanel, LibraryPanelViewToggle } from "./panels/LibraryPanel";
 import { LogPanel, LogPanelHeaderActions } from "./panels/LogPanel";
 import { InitiativePanel } from "./panels/InitiativePanel";
+import { InitiativePopoutProvider } from "./panels/initiative/InitiativePopoutProvider";
+import { InitiativeLauncherButton } from "./panels/initiative/InitiativeLauncherButton";
 import type {
   LibraryPanelFocusRequest,
   LibraryViewMode
@@ -397,6 +399,7 @@ function AppContent() {
   function renderPanelHeaderActions(
     panel: DockPanelDefinition | CompactPanelDefinition
   ) {
+    if (panel.id === "initiative") return <InitiativeLauncherButton />;
     if (panel.id === "library") {
       return (
         <LibraryPanelViewToggle
@@ -439,6 +442,7 @@ function AppContent() {
           }
         >
       <ZoneResizeApprovalProvider>
+      <InitiativePopoutProvider>
       <Toolbar
         actorCreationImage={actorCreationImage}
         encounterToolSelectionRequest={
@@ -553,6 +557,7 @@ function AppContent() {
       {encounterRenameOpen ? (
         <EncounterRenameDialog onClose={() => setEncounterRenameOpen(false)} />
       ) : null}
+      </InitiativePopoutProvider>
       </ZoneResizeApprovalProvider>
         </div>
       </TouchTooltipProvider>

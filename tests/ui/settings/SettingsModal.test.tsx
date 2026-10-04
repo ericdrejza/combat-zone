@@ -143,6 +143,13 @@ describe("SettingsModal local reset", () => {
     renderSettings();
     await user.click(screen.getByRole("tab", { name: "Keybinds" }));
 
+    const initiative = screen.getByRole("button", { name: "Change Toggle Initiative popout keybind" });
+    expect(initiative).toHaveTextContent("I");
+    await user.click(initiative);
+    fireEvent.keyDown(initiative, { key: "j" });
+    expect(initiative).toHaveTextContent("J");
+    expect(JSON.parse(localStorage.getItem(KEYBIND_STORAGE_KEY)!)).toMatchObject({ "initiative.toggle": "j" });
+
     const actorTool = screen.getByRole("button", {
       name: "Change Activate Actor tool keybind"
     });

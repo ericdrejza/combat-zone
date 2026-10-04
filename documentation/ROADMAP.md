@@ -11,6 +11,11 @@ After completing a numbered section (## X.), move the completed section to the e
 
 ## 15. MVP Acceptance Hardening
 
+- [x] Add the Initiative browser popout and customizable I shortcut; persist
+      ordinal Actor health with row status controls, dead-participant skipping,
+      disabled-control explanations, and exact undo/redo coverage.
+- [x] Add a durable, default-on Interface > Panels switch for strikethrough
+      on dead Actor names in the Initiative panel and popout.
 - [x] Implement aspect-preserving background/canvas sizing commands with
       proportional Zone scaling, safe shrink clamping, and exact history.
 - [x] Implement session-only zoom-to-fit, zoom stepping, two-axis scrolling,

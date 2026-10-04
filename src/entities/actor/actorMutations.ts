@@ -157,7 +157,8 @@ export function buildActor({
     name: name ?? getDefaultActorName(image),
     shape,
     size,
-    statusEffects: []
+    statusEffects: [],
+    status: 3
   };
 }
 

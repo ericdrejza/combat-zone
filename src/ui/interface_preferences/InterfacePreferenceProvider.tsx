@@ -7,6 +7,7 @@ import {
 } from "react";
 
 import { readAudioCueVolumeDefault, readAudioRepeatDelayDefaults } from "./audioPreferences";
+import { readPanelVisibility } from "./panelPreferences";
 
 import { LOCAL_PREFERENCES_RESET_EVENT } from "@ui/motion_preferences/MotionPreferenceProvider";
 import {
@@ -49,6 +50,7 @@ type DurableInterfacePreferences = {
   panelOrder: EncounterPanelOrder;
   panelVisibility: DockablePanelVisibility;
   panWithRightClickDrag: boolean;
+  strikethroughDeadInitiativeNames: boolean;
   zoneColorDefaults: ZoneColorDefaults;
   zoneOpacityDefault: number;
   zoneShowBorderDefault: boolean;
@@ -67,6 +69,7 @@ type InterfacePreferences = DurableInterfacePreferences & {
   setAutoSelectActiveActorDefault: (enabled: boolean) => void;
   setPanelVisible: (panelId: DockablePanelId, visible: boolean) => void;
   setPanWithRightClickDrag: (enabled: boolean) => void;
+  setStrikethroughDeadInitiativeNames: (enabled: boolean) => void;
   setZoneColorDefaults: (defaults: ZoneColorDefaults) => void;
   setZoneOpacityDefault: (opacity: number) => void;
   setZoneShowBorderDefault: (showBorder: boolean) => void;
@@ -83,6 +86,7 @@ const defaultPreferences: DurableInterfacePreferences = {
   panelOrder: DEFAULT_ENCOUNTER_PANEL_ORDER,
   panelVisibility: DEFAULT_DOCKABLE_PANEL_VISIBILITY,
   panWithRightClickDrag: true,
+  strikethroughDeadInitiativeNames: true,
   zoneColorDefaults: DEFAULT_ZONE_COLOR_DEFAULTS,
   zoneOpacityDefault: 0.7,
   zoneShowBorderDefault: true
@@ -102,6 +106,7 @@ const defaultValue: InterfacePreferences = {
   setAutoSelectActiveActorDefault: () => undefined,
   setPanelVisible: () => undefined,
   setPanWithRightClickDrag: () => undefined,
+  setStrikethroughDeadInitiativeNames: () => undefined,
   setZoneColorDefaults: () => undefined,
   setZoneOpacityDefault: () => undefined,
   setZoneShowBorderDefault: () => undefined
@@ -143,35 +148,14 @@ function readPreferences(): DurableInterfacePreferences {
       panelOrder: isEncounterPanelOrder(stored?.panelOrder)
         ? stored.panelOrder
         : DEFAULT_ENCOUNTER_PANEL_ORDER,
-      panelVisibility: {
-        initiative:
-          typeof stored?.panelVisibility?.initiative === "boolean"
-            ? stored.panelVisibility.initiative
-            : true,
-        library:
-          typeof stored?.panelVisibility?.library === "boolean"
-            ? stored.panelVisibility.library
-            : true,
-        log:
-          typeof stored?.panelVisibility?.log === "boolean"
-            ? stored.panelVisibility.log
-            : true,
-        properties:
-          typeof stored?.panelVisibility?.properties === "boolean"
-            ? stored.panelVisibility.properties
-            : true,
-        status:
-          typeof stored?.panelVisibility?.status === "boolean"
-            ? stored.panelVisibility.status
-            : true,
-        audio:
-          typeof stored?.panelVisibility?.audio === "boolean"
-            ? stored.panelVisibility.audio
-            : true
-      },
+      panelVisibility: readPanelVisibility(stored?.panelVisibility),
       panWithRightClickDrag:
         typeof stored?.panWithRightClickDrag === "boolean"
           ? stored.panWithRightClickDrag
+          : true,
+      strikethroughDeadInitiativeNames:
+        typeof stored?.strikethroughDeadInitiativeNames === "boolean"
+          ? stored.strikethroughDeadInitiativeNames
           : true,
       zoneColorDefaults: {
         border: isHexColor(stored?.zoneColorDefaults?.border)
@@ -269,6 +253,8 @@ export function InterfacePreferenceProvider({ children }: { children: ReactNode 
           }),
         setPanWithRightClickDrag: (enabled) =>
           updatePreferences({ panWithRightClickDrag: enabled }),
+        setStrikethroughDeadInitiativeNames: (enabled) =>
+          updatePreferences({ strikethroughDeadInitiativeNames: enabled }),
         setZoneColorDefaults: (zoneColorDefaults) =>
           updatePreferences({ zoneColorDefaults }),
         setZoneOpacityDefault: (zoneOpacityDefault) =>

@@ -6,6 +6,7 @@ import {
 import type { LibraryState } from "@library/types";
 import { isImageAssetSource, migrateLegacyImageSource } from "@core/assets/imageAssetSource";
 import { isAudioMediaType } from "@library/mediaAsset";
+import { isActorStatus } from "@entities/actor/actorStatus";
 import {
   EXPORT_SCHEMA_VERSION,
   PersistenceValidationError,
@@ -127,6 +128,9 @@ export function assertEncounterState(value: unknown, name = "encounter"): assert
   }
   for (const actorId of (value.actors as { allIds: string[] }).allIds) {
     const actor = (value.actors as { byId: UnknownRecord }).byId[actorId];
+    if (isRecord(actor) && actor.status !== undefined && !isActorStatus(actor.status)) {
+      throw new PersistenceValidationError(`${name}.actors.${actorId}.status is invalid.`);
+    }
     if (isRecord(actor) && actor.image !== undefined && !isImageAssetSource(actor.image)) {
       throw new PersistenceValidationError(`${name}.actors.${actorId}.image is invalid.`);
     }
@@ -412,7 +416,7 @@ export function migrateEncounterState(value: unknown): unknown {
   if (!isRecord(value)) return value;
   const migrated = structuredClone(value);
   if (migrated.schemaVersion === 9) {
-    migrated.schemaVersion = ENCOUNTER_SCHEMA_VERSION;
+    migrated.schemaVersion = 11;
     if (isRecord(migrated.audioCues) && isRecord(migrated.audioCues.byId)) {
       for (const cue of Object.values(migrated.audioCues.byId)) {
         if (isRecord(cue)) cue.triggersEnabled = cue.repeat === false && Array.isArray(cue.triggers) && cue.triggers.length > 0;
@@ -441,7 +445,7 @@ export function migrateEncounterState(value: unknown): unknown {
     migrated.panelLayout = panelLayout;
   }
   if (migrated.schemaVersion === LEGACY_AUDIO_ENCOUNTER_SCHEMA_VERSION) {
-    migrated.schemaVersion = ENCOUNTER_SCHEMA_VERSION;
+    migrated.schemaVersion = 11;
     migrated.audioCues = { byId: {}, allIds: [] };
     migrated.audioCueGroups = { byId: {}, allIds: [] };
     migrated.musicGroupIds = [];
@@ -453,6 +457,14 @@ export function migrateEncounterState(value: unknown): unknown {
     }
     if (isRecord(migrated.panelLayout) && Array.isArray(migrated.panelLayout.right)) {
       migrated.panelLayout.right.push({ id: "audio", collapsed: false });
+    }
+  }
+  if (migrated.schemaVersion === 11) {
+    migrated.schemaVersion = ENCOUNTER_SCHEMA_VERSION;
+    if (isRecord(migrated.actors) && isRecord(migrated.actors.byId)) {
+      for (const actor of Object.values(migrated.actors.byId)) {
+        if (isRecord(actor) && actor.status === undefined) actor.status = 3;
+      }
     }
   }
   return migrated;

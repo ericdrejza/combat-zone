@@ -1,8 +1,12 @@
 import type { EntityId } from "@core/state/entityCollection";
+import { getActorStatus } from "@entities/actor/actorStatus";
 import type { EncounterState } from "./types";
 
 export function startInitiative(state: EncounterState): EncounterState {
-  const firstActorId = state.initiativeTracker.entries[0]?.actorId;
+  const firstActorId = state.initiativeTracker.entries.find(({ actorId }) => {
+    const actor = state.actors.byId[actorId];
+    return actor && getActorStatus(actor) !== 0;
+  })?.actorId;
   if (!firstActorId || state.initiativeTracker.currentActorId) return state;
   return {
     ...state,
@@ -46,7 +50,7 @@ export function endInitiative(state: EncounterState): EncounterState {
 }
 
 export function advanceInitiative(state: EncounterState): EncounterState {
-  const { currentActorId, currentRound, entries } = state.initiativeTracker;
+  const { currentRound, entries } = state.initiativeTracker;
   if (entries.length === 0 && currentRound !== null) {
     return {
       ...state,
@@ -57,21 +61,11 @@ export function advanceInitiative(state: EncounterState): EncounterState {
       }
     };
   }
-  const currentIndex = entries.findIndex(({ actorId }) => actorId === currentActorId);
-  if (currentIndex < 0 || currentRound === null) return state;
-  const wrapped = currentIndex === entries.length - 1;
-  return {
-    ...state,
-    initiativeTracker: {
-      entries,
-      currentActorId: entries[wrapped ? 0 : currentIndex + 1]?.actorId ?? null,
-      currentRound: wrapped ? currentRound + 1 : currentRound
-    }
-  };
+  return stepInitiative(state, 1);
 }
 
 export function retreatInitiative(state: EncounterState): EncounterState {
-  const { currentActorId, currentRound, entries } = state.initiativeTracker;
+  const { currentRound, entries } = state.initiativeTracker;
   if (entries.length === 0 && currentRound !== null) {
     if (currentRound === 1) return state;
     return {
@@ -83,22 +77,26 @@ export function retreatInitiative(state: EncounterState): EncounterState {
       }
     };
   }
+  return stepInitiative(state, -1);
+}
+
+/** Walks at most one round, retaining dead entries and respecting round one's start. */
+function stepInitiative(state: EncounterState, direction: -1 | 1): EncounterState {
+  const { entries, currentActorId, currentRound } = state.initiativeTracker;
   const currentIndex = entries.findIndex(({ actorId }) => actorId === currentActorId);
-  if (
-    currentIndex < 0 ||
-    currentRound === null ||
-    (currentRound === 1 && currentIndex === 0)
-  ) {
-    return state;
+  if (currentIndex < 0 || currentRound === null) return state;
+  for (let distance = 1; distance <= entries.length; distance++) {
+    const rawIndex = currentIndex + direction * distance;
+    const round = currentRound + Math.floor(rawIndex / entries.length);
+    if (round < 1) return state;
+    const index = (rawIndex + entries.length) % entries.length;
+    const actorId = entries[index].actorId;
+    const actor = state.actors.byId[actorId];
+    if (!actor || getActorStatus(actor) === 0) continue;
+    return {
+      ...state,
+      initiativeTracker: { entries, currentActorId: actorId, currentRound: round }
+    };
   }
-  const wrapped = currentIndex === 0;
-  return {
-    ...state,
-    initiativeTracker: {
-      entries,
-      currentActorId:
-        entries[wrapped ? entries.length - 1 : currentIndex - 1]?.actorId ?? null,
-      currentRound: wrapped ? currentRound - 1 : currentRound
-    }
-  };
+  return state;
 }
