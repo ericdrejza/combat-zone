@@ -116,9 +116,9 @@ const initialState: InteractionState = {
   audioTool: {
     sectionType: 'encounter',
     cueTypeBySection: {
-      encounter: 'loop',
-      zone: 'one_shot',
-      actor: 'one_shot'
+      encounter: 'track',
+      zone: 'effect',
+      actor: 'effect'
     },
   },
   activeToolId: 'zone',
@@ -204,14 +204,14 @@ export const interactionSlice = createSlice({
       }
     },
     setAudioCueType(state, { payload }: PayloadAction<AudioCueType>) {
-      if ((state.audioTool.sectionType === 'actor' || state.audioTool.sectionType === 'zone') && payload === 'loop') return;
+      if ((state.audioTool.sectionType === 'actor' || state.audioTool.sectionType === 'zone') && payload === 'track') return;
       state.audioTool.cueTypeBySection[state.audioTool.sectionType] = payload;
     },
     setAudioCueTypePresets(state, { payload }: PayloadAction<Record<AudioSectionType, AudioCueType>>) {
       state.audioTool.cueTypeBySection = {
         ...payload,
-        actor: payload.actor === 'loop' ? 'one_shot' : payload.actor,
-        zone: payload.zone === 'loop' ? 'one_shot' : payload.zone
+        actor: payload.actor === 'track' ? 'effect' : payload.actor,
+        zone: payload.zone === 'track' ? 'effect' : payload.zone
       };
     },
     setTouchMultiSelect(state, { payload }: PayloadAction<boolean>) {

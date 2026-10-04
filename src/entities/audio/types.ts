@@ -1,6 +1,6 @@
 import type { EntityId } from "@core/state/entityCollection";
 
-export type AudioCueType = "loop" | "one_shot";
+export type AudioCueType = "track" | "effect";
 export type AudioCueTrigger = "zone_enter" | "zone_leave" | "actor_enter_zone" | "actor_leave_zone";
 export type AudioSectionType = "encounter" | "zone" | "actor";
 export type AudioCueGroupSection = "ambiance" | "music" | "zone" | "actor";

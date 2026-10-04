@@ -26,7 +26,7 @@ function openBoard(section: "music" | "ambiance" = "music") {
   act(() => store.dispatch(uploadImage({ asset: { mediaType: "audio/mpeg", name: "Track", source: { dataUrl: "data:audio/mpeg;base64,AA==", kind: "embedded" } }, parentId: "audio-root", sectionId: "audio" })));
   const libraryNodeId = store.getState().library.sections.audio.nodesById["audio-root"].childIds![0];
   let encounter = createAudioCueGroup(store.getState().encounter.present, { id: "music", name: "Playlist", section });
-  for (const id of ["first", "second"]) encounter = createAudioCue(encounter, { id, libraryNodeId, placement: { type: "group", groupId: "music" }, repeat: false, type: "loop" });
+  for (const id of ["first", "second"]) encounter = createAudioCue(encounter, { id, libraryNodeId, placement: { type: "group", groupId: "music" }, repeat: false, type: "track" });
   act(() => store.dispatch(commitEncounterChange({ action: { id: "setup", payload: {}, timestamp: 1, type: "test.setup" }, nextEncounter: encounter })));
   fireEvent.click(within(screen.getByLabelText("Audio panel")).getByRole("button", { name: "Open Soundboard" }));
   const board = screen.getByRole("dialog", { name: "Soundboard modal" });
@@ -52,7 +52,7 @@ describe("Soundboard interactions", () => {
         action: { id: "third-setup", payload: {}, timestamp: 2, type: "test.setup" },
         nextEncounter: createAudioCue(encounter, {
           id: "third", libraryNodeId: encounter.audioCues.byId.first.libraryNodeId,
-          placement: { type: "group", groupId: "music" }, type: "loop"
+          placement: { type: "group", groupId: "music" }, type: "track"
         })
       }));
     });

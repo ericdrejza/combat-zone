@@ -23,7 +23,7 @@ export function useTriggeredAudioBatch({ audioMasterVolume, cueSources, entries,
       const key = `${request.cueId}:${request.instanceId}`;
       if (!registered || entries.current!.has(key) || keys.has(key)) continue;
       const { cue } = registered;
-      if (cue.type !== "one_shot" || cue.repeat || !cue.triggersEnabled || isCuePaused(cue)) continue;
+      if (cue.type !== "effect" || cue.repeat || !cue.triggersEnabled || isCuePaused(cue)) continue;
       keys.add(key);
       const batch = batches.get(registered.assetId) ?? [];
       batch.push({ key, registered });

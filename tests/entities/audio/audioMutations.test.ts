@@ -17,8 +17,8 @@ function groupedState() {
   state = createAudioCueGroup(state, { id: "actor-group", section: "actor" });
   state = setEntityAudioGroups(state, "zone", "zone-1", ["zone-group"]);
   state = setEntityAudioGroups(state, "actor", "actor-1", ["actor-group"]);
-  state = createAudioCue(state, { id: "zone-cue", libraryNodeId: "door", placement: { type: "group", groupId: "zone-group" }, triggers: ["zone_enter"], type: "one_shot" });
-  return createAudioCue(state, { id: "actor-cue", libraryNodeId: "voice", placement: { type: "group", groupId: "actor-group" }, triggers: ["actor_enter_zone"], type: "one_shot", volume: 0.4 });
+  state = createAudioCue(state, { id: "zone-cue", libraryNodeId: "door", placement: { type: "group", groupId: "zone-group" }, triggers: ["zone_enter"], type: "effect" });
+  return createAudioCue(state, { id: "actor-cue", libraryNodeId: "voice", placement: { type: "group", groupId: "actor-group" }, triggers: ["actor_enter_zone"], type: "effect", volume: 0.4 });
 }
 
 describe("audio cue groups", () => {
@@ -29,17 +29,17 @@ describe("audio cue groups", () => {
     const triggered = updateAudioCue(repeated, "zone-cue", { triggersEnabled: true });
     expect(triggered.audioCues.byId["zone-cue"]).toMatchObject({ repeat: false, triggersEnabled: true, repeatDelay: { minimumDelaySeconds: 5, maximumDelaySeconds: 10 } });
     expect(updateAudioCue(triggered, "zone-cue", { repeat: true, triggersEnabled: true })).toBe(triggered);
-    expect(createAudioCue(triggered, { id: "invalid", libraryNodeId: "sound", placement: { type: "group", groupId: "zone-group" }, type: "one_shot", repeat: true, triggersEnabled: true })).toBe(triggered);
+    expect(createAudioCue(triggered, { id: "invalid", libraryNodeId: "sound", placement: { type: "group", groupId: "zone-group" }, type: "effect", repeat: true, triggersEnabled: true })).toBe(triggered);
     const ambience = createAudioCueGroup(triggered, { id: "ambience", section: "ambiance" });
-    expect(createAudioCue(ambience, { id: "invalid", libraryNodeId: "sound", placement: { type: "group", groupId: "ambience" }, type: "one_shot", triggersEnabled: true })).toBe(ambience);
+    expect(createAudioCue(ambience, { id: "invalid", libraryNodeId: "sound", placement: { type: "group", groupId: "ambience" }, type: "effect", triggersEnabled: true })).toBe(ambience);
   });
 
   it("shares group configuration and constrains cue types", () => {
     const state = groupedState();
     const updated = updateAudioCue(state, "actor-cue", { volume: 0.75 });
     expect(updated.audioCues.byId["actor-cue"].volume).toBe(0.75);
-    expect(createAudioCue(state, { id: "invalid", libraryNodeId: "x", placement: { type: "group", groupId: "actor-group" }, type: "loop" })).toBe(state);
-    expect(createAudioCue(state, { id: "invalid-zone-loop", libraryNodeId: "x", placement: { type: "group", groupId: "zone-group" }, type: "loop" })).toBe(state);
+    expect(createAudioCue(state, { id: "invalid", libraryNodeId: "x", placement: { type: "group", groupId: "actor-group" }, type: "track" })).toBe(state);
+    expect(createAudioCue(state, { id: "invalid-zone-track", libraryNodeId: "x", placement: { type: "group", groupId: "zone-group" }, type: "track" })).toBe(state);
     expect(state.audioCues.byId["zone-cue"].volume).toBe(0.5);
   });
 
@@ -74,23 +74,23 @@ describe("audio cue groups", () => {
   it("only permits section-specific movement triggers on effects", () => {
     const state = createAudioCueGroup(groupedState(), { id: "ambience", section: "ambiance" });
     expect(updateAudioCue(state, "zone-cue", { triggers: ["actor_enter_zone"] })).toBe(state);
-    expect(createAudioCue(state, { id: "ambiance-auto", libraryNodeId: "x", placement: { type: "group", groupId: "ambience" }, triggers: ["zone_enter"], type: "one_shot" })).toBe(state);
+    expect(createAudioCue(state, { id: "ambiance-auto", libraryNodeId: "x", placement: { type: "group", groupId: "ambience" }, triggers: ["zone_enter"], type: "effect" })).toBe(state);
     expect(state.audioCues.byId["actor-cue"].triggers).toEqual(["actor_enter_zone"]);
   });
 
   it("moves cues to any group and normalizes them for the destination", () => {
     let state = groupedState();
-    state = createAudioCue(state, { id: "zone-effect", libraryNodeId: "effect", placement: { type: "group", groupId: "zone-group" }, type: "one_shot" });
+    state = createAudioCue(state, { id: "zone-effect", libraryNodeId: "effect", placement: { type: "group", groupId: "zone-group" }, type: "effect" });
     const reordered = moveAudioCue(state, "zone-effect", { type: "group", groupId: "zone-group" }, "zone-cue");
     expect(reordered.audioCues.allIds).toEqual(["zone-effect", "zone-cue", "actor-cue"]);
     const moved = moveAudioCue(reordered, "zone-cue", { type: "group", groupId: "actor-group" });
-    expect(moved.audioCues.byId["zone-cue"]).toMatchObject({ placement: { groupId: "actor-group" }, triggers: [], type: "one_shot" });
+    expect(moved.audioCues.byId["zone-cue"]).toMatchObject({ placement: { groupId: "actor-group" }, triggers: [], type: "effect" });
   });
 
   it("moves groups between sections, clears assignments, and normalizes cues", () => {
     const moved = moveAudioCueGroup(groupedState(), "zone-group", "music");
     expect(moved.audioCueGroups.byId["zone-group"].section).toBe("music");
-    expect(moved.audioCues.byId["zone-cue"]).toMatchObject({ triggers: [], type: "loop" });
+    expect(moved.audioCues.byId["zone-cue"]).toMatchObject({ triggers: [], type: "track" });
     expect(moved.zones.byId["zone-1"].audioGroupIds).toEqual([]);
   });
 
@@ -103,7 +103,7 @@ describe("audio cue groups", () => {
 
   it("restores group and cue mutations through undo and redo", () => {
     const initial = reducer(undefined, { type: "test/init" });
-    const nextEncounter = createAudioCue(createAudioCueGroup(initial.present, { id: "music-group", section: "music" }), { id: "music", libraryNodeId: "music-node", placement: { type: "group", groupId: "music-group" }, type: "loop" });
+    const nextEncounter = createAudioCue(createAudioCueGroup(initial.present, { id: "music-group", section: "music" }), { id: "music", libraryNodeId: "music-node", placement: { type: "group", groupId: "music-group" }, type: "track" });
     const committed = reducer(initial, commitEncounterChange({ action: createEncounterActionRecord("audio.addCue", { cueId: "music" }), nextEncounter }));
     expect(committed.present.audioCues.allIds).toEqual(["music"]);
     const undone = reducer(committed, undoEncounterChange());

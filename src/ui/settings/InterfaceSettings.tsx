@@ -4,6 +4,7 @@ import { motion } from "motion/react";
 import { useInterfacePreferences } from "@ui/interface_preferences/InterfacePreferenceProvider";
 import { DOCKABLE_PANEL_DEFINITIONS } from "@ui/panels/dockablePanelMetadata";
 import { useTheme, type Theme } from "@ui/theme/ThemeProvider";
+import { ApplyPanelOrderButton } from "./ApplyPanelOrderButton";
 import { DefaultColorSettings } from "./DefaultColorSettings";
 import { PreferenceSwitch } from "./PreferenceSwitch";
 import { PanelOrderSettings } from "./PanelOrderSettings";
@@ -144,6 +145,7 @@ export function InterfaceSettings() {
             <legend className="text-sm font-semibold">Order</legend>
             <p className="mb-3 mt-1 text-xs text-canvas-muted">Default sides and order for new encounters.</p>
             <PanelOrderSettings onChange={setPanelOrder} order={panelOrder} />
+            <ApplyPanelOrderButton order={panelOrder} />
           </fieldset>
         </div>
       </section>

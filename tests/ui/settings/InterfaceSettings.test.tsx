@@ -1,3 +1,5 @@
+import { Provider } from "react-redux";
+import { store } from "@store/store";
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
@@ -25,11 +27,13 @@ describe("InterfaceSettings", () => {
 
   function renderSettings() {
     return render(
+      <Provider store={store}>
       <ThemeProvider>
         <InterfacePreferenceProvider>
           <InterfaceSettings />
         </InterfacePreferenceProvider>
       </ThemeProvider>
+      </Provider>
     );
   }
 
@@ -76,11 +80,6 @@ describe("InterfaceSettings", () => {
       audioMasterVolume: 1,
       audioCueVolumeDefault: 0.5,
       audioMediaKeyScope: "music",
-      audioCueTypeDefaults: {
-        encounter: "loop",
-        zone: "one_shot",
-        actor: "one_shot"
-      },
       audioRepeatDelayDefaults: {
         minimumDelaySeconds: 0,
         maximumDelaySeconds: 0
@@ -132,7 +131,7 @@ describe("InterfaceSettings", () => {
       name: "Default engagements color"
     });
     const showBorder = within(defaults).getByRole("switch", {
-      name: "Show border"
+      name: "Show border by default"
     });
 
     expect(zoneColor).toHaveValue("");
@@ -216,8 +215,7 @@ describe("InterfaceSettings", () => {
     expect(libraryVisibility.querySelector(".lucide-eye-off")).not.toBeNull();
   });
 
-  it("persists panel order separately from encounter layouts", async () => {
-    const user = userEvent.setup();
+  it("persists panel order separately from encounter layouts", () => {
     renderSettings();
     const order = screen.getByRole("group", { name: "Order" });
     const left = within(order).getByRole("list", { name: "Default left panel order" });
@@ -234,8 +232,15 @@ describe("InterfaceSettings", () => {
       expect.stringContaining("Audio")
     ]);
 
-    await user.click(within(order).getByRole("button", { name: "Move Audio to left" }));
-    await user.click(within(order).getByRole("button", { name: "Move Audio up" }));
+    expect(within(order).queryByRole("button", { name: /^Move / })).not.toBeInTheDocument();
+    const audio = within(order).getByRole("button", { name: "Reorder Audio panel" });
+    const target = screen.getByLabelText("Drop panel 2 in default left panel order");
+    const dataTransfer = { effectAllowed: "", dropEffect: "", setData: vi.fn() };
+    fireEvent.dragStart(audio, { dataTransfer });
+    fireEvent.dragOver(target, { dataTransfer });
+    expect(target.firstElementChild).toHaveAttribute("aria-hidden", "false");
+    fireEvent.drop(target, { dataTransfer });
+    expect(target.firstElementChild).toHaveAttribute("aria-hidden", "true");
 
     expect(JSON.parse(localStorage.getItem(INTERFACE_PREFERENCES_STORAGE_KEY)!))
       .toMatchObject({

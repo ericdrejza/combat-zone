@@ -18,13 +18,13 @@ function cueAllowed(state: EncounterState, cue: Pick<AudioCue, "placement" | "tr
   const section = state.audioCueGroups.byId[cue.placement.groupId]?.section;
   return Boolean(section) &&
     (!cue.triggersEnabled || !cue.repeat && (section === "actor" || section === "zone")) &&
-    (section !== "music" || cue.type === "loop") &&
-    ((section !== "actor" && section !== "zone") || cue.type === "one_shot") &&
-    cue.triggers.every((trigger) => cue.type === "one_shot" && SECTION_TRIGGERS[section!]?.includes(trigger));
+    (section !== "music" || cue.type === "track") &&
+    ((section !== "actor" && section !== "zone") || cue.type === "effect") &&
+    cue.triggers.every((trigger) => cue.type === "effect" && SECTION_TRIGGERS[section!]?.includes(trigger));
 }
 
 function normalizeCueForSection(cue: AudioCue, section: AudioCueGroupSection): AudioCue {
-  const type = section === "music" ? "loop" : section === "zone" || section === "actor" ? "one_shot" : cue.type;
+  const type = section === "music" ? "track" : section === "zone" || section === "actor" ? "effect" : cue.type;
   const allowedTriggers = SECTION_TRIGGERS[section] ?? [];
   return { ...cue, triggers: cue.triggers.filter((trigger) => allowedTriggers.includes(trigger)), triggersEnabled: allowedTriggers.length > 0 && cue.triggersEnabled, type };
 }
@@ -36,9 +36,9 @@ export function createAudioCue(state: EncounterState, input: CreateAudioCueInput
     repeatDelay: input.repeatDelay ?? { ...DEFAULT_AUDIO_REPEAT_DELAY_SETTINGS },
     libraryNodeId: input.libraryNodeId,
     placement: input.placement,
-    repeat: input.repeat ?? input.type === "loop",
+    repeat: input.repeat ?? input.type === "track",
     triggers: input.triggers ?? [],
-    triggersEnabled: input.triggersEnabled ?? (!(input.repeat ?? input.type === "loop") && Boolean(input.triggers?.length)),
+    triggersEnabled: input.triggersEnabled ?? (!(input.repeat ?? input.type === "track") && Boolean(input.triggers?.length)),
     type: input.type,
     volume: Math.max(0, Math.min(1, input.volume ?? 0.5))
   };
@@ -51,11 +51,11 @@ export function updateAudioCue(state: EncounterState, cueId: string, update: Par
   if (!cue) return state;
   if (update.repeat === true && update.triggersEnabled === true) return state;
   const nextType = update.type ?? cue.type;
-  const triggersEnabled = nextType === "one_shot" && (update.repeat === true ? false : update.triggersEnabled ?? cue.triggersEnabled);
+  const triggersEnabled = nextType === "effect" && (update.repeat === true ? false : update.triggersEnabled ?? cue.triggersEnabled);
   const nextCue = {
     ...cue,
     ...update,
-    triggers: nextType === "one_shot" ? update.triggers ?? cue.triggers : [],
+    triggers: nextType === "effect" ? update.triggers ?? cue.triggers : [],
     repeat: update.triggersEnabled === true ? false : update.repeat ?? cue.repeat,
     triggersEnabled,
     volume: update.volume === undefined ? cue.volume : Math.max(0, Math.min(1, update.volume))

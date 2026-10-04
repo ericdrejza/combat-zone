@@ -18,10 +18,14 @@ runtime playback state.
   multiple groups from its own section; groups do not cross entity sections.
 - Groups own configuration. Entities store only ordered group references, and
   selectors derive cues and inheritors without duplicating either relationship.
-- Audio cues have two types selected with icon radio buttons: Loop and Effect.
-  Zone and Actor groups accept Effects only; Music groups accept Loops only.
+- Audio cues have two types selected with icon radio buttons: Track and Effect.
+  Zone and Actor groups accept Effects only; Music groups accept Tracks only.
   Ambience accepts either type.
-- Repeat is independent from cue type. A repeating Loop repeats continuously.
+- Track describes position-oriented playback with seeking and resumable timing;
+  Effect describes event-oriented playback normally heard from start to finish.
+  Tracks are often longer, but duration does not determine or constrain the type.
+  Repetition is a separate behavior, not a cue type.
+- Repeat is independent from cue type. A Track with Repeat enabled loops continuously.
   A repeating Effect waits a random duration between its configured minimum and
   maximum before playing again. Allowed delay choices are `0s`, `1s`, `2s`,
   `5s`, `10s`, `15s`, `20s`, `30s`, `45s`, `1m`, `2m`, `5m`, `10m`,
@@ -70,7 +74,7 @@ runtime playback state.
 Keep audio normalized in `EncounterState`:
 
 - `audioCues` is a normalized, ordered collection. A cue contains its stable
-  ID, Audio Library node ID, placement, Loop/Effect type, volume, repeat flag,
+  ID, Audio Library node ID, placement, Track/Effect type, volume, repeat flag,
   Effect repeat-delay range, movement-trigger selections, and their enabled state. Cue volume
   defaults to 50% and is constrained to 0–100%. `allIds` determines order
   within each filtered group.
@@ -85,9 +89,10 @@ Keep audio normalized in `EncounterState`:
 
 Validate collection integrity, cue placement, section/type compatibility,
 repeat-delay ranges, trigger legality, group references, and Music
-order before data reaches Redux. Schema 10 adds the trigger-enabled state to the
-schema-9 group model. Schema-9 records retain all settings during migration;
-Repeat remains active if previously enabled, otherwise configured triggers activate.
+order before data reaches Redux. Schema 11 uses `track` and `effect` as the only
+current cue-type values. This naming refactor targets fresh application data;
+older cue-type names are not migrated or accepted as aliases. Existing unrelated
+migrations remain in place, including trigger-enabled state normalization.
 The earlier schema-8 audio model is development-only and unsupported; use fresh
 browser data rather than migrating it. Pre-audio schema migrations remain supported.
 
@@ -100,7 +105,7 @@ editing, movement, deletion, assignment, and ordering participates in history.
 ## Assignment and Properties
 
 - Adding an Audio Library item always requires a destination. Encounter offers
-  existing or new Ambience and Music groups for Loops, and only Ambience
+  existing or new Ambience and Music groups for Tracks, and only Ambience
   groups for Effects. Normal Library browsing closes the Library before opening
   the destination picker; a group-specific Add Cue action adds directly to
   that group. Zone or Actor additions use groups
@@ -119,9 +124,11 @@ editing, movement, deletion, assignment, and ordering participates in history.
 
 ## Cue behavior
 
-### Loop
+### Track
 
 - Available in named Ambience and Music groups.
+- Position matters: users can scrub to hear a particular passage or resume where
+  playback paused. A Track need not repeat.
 - Plays immediately. Repeat on loops continuously; Repeat off finishes once.
 - Cards show elapsed time left of the scrub bar and total duration right of it.
 - Global Pause preserves position; global Play resumes it.
@@ -129,6 +136,8 @@ editing, movement, deletion, assignment, and ordering participates in history.
 ### Effect
 
 - Available in named Ambience, Zone, and Actor groups.
+- Event-oriented sounds are normally heard from start to finish rather than
+  navigated with a scrub bar; Effects still display their total duration.
 - Repeat off plays once. Repeat on shows the compact `Repeat this sound every
   [minimum] to [maximum]` controls and schedules another playback after each
   completion.
@@ -166,13 +175,13 @@ editing, movement, deletion, assignment, and ordering participates in history.
   of the panel drag handle. Master and cue volume controls appear only while
   Volume is active, and slider history/preferences commit only on release.
 - Docked cue cards show their type and, only when repeat is enabled, a read-only
-  Repeat1 icon beside the Loop type text or at the bottom left for Effects. Effects show the tooltip `This sound repeats
-  every {min} to {max}` with their configured delay range; Loops show
+  Repeat1 icon beside the Track type text or at the bottom left for Effects. Effects show the tooltip `This sound repeats
+  every {min} to {max}` with their configured delay range; Tracks show
   `Repeating`. Their Play/Stop control sits at the top right.
 - Cue cards are compact. Soundboard cards have a borderless drag handle and can
   use three columns at large screen sizes and four at extra-large sizes. They
   move within or between every section. Moving into Music converts a cue to a
-  Loop; moving into Zone or Actor converts it to an Effect; Ambience preserves
+  Track; moving into Zone or Actor converts it to an Effect; Ambience preserves
   its type. Invalid destination triggers are cleared. Music playlist playback
   follows cue order.
 - Groups have a borderless drag handle immediately left of their borderless
@@ -252,7 +261,7 @@ control sit to the right. The docked panel has the same transport above Encounte
 - Rewind and forward navigate the active Music track only; they do not affect
   Ambience or Effects. Both use the same previous/next rules as the media keys.
 - Stop rewinds every cue, clears repeat timers, and clears global pause.
-- Pause rewinds non-repeating Effects and pauses Loops/repeating Effects,
+- Pause rewinds non-repeating Effects and pauses Tracks/repeating Effects,
   including active waits.
 - Selecting Play on a cue while paused queues it without starting audio. Resume
   starts queued cues and playback retained by Pause, and never starts idle cues.
@@ -261,12 +270,14 @@ control sit to the right. The docked panel has the same transport above Encounte
 
 ## Settings
 
-Audio settings contain master volume, default volume for added cues, the default Loop/Effect type for
-Encounter Ambience, fixed Effect defaults for Zones and Actors, the fixed Music
-default of Loop, and default
+Audio settings contain master volume, default volume for added cues, and default
 minimum/maximum Effect repeat delays chosen from the same options as the
 Soundboard repeat controls. Store these in the existing namespaced
 interface preferences and restore them with application preference reset.
+There is no default cue-type preference or setting. Normal Library additions
+start as Tracks; audio-tool additions use the currently selected cue type.
+Direct group additions use Tracks for Ambience/Music and Effects for Zone/Actor.
+Section/type restrictions remain unchanged.
 Keyboard Play/Pause controls have an Audio setting for `All sounds`
 or `Music only` (default). Music-only pause/resume leaves other sounds running. Keyboard
 controls use browser Media Session actions where supported and handle delivered

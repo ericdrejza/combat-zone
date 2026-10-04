@@ -1,9 +1,5 @@
-import { DEFAULT_AUDIO_REPEAT_DELAY_SETTINGS, type AudioCueType, type AudioRepeatDelaySettings } from "@entities/audio/types";
+import { DEFAULT_AUDIO_REPEAT_DELAY_SETTINGS, type AudioRepeatDelaySettings } from "@entities/audio/types";
 import { AUDIO_REPEAT_DELAYS } from "@ui/audio/audioRepeatDelay";
-
-export function isAudioCueType(value: unknown): value is AudioCueType {
-  return value === "loop" || value === "one_shot";
-}
 
 function allowedDelay(value: unknown, fallback: number): number {
   return typeof value === "number" && AUDIO_REPEAT_DELAYS.includes(value) ? value : fallback;

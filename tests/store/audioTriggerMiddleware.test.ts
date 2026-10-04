@@ -23,10 +23,10 @@ function automaticEncounter() {
   encounter = setEntityAudioGroups(encounter, "zone", "room", ["zone-sounds"]);
   encounter = setEntityAudioGroups(encounter, "zone", "hall", ["zone-sounds"]);
   encounter = setEntityAudioGroups(encounter, "actor", "actor-a", ["actor-sounds"]);
-  encounter = createAudioCue(encounter, { id: "zone-leave", libraryNodeId: "a", placement: { type: "group", groupId: "zone-sounds" }, triggers: ["zone_leave"], type: "one_shot" });
-  encounter = createAudioCue(encounter, { id: "actor-leave", libraryNodeId: "b", placement: { type: "group", groupId: "actor-sounds" }, triggers: ["actor_leave_zone"], type: "one_shot" });
-  encounter = createAudioCue(encounter, { id: "zone-enter", libraryNodeId: "c", placement: { type: "group", groupId: "zone-sounds" }, triggers: ["zone_enter"], type: "one_shot" });
-  return createAudioCue(encounter, { id: "actor-enter", libraryNodeId: "d", placement: { type: "group", groupId: "actor-sounds" }, triggers: ["actor_enter_zone"], type: "one_shot" });
+  encounter = createAudioCue(encounter, { id: "zone-leave", libraryNodeId: "a", placement: { type: "group", groupId: "zone-sounds" }, triggers: ["zone_leave"], type: "effect" });
+  encounter = createAudioCue(encounter, { id: "actor-leave", libraryNodeId: "b", placement: { type: "group", groupId: "actor-sounds" }, triggers: ["actor_leave_zone"], type: "effect" });
+  encounter = createAudioCue(encounter, { id: "zone-enter", libraryNodeId: "c", placement: { type: "group", groupId: "zone-sounds" }, triggers: ["zone_enter"], type: "effect" });
+  return createAudioCue(encounter, { id: "actor-enter", libraryNodeId: "d", placement: { type: "group", groupId: "actor-sounds" }, triggers: ["actor_enter_zone"], type: "effect" });
 }
 
 function makeStore() {

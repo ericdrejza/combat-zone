@@ -1,3 +1,5 @@
+import { Provider } from "react-redux";
+import { store } from "@store/store";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
@@ -17,6 +19,7 @@ describe("SettingsModal local reset", () => {
 
   function renderSettings() {
     return render(
+      <Provider store={store}>
       <KeybindProvider>
         <SettingsModal
           onClose={() => undefined}
@@ -26,6 +29,7 @@ describe("SettingsModal local reset", () => {
           readOnly={false}
         />
       </KeybindProvider>
+      </Provider>
     );
   }
 

@@ -37,10 +37,10 @@ function setup() {
   for (const id of ["room", "hall"]) encounter = setEntityAudioGroups(encounter, "zone", id, ["zone-group"]);
   encounter = setEntityAudioGroups(encounter, "actor", "guard", ["actor-group"]);
   for (const id of ["zone-cue", "zone-duplicate"]) encounter = createAudioCue(encounter, {
-    id, libraryNodeId: assetId, placement: { type: "group", groupId: "zone-group" }, type: "one_shot", triggers: ["zone_enter", "zone_leave"], volume: 0.4
+    id, libraryNodeId: assetId, placement: { type: "group", groupId: "zone-group" }, type: "effect", triggers: ["zone_enter", "zone_leave"], volume: 0.4
   });
-  encounter = createAudioCue(encounter, { id: "actor-cue", libraryNodeId: link.payload.id, placement: { type: "group", groupId: "actor-group" }, type: "one_shot", triggers: ["actor_enter_zone", "actor_leave_zone"], volume: 0.8 });
-  encounter = createAudioCue(encounter, { id: "other-cue", libraryNodeId: otherId, placement: { type: "group", groupId: "actor-group" }, type: "one_shot", triggers: ["actor_enter_zone"], volume: 0.3 });
+  encounter = createAudioCue(encounter, { id: "actor-cue", libraryNodeId: link.payload.id, placement: { type: "group", groupId: "actor-group" }, type: "effect", triggers: ["actor_enter_zone", "actor_leave_zone"], volume: 0.8 });
+  encounter = createAudioCue(encounter, { id: "other-cue", libraryNodeId: otherId, placement: { type: "group", groupId: "actor-group" }, type: "effect", triggers: ["actor_enter_zone"], volume: 0.3 });
   act(() => store.dispatch(commitEncounterChange({ action: { id: "setup", type: "test.setup", timestamp: 1, payload: {} }, nextEncounter: encounter })));
   return screen.getByLabelText("Audio panel");
 }

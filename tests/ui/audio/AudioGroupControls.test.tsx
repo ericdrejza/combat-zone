@@ -25,13 +25,13 @@ function setup() {
   let encounter = store.getState().encounter.present;
   for (const id of ["a", "b", "c"]) {
     encounter = createAudioCueGroup(encounter, { id, name: id.toUpperCase(), section: "music" });
-    encounter = createAudioCue(encounter, { id: `${id}-cue`, libraryNodeId, placement: { type: "group", groupId: id }, type: "loop", repeat: true });
+    encounter = createAudioCue(encounter, { id: `${id}-cue`, libraryNodeId, placement: { type: "group", groupId: id }, type: "track", repeat: true });
   }
   encounter = createAudioCueGroup(encounter, { id: "ambient", name: "Rain", section: "ambiance" });
-  encounter = createAudioCue(encounter, { id: "rain", libraryNodeId, placement: { type: "group", groupId: "ambient" }, type: "loop" });
+  encounter = createAudioCue(encounter, { id: "rain", libraryNodeId, placement: { type: "group", groupId: "ambient" }, type: "track" });
   for (const section of ["zone", "actor"] as const) {
     encounter = createAudioCueGroup(encounter, { id: section, name: section, section });
-    encounter = createAudioCue(encounter, { id: `${section}-cue`, libraryNodeId, placement: { type: "group", groupId: section }, type: "one_shot", repeat: true });
+    encounter = createAudioCue(encounter, { id: `${section}-cue`, libraryNodeId, placement: { type: "group", groupId: section }, type: "effect", repeat: true });
   }
   act(() => store.dispatch(commitEncounterChange({ action: { id: "setup", type: "test.setup", payload: {}, timestamp: 1 }, nextEncounter: encounter })));
   const panel = screen.getByLabelText("Audio panel");
@@ -98,7 +98,7 @@ describe("Audio group and section controls", () => {
     expect(store.getState().encounter.present.musicGroupIds).toEqual(order);
   });
 
-  it("shows collapsed-group counts, panel section disclosures, inline Loop repeat, and movement boundaries", () => {
+  it("shows collapsed-group counts, panel section disclosures, inline Track repeat, and movement boundaries", () => {
     const { panel, board } = setup();
     fireEvent.click(within(board).getByRole("button", { name: "Collapse A" }));
     expect(within(board).getByLabelText("1 cues in A")).toHaveTextContent("1");
@@ -106,7 +106,7 @@ describe("Audio group and section controls", () => {
     expect(within(board).queryByLabelText("1 cues in A")).not.toBeInTheDocument();
     expect(within(panel).queryByLabelText("Track 1")).not.toBeInTheDocument();
     const cue = panel.querySelector('[data-audio-cue-id="a-cue"]') as HTMLElement;
-    expect(within(cue).getByRole("img", { name: "Repeating Track" }).parentElement).toHaveTextContent("Loop");
+    expect(within(cue).getByRole("img", { name: "Repeating Track" }).parentElement).toHaveTextContent("Track");
     expect(within(panel).getByRole("button", { name: "Move A up" })).toBeDisabled();
     expect(within(panel).getByRole("button", { name: "Move C down" })).toBeDisabled();
     fireEvent.click(within(panel).getByRole("button", { name: "Move A down" }));

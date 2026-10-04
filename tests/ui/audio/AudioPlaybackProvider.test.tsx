@@ -26,48 +26,48 @@ class FakeAudio extends EventTarget {
   }
 }
 
-const loopCue: AudioCue = {
-  id: "loop",
+const trackCue: AudioCue = {
+  id: "track",
   repeatDelay: {
     maximumDelaySeconds: 60,
     minimumDelaySeconds: 30,
   },
-  libraryNodeId: "loop-node",
+  libraryNodeId: "track-node",
   placement: { type: "group", groupId: "ambience" },
   repeat: true,
   triggers: [],
   triggersEnabled: false,
-  type: "loop",
+  type: "track",
   volume: 0.8
 };
 
-const oneShotCue: AudioCue = {
-  ...loopCue,
-  id: "shot",
-  libraryNodeId: "shot-node",
+const effectCue: AudioCue = {
+  ...trackCue,
+  id: "effect",
+  libraryNodeId: "effect-node",
   repeat: false,
-  type: "one_shot"
+  type: "effect"
 };
 
-const nonRepeatingLoopCue: AudioCue = {
-  ...loopCue,
-  id: "single-loop",
+const nonRepeatingTrackCue: AudioCue = {
+  ...trackCue,
+  id: "single-track",
   repeat: false
 };
 
 function Harness() {
   const playback = useAudioPlayback();
   return <>
-    <button onClick={() => void playback.play(loopCue, "loop.mp3")}>Loop</button>
-    <button onClick={() => void playback.play(oneShotCue, "shot.mp3")}>Shot</button>
-    <button onClick={() => void playback.play(oneShotCue, "shot.mp3", `trigger-${FakeAudio.instances.length}`)}>Triggered shot</button>
-    <button onClick={() => void playback.play(nonRepeatingLoopCue, "single-loop.mp3")}>Single loop</button>
+    <button onClick={() => void playback.play(trackCue, "track.mp3")}>Track</button>
+    <button onClick={() => void playback.play(effectCue, "effect.mp3")}>Effect</button>
+    <button onClick={() => void playback.play(effectCue, "effect.mp3", `trigger-${FakeAudio.instances.length}`)}>Triggered effect</button>
+    <button onClick={() => void playback.play(nonRepeatingTrackCue, "single-track.mp3")}>Single track</button>
     <button onClick={playback.pauseAll}>Pause all</button>
     <button onClick={playback.resumeAll}>Resume all</button>
     <button onClick={playback.pauseMusic}>Pause music</button>
     <button onClick={playback.resumeMusic}>Resume music</button>
     <button onClick={playback.stopAll}>Stop all</button>
-    <output aria-label="playback status">{playback.globallyPaused ? "paused" : "running"}:{playback.getStatus("loop")}:{playback.getStatus("shot")}</output>
+    <output aria-label="playback status">{playback.globallyPaused ? "paused" : "running"}:{playback.getStatus("track")}:{playback.getStatus("effect")}</output>
     <output aria-label="has playback">{String(playback.hasPlayback)}</output>
   </>;
 }
@@ -75,9 +75,9 @@ function Harness() {
 function MusicHarness() {
   const playback = useAudioPlayback();
   const [repeat, setRepeat] = useState(true);
-  const first: AudioCue = { ...nonRepeatingLoopCue, id: "music-1", placement: { type: "group", groupId: "music" } };
-  const second: AudioCue = { ...nonRepeatingLoopCue, id: "music-2", placement: { type: "group", groupId: "music" } };
-  const other: AudioCue = { ...nonRepeatingLoopCue, id: "other-music", placement: { type: "group", groupId: "other-music-group" } };
+  const first: AudioCue = { ...nonRepeatingTrackCue, id: "music-1", placement: { type: "group", groupId: "music" } };
+  const second: AudioCue = { ...nonRepeatingTrackCue, id: "music-2", placement: { type: "group", groupId: "music" } };
+  const other: AudioCue = { ...nonRepeatingTrackCue, id: "other-music", placement: { type: "group", groupId: "other-music-group" } };
   useEffect(() => {
     const unregisterFirst = playback.registerCueSource(first, "first.mp3");
     const unregisterSecond = playback.registerCueSource(second, "second.mp3");
@@ -101,7 +101,7 @@ describe("AudioPlaybackProvider", () => {
 
   it("applies master and cue volume and stops with a reset", async () => {
     render(<AudioPlaybackProvider><Harness /></AudioPlaybackProvider>);
-    await act(async () => fireEvent.click(screen.getByRole("button", { name: "Loop" })));
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: "Track" })));
     const audio = FakeAudio.instances[0];
 
     expect(audio.loop).toBe(true);
@@ -125,40 +125,40 @@ describe("AudioPlaybackProvider", () => {
       }
     }
     vi.stubGlobal("Audio", PendingAudio);
-    fireEvent.click(screen.getByRole("button", { name: "Loop" }));
+    fireEvent.click(screen.getByRole("button", { name: "Track" }));
     fireEvent.click(screen.getByRole("button", { name: "Stop all" }));
-    await act(async () => fireEvent.click(screen.getByRole("button", { name: "Loop" })));
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: "Track" })));
     await act(async () => rejectPlay(new DOMException("Playback cancelled", "AbortError")));
     expect(screen.getByLabelText("playback status")).toHaveTextContent("running:playing:idle");
     act(() => FakeAudio.instances[0].dispatchEvent(new Event("ended")));
     expect(screen.getByLabelText("has playback")).toHaveTextContent("true");
   });
 
-  it("stops one-shots, pauses loops, and resumes only resumable cues", async () => {
+  it("stops effects, pauses tracks, and resumes only resumable cues", async () => {
     render(<AudioPlaybackProvider><Harness /></AudioPlaybackProvider>);
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Loop" }));
-      fireEvent.click(screen.getByRole("button", { name: "Shot" }));
+      fireEvent.click(screen.getByRole("button", { name: "Track" }));
+      fireEvent.click(screen.getByRole("button", { name: "Effect" }));
     });
-    const [loop, shot] = FakeAudio.instances;
+    const [track, effect] = FakeAudio.instances;
 
     fireEvent.click(screen.getByRole("button", { name: "Pause all" }));
-    expect(loop.pause).toHaveBeenCalledOnce();
-    expect(shot.pause).toHaveBeenCalledOnce();
-    expect(shot.currentTime).toBe(0);
+    expect(track.pause).toHaveBeenCalledOnce();
+    expect(effect.pause).toHaveBeenCalledOnce();
+    expect(effect.currentTime).toBe(0);
     expect(screen.getByLabelText("playback status")).toHaveTextContent("paused:paused:idle");
 
     await act(async () => fireEvent.click(screen.getByRole("button", { name: "Resume all" })));
-    expect(loop.play).toHaveBeenCalledTimes(2);
-    expect(shot.play).toHaveBeenCalledTimes(1);
+    expect(track.play).toHaveBeenCalledTimes(2);
+    expect(effect.play).toHaveBeenCalledTimes(1);
     expect(screen.getByLabelText("playback status")).toHaveTextContent("running:playing:idle");
   });
 
-  it("allows automatic one-shot instances to overlap", async () => {
+  it("allows automatic effect instances to overlap", async () => {
     render(<AudioPlaybackProvider><Harness /></AudioPlaybackProvider>);
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Triggered shot" }));
-      fireEvent.click(screen.getByRole("button", { name: "Triggered shot" }));
+      fireEvent.click(screen.getByRole("button", { name: "Triggered effect" }));
+      fireEvent.click(screen.getByRole("button", { name: "Triggered effect" }));
     });
     expect(FakeAudio.instances).toHaveLength(2);
     const pauseAll = screen.getByRole("button", { name: "Pause all" });
@@ -168,37 +168,37 @@ describe("AudioPlaybackProvider", () => {
     expect(FakeAudio.instances.map((audio) => audio.currentTime)).toEqual([0, 0]);
   });
 
-  it("disposes a non-repeating loop after it ends", async () => {
+  it("disposes a non-repeating track after it ends", async () => {
     render(<AudioPlaybackProvider><Harness /></AudioPlaybackProvider>);
-    await act(async () => fireEvent.click(screen.getByRole("button", { name: "Single loop" })));
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: "Single track" })));
     expect(FakeAudio.instances[0].loop).toBe(false);
     act(() => FakeAudio.instances[0].dispatchEvent(new Event("ended")));
     expect(screen.getByLabelText("has playback")).toHaveTextContent("false");
   });
 
-  it("queues Loops and Effects while globally paused and starts them only on resume", async () => {
+  it("queues Tracks and Effects while globally paused and starts them only on resume", async () => {
     render(<AudioPlaybackProvider><Harness /></AudioPlaybackProvider>);
     fireEvent.click(screen.getByRole("button", { name: "Pause all" }));
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Loop" }));
-      fireEvent.click(screen.getByRole("button", { name: "Shot" }));
+      fireEvent.click(screen.getByRole("button", { name: "Track" }));
+      fireEvent.click(screen.getByRole("button", { name: "Effect" }));
     });
-    const [loop, shot] = FakeAudio.instances;
-    expect(loop.play).not.toHaveBeenCalled();
-    expect(shot.play).not.toHaveBeenCalled();
+    const [track, effect] = FakeAudio.instances;
+    expect(track.play).not.toHaveBeenCalled();
+    expect(effect.play).not.toHaveBeenCalled();
     expect(screen.getByLabelText("playback status")).toHaveTextContent("paused:paused:paused");
-    await act(async () => fireEvent.click(screen.getByRole("button", { name: "Triggered shot" })));
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: "Triggered effect" })));
     expect(FakeAudio.instances).toHaveLength(2);
     await act(async () => fireEvent.click(screen.getByRole("button", { name: "Resume all" })));
-    expect(loop.play).toHaveBeenCalledOnce();
-    expect(shot.play).toHaveBeenCalledOnce();
+    expect(track.play).toHaveBeenCalledOnce();
+    expect(effect.play).toHaveBeenCalledOnce();
     expect(screen.getByLabelText("playback status")).toHaveTextContent("running:playing:playing");
   });
 
   it("pauses only Music, queues new Music, and keeps other sounds running", async () => {
     render(<AudioPlaybackProvider><Harness /><MusicHarness /></AudioPlaybackProvider>);
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Loop" }));
+      fireEvent.click(screen.getByRole("button", { name: "Track" }));
       fireEvent.click(screen.getByRole("button", { name: "First track" }));
     });
     const [ambience, first] = FakeAudio.instances;
@@ -209,7 +209,7 @@ describe("AudioPlaybackProvider", () => {
     const queued = FakeAudio.instances[2];
     expect(queued.play).not.toHaveBeenCalled();
     expect(screen.getByLabelText("music status")).toHaveTextContent("idle:paused");
-    await act(async () => fireEvent.click(screen.getByRole("button", { name: "Shot" })));
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: "Effect" })));
     expect(FakeAudio.instances[3].play).toHaveBeenCalledOnce();
     await act(async () => fireEvent.click(screen.getByRole("button", { name: "Resume music" })));
     expect(queued.play).toHaveBeenCalledOnce();
@@ -255,7 +255,7 @@ describe("AudioPlaybackProvider", () => {
   it("switches Music groups without stopping ambience or resuming the previous playlist", async () => {
     render(<AudioPlaybackProvider><Harness /><MusicHarness /></AudioPlaybackProvider>);
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Loop" }));
+      fireEvent.click(screen.getByRole("button", { name: "Track" }));
       fireEvent.click(screen.getByRole("button", { name: "First track" }));
     });
     const [ambience, first] = FakeAudio.instances;

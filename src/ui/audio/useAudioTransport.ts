@@ -26,7 +26,7 @@ export function useAudioTransport({ entries, musicGroups, groupSections, refresh
     sections.forEach((section) => paused.current.add(section));
     for (const entry of entries.current!.values()) {
       if (!sections.includes(sectionOf(entry.cue)) || entry.status === "paused") continue;
-      if (entry.cue.type === "one_shot" && !entry.cue.repeat) {
+      if (entry.cue.type === "effect" && !entry.cue.repeat) {
         stop(entry.cue.id);
         continue;
       }

@@ -161,7 +161,7 @@ export function assertEncounterState(value: unknown, name = "encounter"): assert
       !isRecord(cue) ||
       cue.id !== cueId ||
       typeof cue.libraryNodeId !== "string" ||
-      !["loop", "one_shot"].includes(String(cue.type)) ||
+      !["track", "effect"].includes(String(cue.type)) ||
       typeof cue.volume !== "number" ||
       !Number.isFinite(cue.volume) ||
       cue.volume < 0 ||
@@ -185,7 +185,7 @@ export function assertEncounterState(value: unknown, name = "encounter"): assert
     const group = typeof cue.placement.groupId === "string" ? groups.byId[cue.placement.groupId] : undefined;
     const groupSection = isRecord(group) ? group.section : undefined;
     const legalTriggers = groupSection === "zone" ? ["zone_enter", "zone_leave"] : groupSection === "actor" ? ["actor_enter_zone", "actor_leave_zone"] : [];
-    if (!isRecord(group) || (groupSection === "music" && cue.type !== "loop") || (["actor", "zone"].includes(String(groupSection)) && cue.type === "loop") || (cue.triggersEnabled && !["actor", "zone"].includes(String(groupSection))) || cue.triggers.some((trigger) => cue.type !== "one_shot" || !legalTriggers.includes(String(trigger)))) {
+    if (!isRecord(group) || (groupSection === "music" && cue.type !== "track") || (["actor", "zone"].includes(String(groupSection)) && cue.type === "track") || (cue.triggersEnabled && !["actor", "zone"].includes(String(groupSection))) || cue.triggers.some((trigger) => cue.type !== "effect" || !legalTriggers.includes(String(trigger)))) {
       throw new PersistenceValidationError(`${name}.audioCues.${cueId} has an invalid group placement.`);
     }
   }

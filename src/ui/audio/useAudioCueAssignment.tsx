@@ -29,7 +29,7 @@ export function useAudioCueAssignment() {
   function requestDestination(node: LibraryNode, options?: Partial<DestinationRequest>) {
     if (!resolveLibraryAsset(audioLibrary, node.id)) return;
     const sectionType = options?.sectionType ?? (activeToolId === "audio" ? audioTool.sectionType : "encounter");
-    const cueType = options?.cueType ?? (activeToolId === "audio" ? audioTool.cueTypeBySection[sectionType] : preferences.audioCueTypeDefaults.encounter);
+    const cueType = options?.cueType ?? (activeToolId === "audio" ? audioTool.cueTypeBySection[sectionType] : "track");
     const selectedEntityId = options?.selectedEntityId ?? (selection.selectedEntityType === sectionType && selection.selectedIds.length === 1 ? selection.selectedIds[0] : null);
     setPending({ cueType, encounterId: encounter.id, node, sectionType, selectedEntityId });
   }
@@ -38,7 +38,7 @@ export function useAudioCueAssignment() {
     if (!resolveLibraryAsset(audioLibrary, node.id)) return;
     const group = encounter.audioCueGroups.byId[placement.groupId];
     if (!group) return;
-    const type = group.section === "music" ? "loop" : group.section === "ambiance" ? preferences.audioCueTypeDefaults.encounter : preferences.audioCueTypeDefaults[group.section];
+    const type = group.section === "music" || group.section === "ambiance" ? "track" : "effect";
     commitCue(encounter, node, placement, type);
   }
 

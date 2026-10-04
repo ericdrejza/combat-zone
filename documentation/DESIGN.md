@@ -677,6 +677,11 @@ default. A Show border setting, enabled by default, controls border visibility
 for newly created Zones; clones retain their source Zone's setting.
 The Interface panel controls are grouped under General, Defaults (including
 the Colors subsection), and Panel Visibility.
+Panels > Order edits the default left/right panel arrangement by dragging panel
+names, with a line preview at the drop position and no arrow controls. Its last
+control, Apply to current encounter, applies those sides and order to the active
+Encounter through undo/redo while preserving each panel's expanded/collapsed
+state.
 On layouts narrower than the shared 1024px compact breakpoint, the Settings
 section navigation starts collapsed to icons, can be expanded for selection,
 and collapses again after a section is selected.
