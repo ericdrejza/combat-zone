@@ -1,0 +1,228 @@
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { Provider } from "react-redux";
+import { createActor } from "@entities/actor/actorMutations";
+import { createEncounterState } from "@core/encounter/createEncounterState";
+import { selectEntity, setActiveTool } from "@interaction/interactionState";
+import { loadEncounterState, undoEncounterChange, redoEncounterChange } from "@store/encounterSlice";
+import { store } from "@store/store";
+import { setPersistenceWritable } from "@store/persistenceWriteGuardMiddleware";
+import { resetAppStore } from "@tests/ui/renderApp";
+import { StatusPanel } from "@ui/panels/StatusPanel";
+import { CombatPreferenceProvider, COMBAT_PREFERENCES_STORAGE_KEY } from "@ui/combat_preferences/CombatPreferenceProvider";
+import { InterfacePreferenceProvider } from "@ui/interface_preferences/InterfacePreferenceProvider";
+import { CONDITIONS } from "@ui/status/markerCatalog";
+
+function setup(ids = ["a"], configured = true) {
+  resetAppStore();
+  let state = createEncounterState({ id: "status-ui", name: "Status" });
+  state = createActor(createActor(state, { id: "a", name: "Alpha", currentZoneId: "zoneless" }), { id: "b", name: "Bravo", currentZoneId: "zoneless" });
+  if (configured) state.actors.byId.a.hitPoints = { current: 10, maximum: 20 };
+  store.dispatch(loadEncounterState(state));
+  store.dispatch(setActiveTool("select"));
+  store.dispatch(selectEntity({ entityType: "actor", ids }));
+  return render(<Provider store={store}><InterfacePreferenceProvider><CombatPreferenceProvider><StatusPanel /></CombatPreferenceProvider></InterfacePreferenceProvider></Provider>);
+}
+async function value(id = "a", current = 9) {
+  await waitFor(() => expect(store.getState().encounter.present.actors.byId[id].hitPoints?.current).toBe(current));
+}
+afterEach(() => { localStorage.removeItem(COMBAT_PREFERENCES_STORAGE_KEY); setPersistenceWritable(true); });
+
+describe("StatusPanel", () => {
+  it("shows read-only names, all approved conditions alphabetically, and health radio options", () => {
+    setup();
+    expect(within(screen.getByLabelText("Selected actor names")).getByText("Alpha")).toBeInTheDocument();
+    expect(screen.queryByRole("textbox", { name: /name/i })).not.toBeInTheDocument();
+    const buttons = within(screen.getByRole("group", { name: "Conditions" })).getAllByRole("button");
+    expect(buttons.map((button) => button.getAttribute("aria-label"))).toEqual(CONDITIONS.map(({ label }) => label));
+    expect(buttons).toHaveLength(39);
+    expect(screen.getByRole("radio", { name: "Healthy" })).toHaveAttribute("aria-checked", "true");
+    expect(screen.getByRole("button", { name: "Stunned" })).toBeInTheDocument();
+  });
+  it("changes manual health and preserves it until an effective HP update", async () => {
+    localStorage.setItem(COMBAT_PREFERENCES_STORAGE_KEY, JSON.stringify({ limits: "bounded", automaticHealth: true, unit: "fixed", thresholds: [0, 5, 10] }));
+    setup();
+    fireEvent.click(screen.getByRole("radio", { name: "Dead" }));
+    await waitFor(() => expect(store.getState().encounter.present.actors.byId.a.status).toBe(0));
+    fireEvent.click(screen.getByRole("button", { name: "Apply healing" }));
+    await value("a", 11);
+    expect(store.getState().encounter.present.actors.byId.a.status).toBe(3);
+    act(() => store.dispatch(undoEncounterChange()));
+    expect(store.getState().encounter.present.actors.byId.a.status).toBe(0);
+    expect(store.getState().encounter.present.actors.byId.a.hitPoints?.current).toBe(10);
+  });
+  it("requires confirmation for skipped actors, then applies one undoable bulk command", async () => {
+    setup(["a", "b"]);
+    expect(screen.queryByRole("radiogroup", { name: "Health status" })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Custom counters")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Apply damage" }));
+    let dialog = screen.getByRole("dialog", { name: "Skip actors without hit points?" });
+    expect(within(dialog).getByText("Bravo")).toBeInTheDocument();
+    fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
+    expect(store.getState().encounter.past).toHaveLength(0);
+    fireEvent.click(screen.getByRole("button", { name: "Apply damage" }));
+    dialog = screen.getByRole("dialog", { name: "Skip actors without hit points?" });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Continue" }));
+    await value();
+    expect(store.getState().encounter.past).toHaveLength(1);
+    expect(store.getState().encounter.present.actors.byId.b.hitPoints).toBeUndefined();
+    act(() => store.dispatch(undoEncounterChange())); expect(store.getState().encounter.present.actors.byId.a.hitPoints?.current).toBe(10);
+    act(() => store.dispatch(redoEncounterChange())); expect(store.getState().encounter.present.actors.byId.a.hitPoints?.current).toBe(9);
+  });
+  it("disables unconfigured HP commands with a reason and configures current to the initial maximum", async () => {
+    setup(["a"], false);
+    expect(screen.getByRole("button", { name: "Apply damage" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Apply damage" }).title).toMatch(/Configure/);
+    fireEvent.click(screen.getByRole("button", { name: "Edit Hit points" }));
+    fireEvent.change(screen.getByLabelText("Maximum hit points"), { target: { value: "30" } });
+    expect(screen.getByLabelText("Current hit points")).toHaveValue(30);
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    await value("a", 30);
+  });
+  it("confirms maximum reset and edits HP with bounds", async () => {
+    setup();
+    fireEvent.click(screen.getByRole("button", { name: "Reset Hit points to maximum" }));
+    expect(screen.getByRole("button", { name: "Confirm" })).toHaveFocus();
+    fireEvent.click(screen.getByRole("dialog", { name: "Reset Hit points?" }));
+    expect(screen.getByRole("dialog", { name: "Reset Hit points?" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("dialog", { name: "Reset Hit points?" }).parentElement!);
+    expect(screen.queryByRole("dialog", { name: "Reset Hit points?" })).not.toBeInTheDocument();
+    expect(store.getState().encounter.present.actors.byId.a.hitPoints?.current).toBe(10);
+    fireEvent.click(screen.getByRole("button", { name: "Reset Hit points to maximum" }));
+    expect(screen.getByRole("button", { name: "Confirm" })).toHaveFocus();
+    fireEvent.click(screen.getByRole("button", { name: "Confirm" })); await value("a", 20);
+    fireEvent.click(screen.getByRole("button", { name: "Edit Hit points" }));
+    fireEvent.change(screen.getByLabelText("Maximum hit points"), { target: { value: "5" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save" })); await value("a", 5);
+  });
+  it("toggles mixed conditions and replaces armor atomically for multiple actors", async () => {
+    setup(["a", "b"]);
+    act(() => { const state = structuredClone(store.getState().encounter.present); state.actors.byId.a.statusEffects = ["hidden", "custom", "armor:light"]; store.dispatch(loadEncounterState(state)); });
+    expect(screen.getByRole("button", { name: "Hidden / Concealed" })).toHaveAttribute("aria-pressed", "mixed");
+    fireEvent.click(screen.getByRole("button", { name: "Hidden / Concealed" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Hidden / Concealed" })).toHaveAttribute("aria-pressed", "true"));
+    fireEvent.click(screen.getByRole("button", { name: "Heavy armor" }));
+    await waitFor(() => expect(store.getState().encounter.present.actors.byId.a.statusEffects).toEqual(expect.arrayContaining(["hidden", "custom", "armor:heavy"])));
+    fireEvent.click(screen.getByRole("button", { name: "Heavy armor" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Heavy armor" })).toHaveAttribute("aria-pressed", "false"));
+    expect(store.getState().encounter.present.actors.byId.a.statusEffects).not.toContain("armor:no-armor");
+  });
+  it("creates, adjusts, edits, resets and removes custom counters", async () => {
+    setup();
+    fireEvent.click(screen.getByRole("button", { name: "Add counter" }));
+    fireEvent.change(screen.getByLabelText("Counter name"), { target: { value: "Charges" } });
+    fireEvent.change(screen.getByLabelText("Current value"), { target: { value: "1" } });
+    fireEvent.change(screen.getByLabelText("Minimum (optional)"), { target: { value: "0" } });
+    fireEvent.change(screen.getByLabelText("Maximum (optional)"), { target: { value: "2" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Increase Charges" })).toBeEnabled());
+    fireEvent.click(screen.getByRole("button", { name: "Increase Charges" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Increase Charges" })).toBeDisabled());
+    fireEvent.click(screen.getByRole("button", { name: "Decrease Charges" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Increase Charges" })).toBeEnabled());
+    fireEvent.click(screen.getByRole("button", { name: "Reset Charges to maximum" }));
+    expect(screen.getByRole("button", { name: "Confirm" })).toHaveFocus();
+    fireEvent.click(screen.getByRole("button", { name: "Confirm" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Increase Charges" })).toBeDisabled());
+    fireEvent.click(screen.getByRole("button", { name: "Edit counters" }));
+    fireEvent.change(screen.getByLabelText("Maximum (optional)"), { target: { value: "1" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() => expect(Object.values(store.getState().encounter.present.actors.byId.a.counters!.byId)[0].value).toBe(1));
+    fireEvent.click(screen.getByRole("button", { name: "Edit counters" }));
+    fireEvent.click(screen.getByRole("button", { name: "Remove counter" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() => expect(store.getState().encounter.present.actors.byId.a.counters!.allIds).toHaveLength(0));
+    act(() => store.dispatch(undoEncounterChange()));
+    expect(screen.getByRole("group", { name: "Charges" })).toBeInTheDocument();
+  });
+  it("disables damage at zero and reenables it after healing", async () => {
+    setup();
+    fireEvent.change(screen.getByLabelText("Damage or healing amount"), { target: { value: "10" } });
+    fireEvent.click(screen.getByRole("button", { name: "Apply damage" }));
+    await value("a", 0);
+    expect(screen.getByRole("button", { name: "Apply damage" })).toBeDisabled();
+    expect(store.getState().encounter.past).toHaveLength(1);
+    fireEvent.click(screen.getByRole("button", { name: "Apply healing" }));
+    await value("a", 10);
+    expect(screen.getByRole("button", { name: "Apply damage" })).toBeEnabled();
+    expect(store.getState().encounter.past).toHaveLength(2);
+    act(() => store.dispatch(undoEncounterChange()));
+    expect(screen.getByRole("button", { name: "Apply damage" })).toBeDisabled();
+    act(() => store.dispatch(redoEncounterChange()));
+    expect(screen.getByRole("button", { name: "Apply damage" })).toBeEnabled();
+  });
+  it("supports radio keyboard navigation and rebases rapid resource commands", async () => {
+    setup();
+    fireEvent.keyDown(screen.getByRole("radio", { name: "Healthy" }), { key: "ArrowRight" });
+    await waitFor(() => expect(screen.getByRole("radio", { name: "Dead" })).toHaveAttribute("aria-checked", "true"));
+    const damage = screen.getByRole("button", { name: "Apply damage" });
+    fireEvent.click(damage); fireEvent.click(damage); fireEvent.click(damage);
+    await value("a", 7);
+    expect(store.getState().encounter.past).toHaveLength(4);
+    fireEvent.click(screen.getByRole("button", { name: "Stunned" }));
+    fireEvent.click(screen.getByRole("button", { name: "Stunned" }));
+    await waitFor(() => expect(store.getState().encounter.past).toHaveLength(6));
+    expect(store.getState().encounter.present.actors.byId.a.statusEffects).not.toContain("stunned");
+  });
+  it("cancels pending resource commands when navigation replaces the encounter", async () => {
+    setup();
+    const other = createActor(createEncounterState({ id: "other", name: "Other" }), { id: "a", currentZoneId: "zoneless" });
+    other.actors.byId.a.hitPoints = { current: 30, maximum: 30 };
+    act(() => {
+      fireEvent.click(screen.getByRole("button", { name: "Apply damage" }));
+      store.dispatch(loadEncounterState(other));
+    });
+    await act(async () => {});
+    expect(store.getState().encounter.present.actors.byId.a.hitPoints?.current).toBe(30);
+    expect(store.getState().encounter.past).toHaveLength(0);
+  });
+  it("shows a prompt for non-actor selection and enforces the writer boundary", async () => {
+    setup();
+    setPersistenceWritable(false);
+    fireEvent.click(screen.getByRole("button", { name: "Stunned" }));
+    await act(async () => {});
+    expect(store.getState().encounter.past).toHaveLength(0);
+    act(() => store.dispatch(selectEntity({ entityType: "zone", ids: ["z"] })));
+    expect(screen.getByText("Select an actor to view status.")).toBeInTheDocument();
+  });
+});
+
+it("steps the damage/healing amount with accessible buttons before applying it", async () => {
+  setup();
+  const input = screen.getByLabelText("Damage or healing amount");
+  const decrease = screen.getByRole("button", { name: "Decrease damage or healing amount" });
+  const increase = screen.getByRole("button", { name: "Increase damage or healing amount" });
+  expect(input).toHaveValue(1);
+  expect(decrease).toBeDisabled();
+  fireEvent.click(increase);
+  expect(input).toHaveValue(2);
+  expect(decrease).toBeEnabled();
+  fireEvent.click(decrease);
+  expect(input).toHaveValue(1);
+  fireEvent.keyDown(input, { key: "ArrowDown" });
+  expect(input).toHaveValue(1);
+  fireEvent.change(input, { target: { value: "" } });
+  fireEvent.click(increase);
+  expect(input).toHaveValue(1);
+  fireEvent.click(increase);
+  expect(store.getState().encounter.past).toHaveLength(0);
+  fireEvent.click(screen.getByRole("button", { name: "Apply damage" }));
+  await value("a", 8);
+});
+
+it("edits current hit points inline while preserving maximum and undo/redo", async () => {
+  setup();
+  fireEvent.click(screen.getByRole("button", { name: "Edit current hit points" }));
+  const input = screen.getByRole("textbox", { name: "Edit current hit points" }) as HTMLInputElement;
+  expect(input).toHaveFocus();
+  expect(input.selectionStart).toBe(0);
+  expect(input.selectionEnd).toBe(2);
+  fireEvent.change(input, { target: { value: "7" } });
+  fireEvent.keyDown(input, { key: "Enter" });
+  await value("a", 7);
+  expect(store.getState().encounter.present.actors.byId.a.hitPoints?.maximum).toBe(20);
+  expect(store.getState().encounter.past).toHaveLength(1);
+  act(() => store.dispatch(undoEncounterChange()));
+  await value("a", 10);
+  act(() => store.dispatch(redoEncounterChange()));
+  await value("a", 7);
+});

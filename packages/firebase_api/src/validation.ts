@@ -1,3 +1,5 @@
+import { ApiContractValidationError } from "./errors.js";
+import { validateActorResources } from "./actorResources.js";
 import {
   CLOUD_RECORD_SCHEMA_VERSION,
   FIREBASE_API_VERSION,
@@ -19,12 +21,7 @@ import {
   type WorkspaceMetadataPayload
 } from "./contracts.js";
 
-export class ApiContractValidationError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "ApiContractValidationError";
-  }
-}
+export { ApiContractValidationError } from "./errors.js";
 
 function record(value: unknown, name: string): Record<string, unknown> {
   if (typeof value !== "object" || value === null || Array.isArray(value)) {
@@ -85,15 +82,20 @@ function validateEntityCollection(value: unknown, name: string): void {
 
 function validateEncounterStateShape(state: JsonObject): void {
   string(state.id, "encounter.state.id");
-  if (state.schemaVersion !== SUPPORTED_ENCOUNTER_SCHEMA_VERSION) {
+  if (state.schemaVersion !== SUPPORTED_ENCOUNTER_SCHEMA_VERSION && state.schemaVersion !== 7) {
     throw new ApiContractValidationError("encounter.state.schemaVersion is unsupported.");
   }
   for (const key of ["zones", "edges", "actors", "engagements", "annotations"]) {
     validateEntityCollection(state[key], `encounter.state.${key}`);
   }
+  if (state.schemaVersion === 13) {
+    const actors = record(state.actors, "encounter.state.actors");
+    Object.values(record(actors.byId, "encounter.state.actors.byId")).forEach(validateActorResources);
+    for (const key of ["audioCues", "audioCueGroups"]) validateEntityCollection(state[key], `encounter.state.${key}`);
+  }
   record(state.initiativeTracker, "encounter.state.initiativeTracker");
   const panelLayout = record(state.panelLayout, "encounter.state.panelLayout");
-  const panelIds = ["initiative", "library", "log", "properties", "status"];
+  const panelIds = ["initiative", "library", "log", "properties", "status", ...(state.schemaVersion === 13 ? ["audio"] : [])];
   const panels = ["left", "right"].flatMap((side) => {
     const dock = panelLayout[side];
     if (!Array.isArray(dock)) {

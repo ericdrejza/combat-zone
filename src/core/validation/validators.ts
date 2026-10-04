@@ -22,8 +22,11 @@ export {
   ZoneSizeValidator
 };
 
+import { ActorResourceValidator } from "@entities/actor/actorResourceValidator";
+
 export const MVP_VALIDATORS: Validator<EncounterState>[] = [
   ActorStatusValidator,
+  ActorResourceValidator,
   MovementValidator,
   ZoneSizeValidator,
   ZoneOverlapValidator,

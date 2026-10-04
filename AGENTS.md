@@ -132,6 +132,15 @@ engineering contracts:
 
 ## UI IMPLEMENTATION RULES
 
+- Every enabled interactive control must provide visible hover feedback,
+  including icon-only controls and selected or mixed-state toggles. Use
+  established theme colors for background, border, ring, or text changes;
+  provide visible keyboard focus feedback as well. Standardize disabled
+  elements across the project with consistent muted colors, opacity, and
+  cursor treatment. Disabled controls must retain their disabled appearance
+  without hover feedback suggesting they are actionable. Use Motion if the
+  feedback is animated.
+
 - Prefer icon-only controls when an icon communicates the action more clearly
   than text, while keeping accessible names through `aria-label` or equivalent
   semantics.

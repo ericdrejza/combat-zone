@@ -1,3 +1,4 @@
+import { formatStatusAction } from "./formatStatusAction";
 import { ZONELESS_ACTOR_ZONE_ID } from "@core/encounter/types";
 import type { EncounterState } from "@core/encounter/types";
 import type { EncounterActionRecord, JsonValue } from "@core/history/types";
@@ -156,6 +157,8 @@ export function formatCommittedEncounterAction(
   action: EncounterActionRecord,
   snapshots: EncounterSnapshots
 ): string {
+  const statusMessage = formatStatusAction(action, snapshots);
+  if (statusMessage) return statusMessage;
   const actorNames = () => listNames(namesForActorIds(actorIdsFrom(action), snapshots));
   const zoneNames = () => listNames(namesForZoneIds(zoneIdsFrom(action), snapshots));
 

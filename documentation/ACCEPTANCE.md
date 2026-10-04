@@ -413,3 +413,59 @@ truth.
 
 Add new sections here as MVP scope is confirmed to have grown; don't fold
 these back into `AGENT.md` or `DESIGN.md`.
+
+
+## Actor Status panel and Combat settings
+
+- [x] Status is available in desktop and compact panels with read-only names,
+      single-Actor health and counters, and multi-Actor HP/marker commands.
+- [x] All 39 approved condition toggles use the approved icons and alphabetical
+      labels, including Galaxy for Stunned and ZapOff for Powerless.
+- [x] Mixed bulk markers apply to all; fully applied markers clear from all.
+      Armor replaces known tiers and unknown markers are preserved.
+- [x] HP setup, damage/healing, partial-selection confirmation, disabled reasons,
+      direct edits, and confirmed maximum resets follow the approved rules.
+      Capped damage/healing disables at the applicable limit, including when
+      every configured Actor in a bulk selection is capped; uncapped directions
+      remain enabled and disabled controls explain the reached limit.
+- [x] Edit counters always appears before Add counter, even when none exist. Counter
+      rows omit edit/remove icons. The editor dropdown preserves edits across
+      counters and marks changed names with a pen. Closing a dirty draft prompts
+      to save, discard, or keep editing. All edits/removals save as one history
+      entry; invalid drafts disable saving. The “Edit counters” dropdown ends
+      with Create new counter, adding/selecting an empty draft counter. Pen
+      indicators appear only inside the dropdown. Current-value stepping buttons
+      and keyboard stepping respect the configured draft bounds.
+- [x] Counters support bounded edits, ±1, create/remove, confirmed maximum reset,
+      independent duplication, and exact undo/redo. Empty current/minimum fields
+      begin at zero in either direction; an empty maximum begins at 1 when
+      incremented and 0 when decremented. X controls clear optional
+      minimum/maximum bounds on save and cancellation preserves prior bounds.
+      New unnamed counters use the first nonconflicting Counter N name starting
+      at 1, reusing gaps; custom names take precedence. Current value shortcuts
+      set to minimum (zero if unset) or maximum, and the latter is disabled
+      with its Set to maximum tooltip when the maximum is unset. An unset minimum
+      adds (0 by default) to the Set to minimum tooltip.
+- [x] Combat settings autosave condition visibility using the approved wrapped icon
+      toggles. Eye/EyeOff controls show/hide Conditions (preserving individual
+      choices), Weapons, and Armor. Hidden conditions remain visible if active
+      on any selected Actor; hidden equipment sections stay hidden. Preferences
+      default to all shown, persist/synchronize/reset, and never mutate Actors.
+- [x] Combat preferences support three HP-limit modes and optional configured
+      automatic health; manual overrides survive no-op HP commands.
+- [x] Combat settings autosave toggles/selects and cutoff inputs on blur. No Save
+      or Apply controls remain. Valid automatic-health changes recalculate all
+      configured Actors atomically with undo/redo, preserving HP and writer guards.
+      Blank cutoffs never trigger their statuses; manual statuses with blank cutoffs
+      stay manual. The first cutoff enables automation; clearing all disables it.
+      Invalid drafts preserve the last valid preferences.
+- [x] Health counter name defaults to Hit points and durable preferences synchronize
+      and reset alongside existing application-owned preferences.
+- [x] Resource mutations respect STRICT/ADVISORY validation and read-only writer
+      boundaries, with bulk HP and health committed atomically.
+- [x] Schema 13 migration, local/draft/export round trips, invalid-write preservation,
+      unsupported schemas, cloud contracts and emulator resource round trips pass.
+
+- [x] Clicking current HP or counter values selects the full value for digit-only
+      inline edits. Enter/blur commits through existing bounds and undo/redo;
+      Escape/empty drafts cancel and read-only encounters disable editing.

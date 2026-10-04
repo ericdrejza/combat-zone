@@ -1,3 +1,4 @@
+import { validActorResources } from "@entities/actor/actorResources";
 import { ENCOUNTER_SCHEMA_VERSION, type EncounterState } from "@core/encounter/types";
 import {
   DEFAULT_ENCOUNTER_PANEL_LAYOUT,
@@ -128,6 +129,9 @@ export function assertEncounterState(value: unknown, name = "encounter"): assert
   }
   for (const actorId of (value.actors as { allIds: string[] }).allIds) {
     const actor = (value.actors as { byId: UnknownRecord }).byId[actorId];
+    if (isRecord(actor) && !validActorResources(actor)) {
+      throw new PersistenceValidationError(`${name}.actors.${actorId}.resources are invalid.`);
+    }
     if (isRecord(actor) && actor.status !== undefined && !isActorStatus(actor.status)) {
       throw new PersistenceValidationError(`${name}.actors.${actorId}.status is invalid.`);
     }
@@ -460,10 +464,18 @@ export function migrateEncounterState(value: unknown): unknown {
     }
   }
   if (migrated.schemaVersion === 11) {
-    migrated.schemaVersion = ENCOUNTER_SCHEMA_VERSION;
+    migrated.schemaVersion = 12;
     if (isRecord(migrated.actors) && isRecord(migrated.actors.byId)) {
       for (const actor of Object.values(migrated.actors.byId)) {
         if (isRecord(actor) && actor.status === undefined) actor.status = 3;
+      }
+    }
+  }
+  if (migrated.schemaVersion === 12) {
+    migrated.schemaVersion = ENCOUNTER_SCHEMA_VERSION;
+    if (isRecord(migrated.actors) && isRecord(migrated.actors.byId)) {
+      for (const actor of Object.values(migrated.actors.byId)) {
+        if (isRecord(actor) && actor.counters === undefined) actor.counters = { allIds: [], byId: {} };
       }
     }
   }

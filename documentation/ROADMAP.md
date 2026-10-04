@@ -11,6 +11,10 @@ After completing a numbered section (## X.), move the completed section to the e
 
 ## 15. MVP Acceptance Hardening
 
+- [x] Implement the Actor Status panel, optional hit points, custom counters,
+      approved condition/weapon/armor controls, Combat preferences and automatic
+      health; verify atomic history, schema 13 persistence and cloud round trips.
+
 - [x] Add the Initiative browser popout and customizable I shortcut; persist
       ordinal Actor health with row status controls, dead-participant skipping,
       disabled-control explanations, and exact undo/redo coverage.

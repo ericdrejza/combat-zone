@@ -209,7 +209,10 @@ Properties:
 - size
 - stats (optional system-specific blob)
 - currentZoneId | zoneless
-- statusEffects[]
+- statusEffects[] (stable condition IDs and namespaced weapon/armor markers)
+- hitPoints (optional integer current and positive integer maximum)
+- counters (actor-owned normalized collection of named integer counters with
+  optional minimum/maximum bounds)
 - status (ordinal overall health: 0 dead, 1 unconscious / severely injured,
   2 injured, 3 healthy; defaults to healthy)
 - metadata
@@ -685,6 +688,130 @@ Context-sensitive editor:
 - Zone properties
 - Edge properties
 - Engagement properties
+
+### 7.4 Status Panel and Combat Settings
+
+Status edits short-term actor details, in this order: read-only names, health,
+hit points, custom counters, Conditions, Weapons, and Armor. A single selected
+Actor exposes all sections. Multiple selected Actors expose names, bulk HP,
+and markers; health editing and custom counters are hidden. Other selections
+show an Actor selection prompt.
+
+Health uses the same four ordinal statuses as Initiative, without its removal
+action. HP starts unset. Setup defaults current to the first maximum entered;
+current and maximum can be edited. Maximum must be a positive integer. Damage
+and healing use HeartMinus/HeartPlus and a positive integer amount per configured
+Actor. A partially configured selection requires Cancel/Continue confirmation
+listing skipped Actors; a wholly unconfigured selection disables HP actions
+with an explanation. Clicking a displayed HP or custom-counter maximum confirms
+resetting current to maximum; editing maximum uses a separate control.
+
+For a single Actor, the hit points current / maximum value appears in the header
+between its label and edit icon. Bulk selection retains per-Actor value rows.
+Clicking a single Actor’s current HP or counter value opens an inline input with
+the entire value selected. Input accepts digits only; Enter or blur commits
+through validation/history and existing bounds. Escape or an empty draft cancels.
+Read-only encounters disable inline editing. HP and counter reset-to-maximum
+confirmation dialogs initially focus Confirm, allowing Enter to confirm.
+Clicking a confirmation backdrop invokes its cancel behavior. For an unsaved
+counter draft confirmation, this returns to editing and preserves the draft.
+The damage/healing amount input uses minus and plus buttons beside the value
+instead of native spinner arrows. Amount stepping stops at 1 and remains disabled
+in read-only encounters.
+
+New custom counters may be saved without entering a name: the placeholder
+“Counter N” uses the first available integer starting at 1, reusing numbering
+gaps without conflicting with an existing name on that Actor. Explicitly
+entered names take precedence.
+
+Custom counters have stable IDs, names, integer current values and optional
+integer bounds. Create, edit, remove and ±1 controls are available for one Actor.
+The header always shows an “Edit counters” pencil immediately before Add counter,
+including when no counters exist; rows have no edit or remove icons. The shared editor uses
+a counter dropdown whose last option, “Create new counter”, adds and selects
+an empty draft counter (current value zero, no bounds, generated name placeholder).
+The modal title is “Edit counters”. It keeps all edits and removals in one local draft while
+switching counters. Changed counters show a pen indicator only beside their names inside the dropdown.
+Save commits the entire draft as one undoable change. Closing a dirty editor
+prompts to save, discard, or keep editing; invalid drafts cannot be saved.
+Removal is available inside the editor and takes effect on save.
+Minimum must not exceed maximum; all changes clamp to configured bounds. Clones
+retain values and subsequent changes remain independent. In the counter editor,
+stepping an empty current or minimum field in either direction first sets it
+to zero. An empty maximum starts at 1 when incremented and 0 when decremented;
+subsequent steps change it by one. Optional minimum and maximum fields each
+have an X control to clear that bound, committed only when the editor is saved.
+Current value has ArrowDownToLine and ArrowUpToLine shortcuts after its plus
+control: set to minimum (zero when unset) and set to maximum. Their tooltips are
+“Set to minimum” and “Set to maximum”. Without a minimum, the former adds
+“(0 by default)”. Without a maximum, the latter is disabled and retains the
+“Set to maximum” tooltip. Current-value decrement/increment buttons and keyboard
+steps stop at the configured minimum/maximum; clearing a bound re-enables stepping
+in that direction.
+Shared Systems templates
+are future work.
+
+The 39 approved Conditions in `plans/status_panel.md` are independent markers,
+sorted alphabetically by display label, including Cover and Stunned (Galaxy).
+Weapons are independent Fist, Sword, Swords, Axe and Bow markers. Armor tiers
+are No armor, Light armor, Medium armor and Heavy armor, with at most one known
+tier per Actor. Bulk toggles clear a marker if all selected Actors have it;
+otherwise they apply it to all. Selecting armor replaces other known tiers;
+clearing armor does not select No armor. Unknown marker strings are preserved.
+Markers have active/inactive/mixed accessible states and descriptive tooltips.
+
+Interface settings > Panels persists a global Health counter name, defaulting
+to “Hit points”. Trimmed empty input restores that default; the label is not
+stored separately on Actors.
+
+Combat settings persist global HP limits: clamp at zero and maximum (default),
+allow negative but cap at maximum, or allow negative and above maximum. These
+limits apply to every HP change, including direct edits and maximum changes.
+Damage is disabled at or below zero when the minimum is capped; healing is
+disabled at or above maximum when the maximum is capped. For bulk selection,
+disable a direction only when every configured Actor is at that limit. Uncapped
+directions remain enabled, and disabled controls explain the reached limit.
+Automatic health starts off with no preset thresholds. Each Dead,
+Unconscious/severely injured, or Injured cutoff is optional: a blank cutoff never
+triggers that status and leaves that status under manual control. Setting the
+first valid cutoff enables automation. The user can switch automation off;
+later cutoff edits keep it off until re-enabled. Clearing every cutoff disables
+it. Configured cutoffs must be ordered by severity, skipping blanks, using one
+shared fixed-HP or percentage-of-maximum unit. Fixed values are integers;
+percentages are integers from 0–100. Ties choose the most severe configured
+status; values above all configured cutoffs are Healthy. Actors manually set to
+a status with a blank cutoff retain it until manually changed.
+
+Combat settings save toggles/selects immediately and cutoff inputs on blur.
+Invalid cutoffs remain editable but do not replace the last valid preferences.
+There are no Save combat settings or Apply to current encounter buttons.
+Enabling automation or changing its valid cutoffs/units automatically recalculates
+all configured Actors’ statuses in the current encounter without changing HP,
+through validation, writer guards and one undoable history command. No-op
+recalculations create no history. HP-limit changes apply to subsequent HP edits.
+With automation enabled, effective current/maximum HP changes also recalculate
+health. Overrides for statuses with configured cutoffs persist until an effective
+HP change or cutoff recalculation; no-op HP commands preserve them.
+
+Combat settings also autosave global Status panel visibility. All conditions
+and equipment sections are shown by
+default. Conditions are individual icon toggles in an alphabetically sorted,
+wrapped row matching the Status panel. Eye/EyeOff section controls match
+Interface panel visibility controls: Conditions is a master override preserving
+individual condition choices; Weapons and Armor each show/hide their complete
+section. Hidden conditions still appear if active on any selected Actor,
+including mixed selections; they disappear again when no selected Actor has
+that condition. The Conditions section is hidden when it has no visible conditions. Hiding equipment removes its section even when equipment is
+active. Visibility never alters Actor markers or creates history. These global
+preferences reload, synchronize across tabs, and reset to showing everything.
+Preferences themselves do not enter encounter history and reset with local data.
+
+Encounter schema 13 adds optional HP and normalized counters. Version 12 migration
+leaves HP unset and initializes empty counters. Persisted HP may be negative or
+above maximum regardless of local preferences. All domain mutations pass through
+validation, Redux history and the writer boundary; bulk changes and HP plus
+health changes are atomic. Resources and unknown markers survive local and cloud
+round trips. The Firebase API accepts schema 13 and its existing legacy schema 7.
 
 ## 8. Themes
 

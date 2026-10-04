@@ -1,3 +1,4 @@
+import { COMBAT_PREFERENCES_STORAGE_KEY } from "@ui/combat_preferences/CombatPreferenceProvider";
 import { act, render, screen, waitFor } from "@testing-library/react";
 import { Provider, useSelector } from "react-redux";
 
@@ -48,6 +49,7 @@ describe("PersistenceProvider", () => {
     localStorage.removeItem(MOTION_OVERRIDE_STORAGE_KEY);
     localStorage.removeItem(THEME_STORAGE_KEY);
     localStorage.removeItem(INTERFACE_PREFERENCES_STORAGE_KEY);
+    localStorage.removeItem(COMBAT_PREFERENCES_STORAGE_KEY);
     localStorage.removeItem("unrelated-origin-key");
   });
 
@@ -95,6 +97,7 @@ describe("PersistenceProvider", () => {
     localStorage.setItem(MOTION_OVERRIDE_STORAGE_KEY, "true");
     localStorage.setItem(THEME_STORAGE_KEY, "dark");
     localStorage.setItem(INTERFACE_PREFERENCES_STORAGE_KEY, "{}");
+    localStorage.setItem(COMBAT_PREFERENCES_STORAGE_KEY, "{}");
     localStorage.setItem(IMAGE_COMPRESSION_STORAGE_KEY, "lossy_webp");
     localStorage.setItem("unrelated-origin-key", "keep");
     renderPersistence(repository);
@@ -112,6 +115,7 @@ describe("PersistenceProvider", () => {
       expect(localStorage.getItem(MOTION_OVERRIDE_STORAGE_KEY)).toBeNull();
       expect(localStorage.getItem(THEME_STORAGE_KEY)).toBeNull();
       expect(localStorage.getItem(INTERFACE_PREFERENCES_STORAGE_KEY)).toBeNull();
+      expect(localStorage.getItem(COMBAT_PREFERENCES_STORAGE_KEY)).toBeNull();
       expect(localStorage.getItem(IMAGE_COMPRESSION_STORAGE_KEY)).toBeNull();
       expect(localStorage.getItem("unrelated-origin-key")).toBe("keep");
     });

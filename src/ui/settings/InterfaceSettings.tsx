@@ -1,4 +1,4 @@
-import { Eye, EyeOff, Moon, Sun } from "lucide-react";
+import { Moon, Sun } from "lucide-react";
 import { motion } from "motion/react";
 
 import { useInterfacePreferences } from "@ui/interface_preferences/InterfacePreferenceProvider";
@@ -6,6 +6,7 @@ import { DOCKABLE_PANEL_DEFINITIONS } from "@ui/panels/dockablePanelMetadata";
 import { useTheme, type Theme } from "@ui/theme/ThemeProvider";
 import { ApplyPanelOrderButton } from "./ApplyPanelOrderButton";
 import { DefaultColorSettings } from "./DefaultColorSettings";
+import { VisibilitySwitch } from "./VisibilitySwitch";
 import { PreferenceSwitch } from "./PreferenceSwitch";
 import { PanelOrderSettings } from "./PanelOrderSettings";
 
@@ -22,6 +23,7 @@ const themeOptions: Array<{
 export function InterfaceSettings() {
   const { setTheme, theme } = useTheme();
   const {
+    healthCounterName, setHealthCounterName,
     autoSelectActiveActorDefault,
     enableAssetAnimation,
     encounterCreationTool,
@@ -133,9 +135,11 @@ export function InterfaceSettings() {
             <legend className="text-sm font-semibold">Visibility</legend>
             <div className="mt-1 divide-y divide-canvas-line">
               {DOCKABLE_PANEL_DEFINITIONS.map((panel) => (
-                <PanelVisibilitySwitch
+                <VisibilitySwitch
                   key={panel.id}
-                  panelTitle={panel.title}
+                  label={panel.title}
+                  ariaLabel={`${panel.title} panel visibility`}
+                  tooltipLabel={`${panel.title} panel`}
                   visible={panelVisibility[panel.id]}
                   onChange={(visible) => setPanelVisible(panel.id, visible)}
                 />
@@ -157,40 +161,10 @@ export function InterfaceSettings() {
             onChange={setStrikethroughDeadInitiativeNames}
           />
         </div>
+        <label className="mt-3 flex items-center justify-between gap-3 text-sm">Health counter name
+          <input aria-label="Health counter name" className="w-40 rounded border border-canvas-line bg-canvas p-2" defaultValue={healthCounterName} key={healthCounterName} onBlur={(event) => setHealthCounterName(event.currentTarget.value)} />
+        </label>
       </section>
     </section>
-  );
-}
-
-function PanelVisibilitySwitch({
-  onChange,
-  panelTitle,
-  visible
-}: {
-  onChange: (visible: boolean) => void;
-  panelTitle: string;
-  visible: boolean;
-}) {
-  const Icon = visible ? Eye : EyeOff;
-
-  return (
-    <div className="flex min-h-12 items-center justify-between gap-4 py-3">
-      <span className="text-sm">{panelTitle}</span>
-      <button
-        aria-checked={visible}
-        aria-label={`${panelTitle} panel visibility`}
-        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors ${
-          visible
-            ? "border-canvas-ink bg-canvas-ink text-canvas-on-ink"
-            : "border-canvas-line bg-canvas text-canvas-muted"
-        }`}
-        onClick={() => onChange(!visible)}
-        role="switch"
-        title={visible ? `Hide ${panelTitle} panel` : `Show ${panelTitle} panel`}
-        type="button"
-      >
-        <Icon aria-hidden="true" className="h-4 w-4" />
-      </button>
-    </div>
   );
 }

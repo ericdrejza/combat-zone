@@ -77,6 +77,7 @@ describe("InterfaceSettings", () => {
     expect(assetAnimation).not.toBeChecked();
     expect(pan).not.toBeChecked();
     expect(JSON.parse(localStorage.getItem(INTERFACE_PREFERENCES_STORAGE_KEY)!)).toEqual({
+      healthCounterName: "Hit points",
       audioMasterVolume: 1,
       audioCueVolumeDefault: 0.5,
       audioMediaKeyScope: "music",

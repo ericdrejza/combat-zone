@@ -1,3 +1,4 @@
+import { CombatSettings } from "./CombatSettings";
 import { X } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -39,6 +40,7 @@ export function SettingsModal(props: SettingsModalProps) {
         <CloudSyncSettings />
       </section>
     );
+    if (activeTab === "combat") return <CombatSettings />;
     if (activeTab === "audio") return <AudioSettings />;
     if (activeTab === "data") return <DataSettings {...props} />;
     if (activeTab === "interface") return <InterfaceSettings />;

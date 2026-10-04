@@ -6,7 +6,7 @@ export const DOCKABLE_PANEL_DEFINITIONS = [
   { id: "library", title: "Library" },
   { id: "log", title: "Log" },
   { id: "properties", title: "Properties" },
-  { id: "status", title: "Status", description: "Entity detail scaffold." }
+  { id: "status", title: "Status", description: "Actor health, resources, and conditions." }
 ] as const;
 
 export type DockablePanelId = EncounterPanelId;

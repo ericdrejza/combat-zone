@@ -1,3 +1,5 @@
+import { CombatPreferenceProvider } from "@ui/combat_preferences/CombatPreferenceProvider";
+import { StatusPanel } from "@ui/panels/StatusPanel";
 import type { CSSProperties } from "react";
 import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
@@ -387,6 +389,8 @@ function AppContent() {
       return <InitiativePanel />;
     }
 
+    if (panel.id === "status") return <StatusPanel />;
+
     if (panel.id === "audio") return <AudioPanel showVolume={showAudioCueVolumes} />;
 
     if (panel.id === "zoneless") {
@@ -569,16 +573,18 @@ export function App() {
   return (
     <ThemeProvider>
       <InterfacePreferenceProvider>
-        <AudioPlaybackProvider>
-          <SoundboardProvider>
-            <AudioTriggerBridge />
-            <KeybindProvider>
-              <CanvasViewportProvider>
-                <AppContent />
-              </CanvasViewportProvider>
-            </KeybindProvider>
-          </SoundboardProvider>
-        </AudioPlaybackProvider>
+        <CombatPreferenceProvider>
+          <AudioPlaybackProvider>
+            <SoundboardProvider>
+              <AudioTriggerBridge />
+              <KeybindProvider>
+                <CanvasViewportProvider>
+                  <AppContent />
+                </CanvasViewportProvider>
+              </KeybindProvider>
+            </SoundboardProvider>
+          </AudioPlaybackProvider>
+        </CombatPreferenceProvider>
       </InterfacePreferenceProvider>
     </ThemeProvider>
   );

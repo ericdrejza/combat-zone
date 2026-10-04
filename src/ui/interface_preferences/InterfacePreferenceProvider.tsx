@@ -50,6 +50,7 @@ type DurableInterfacePreferences = {
   panelOrder: EncounterPanelOrder;
   panelVisibility: DockablePanelVisibility;
   panWithRightClickDrag: boolean;
+  healthCounterName: string;
   strikethroughDeadInitiativeNames: boolean;
   zoneColorDefaults: ZoneColorDefaults;
   zoneOpacityDefault: number;
@@ -69,6 +70,7 @@ type InterfacePreferences = DurableInterfacePreferences & {
   setAutoSelectActiveActorDefault: (enabled: boolean) => void;
   setPanelVisible: (panelId: DockablePanelId, visible: boolean) => void;
   setPanWithRightClickDrag: (enabled: boolean) => void;
+  setHealthCounterName: (name: string) => void;
   setStrikethroughDeadInitiativeNames: (enabled: boolean) => void;
   setZoneColorDefaults: (defaults: ZoneColorDefaults) => void;
   setZoneOpacityDefault: (opacity: number) => void;
@@ -86,6 +88,7 @@ const defaultPreferences: DurableInterfacePreferences = {
   panelOrder: DEFAULT_ENCOUNTER_PANEL_ORDER,
   panelVisibility: DEFAULT_DOCKABLE_PANEL_VISIBILITY,
   panWithRightClickDrag: true,
+  healthCounterName: "Hit points",
   strikethroughDeadInitiativeNames: true,
   zoneColorDefaults: DEFAULT_ZONE_COLOR_DEFAULTS,
   zoneOpacityDefault: 0.7,
@@ -106,6 +109,7 @@ const defaultValue: InterfacePreferences = {
   setAutoSelectActiveActorDefault: () => undefined,
   setPanelVisible: () => undefined,
   setPanWithRightClickDrag: () => undefined,
+  setHealthCounterName: () => undefined,
   setStrikethroughDeadInitiativeNames: () => undefined,
   setZoneColorDefaults: () => undefined,
   setZoneOpacityDefault: () => undefined,
@@ -153,6 +157,7 @@ function readPreferences(): DurableInterfacePreferences {
         typeof stored?.panWithRightClickDrag === "boolean"
           ? stored.panWithRightClickDrag
           : true,
+      healthCounterName: typeof stored?.healthCounterName === "string" && stored.healthCounterName.trim() ? stored.healthCounterName.trim() : "Hit points",
       strikethroughDeadInitiativeNames:
         typeof stored?.strikethroughDeadInitiativeNames === "boolean"
           ? stored.strikethroughDeadInitiativeNames
@@ -253,6 +258,7 @@ export function InterfacePreferenceProvider({ children }: { children: ReactNode 
           }),
         setPanWithRightClickDrag: (enabled) =>
           updatePreferences({ panWithRightClickDrag: enabled }),
+        setHealthCounterName: (name) => updatePreferences({ healthCounterName: name.trim() || "Hit points" }),
         setStrikethroughDeadInitiativeNames: (enabled) =>
           updatePreferences({ strikethroughDeadInitiativeNames: enabled }),
         setZoneColorDefaults: (zoneColorDefaults) =>

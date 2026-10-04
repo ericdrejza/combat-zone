@@ -21,7 +21,7 @@ describe("App", () => {
       screen.queryByLabelText("Bottom status, initiative, and validation area")
     ).not.toBeInTheDocument();
     expect(screen.getByLabelText("Status panel")).toBeInTheDocument();
-    expect(screen.getByText("Entity detail scaffold.")).toBeInTheDocument();
+    expect(screen.getByText("Select an actor to view status.")).toBeInTheDocument();
   });
 
   it("opens the Library destination picker when saving an unfiled encounter", async () => {

@@ -14,6 +14,8 @@ export type ActorShape = "circle" | "rectangle";
 export type ActorStatus = 0 | 1 | 2 | 3;
 
 export type Actor = {
+  hitPoints?: import("./actorResources").HitPoints;
+  counters?: import("./actorResources").ActorCounters;
   audioGroupIds?: string[];
   id: string;
   name: string;

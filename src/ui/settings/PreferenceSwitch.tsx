@@ -2,11 +2,15 @@ import { motion } from "motion/react";
 
 export function PreferenceSwitch({
   ariaLabel,
+  disabled = false,
+  title,
   checked,
   label,
   onChange
 }: {
   ariaLabel?: string;
+  disabled?: boolean;
+  title?: string;
   checked: boolean;
   label: string;
   onChange: (checked: boolean) => void;
@@ -15,9 +19,11 @@ export function PreferenceSwitch({
     <div className="flex min-h-12 items-center justify-between gap-4 py-3">
       <span className="text-sm">{label}</span>
       <button
+        disabled={disabled}
+        title={title}
         aria-checked={checked}
         aria-label={ariaLabel ?? label}
-        className={`relative h-6 w-11 shrink-0 rounded-full border transition-colors ${
+        className={`disabled:opacity-40 relative h-6 w-11 shrink-0 rounded-full border transition-colors ${
           checked
             ? "border-canvas-ink bg-canvas-ink"
             : "border-canvas-line bg-canvas"

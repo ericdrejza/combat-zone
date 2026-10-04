@@ -67,6 +67,20 @@ afterAll(async () => {
 });
 
 describe("Firebase API service", () => {
+  it("round trips schema 13 actor resources through Firestore", async () => {
+    const command = encounterCommand();
+    const actor = { id: "actor", name: "Actor", actorType: "creature", layoutGroup: "hero", size: "medium", shape: "circle", currentZoneId: "zoneless", metadata: {}, status: 2,
+      hitPoints: { current: -3, maximum: 20 }, counters: { allIds: ["charges"], byId: { charges: { id: "charges", name: "Charges", value: 2, minimum: 0, maximum: 3 } } },
+      statusEffects: ["stunned", "custom-marker", "weapon:bow", "armor:medium"] };
+    command.payload.state.schemaVersion = 13;
+    command.payload.state.actors = { allIds: ["actor"], byId: { actor } } as never;
+    command.payload.state.panelLayout.right.push({ id: "audio", collapsed: false });
+    Object.assign(command.payload.state, { audioCues: { allIds: [], byId: {} }, audioCueGroups: { allIds: [], byId: {} }, musicGroupIds: [] });
+    await service.commitEncounter("alice", command);
+    const record = await getFirestore().doc("users/alice/encounters/encounter-1").get();
+    expect(record.data()?.state.actors.byId.actor).toEqual(actor);
+    expect(record.data()?.state.schemaVersion).toBe(13);
+  });
   it("commits records and reference sets atomically", async () => {
     const result = await service.commitEncounter("alice", encounterCommand());
     expect(result).toMatchObject({ status: "applied", revision: 1 });

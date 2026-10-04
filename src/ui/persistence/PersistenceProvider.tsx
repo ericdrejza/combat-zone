@@ -1,3 +1,4 @@
+import { COMBAT_PREFERENCES_STORAGE_KEY } from "@ui/combat_preferences/CombatPreferenceProvider";
 import {
   type PropsWithChildren,
   useContext,
@@ -402,6 +403,7 @@ export function PersistenceProvider({
     await resetLocalPersistence(repository, draft, [
       MOTION_OVERRIDE_STORAGE_KEY,
       INTERFACE_PREFERENCES_STORAGE_KEY,
+      COMBAT_PREFERENCES_STORAGE_KEY,
       IMAGE_COMPRESSION_STORAGE_KEY,
       THEME_STORAGE_KEY
     ]);
@@ -435,6 +437,7 @@ export function PersistenceProvider({
           await recoverInterruptedLocalReset(repository, [
             MOTION_OVERRIDE_STORAGE_KEY,
             INTERFACE_PREFERENCES_STORAGE_KEY,
+            COMBAT_PREFERENCES_STORAGE_KEY,
             IMAGE_COMPRESSION_STORAGE_KEY,
             THEME_STORAGE_KEY
           ]);

@@ -157,6 +157,7 @@ export function buildActor({
     name: name ?? getDefaultActorName(image),
     shape,
     size,
+    counters: { allIds: [], byId: {} },
     statusEffects: [],
     status: 3
   };

@@ -92,7 +92,7 @@ describe("SettingsModal local reset", () => {
       within(screen.getByRole("tablist", { name: "General settings" }))
         .getAllByRole("tab")
         .map((tab) => tab.textContent)
-    ).toEqual(["Audio", "Interface", "Keybinds"]);
+    ).toEqual(["Audio", "Combat", "Interface", "Keybinds"]);
     expect(
       within(screen.getByRole("tablist", { name: "Account settings" }))
         .getAllByRole("tab")

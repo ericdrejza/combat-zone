@@ -1,15 +1,10 @@
-import { BoneFracture, HeartCrack, HeartPulse, Skull, Delete } from "lucide-react";
+import { Delete } from "lucide-react";
 import { useState } from "react";
 
 import { getActorStatus } from "@entities/actor/actorStatus";
 import type { Actor, ActorStatus } from "@entities/actor/types";
 
-const statuses = [
-  { value: 0, label: "Dead", Icon: Skull },
-  { value: 1, label: "Unconscious / severely injured", Icon: BoneFracture },
-  { value: 2, label: "Injured", Icon: HeartCrack },
-  { value: 3, label: "Healthy", Icon: HeartPulse }
-] as const;
+import { HEALTH_STATUSES as statuses } from "@ui/status/healthCatalog";
 
 /** Overlays the row without letting health choices select or drag its actor. */
 export function InitiativeStatusControl({ actor, onRemove, onStatusChange }: {

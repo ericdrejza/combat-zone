@@ -30,7 +30,7 @@ describe("persisted record hydration", () => {
   it("validates fresh records using the explicitly versioned cue-group schema", () => {
     const state = createEncounterState({ id: "fresh", name: "Fresh" });
     const record = { createdAt: 1, folderId: null, id: state.id, revision: 0, state, updatedAt: 1 };
-    expect(ENCOUNTER_SCHEMA_VERSION).toBe(12);
+    expect(ENCOUNTER_SCHEMA_VERSION).toBe(13);
     expect(hydrateEncounterRecord(record)).toEqual(record);
     expect(hydrateRecoveryDraft({ state, updatedAt: 1 }).state).toEqual(state);
     expect(state.audioCueGroups).toEqual({ allIds: [], byId: {} });

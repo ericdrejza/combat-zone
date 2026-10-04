@@ -109,20 +109,21 @@ describe("InitiativePanel", () => {
     const user = userEvent.setup();
     renderApp();
     seedActors();
-    await user.click(screen.getByTitle("Add all actors"));
+    const initiative = within(screen.getByLabelText("Initiative panel"));
+    await user.click(initiative.getByTitle("Add all actors"));
 
     await user.type(
-      screen.getByRole("textbox", { name: "Alpha initiative" }),
+      initiative.getByRole("textbox", { name: "Alpha initiative" }),
       "15"
     );
     await user.tab();
     await user.type(
-      screen.getByRole("textbox", { name: "Bravo initiative" }),
+      initiative.getByRole("textbox", { name: "Bravo initiative" }),
       "10"
     );
     await user.tab();
 
-    const charlieInput = screen.getByRole("textbox", {
+    const charlieInput = initiative.getByRole("textbox", {
       name: "Charlie initiative"
     });
     await user.type(charlieInput, "15");
@@ -138,31 +139,31 @@ describe("InitiativePanel", () => {
       "bravo"
     ]);
 
-    await user.click(screen.getByRole("button", { name: "Start combat" }));
-    expect(screen.getByText("Round 1")).toBeInTheDocument();
-    expect(screen.getByLabelText("Current actor").closest("li")).toHaveTextContent("Alpha");
-    expect(screen.getByRole("button", { name: "Previous turn" })).toBeDisabled();
+    await user.click(initiative.getByRole("button", { name: "Start combat" }));
+    expect(initiative.getByText("Round 1")).toBeInTheDocument();
+    expect(initiative.getByLabelText("Current actor").closest("li")).toHaveTextContent("Alpha");
+    expect(initiative.getByRole("button", { name: "Previous turn" })).toBeDisabled();
 
-    await user.click(screen.getByRole("button", { name: "Next turn" }));
-    expect(screen.getByLabelText("Current actor").closest("li")).toHaveTextContent("Charlie");
-    await user.click(screen.getByRole("button", { name: "Previous turn" }));
-    expect(screen.getByLabelText("Current actor").closest("li")).toHaveTextContent("Alpha");
+    await user.click(initiative.getByRole("button", { name: "Next turn" }));
+    expect(initiative.getByLabelText("Current actor").closest("li")).toHaveTextContent("Charlie");
+    await user.click(initiative.getByRole("button", { name: "Previous turn" }));
+    expect(initiative.getByLabelText("Current actor").closest("li")).toHaveTextContent("Alpha");
 
-    await user.click(screen.getByRole("button", { name: "End combat" }));
-    expect(screen.getByText("Not Started")).toBeInTheDocument();
-    expect(screen.queryByLabelText("Current actor")).not.toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Start combat" }));
+    await user.click(initiative.getByRole("button", { name: "End combat" }));
+    expect(initiative.getByText("Not Started")).toBeInTheDocument();
+    expect(initiative.queryByLabelText("Current actor")).not.toBeInTheDocument();
+    await user.click(initiative.getByRole("button", { name: "Start combat" }));
 
-    await user.click(screen.getByRole("button", { name: "Alpha status: Healthy" }));
+    await user.click(initiative.getByRole("button", { name: "Alpha status: Healthy" }));
     await user.click(
-      screen.getByRole("button", { name: "Remove Alpha from initiative" })
+      initiative.getByRole("button", { name: "Remove Alpha from initiative" })
     );
-    expect(screen.getByLabelText("Current actor").closest("li")).toHaveTextContent("Charlie");
+    expect(initiative.getByLabelText("Current actor").closest("li")).toHaveTextContent("Charlie");
 
     await user.click(
-      screen.getByRole("button", { name: "Remove all initiative actors" })
+      initiative.getByRole("button", { name: "Remove all initiative actors" })
     );
-    const dialog = screen.getByRole("dialog", {
+    const dialog = initiative.getByRole("dialog", {
       name: "Confirm remove all initiative actors"
     });
     await user.click(within(dialog).getByRole("button", { name: "Clear all" }));
@@ -171,13 +172,13 @@ describe("InitiativePanel", () => {
       currentActorId: null,
       currentRound: 1
     });
-    expect(screen.getByText("Round 1")).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Next round" }));
-    expect(screen.getByText("Round 2")).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Previous round" }));
-    expect(screen.getByText("Round 1")).toBeInTheDocument();
+    expect(initiative.getByText("Round 1")).toBeInTheDocument();
+    await user.click(initiative.getByRole("button", { name: "Next round" }));
+    expect(initiative.getByText("Round 2")).toBeInTheDocument();
+    await user.click(initiative.getByRole("button", { name: "Previous round" }));
+    expect(initiative.getByText("Round 1")).toBeInTheDocument();
 
-    await user.click(screen.getByTitle("Add all actors"));
+    await user.click(initiative.getByTitle("Add all actors"));
     expect(
       store.getState().encounter.present.initiativeTracker.currentActorId
     ).toBe("alpha");
@@ -455,7 +456,7 @@ describe("InitiativePanel", () => {
 
     await user.click(screen.getByRole("button", { name: "End combat" }));
     const historyLength = store.getState().encounter.past.length;
-    await user.dblClick(screen.getByText("Alpha").closest("li")!);
+    await user.dblClick(document.querySelector<HTMLElement>('[data-initiative-actor-id="alpha"]')!);
     await new Promise((resolve) => setTimeout(resolve, 300));
     expect(store.getState().encounter.present.initiativeTracker.currentActorId).toBeNull();
     expect(store.getState().encounter.past).toHaveLength(historyLength);
@@ -491,7 +492,7 @@ describe("InitiativePanel", () => {
       ]);
     });
 
-    fireEvent.click(screen.getByText("Alpha").closest("li")!, {
+    fireEvent.click(document.querySelector<HTMLElement>('[data-initiative-actor-id="alpha"]')!, {
       ctrlKey: true
     });
     await waitFor(() => {
