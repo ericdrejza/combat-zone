@@ -1,3 +1,4 @@
+import { DEFAULT_CLOCK_STYLE, isClockStyle, type ClockStyle } from "@entities/zone/clockStyle";
 import {
   createContext,
   type ReactNode,
@@ -51,6 +52,7 @@ type DurableInterfacePreferences = {
   panelVisibility: DockablePanelVisibility;
   panWithRightClickDrag: boolean;
   healthCounterName: string;
+  clockStyleDefault: ClockStyle;
   strikethroughDeadInitiativeNames: boolean;
   zoneColorDefaults: ZoneColorDefaults;
   zoneOpacityDefault: number;
@@ -71,6 +73,7 @@ type InterfacePreferences = DurableInterfacePreferences & {
   setPanelVisible: (panelId: DockablePanelId, visible: boolean) => void;
   setPanWithRightClickDrag: (enabled: boolean) => void;
   setHealthCounterName: (name: string) => void;
+  setClockStyleDefault: (style: ClockStyle) => void;
   setStrikethroughDeadInitiativeNames: (enabled: boolean) => void;
   setZoneColorDefaults: (defaults: ZoneColorDefaults) => void;
   setZoneOpacityDefault: (opacity: number) => void;
@@ -89,6 +92,7 @@ const defaultPreferences: DurableInterfacePreferences = {
   panelVisibility: DEFAULT_DOCKABLE_PANEL_VISIBILITY,
   panWithRightClickDrag: true,
   healthCounterName: "Hit points",
+  clockStyleDefault: DEFAULT_CLOCK_STYLE,
   strikethroughDeadInitiativeNames: true,
   zoneColorDefaults: DEFAULT_ZONE_COLOR_DEFAULTS,
   zoneOpacityDefault: 0.7,
@@ -110,6 +114,7 @@ const defaultValue: InterfacePreferences = {
   setPanelVisible: () => undefined,
   setPanWithRightClickDrag: () => undefined,
   setHealthCounterName: () => undefined,
+  setClockStyleDefault: () => undefined,
   setStrikethroughDeadInitiativeNames: () => undefined,
   setZoneColorDefaults: () => undefined,
   setZoneOpacityDefault: () => undefined,
@@ -157,6 +162,7 @@ function readPreferences(): DurableInterfacePreferences {
         typeof stored?.panWithRightClickDrag === "boolean"
           ? stored.panWithRightClickDrag
           : true,
+      clockStyleDefault: isClockStyle(stored?.clockStyleDefault) ? stored.clockStyleDefault : DEFAULT_CLOCK_STYLE,
       healthCounterName: typeof stored?.healthCounterName === "string" && stored.healthCounterName.trim() ? stored.healthCounterName.trim() : "Hit points",
       strikethroughDeadInitiativeNames:
         typeof stored?.strikethroughDeadInitiativeNames === "boolean"
@@ -258,6 +264,7 @@ export function InterfacePreferenceProvider({ children }: { children: ReactNode 
           }),
         setPanWithRightClickDrag: (enabled) =>
           updatePreferences({ panWithRightClickDrag: enabled }),
+        setClockStyleDefault: (style) => { if (isClockStyle(style)) updatePreferences({ clockStyleDefault: style }); },
         setHealthCounterName: (name) => updatePreferences({ healthCounterName: name.trim() || "Hit points" }),
         setStrikethroughDeadInitiativeNames: (enabled) =>
           updatePreferences({ strikethroughDeadInitiativeNames: enabled }),

@@ -1,4 +1,4 @@
-import { fireEvent, screen } from "@testing-library/react";
+import { fireEvent, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { store } from "@store/store";
@@ -44,11 +44,11 @@ describe("CanvasShell zone creation", () => {
     expect(rectangleZone.getAttribute("points")?.split(" ")).toHaveLength(4);
 
     createCircleZone(canvas);
-    expect(screen.getByText("Zone 2")).toBeInTheDocument();
+    expect(screen.getByLabelText("Selected zone name")).toHaveTextContent("Zone 2");
     expect((await screen.findByLabelText("Zone 2")).getAttribute("points")?.split(" ")).toHaveLength(60);
 
     createHexagonZone(canvas, { x: 420, y: 100 }, { x: 520, y: 200 });
-    expect(screen.getByText("Zone 3")).toBeInTheDocument();
+    expect(screen.getByLabelText("Selected zone name")).toHaveTextContent("Zone 3");
     expect((await screen.findByLabelText("Zone 3")).getAttribute("points")?.split(" ")).toHaveLength(6);
   });
 
@@ -181,10 +181,11 @@ describe("CanvasShell zone creation", () => {
     await user.click(screen.getByRole("radio", { name: "Bottom right" }));
     await user.click(screen.getByRole("radio", { name: "SPLIT_FLEX" }));
     await user.click(screen.getByRole("radio", { name: "Top to bottom" }));
-    fireEvent.change(screen.getByLabelText("Tags"), {
-      target: { value: "hazard, upper" }
-    });
-    fireEvent.blur(screen.getByLabelText("Tags"));
+    for (const value of ["hazard", "upper"]) {
+      fireEvent.change(screen.getByLabelText("Add zone tag"), { target: { value } });
+      fireEvent.keyDown(screen.getByLabelText("Add zone tag"), { key: "Enter" });
+    }
+    await waitFor(() => expect(store.getState().encounter.present.zones.byId[store.getState().interaction.selection.selectedIds[0]].tags).toEqual(["hazard", "upper"]));
 
     fireEvent.mouseDown(canvas, {
       button: 0,

@@ -116,6 +116,8 @@ export function buildZone({
 }: CreateZoneInput): Zone {
   return {
     audioGroupIds: [],
+    counters: { allIds: [], byId: {} },
+    clocks: { allIds: [], byId: {} },
     autoResize,
     colorBorder,
     colorEngagement: colorEngagement ?? colorBorder,

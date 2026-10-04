@@ -1,4 +1,4 @@
-import { act, fireEvent, screen } from "@testing-library/react";
+import { act, fireEvent, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { COMPACT_LAYOUT_QUERY } from "@hooks/useCompactLayout";
@@ -92,16 +92,16 @@ describe("CanvasShell zone selection", () => {
     await selectZoneTool(user);
     createRectangleZone(canvas, { x: 40, y: 40 }, { x: 140, y: 140 });
 
-    fireEvent.change(screen.getByLabelText("Tags"), {
-      target: { value: "hazard, upper" }
-    });
-    fireEvent.blur(screen.getByLabelText("Tags"));
+    for (const value of ["hazard", "upper"]) {
+      fireEvent.change(screen.getByLabelText("Add zone tag"), { target: { value } });
+      fireEvent.keyDown(screen.getByLabelText("Add zone tag"), { key: "Enter" });
+    }
+    await waitFor(() => expect(store.getState().encounter.present.zones.byId[store.getState().interaction.selection.selectedIds[0]].tags).toEqual(["hazard", "upper"]));
 
     createRectangleZone(canvas, { x: 220, y: 40 }, { x: 320, y: 140 });
-    fireEvent.change(screen.getByLabelText("Tags"), {
-      target: { value: "cover" }
-    });
-    fireEvent.blur(screen.getByLabelText("Tags"));
+    fireEvent.change(screen.getByLabelText("Add zone tag"), { target: { value: "cover" } });
+    fireEvent.keyDown(screen.getByLabelText("Add zone tag"), { key: "Enter" });
+    await waitFor(() => expect(store.getState().encounter.present.zones.byId[store.getState().interaction.selection.selectedIds[0]].tags).toEqual(["cover"]));
 
     const firstZone = await screen.findByLabelText("Zone 1");
     const secondZone = await screen.findByLabelText("Zone 2");

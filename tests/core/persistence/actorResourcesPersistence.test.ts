@@ -33,7 +33,7 @@ describe("actor resource persistence", () => {
     const before = structuredClone(legacy);
     const migrated = migrateEncounterState(legacy);
     assertEncounterState(migrated);
-    expect(migrated.schemaVersion).toBe(13);
+    expect(migrated.schemaVersion).toBe(15);
     expect(migrated.actors.byId.a.hitPoints).toBeUndefined();
     expect(migrated.actors.byId.a.counters).toEqual({ allIds: [], byId: {} });
     expect(legacy).toEqual(before);

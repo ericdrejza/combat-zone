@@ -1,3 +1,4 @@
+import { validZoneResources } from "@entities/zone/zoneStatus";
 import { validActorResources } from "@entities/actor/actorResources";
 import { ENCOUNTER_SCHEMA_VERSION, type EncounterState } from "@core/encounter/types";
 import {
@@ -126,6 +127,9 @@ export function assertEncounterState(value: unknown, name = "encounter"): assert
     !isImageAssetSource(value.backgroundImage.source)
   ) {
     throw new PersistenceValidationError(`${name}.backgroundImage.source is invalid.`);
+  }
+  for (const zone of Object.values((value.zones as { byId: UnknownRecord }).byId)) {
+    if (!validZoneResources(zone)) throw new PersistenceValidationError(`${name}.zone resources are invalid.`);
   }
   for (const actorId of (value.actors as { allIds: string[] }).allIds) {
     const actor = (value.actors as { byId: UnknownRecord }).byId[actorId];
@@ -472,10 +476,32 @@ export function migrateEncounterState(value: unknown): unknown {
     }
   }
   if (migrated.schemaVersion === 12) {
-    migrated.schemaVersion = ENCOUNTER_SCHEMA_VERSION;
+    migrated.schemaVersion = 13;
     if (isRecord(migrated.actors) && isRecord(migrated.actors.byId)) {
       for (const actor of Object.values(migrated.actors.byId)) {
         if (isRecord(actor) && actor.counters === undefined) actor.counters = { allIds: [], byId: {} };
+      }
+    }
+  }
+  if (migrated.schemaVersion === 13) {
+    migrated.schemaVersion = 14;
+    if (isRecord(migrated.zones) && isRecord(migrated.zones.byId)) {
+      for (const zone of Object.values(migrated.zones.byId)) {
+        if (isRecord(zone)) {
+          if (zone.counters === undefined) zone.counters = { allIds: [], byId: {} };
+          if (zone.clocks === undefined) zone.clocks = { allIds: [], byId: {} };
+        }
+      }
+    }
+  }
+  if (migrated.schemaVersion === 14) {
+    migrated.schemaVersion = ENCOUNTER_SCHEMA_VERSION;
+    if (isRecord(migrated.zones) && isRecord(migrated.zones.byId)) {
+      for (const zone of Object.values(migrated.zones.byId)) {
+        if (!isRecord(zone) || !isRecord(zone.clocks) || !isRecord(zone.clocks.byId)) continue;
+        for (const clock of Object.values(zone.clocks.byId)) {
+          if (isRecord(clock) && clock.style === undefined) clock.style = "traditional";
+        }
       }
     }
   }

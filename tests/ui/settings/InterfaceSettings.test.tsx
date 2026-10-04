@@ -37,6 +37,26 @@ describe("InterfaceSettings", () => {
     );
   }
 
+  it("persists the default clock style in Defaults, synchronizes changes, and resets to Traditional", () => {
+    const view = renderSettings();
+    const defaults = screen.getByRole("group", { name: "Defaults" });
+    const select = within(defaults).getByRole("combobox", { name: "Default clock style" });
+    expect(select).toHaveValue("traditional");
+    fireEvent.change(select, { target: { value: "linear" } });
+    expect(JSON.parse(localStorage.getItem(INTERFACE_PREFERENCES_STORAGE_KEY)!)).toMatchObject({ clockStyleDefault: "linear" });
+    view.unmount(); renderSettings();
+    expect(screen.getByLabelText("Default clock style")).toHaveValue("linear");
+    localStorage.setItem(INTERFACE_PREFERENCES_STORAGE_KEY, JSON.stringify({ clockStyleDefault: "traditional" }));
+    act(() => window.dispatchEvent(new StorageEvent("storage", { key: INTERFACE_PREFERENCES_STORAGE_KEY })));
+    expect(screen.getByLabelText("Default clock style")).toHaveValue("traditional");
+    fireEvent.change(screen.getByLabelText("Default clock style"), { target: { value: "linear" } });
+    act(() => window.dispatchEvent(new Event(LOCAL_PREFERENCES_RESET_EVENT)));
+    expect(screen.getByLabelText("Default clock style")).toHaveValue("traditional");
+  });
+  it("uses Traditional for unknown saved clock style defaults", () => {
+    localStorage.setItem(INTERFACE_PREFERENCES_STORAGE_KEY, JSON.stringify({ clockStyleDefault: "unknown" }));
+    renderSettings(); expect(screen.getByLabelText("Default clock style")).toHaveValue("traditional");
+  });
   it("defaults to light mode and persists a dark-mode selection", async () => {
     const user = userEvent.setup();
     renderSettings();
@@ -78,6 +98,7 @@ describe("InterfaceSettings", () => {
     expect(pan).not.toBeChecked();
     expect(JSON.parse(localStorage.getItem(INTERFACE_PREFERENCES_STORAGE_KEY)!)).toEqual({
       healthCounterName: "Hit points",
+      clockStyleDefault: "traditional",
       audioMasterVolume: 1,
       audioCueVolumeDefault: 0.5,
       audioMediaKeyScope: "music",

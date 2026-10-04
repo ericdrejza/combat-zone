@@ -1,6 +1,7 @@
+import { saveCollectionCounter, removeCollectionCounter } from "@core/entity_resources/counters";
 import type { EncounterState } from "@core/encounter/types";
 import type { Actor } from "./types";
-import { automaticStatus, validThresholds, normalizeCounter, normalizeHitPoints, type ActorCounter, type CombatRules, type HitPoints } from "./actorResources";
+import { automaticStatus, validThresholds, normalizeHitPoints, type ActorCounter, type CombatRules, type HitPoints } from "./actorResources";
 
 /** One immutable encounter replacement per bulk operation; untouched actors retain identity. */
 export function updateSelectedActors(state: EncounterState, ids: string[], update: (actor: Actor) => Actor): EncounterState {
@@ -62,16 +63,11 @@ export function removeMarker(state: EncounterState, actorId: string, marker: str
 }
 
 export function saveCounter(actor: Actor, input: ActorCounter): Actor {
-  const counter = normalizeCounter(input);
-  const counters = actor.counters ?? { allIds: [], byId: {} };
-  const previous = counters.byId[counter.id];
-  if (previous && previous.name === counter.name && previous.value === counter.value && previous.minimum === counter.minimum && previous.maximum === counter.maximum) return actor;
-  return { ...actor, counters: { allIds: previous ? counters.allIds : [...counters.allIds, counter.id], byId: { ...counters.byId, [counter.id]: counter } } };
+  const counters = saveCollectionCounter(actor.counters, input);
+  return counters === actor.counters ? actor : { ...actor, counters };
 }
 
 export function removeCounter(actor: Actor, id: string): Actor {
-  if (!actor.counters?.byId[id]) return actor;
-  const byId = { ...actor.counters.byId };
-  delete byId[id];
-  return { ...actor, counters: { byId, allIds: actor.counters.allIds.filter((value) => value !== id) } };
+  const counters = removeCollectionCounter(actor.counters, id);
+  return counters === actor.counters ? actor : { ...actor, counters };
 }

@@ -481,3 +481,30 @@ these back into `AGENT.md` or `DESIGN.md`.
       damage/healing amount, repeat while held and advertise this in tooltips.
       Release, cancellation and bounds stop repeating; counter steps remain
       undoable. Apply damage and Apply healing remain single-click actions.
+
+## Zone Status panel
+
+- [x] A single selected Zone exposes name, counters, clocks, tags, and notes;
+      multiple Zones show a single-Zone selection prompt.
+- [x] Zone counters reuse Actor controls, bounds, naming, and atomic draft saves.
+- [x] Clocks support 1–12 segments, default four, bounded progress, shared draft
+      editing/removal, inline values, hold-to-repeat, and confirmed filling.
+- [x] Zones and Edges share Enter-created removable tag pills and blur-saved
+      notes; Zone Properties and property export exclude Zone status fields.
+- [x] Zone status mutations have exact undo/redo, no-op suppression, validation
+      mode coverage, and central writer enforcement.
+- [x] Schema 14 migrations and local/cloud round trips retain Zone status;
+      invalid resources and unsupported schemas preserve valid data.
+
+- [x] Clock style is editable as Traditional or Linear. Linear boxes wrap into
+      rows. Two-column mini cards show name, centered visual, and current value/controls.
+      /maximum sits beside the visual without shifting its center and still confirms filling.
+      Both styles retain the same bounds and progress mechanics.
+- [x] Interface > Defaults persists Default clock style, initially Traditional;
+      it affects new clocks only and synchronizes/resets with Interface preferences.
+- [x] Clock styles survive atomic editor saves, undo/redo, schema 15 migration,
+      persistence, and cloud round trips; invalid styles are rejected.
+
+- [x] Clicking a full clock's maximum confirms resetting progress to zero. Both
+      styles support cancellation, exact undo/redo, and writer enforcement;
+      clicking a non-full clock's maximum continues to confirm filling.

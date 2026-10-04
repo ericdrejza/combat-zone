@@ -12,7 +12,7 @@ Render the sections in this order:
 1. Actor name or names, read only.
 2. Health status.
 3. Hit points.
-4. Custom counters.
+4. Counters.
 5. Conditions.
 6. Weapons.
 7. Armor.
@@ -73,7 +73,7 @@ HP limits apply to damage, healing, direct edits, setup, and maximum edits. An H
 operation that leaves the effective current/maximum tuple unchanged must not
 erase a manual health override or create a history entry.
 
-## Custom counters
+## Counters
 
 Custom counters belong to individual actors and are editable only for a single
 selected actor. Shared Systems templates are future work.
@@ -362,3 +362,75 @@ work as agreed. No deployment or external publication was performed.
   damage/healing amount, support hold-to-repeat with an enabled tooltip hint.
   Repetition stops on release, cancellation, leaving the control, or reaching
   a bound. Apply damage and Apply healing remain single-click actions.
+
+## Zone Status extension
+
+Approved for this session:
+
+- Single-Zone Status shows read-only name, counters, clocks, tags, and notes.
+  Multiple Zones show a single-Zone selection prompt.
+- Reuse Actor counter behavior and draft editors through owner-independent
+  controls and shared counter helpers.
+- Share Edge Enter-created tag pills and blur-saved multiline notes; move Zone
+  tags out of Properties. Property export excludes all Zone status fields.
+- Clocks store stable ID, name, progress, and 1–12 segments (default four).
+  Start at zero, use Clock N names, clamp progress on resize, and have no
+  automatic completion effect. SVG circles fill clockwise from the top.
+- Clock progress uses ±1 with hold-to-repeat and inline value editing; clicking
+  the total confirms filling. Add/Edit uses the shared counter draft workflow.
+- Validate and persist Zone resources with encounter schema 14, explicitly
+  migrating 12 → 13 → 14. Retain cloud schema 7 and 13 compatibility.
+- Verify history, no-op behavior, validation modes, read-only writer enforcement,
+  migrations, local recovery/import/export, cloud round trips, and Actor/Edge
+  regressions before checking completion.
+
+Implemented and verified:
+
+- Full `npm run test:agent`: 221 files and 1,083 tests passed.
+- `npm run typecheck`, `npm run build`, and `npm run build:functions` passed.
+- `npm run test:emulator`: three files and 11 tests passed, including schema 14
+  Zone resources and retained schema 13 Actor compatibility.
+- `git diff --check` passed.
+
+Shared controls live under `src/ui/controls` and shared counter/tag helpers under
+`src/core/entity_resources`. Clock counter-shaped adapters are derived UI data;
+durable clocks store ID, name, progress, segment count, and style.
+
+A follow-up question was raised about Ctrl-drawn Zone cloning: whether it should
+also copy counters, clocks, and notes. No change to the existing cloning path
+was made while that question awaits an answer. It currently copies tags and
+visual properties; the new resource collections start empty on creation.
+
+### Traditional and Linear clock styles
+
+- Add a per-clock style, Traditional by default. Traditional keeps the radial
+  segmented rendering; Linear uses filled boxes that wrap into rows as needed.
+- Arrange clocks as mini cards in two columns, showing name, centered visual,
+  then the current value/stepping controls below. Place /maximum beside the
+  visual without moving its center; retain clicking the maximum to confirm filling.
+  Keep the existing zero-to-segment-count bounds and all progress mechanics.
+- Expose style in Add/Edit clocks and a durable Interface > Defaults preference
+  for newly created clocks. Existing clock styles remain independent of this default.
+- Use encounter schema 15 with explicit 14 → 15 migration to Traditional, keeping
+  cloud compatibility for schemas 7, 13, and 14. Validate persisted style values.
+- Verify draft preservation, undo/redo, bounds, defaults, synchronization/reset,
+  persistence/migration, and cloud compatibility.
+
+Verification completed:
+
+- Full `npm run test:agent`: 221 files and 1,096 tests passed.
+- Final card/maximum-control follow-up: five files and 43 tests passed.
+- `npm run typecheck`, `npm run build`, and `npm run build:functions` passed.
+- `npm run test:emulator`: three files and 13 tests passed, including both schema
+  15 clock styles and retained schema 7/13/14 compatibility coverage.
+- `git diff --check` passed.
+
+### Full-clock reset
+
+Clicking the displayed maximum on a full clock offers a confirmation to reset
+progress to zero. A clock below maximum retains confirmation to fill. Both
+styles retain their segment count and style. Cancellation leaves progress and
+history unchanged; confirmed resets use the existing validated writer boundary
+and one undoable history entry. Verified with 62 focused tests and a production build.
+
+The Actor and Zone counter section heading and accessible name are “Counters”.

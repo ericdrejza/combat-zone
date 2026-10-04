@@ -49,13 +49,6 @@ export const zoneNamePositions: Array<{
   { icon: ArrowDownRight, id: 'bottom-right', label: 'Bottom right' }
 ];
 
-export function parseTags(value: string): string[] {
-  return value
-    .split(',')
-    .map((tag) => tag.trim())
-    .filter(Boolean);
-}
-
 export function getExportableZoneProperties(
   zone: Zone
 ): UpdateZonePropertiesInput {
@@ -71,8 +64,7 @@ export function getExportableZoneProperties(
     opacity: zone.opacity,
     showBorder: zone.showBorder,
     showName: zone.showName,
-    showSectionDividers: zone.showSectionDividers,
-    tags: zone.tags
+    showSectionDividers: zone.showSectionDividers
   };
 }
 

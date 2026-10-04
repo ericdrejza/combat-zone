@@ -25,7 +25,7 @@ describe("ZonePropertiesPanel", () => {
 
     expect(zone).toHaveAttribute("fill", "#ffffff");
     expect(zone).toHaveAttribute("fill-opacity", "0.7");
-    expect(screen.getByText("Zone 1")).toBeInTheDocument();
+    expect(screen.getByLabelText("Selected zone name")).toHaveTextContent("Zone 1");
     expect(screen.getByRole("heading", { name: "Name" })).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Enable automatic zone resizing" })
@@ -271,10 +271,7 @@ describe("ZonePropertiesPanel", () => {
     await user.click(screen.getByRole("radio", { name: "SPLIT_FLEX" }));
     act(() => {
       fireEvent.click(screen.getByRole("radio", { name: "Top to bottom" }));
-      fireEvent.change(screen.getByLabelText("Tags"), {
-        target: { value: "hazard, elevated" }
-      });
-      fireEvent.blur(screen.getByLabelText("Tags"));
+      expect(screen.queryByLabelText("Tags")).not.toBeInTheDocument();
     });
 
     await user.click(
@@ -290,7 +287,7 @@ describe("ZonePropertiesPanel", () => {
       namePosition: "bottom-right",
       opacity: 0.4,
       showName: true,
-      tags: ["hazard", "elevated"]
+      tags: []
     });
     expect(zones[thirdZoneId]).toMatchObject({
       colorFill: "#bfdbfe",
@@ -299,7 +296,7 @@ describe("ZonePropertiesPanel", () => {
       namePosition: "bottom-right",
       opacity: 0.4,
       showName: true,
-      tags: ["hazard", "elevated"]
+      tags: []
     });
   });
 

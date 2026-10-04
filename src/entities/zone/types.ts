@@ -1,3 +1,5 @@
+import type { Counters } from "@core/entity_resources/counters";
+import type { ZoneClocks } from "./zoneStatus";
 import type {
   LayoutOrientation,
   LayoutPoint,
@@ -35,4 +37,7 @@ export type Zone = {
   layoutOrientation: LayoutOrientation;
   autoResize?: boolean;
   tags: string[];
+  notes?: string;
+  counters?: Counters;
+  clocks?: ZoneClocks;
 };

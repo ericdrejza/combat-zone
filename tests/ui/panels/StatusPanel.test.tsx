@@ -73,7 +73,7 @@ describe("StatusPanel", () => {
   it("requires confirmation for skipped actors, then applies one undoable bulk command", async () => {
     setup(["a", "b"]);
     expect(screen.queryByRole("radiogroup", { name: "Health status" })).not.toBeInTheDocument();
-    expect(screen.queryByLabelText("Custom counters")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Counters")).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Apply damage" }));
     let dialog = screen.getByRole("dialog", { name: "Skip actors without hit points?" });
     expect(within(dialog).getByText("Bravo")).toBeInTheDocument();
@@ -202,7 +202,7 @@ describe("StatusPanel", () => {
     await act(async () => {});
     expect(store.getState().encounter.past).toHaveLength(0);
     act(() => store.dispatch(selectEntity({ entityType: "zone", ids: ["z"] })));
-    expect(screen.getByText("Select an actor to view status.")).toBeInTheDocument();
+    expect(screen.getByText("Select one zone to view status.")).toBeInTheDocument();
   });
 });
 

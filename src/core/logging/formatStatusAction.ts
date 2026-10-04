@@ -3,6 +3,13 @@ import type { EncounterActionRecord } from "@core/history/types";
 
 /** Describes short-term actor edits without exposing internal command names. */
 export function formatStatusAction(action: EncounterActionRecord, snapshots: { before: EncounterState; after: EncounterState }): string | undefined {
+  if (action.type.startsWith("zone.")) {
+    const id = String(action.payload.zoneId);
+    const name = snapshots.after.zones.byId[id]?.name ?? snapshots.before.zones.byId[id]?.name ?? id;
+    const labels: Record<string, string> = { saveCounter: "Saved a counter", adjustCounter: "Adjusted a counter", editCounters: "Updated counters", saveClock: "Saved a clock", adjustClock: "Adjusted a clock", editClocks: "Updated clocks", setTags: "Updated tags", setNotes: "Updated notes" };
+    const label = labels[action.type.slice(5)];
+    if (label) return `${label} for ${name}.`;
+  }
   const ids = Array.isArray(action.payload.actorIds) ? action.payload.actorIds.filter((id): id is string => typeof id === "string") :
     typeof action.payload.actorId === "string" ? [action.payload.actorId] : [];
   const names = ids.map((id) => snapshots.after.actors.byId[id]?.name ?? snapshots.before.actors.byId[id]?.name ?? id).join(", ");

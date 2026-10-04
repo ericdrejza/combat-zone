@@ -7,7 +7,6 @@ import { ZoneLayoutDescriptor } from "./zone_properties/ZoneLayoutDescriptor";
 import { ZoneLayoutSection } from "./zone_properties/ZoneLayoutSection";
 import { ZoneNameSection } from "./zone_properties/ZoneNameSection";
 import { ZonePropertiesHeaderActions } from "./zone_properties/ZonePropertiesHeaderActions";
-import { ZoneTagsSection } from "./zone_properties/ZoneTagsSection";
 import { useZonePropertiesActions } from "./zone_properties/useZonePropertiesActions";
 
 export { ZonePropertiesHeaderActions };
@@ -28,7 +27,7 @@ export function ZonePropertiesPanel() {
   if (!selectedZone) {
     return (
       <p className="text-sm text-canvas-muted">
-        Select a zone to edit its name, layout strategy, tags, and deletion.
+        Select a zone to edit its name, layout strategy, appearance, and deletion.
       </p>
     );
   }
@@ -54,10 +53,6 @@ export function ZonePropertiesPanel() {
         onToggleColorSection={() => setColorSectionOpen((isOpen) => !isOpen)}
         zone={selectedZone}
         zonePaintBrush={zonePaintBrush}
-      />
-      <ZoneTagsSection
-        onCommitZoneProperties={commitZoneProperties}
-        zone={selectedZone}
       />
       <ZoneLayoutDescriptor descriptor={layoutDescriptor} />
       <ZoneDeleteButton onDeleteZone={commitZoneDelete} />

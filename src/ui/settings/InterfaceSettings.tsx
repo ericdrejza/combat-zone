@@ -1,3 +1,4 @@
+import { ClockStyleSelect } from "@ui/controls/ClockStyleSelect";
 import { Moon, Sun } from "lucide-react";
 import { motion } from "motion/react";
 
@@ -24,6 +25,7 @@ export function InterfaceSettings() {
   const { setTheme, theme } = useTheme();
   const {
     healthCounterName, setHealthCounterName,
+    clockStyleDefault, setClockStyleDefault,
     autoSelectActiveActorDefault,
     enableAssetAnimation,
     encounterCreationTool,
@@ -125,6 +127,7 @@ export function InterfaceSettings() {
             label="Auto-select active actor in initiative"
             onChange={setAutoSelectActiveActorDefault}
           />
+          <ClockStyleSelect label="Default clock style" value={clockStyleDefault} onChange={setClockStyleDefault} />
           <DefaultColorSettings />
         </div>
       </fieldset>

@@ -129,6 +129,9 @@ Properties:
 - showSectionDividers
 - autoResize
 - tags
+- notes (optional multiline text)
+- counters (Zone-owned normalized named integer counters with optional bounds)
+- clocks (Zone-owned normalized named progress clocks)
 
 Zone names trim surrounding whitespace and may be empty.
 Zone opacity previews continuously while its slider is dragged and commits the
@@ -708,10 +711,48 @@ Context-sensitive editor:
 ### 7.4 Status Panel and Combat Settings
 
 Status edits short-term actor details, in this order: read-only names, health,
-hit points, custom counters, Conditions, Weapons, and Armor. A single selected
+hit points, counters, Conditions, Weapons, and Armor. A single selected
 Actor exposes all sections. Multiple selected Actors expose names, bulk HP,
 and markers; health editing and custom counters are hidden. Other selections
-show an Actor selection prompt.
+show an Actor-or-Zone selection prompt.
+
+The Actor and Zone counter section is labeled “Counters”.
+
+A single selected Zone exposes its read-only name, counters, clocks, tags,
+and notes in that order. Multiple selected Zones show a single-Zone selection
+prompt. Zone counters follow the Actor counter controls, bounds, naming, shared
+draft editing, and reset rules below. Zone status fields remain independent when
+exporting visual/layout properties to selected Zones.
+
+Zone tags use the same trimmed Enter-created removable pills as Edge tags,
+rejecting exact duplicates and ignoring blank entries. Existing tags survive
+migration unchanged. Notes use a multiline text field, preserve whitespace, and
+save on blur. Both controls follow undo/redo and selection changes.
+
+Clocks have stable IDs, names, integer progress, and an integer segment count
+from 1 through 12. New clocks start at zero with four segments; blank names use
+the first available Clock N name. Progress stays between zero and segment count,
+and shrinking a clock clamps progress. Each clock stores a style: Traditional
+(default), a segmented radial progress clock filling clockwise from the top, or
+Linear, a series of SVG boxes filling in order. Linear boxes wrap into rows when
+needed. Arrange clocks as mini cards in a two-column grid. Each card shows the clock
+name, a centered visualization, then the current value and stepping controls
+below. Place /maximum to the right of the visualization, outside its layout
+flow so the clock stays centered; the maximum retains its confirmed-fill action. Both styles use the same
+zero-to-segment-count bounds, progress mechanics, and exact current/total value.
+The clock editor exposes the style choice. Interface settings > Defaults stores
+a Default clock style preference, initially Traditional, used only for newly
+created clocks (including creation from the shared editor). Existing clocks keep
+their own style when that default changes. The preference persists, synchronizes
+across tabs, resets with Interface preferences, and stays outside encounter history. Minus/plus
+controls support hold-to-repeat; the current value supports inline editing.
+Clicking the maximum confirms filling a clock below maximum. When the clock is
+already full, clicking that maximum instead offers to reset its progress to zero.
+Cancel, Escape, or backdrop dismissal leaves progress unchanged. Completion has no automatic effect.
+Clock Add/Edit follows counter draft editing: a shared dropdown, creation and
+removal inside the editor, change indicators, atomic Save, and dirty-close
+Save/Discard/Keep editing confirmation. All Zone status changes pass validation,
+writer enforcement, and snapshot undo/redo; no-op operations create no history.
 
 Health uses the same four ordinal statuses as Initiative, without its removal
 action. HP starts unset. Setup defaults current to the first maximum entered;
@@ -844,7 +885,12 @@ leaves HP unset and initializes empty counters. Persisted HP may be negative or
 above maximum regardless of local preferences. All domain mutations pass through
 validation, Redux history and the writer boundary; bulk changes and HP plus
 health changes are atomic. Resources and unknown markers survive local and cloud
-round trips. The Firebase API accepts schema 13 and its existing legacy schema 7.
+round trips. Encounter schema 14 adds Zone counters, clocks, and notes. Migration from schema
+13 initializes empty counter/clock collections while preserving tags and all
+other encounter fields. Encounter schema 15 adds clock style; migration from schema 14 sets missing
+styles to Traditional without changing progress or segment counts. Missing
+legacy styles render as Traditional. The Firebase API accepts schemas 15, 14,
+13, and legacy 7, and validates clock styles when present.
 
 ## 8. Themes
 

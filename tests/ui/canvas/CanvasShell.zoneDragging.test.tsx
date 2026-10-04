@@ -57,7 +57,7 @@ describe("CanvasShell zone dragging", () => {
     expect(actorElement.parentElement).toHaveClass("pointer-events-none");
 
     fireEvent.mouseEnter(actorElement);
-    expect(screen.getByText("Zone 1")).toBeInTheDocument();
+    expect(screen.getByLabelText("Selected zone name")).toHaveTextContent("Zone 1");
 
     const beforePoints = zone.getAttribute("points");
     fireEvent.mouseDown(zone, {

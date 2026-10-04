@@ -1,9 +1,10 @@
-import type { EntityCollection } from "@core/state/entityCollection";
+import { validCounters, type Counter, type Counters } from "@core/entity_resources/counters";
+export { normalizeCounter } from "@core/entity_resources/counters";
 import type { ActorStatus } from "./types";
 
 export type HitPoints = { current: number; maximum: number };
-export type ActorCounter = { id: string; name: string; value: number; minimum?: number; maximum?: number };
-export type ActorCounters = EntityCollection<ActorCounter>;
+export type ActorCounter = Counter;
+export type ActorCounters = Counters;
 export type CombatRules = {
   limits: "bounded" | "negative" | "unbounded";
   automaticHealth: boolean;
@@ -33,24 +34,10 @@ export function automaticStatus(hp: HitPoints, rules: CombatRules): ActorStatus 
   return (index < 0 ? 3 : index) as ActorStatus;
 }
 
-export function normalizeCounter(counter: ActorCounter): ActorCounter {
-  return { ...counter, value: Math.max(counter.minimum ?? -Infinity, Math.min(counter.maximum ?? Infinity, counter.value)) };
-}
-
-/** Structural checks also apply on load, independently of local combat preferences. */
+/** Structural checks apply on load independently of combat preferences. */
 export function validActorResources(actor: { hitPoints?: unknown; counters?: unknown }): boolean {
   if (!actor || typeof actor !== "object" || Array.isArray(actor)) return false;
   const hp = actor.hitPoints as HitPoints | undefined;
   if (hp !== undefined && (!hp || !Number.isSafeInteger(hp.current) || !Number.isSafeInteger(hp.maximum) || hp.maximum <= 0)) return false;
-  const counters = actor.counters as ActorCounters | undefined;
-  if (counters === undefined) return true;
-  if (!counters || Array.isArray(counters) || !Array.isArray(counters.allIds) || !counters.byId || typeof counters.byId !== "object" || Array.isArray(counters.byId) ||
-    new Set(counters.allIds).size !== counters.allIds.length || Object.keys(counters.byId).length !== counters.allIds.length) return false;
-  return counters.allIds.every((id) => {
-    const c = counters.byId[id];
-    return typeof id === "string" && !!c && c.id === id && typeof c.name === "string" && c.name.trim().length > 0 &&
-      Number.isSafeInteger(c.value) && (c.minimum === undefined || Number.isSafeInteger(c.minimum)) &&
-      (c.maximum === undefined || Number.isSafeInteger(c.maximum)) && (c.minimum ?? -Infinity) <= (c.maximum ?? Infinity) &&
-      c.value >= (c.minimum ?? -Infinity) && c.value <= (c.maximum ?? Infinity);
-  });
+  return validCounters(actor.counters);
 }

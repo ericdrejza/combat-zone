@@ -11,6 +11,15 @@ After completing a numbered section (## X.), move the completed section to the e
 
 ## 15. MVP Acceptance Hardening
 
+- [x] Offer confirmed reset to zero when a full clock's maximum is clicked,
+      with cancellation, writer enforcement, and exact undo/redo coverage.
+
+- [x] Add Traditional/Linear clock styles, two-column mini cards, and
+      an Interface default; verify history, schema 15 migration, and cloud.
+
+- [x] Implement Zone Status counters, clocks, shared Edge tags/notes, and schema
+      14 persistence; verify validation, writer guards, history, and cloud.
+
 - [x] Implement the Actor Status panel, optional hit points, custom counters,
       approved condition/weapon/armor controls, Combat preferences and automatic
       health; verify atomic history, schema 13 persistence and cloud round trips.

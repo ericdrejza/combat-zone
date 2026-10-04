@@ -1,3 +1,4 @@
+import { ZoneResourceValidator } from "@entities/zone/zoneResourceValidator";
 import type { EncounterState } from "@core/encounter/types";
 import { PolygonPlacementValidator } from "./polygonFlexPlacementValidator";
 import type { Validator } from "./types";
@@ -27,6 +28,7 @@ import { ActorResourceValidator } from "@entities/actor/actorResourceValidator";
 export const MVP_VALIDATORS: Validator<EncounterState>[] = [
   ActorStatusValidator,
   ActorResourceValidator,
+  ZoneResourceValidator,
   MovementValidator,
   ZoneSizeValidator,
   ZoneOverlapValidator,

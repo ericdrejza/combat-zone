@@ -81,6 +81,32 @@ describe("Firebase API service", () => {
     expect(record.data()?.state.actors.byId.actor).toEqual(actor);
     expect(record.data()?.state.schemaVersion).toBe(13);
   });
+  it("round trips schema 14 Zone counters, clocks, tags, and notes through Firestore", async () => {
+    const command = encounterCommand();
+    const zone = { id: "z", name: "Hall", tags: ["hazard"], notes: "  Secret\nexit ",
+      counters: { allIds: ["c"], byId: { c: { id: "c", name: "Water", value: -2, minimum: -3, maximum: 4 } } },
+      clocks: { allIds: ["k"], byId: { k: { id: "k", name: "Alarm", value: 3, segments: 5 } } } };
+    command.payload.state.schemaVersion = 14;
+    command.payload.state.zones = { allIds: ["z"], byId: { z: zone } } as never;
+    command.payload.state.panelLayout.right.push({ id: "audio", collapsed: false });
+    Object.assign(command.payload.state, { audioCues: { allIds: [], byId: {} }, audioCueGroups: { allIds: [], byId: {} }, musicGroupIds: [] });
+    await service.commitEncounter("alice", command);
+    const record = await getFirestore().doc("users/alice/encounters/encounter-1").get();
+    expect(record.data()?.state.zones.byId.z).toEqual(zone);
+    expect(record.data()?.state.schemaVersion).toBe(14);
+  });
+  it.each(["traditional", "linear"])("round trips schema 15 %s clocks through Firestore", async (style) => {
+    const command = encounterCommand();
+    const zone = { id: "z", tags: [], clocks: { allIds: ["k"], byId: { k: { id: "k", name: "Alarm", value: 2, segments: 5, style } } } };
+    command.payload.state.schemaVersion = 15;
+    command.payload.state.zones = { allIds: ["z"], byId: { z: zone } } as never;
+    command.payload.state.panelLayout.right.push({ id: "audio", collapsed: false });
+    Object.assign(command.payload.state, { audioCues: { allIds: [], byId: {} }, audioCueGroups: { allIds: [], byId: {} }, musicGroupIds: [] });
+    await service.commitEncounter("alice", command);
+    const record = await getFirestore().doc("users/alice/encounters/encounter-1").get();
+    expect(record.data()?.state.zones.byId.z).toEqual(zone);
+    expect(record.data()?.state.schemaVersion).toBe(15);
+  });
   it("commits records and reference sets atomically", async () => {
     const result = await service.commitEncounter("alice", encounterCommand());
     expect(result).toMatchObject({ status: "applied", revision: 1 });

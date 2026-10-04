@@ -1,3 +1,7 @@
+import { applyTagChanges } from "@core/entity_resources/tags";
+import { useStatusActions } from "@ui/status/useStatusActions";
+import { NotesEditor } from "@ui/controls/NotesEditor";
+import { usePersistence } from "@ui/persistence/PersistenceProvider";
 import { Activity, Ban, ChevronsDown, CornerDownRight, Dices, Eye, EyeDashed, EyeOff, MoveRight, Spline, Trash2 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 
@@ -36,6 +40,8 @@ function uniqueValue<T>(edges: Edge[], getter: (edge: Edge) => T): T | undefined
 
 export function EdgePropertiesPanel() {
   const dispatch = useDispatch();
+  const { readOnly } = usePersistence();
+  const commitStatus = useStatusActions();
   const encounter = useSelector((state: RootState) => state.encounter.present);
   const selection = useSelector((state: RootState) => state.interaction.selection);
   const edgeIds = selection.selectedEntityType === "edge" ? selection.selectedIds : [];
@@ -85,14 +91,17 @@ export function EdgePropertiesPanel() {
       {shapeOptions.map(({ icon: Icon, label, value }) => <button key={value} aria-checked={shape === value} aria-label={label} className={buttonClass(shape === value)} onClick={() => commit(updateEdges(encounter, edgeIds, { shape: value }), { shape: value })} role="radio" title={label} type="button"><Icon aria-hidden="true" className="h-4 w-4" /></button>)}
     </div></fieldset>
     {edges.length === 1 ? <>
-      <EdgeTagEditor
-        onChange={(interactionTags) => commit(
-          updateEdges(encounter, edgeIds, { interactionTags }),
-          { interactionTags }
-        )}
+      <EdgeTagEditor key={`tags:${first.id}`} disabled={readOnly}
+        onChange={(interactionTags) => void commitStatus("edge.updateProperties", { edgeIds: [first.id], properties: { interactionTags } }, (state) => {
+          const edge = state.edges.byId[first.id];
+          if (!edge) return state;
+          const tags = applyTagChanges(edge.interactionTags, first.interactionTags, interactionTags);
+          return tags === edge.interactionTags ? state : updateEdges(state, [edge.id], { interactionTags: tags });
+        })}
         tags={first.interactionTags}
       />
-      <label className="block space-y-1"><span className="font-semibold text-canvas-ink">Notes</span><textarea className="w-full rounded-xl border border-canvas-line bg-canvas-surface px-3 py-2" defaultValue={first.notes ?? ""} onBlur={(event) => { if (event.currentTarget.value !== (first.notes ?? "")) commit(updateEdges(encounter, edgeIds, { notes: event.currentTarget.value }), { notes: event.currentTarget.value }); }} rows={3} /></label>
+      <NotesEditor key={`notes:${first.id}`} disabled={readOnly} notes={first.notes}
+        onChange={(notes) => void commitStatus("edge.updateProperties", { edgeIds: [first.id], properties: { notes } }, (state) => { const edge = state.edges.byId[first.id]; return !edge || (edge.notes ?? "") === notes ? state : updateEdges(state, [first.id], { notes }); })} />
     </> : <p className="text-canvas-muted">Select one edge to edit tags and notes.</p>}
     <button className="inline-flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-3 py-2 font-semibold text-red-700 transition hover:bg-red-100 dark:border-red-800 dark:bg-red-950 dark:text-red-500 dark:hover:bg-red-900" onClick={() => { dispatch(commitEncounterChange({ action: createEncounterActionRecord("edge.delete", { edgeIds }), nextEncounter: deleteEdges(encounter, edgeIds) })); dispatch(clearSelection()); }} type="button"><Trash2 aria-hidden="true" className="h-4 w-4" />Delete {edges.length === 1 ? "edge" : `${edges.length} edges`}</button>
   </div>;
