@@ -10,8 +10,13 @@ export function getAudioGroupsBySection(state: EncounterState, section: AudioCue
   return ids.map((id) => state.audioCueGroups.byId[id]).filter(Boolean);
 }
 
-export function getGroupInheritorNames(state: EncounterState, group: AudioCueGroup): string[] {
+export function getGroupInheritorIds(state: EncounterState, group: AudioCueGroup): string[] {
   if (group.section === "music" || group.section === "ambiance") return [];
   const collection = group.section === "zone" ? state.zones : state.actors;
-  return collection.allIds.map((id) => collection.byId[id]).filter((entity) => entity && (entity.audioGroupIds ?? []).includes(group.id)).map((entity) => entity.name);
+  return collection.allIds.filter((id) => collection.byId[id]?.audioGroupIds?.includes(group.id));
+}
+
+export function getGroupInheritorNames(state: EncounterState, group: AudioCueGroup): string[] {
+  const collection = group.section === "zone" ? state.zones : state.actors;
+  return getGroupInheritorIds(state, group).map((id) => collection.byId[id].name);
 }

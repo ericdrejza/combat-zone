@@ -226,6 +226,12 @@ one undoable action while retaining groups and valid-source cues.
   entities rather than unique names. Hidden names appear in a hover/focus
   tooltip. Use `All` when every entity of the group's section is assigned,
   but do not abbreviate members by faction.
+- Docked Audio panel Zone/Actor group headers show a numeric member-count pill
+  at the top right beside the group name instead of a member-name summary.
+  Hover/focus lists all names using the Soundboard tooltip style and duplicate
+  name counts. Clicking selects all member actors or zones, replacing selection
+  without changing membership or encounter history. Audio keeps its active tool
+  and switches to the matching owner subtool; incompatible tools switch to Select.
 - Soundboard owns named group creation in Ambience, Music, Zones, and Actors,
   and owns confirmed group deletion. Each section reserves a bottom row for an
   `Add new group` control that becomes visible on section hover without changing

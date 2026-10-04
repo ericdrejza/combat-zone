@@ -3,6 +3,7 @@ import { useId, useLayoutEffect, useRef, useState } from "react";
 import type { EncounterState } from "@core/encounter/types";
 import type { AudioCueGroup } from "@entities/audio/types";
 import { chooseMemberSummary, getAudioGroupMemberSummary } from "./audioGroupMembers";
+import { AudioGroupMemberTooltip } from "./AudioGroupMemberTooltip";
 
 /** Measures in the owning window so popouts and responsive headers behave alike. */
 export function AudioGroupMembers({ encounter, group }: { encounter: EncounterState; group: AudioCueGroup }) {
@@ -37,6 +38,6 @@ export function AudioGroupMembers({ encounter, group }: { encounter: EncounterSt
     <span aria-hidden="true" className="invisible block truncate" ref={full}>{summary.full}</span>
     <span aria-hidden="true" className="pointer-events-none invisible absolute left-0 top-0 whitespace-nowrap" ref={condensed}>{summary.condensed}</span>
     <span className="absolute inset-0 truncate">{summary[mode]}</span>
-    {showTooltip ? <span className="absolute right-0 top-6 z-50 w-max max-w-72 rounded-lg bg-canvas-ink px-3 py-2 text-xs text-canvas-on-ink shadow-lg" id={tooltipId} role="tooltip">{summary.names.map((name) => <span className="block" key={name}>{name}</span>)}</span> : null}
+    {showTooltip ? <AudioGroupMemberTooltip id={tooltipId} names={summary.names} /> : null}
   </span>;
 }
