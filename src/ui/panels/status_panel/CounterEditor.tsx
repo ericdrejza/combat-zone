@@ -54,7 +54,7 @@ export function CounterEditor({ counter, defaultName, selector, onClose, onSave,
       <CounterNumberField label="Maximum (optional)" name="maximum" value={maximum} emptyIncrementValue={1} optional onChange={(next) => update("maximum", next)} />
       {!valid ? <p className="text-xs text-canvas-muted">{counter ? "Enter a name, whole numbers, and a minimum no greater than maximum." : "Enter whole numbers and a minimum no greater than maximum."}</p> : null}
       <div className="flex flex-wrap justify-end gap-2">
-        {onRemove ? <button className="mr-auto rounded border border-canvas-line p-2 text-red-700 enabled:hover:bg-canvas-surface" onClick={onRemove} type="button">Remove counter</button> : null}
+        {onRemove ? <button className="mr-auto rounded border border-canvas-line p-2 text-red-700 dark:text-red-500 enabled:hover:bg-canvas-surface" onClick={onRemove} type="button">Remove counter</button> : null}
         <button type="button" onClick={onClose} className="rounded border border-canvas-line p-2 enabled:hover:bg-canvas-surface">Cancel</button>
         <button type="submit" disabled={!valid || saveDisabled} className="rounded bg-canvas-ink p-2 text-canvas-on-ink enabled:hover:bg-canvas-ink/80 disabled:cursor-not-allowed disabled:border-canvas-line disabled:bg-canvas-surface disabled:text-canvas-muted disabled:opacity-40">Save</button>
       </div>

@@ -119,7 +119,7 @@ export function BackgroundToolButton({
           </ToolbarOptionButton>
           <ToolbarOptionButton
             aria-label="Delete"
-            className="w-11 min-w-0 px-0 text-red-700 hover:bg-red-50 lg:w-8"
+            className="w-11 min-w-0 px-0 text-red-700 hover:bg-red-50 dark:text-red-500 dark:hover:bg-red-950 lg:w-8"
             onClick={deleteBackground}
             role="menuitem"
             title="Delete"

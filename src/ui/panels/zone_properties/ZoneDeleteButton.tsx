@@ -7,7 +7,7 @@ type ZoneDeleteButtonProps = {
 export function ZoneDeleteButton({ onDeleteZone }: ZoneDeleteButtonProps) {
   return (
     <button
-      className="inline-flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-3 py-2 font-semibold text-red-700 transition hover:bg-red-100"
+      className="inline-flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-3 py-2 font-semibold text-red-700 transition hover:bg-red-100 dark:border-red-800 dark:bg-red-950 dark:text-red-500 dark:hover:bg-red-900"
       onClick={onDeleteZone}
       type="button"
     >

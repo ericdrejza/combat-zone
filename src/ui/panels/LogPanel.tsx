@@ -126,7 +126,7 @@ export function LogPanel() {
           <div className="mb-1 flex items-center justify-between gap-2 text-xs font-semibold uppercase tracking-wide text-canvas-muted">
             <span>{CATEGORY_LABELS[entry.category]}</span>
             {entry.kind === "validation-block" ? (
-              <span className="text-red-700">Blocked</span>
+              <span className="text-red-700 dark:text-red-500">Blocked</span>
             ) : null}
           </div>
           <p className="text-canvas-ink">{entry.message}</p>

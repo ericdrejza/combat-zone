@@ -94,7 +94,7 @@ export function WebImageUrlDialog({
           </>
         ) : null}
         {error ? (
-          <p className="mt-2 text-sm text-red-700" role="alert">
+          <p className="mt-2 text-sm text-red-700 dark:text-red-500" role="alert">
             {error}
           </p>
         ) : null}

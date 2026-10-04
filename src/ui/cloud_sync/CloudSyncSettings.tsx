@@ -75,7 +75,7 @@ export function CloudSyncSettings() {
         </button>
       )}
       {cloud.lastSuccessfulSyncAt ? <p className="mt-2 text-xs text-canvas-muted">Last synced {new Date(cloud.lastSuccessfulSyncAt).toLocaleString()}</p> : null}
-      {cloud.error ? <p className="mt-2 text-sm text-red-700" role="alert">{cloud.error.message}</p> : null}
+      {cloud.error ? <p className="mt-2 text-sm text-red-700 dark:text-red-500" role="alert">{cloud.error.message}</p> : null}
     </section>
   );
 }

@@ -29,14 +29,14 @@ export function CloudReconciliationDialog() {
         <div className="mt-5 grid gap-3">
           <button className="rounded-xl bg-canvas-ink px-4 py-3 text-left font-semibold text-canvas-on-ink disabled:opacity-50" disabled={busy} onClick={() => void choose("merge")} type="button">Merge both workspaces</button>
           <button className="rounded-xl border border-canvas-line bg-canvas-surface px-4 py-3 text-left font-semibold disabled:opacity-50" disabled={busy} onClick={() => void choose("use_cloud")} type="button">Use cloud on this device</button>
-          <div className="rounded-xl border border-red-300 bg-red-50 p-3">
-            <label className="text-sm text-red-900">Type {CONFIRMATION} to keep this device and replace cloud data
-              <input aria-label="Cloud replacement confirmation" className="mt-2 w-full rounded-lg border border-red-300 bg-canvas-surface px-3 py-2 font-mono" value={confirmation} onChange={(event) => setConfirmation(event.target.value)} />
+          <div className="rounded-xl border border-red-300 bg-red-50 p-3 dark:border-red-800 dark:bg-red-950">
+            <label className="text-sm text-red-900 dark:text-red-500">Type {CONFIRMATION} to keep this device and replace cloud data
+              <input aria-label="Cloud replacement confirmation" className="mt-2 w-full rounded-lg border border-red-300 bg-canvas-surface px-3 py-2 font-mono dark:border-red-800 dark:text-red-500" value={confirmation} onChange={(event) => setConfirmation(event.target.value)} />
             </label>
             <button className="mt-2 rounded-lg bg-red-700 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50" disabled={busy || confirmation !== CONFIRMATION} onClick={() => void choose("keep_device")} type="button">Keep this device</button>
           </div>
         </div>
-        {error ? <p className="mt-3 text-sm text-red-700" role="alert">{error}</p> : null}
+        {error ? <p className="mt-3 text-sm text-red-700 dark:text-red-500" role="alert">{error}</p> : null}
       </div>
     </div>
   );

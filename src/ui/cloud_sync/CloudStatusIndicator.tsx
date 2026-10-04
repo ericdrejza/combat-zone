@@ -15,7 +15,7 @@ export function CloudStatusIndicator() {
   return (
     <motion.span
       aria-label={label}
-      className={`flex h-8 items-center gap-1 rounded-lg px-2 text-xs ${cloud.status === "error" ? "text-red-700" : "text-canvas-muted"}`}
+      className={`flex h-8 items-center gap-1 rounded-lg px-2 text-xs ${cloud.status === "error" ? "text-red-700 dark:text-red-500" : "text-canvas-muted"}`}
       initial={false}
       animate={{ opacity: 1 }}
       title={label}

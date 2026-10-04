@@ -44,10 +44,10 @@ export function SoundboardWarnings() {
     setOpen(false);
   }
   return <div className="relative" ref={control}>
-    <button aria-label="Click to see warnings" aria-expanded={open} aria-haspopup="menu" className="flex h-7 w-7 cursor-pointer items-center justify-center text-red-600" onClick={() => setOpen((value) => !value)} title="Click to see warnings" type="button"><TriangleAlert aria-hidden="true" className="h-4 w-4" /></button>
+    <button aria-label="Click to see warnings" aria-expanded={open} aria-haspopup="menu" className="flex h-7 w-7 cursor-pointer items-center justify-center text-red-600 dark:text-red-500" onClick={() => setOpen((value) => !value)} title="Click to see warnings" type="button"><TriangleAlert aria-hidden="true" className="h-4 w-4" /></button>
     {open ? <div aria-label="Soundboard warnings" className="absolute right-0 top-9 z-30 w-64 rounded-xl border border-canvas-line bg-canvas-panel p-3 shadow-xl" role="menu">
       <p className="text-sm">{missingIds.length} {missingIds.length === 1 ? "cue is" : "cues are"} without sources.</p>
-      <button className="mt-3 w-full rounded-lg px-2 py-2 text-left text-sm text-red-600 hover:bg-canvas disabled:opacity-50" disabled={readOnly} onClick={deleteMissing} role="menuitem" type="button">Delete all unlinked sound cues</button>
+      <button className="mt-3 w-full rounded-lg px-2 py-2 text-left text-sm text-red-600 hover:bg-canvas dark:text-red-500 disabled:opacity-50" disabled={readOnly} onClick={deleteMissing} role="menuitem" type="button">Delete all unlinked sound cues</button>
     </div> : null}
   </div>;
 }

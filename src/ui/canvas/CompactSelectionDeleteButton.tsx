@@ -44,7 +44,7 @@ export function CompactSelectionDeleteButton({
     <TouchTooltip label={label}>
       <motion.button
         aria-label={label}
-        className="flex h-11 min-w-11 items-center justify-center rounded-full border border-red-200 bg-red-50 px-2 text-red-700 shadow-lg transition hover:bg-red-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-700"
+        className="flex h-11 min-w-11 items-center justify-center rounded-full border border-red-200 bg-red-50 px-2 text-red-700 shadow-lg transition hover:bg-red-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-500 dark:hover:bg-red-900 dark:focus-visible:outline-red-500"
         onClick={onDelete}
         title={label}
         type="button"

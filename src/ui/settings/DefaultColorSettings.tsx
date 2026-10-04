@@ -75,7 +75,7 @@ function HexColorInput({
       </div>
       {description ? <span className="block text-xs text-canvas-muted">{description}</span> : null}
       {invalid ? (
-        <span className="block text-xs text-red-700 dark:text-red-300" id={errorId} role="alert">
+        <span className="block text-xs text-red-700 dark:text-red-500" id={errorId} role="alert">
           Enter a six-digit hex color beginning with #.
         </span>
       ) : null}

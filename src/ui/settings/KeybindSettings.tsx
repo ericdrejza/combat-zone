@@ -51,7 +51,7 @@ export function KeybindSettings() {
           Reset defaults
         </button>
       </div>
-      {error ? <p className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-800" role="alert">{error}</p> : null}
+      {error ? <p className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-800 dark:bg-red-950 dark:text-red-500" role="alert">{error}</p> : null}
       <h4 className="mt-5 text-sm font-semibold">Customizable</h4>
       <div className="mt-2 divide-y divide-canvas-line rounded-2xl border border-canvas-line bg-canvas-surface">
         {KEYBIND_DEFINITIONS.filter(({ editable }) => editable).map(({ id, label }) => (
