@@ -1,4 +1,4 @@
-import { BookHeadphones, CircleUserRound, Globe2, Music3, Pause, Play, Repeat2, Shapes, Square } from "lucide-react";
+import { AudioLines, BookHeadphones, CircleUserRound, Globe2, Music, Pause, Play, Shapes, Square } from "lucide-react";
 import { createPortal } from "react-dom";
 import { useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -20,8 +20,8 @@ const OWNERS = [
   { value: "actor" as const, label: "Actor audio", Icon: CircleUserRound }
 ];
 const TYPES = [
-  { value: "track" as const, label: "Track cue", Icon: Repeat2 },
-  { value: "effect" as const, label: "Effect cue", Icon: Music3 }
+  { value: "track" as const, label: "Track cue", Icon: Music },
+  { value: "effect" as const, label: "Effect cue", Icon: AudioLines }
 ];
 
 export function AudioToolButton({ activeToolId, compactLayout, compactSubtoolHost, encounterId, tool }: Props) {
