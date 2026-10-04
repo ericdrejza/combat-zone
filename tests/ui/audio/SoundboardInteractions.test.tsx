@@ -199,4 +199,31 @@ describe("Soundboard interactions", () => {
     fireEvent.click(within(library).getByRole("button", { name: "Close Asset Library" }));
     expect(board).toBeInTheDocument();
   });
+
+  it("keeps the popped-out Soundboard open while choosing a cue in the main Library", () => {
+    const { board } = openBoard();
+    const frame = document.createElement("iframe");
+    document.body.append(frame);
+    const popupDocument = frame.contentDocument!;
+    const popup = { document: popupDocument, closed: false, close: vi.fn(), focus: vi.fn(), addEventListener: vi.fn(), history: { replaceState: vi.fn() } };
+    const open = vi.spyOn(window, "open").mockReturnValueOnce(popup as unknown as Window);
+    fireEvent.click(within(board).getByRole("button", { name: "Pop out Soundboard" }));
+    expect(screen.queryByRole("dialog", { name: "Soundboard modal" })).not.toBeInTheDocument();
+    const popupRoot = popupDocument.getElementById("soundboard-root")!;
+    fireEvent.click(within(popupRoot).getByRole("button", { name: "Add cue to Playlist" }));
+    const library = screen.getByRole("dialog", { name: "Asset Library" });
+    expect(within(library).getAllByRole("tab")).toHaveLength(1);
+    expect(within(library).getByRole("tab", { name: "Audio" })).toHaveAttribute("aria-selected", "true");
+    expect(popup.close).not.toHaveBeenCalled();
+    expect(screen.queryByRole("dialog", { name: "Soundboard modal" })).not.toBeInTheDocument();
+    expect(within(popupRoot).getByRole("button", { name: "Dock Soundboard" })).toBeInTheDocument();
+    fireEvent.click(within(library).getByRole("button", { name: "Track" }));
+    fireEvent.click(within(library).getByRole("button", { name: "Add Cue" }));
+    expect(store.getState().encounter.present.audioCues.allIds).toHaveLength(3);
+    expect(popupRoot.querySelectorAll('[data-audio-cue-id]')).toHaveLength(3);
+    expect(popup.close).not.toHaveBeenCalled();
+    expect(screen.queryByRole("dialog", { name: "Soundboard modal" })).not.toBeInTheDocument();
+    open.mockRestore();
+    frame.remove();
+  });
 });

@@ -115,7 +115,9 @@ describe("Audio panel volume controls", () => {
 
   it("opens the Soundboard in a modal and can pop it out and back in", () => {
     localStorage.setItem(THEME_STORAGE_KEY, "dark");
-    const popupDocument = document.implementation.createHTMLDocument("Soundboard");
+    const popupFrame = document.createElement("iframe");
+    document.body.append(popupFrame);
+    const popupDocument = popupFrame.contentDocument!;
     const focus = vi.fn();
     const close = vi.fn();
     const replaceState = vi.fn();
@@ -176,8 +178,9 @@ describe("Audio panel volume controls", () => {
     act(() => addAmbienceGroup.click());
     const ambienceGroupId = store.getState().encounter.present.audioCueGroups.allIds.find((id) => store.getState().encounter.present.audioCueGroups.byId[id].section === "ambiance") as string;
     act(() => (soundboardRoot.querySelector('[aria-label="Add cue to New Ambience Group"]') as HTMLButtonElement).click());
-    expect(close).toHaveBeenCalledTimes(1);
-    const soundboardBehindLibrary = screen.getByRole("dialog", { name: "Soundboard modal" });
+    expect(close).not.toHaveBeenCalled();
+    expect(screen.queryByRole("dialog", { name: "Soundboard modal" })).not.toBeInTheDocument();
+    const soundboardBehindLibrary = soundboardRoot;
     const libraryDialog = screen.getByRole("dialog", { name: "Asset Library" });
     expect(within(libraryDialog).getAllByRole("tab")).toHaveLength(1);
     expect(within(libraryDialog).getByRole("tab", { name: "Audio" })).toHaveAttribute("aria-selected", "true");
@@ -199,7 +202,9 @@ describe("Audio panel volume controls", () => {
     expect(within(soundboardBehindLibrary).queryByRole("button", { name: "Add cue to New Ambience Group" })).not.toBeInTheDocument();
     act(() => fireEvent.click(within(soundboardBehindLibrary).getByRole("button", { name: "Expand Encounter" })));
 
-    fireEvent.click(within(soundboardBehindLibrary).getByRole("button", { name: "Pop out Soundboard" }));
+    fireEvent.click(within(soundboardBehindLibrary).getByRole("button", { name: "Dock Soundboard" }));
+    expect(close).toHaveBeenCalledTimes(1);
+    fireEvent.click(within(screen.getByRole("dialog", { name: "Soundboard modal" })).getByRole("button", { name: "Pop out Soundboard" }));
     expect(open).toHaveBeenCalledTimes(2);
 
     fireEvent.click(toolbarLauncher as HTMLButtonElement);
@@ -214,5 +219,6 @@ describe("Audio panel volume controls", () => {
     fireEvent.mouseDown(dockedModal);
     expect(screen.queryByRole("dialog", { name: "Soundboard modal" })).not.toBeInTheDocument();
     expect(panelLauncher).toHaveAttribute("aria-pressed", "false");
+    popupFrame.remove();
   });
 });

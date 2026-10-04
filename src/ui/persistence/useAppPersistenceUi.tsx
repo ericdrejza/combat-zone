@@ -221,6 +221,7 @@ export function useAppPersistenceUi({
             }));
           }}
           onCreateEncounter={() => {
+            setLibraryOpen(false);
             if (libraryMode === "encounter-only") {
               void persistence.createNewEncounter().then(() => {
                 requestEncounterToolSelection();
