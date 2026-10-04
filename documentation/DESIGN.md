@@ -734,11 +734,15 @@ from 1 through 12. New clocks start at zero with four segments; blank names use
 the first available Clock N name. Progress stays between zero and segment count,
 and shrinking a clock clamps progress. Each clock stores a style: Traditional
 (default), a segmented radial progress clock filling clockwise from the top, or
-Linear, a series of SVG boxes filling in order. Linear boxes wrap into rows when
-needed. Arrange clocks as mini cards in a two-column grid. Each card shows the clock
+Linear, a series of SVG boxes filling in order. Traditional clocks use contrasting
+dividers between adjacent completed segments, including the closing divider
+when full. Linear boxes use a four-column grid with left-aligned segments,
+including partially filled rows. Arrange clocks as mini cards in a two-column grid. Each card shows the clock
 name, a centered visualization, then the current value and stepping controls
 below. Place /maximum to the right of the visualization, outside its layout
-flow so the clock stays centered; the maximum retains its confirmed-fill action. Both styles use the same
+flow so the maximum does not shift the visualization. Linear visuals sit slightly
+left of center with more room for boxes on the left, keeping two-digit maxima
+inset from the card edge; the maximum retains its confirmed-fill action. Both styles use the same
 zero-to-segment-count bounds, progress mechanics, and exact current/total value.
 The clock editor exposes the style choice. Interface settings > Defaults stores
 a Default clock style preference, initially Traditional, used only for newly

@@ -404,7 +404,8 @@ visual properties; the new resource collections start empty on creation.
 ### Traditional and Linear clock styles
 
 - Add a per-clock style, Traditional by default. Traditional keeps the radial
-  segmented rendering; Linear uses filled boxes that wrap into rows as needed.
+  segmented rendering; Linear uses filled boxes in a four-column grid with
+  left-aligned segments, including partial rows.
 - Arrange clocks as mini cards in two columns, showing name, centered visual,
   then the current value/stepping controls below. Place /maximum beside the
   visual without moving its center; retain clicking the maximum to confirm filling.

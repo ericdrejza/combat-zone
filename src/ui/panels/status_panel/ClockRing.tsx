@@ -10,5 +10,12 @@ export function ClockRing({ name, value, segments }: { name: string; value: numb
         return <path key={index} d={`M ${point(20, start)} A 20 20 0 0 1 ${point(20, end)} L ${point(8, end)} A 8 8 0 0 0 ${point(8, start)} Z`}
           fill={index < value ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1" />;
       })}
+    {segments > 1 ? Array.from({ length: segments }, (_, index) => {
+      const previous = (index + segments - 1) % segments;
+      if (index >= value || previous >= value) return null;
+      // Draw shared filled edges last so segment outlines cannot cover the contrast.
+      return <path key={`divider-${index}`} d={`M ${point(8, index * angle)} L ${point(20, index * angle)}`}
+        fill="none" stroke="rgb(var(--color-canvas-on-ink))" strokeWidth="1.5" />;
+    }) : null}
   </svg>;
 }

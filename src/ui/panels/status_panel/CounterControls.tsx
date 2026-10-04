@@ -40,7 +40,7 @@ export function CounterControls({ counters, kind = "counter", defaultClockStyle 
       return <div key={id} className={kind === "clock" ? "flex min-w-0 flex-col items-center gap-2 rounded-xl border border-canvas-line bg-canvas-surface p-3 text-base" : "flex flex-wrap items-center gap-1 text-base"} role="group" aria-label={counter.name}>
         <span className={kind === "clock" ? "w-full min-w-0 break-words text-center" : "mr-auto"}>{counter.name}</span>
         {kind === "clock" ? <div className="flex w-full min-w-0 items-center justify-center">
-          <div className={counter.style === "linear" ? "relative flex w-[calc(100%-4rem)] min-w-0 items-center justify-center" : "relative flex items-center justify-center"}>
+          <div className={counter.style === "linear" ? "relative flex w-[calc(100%-1rem)] min-w-0 max-w-20 -translate-x-3 items-center justify-center" : "relative flex items-center justify-center"}>
             <ClockDisplay style={counter.style} value={counter.value} segments={counter.maximum!} name={counter.name} />
             <div className="absolute left-full top-1/2 ml-1 -translate-y-1/2">
               <ResourceMaximum resetToZero={counter.value === counter.maximum} name={counter.name} maximum={counter.maximum!} disabled={disabled} onReset={() => requestReset(counter)} />
