@@ -1,4 +1,4 @@
-import { GripVertical, MoveLeft, MoveRight, Music3, Play, Repeat1, Repeat2, Square, Trash2, Volume, Volume1, Volume2, VolumeX } from "lucide-react";
+import { AudioLines, BookHeadphones, GripVertical, MoveLeft, MoveRight, Music, Play, Repeat1, Square, Trash2, Volume, Volume1, Volume2, VolumeX } from "lucide-react";
 import { motion } from "motion/react";
 import { useEffect, useId, useRef, useState, type DragEvent } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -12,6 +12,7 @@ import { commitEncounterChange } from "@store/encounterSlice";
 import type { RootState } from "@store/store";
 import { useAudioPlayback } from "./AudioPlaybackProvider";
 import { CueBehaviorButtons } from "./CueBehaviorButtons";
+import { openAudioLibraryForRelink } from "./audioLibraryEvents";
 import { AUDIO_REPEAT_DELAYS as DELAYS, formatAudioRepeatDelay as delayLabel } from "./audioRepeatDelay";
 
 type Props = { configurable?: boolean; cue: AudioCue; dropSide?: "before" | "after"; onDragStart?: (event: DragEvent<HTMLElement>, cueId: string) => void; onDropCue?: (cueId: string, side: "before" | "after") => void; onPreviewDrop?: (cueId: string, side: "before" | "after") => void; showVolume?: boolean };
@@ -45,14 +46,16 @@ export function AudioCueRow({ configurable = false, cue, dropSide, onDragStart, 
     committedVolume.current = nextVolume;
     commit({ volume: nextVolume }, "audio.setVolume");
   }
-  const typeChoices: Array<{ Icon: typeof Repeat2; label: string; type: AudioCueType }> = [
-    { Icon: Repeat2, label: "Track", type: "track" },
-    { Icon: Music3, label: "Effect", type: "effect" }
+  const typeChoices: Array<{ Icon: typeof Music; label: string; type: AudioCueType }> = [
+    { Icon: Music, label: "Track", type: "track" },
+    { Icon: AudioLines, label: "Effect", type: "effect" }
   ];
   const VolumeIcon = volume === 0 ? VolumeX : volume < 0.3 ? Volume : volume <= 0.7 ? Volume1 : Volume2;
   const repeatIndicator = cue.repeat ? <span aria-label={`Repeating ${name}`} className="inline-flex text-canvas-muted" role="img" title={cue.type === "effect" ? `This sound repeats every ${delayLabel(cue.repeatDelay.minimumDelaySeconds)} to ${delayLabel(cue.repeatDelay.maximumDelaySeconds)}` : "Repeating"}><Repeat1 aria-hidden="true" className="h-3.5 w-3.5" /></span> : null;
   const showCueVolume = configurable || showVolume;
-  const playButton = <PlayButton active={active} disabled={!active && !sourceUrl} name={name} onClick={() => active ? playback.stop(cue.id) : sourceUrl && void playback.play(cue, sourceUrl)} />;
+  const playButton = !asset
+    ? <button aria-label={`Relink ${name}`} className="flex h-7 w-7 items-center justify-center rounded-full border border-red-600 text-red-600" onClick={() => openAudioLibraryForRelink(cue.id)} title="Choose a new Library audio source" type="button"><BookHeadphones aria-hidden="true" className="h-4 w-4" /></button>
+    : <PlayButton active={active} disabled={!active && !sourceUrl} name={name} onClick={() => active ? playback.stop(cue.id) : sourceUrl && void playback.play(cue, sourceUrl)} />;
 
   return <motion.article className={`group/cue relative space-y-1.5 rounded-lg border ${highlighted ? "border-blue-500" : status === "paused" ? "border-yellow-500" : "border-canvas-line"} bg-canvas-surface p-2`} data-audio-cue-id={cue.id} layout="position" onDragOver={(event) => { if (onDropCue) { event.preventDefault(); onPreviewDrop?.(cue.id, getCueDropSide(event)); } }} onDrop={(event) => { if (onDropCue) { event.stopPropagation(); onDropCue(cue.id, getCueDropSide(event)); } }}>
     {dropSide ? <div aria-label={`Insert cue ${dropSide} ${name}`} aria-orientation="vertical" role="separator" className={`absolute bottom-1 top-1 w-0.5 bg-canvas-ink ${dropSide === "before" ? "-left-1.5" : "-right-1.5"}`} data-testid="cue-drop-preview" /> : null}

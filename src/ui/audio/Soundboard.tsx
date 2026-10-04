@@ -17,6 +17,7 @@ import { openAudioLibraryForCue } from "./audioLibraryEvents";
 import { useAudioPlayback } from "./AudioPlaybackProvider";
 import type { SoundboardNavigationRequest } from "./soundboardNavigation";
 import { useSoundboardNavigation } from "./useSoundboardNavigation";
+import { SoundboardWarnings } from "./SoundboardWarnings";
 
 type Commit = (next: RootState["encounter"]["present"], type: string, payload: Parameters<typeof createEncounterActionRecord>[1]) => void;
 type Dragged = { id: string; kind: "cue" | "group" } | null;
@@ -85,7 +86,7 @@ export function Soundboard({ isPopout = false, navigation, onToggleWindow }: { i
     <header className="sticky top-0 z-20 mb-4 grid grid-cols-[1fr_auto_1fr] items-center gap-2 rounded-2xl border border-canvas-line bg-canvas-panel p-3 shadow-sm">
       <h1 className="mr-auto font-display text-xl font-semibold">Soundboard</h1>
       <AudioTransportControls />
-      <div className="flex flex-wrap items-center justify-end gap-2"><span className="min-w-14 text-xs font-semibold uppercase text-canvas-muted">{playback.hasPausedPlayback ? playback.hasRunningPlayback ? "Partly paused" : "Paused" : playback.hasPlayback ? "Running" : "Idle"}</span><label className="flex items-center gap-2 text-xs text-canvas-muted"><span className="inline-block w-[12ch] shrink-0 whitespace-nowrap tabular-nums">Master {Math.round(preferences.audioMasterVolume * 100)}%</span><input aria-label="Soundboard master volume" className="w-24 shrink-0" max="100" min="0" onChange={(event) => preferences.setAudioMasterVolume(Number(event.currentTarget.value) / 100)} type="range" value={Math.round(preferences.audioMasterVolume * 100)} /></label>
+      <div className="flex flex-wrap items-center justify-end gap-2"><span className="min-w-14 text-xs font-semibold uppercase text-canvas-muted">{playback.hasPausedPlayback ? playback.hasRunningPlayback ? "Partly paused" : "Paused" : playback.hasPlayback ? "Running" : "Idle"}</span><SoundboardWarnings /><label className="flex items-center gap-2 text-xs text-canvas-muted"><span className="inline-block w-[12ch] shrink-0 whitespace-nowrap tabular-nums">Master {Math.round(preferences.audioMasterVolume * 100)}%</span><input aria-label="Soundboard master volume" className="w-24 shrink-0" max="100" min="0" onChange={(event) => preferences.setAudioMasterVolume(Number(event.currentTarget.value) / 100)} type="range" value={Math.round(preferences.audioMasterVolume * 100)} /></label>
       <button aria-label={isPopout ? "Dock Soundboard" : "Pop out Soundboard"} className="flex h-10 w-10 items-center justify-center rounded-full border border-canvas-line" onClick={onToggleWindow} title={isPopout ? "Dock Soundboard" : "Pop out Soundboard"} type="button">{isPopout ? <SquareArrowOutDownLeft aria-hidden="true" className="h-4 w-4" /> : <SquareArrowOutUpRight aria-hidden="true" className="h-4 w-4" />}</button></div>
     </header>
     <main className="space-y-5">

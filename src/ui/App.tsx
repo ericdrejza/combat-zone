@@ -67,7 +67,7 @@ import { AudioPanel, AudioPanelHeaderActions } from "./panels/AudioPanel";
 import { SoundboardProvider } from "./audio/SoundboardProvider";
 import { useAudioCueAssignment } from "./audio/useAudioCueAssignment";
 import type { AudioCuePlacement } from "@entities/audio/types";
-import { OPEN_AUDIO_LIBRARY_EVENT } from "./audio/audioLibraryEvents";
+import { OPEN_AUDIO_LIBRARY_EVENT, RELINK_AUDIO_LIBRARY_EVENT } from "./audio/audioLibraryEvents";
 
 type SidebarCollapsedState = Record<DockSide, boolean>;
 
@@ -134,8 +134,13 @@ function AppContent() {
       persistenceUi.openAudioLibraryForCue((event as CustomEvent<AudioCuePlacement>).detail);
     };
     window.addEventListener(OPEN_AUDIO_LIBRARY_EVENT, openAudioLibrary);
-    return () => window.removeEventListener(OPEN_AUDIO_LIBRARY_EVENT, openAudioLibrary);
-  }, [persistenceUi.openAudioLibraryForCue]);
+    const relinkAudio = (event: Event) => persistenceUi.openAudioLibraryForRelink((event as CustomEvent<string>).detail);
+    window.addEventListener(RELINK_AUDIO_LIBRARY_EVENT, relinkAudio);
+    return () => {
+      window.removeEventListener(OPEN_AUDIO_LIBRARY_EVENT, openAudioLibrary);
+      window.removeEventListener(RELINK_AUDIO_LIBRARY_EVENT, relinkAudio);
+    };
+  }, [persistenceUi.openAudioLibraryForCue, persistenceUi.openAudioLibraryForRelink]);
   const effectivePanelLayout = libraryAutoCollapsedBySelect
     ? mapLibraryPanel(panelLayout, (panel) => ({ ...panel, collapsed: true }))
     : panelLayout;
@@ -246,8 +251,9 @@ function AppContent() {
     dispatch(setActiveTool("actor"));
   }
 
-  function addAudioCueFromLibrary(node: LibraryNode, placement?: AudioCuePlacement) {
-    if (placement) audioAssignment.addToGroup(node, placement);
+  function addAudioCueFromLibrary(node: LibraryNode, placement?: AudioCuePlacement, relinkCueId?: string) {
+    if (relinkCueId) audioAssignment.relink(relinkCueId, node);
+    else if (placement) audioAssignment.addToGroup(node, placement);
     else audioAssignment.requestDestination(node);
   }
 

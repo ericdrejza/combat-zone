@@ -4,6 +4,9 @@ import { useSelector } from "react-redux";
 
 import { LIBRARY_SECTION_IDS, LIBRARY_SECTION_LABELS } from "@library/types";
 import { resolveLibraryAsset } from "@library/librarySlice";
+import { getDirectoryAudioNodes } from "@ui/audio/audioLibraryDirectory";
+import { getAudioDeletionImpact } from "./audioDeletionImpact";
+import { ConfirmAudioDeleteDialog } from "./ConfirmAudioDeleteDialog";
 import {
   AssetLibraryAddMenu,
   type AssetSourceType
@@ -63,6 +66,7 @@ type AssetLibraryModalProps = {
   ) => void;
   onBackgroundDoubleClick: (node: LibraryNode) => void;
   onAudioDoubleClick?: (node: LibraryNode) => void;
+  audioRelinking?: boolean;
   onTokenDoubleClick: (node: LibraryNode) => void;
   tokenSubmitLabel?: string;
   mode?: AssetLibraryMode;
@@ -87,6 +91,7 @@ export function AssetLibraryModal({
   lockedSectionId,
   onViewModeChange = () => undefined,
   onTokenDoubleClick,
+  audioRelinking = false,
   tokenSubmitLabel = "Create Actor",
   viewModeBySection = {},
   mode = "browse",
@@ -112,9 +117,8 @@ export function AssetLibraryModal({
   const activeBackgroundImage = useSelector(
     (state: RootState) => state.encounter.present.backgroundImage
   );
-  const encounterActors = useSelector(
-    (state: RootState) => state.encounter.present.actors
-  );
+  const encounter = useSelector((state: RootState) => state.encounter.present);
+  const encounterActors = encounter.actors;
   const encounterOnly = mode !== "browse";
   const pendingDeleteNode = controller.pendingDeleteNode;
   const encounterImportInputRef = useRef<HTMLInputElement>(null);
@@ -388,6 +392,10 @@ export function AssetLibraryModal({
           (record) => record.id === controller.selectedNodeId
         )
       : null;
+  const selectedAudioNode = controller.activeSectionId === "audio" ? controller.selectedNode : null;
+  const canAddSelectedAudio = selectedAudioNode?.type === "folder"
+    ? !audioRelinking && getDirectoryAudioNodes(controller.activeSection, selectedAudioNode, true).length > 0
+    : Boolean(selectedAudioNode && resolveLibraryAsset(controller.activeSection, selectedAudioNode.id));
   const usedTokenNodeIds = (() => {
     const visibleIds = new Set<string>([controller.activeSection.rootId]);
     for (const actorId of encounterActors.allIds) {
@@ -730,13 +738,13 @@ export function AssetLibraryModal({
             <div aria-label="Audio preview controls" className="min-w-0 flex-1" ref={setAudioPreviewContainer} />
             <button
               className="shrink-0 rounded-xl bg-canvas-ink px-4 py-2 text-sm font-semibold text-canvas-on-ink disabled:cursor-not-allowed disabled:opacity-50"
-              disabled={persistence.readOnly || !selectedLibraryImage}
+              disabled={persistence.readOnly || !canAddSelectedAudio}
               onClick={() => {
-                if (selectedLibraryImage) onAudioDoubleClick(selectedLibraryImage);
+                if (selectedAudioNode) onAudioDoubleClick(selectedAudioNode);
               }}
               type="button"
             >
-              Add Cue
+              {audioRelinking ? "Relink Cue" : selectedAudioNode?.type === "folder" ? "Add all cues from directory" : "Add Cue"}
             </button>
           </footer>
         ) : controller.activeSectionId === "encounters" ? (
@@ -863,7 +871,9 @@ export function AssetLibraryModal({
           readOnly={persistence.readOnly}
         />
       ) : null}
-      {pendingDeleteNode ? (
+      {pendingDeleteNode && controller.activeSectionId === "audio" ? (
+        <ConfirmAudioDeleteDialog node={pendingDeleteNode} {...getAudioDeletionImpact(controller.activeSection, pendingDeleteNode, encounter, persistence.encounters)} onCancel={() => controller.setPendingDeleteNodeId(null)} onDelete={controller.confirmDeletePendingFolder} />
+      ) : pendingDeleteNode ? (
         <ConfirmFolderDeleteDialog
           node={pendingDeleteNode}
           onCancel={() => controller.setPendingDeleteNodeId(null)}

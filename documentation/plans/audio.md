@@ -19,6 +19,7 @@ runtime playback state.
 - Groups own configuration. Entities store only ordered group references, and
   selectors derive cues and inheritors without duplicating either relationship.
 - Audio cues have two types selected with icon radio buttons: Track and Effect.
+  Soundboard cue-type buttons use Music for Track and AudioLines for Effect.
   Zone and Actor groups accept Effects only; Music groups accept Tracks only.
   Ambience accepts either type.
 - Track describes position-oriented playback with seeking and resumable timing;
@@ -101,6 +102,18 @@ is available only in Soundboard, requires confirmation, removes its cues, and
 unassigns it from every inheriting entity in one undoable mutation. Missing
 Library assets remain visible so their cues can be removed or relinked. All cue/group creation,
 editing, movement, deletion, assignment, and ordering participates in history.
+Deleting an Audio Library source used by current or saved encounter cues or linked assets
+requires a warning confirmation, including indirect cue references through links
+and sources removed inside directories. Cues are retained with missing sources.
+Warnings include live references and every saved snapshot, including references
+removed by unsaved edits. The same cue in the same encounter counts only once.
+Saved encounters are checked through the persistence provider's validated records.
+Their Play control becomes a Library relink control that opens the Library locked
+to Audio; selecting a replacement changes only the cue's source in undo/redo.
+The Soundboard header shows a red clickable warning to the right of media status
+when cues lack sources, with tooltip `Click to see warnings`. Its dropdown reports
+the count and offers `Delete all unlinked sound cues`, removing only those cues in
+one undoable action while retaining groups and valid-source cues.
 
 ## Assignment and Properties
 
@@ -110,6 +123,13 @@ editing, movement, deletion, assignment, and ordering participates in history.
   the destination picker; a group-specific Add Cue action adds directly to
   that group. Zone or Actor additions use groups
   assigned to the selected entity.
+- Selecting an Audio Library directory changes Add Cue to `Add all cues from
+  directory`. Empty directories cannot be added. Directories containing
+  subdirectories ask once whether to include their cues recursively or use only
+  immediate contents; Cancel adds nothing. All selected directory cues share
+  one destination and, when applicable, one new-group naming dialog. Existing
+  group-specific entry points retain their destination. The entire batch,
+  including a new group/entity assignment when applicable, is one undoable action.
 - When multiple destinations are legal, show cards with group and cue names.
   A new-group option for each compatible section creates, assigns when needed,
   and adds the cue as one undoable action.

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 import { createEncounterActionRecord } from "@core/history/createEncounterActionRecord";
-import { createAudioCue, createAudioCueGroup, setEntityAudioGroups } from "@entities/audio/audioMutations";
+import { createAudioCue, createAudioCueGroup, setEntityAudioGroups, updateAudioCue } from "@entities/audio/audioMutations";
 import type { AudioCueGroupSection, AudioCuePlacement, AudioCueType, AudioSectionType } from "@entities/audio/types";
 import { resolveLibraryAsset } from "@library/librarySlice";
 import type { LibraryNode } from "@library/types";
@@ -11,9 +11,12 @@ import type { RootState } from "@store/store";
 import { useInterfacePreferences } from "@ui/interface_preferences/InterfacePreferenceProvider";
 import { AudioDestinationDialog } from "./AudioDestinationDialog";
 import { getAudioDestinationSections } from "./audioDestinations";
+import { AudioDirectoryDialog } from "./AudioDirectoryDialog";
+import { getDirectoryAudioNodes } from "./audioLibraryDirectory";
+import { useAudioPlayback } from "./AudioPlaybackProvider";
 
 type DestinationRequest = { cueType: AudioCueType; sectionType: AudioSectionType; selectedEntityId: string | null };
-type Pending = DestinationRequest & { encounterId: string; node: LibraryNode };
+type Pending = DestinationRequest & { encounterId: string; node: LibraryNode; nodes: LibraryNode[]; placement?: AudioCuePlacement; askSubdirectories?: boolean };
 
 /** Shares explicit destinations and atomic history commits across Library entry points. */
 export function useAudioCueAssignment() {
@@ -24,33 +27,61 @@ export function useAudioCueAssignment() {
   const audioTool = useSelector((state: RootState) => state.interaction.audioTool);
   const selection = useSelector((state: RootState) => state.interaction.selection);
   const preferences = useInterfacePreferences();
+  const playback = useAudioPlayback();
   const [pending, setPending] = useState<Pending | null>(null);
 
   function requestDestination(node: LibraryNode, options?: Partial<DestinationRequest>) {
-    if (!resolveLibraryAsset(audioLibrary, node.id)) return;
     const sectionType = options?.sectionType ?? (activeToolId === "audio" ? audioTool.sectionType : "encounter");
     const cueType = options?.cueType ?? (activeToolId === "audio" ? audioTool.cueTypeBySection[sectionType] : "track");
     const selectedEntityId = options?.selectedEntityId ?? (selection.selectedEntityType === sectionType && selection.selectedIds.length === 1 ? selection.selectedIds[0] : null);
-    setPending({ cueType, encounterId: encounter.id, node, sectionType, selectedEntityId });
+    prepare({ cueType, encounterId: encounter.id, node, sectionType, selectedEntityId, nodes: [] });
   }
 
   function addToGroup(node: LibraryNode, placement: AudioCuePlacement) {
-    if (!resolveLibraryAsset(audioLibrary, node.id)) return;
     const group = encounter.audioCueGroups.byId[placement.groupId];
     if (!group) return;
     const type = group.section === "music" || group.section === "ambiance" ? "track" : "effect";
-    commitCue(encounter, node, placement, type);
+    prepare({ cueType: type, encounterId: encounter.id, node, sectionType: group.section === "zone" || group.section === "actor" ? group.section : "encounter", selectedEntityId: null, nodes: [], placement });
   }
 
-  function commitCue(state: typeof encounter, node: LibraryNode, placement: AudioCuePlacement, type: AudioCueType, newGroupId?: string) {
-    const cueId = `audio-${crypto.randomUUID?.() ?? Date.now()}`;
-    const nextEncounter = createAudioCue(state, {
-      id: cueId, libraryNodeId: node.id, placement, type,
-      repeatDelay: { ...preferences.audioRepeatDelayDefaults }, volume: preferences.audioCueVolumeDefault
-    });
-    if (nextEncounter === state) return;
+  function prepare(request: Pending) {
+    const { node } = request;
+    if (node.type === "folder") {
+      const nodes = getDirectoryAudioNodes(audioLibrary, node, true);
+      if (!nodes.length) return;
+      const askSubdirectories = (node.childIds ?? []).some((id) => audioLibrary.nodesById[id]?.type === "folder");
+      if (askSubdirectories) setPending({ ...request, nodes, askSubdirectories });
+      else proceed({ ...request, nodes });
+    } else if (resolveLibraryAsset(audioLibrary, node.id)) proceed({ ...request, nodes: [node] });
+  }
+
+  function proceed(request: Pending) {
+    if (request.placement) {
+      commitCues(encounter, request.nodes, request.placement, request.cueType);
+      setPending(null);
+    } else setPending({ ...request, askSubdirectories: false });
+  }
+
+  function commitCues(state: typeof encounter, nodes: LibraryNode[], placement: AudioCuePlacement, type: AudioCueType, newGroupId?: string) {
+    let nextEncounter = state;
+    const cueIds: string[] = [];
+    for (const node of nodes) {
+      if (!resolveLibraryAsset(audioLibrary, node.id)) continue;
+      const cueId = `audio-${crypto.randomUUID()}`;
+      const next = createAudioCue(nextEncounter, {
+        id: cueId, libraryNodeId: node.id, placement, type,
+        repeatDelay: { ...preferences.audioRepeatDelayDefaults }, volume: preferences.audioCueVolumeDefault
+      });
+      if (next !== nextEncounter) cueIds.push(cueId);
+      nextEncounter = next;
+    }
+    if (!cueIds.length) return;
+    const single = cueIds.length === 1;
     dispatch(commitEncounterChange({
-      action: createEncounterActionRecord(newGroupId ? "audio.createGroupWithCue" : "audio.createCue", { cueId, libraryNodeId: node.id, ...(newGroupId ? { groupId: newGroupId } : {}) }),
+      action: createEncounterActionRecord(
+        newGroupId ? single ? "audio.createGroupWithCue" : "audio.createGroupWithCues" : single ? "audio.createCue" : "audio.createCues",
+        { ...(single ? { cueId: cueIds[0], libraryNodeId: nodes[0].id } : { cueIds, libraryNodeIds: nodes.map((node) => node.id) }), ...(newGroupId ? { groupId: newGroupId } : {}) }
+      ),
       nextEncounter
     }));
   }
@@ -59,7 +90,7 @@ export function useAudioCueAssignment() {
     if (!pending || pending.encounterId !== encounter.id) return;
     const group = encounter.audioCueGroups.byId[placement.groupId];
     if (!group || !getAudioDestinationSections(pending.sectionType, pending.cueType).includes(group.section)) return;
-    commitCue(encounter, pending.node, placement, pending.cueType);
+    commitCues(encounter, pending.nodes, placement, pending.cueType);
     setPending(null);
   }
 
@@ -72,12 +103,19 @@ export function useAudioCueAssignment() {
       if (!entity) return;
       nextEncounter = setEntityAudioGroups(nextEncounter, section, entity.id, [...(entity.audioGroupIds ?? []), groupId]);
     }
-    commitCue(nextEncounter, pending.node, { type: "group", groupId }, pending.cueType, groupId);
+    commitCues(nextEncounter, pending.nodes, { type: "group", groupId }, pending.cueType, groupId);
     setPending(null);
   }
 
   return {
     addToGroup, requestDestination,
-    dialog: pending && pending.encounterId === encounter.id ? <AudioDestinationDialog audioLibrary={audioLibrary} cueType={pending.cueType} encounter={encounter} node={pending.node} onCancel={() => setPending(null)} onChoose={choose} onCreateGroup={createGroup} sectionType={pending.sectionType} selectedEntityId={pending.selectedEntityId} /> : null
+    relink: (cueId: string, node: LibraryNode) => {
+      if (!encounter.audioCues.byId[cueId] || !resolveLibraryAsset(audioLibrary, node.id)) return;
+      playback.stop(cueId);
+      dispatch(commitEncounterChange({ action: createEncounterActionRecord("audio.relinkCue", { cueId, libraryNodeId: node.id }), nextEncounter: updateAudioCue(encounter, cueId, { libraryNodeId: node.id }) }));
+    },
+    dialog: pending && pending.encounterId === encounter.id ? pending.askSubdirectories
+      ? <AudioDirectoryDialog name={pending.node.name} directCount={getDirectoryAudioNodes(audioLibrary, pending.node, false).length} totalCount={pending.nodes.length} onCancel={() => setPending(null)} onChoose={(recursive) => proceed({ ...pending, nodes: getDirectoryAudioNodes(audioLibrary, pending.node, recursive), askSubdirectories: false })} />
+      : <AudioDestinationDialog audioLibrary={audioLibrary} cueType={pending.cueType} cueCount={pending.nodes.length} encounter={encounter} node={pending.node} onCancel={() => setPending(null)} onChoose={choose} onCreateGroup={createGroup} sectionType={pending.sectionType} selectedEntityId={pending.selectedEntityId} /> : null
   };
 }
