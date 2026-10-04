@@ -28,6 +28,26 @@ async function value(id = "a", current = 9) {
 afterEach(() => { localStorage.removeItem(COMBAT_PREFERENCES_STORAGE_KEY); setPersistenceWritable(true); });
 
 describe("StatusPanel", () => {
+  it("allows manual status changes without blocking subsequent healing and damage automation", async () => {
+    localStorage.setItem(COMBAT_PREFERENCES_STORAGE_KEY, JSON.stringify({ limits: "bounded", automaticHealth: true, unit: "fixed", thresholds: [null, null, 12] }));
+    setup();
+    fireEvent.click(screen.getByRole("radio", { name: "Dead" }));
+    await waitFor(() => expect(store.getState().encounter.present.actors.byId.a.status).toBe(0));
+    fireEvent.click(screen.getByRole("button", { name: "Apply healing" }));
+    await value("a", 11);
+    expect(store.getState().encounter.present.actors.byId.a.status).toBe(2);
+    fireEvent.click(screen.getByRole("radio", { name: "Unconscious / severely injured" }));
+    await waitFor(() => expect(store.getState().encounter.present.actors.byId.a.status).toBe(1));
+    fireEvent.click(screen.getByRole("button", { name: "Apply damage" }));
+    await value("a", 10);
+    expect(store.getState().encounter.present.actors.byId.a.status).toBe(2);
+    act(() => store.dispatch(undoEncounterChange()));
+    expect(store.getState().encounter.present.actors.byId.a.status).toBe(1);
+    expect(store.getState().encounter.present.actors.byId.a.hitPoints?.current).toBe(11);
+    act(() => store.dispatch(redoEncounterChange()));
+    expect(store.getState().encounter.present.actors.byId.a.status).toBe(2);
+    expect(store.getState().encounter.present.actors.byId.a.hitPoints?.current).toBe(10);
+  });
   it("shows read-only names, all approved conditions alphabetically, and health radio options", () => {
     setup();
     expect(within(screen.getByLabelText("Selected actor names")).getByText("Alpha")).toBeInTheDocument();

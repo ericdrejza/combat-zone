@@ -20,14 +20,14 @@ it("accepts gaps in ordered thresholds and skips every unset status", () => {
   expect(automaticStatus({ current: 0, maximum: 20 }, { ...rules, thresholds: [null, null, 10] })).toBe(2);
   expect(automaticStatus({ current: 1, maximum: 20 }, { ...rules, unit: "percent", thresholds: [null, 5, null] })).toBe(1);
 });
-it("keeps statuses with blank thresholds under manual control during HP updates", () => {
-  expect(automaticStatus({ current: 20, maximum: 20 }, rules, 0)).toBe(0);
+it("recalculates manually assigned statuses even when their own cutoff is blank", () => {
+  expect(automaticStatus({ current: 20, maximum: 20 }, rules)).toBe(3);
   const state = createActor(createEncounterState({ id: "partial-health", name: "Partial health" }), { id: "a", currentZoneId: "zoneless" });
   state.actors.byId.a.status = 0;
   state.actors.byId.a.hitPoints = { current: 0, maximum: 20 };
   const next = adjustHitPoints(state, ["a"], 10, rules);
   expect(next.actors.byId.a.hitPoints?.current).toBe(10);
-  expect(next.actors.byId.a.status).toBe(0);
+  expect(next.actors.byId.a.status).toBe(2);
 });
 it.each(["STRICT", "ADVISORY"] as const)("recalculates all actors atomically without changing HP in %s", (mode) => {
   let state = createActor(createActor(createEncounterState({ id: "partial-health", name: "Partial health" }), { id: "a", currentZoneId: "zoneless" }), { id: "b", currentZoneId: "zoneless" });
@@ -48,4 +48,15 @@ it.each(["STRICT", "ADVISORY"] as const)("recalculates all actors atomically wit
   history = reducer(history, redoEncounterChange());
   expect(history.present).toEqual(next);
   expect(recalculateHealthStatuses(next, rules)).toBe(next);
+});
+
+it("preserves manual health during HP changes when the enabled gate has no cutoffs", () => {
+  const state = createActor(createEncounterState({ id: "empty-health", name: "Empty health" }), { id: "a", currentZoneId: "zoneless" });
+  state.actors.byId.a.status = 2;
+  state.actors.byId.a.hitPoints = { current: 5, maximum: 20 };
+  const emptyRules: CombatRules = { ...rules, thresholds: [null, null, null] };
+  const next = adjustHitPoints(state, ["a"], 1, emptyRules);
+  expect(next.actors.byId.a.hitPoints?.current).toBe(6);
+  expect(next.actors.byId.a.status).toBe(2);
+  expect(recalculateHealthStatuses(next, emptyRules)).toBe(next);
 });

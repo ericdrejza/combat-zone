@@ -18,7 +18,7 @@ export function updateSelectedActors(state: EncounterState, ids: string[], updat
 export function setHitPoints(actor: Actor, input: HitPoints, rules: CombatRules, forceStatus = false): Actor {
   const hp = normalizeHitPoints(input, rules);
   const changed = hp.current !== actor.hitPoints?.current || hp.maximum !== actor.hitPoints?.maximum;
-  const status = rules.automaticHealth && (changed || forceStatus) ? automaticStatus(hp, rules, actor.status) : actor.status;
+  const status = rules.automaticHealth && validThresholds(rules) && (changed || forceStatus) ? automaticStatus(hp, rules) : actor.status;
   if (!changed && status === actor.status) return actor;
   return { ...actor, hitPoints: hp, status };
 }
@@ -38,7 +38,7 @@ export function recalculateHealthStatuses(state: EncounterState, rules: CombatRu
   if (!rules.automaticHealth || !validThresholds(rules)) return state;
   return updateSelectedActors(state, state.actors.allIds, (actor) => {
     if (!actor.hitPoints) return actor;
-    const status = automaticStatus(actor.hitPoints, rules, actor.status);
+    const status = automaticStatus(actor.hitPoints, rules);
     return status === actor.status ? actor : { ...actor, status };
   });
 }

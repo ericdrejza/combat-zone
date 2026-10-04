@@ -17,7 +17,7 @@ export function readCombatPreferences(): CombatRules {
         ? value.thresholds.map((n) => Number.isSafeInteger(n) ? n : null) as CombatRules["thresholds"]
         : [null, null, null]
     };
-    rules.automaticHealth = value?.automaticHealth === true && validThresholds(rules);
+    rules.automaticHealth = value?.automaticHealth === true && (rules.thresholds.every((value) => value === null) || validThresholds(rules));
     return rules;
   } catch { return { ...DEFAULT_COMBAT_RULES }; }
 }
@@ -43,7 +43,7 @@ export function CombatPreferenceProvider({ children }: { children: ReactNode }) 
     };
   }, []);
   function saveRules(next: CombatRules, nextVisibility = visibility) {
-    if (next.automaticHealth && !validThresholds(next)) return;
+    if (next.thresholds.some((value) => value !== null) && !validThresholds(next)) return;
     setRules(next);
     const normalized = normalizeStatusVisibility(nextVisibility);
     setVisibility(normalized);

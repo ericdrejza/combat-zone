@@ -796,14 +796,25 @@ disable a direction only when every configured Actor is at that limit. Uncapped
 directions remain enabled, and disabled controls explain the reached limit.
 Automatic health starts off with no preset thresholds. Each Dead,
 Unconscious/severely injured, or Injured cutoff is optional: a blank cutoff never
-triggers that status and leaves that status under manual control. Setting the
-first valid cutoff enables automation. The user can switch automation off;
-later cutoff edits keep it off until re-enabled. Clearing every cutoff disables
-it. Configured cutoffs must be ordered by severity, skipping blanks, using one
+triggers that status, so assigning it requires manual selection.
+The “Automatically update health status” switch is the first setting in its
+subsection and gates the threshold units, cutoffs, and related help. Enabling it
+reveals these controls, even when no cutoffs are configured. Disabling it hides
+them and preserves saved thresholds. Clearing every cutoff leaves the switch
+enabled but performs no automatic status changes. Configured cutoffs must be
+ordered by severity, skipping blanks, using one
 shared fixed-HP or percentage-of-maximum unit. Fixed values are integers;
-percentages are integers from 0–100. Ties choose the most severe configured
-status; values above all configured cutoffs are Healthy. Actors manually set to
-a status with a blank cutoff retain it until manually changed.
+percentages are integers from 0–100. Nonempty percentage cutoff inputs display
+a % suffix directly after the number; empty inputs and fixed-HP cutoffs do not.
+The number (or number and % together) is centered in the field, with repeatable
+minus and plus controls on its left and right. These steps save immediately and
+percentage steps stop at 0 and 100. An X button before minus clears that cutoff
+and saves immediately; it is disabled when empty. Enter blurs the input, saving
+valid cutoffs through the same validation as leaving the field. Ties choose the
+most severe configured
+status; values above all configured cutoffs are Healthy. Manual status selection
+applies immediately without disabling future automatic triggers, including
+when the manually selected status has no configured cutoff.
 
 Combat settings save toggles/selects immediately and cutoff inputs on blur.
 Invalid cutoffs remain editable but do not replace the last valid preferences.
@@ -813,8 +824,7 @@ all configured Actors’ statuses in the current encounter without changing HP,
 through validation, writer guards and one undoable history command. No-op
 recalculations create no history. HP-limit changes apply to subsequent HP edits.
 With automation enabled, effective current/maximum HP changes also recalculate
-health. Overrides for statuses with configured cutoffs persist until an effective
-HP change or cutoff recalculation; no-op HP commands preserve them.
+health. Manual overrides persist until an effective HP change or cutoff recalculation; no-op HP commands preserve them.
 
 Combat settings also autosave global Status panel visibility. All conditions
 and equipment sections are shown by

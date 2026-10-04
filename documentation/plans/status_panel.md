@@ -198,15 +198,16 @@ Support three mutually exclusive HP-limit modes:
 3. Allow negative HP and healing above maximum.
 
 Automatic health starts off without default thresholds. Each upper cutoff is
-optional; blanks disable automation for that status. Set the first valid cutoff
-to enable automation; the user may switch it off, and later edits preserve that
-choice. Clearing every cutoff disables automation.
+optional; blanks disable automation for that status. The automation switch appears first and gates all threshold controls below it.
+It can be enabled before cutoffs are configured. Disabling it hides the controls
+and retains saved cutoffs; clearing every cutoff leaves it enabled without
+automatic status changes.
 
 Use one shared unit selector: fixed HP or percentage of maximum HP. Configured
 cutoffs must be ordered by severity, skipping blanks; fixed values are integers
 and percentages range from 0 through 100. Ties select the most severe configured
-status. Values above all configured cutoffs are Healthy. Manually assigned
-statuses with blank cutoffs remain manual until explicitly changed.
+status. Values above all configured cutoffs are Healthy. Manual status selection never blocks future automatic triggers, including
+when that status has a blank cutoff.
 
 Autosave toggles/selects immediately and cutoff inputs on blur. Reject invalid
 drafts without overwriting saved settings. Remove Save and Apply controls.

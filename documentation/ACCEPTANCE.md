@@ -463,8 +463,9 @@ these back into `AGENT.md` or `DESIGN.md`.
 - [x] Combat settings autosave toggles/selects and cutoff inputs on blur. No Save
       or Apply controls remain. Valid automatic-health changes recalculate all
       configured Actors atomically with undo/redo, preserving HP and writer guards.
-      Blank cutoffs never trigger their statuses; manual statuses with blank cutoffs
-      stay manual. The first cutoff enables automation; clearing all disables it.
+      Blank cutoffs never trigger their statuses; manual selection does not block
+      future automatic triggers. The automation switch appears first and shows threshold controls
+      only when enabled. It supports blank cutoffs and preserves them when disabled.
       Invalid drafts preserve the last valid preferences.
 - [x] Health counter name defaults to Hit points and durable preferences synchronize
       and reset alongside existing application-owned preferences.

@@ -1,8 +1,8 @@
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { Provider } from "react-redux";
 import { createEncounterState } from "@core/encounter/createEncounterState";
 import { createActor } from "@entities/actor/actorMutations";
-import { CombatPreferenceProvider, COMBAT_PREFERENCES_STORAGE_KEY } from "@ui/combat_preferences/CombatPreferenceProvider";
+import { CombatPreferenceProvider, COMBAT_PREFERENCES_STORAGE_KEY, readCombatPreferences } from "@ui/combat_preferences/CombatPreferenceProvider";
 import { CombatSettings } from "@ui/settings/CombatSettings";
 import { InterfacePreferenceProvider, INTERFACE_PREFERENCES_STORAGE_KEY } from "@ui/interface_preferences/InterfacePreferenceProvider";
 import { InterfaceSettings } from "@ui/settings/InterfaceSettings";
@@ -21,19 +21,112 @@ function setup() {
   store.dispatch(loadEncounterState(state));
   return render(<Provider store={store}><CombatPreferenceProvider><CombatSettings /></CombatPreferenceProvider></Provider>);
 }
+function enableAutomation() {
+  fireEvent.click(screen.getByRole("switch", { name: "Automatically update health status" }));
+}
 function configure() {
+  enableAutomation();
   fireEvent.change(screen.getByLabelText("Dead upper cutoff"), { target: { value: "0" } });
   fireEvent.change(screen.getByLabelText("Unconscious / severely injured upper cutoff"), { target: { value: "5" } });
   fireEvent.change(screen.getByLabelText("Injured upper cutoff"), { target: { value: "10" } });
 }
 describe("Combat and resource label preferences", () => {
+  it("commits on Enter by blurring and clears individual cutoffs immediately", () => {
+    setup();
+    enableAutomation();
+    fireEvent.change(screen.getByLabelText("Threshold units"), { target: { value: "percent" } });
+    const injured = screen.getByLabelText("Injured upper cutoff");
+    const dead = screen.getByLabelText("Dead upper cutoff");
+    const clear = screen.getByRole("button", { name: "Clear dead cutoff" });
+    expect(clear).toBeDisabled();
+    act(() => injured.focus());
+    fireEvent.change(injured, { target: { value: "50" } });
+    fireEvent.keyDown(injured, { key: "Enter" });
+    expect(injured).not.toHaveFocus();
+    expect(readCombatPreferences().thresholds).toEqual([null, null, 50]);
+    act(() => dead.focus());
+    fireEvent.change(dead, { target: { value: "0" } });
+    fireEvent.keyDown(dead, { key: "Enter" });
+    expect(dead).not.toHaveFocus();
+    expect(readCombatPreferences().thresholds).toEqual([0, null, 50]);
+    fireEvent.click(clear);
+    expect(dead).toHaveValue(null);
+    expect(within(dead.parentElement!).queryByText("%")).not.toBeInTheDocument();
+    expect(clear).toBeDisabled();
+    expect(readCombatPreferences().thresholds).toEqual([null, null, 50]);
+    act(() => injured.focus());
+    fireEvent.change(injured, { target: { value: "101" } });
+    fireEvent.keyDown(injured, { key: "Enter" });
+    expect(injured).not.toHaveFocus();
+    expect(readCombatPreferences().thresholds).toEqual([null, null, 50]);
+    expect(screen.getByRole("alert")).toBeInTheDocument();
+  });
+  it("steps cutoffs with minus/plus buttons, autosaves, and stops at percentage bounds", () => {
+    setup();
+    enableAutomation();
+    const cutoff = screen.getByLabelText("Dead upper cutoff");
+    fireEvent.click(screen.getByRole("button", { name: "Decrease dead cutoff" }));
+    expect(cutoff).toHaveValue(0);
+    fireEvent.click(screen.getByRole("button", { name: "Decrease dead cutoff" }));
+    expect(cutoff).toHaveValue(-1);
+    expect(readCombatPreferences().thresholds).toEqual([-1, null, null]);
+    fireEvent.click(screen.getByRole("button", { name: "Increase dead cutoff" }));
+    fireEvent.change(screen.getByLabelText("Threshold units"), { target: { value: "percent" } });
+    expect(screen.getByRole("button", { name: "Decrease dead cutoff" })).toBeDisabled();
+    fireEvent.change(cutoff, { target: { value: "99" } });
+    fireEvent.click(screen.getByRole("button", { name: "Increase dead cutoff" }));
+    expect(cutoff).toHaveValue(100);
+    expect(readCombatPreferences().thresholds).toEqual([100, null, null]);
+    expect(screen.getByRole("button", { name: "Increase dead cutoff" })).toBeDisabled();
+  });
+  it("shows percentage suffixes only on populated percentage cutoffs", () => {
+    setup();
+    enableAutomation();
+    const dead = screen.getByLabelText("Dead upper cutoff");
+    const injured = screen.getByLabelText("Injured upper cutoff");
+    fireEvent.change(dead, { target: { value: "0" } });
+    fireEvent.blur(dead);
+    expect(within(dead.parentElement!).queryByText("%")).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Threshold units"), { target: { value: "percent" } });
+    expect(within(dead.parentElement!).getByText("%")).toBeInTheDocument();
+    expect(within(injured.parentElement!).queryByText("%")).not.toBeInTheDocument();
+    fireEvent.change(injured, { target: { value: "50" } });
+    expect(within(injured.parentElement!).getByText("%")).toBeInTheDocument();
+    expect(injured).toHaveValue(50);
+    fireEvent.change(injured, { target: { value: "" } });
+    expect(within(injured.parentElement!).queryByText("%")).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Threshold units"), { target: { value: "fixed" } });
+    expect(within(dead.parentElement!).queryByText("%")).not.toBeInTheDocument();
+  });
+  it("gates threshold controls, preserves their values while hidden, and restores an enabled empty gate", () => {
+    const view = setup();
+    const gate = screen.getByRole("switch", { name: "Automatically update health status" });
+    expect(gate).toBeEnabled();
+    expect(gate).toHaveAttribute("aria-checked", "false");
+    expect(screen.queryByLabelText("Threshold units")).not.toBeInTheDocument();
+    enableAutomation();
+    expect(screen.getByLabelText("Dead upper cutoff")).toHaveValue(null);
+    expect(readCombatPreferences().automaticHealth).toBe(true);
+    view.unmount();
+    setup();
+    expect(screen.getByLabelText("Dead upper cutoff")).toHaveValue(null);
+    fireEvent.change(screen.getByLabelText("Dead upper cutoff"), { target: { value: "0" } });
+    fireEvent.blur(screen.getByLabelText("Dead upper cutoff"));
+    enableAutomation();
+    expect(screen.queryByLabelText("Threshold units")).not.toBeInTheDocument();
+    expect(readCombatPreferences()).toMatchObject({ automaticHealth: false, thresholds: [0, null, null] });
+    enableAutomation();
+    expect(screen.getByLabelText("Dead upper cutoff")).toHaveValue(0);
+  });
   it("autosaves the first threshold on blur and recalculates status with undo/redo", async () => {
     setup();
     expect(screen.queryByRole("button", { name: "Save combat settings" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Apply to current encounter" })).not.toBeInTheDocument();
+    enableAutomation();
+    const beforeCutoff = localStorage.getItem(COMBAT_PREFERENCES_STORAGE_KEY);
     const cutoff = screen.getByLabelText("Dead upper cutoff");
     fireEvent.change(cutoff, { target: { value: "0" } });
-    expect(localStorage.getItem(COMBAT_PREFERENCES_STORAGE_KEY)).toBeNull();
+    expect(localStorage.getItem(COMBAT_PREFERENCES_STORAGE_KEY)).toBe(beforeCutoff);
     expect(store.getState().encounter.past).toHaveLength(0);
     fireEvent.blur(cutoff);
     expect(JSON.parse(localStorage.getItem(COMBAT_PREFERENCES_STORAGE_KEY)!)).toMatchObject({ automaticHealth: true, thresholds: [0, null, null] });
@@ -63,11 +156,12 @@ describe("Combat and resource label preferences", () => {
     const percentSaved = localStorage.getItem(COMBAT_PREFERENCES_STORAGE_KEY);
     fireEvent.change(screen.getByLabelText("Injured upper cutoff"), { target: { value: "101" } });
     fireEvent.blur(screen.getByLabelText("Injured upper cutoff"));
-    expect(screen.getByRole("switch", { name: "Automatically update health status" })).toBeDisabled();
+    expect(screen.getByRole("switch", { name: "Automatically update health status" })).toBeEnabled();
     expect(localStorage.getItem(COMBAT_PREFERENCES_STORAGE_KEY)).toBe(percentSaved);
   });
-  it("allows blank statuses, preserves manual death and disables all-blank automation", async () => {
+  it("allows blank cutoffs, recalculates manual status, and leaves the gate enabled for all-blank cutoffs", async () => {
     setup();
+    enableAutomation();
     fireEvent.change(screen.getByLabelText("Injured upper cutoff"), { target: { value: "10" } });
     fireEvent.blur(screen.getByLabelText("Injured upper cutoff"));
     await waitFor(() => expect(store.getState().encounter.present.actors.byId.a.status).toBe(2));
@@ -77,26 +171,26 @@ describe("Combat and resource label preferences", () => {
     act(() => store.dispatch(loadEncounterState(manual)));
     fireEvent.change(screen.getByLabelText("Injured upper cutoff"), { target: { value: "12" } });
     fireEvent.blur(screen.getByLabelText("Injured upper cutoff"));
-    expect(store.getState().encounter.present.actors.byId.a.status).toBe(0);
+    await waitFor(() => expect(store.getState().encounter.present.actors.byId.a.status).toBe(2));
     fireEvent.change(screen.getByLabelText("Injured upper cutoff"), { target: { value: "" } });
     fireEvent.blur(screen.getByLabelText("Injured upper cutoff"));
-    expect(JSON.parse(localStorage.getItem(COMBAT_PREFERENCES_STORAGE_KEY)!)).toMatchObject({ automaticHealth: false, thresholds: [null, null, null] });
-    expect(screen.getByRole("switch", { name: "Automatically update health status" })).toBeDisabled();
-    expect(store.getState().encounter.present.actors.byId.a.status).toBe(0);
+    expect(JSON.parse(localStorage.getItem(COMBAT_PREFERENCES_STORAGE_KEY)!)).toMatchObject({ automaticHealth: true, thresholds: [null, null, null] });
+    expect(screen.getByRole("switch", { name: "Automatically update health status" })).toBeEnabled();
+    expect(store.getState().encounter.present.actors.byId.a.status).toBe(2);
   });
   it("saves selects immediately and respects disabled automation and writer boundaries", () => {
     setup();
     fireEvent.change(screen.getByLabelText("Hit point limits"), { target: { value: "unbounded" } });
     expect(JSON.parse(localStorage.getItem(COMBAT_PREFERENCES_STORAGE_KEY)!).limits).toBe("unbounded");
     expect(store.getState().encounter.past).toHaveLength(0);
+    enableAutomation();
     setPersistenceWritable(false);
     fireEvent.change(screen.getByLabelText("Injured upper cutoff"), { target: { value: "10" } });
     fireEvent.blur(screen.getByLabelText("Injured upper cutoff"));
     expect(store.getState().encounter.past).toHaveLength(0);
     expect(store.getState().encounter.present.actors.byId.a.status).toBe(3);
     fireEvent.click(screen.getByRole("switch", { name: "Automatically update health status" }));
-    fireEvent.change(screen.getByLabelText("Injured upper cutoff"), { target: { value: "12" } });
-    fireEvent.blur(screen.getByLabelText("Injured upper cutoff"));
+    expect(screen.queryByLabelText("Injured upper cutoff")).not.toBeInTheDocument();
     expect(JSON.parse(localStorage.getItem(COMBAT_PREFERENCES_STORAGE_KEY)!).automaticHealth).toBe(false);
   });
   it("synchronizes storage and resets durable combat defaults", () => {
@@ -107,7 +201,7 @@ describe("Combat and resource label preferences", () => {
     expect(screen.getByLabelText("Hit point limits")).toHaveValue("unbounded");
     act(() => window.dispatchEvent(new Event(LOCAL_PREFERENCES_RESET_EVENT)));
     expect(screen.getByLabelText("Hit point limits")).toHaveValue("bounded");
-    expect(screen.getByLabelText("Dead upper cutoff")).toHaveValue(null);
+    expect(screen.queryByLabelText("Dead upper cutoff")).not.toBeInTheDocument();
   });
   it("persists the health label, trims names, falls back on blank, and resets", () => {
     render(<Provider store={store}><InterfacePreferenceProvider><InterfaceSettings /></InterfacePreferenceProvider></Provider>);

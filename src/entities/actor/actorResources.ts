@@ -26,10 +26,8 @@ export function normalizeHitPoints(hp: HitPoints, rules: CombatRules): HitPoints
     Math.min(rules.limits === "unbounded" ? Infinity : hp.maximum, hp.current)) };
 }
 
-export function automaticStatus(hp: HitPoints, rules: CombatRules, currentStatus: ActorStatus = 3): ActorStatus {
+export function automaticStatus(hp: HitPoints, rules: CombatRules): ActorStatus {
   if (!validThresholds(rules)) throw new Error("Configure ordered health thresholds before enabling automatic health.");
-  // An unconfigured status remains under manual control, including manual death.
-  if (currentStatus !== 3 && rules.thresholds[currentStatus] === null) return currentStatus;
   const value = rules.unit === "percent" ? hp.current * 100 / hp.maximum : hp.current;
   const index = rules.thresholds.findIndex((threshold) => threshold !== null && value <= threshold);
   return (index < 0 ? 3 : index) as ActorStatus;
