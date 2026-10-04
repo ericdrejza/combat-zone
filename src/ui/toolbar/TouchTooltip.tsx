@@ -108,6 +108,13 @@ export function TouchTooltipProvider({ children }: { children: ReactNode }) {
     if (event.pointerType !== "touch") return;
     activeTouchPointersRef.current.add(event.pointerId);
     if (event.button !== 0) return;
+    if (event.target instanceof Element && event.target.closest("[data-press-repeat]:not(:disabled)")) {
+      clearHold();
+      clearHide();
+      setTooltip(null);
+      suppressNextClickRef.current = false;
+      return;
+    }
     const resolved = findTooltipTarget(event.target);
     if (!resolved) return;
 

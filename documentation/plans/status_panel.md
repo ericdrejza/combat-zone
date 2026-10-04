@@ -347,3 +347,17 @@ work as agreed. No deployment or external publication was performed.
   sections hide even when active; Actor markers remain unchanged.
 - Default to all shown and persist/synchronize/reset with Combat preferences;
   display preferences remain outside encounter history.
+
+### Initiative condition display
+
+- Show active condition icons immediately after Actor names with name tooltips.
+- Measure the name and icon strip in the owning window; replace the full strip
+  with Activity if it cannot fit. Hover/focus lists all condition icons and names.
+- Clicking any condition icon asks to remove it from its Actor; validate and
+  record confirmed removal with undo/redo, preserving other markers. Read-only
+  windows can inspect, and cancel/backdrop/Escape leave conditions unchanged.
+
+- HP and counter decrement/increment controls, including modal fields and the
+  damage/healing amount, support hold-to-repeat with an enabled tooltip hint.
+  Repetition stops on release, cancellation, leaving the control, or reaching
+  a bound. Apply damage and Apply healing remain single-click actions.

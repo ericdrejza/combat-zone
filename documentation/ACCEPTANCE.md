@@ -334,6 +334,13 @@ truth.
 
 ## Initiative tracker
 
+- [x] Active condition icons follow Actor names with name tooltips. If all icons
+      cannot fit, Activity shows an icon/name list on hover or keyboard focus.
+      Resize and condition/name changes re-evaluate fit in docked and popout views.
+      Icons prompt to remove a condition from its Actor; confirmation uses
+      validation/history, cancellation preserves it, and read-only removal is
+      disabled. Equipment markers are excluded.
+
 - [x] A default-on standard switch at the bottom of Interface > Panels toggles
       strikethrough on dead Actor names in the list and popout; the preference
       persists independently of encounter history and resets to enabled.
@@ -469,3 +476,7 @@ these back into `AGENT.md` or `DESIGN.md`.
 - [x] Clicking current HP or counter values selects the full value for digit-only
       inline edits. Enter/blur commits through existing bounds and undo/redo;
       Escape/empty drafts cancel and read-only encounters disable editing.
+- [x] HP and counter increment/decrement controls, including editor fields and
+      damage/healing amount, repeat while held and advertise this in tooltips.
+      Release, cancellation and bounds stop repeating; counter steps remain
+      undoable. Apply damage and Apply healing remain single-click actions.

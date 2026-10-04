@@ -20,6 +20,7 @@ export function formatStatusAction(action: EncounterActionRecord, snapshots: { b
     case "actor.saveCounter": return `Saved a counter for ${names}.`;
     case "actor.adjustCounter": return `Adjusted a counter for ${names}.`;
     case "actor.removeCounter": return `Removed a counter from ${names}.`;
+    case "actor.removeCondition": return `Removed ${String(action.payload.condition)} from ${names}.`;
     case "actor.toggleCondition": return `Updated conditions for ${names}.`;
     case "actor.toggleWeapon": return `Updated weapons for ${names}.`;
     case "actor.toggleArmor": return `Updated armor for ${names}.`;

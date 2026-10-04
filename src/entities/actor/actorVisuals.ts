@@ -22,7 +22,7 @@ export const ACTOR_LAYOUT_GROUP_COLORS: Record<
   },
   enemy: {
     fill: '#dc2626',
-    iconClassName: 'text-red-600 dark:text-red-500',
+    iconClassName: 'text-red-600',
     outline: '#ef4444'
   },
   hero: {

@@ -55,6 +55,12 @@ export function toggleMarker(state: EncounterState, ids: string[], marker: strin
   });
 }
 
+/** Removing a condition never toggles it back on if it was already removed. */
+export function removeMarker(state: EncounterState, actorId: string, marker: string): EncounterState {
+  return updateSelectedActors(state, [actorId], (actor) => actor.statusEffects.includes(marker)
+    ? { ...actor, statusEffects: actor.statusEffects.filter((value) => value !== marker) } : actor);
+}
+
 export function saveCounter(actor: Actor, input: ActorCounter): Actor {
   const counter = normalizeCounter(input);
   const counters = actor.counters ?? { allIds: [], byId: {} };

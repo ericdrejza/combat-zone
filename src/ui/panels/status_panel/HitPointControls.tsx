@@ -1,9 +1,10 @@
-import { HeartMinus, HeartPlus, Pencil, Plus } from "lucide-react";
+import { HeartMinus, HeartPlus, Pencil, Plus, RotateCcw } from "lucide-react";
 import { useState } from "react";
 import type { Actor } from "@entities/actor/types";
 import type { HitPoints } from "@entities/actor/actorResources";
 import { useCombatPreferences } from "@ui/combat_preferences/CombatPreferenceProvider";
 import { TouchTooltip } from "@ui/toolbar/TouchTooltip";
+import { CounterNumberField } from "./CounterNumberField";
 import { InlineResourceValue } from "./InlineResourceValue";
 import { DamageHealingAmountField } from "./DamageHealingAmountField";
 import { ConfirmStatusDialog, StatusDialog } from "./StatusDialog";
@@ -71,13 +72,17 @@ export function HitPointControls({ actors, label, disabled, onAdjust, onSet }: {
 }
 
 function HitPointEditor({ actor, label, onClose, onSave }: { actor: Actor; label: string; onClose: () => void; onSave: (hp: HitPoints) => void }) {
+  const { rules } = useCombatPreferences();
   const [maximum, setMaximum] = useState(actor.hitPoints ? String(actor.hitPoints.maximum) : "");
   const [current, setCurrent] = useState(actor.hitPoints ? String(actor.hitPoints.current) : "");
-  const valid = maximum.trim() !== "" && current.trim() !== "" && Number.isSafeInteger(Number(maximum)) && Number(maximum) > 0 && Number.isSafeInteger(Number(current));
-  return <StatusDialog title={`Edit ${label}`} onClose={onClose}>
+  const validMaximum = maximum.trim() !== "" && Number.isSafeInteger(Number(maximum)) && Number(maximum) > 0;
+  const valid = validMaximum && current.trim() !== "" && Number.isSafeInteger(Number(current));
+  return <StatusDialog title={`Edit ${label === "Hit points" ? "hit points" : label}`} onClose={onClose}>
     <form className="space-y-3" onSubmit={(event) => { event.preventDefault(); if (valid) onSave({ maximum: Number(maximum), current: Number(current) }); }}>
-      <label className="block text-sm">Maximum<input aria-label="Maximum hit points" className="mt-1 w-full rounded border border-canvas-line bg-canvas p-2" type="number" min="1" step="1" value={maximum} onChange={(event) => { setMaximum(event.currentTarget.value); if (!actor.hitPoints && (current === "" || current === maximum)) setCurrent(event.currentTarget.value); }} /></label>
-      <label className="block text-sm">Current<input aria-label="Current hit points" className="mt-1 w-full rounded border border-canvas-line bg-canvas p-2" type="number" step="1" value={current} onChange={(event) => setCurrent(event.currentTarget.value)} /></label>
+      <CounterNumberField label="Maximum hit points" name="maximum hit points" value={maximum} minimum={1} emptyIncrementValue={1} onChange={(value) => { setMaximum(value); if (!actor.hitPoints && (current === "" || current === maximum)) setCurrent(value); }} />
+      <CounterNumberField label="Current hit points" name="current hit points" value={current} minimum={rules.limits === "bounded" ? 0 : undefined} maximum={rules.limits !== "unbounded" && validMaximum ? Number(maximum) : undefined} onChange={setCurrent} beforeDecrement={
+        <button aria-label="Reset current hit points to maximum" title={validMaximum ? "Reset current hit points to maximum" : "Enter a positive whole-number maximum first"} disabled={!validMaximum} className="rounded p-2 enabled:hover:bg-canvas-surface enabled:hover:text-canvas-ink focus-visible:ring-2 focus-visible:ring-canvas-ink disabled:cursor-not-allowed disabled:border-canvas-line disabled:bg-canvas-surface disabled:text-canvas-muted disabled:opacity-40" onClick={() => setCurrent(String(Number(maximum)))} type="button"><RotateCcw aria-hidden="true" className="h-4 w-4" /></button>
+      } />
       {!valid ? <p className="text-xs text-canvas-muted">Enter whole numbers and a positive maximum.</p> : null}
       <div className="flex justify-end gap-2"><button type="button" onClick={onClose} className="rounded border border-canvas-line p-2 enabled:hover:bg-canvas-surface">Cancel</button><button type="submit" disabled={!valid} className="rounded bg-canvas-ink p-2 text-canvas-on-ink enabled:hover:bg-canvas-ink/80 disabled:cursor-not-allowed disabled:border-canvas-line disabled:bg-canvas-surface disabled:text-canvas-muted disabled:opacity-40">Save</button></div>
     </form>

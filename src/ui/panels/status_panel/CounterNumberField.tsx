@@ -1,15 +1,17 @@
+import { RepeatButton } from "@ui/controls/RepeatButton";
 import { Minus, Plus, X } from "lucide-react";
 import { useId, type ReactNode } from "react";
 
 const buttonClassName = "rounded p-2 enabled:hover:bg-canvas-surface enabled:hover:text-canvas-ink focus-visible:ring-2 focus-visible:ring-canvas-ink disabled:cursor-not-allowed disabled:border-canvas-line disabled:bg-canvas-surface disabled:text-canvas-muted disabled:opacity-40";
 
 /** Explicit stepping gives unset fields predictable starting values in every browser. */
-export function CounterNumberField({ label, name, value, optional = false, emptyIncrementValue = 0, afterIncrement, minimum, maximum, onChange }: {
+export function CounterNumberField({ label, name, value, optional = false, emptyIncrementValue = 0, beforeDecrement, afterIncrement, minimum, maximum, onChange }: {
   label: string;
   name: string;
   value: string;
   optional?: boolean;
   emptyIncrementValue?: number;
+  beforeDecrement?: ReactNode;
   afterIncrement?: ReactNode;
   minimum?: number;
   maximum?: number;
@@ -31,8 +33,9 @@ export function CounterNumberField({ label, name, value, optional = false, empty
         event.preventDefault(); event.stopPropagation();
         step(event.key === "ArrowUp" ? 1 : -1);
       }} />
-      <button aria-label={`Decrease ${name}`} title={decreaseDisabled ? "Minimum reached" : `Decrease ${name}`} disabled={decreaseDisabled} className={buttonClassName} onClick={() => step(-1)} type="button"><Minus aria-hidden="true" className="h-4 w-4" /></button>
-      <button aria-label={`Increase ${name}`} title={increaseDisabled ? "Maximum reached" : `Increase ${name}`} disabled={increaseDisabled} className={buttonClassName} onClick={() => step(1)} type="button"><Plus aria-hidden="true" className="h-4 w-4" /></button>
+      {beforeDecrement}
+      <RepeatButton aria-label={`Decrease ${name}`} title={decreaseDisabled ? "Minimum reached" : `Decrease ${name}`} disabled={decreaseDisabled} className={buttonClassName} onClick={() => step(-1)} type="button"><Minus aria-hidden="true" className="h-4 w-4" /></RepeatButton>
+      <RepeatButton aria-label={`Increase ${name}`} title={increaseDisabled ? "Maximum reached" : `Increase ${name}`} disabled={increaseDisabled} className={buttonClassName} onClick={() => step(1)} type="button"><Plus aria-hidden="true" className="h-4 w-4" /></RepeatButton>
       {afterIncrement}
       {optional ? <button aria-label={`Clear ${name}`} title={value === "" ? `No ${name} configured` : `Clear ${name}`} disabled={value === ""} className={buttonClassName} onClick={() => onChange("")} type="button"><X aria-hidden="true" className="h-4 w-4" /></button> : null}
     </div>

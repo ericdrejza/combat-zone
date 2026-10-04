@@ -660,6 +660,22 @@ in the panel header immediately left of its drag control,
 or the customizable I shortcut, which toggles the window from either window.
 Clicking the launcher while the window is open focuses that existing window.
 The window can be closed using its own close control or the I shortcut.
+Initiative rows show all active catalog condition icons immediately after the
+Actor name, independent of visibility preferences; equipment is excluded. Each
+icon shows its condition name and icon in the same compact pill popup used
+by the Activity summary, on hover or keyboard focus. If the complete name/icon strip does
+not fit, replace the icons with Activity. Hovering or focusing Activity displays
+compact, content-sized pills containing every active condition icon and name,
+wrapping within the popup and positioned outside the scrolling
+list in the owning window. Re-evaluate fit when the row/window size, Actor name,
+selection styling, or conditions change.
+
+Clicking a condition icon (including in the Activity summary) asks whether to
+remove that condition from that Actor. Confirm removes only that condition through
+validation and undo/redo; Cancel, Escape or clicking the backdrop preserves it.
+Condition controls do not select or drag Actors. Read-only windows may inspect
+conditions but cannot remove them.
+
 While open, its docked panel retains the full Initiative list and controls;
 the user can collapse it independently. Both views share the current encounter,
 history and selection, and the popout
@@ -717,7 +733,14 @@ Clicking a confirmation backdrop invokes its cancel behavior. For an unsaved
 counter draft confirmation, this returns to editing and preserves the draft.
 The damage/healing amount input uses minus and plus buttons beside the value
 instead of native spinner arrows. Amount stepping stops at 1 and remains disabled
-in read-only encounters.
+in read-only encounters. All HP and custom counter decrement/increment controls,
+including editor fields, support holding to repeat: one immediate step, followed
+by repeated steps after a short delay. Enabled tooltips say “hold to repeat”.
+Repetition stops on release, cancellation, leaving the button, or reaching an
+enabled bound. Apply damage and Apply healing remain single-click actions. In the HP editor,
+a RotateCcw control before the current-value minus button resets the draft to
+its entered maximum. It requires a valid positive integer maximum and commits
+only when Save is selected.
 
 New custom counters may be saved without entering a name: the placeholder
 “Counter N” uses the first available integer starting at 1, reusing numbering
