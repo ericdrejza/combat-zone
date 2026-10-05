@@ -25,6 +25,17 @@ function validEnvelope(): EncounterExportEnvelope {
 }
 
 describe("persistence export envelopes", () => {
+  it("round trips actor movement, health, and damage trigger selections", () => {
+    const value = validEnvelope();
+    value.encounter = createAudioCue(createAudioCueGroup(value.encounter, { id: "actor", section: "actor" }), {
+      id: "effect", libraryNodeId: "sound", placement: { type: "group", groupId: "actor" }, type: "effect",
+      triggers: ["actor_changes_zone", "actor_takes_damage", "actor_health_dead", "actor_health_unconscious", "actor_health_injured"]
+    });
+    expect(parseExportEnvelope(JSON.parse(JSON.stringify(value)))).toEqual(value);
+    value.encounter.audioCueGroups.byId.actor.section = "zone";
+    expect(() => validateExportEnvelope(value)).toThrow(/invalid group placement/);
+  });
+
   it.each(["repeat", "triggers", "none"] as const)("round trips inactive settings with %s behavior active", (behavior) => {
     const value = validEnvelope();
     value.encounter = createAudioCue(createAudioCueGroup(value.encounter, { id: "zone", section: "zone" }), {

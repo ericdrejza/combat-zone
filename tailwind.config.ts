@@ -4,6 +4,14 @@ export default {
   content: ['./index.html', './src/**/*.{ts,tsx}'],
   darkMode: 'class',
   theme: {
+    screens: {
+      xs: '36rem',
+      sm: '40rem',
+      md: '48rem',
+      lg: '64rem',
+      xl: '80rem',
+      '2xl': '96rem'
+    },
     extend: {
       colors: {
         canvas: {

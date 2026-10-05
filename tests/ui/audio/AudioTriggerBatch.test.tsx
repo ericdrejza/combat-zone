@@ -30,7 +30,7 @@ const zoneCue: AudioCue = {
   repeat: false, repeatDelay: { minimumDelaySeconds: 0, maximumDelaySeconds: 0 },
   triggers: ["zone_enter", "zone_leave"], triggersEnabled: true, type: "effect", volume: 0.2
 };
-const actorCue: AudioCue = { ...zoneCue, id: "actor", libraryNodeId: "linked-asset", placement: { type: "group", groupId: "actor-group" }, triggers: ["actor_enter_zone"], volume: 0.8 };
+const actorCue: AudioCue = { ...zoneCue, id: "actor", libraryNodeId: "linked-asset", placement: { type: "group", groupId: "actor-group" }, triggers: ["actor_changes_zone"], volume: 0.8 };
 // Distinct Library assets remain distinct even if their source URLs match.
 const otherCue: AudioCue = { ...actorCue, id: "other", libraryNodeId: "other-asset" };
 let sequence = 0;

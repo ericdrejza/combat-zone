@@ -1,4 +1,4 @@
-import { AudioLines, BookHeadphones, GripVertical, MoveLeft, MoveRight, Music, Play, Repeat1, Square, Trash2, Volume, Volume1, Volume2, VolumeX } from "lucide-react";
+import { AudioLines, BookHeadphones, GripVertical,  Music, Play, Repeat1, Square, Trash2, Volume, Volume1, Volume2, VolumeX } from "lucide-react";
 import { motion } from "motion/react";
 import { useEffect, useId, useRef, useState, type DragEvent } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -6,11 +6,12 @@ import { useDispatch, useSelector } from "react-redux";
 import { useResolvedImageSource } from "@core/assets/ImageAssetResolver";
 import { createEncounterActionRecord } from "@core/history/createEncounterActionRecord";
 import { deleteAudioCue, updateAudioCue } from "@entities/audio/audioMutations";
-import type { AudioCue, AudioCueTrigger, AudioCueType } from "@entities/audio/types";
+import type { AudioCue, AudioCueType } from "@entities/audio/types";
 import { resolveLibraryAsset } from "@library/librarySlice";
 import { commitEncounterChange } from "@store/encounterSlice";
 import type { RootState } from "@store/store";
 import { useAudioPlayback } from "./AudioPlaybackProvider";
+import { TriggerChoices, TriggerIndicators } from "./AudioCueTriggers";
 import { CueBehaviorButtons } from "./CueBehaviorButtons";
 import { openAudioLibraryForRelink } from "./audioLibraryEvents";
 import { AUDIO_REPEAT_DELAYS as DELAYS, formatAudioRepeatDelay as delayLabel } from "./audioRepeatDelay";
@@ -109,22 +110,6 @@ function VolumeControl({ VolumeIcon, commitVolume, name, onClose, onOpen, open, 
     return () => ownerDocument?.removeEventListener("pointerdown", dismiss);
   }, [commitVolume, onClose, open]);
   return <div className="relative" ref={controlRef}><button aria-describedby={tooltipVisible ? tooltipId : undefined} aria-label={`Volume for ${name}: ${Math.round(volume * 100)}%`} aria-expanded={open} className={`flex h-7 w-7 items-center justify-center ${volume === 0 ? "text-red-600 dark:text-red-500" : ""}`} onClick={() => { setHovered(false); open ? onClose() : onOpen(); }} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)} type="button"><VolumeIcon aria-hidden="true" className="h-4 w-4" /></button>{tooltipVisible ? <span className="pointer-events-none absolute bottom-8 right-0 z-30 whitespace-nowrap rounded-md bg-canvas-ink px-2 py-1 text-xs text-canvas-on-ink shadow-lg" id={tooltipId} role="tooltip">{Math.round(volume * 100)}%</span> : null}{open ? <div className="absolute bottom-8 right-1/2 z-30 flex h-32 translate-x-1/2 flex-col items-center rounded-xl border border-canvas-line bg-canvas-panel p-2 shadow-lg"><input aria-label={`Set volume for ${name}`} className="h-24 w-5 cursor-grab active:cursor-grabbing [direction:rtl] [writing-mode:vertical-lr]" max="100" min="0" onBlur={() => { commitVolume(); onClose(); }} onChange={(event) => { const next = Number(event.currentTarget.value) / 100; setVolume(next); playbackVolume(next); }} onPointerUp={(event) => commitVolume(Number(event.currentTarget.value) / 100)} step="10" type="range" value={Math.round(volume * 100)} /><span className="text-[10px]">{Math.round(volume * 100)}%</span></div> : null}</div>;
-}
-
-function getTriggerChoices(owner: "zone" | "actor"): Array<{ Icon: typeof MoveLeft; label: string; trigger: AudioCueTrigger }> {
-  return owner === "zone"
-    ? [{ Icon: MoveLeft, label: "Entering zone", trigger: "zone_enter" }, { Icon: MoveRight, label: "Leaving zone", trigger: "zone_leave" }]
-    : [{ Icon: MoveLeft, label: "Actor enters zone", trigger: "actor_enter_zone" }, { Icon: MoveRight, label: "Actor leaves zone", trigger: "actor_leave_zone" }];
-}
-
-function TriggerIndicators({ cue, owner }: { cue: AudioCue; owner?: "zone" | "actor" }) {
-  if (!owner || cue.type !== "effect" || !cue.triggersEnabled) return null;
-  return <>{getTriggerChoices(owner).filter(({ trigger }) => cue.triggers.includes(trigger)).map(({ Icon, label, trigger }) => <span aria-label={label} className="inline-flex shrink-0" key={trigger} role="img" title={label}><Icon aria-hidden="true" className="h-3.5 w-3.5" /></span>)}</>;
-}
-
-function TriggerChoices({ cue, onCommit, owner }: { cue: AudioCue; onCommit: (update: Parameters<typeof updateAudioCue>[2], actionType?: string) => void; owner: "zone" | "actor" }) {
-  const choices = getTriggerChoices(owner);
-  return <fieldset><legend className="mb-1 text-canvas-muted">Triggers</legend><div className="grid grid-cols-2 gap-1">{choices.map(({ label, trigger }) => <label className="flex min-w-0 items-center gap-1 rounded-lg bg-canvas px-1.5 py-1" key={trigger}><input checked={cue.triggers.includes(trigger)} onChange={(event) => onCommit({ triggers: event.currentTarget.checked ? [...cue.triggers, trigger] : cue.triggers.filter((value) => value !== trigger) }, "audio.setTriggers")} type="checkbox" /><span>{label}</span></label>)}</div></fieldset>;
 }
 
 function RepeatDelay({ cue, onCommit }: { cue: AudioCue; onCommit: (update: Parameters<typeof updateAudioCue>[2], actionType?: string) => void }) {

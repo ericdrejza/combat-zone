@@ -18,7 +18,7 @@ function groupedState() {
   state = setEntityAudioGroups(state, "zone", "zone-1", ["zone-group"]);
   state = setEntityAudioGroups(state, "actor", "actor-1", ["actor-group"]);
   state = createAudioCue(state, { id: "zone-cue", libraryNodeId: "door", placement: { type: "group", groupId: "zone-group" }, triggers: ["zone_enter"], type: "effect" });
-  return createAudioCue(state, { id: "actor-cue", libraryNodeId: "voice", placement: { type: "group", groupId: "actor-group" }, triggers: ["actor_enter_zone"], type: "effect", volume: 0.4 });
+  return createAudioCue(state, { id: "actor-cue", libraryNodeId: "voice", placement: { type: "group", groupId: "actor-group" }, triggers: ["actor_changes_zone"], type: "effect", volume: 0.4 });
 }
 
 describe("audio cue groups", () => {
@@ -73,9 +73,9 @@ describe("audio cue groups", () => {
 
   it("only permits section-specific movement triggers on effects", () => {
     const state = createAudioCueGroup(groupedState(), { id: "ambience", section: "ambiance" });
-    expect(updateAudioCue(state, "zone-cue", { triggers: ["actor_enter_zone"] })).toBe(state);
+    expect(updateAudioCue(state, "zone-cue", { triggers: ["actor_changes_zone"] })).toBe(state);
     expect(createAudioCue(state, { id: "ambiance-auto", libraryNodeId: "x", placement: { type: "group", groupId: "ambience" }, triggers: ["zone_enter"], type: "effect" })).toBe(state);
-    expect(state.audioCues.byId["actor-cue"].triggers).toEqual(["actor_enter_zone"]);
+    expect(state.audioCues.byId["actor-cue"].triggers).toEqual(["actor_changes_zone"]);
   });
 
   it("moves cues to any group and normalizes them for the destination", () => {

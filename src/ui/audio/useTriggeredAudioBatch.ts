@@ -13,7 +13,7 @@ type Options = {
   restartRepeatedTrigger: (key: string, entry: PlaybackEntry) => void;
 };
 
-/** One physical sound per asset per movement, with an entry for every participating cue. */
+/** One physical sound per asset per committed event, with an entry for every participating cue. */
 export function useTriggeredAudioBatch({ audioMasterVolume, cueSources, entries, isCuePaused, refresh, restartRepeatedTrigger }: Options) {
   return useCallback((requests: AudioTriggerRequest[]) => {
     const batches = new Map<string, Array<{ key: string; registered: RegisteredAudioCue }>>();

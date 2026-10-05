@@ -1,6 +1,6 @@
 import type { EncounterState } from "@core/encounter/types";
 import type { EntityCollection, EntityId } from "@core/state/entityCollection";
-import { DEFAULT_AUDIO_REPEAT_DELAY_SETTINGS, type AudioCue, type AudioCueGroup, type AudioCueGroupSection, type AudioCueTrigger } from "./types";
+import { DEFAULT_AUDIO_REPEAT_DELAY_SETTINGS, type AudioCue, type AudioCueGroup, type AudioCueGroupSection, SECTION_AUDIO_TRIGGERS } from "./types";
 import { getDefaultAudioCueGroupName } from "./audioGroupNames";
 
 export type CreateAudioCueInput = Pick<AudioCue, "id" | "libraryNodeId" | "placement" | "type"> & Partial<Pick<AudioCue, "repeat" | "repeatDelay" | "triggers" | "triggersEnabled" | "volume">>;
@@ -9,23 +9,18 @@ function upsert<TEntity extends { id: EntityId }>(collection: EntityCollection<T
   return { byId: { ...collection.byId, [entity.id]: entity }, allIds: collection.allIds.includes(entity.id) ? collection.allIds : [...collection.allIds, entity.id] };
 }
 
-const SECTION_TRIGGERS: Partial<Record<AudioCueGroupSection, AudioCueTrigger[]>> = {
-  actor: ["actor_enter_zone", "actor_leave_zone"],
-  zone: ["zone_enter", "zone_leave"]
-};
-
 function cueAllowed(state: EncounterState, cue: Pick<AudioCue, "placement" | "triggers" | "triggersEnabled" | "repeat" | "type">) {
   const section = state.audioCueGroups.byId[cue.placement.groupId]?.section;
   return Boolean(section) &&
     (!cue.triggersEnabled || !cue.repeat && (section === "actor" || section === "zone")) &&
     (section !== "music" || cue.type === "track") &&
     ((section !== "actor" && section !== "zone") || cue.type === "effect") &&
-    cue.triggers.every((trigger) => cue.type === "effect" && SECTION_TRIGGERS[section!]?.includes(trigger));
+    cue.triggers.every((trigger) => cue.type === "effect" && SECTION_AUDIO_TRIGGERS[section!]?.includes(trigger));
 }
 
 function normalizeCueForSection(cue: AudioCue, section: AudioCueGroupSection): AudioCue {
   const type = section === "music" ? "track" : section === "zone" || section === "actor" ? "effect" : cue.type;
-  const allowedTriggers = SECTION_TRIGGERS[section] ?? [];
+  const allowedTriggers = SECTION_AUDIO_TRIGGERS[section] ?? [];
   return { ...cue, triggers: cue.triggers.filter((trigger) => allowedTriggers.includes(trigger)), triggersEnabled: allowedTriggers.length > 0 && cue.triggersEnabled, type };
 }
 

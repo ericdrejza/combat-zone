@@ -95,17 +95,24 @@ describe("Firebase API service", () => {
     expect(record.data()?.state.zones.byId.z).toEqual(zone);
     expect(record.data()?.state.schemaVersion).toBe(14);
   });
-  it.each(["traditional", "linear"])("round trips schema 15 %s clocks through Firestore", async (style) => {
+  it.each(["traditional", "linear"])("round trips schema 15 %s clocks and audio through Firestore", async (style) => {
     const command = encounterCommand();
     const zone = { id: "z", tags: [], clocks: { allIds: ["k"], byId: { k: { id: "k", name: "Alarm", value: 2, segments: 5, style } } } };
     command.payload.state.schemaVersion = 15;
     command.payload.state.zones = { allIds: ["z"], byId: { z: zone } } as never;
     command.payload.state.panelLayout.right.push({ id: "audio", collapsed: false });
     Object.assign(command.payload.state, { audioCues: { allIds: [], byId: {} }, audioCueGroups: { allIds: [], byId: {} }, musicGroupIds: [] });
+    const triggers = ["actor_changes_zone", "actor_takes_damage", "actor_health_dead", "actor_health_unconscious", "actor_health_injured"];
+    const cue = { id: "sound", libraryNodeId: "asset", placement: { type: "group", groupId: "group" }, type: "effect", volume: 1, repeat: false, triggersEnabled: true, triggers, repeatDelay: { minimumDelaySeconds: 0, maximumDelaySeconds: 0 } };
+    Object.assign(command.payload.state, {
+      audioCues: { allIds: ["sound"], byId: { sound: cue } },
+      audioCueGroups: { allIds: ["group"], byId: { group: { id: "group", name: "Actor sounds", section: "actor", repeat: false } } }
+    });
     await service.commitEncounter("alice", command);
     const record = await getFirestore().doc("users/alice/encounters/encounter-1").get();
     expect(record.data()?.state.zones.byId.z).toEqual(zone);
     expect(record.data()?.state.schemaVersion).toBe(15);
+    expect(record.data()?.state.audioCues.byId.sound).toEqual(cue);
   });
   it("commits records and reference sets atomically", async () => {
     const result = await service.commitEncounter("alice", encounterCommand());

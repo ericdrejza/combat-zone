@@ -896,6 +896,17 @@ styles to Traditional without changing progress or segment counts. Missing
 legacy styles render as Traditional. The Firebase API accepts schemas 15, 14,
 13, and legacy 7, and validates clock styles when present.
 
+### 7.5 Soundboard trigger updates
+
+Creating an audio group scrolls the Soundboard to reveal the entire group below
+its sticky header. Actor audio combines entering and leaving a zone into one
+“Changes zones” trigger. “Takes damage” fires when the Status panel's Apply damage
+command reduces an Actor's hit points; manually setting hit points does not fire
+that trigger. “Health status becomes” contains independent icon toggles for Dead
+(Skull), Unconscious / severely injured (BoneFracture), and Injured (HeartCrack),
+using the same names and icons as the health controls. These health triggers fire
+when the Actor changes to the selected status. Undo/redo does not play triggers.
+
 ## 8. Themes
 
 - Light

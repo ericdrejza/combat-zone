@@ -1,7 +1,7 @@
 import type { EntityId } from "@core/state/entityCollection";
 
 export type AudioCueType = "track" | "effect";
-export type AudioCueTrigger = "zone_enter" | "zone_leave" | "actor_enter_zone" | "actor_leave_zone";
+export type AudioCueTrigger = "zone_enter" | "zone_leave" | "actor_changes_zone" | "actor_takes_damage" | "actor_health_dead" | "actor_health_unconscious" | "actor_health_injured";
 export type AudioSectionType = "encounter" | "zone" | "actor";
 export type AudioCueGroupSection = "ambiance" | "music" | "zone" | "actor";
 
@@ -37,4 +37,10 @@ export type AudioCueGroup = {
 export const DEFAULT_AUDIO_REPEAT_DELAY_SETTINGS: AudioRepeatDelaySettings = {
   minimumDelaySeconds: 0,
   maximumDelaySeconds: 0
+};
+
+/** Shared section constraints for mutation and persistence validation. */
+export const SECTION_AUDIO_TRIGGERS: Partial<Record<AudioCueGroupSection, AudioCueTrigger[]>> = {
+  actor: ["actor_changes_zone", "actor_takes_damage", "actor_health_dead", "actor_health_unconscious", "actor_health_injured"],
+  zone: ["zone_enter", "zone_leave"]
 };

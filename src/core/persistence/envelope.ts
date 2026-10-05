@@ -1,3 +1,4 @@
+import { SECTION_AUDIO_TRIGGERS, type AudioCueGroupSection } from "@entities/audio/types";
 import { validZoneResources } from "@entities/zone/zoneStatus";
 import { validActorResources } from "@entities/actor/actorResources";
 import { ENCOUNTER_SCHEMA_VERSION, type EncounterState } from "@core/encounter/types";
@@ -179,7 +180,7 @@ export function assertEncounterState(value: unknown, name = "encounter"): assert
       cue.volume < 0 ||
       cue.volume > 1 ||
       !Array.isArray(cue.triggers) ||
-      cue.triggers.some((trigger) => !["zone_enter", "zone_leave", "actor_enter_zone", "actor_leave_zone"].includes(String(trigger))) ||
+      cue.triggers.some((trigger) => !Object.values(SECTION_AUDIO_TRIGGERS).flat().some((allowed) => allowed === trigger)) ||
       typeof cue.repeat !== "boolean" ||
       typeof cue.triggersEnabled !== "boolean" ||
       (cue.triggersEnabled && cue.repeat) ||
@@ -196,7 +197,7 @@ export function assertEncounterState(value: unknown, name = "encounter"): assert
     }
     const group = typeof cue.placement.groupId === "string" ? groups.byId[cue.placement.groupId] : undefined;
     const groupSection = isRecord(group) ? group.section : undefined;
-    const legalTriggers = groupSection === "zone" ? ["zone_enter", "zone_leave"] : groupSection === "actor" ? ["actor_enter_zone", "actor_leave_zone"] : [];
+    const legalTriggers = (SECTION_AUDIO_TRIGGERS[groupSection as AudioCueGroupSection] ?? []) as string[];
     if (!isRecord(group) || (groupSection === "music" && cue.type !== "track") || (["actor", "zone"].includes(String(groupSection)) && cue.type === "track") || (cue.triggersEnabled && !["actor", "zone"].includes(String(groupSection))) || cue.triggers.some((trigger) => cue.type !== "effect" || !legalTriggers.includes(String(trigger)))) {
       throw new PersistenceValidationError(`${name}.audioCues.${cueId} has an invalid group placement.`);
     }

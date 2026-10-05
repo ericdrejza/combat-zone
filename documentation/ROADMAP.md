@@ -11,6 +11,10 @@ After completing a numbered section (## X.), move the completed section to the e
 
 ## 15. MVP Acceptance Hardening
 
+- [x] Reveal newly created Soundboard groups; merge Actor zone triggers and add
+      applied-damage and health-status triggers with independent icon toggles,
+      undo/redo coverage, and local/cloud persistence round trips.
+
 - [x] Offer confirmed reset to zero when a full clock's maximum is clicked,
       with cancellation, writer enforcement, and exact undo/redo coverage.
 

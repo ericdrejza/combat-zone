@@ -101,7 +101,7 @@ describe("Audio panel volume controls", () => {
 
     fireEvent.click(within(screen.getByLabelText("Audio panel")).getByRole("button", { name: "Open Soundboard" }));
     const modal = screen.getByRole("dialog", { name: "Soundboard modal" });
-    for (const label of ["Entering zone", "Leaving zone", "Actor enters zone", "Actor leaves zone"]) expect(within(modal).queryByRole("checkbox", { name: label })).not.toBeInTheDocument();
+    for (const label of ["Entering zone", "Leaving zone", "Changes zones", "Takes damage"]) expect(within(modal).queryByRole("checkbox", { name: label })).not.toBeInTheDocument();
     const zoneCard = within(modal).getByLabelText("Name for Zone FX").closest("article") as HTMLElement;
     const actorCard = within(modal).getByLabelText("Name for Actor FX").closest("article") as HTMLElement;
     for (const card of [zoneCard, actorCard]) {
@@ -110,7 +110,7 @@ describe("Audio panel volume controls", () => {
       expect(within(card).getByRole("button", { name: "Enable repeat" }).querySelector(".lucide-repeat-1")).not.toBeNull();
       fireEvent.click(within(card).getByRole("button", { name: "Enable triggers" }));
     }
-    for (const label of ["Entering zone", "Leaving zone", "Actor enters zone", "Actor leaves zone"]) expect(within(modal).getByRole("checkbox", { name: label })).toBeInTheDocument();
+    for (const label of ["Entering zone", "Leaving zone", "Changes zones", "Takes damage"]) expect(within(modal).getByRole("checkbox", { name: label })).toBeInTheDocument();
   });
 
   it("opens the Soundboard in a modal and can pop it out and back in", () => {
