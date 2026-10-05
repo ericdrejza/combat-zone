@@ -49,7 +49,7 @@ export function AudioPanel({ showVolume }: { showVolume: boolean }) {
       if (section.id === "encounter") {
         const ambiance = groups.filter((group) => group.section === "ambiance");
         const music = groups.filter((group) => group.section === "music");
-        return <AudioPanelSection key={section.id} label="Encounter" scope="encounter"><AudioPanelSection label="Ambience" scope="ambiance" subsection>{ambiance.map((group) => <AudioGroupCard encounter={encounter} group={group} key={group.id} onCommit={commit} showVolume={showVolume} />)}</AudioPanelSection><AudioPanelSection label="Music" scope="music" subsection>{music.map((group) => <AudioGroupCard encounter={encounter} group={group} key={group.id} onCommit={commit} onMove={(offset) => {
+        return <AudioPanelSection key={section.id} label="Encounter" scope="encounter"><AudioPanelSection label="Ambience" scope="ambiance" subsection>{ambiance.map((group) => <AudioGroupCard encounter={encounter} group={group} key={group.id} onCommit={commit} showVolume={showVolume} />)}{ambiance.length === 0 ? <p className="text-xs text-canvas-muted">No ambience groups.</p> : null}</AudioPanelSection><AudioPanelSection label="Music" scope="music" subsection>{music.map((group) => <AudioGroupCard encounter={encounter} group={group} key={group.id} onCommit={commit} onMove={(offset) => {
           const index = encounter.musicGroupIds.indexOf(group.id);
           const target = index + offset;
           if (index < 0 || target < 0 || target >= encounter.musicGroupIds.length) return;
@@ -58,7 +58,7 @@ export function AudioPanel({ showVolume }: { showVolume: boolean }) {
           commit(setMusicGroupOrder(encounter, next), "audio.reorderGroups", { groupId: group.id });
         }} showVolume={showVolume} />)}{music.length === 0 ? <p className="text-xs text-canvas-muted">No music groups.</p> : null}</AudioPanelSection></AudioPanelSection>;
       }
-      return <AudioPanelSection key={section.id} label={section.label} scope={section.id}>{groups.map((group) => <AudioGroupCard encounter={encounter} group={group} key={group.id} onCommit={commit} showVolume={showVolume} />)}{groups.length === 0 ? <p className="text-xs text-canvas-muted">No assigned audio groups.</p> : null}</AudioPanelSection>;
+      return <AudioPanelSection key={section.id} label={section.label} scope={section.id}>{groups.map((group) => <AudioGroupCard encounter={encounter} group={group} key={group.id} onCommit={commit} showVolume={showVolume} />)}{groups.length === 0 ? <p className="text-xs text-canvas-muted">No audio groups.</p> : null}</AudioPanelSection>;
     })}
   </div>;
 }
