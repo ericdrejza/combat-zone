@@ -23,6 +23,15 @@ const conditions: [string, LucideIcon][] = [
 export const CONDITIONS: StatusMarker[] = conditions.map(([label, Icon]) => ({
   id: label.split(" / ")[0].toLowerCase().replace(/ /g, "-"), label, Icon
 })).sort((a, b) => a.label.localeCompare(b.label));
+/** Presentation-only groups; actor status remains the existing marker IDs. */
+const buffIds = new Set([
+  "aiming", "assisted", "blessed", "bolstered", "cover", "disguised", "enchanted",
+  "energized", "flying", "guarded", "hasted", "hidden", "inspired", "invisible", "resistant"
+]);
+export const CONDITION_GROUPS = [
+  { title: "Buffs", markers: CONDITIONS.filter(({ id }) => buffIds.has(id)) },
+  { title: "Debuffs", markers: CONDITIONS.filter(({ id }) => !buffIds.has(id)) }
+];
 export const WEAPONS: StatusMarker[] = [
   { id: "weapon:fist", label: "Fist", Icon: HandFist },
   { id: "weapon:sword", label: "Sword", Icon: Sword },

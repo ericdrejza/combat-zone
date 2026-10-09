@@ -66,6 +66,7 @@ export function prepareValidatedEncounterChange({
       currentEncounter.validationState.mode !== "STRICT" &&
       currentEncounter.validationState.mode !== "ASSISTED") ||
     action.type === "actor.create" ||
+    action.type === "actor.duplicate" ||
     action.type === "actor.move" ||
     action.type === "actor.moveMany" ||
     isZoneLayoutChange(action) ||
@@ -140,6 +141,7 @@ export async function prepareValidatedEncounterChangeAsync({
       currentEncounter.validationState.mode !== "STRICT" &&
       currentEncounter.validationState.mode !== "ASSISTED") ||
     action.type === "actor.create" ||
+    action.type === "actor.duplicate" ||
     action.type === "actor.move" ||
     action.type === "actor.moveMany" ||
     isZoneLayoutChange(action) ||

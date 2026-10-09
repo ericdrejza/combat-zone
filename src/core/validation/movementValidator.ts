@@ -14,7 +14,8 @@ export const MovementValidator: Validator<EncounterState> = {
     if (
       action.type !== "actor.move" &&
       action.type !== "actor.moveMany" &&
-      action.type !== "actor.create"
+      action.type !== "actor.create" &&
+      action.type !== "actor.duplicate"
     ) {
       return result([]);
     }
@@ -42,7 +43,11 @@ export const MovementValidator: Validator<EncounterState> = {
       });
     }
 
-    if (!allowsZoneless(destinationZoneId) && !hasZone(state, destinationZoneId)) {
+    const assignments = action.payload.destinations;
+    const destinations = assignments && typeof assignments === "object" && !Array.isArray(assignments)
+      ? movedActorIds.map((id) => typeof assignments[id] === "string" ? assignments[id] as string : undefined)
+      : [destinationZoneId];
+    if (destinations.some((id) => !allowsZoneless(id) && !hasZone(state, id))) {
       messages.push({
         code: "movement.destinationZoneMissing",
         message: "Movement references a destination zone that does not exist.",

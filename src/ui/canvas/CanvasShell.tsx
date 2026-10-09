@@ -1,3 +1,5 @@
+import { useActorKeyboardMovement } from "./actors/useActorKeyboardMovement";
+import { ActorHealthKeyboard } from "./actors/ActorHealthKeyboard";
 import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
@@ -62,6 +64,7 @@ export function CanvasShell({
   renderCompactPanelHeaderActions
 }: CanvasShellProps) {
   const dispatch = useDispatch<AppDispatch>();
+  const keyboardMovement = useActorKeyboardMovement();
   const {
     zoneColorDefaults,
     zoneOpacityDefault,
@@ -287,6 +290,7 @@ export function CanvasShell({
     >
       <CanvasViewport canvasSize={encounter.canvasSize}>
         <CanvasWorkspace
+          keyboardOverlay={keyboardMovement.overlay}
         activeToolId={activeToolId}
         actorDrag={actorDrag}
         actorRenderPlacements={actorRenderPlacements}
@@ -359,7 +363,10 @@ export function CanvasShell({
           />
         ) : null}
       </CanvasViewport>
+      {keyboardMovement.dialog}
+      <ActorHealthKeyboard />
       <CanvasToolStatusBadge
+        movementSummary={keyboardMovement.summary}
         activeToolId={activeToolId}
         actorNames={canvasStatus.actorNames}
         edgeStatuses={canvasStatus.edgeStatuses}

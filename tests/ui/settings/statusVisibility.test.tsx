@@ -61,6 +61,8 @@ it("hides all inactive conditions with the master switch and preserves individua
   fireEvent.click(screen.getByRole("button", { name: "Show Burning" }));
   fireEvent.click(screen.getByRole("switch", { name: "Show conditions" }));
   expect(conditions().getAllByRole("button").map((button) => button.getAttribute("aria-label"))).toEqual(["Blinded"]);
+  expect(conditions().queryByRole("group", { name: "Buffs" })).not.toBeInTheDocument();
+  expect(within(conditions().getByRole("group", { name: "Debuffs" })).getByRole("button", { name: "Blinded" })).toBeInTheDocument();
   fireEvent.click(screen.getByRole("switch", { name: "Show conditions" }));
   expect(conditions().queryByRole("button", { name: "Burning" })).not.toBeInTheDocument();
   expect(conditions().getByRole("button", { name: "Blessed" })).toBeInTheDocument();

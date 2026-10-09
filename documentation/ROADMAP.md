@@ -24,6 +24,12 @@ After completing a numbered section (## X.), move the completed section to the e
 - [x] Implement Zone Status counters, clocks, shared Edge tags/notes, and schema
       14 persistence; verify validation, writer guards, history, and cloud.
 
+- [x] Make condition, weapon, and armor icon tooltips immediate on hover and
+      focus while preserving touch-hold help.
+
+- [x] Group Actor Status conditions into alphabetical Buffs/Debuffs subsections
+      with muted headings, preserving visibility, bulk toggles and history.
+
 - [x] Implement the Actor Status panel, optional hit points, custom counters,
       approved condition/weapon/armor controls, Combat preferences and automatic
       health; verify atomic history, schema 13 persistence and cloud round trips.
@@ -75,3 +81,10 @@ the design as future or nice-to-have work.
 - [ ] Animated transitions.
 - [ ] AI-assisted GM suggestions.
 - [ ] Rule system plugins per RPG.
+
+## Expanded keyboard commands
+
+- [x] Directional actor movement, candidate chooser, skill-check adjudication, and destination warning.
+- [x] Bulk actor size shortcuts and source-zone-first paste.
+- [x] Configurable chords, conflict overrides, pan presets, zoom/Library/audio shortcuts.
+- [x] Heal/damage shortcut dialog and responsive settings.

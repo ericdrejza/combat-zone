@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 
+import { ignoreShortcut } from "@ui/keybinds/keyboardGuards";
 import { matchesKeybind } from "@ui/keybinds";
 
 /** Tracks a configurable shortcut while its key is held for transient canvas visuals. */
@@ -10,7 +11,7 @@ export function useHeldKeybind(binding: string): boolean {
     setIsHeld(false);
 
     function handleKeyDown(event: KeyboardEvent) {
-      if (matchesKeybind(event, binding)) {
+      if (!ignoreShortcut(event) && matchesKeybind(event, binding)) {
         setIsHeld(true);
       }
     }

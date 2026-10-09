@@ -217,7 +217,7 @@ describe("canvas viewport navigation", () => {
     expect(viewport).toHaveAttribute("data-canvas-zoom", "1.042");
   });
 
-  it("scrolls with shift-wheel, arrow keys, and enabled right drag", () => {
+  it("scrolls with shift-wheel and enabled right drag, without implicit arrow panning", () => {
     renderApp();
     const viewport = screen.getByLabelText("Canvas viewport");
     viewport.scrollLeft = 100;
@@ -227,13 +227,13 @@ describe("canvas viewport navigation", () => {
     expect(viewport.scrollLeft).toBe(130);
 
     fireEvent.keyDown(viewport, { key: "ArrowDown" });
-    expect(viewport.scrollTop).toBe(120);
+    expect(viewport.scrollTop).toBe(80);
 
     fireEvent.mouseDown(viewport, { button: 2, clientX: 200, clientY: 200 });
     fireEvent.mouseMove(window, { clientX: 180, clientY: 170 });
     fireEvent.mouseUp(window, { button: 2 });
     expect(viewport.scrollLeft).toBe(150);
-    expect(viewport.scrollTop).toBe(150);
+    expect(viewport.scrollTop).toBe(110);
   });
 
   it("disables right-drag panning from the interface preference", () => {

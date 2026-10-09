@@ -1,6 +1,25 @@
 import { TOOL_DEFINITIONS_BY_ID } from "@interaction/tools/toolRegistry";
 
 export const KEYBIND_DEFINITIONS = [
+  { id: "actor.moveUp", label: "Move actors up", defaultBinding: "arrowup", editable: true },
+  { id: "actor.moveDown", label: "Move actors down", defaultBinding: "arrowdown", editable: true },
+  { id: "actor.moveLeft", label: "Move actors left", defaultBinding: "arrowleft", editable: true },
+  { id: "actor.moveRight", label: "Move actors right", defaultBinding: "arrowright", editable: true },
+  { id: "actor.sizeDecrease", label: "Decrease actor size", defaultBinding: "shift+minus", editable: true },
+  { id: "actor.sizeIncrease", label: "Increase actor size", defaultBinding: "shift+plus", editable: true },
+  { id: "actor.healDamage", label: "Heal or damage actors", defaultBinding: "h", editable: true },
+  { id: "library.open", label: "Open Library", defaultBinding: "l", editable: true },
+  { id: "audio.toggle", label: "Play/Pause all audio", defaultBinding: "p", editable: true },
+  { id: "viewport.panUp", label: "Pan up", defaultBinding: "", editable: true },
+  { id: "viewport.panDown", label: "Pan down", defaultBinding: "", editable: true },
+  { id: "viewport.panLeft", label: "Pan left", defaultBinding: "", editable: true },
+  { id: "viewport.panRight", label: "Pan right", defaultBinding: "", editable: true },
+  { id: "viewport.zoomOut", label: "Zoom out", defaultBinding: "minus", editable: true },
+  { id: "viewport.zoomIn", label: "Zoom in", defaultBinding: "plus", editable: true },
+  { id: "viewport.fitWidth", label: "Zoom to fit width", defaultBinding: "ctrl+arrowleft", editable: true },
+  { id: "viewport.fitHeight", label: "Zoom to fit height", defaultBinding: "ctrl+arrowright", editable: true },
+  { id: "viewport.fit", label: "Zoom to fit", defaultBinding: "ctrl+arrowup", editable: true },
+  { id: "viewport.reset", label: "Reset zoom", defaultBinding: "ctrl+arrowdown", editable: true },
   { id: "initiative.toggle", label: "Toggle Initiative popout", defaultBinding: "i", editable: true },
   { id: "actor.copy", label: "Copy selected actor", defaultBinding: "mod+c", editable: false },
   { id: "actor.paste", label: "Paste copied actor", defaultBinding: "mod+v", editable: false },
@@ -38,28 +57,45 @@ export const FIXED_SHORTCUT_REFERENCES = [
   { binding: "Tab", label: "Select next zone" }
 ] as const;
 
-/** Turns a keyboard event into the portable chord persisted in preferences. */
+/** Turns browser punctuation and modifier variants into durable, displayable chords. */
 export function keybindFromEvent(event: KeyboardEvent): string | null {
-  const key = event.key.toLowerCase();
+  let key = event.key.toLowerCase();
   if (["alt", "control", "meta", "shift"].includes(key)) return null;
-  if (!/^[a-z]$/.test(key)) return null;
-
-  return [
-    event.ctrlKey || event.metaKey ? "mod" : null,
-    event.altKey ? "alt" : null,
-    event.shiftKey ? "shift" : null,
-    key
-  ].filter(Boolean).join("+");
+  if (key === "+" || key === "=" || event.code === "NumpadAdd") key = "plus";
+  if (key === "-" || key === "_" || event.code === "NumpadSubtract") key = "minus";
+  if (!/^[a-z0-9]$/.test(key) && !["arrowup", "arrowdown", "arrowleft", "arrowright", "plus", "minus"].includes(key)) return null;
+  // Plus intrinsically requires Shift on many keyboards. Equal also works for zoom.
+  const shifted = event.shiftKey && key !== "plus";
+  return [event.ctrlKey ? "ctrl" : null, event.metaKey ? "meta" : null,
+    event.altKey ? "alt" : null, shifted ? "shift" : null, key].filter(Boolean).join("+");
 }
 
-/** Matches Ctrl on Windows/Linux and Command on macOS through one binding. */
+export function isKeybind(binding: unknown): binding is string {
+  return typeof binding === "string" && (binding === "" || /^(?:(?:mod|ctrl|meta|alt|shift)\+)*(?:[a-z0-9]|arrowup|arrowdown|arrowleft|arrowright|plus|minus)$/.test(binding));
+}
+
+export function bindingsConflict(a: string, b: string): boolean {
+  if (!a || !b) return false;
+  const variants = (value: string) => value.includes("mod+")
+    ? [value.replace("mod+", "ctrl+"), value.replace("mod+", "meta+")]
+    : [value];
+  return variants(a).some((value) => variants(b).includes(value));
+}
+
+/** Matching separates physical Shift+Plus from the ordinary plus zoom shortcut. */
 export function matchesKeybind(event: KeyboardEvent, binding: string): boolean {
-  return keybindFromEvent(event) === binding;
+  if (!binding) return false;
+  let chord = keybindFromEvent(event);
+  if (!chord) return false;
+  if (binding.includes("mod+")) chord = chord.replace(/^(ctrl|meta)\+/, "mod+");
+  if (binding.includes("shift+plus") && event.shiftKey && chord.endsWith("plus")) {
+    chord = chord.replace(/plus$/, "shift+plus");
+  }
+  return chord === binding;
 }
 
 export function formatKeybind(binding: string): string {
-  return binding
-    .split("+")
-    .map((part) => part === "mod" ? "Ctrl/Cmd" : part[0].toUpperCase() + part.slice(1))
-    .join(" + ");
+  if (!binding) return "Unassigned";
+  const labels: Record<string, string> = { mod: "Ctrl/Cmd", ctrl: "Ctrl", meta: "Cmd", plus: "+", minus: "-", arrowup: "↑", arrowdown: "↓", arrowleft: "←", arrowright: "→" };
+  return binding.split("+").map((part) => labels[part] ?? part[0].toUpperCase() + part.slice(1)).join(" + ");
 }

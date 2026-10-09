@@ -132,6 +132,8 @@ engineering contracts:
 
 ## UI IMPLEMENTATION RULES
 
+- All new and changed UI must adapt to responsive screen sizing, keeping controls, dialogs, and content usable on compact and desktop screens.
+
 - Every enabled interactive control must provide visible hover feedback,
   including icon-only controls and selected or mixed-state toggles. Use
   established theme colors for background, border, ring, or text changes;

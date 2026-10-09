@@ -70,6 +70,12 @@ function encounter(actorZoneId = "zone-origin"): EncounterState {
 }
 
 describe("encounter log message formatting", () => {
+  it("describes each destination in a keyboard movement batch", () => {
+    const before = encounter(); const after = encounter("zone-target");
+    after.actors.byId["actor-wizard"].currentZoneId = "zoneless";
+    const action = createEncounterActionRecord("actor.moveMany", { actorIds: ["actor-goblin", "actor-wizard"], destinations: { "actor-goblin": "zone-target", "actor-wizard": "zoneless" } });
+    expect(formatCommittedEncounterAction(action, { before, after })).toBe("Goblin moved to the Great Hall. Wizard moved to the zoneless area.");
+  });
   it("formats named multi-actor movement with the destination zone", () => {
     const before = encounter();
     const after = encounter("zone-target");

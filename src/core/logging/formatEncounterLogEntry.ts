@@ -1,7 +1,9 @@
+import { stringValue, stringValues, numberValue, objectStringValue } from "./logValueReaders";
+import { formatActorMovementDestinations } from "./formatActorMovementDestinations";
 import { formatStatusAction } from "./formatStatusAction";
 import { ZONELESS_ACTOR_ZONE_ID } from "@core/encounter/types";
 import type { EncounterState } from "@core/encounter/types";
-import type { EncounterActionRecord, JsonValue } from "@core/history/types";
+import type { EncounterActionRecord } from "@core/history/types";
 import type {
   EncounterLogCategory,
   EncounterLogEntry
@@ -11,29 +13,6 @@ type EncounterSnapshots = {
   before: EncounterState;
   after: EncounterState;
 };
-
-function stringValue(value: JsonValue | undefined): string | undefined {
-  return typeof value === "string" ? value : undefined;
-}
-
-function stringValues(value: JsonValue | undefined): string[] {
-  return Array.isArray(value)
-    ? value.filter((item): item is string => typeof item === "string")
-    : [];
-}
-
-function numberValue(value: JsonValue | undefined): number | undefined {
-  return typeof value === "number" ? value : undefined;
-}
-
-function objectStringValue(
-  value: JsonValue | undefined,
-  key: string
-): string | undefined {
-  return value && !Array.isArray(value) && typeof value === "object"
-    ? stringValue(value[key])
-    : undefined;
-}
 
 function listNames(names: readonly string[]): string {
   if (names.length <= 1) return names[0] ?? "Unknown";
@@ -157,6 +136,8 @@ export function formatCommittedEncounterAction(
   action: EncounterActionRecord,
   snapshots: EncounterSnapshots
 ): string {
+  const movementMessage = formatActorMovementDestinations(action, snapshots, formatCommittedEncounterAction);
+  if (movementMessage !== null) return movementMessage;
   const statusMessage = formatStatusAction(action, snapshots);
   if (statusMessage) return statusMessage;
   const actorNames = () => listNames(namesForActorIds(actorIdsFrom(action), snapshots));

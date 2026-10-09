@@ -48,12 +48,15 @@ describe("StatusPanel", () => {
     expect(store.getState().encounter.present.actors.byId.a.status).toBe(2);
     expect(store.getState().encounter.present.actors.byId.a.hitPoints?.current).toBe(10);
   });
-  it("shows read-only names, all approved conditions alphabetically, and health radio options", () => {
+  it("shows read-only names, all approved conditions alphabetically within Buffs and Debuffs, and health radio options", () => {
     setup();
     expect(within(screen.getByLabelText("Selected actor names")).getByText("Alpha")).toBeInTheDocument();
     expect(screen.queryByRole("textbox", { name: /name/i })).not.toBeInTheDocument();
     const buttons = within(screen.getByRole("group", { name: "Conditions" })).getAllByRole("button");
-    expect(buttons.map((button) => button.getAttribute("aria-label"))).toEqual(CONDITIONS.map(({ label }) => label));
+    const buffLabels = ["Aiming", "Assisted / Helped", "Blessed", "Bolstered", "Cover", "Disguised", "Enchanted", "Energized", "Flying", "Guarded / Shielded", "Hasted / Quickened", "Hidden / Concealed", "Inspired", "Invisible", "Resistant"];
+    expect(within(screen.getByRole("group", { name: "Buffs" })).getAllByRole("button").map((button) => button.getAttribute("aria-label"))).toEqual(buffLabels);
+    expect(within(screen.getByRole("group", { name: "Debuffs" })).getAllByRole("button").map((button) => button.getAttribute("aria-label"))).toEqual(CONDITIONS.filter(({ label }) => !buffLabels.includes(label)).map(({ label }) => label));
+    expect(within(screen.getByRole("group", { name: "Debuffs" })).getByRole("button", { name: "Concentrating" })).toBeInTheDocument();
     expect(buttons).toHaveLength(39);
     expect(screen.getByRole("radio", { name: "Healthy" })).toHaveAttribute("aria-checked", "true");
     expect(screen.getByRole("button", { name: "Stunned" })).toBeInTheDocument();
@@ -120,6 +123,10 @@ describe("StatusPanel", () => {
     expect(screen.getByRole("button", { name: "Hidden / Concealed" })).toHaveAttribute("aria-pressed", "mixed");
     fireEvent.click(screen.getByRole("button", { name: "Hidden / Concealed" }));
     await waitFor(() => expect(screen.getByRole("button", { name: "Hidden / Concealed" })).toHaveAttribute("aria-pressed", "true"));
+    act(() => store.dispatch(undoEncounterChange()));
+    expect(screen.getByRole("button", { name: "Hidden / Concealed" })).toHaveAttribute("aria-pressed", "mixed");
+    act(() => store.dispatch(redoEncounterChange()));
+    expect(screen.getByRole("button", { name: "Hidden / Concealed" })).toHaveAttribute("aria-pressed", "true");
     fireEvent.click(screen.getByRole("button", { name: "Heavy armor" }));
     await waitFor(() => expect(store.getState().encounter.present.actors.byId.a.statusEffects).toEqual(expect.arrayContaining(["hidden", "custom", "armor:heavy"])));
     fireEvent.click(screen.getByRole("button", { name: "Heavy armor" }));

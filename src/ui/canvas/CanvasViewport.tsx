@@ -1,5 +1,4 @@
 import {
-  type KeyboardEvent,
   type MouseEvent,
   type PointerEvent,
   type PropsWithChildren,
@@ -120,22 +119,6 @@ export function CanvasViewport({ canvasSize, children }: CanvasViewportProps) {
     elementRef.current.scrollLeft += event.deltaY || event.deltaX;
   }
 
-  function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
-    const amount = 40;
-    const deltas: Record<string, [number, number]> = {
-      ArrowDown: [0, amount],
-      ArrowLeft: [-amount, 0],
-      ArrowRight: [amount, 0],
-      ArrowUp: [0, -amount]
-    };
-    const delta = deltas[event.key];
-    if (!delta || !elementRef.current) return;
-
-    event.preventDefault();
-    elementRef.current.scrollLeft += delta[0];
-    elementRef.current.scrollTop += delta[1];
-  }
-
   const renderedSize = {
     height: canvasSize.height * viewport.zoom,
     width: canvasSize.width * viewport.zoom
@@ -154,7 +137,6 @@ export function CanvasViewport({ canvasSize, children }: CanvasViewportProps) {
       }`}
       data-canvas-zoom={viewport.zoom}
       onContextMenuCapture={handleContextMenu}
-      onKeyDown={handleKeyDown}
       onMouseDown={handleMouseDown}
       onPointerDownCapture={touchGestures.handlePointerDown}
       onPointerDown={handlePointerDown}

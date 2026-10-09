@@ -151,8 +151,8 @@ truth.
 - [x] Canvas resizing preserves zoom and the proportionally centered canvas
       point, centering automatically on axes that no longer overflow.
 - [x] The canvas scrolls vertically by wheel, horizontally by Shift + wheel,
-      and by arrow keys while focused. Default-enabled, toggleable right-drag
-      panning scrolls both axes and suppresses context actions only after a pan.
+      and by explicitly assigned directional pan shortcuts. Default-enabled,
+      toggleable right-drag panning scrolls both axes and suppresses context actions only after a pan.
       Native scrollbar chrome remains hidden.
 - [x] Drawing, dragging, resizing, selection, overlays, and native drops share
       the same SVG coordinate transform at every zoom and scroll position.
@@ -424,10 +424,15 @@ these back into `AGENT.md` or `DESIGN.md`.
 
 ## Actor Status panel and Combat settings
 
+- [x] Condition, weapon, and armor icon help appears immediately on hover and
+      keyboard focus, supports dismissal, and preserves touch-hold help.
+
 - [x] Status is available in desktop and compact panels with read-only names,
       single-Actor health and counters, and multi-Actor HP/marker commands.
 - [x] All 39 approved condition toggles use the approved icons and alphabetical
-      labels, including Galaxy for Stunned and ZapOff for Powerless.
+      labels within muted Buffs/Debuffs subsections, including Galaxy for Stunned
+      and ZapOff for Powerless. Concentrating is a Debuff; Enchanted is a Buff.
+      Empty subsections are hidden, and visibility and bulk history behavior remain intact.
 - [x] Mixed bulk markers apply to all; fully applied markers clear from all.
       Armor replaces known tiers and unknown markers are preserved.
 - [x] HP setup, damage/healing, partial-selection confirmation, disabled reasons,
@@ -508,3 +513,13 @@ these back into `AGENT.md` or `DESIGN.md`.
 - [x] Clicking a full clock's maximum confirms resetting progress to zero. Both
       styles support cancellation, exact undo/redo, and writer enforcement;
       clicking a non-full clock's maximum continues to confirm filling.
+
+## Expanded keyboard commands
+
+- [x] Actor and Select directional movement resolves connected/fallback destinations,
+      supports pulsing choice, individual skill checks, differing-destination confirmation,
+      and atomic validated undo/redo including Engagement membership.
+- [x] Size shortcuts step bulk actors within bounds; paste prefers the copied zone.
+- [x] Keybind override and pan presets are atomic, persisted, and protect fixed shortcuts.
+- [x] Zoom, Library, and global audio shortcuts use existing application behaviors.
+- [x] H toggles responsive heal/damage UI with shared HP rules, dismissal, and keep-open preference.

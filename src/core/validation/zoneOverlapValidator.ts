@@ -58,6 +58,7 @@ function getChangedZoneIds(
 
   if (
     action.type !== 'actor.create' &&
+    action.type !== 'actor.duplicate' &&
     action.type !== 'actor.move' &&
     action.type !== 'actor.moveMany' &&
     action.type !== 'actor.paint' &&

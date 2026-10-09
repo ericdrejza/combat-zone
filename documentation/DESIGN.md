@@ -567,9 +567,9 @@ point centered by mapping it through the top-left resize transform. When the
 rendered canvas no longer overflows an axis, it centers on that axis.
 
 The canvas viewport scrolls on both axes with scrollbar chrome hidden. The mouse wheel scrolls vertically,
-Shift + mouse wheel scrolls horizontally, and arrow keys scroll while the
-viewport has focus. Right-button drag panning is enabled by default and can be
-toggled from the toolbar. A right-click without a pan gesture retains the
+Shift + mouse wheel scrolls horizontally. Keyboard panning uses configurable,
+initially unbound directional shortcuts. Right-button drag panning is enabled
+by default and can be toggled from the toolbar. A right-click without a pan gesture retains the
 active tool's existing context action.
 
 Touch input uses one pointer for the active tool's normal editing gesture and
@@ -579,6 +579,65 @@ actions; context actions remain available through normal mouse right-click
 when testing a compact layout. Touch multi-selection is exposed as a subtool
 toggle because modifier keys are not available.
 Perception-only touch navigation does not create history.
+
+### 5.7 Keyboard Actor and Viewport Commands
+
+Actor and Select tools support arrow-key zone movement and Shift+- / Shift++
+size changes for selected actors. Size steps follow small, medium, large,
+xLarge and leave actors at a bound unchanged. Movement preserves complete
+Engagements travelling together, disengages partial groups, and commits the
+final batch atomically through validation and history. Actor positions remain
+derived. Zoneless actors and actors without a directional destination remain
+stationary. Paste prefers the copied actor's valid zone, otherwise the selected
+Actor target zone, otherwise zoneless.
+
+Directional movement compares zone centers in the requested half-plane. Origins
+with any Edges use only connected destinations respecting unilateral direction;
+origins without Edges use the nearest directional center. Parallel traversable
+Edges combine restrictions: any blocked rule excludes that destination, any
+skillCheck requires individual adjudication, and difficult remains informational.
+For multiple connected candidates, horizontal movement orders top-to-bottom and
+vertical movement left-to-right. Perpendicular arrows cycle with wrapping;
+Enter or the original arrow confirms; Escape cancels the whole batch. Candidates
+pulse their borders and perpendicular chevrons using the animation preference.
+The top-left HUD shows actor names, origin -> destination, and comma-separated,
+deduplicated movement rules and interaction tags in square brackets.
+
+A single “Skill check required” dialog lists affected actors alphabetically,
+with centered tokens and names beneath, amber pending/question, red remain/X,
+and green move/check indicators. Clicking a token selects it. “Remain in current
+zone” and “Move to zone” adjudicate and advance to the next pending actor; the
+last pending decision appends “and proceed”. “Move all unadjudicated actors and
+proceed” resolves pending actors while retaining existing decisions. No move
+occurs until all choices complete. Escape, backdrop, or close cancels the batch.
+After adjudication, differing final destinations (including stationary actors)
+require “Actor destinations differ” Cancel/Continue confirmation. “Don't show
+this warning again” persists only on Continue, resets with Interface preferences,
+and can be restored in Interface settings.
+
+H toggles a compact heal/damage dialog in Actor and Select tools with actor
+selection. Alphabetically ordered actor names wrap with centered spacing on their
+own row below the close button. Minus,
+centered positive-integer amount, plus appear above Apply Heal (left) and Apply
+Damage (right). Existing HP bounds, skipped-actor confirmation, writer boundary,
+and history rules apply. H, Escape, backdrop, and close dismiss without applying.
+Successful application closes by default; Interface settings can keep it open.
+The Status panel also places the amount decrement control before its value. The amount
+field fits its content with a comfortable two-digit minimum; the dialog uses a
+compact width to keep its controls close. Enter in the amount field retains the
+draft and focuses enabled Apply Damage without applying it. Subsequent Tab and
+Shift+Tab use the normal dialog focus order.
+
+L opens the same Library section as the toolbar for the active tool. P pauses
+or resumes all active audio and is a no-op without playback. Minus/plus zoom
+out/in; Ctrl+Left/Right fit width/height, Ctrl+Up fits the canvas, and Ctrl+Down
+resets zoom. Pan directions are initially unbound, replacing implicit focused
+arrow scrolling. Keybind settings arrange four pan assignments on one row and
+offer atomic WASD/Arrow Keys presets. Conflicts require confirmation before
+unbinding displaced editable actions; read-only bindings cannot be displaced.
+All navigation is session-only. Text editing and unrelated modal workflows
+suppress application shortcuts. Stored existing assignments take precedence
+over conflicting newly introduced defaults.
 
 ## 6. Layout System
 
@@ -820,13 +879,22 @@ Shared Systems templates
 are future work.
 
 The 39 approved Conditions in `plans/status_panel.md` are independent markers,
-sorted alphabetically by display label, including Cover and Stunned (Galaxy).
+grouped into Buffs and Debuffs in the Actor Status panel, each sorted alphabetically
+by display label with a muted subsection heading. Buffs are Aiming, Assisted /
+Helped, Blessed, Bolstered, Cover, Disguised, Enchanted, Energized, Flying,
+Guarded / Shielded, Hasted / Quickened, Hidden / Concealed, Inspired, Invisible,
+and Resistant. All remaining approved conditions are Debuffs, including
+Concentrating and Stunned (Galaxy). Empty subsections are hidden. Actor Status
+heal/damage buttons use wider horizontal padding with the standard height and
+icon size.
 Weapons are independent Fist, Sword, Swords, Axe and Bow markers. Armor tiers
 are No armor, Light armor, Medium armor and Heavy armor, with at most one known
 tier per Actor. Bulk toggles clear a marker if all selected Actors have it;
 otherwise they apply it to all. Selecting armor replaces other known tiers;
 clearing armor does not select No armor. Unknown marker strings are preserved.
 Markers have active/inactive/mixed accessible states and descriptive tooltips.
+Condition, weapon, and armor icon tooltips appear immediately on pointer hover
+or keyboard focus, remain within the viewport, and retain touch-hold help.
 
 Interface settings > Panels persists a global Health counter name, defaulting
 to “Hit points”. Trimmed empty input restores that default; the label is not
@@ -874,7 +942,7 @@ health. Manual overrides persist until an effective HP change or cutoff recalcul
 Combat settings also autosave global Status panel visibility. All conditions
 and equipment sections are shown by
 default. Conditions are individual icon toggles in an alphabetically sorted,
-wrapped row matching the Status panel. Eye/EyeOff section controls match
+wrapped row; the Status panel sorts within its Buffs and Debuffs subsections. Eye/EyeOff section controls match
 Interface panel visibility controls: Conditions is a master override preserving
 individual condition choices; Weapons and Armor each show/hide their complete
 section. Hidden conditions still appear if active on any selected Actor,

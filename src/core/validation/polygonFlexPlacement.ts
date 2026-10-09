@@ -15,6 +15,8 @@ function getActorIdsFromPayload(action: ValidationAction): string[] {
         (actorId): actorId is string => typeof actorId === "string"
       )
     : [];
+  const duplicateId = action.type === "actor.duplicate" ? action.payload.duplicateActorId : undefined;
+  if (typeof duplicateId === "string") actorIds.push(duplicateId);
   const actorId = action.payload.actorId;
 
   return Array.from(
@@ -31,6 +33,7 @@ function isActorFootprintChange(action: ValidationAction): boolean {
 function isActorMovementOrCreation(action: ValidationAction): boolean {
   return (
     action.type === "actor.create" ||
+    action.type === "actor.duplicate" ||
     action.type === "actor.move" ||
     action.type === "actor.moveMany"
   );

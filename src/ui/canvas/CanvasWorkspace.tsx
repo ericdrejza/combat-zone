@@ -1,4 +1,5 @@
 import type {
+  ReactNode,
   DragEventHandler,
   MouseEvent,
   MouseEventHandler,
@@ -32,6 +33,7 @@ import type { EdgePreset } from "@entities/edge/edgeMutations";
 import { createCanvasMotionPointTransform } from "./canvasCoordinates";
 
 type CanvasWorkspaceProps = {
+  keyboardOverlay?: ReactNode;
   activeToolId: RootState["interaction"]["activeToolId"];
   actorDrag: ActorDragState | null;
   actorTargetZoneId: string | null;
@@ -101,6 +103,7 @@ type CanvasWorkspaceProps = {
 };
 
 export function CanvasWorkspace({
+  keyboardOverlay,
   activeToolId,
   actorDrag,
   actorRenderPlacements,
@@ -271,6 +274,7 @@ export function CanvasWorkspace({
             ) : null}
           </g>
         ))}
+        {keyboardOverlay}
       </motion.svg>
     </MotionConfig>
   );

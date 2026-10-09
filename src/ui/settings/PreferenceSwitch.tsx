@@ -23,7 +23,7 @@ export function PreferenceSwitch({
         title={title}
         aria-checked={checked}
         aria-label={ariaLabel ?? label}
-        className={`disabled:opacity-40 relative h-6 w-11 shrink-0 rounded-full border transition-colors ${
+        className={`disabled:cursor-not-allowed disabled:opacity-40 enabled:hover:ring-2 enabled:hover:ring-canvas-muted focus-visible:ring-2 focus-visible:ring-canvas-ink relative h-6 w-11 shrink-0 rounded-full border transition-colors ${
           checked
             ? "border-canvas-ink bg-canvas-ink"
             : "border-canvas-line bg-canvas"

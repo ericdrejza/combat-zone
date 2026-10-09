@@ -25,6 +25,8 @@ export function InterfaceSettings() {
   const { setTheme, theme } = useTheme();
   const {
     healthCounterName, setHealthCounterName,
+    keepHealDamageDialogOpen, setKeepHealDamageDialogOpen,
+    warnActorDestinationsDiffer, setWarnActorDestinationsDiffer,
     clockStyleDefault, setClockStyleDefault,
     autoSelectActiveActorDefault,
     enableAssetAnimation,
@@ -95,6 +97,8 @@ export function InterfaceSettings() {
       </fieldset>
       <fieldset className="mt-4 max-w-lg border-t border-canvas-line pt-5">
         <legend className="pr-3 text-sm font-semibold">Navigation</legend>
+        <PreferenceSwitch checked={warnActorDestinationsDiffer} label="Warn when actor destinations differ" onChange={setWarnActorDestinationsDiffer} />
+        <PreferenceSwitch checked={keepHealDamageDialogOpen} label="Keep heal/damage dialog open after application" onChange={setKeepHealDamageDialogOpen} />
         <div className="mt-1 divide-y divide-canvas-line">
           <PreferenceSwitch
             checked={panWithRightClickDrag}

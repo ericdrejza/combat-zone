@@ -1,7 +1,10 @@
 import { useEffect } from 'react';
+import { useStore } from 'react-redux';
+import { ignoreShortcut } from '@ui/keybinds/keyboardGuards';
+import { getActorPasteDestination } from '@entities/actor/actorKeyboardMutations';
+import { useKeyboardEncounterCommit } from './useKeyboardEncounterCommit';
 import type { Dispatch } from 'redux';
 
-import { createEncounterActionRecord } from '@core/history/createEncounterActionRecord';
 import { duplicateActor } from '@entities/actor/actorMutations';
 import { deleteSelectedEntities } from '@interaction/selection/deleteSelectedEntities';
 import {
@@ -14,7 +17,6 @@ import {
   setActorToolSize,
   setZoneShapeMode
 } from '@interaction/interactionState';
-import { commitEncounterChange } from '@store/encounterSlice';
 import type { RootState } from '@store/store';
 import { matchesKeybind, useKeybinds } from '@ui/keybinds';
 import { sortZoneIdsByPosition } from './zones/zoneGeometry';
@@ -45,10 +47,12 @@ export function useCanvasKeyboard({
   zonePaintBrush
 }: UseCanvasKeyboardInput) {
   const { bindings } = useKeybinds();
+  const commit = useKeyboardEncounterCommit();
+  const store = useStore<RootState>();
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
-      const target = event.target;
+      if (ignoreShortcut(event)) return;
 
       if (
         event.key === 'Delete' &&
@@ -57,15 +61,6 @@ export function useCanvasKeyboard({
       ) {
         event.preventDefault();
         deleteSelectedEntities(dispatch, encounter, selection);
-        return;
-      }
-
-      if (
-        target instanceof HTMLInputElement ||
-        target instanceof HTMLTextAreaElement ||
-        target instanceof HTMLSelectElement ||
-        (target instanceof HTMLElement && target.isContentEditable)
-      ) {
         return;
       }
 
@@ -113,32 +108,13 @@ export function useCanvasKeyboard({
           return;
         }
 
-        const duplicateActorId = `actor-${Date.now()}`;
-        const destinationZoneId =
-          actorTool.targetZoneId ?? sourceActor.currentZoneId;
-        const nextEncounter = duplicateActor(
-          encounter,
-          sourceActor.id,
-          duplicateActorId,
-          destinationZoneId
-        );
-
-        dispatch(
-          commitEncounterChange({
-            action: createEncounterActionRecord('actor.duplicate', {
-              actorId: sourceActor.id,
-              destinationZoneId,
-              duplicateActorId
-            }),
-            nextEncounter
-          })
-        );
-        dispatch(
-          selectEntity({
-            entityType: 'actor',
-            ids: [duplicateActorId]
-          })
-        );
+        const duplicateActorId = `actor-${crypto.randomUUID()}`;
+        const destinationZoneId = getActorPasteDestination(encounter, sourceActor.id, actorTool.targetZoneId);
+        const isCurrent = () => store.getState().encounter.present === encounter;
+        void commit('actor.duplicate', {
+          actorId: sourceActor.id, destinationZoneId, duplicateActorId
+        }, (state) => duplicateActor(state, sourceActor.id, duplicateActorId, destinationZoneId), isCurrent,
+          () => dispatch(selectEntity({ entityType: 'actor', ids: [duplicateActorId] })));
         return;
       }
 
@@ -309,6 +285,8 @@ export function useCanvasKeyboard({
     actorPaintBrush,
     actorTool,
     bindings,
+    commit,
+    store,
     clearShapeDraft,
     clearZoneDraftPoints,
     closeZoneShapeMenu,

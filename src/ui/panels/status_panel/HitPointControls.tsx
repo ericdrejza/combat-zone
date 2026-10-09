@@ -1,3 +1,4 @@
+import { getHitPointAdjustment } from "@entities/actor/hitPointAdjustment";
 import { HeartMinus, HeartPlus, Pencil, Plus, RotateCcw } from "lucide-react";
 import { useState } from "react";
 import type { Actor } from "@entities/actor/types";
@@ -19,19 +20,7 @@ export function HitPointControls({ actors, label, disabled, onAdjust, onSet }: {
   const [reset, setReset] = useState(false);
   const [pending, setPending] = useState<{ ids: string[]; skipped: string[]; amount: number } | null>(null);
   const actor = actors.length === 1 ? actors[0] : undefined;
-  const eligible = actors.filter((actor) => actor.hitPoints);
-  const validAmount = Number.isSafeInteger(Number(amount)) && Number(amount) > 0;
-  const reason = disabled ? "Read-only encounter" : !eligible.length ? "Configure hit points for a selected actor first" : !validAmount ? "Enter a positive whole-number amount" : "";
-  function disabledReason(sign: number): string {
-    if (reason) return reason;
-    if (sign < 0 && rules.limits === "bounded" && eligible.every((actor) => actor.hitPoints!.current <= 0)) {
-      return "All selected actors with hit points are at or below the minimum (0)";
-    }
-    if (sign > 0 && rules.limits !== "unbounded" && eligible.every((actor) => actor.hitPoints!.current >= actor.hitPoints!.maximum)) {
-      return "All selected actors with hit points are at or above their maximum";
-    }
-    return "";
-  }
+  const { eligible, disabledReason } = getHitPointAdjustment(actors, amount, disabled, rules);
   function adjust(sign: number) {
     const ids = eligible.map((actor) => actor.id);
     const skipped = actors.filter((actor) => !actor.hitPoints).map((actor) => actor.name);
@@ -51,13 +40,13 @@ export function HitPointControls({ actors, label, disabled, onAdjust, onSet }: {
       <span>{item.name}</span>
       {item.hitPoints ? <span>{item.hitPoints.current} / {item.hitPoints.maximum}</span> : <span className="text-canvas-muted">Not configured</span>}
     </div>) : null}
-    <div className="flex items-end gap-2">
+    <div className="flex flex-wrap items-center gap-2">
       <DamageHealingAmountField value={amount} disabled={disabled} onChange={setAmount} />
       {[{ text: "Apply damage", Icon: HeartMinus, sign: -1 }, { text: "Apply healing", Icon: HeartPlus, sign: 1 }].map(({ text, Icon, sign }) => {
         const actionReason = disabledReason(sign);
         const tooltip = actionReason ? `${text}: ${actionReason}` : text;
         return <TouchTooltip key={text} label={tooltip}>
-          <button aria-label={text} title={tooltip} disabled={!!actionReason} className="rounded-lg border border-canvas-line p-2 enabled:hover:bg-canvas-surface enabled:hover:text-canvas-ink disabled:cursor-not-allowed disabled:border-canvas-line disabled:bg-canvas-surface disabled:text-canvas-muted disabled:opacity-40" onClick={() => adjust(sign)} type="button"><Icon aria-hidden="true" className="h-5 w-5" /></button>
+          <button aria-label={text} title={tooltip} disabled={!!actionReason} className="flex items-center justify-center rounded-lg border border-canvas-line px-4 py-2 enabled:hover:bg-canvas-surface enabled:hover:text-canvas-ink focus-visible:ring-2 focus-visible:ring-canvas-ink disabled:cursor-not-allowed disabled:border-canvas-line disabled:bg-canvas-surface disabled:text-canvas-muted disabled:opacity-40" onClick={() => adjust(sign)} type="button"><Icon aria-hidden="true" className="h-5 w-5" /></button>
         </TouchTooltip>;
       })}
     </div>

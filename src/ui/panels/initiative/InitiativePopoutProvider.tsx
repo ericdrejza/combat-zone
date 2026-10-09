@@ -1,3 +1,4 @@
+import { ignoreShortcut } from "@ui/keybinds/keyboardGuards";
 import { ContactRound, X } from "lucide-react";
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type PropsWithChildren } from "react";
 import { createPortal } from "react-dom";
@@ -57,7 +58,7 @@ export function InitiativePopoutProvider({ children }: PropsWithChildren) {
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
-      if (event.defaultPrevented || event.repeat || target?.closest?.("input,textarea,select,[contenteditable='true']")) return;
+      if (ignoreShortcut(event) || event.repeat || target?.closest?.("input,textarea,select,[contenteditable='true']")) return;
       if (!matchesKeybind(event, bindings["initiative.toggle"])) return;
       event.preventDefault();
       toggleInitiative();

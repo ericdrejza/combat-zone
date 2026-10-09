@@ -27,6 +27,7 @@ import {
 type CanvasViewportValue = {
   getViewportSize: () => CanvasSize;
   panEnabled: boolean;
+  pan: (direction: "up" | "down" | "left" | "right") => void;
   registerViewport: (element: HTMLDivElement | null) => void;
   viewportSize: CanvasSize;
   zoom: number;
@@ -274,6 +275,11 @@ export function CanvasViewportProvider({ children }: PropsWithChildren) {
     () => ({
       getViewportSize,
       panEnabled: panWithRightClickDrag,
+      pan: (direction) => {
+        if (!viewportElement) return;
+        viewportElement.scrollLeft += direction === "left" ? -40 : direction === "right" ? 40 : 0;
+        viewportElement.scrollTop += direction === "up" ? -40 : direction === "down" ? 40 : 0;
+      },
       registerViewport: setViewportElement,
       resetZoom: () => setCenteredZoom(1),
       setZoomAtPoint,
@@ -287,6 +293,7 @@ export function CanvasViewportProvider({ children }: PropsWithChildren) {
     }),
     [
       getViewportSize,
+      viewportElement,
       panWithRightClickDrag,
       setCenteredZoom,
       setZoomAtPoint,

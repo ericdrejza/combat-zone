@@ -6,7 +6,7 @@ import { adjustHitPoints, removeCounter, saveCounter, setHitPoints, toggleMarker
 import { useCombatPreferences } from "@ui/combat_preferences/CombatPreferenceProvider";
 import { useInterfacePreferences } from "@ui/interface_preferences/InterfacePreferenceProvider";
 import { usePersistence } from "@ui/persistence/PersistenceProvider";
-import { ARMOR, CONDITIONS, WEAPONS } from "@ui/status/markerCatalog";
+import { ARMOR, CONDITIONS, CONDITION_GROUPS, WEAPONS } from "@ui/status/markerCatalog";
 import { useStatusActions } from "@ui/status/useStatusActions";
 import { HealthStatusControl } from "./HealthStatusControl";
 import { MarkerSection } from "./MarkerSection";
@@ -42,7 +42,7 @@ export function ActorStatusPanel() {
         const removed = removedIds.reduce((next, id) => removeCounter(next, id), current);
         return counters.reduce((next, counter) => saveCounter(next, counter), removed);
       }))} /> : null}
-    {visibleConditions.length ? <MarkerSection title="Conditions" actors={actors} markers={visibleConditions} disabled={readOnly} onToggle={(marker) => void commit("actor.toggleCondition", { actorIds: ids, marker }, (state) => toggleMarker(state, ids, marker))} /> : null}
+    {visibleConditions.length ? <MarkerSection title="Conditions" actors={actors} markers={visibleConditions} subsections={CONDITION_GROUPS.map((group) => ({ ...group, markers: group.markers.filter((marker) => visibleConditions.includes(marker)) }))} disabled={readOnly} onToggle={(marker) => void commit("actor.toggleCondition", { actorIds: ids, marker }, (state) => toggleMarker(state, ids, marker))} /> : null}
     {visibility.showWeapons ? <MarkerSection title="Weapons" actors={actors} markers={WEAPONS} disabled={readOnly} onToggle={(marker) => void commit("actor.toggleWeapon", { actorIds: ids, marker }, (state) => toggleMarker(state, ids, marker))} /> : null}
     {visibility.showArmor ? <MarkerSection title="Armor" actors={actors} markers={ARMOR} disabled={readOnly} onToggle={(marker) => void commit("actor.toggleArmor", { actorIds: ids, marker }, (state) => toggleMarker(state, ids, marker, ARMOR.map(({ id }) => id)))} /> : null}
   </div>;

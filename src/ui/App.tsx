@@ -1,3 +1,5 @@
+import { WorkspaceKeyboardShortcuts } from "./keybinds/WorkspaceKeyboardShortcuts";
+import { ignoreShortcut } from "./keybinds/keyboardGuards";
 import { CombatPreferenceProvider } from "@ui/combat_preferences/CombatPreferenceProvider";
 import { StatusPanel } from "@ui/panels/StatusPanel";
 import type { CSSProperties } from "react";
@@ -160,6 +162,7 @@ function AppContent() {
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
+      if (ignoreShortcut(event)) return;
       if (matchesKeybind(event, bindings["workspace.save"])) {
         event.preventDefault();
         void persistenceUi.requestSave();
@@ -167,10 +170,6 @@ function AppContent() {
       }
 
       if (shouldIgnoreKeyboardShortcut(event.target)) {
-        return;
-      }
-
-      if (event.ctrlKey || event.metaKey || event.altKey) {
         return;
       }
 
@@ -446,6 +445,9 @@ function AppContent() {
           }
         >
       <ZoneResizeApprovalProvider>
+      <WorkspaceKeyboardShortcuts onOpenLibrary={() => persistenceUi.openLibrary(
+        activeToolId === "background" ? "backgrounds" : activeToolId === "actor" ? "tokens" : activeToolId === "audio" ? "audio" : "encounters"
+      )} />
       <InitiativePopoutProvider>
       <Toolbar
         actorCreationImage={actorCreationImage}

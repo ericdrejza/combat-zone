@@ -9,6 +9,8 @@ import {
 import { LOCAL_PREFERENCES_RESET_EVENT } from "@ui/motion_preferences/MotionPreferenceProvider";
 import {
   DEFAULT_KEYBINDS,
+  isKeybind,
+  bindingsConflict,
   KEYBIND_DEFINITIONS,
   type KeybindActionId,
   type KeybindMap
@@ -19,12 +21,14 @@ export const KEYBIND_STORAGE_KEY = "combat-zone.keybinds";
 type KeybindContextValue = {
   bindings: KeybindMap;
   resetBindings: () => void;
+  applyBindings: (updates: Partial<KeybindMap>, override?: boolean) => KeybindActionId[];
   setBinding: (actionId: KeybindActionId, binding: string) => KeybindActionId | null;
 };
 
 const defaultValue: KeybindContextValue = {
   bindings: DEFAULT_KEYBINDS,
   resetBindings: () => undefined,
+  applyBindings: () => [],
   setBinding: () => null
 };
 
@@ -38,17 +42,20 @@ function readBindings(): KeybindMap {
     for (const { editable, id } of KEYBIND_DEFINITIONS) {
       if (!editable) continue;
       const candidate = stored[id];
-      if (candidate !== undefined && (typeof candidate !== "string" || !/^[a-z]$/.test(candidate))) {
+      if (candidate !== undefined && (!isKeybind(candidate))) {
         return DEFAULT_KEYBINDS;
       }
       if (typeof candidate === "string") next[id] = candidate;
     }
-    const editableBindings = KEYBIND_DEFINITIONS
-      .filter(({ editable }) => editable)
-      .map(({ id }) => next[id]);
-    return new Set(editableBindings).size === editableBindings.length
-      ? next
-      : DEFAULT_KEYBINDS;
+    // New defaults may conflict with an older customized letter; keep the saved choice.
+    const assigned: string[] = [];
+    for (const { id } of KEYBIND_DEFINITIONS.filter((d) => !d.editable)) assigned.push(next[id]);
+    const ordered = KEYBIND_DEFINITIONS.filter((d) => d.editable).sort((a, b) => Number(typeof stored[b.id] === "string") - Number(typeof stored[a.id] === "string"));
+    for (const { id } of ordered) {
+      if (assigned.some((binding) => bindingsConflict(binding, next[id]))) next[id] = "";
+      if (next[id]) assigned.push(next[id]);
+    }
+    return next;
   } catch {
     return DEFAULT_KEYBINDS;
   }
@@ -60,8 +67,10 @@ export function KeybindProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const reset = () => setBindings(DEFAULT_KEYBINDS);
+    const sync = (event: StorageEvent) => { if (event.key === KEYBIND_STORAGE_KEY) setBindings(readBindings()); };
+    globalThis.addEventListener("storage", sync);
     globalThis.addEventListener(LOCAL_PREFERENCES_RESET_EVENT, reset);
-    return () => globalThis.removeEventListener(LOCAL_PREFERENCES_RESET_EVENT, reset);
+    return () => { globalThis.removeEventListener(LOCAL_PREFERENCES_RESET_EVENT, reset); globalThis.removeEventListener("storage", sync); };
   }, []);
 
   function persist(next: KeybindMap) {
@@ -80,15 +89,20 @@ export function KeybindProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  function applyBindings(updates: Partial<KeybindMap>, override = false): KeybindActionId[] {
+    const entries = Object.entries(updates) as [KeybindActionId, string][];
+    if (entries.some(([id, binding]) => !KEYBIND_DEFINITIONS.find((d) => d.id === id)?.editable || !isKeybind(binding))) return entries.map(([id]) => id);
+    const conflicts = KEYBIND_DEFINITIONS.filter(({ id }) => !(id in updates) && entries.some(([, binding]) => bindingsConflict(bindings[id], binding)));
+    if (conflicts.length && (!override || conflicts.some((d) => !d.editable))) return conflicts.map((d) => d.id);
+    if (entries.some(([, binding], index) => entries.slice(index + 1).some(([, other]) => bindingsConflict(binding, other)))) return entries.map(([id]) => id);
+    const next = { ...bindings, ...updates };
+    for (const { id } of conflicts) next[id] = "";
+    persist(next);
+    return [];
+  }
+
   function setBinding(actionId: KeybindActionId, binding: string) {
-    const definition = KEYBIND_DEFINITIONS.find(({ id }) => id === actionId);
-    if (!definition?.editable) return actionId;
-    const conflict = KEYBIND_DEFINITIONS.find(
-      ({ editable, id }) => editable && id !== actionId && bindings[id] === binding
-    );
-    if (conflict) return conflict.id;
-    persist({ ...bindings, [actionId]: binding });
-    return null;
+    return applyBindings({ [actionId]: binding })[0] ?? null;
   }
 
   function resetBindings() {
@@ -96,7 +110,7 @@ export function KeybindProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <KeybindContext.Provider value={{ bindings, resetBindings, setBinding }}>
+    <KeybindContext.Provider value={{ bindings, resetBindings, setBinding, applyBindings }}>
       {children}
     </KeybindContext.Provider>
   );
