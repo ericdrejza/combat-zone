@@ -1,8 +1,8 @@
 import { ClockStyleSelect } from "@ui/controls/ClockStyleSelect";
-import { isClockStyle } from "@entities/zone/clockStyle";
+import { isClockStyle } from "@core/entity_resources/clockStyle";
 import { useState, type ReactNode } from "react";
-import type { ClockCounter as Counter } from "@entities/zone/zoneStatus";
-import { DEFAULT_CLOCK_STYLE, type ClockStyle } from "@entities/zone/clockStyle";
+import type { ClockCounter as Counter } from "@core/entity_resources/statusResources";
+import { DEFAULT_CLOCK_STYLE, type ClockStyle } from "@core/entity_resources/clockStyle";
 import { CounterValueField } from "./CounterValueField";
 import { CounterNumberField } from "./CounterNumberField";
 import { StatusDialog } from "./StatusDialog";

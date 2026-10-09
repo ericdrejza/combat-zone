@@ -1,3 +1,5 @@
+import { validCounters } from "@core/entity_resources/counters";
+import { validClocks } from "@core/entity_resources/statusResources";
 import { SECTION_AUDIO_TRIGGERS, type AudioCueGroupSection } from "@entities/audio/types";
 import { validZoneResources } from "@entities/zone/zoneStatus";
 import { validActorResources } from "@entities/actor/actorResources";
@@ -103,6 +105,7 @@ export function assertEncounterState(value: unknown, name = "encounter"): assert
       `${name}.schemaVersion ${String(value.schemaVersion)} is unsupported.`
     );
   }
+  if (value.counters === undefined || value.clocks === undefined || !validCounters(value.counters) || !validClocks(value.clocks)) throw new PersistenceValidationError(`${name}.encounter resources are invalid.`);
   requiredString(value.id, `${name}.id`);
   if (typeof value.name !== "string") {
     throw new PersistenceValidationError(`${name}.name must be a string.`);
@@ -496,7 +499,7 @@ export function migrateEncounterState(value: unknown): unknown {
     }
   }
   if (migrated.schemaVersion === 14) {
-    migrated.schemaVersion = ENCOUNTER_SCHEMA_VERSION;
+    migrated.schemaVersion = 15;
     if (isRecord(migrated.zones) && isRecord(migrated.zones.byId)) {
       for (const zone of Object.values(migrated.zones.byId)) {
         if (!isRecord(zone) || !isRecord(zone.clocks) || !isRecord(zone.clocks.byId)) continue;
@@ -506,6 +509,12 @@ export function migrateEncounterState(value: unknown): unknown {
       }
     }
   }
+  if (migrated.schemaVersion === 15) {
+    migrated.schemaVersion = ENCOUNTER_SCHEMA_VERSION;
+    if (migrated.counters === undefined) migrated.counters = { allIds: [], byId: {} };
+    if (migrated.clocks === undefined) migrated.clocks = { allIds: [], byId: {} };
+  }
+
   return migrated;
 }
 

@@ -111,7 +111,7 @@ describe("Zone Status panel", () => {
     await act(async () => {});
     expect(clocks()[0].value).toBe(4); expect(store.getState().encounter.past).toHaveLength(history);
   });
-  it.each(["traditional", "linear"])("confirms resetting a full %s clock to zero, with cancellation and exact history", async (style) => {
+  it.each(["traditional", "box", "stack", "row"])("confirms resetting a full %s clock to zero, with cancellation and exact history", async (style) => {
     localStorage.setItem(INTERFACE_PREFERENCES_STORAGE_KEY, JSON.stringify({ clockStyleDefault: style }));
     setup(); await addClock();
     fireEvent.click(screen.getByRole("button", { name: "Reset Clock 1 to maximum" }));
@@ -174,44 +174,64 @@ describe("Zone Status panel", () => {
     setup(); await addClock();
     expect(clocks()[0].style).toBe("traditional");
     fireEvent.click(screen.getByRole("button", { name: "Edit clocks" }));
-    fireEvent.change(screen.getByLabelText("Clock style"), { target: { value: "linear" } });
+    fireEvent.change(screen.getByLabelText("Clock style"), { target: { value: "box" } });
     expect(clocks()[0].style).toBe("traditional");
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
-    await waitFor(() => expect(clocks()[0].style).toBe("linear"));
+    await waitFor(() => expect(clocks()[0].style).toBe("box"));
     expect(screen.getByRole("img", { name: "Clock 1: 0 of 4 segments filled" }).querySelectorAll("rect")).toHaveLength(4);
     fireEvent.click(screen.getByRole("button", { name: "Increase Clock 1" }));
     await waitFor(() => expect(clocks()[0].value).toBe(1));
-    expect(clocks()[0].style).toBe("linear");
+    expect(clocks()[0].style).toBe("box");
     act(() => store.dispatch(undoEncounterChange()));
-    expect(clocks()[0]).toMatchObject({ style: "linear", value: 0, segments: 4 });
+    expect(clocks()[0]).toMatchObject({ style: "box", value: 0, segments: 4 });
     act(() => store.dispatch(undoEncounterChange()));
     expect(clocks()[0]).toMatchObject({ style: "traditional", value: 0, segments: 4 });
     act(() => store.dispatch(redoEncounterChange()));
-    expect(clocks()[0]).toMatchObject({ style: "linear", value: 0, segments: 4 });
+    expect(clocks()[0]).toMatchObject({ style: "box", value: 0, segments: 4 });
     fireEvent.click(screen.getByRole("button", { name: "Edit clocks" }));
     fireEvent.change(screen.getByLabelText("Clock style"), { target: { value: "traditional" } });
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
     fireEvent.click(screen.getByRole("button", { name: "Discard changes" }));
-    expect(clocks()[0].style).toBe("linear");
+    expect(clocks()[0].style).toBe("box");
   });
   it("uses Interface defaults for new clocks through both creation paths without changing existing clocks", async () => {
-    localStorage.setItem(INTERFACE_PREFERENCES_STORAGE_KEY, JSON.stringify({ clockStyleDefault: "linear" }));
+    localStorage.setItem(INTERFACE_PREFERENCES_STORAGE_KEY, JSON.stringify({ clockStyleDefault: "box" }));
     setup();
     fireEvent.click(screen.getByRole("button", { name: "Add clock" }));
-    expect(screen.getByLabelText("Clock style")).toHaveValue("linear");
+    expect(screen.getByLabelText("Clock style")).toHaveValue("box");
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
     await waitFor(() => expect(clocks()).toHaveLength(1));
-    expect(clocks()[0].style).toBe("linear");
+    expect(clocks()[0].style).toBe("box");
     localStorage.setItem(INTERFACE_PREFERENCES_STORAGE_KEY, JSON.stringify({ clockStyleDefault: "traditional" }));
     act(() => window.dispatchEvent(new StorageEvent("storage", { key: INTERFACE_PREFERENCES_STORAGE_KEY })));
-    expect(clocks()[0].style).toBe("linear");
+    expect(clocks()[0].style).toBe("box");
     fireEvent.click(screen.getByRole("button", { name: "Edit clocks" }));
-    expect(screen.getByLabelText("Clock style")).toHaveValue("linear");
+    expect(screen.getByLabelText("Clock style")).toHaveValue("box");
     fireEvent.change(screen.getByLabelText("Clock to edit"), { target: { value: "" } });
     expect(screen.getByLabelText("Clock style")).toHaveValue("traditional");
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
     await waitFor(() => expect(clocks()).toHaveLength(2));
-    expect(clocks().map(({ style }) => style)).toEqual(["linear", "traditional"]);
+    expect(clocks().map(({ style }) => style)).toEqual(["box", "traditional"]);
+  });
+  it("opens a Zone clock card's editor with its clock selected", async () => {
+    setup(); await addClock();
+    fireEvent.click(screen.getByRole("button", { name: "Add clock" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() => expect(clocks()).toHaveLength(2));
+    fireEvent.click(screen.getByRole("button", { name: "Edit Clock 2 clock" }));
+    expect(screen.getByRole("combobox", { name: "Clock to edit" })).toHaveValue(clocks()[1].id);
+    expect(screen.getByLabelText("Clock name")).toHaveValue("Clock 2");
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(clocks()[1].name).toBe("Clock 2");
+  });
+  it("deletes a clock directly from its card with exact undo/redo", async () => {
+    setup(); await addClock();
+    const before = structuredClone(zone().clocks);
+    fireEvent.click(screen.getByRole("button", { name: "Delete Clock 1 clock" }));
+    await waitFor(() => expect(clocks()).toHaveLength(0));
+    act(() => store.dispatch(undoEncounterChange())); expect(zone().clocks).toEqual(before);
+    act(() => store.dispatch(redoEncounterChange())); expect(clocks()).toHaveLength(0);
   });
   it("clamps on shrink and defers removal until Save, with dirty discard", async () => {
     setup(); await addClock();

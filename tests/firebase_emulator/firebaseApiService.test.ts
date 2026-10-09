@@ -67,6 +67,26 @@ afterAll(async () => {
 });
 
 describe("Firebase API service", () => {
+  it.each(["traditional", "box", "stack", "row"])("round trips schema 16 encounter counters and %s clocks through Firestore", async (style) => {
+    const command = encounterCommand();
+    command.payload.state.schemaVersion = 16;
+    command.payload.state.panelLayout.right.push({ id: "audio", collapsed: false });
+    const resources = {
+      audioCues: { allIds: [], byId: {} }, audioCueGroups: { allIds: [], byId: {} },
+      counters: { allIds: ["c"], byId: { c: { id: "c", name: "Supplies", value: 2, minimum: 0, maximum: 5 } } },
+      clocks: { allIds: ["k"], byId: { k: { id: "k", name: "Alarm", value: 3, segments: 6, style } } }
+    };
+    Object.assign(command.payload.state, resources);
+    await service.commitEncounter("alice", command);
+    const record = await getFirestore().doc("users/alice/encounters/encounter-1").get();
+    expect(record.data()?.state).toMatchObject(resources);
+    const invalid = encounterCommand("invalid", 1);
+    invalid.payload.state = structuredClone(command.payload.state);
+    Object.assign(invalid.payload.state, { clocks: { ...resources.clocks, byId: { k: { ...resources.clocks.byId.k, segments: 13 } } } });
+    expect(() => service.commitEncounter("alice", invalid)).toThrow(/clock/);
+    expect((await getFirestore().doc("users/alice/encounters/encounter-1").get()).data()?.state).toMatchObject(resources);
+  });
+
   it("round trips schema 13 actor resources through Firestore", async () => {
     const command = encounterCommand();
     const actor = { id: "actor", name: "Actor", actorType: "creature", layoutGroup: "hero", size: "medium", shape: "circle", currentZoneId: "zoneless", metadata: {}, status: 2,
@@ -95,7 +115,7 @@ describe("Firebase API service", () => {
     expect(record.data()?.state.zones.byId.z).toEqual(zone);
     expect(record.data()?.state.schemaVersion).toBe(14);
   });
-  it.each(["traditional", "linear"])("round trips schema 15 %s clocks and audio through Firestore", async (style) => {
+  it.each(["traditional", "box"])("round trips schema 15 %s clocks and audio through Firestore", async (style) => {
     const command = encounterCommand();
     const zone = { id: "z", tags: [], clocks: { allIds: ["k"], byId: { k: { id: "k", name: "Alarm", value: 2, segments: 5, style } } } };
     command.payload.state.schemaVersion = 15;

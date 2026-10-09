@@ -178,6 +178,8 @@ describe('EncounterState foundation', () => {
       schemaVersion: ENCOUNTER_SCHEMA_VERSION,
       id: 'encounter-empty',
       name: 'Empty Encounter',
+      counters: { byId: {}, allIds: [] },
+      clocks: { byId: {}, allIds: [] },
       backgroundImage: null,
       canvasSize: { height: 640, width: 960 },
       zones: { byId: {}, allIds: [] },

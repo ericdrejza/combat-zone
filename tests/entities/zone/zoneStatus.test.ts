@@ -54,13 +54,13 @@ describe("Zone status resources", () => {
     expect(prepared.blocked).toBe(mode === "STRICT");
     expect(prepared.validationResult.messages).toContainEqual(expect.objectContaining({ code: "zone.resourcesInvalid" }));
   });
-  it.each(["traditional", "linear"] as const)("preserves %s style during bounded progress edits", (style) => {
+  it.each(["traditional", "box", "stack", "row"] as const)("preserves %s style during bounded progress edits", (style) => {
     const initial = initialState();
     const styled = saveZoneClock(initial.zones.byId.z, { ...clock, style });
     expect(saveZoneClock(styled, { ...clock, style })).toBe(styled);
     expect(saveZoneClock(styled, { ...clock, style, value: 99 }).clocks?.byId.k).toMatchObject({ value: 4, segments: 4, style });
     expect(saveZoneClock(styled, { ...clock, style, value: -2 }).clocks?.byId.k).toMatchObject({ value: 0, segments: 4, style });
-    const switched = saveZoneClock(styled, { ...clock, style: style === "traditional" ? "linear" : "traditional" });
+    const switched = saveZoneClock(styled, { ...clock, style: style === "traditional" ? "box" : "traditional" });
     expect(switched).not.toBe(styled); expect(switched.clocks?.byId.k.value).toBe(3);
   });
   it.each(["STRICT", "ADVISORY"] as const)("validates an invalid clock style in %s", (mode) => {

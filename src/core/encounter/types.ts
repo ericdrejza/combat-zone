@@ -1,3 +1,5 @@
+import type { Counters } from "@core/entity_resources/counters";
+import type { Clocks } from "@core/entity_resources/statusResources";
 import type { ValidationMode, ValidationMessage } from "../validation/types";
 import type { EntityCollection, EntityId } from "../state/entityCollection";
 import type { Actor } from "@entities/actor/types";
@@ -10,7 +12,7 @@ import type { ImageAssetSource } from "@core/assets/imageAssetSource";
 import type { EncounterPanelLayout } from "./panelLayout";
 import type { AudioCue, AudioCueGroup } from "@entities/audio/types";
 
-export const ENCOUNTER_SCHEMA_VERSION = 15;
+export const ENCOUNTER_SCHEMA_VERSION = 16;
 export const ZONELESS_ACTOR_ZONE_ID = "zoneless";
 
 export type EncounterSchemaVersion = typeof ENCOUNTER_SCHEMA_VERSION;
@@ -46,6 +48,8 @@ export type EncounterState = {
   schemaVersion: EncounterSchemaVersion;
   id: EntityId;
   name: string;
+  counters: Counters;
+  clocks: Clocks;
   backgroundImage: EncounterBackgroundImage | null;
   canvasSize: CanvasSize;
   zones: EntityCollection<Zone>;

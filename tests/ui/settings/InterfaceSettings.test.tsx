@@ -37,19 +37,20 @@ describe("InterfaceSettings", () => {
     );
   }
 
-  it("persists the default clock style in Defaults, synchronizes changes, and resets to Traditional", () => {
+  it.each(["box", "stack", "row"])("persists %s as the default clock style and resets to Traditional", (style) => {
     const view = renderSettings();
     const defaults = screen.getByRole("group", { name: "Defaults" });
     const select = within(defaults).getByRole("combobox", { name: "Default clock style" });
     expect(select).toHaveValue("traditional");
-    fireEvent.change(select, { target: { value: "linear" } });
-    expect(JSON.parse(localStorage.getItem(INTERFACE_PREFERENCES_STORAGE_KEY)!)).toMatchObject({ clockStyleDefault: "linear" });
+    expect(within(select).getAllByRole("option").map((option) => option.textContent)).toEqual(["Box", "Row", "Stack", "Traditional"]);
+    fireEvent.change(select, { target: { value: style } });
+    expect(JSON.parse(localStorage.getItem(INTERFACE_PREFERENCES_STORAGE_KEY)!)).toMatchObject({ clockStyleDefault: style });
     view.unmount(); renderSettings();
-    expect(screen.getByLabelText("Default clock style")).toHaveValue("linear");
+    expect(screen.getByLabelText("Default clock style")).toHaveValue(style);
     localStorage.setItem(INTERFACE_PREFERENCES_STORAGE_KEY, JSON.stringify({ clockStyleDefault: "traditional" }));
     act(() => window.dispatchEvent(new StorageEvent("storage", { key: INTERFACE_PREFERENCES_STORAGE_KEY })));
     expect(screen.getByLabelText("Default clock style")).toHaveValue("traditional");
-    fireEvent.change(screen.getByLabelText("Default clock style"), { target: { value: "linear" } });
+    fireEvent.change(screen.getByLabelText("Default clock style"), { target: { value: style } });
     act(() => window.dispatchEvent(new Event(LOCAL_PREFERENCES_RESET_EVENT)));
     expect(screen.getByLabelText("Default clock style")).toHaveValue("traditional");
   });

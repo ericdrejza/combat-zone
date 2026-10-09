@@ -24,6 +24,8 @@ export function createEncounterState({
     schemaVersion: ENCOUNTER_SCHEMA_VERSION,
     id,
     name,
+    counters: createEmptyEntityCollection(),
+    clocks: createEmptyEntityCollection(),
     backgroundImage: null,
     canvasSize: { ...DEFAULT_CANVAS_SIZE },
     zones: createEmptyEntityCollection(),

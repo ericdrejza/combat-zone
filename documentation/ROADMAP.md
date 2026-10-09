@@ -11,6 +11,9 @@ After completing a numbered section (## X.), move the completed section to the e
 
 ## 15. MVP Acceptance Hardening
 
+- [x] Add touch-only counter swipes for deletion and targeted editing, preserving
+      vertical scrolling, value controls, writer enforcement, and undo/redo.
+
 - [x] Reveal newly created Soundboard groups; merge Actor zone triggers and add
       applied-damage and health-status triggers with independent icon toggles,
       undo/redo coverage, and local/cloud persistence round trips.
@@ -18,8 +21,22 @@ After completing a numbered section (## X.), move the completed section to the e
 - [x] Offer confirmed reset to zero when a full clock's maximum is clicked,
       with cancellation, writer enforcement, and exact undo/redo coverage.
 
-- [x] Add Traditional/Linear clock styles, two-column mini cards, and
+- [x] Add Traditional/Box clock styles, two-column mini cards, and
       an Interface default; verify history, schema 15 migration, and cloud.
+
+- [x] Add compact Stack and Row clock styles, alphabetize style choices while
+      retaining the Traditional default, and make clock-card trash icons red.
+      Verify styles, history, preferences, local/cloud persistence, and card sizing.
+
+- [x] Add clock-card pen controls opening the shared editor at the clicked clock,
+      preserving draft editing, cancellation, and exact history.
+
+- [x] Add clock-card trash controls without title layout shifts, with validated
+      history and writer enforcement in Zone and Encounter scopes.
+
+- [x] Show Encounter Status with no selected entity, reusing Zone clocks and
+      counters with independent resources, schema 16 migration, validated history,
+      writer guards, autosave/recovery, and local/cloud round trips.
 
 - [x] Implement Zone Status counters, clocks, shared Edge tags/notes, and schema
       14 persistence; verify validation, writer guards, history, and cloud.

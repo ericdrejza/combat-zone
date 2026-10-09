@@ -487,7 +487,26 @@ these back into `AGENT.md` or `DESIGN.md`.
       Release, cancellation and bounds stop repeating; counter steps remain
       undoable. Apply damage and Apply healing remain single-click actions.
 
+## Encounter Status panel
+
+- [x] With no entity selected, Status shows the Encounter name, Counters, and
+      Clocks in desktop and compact panels; selected entities retain their status.
+- [x] Encounter resources reuse Zone creation/editing, generated names, counter
+      bounds, clock styles, progress limits, hold controls, and fill/reset dialogs.
+      Encounter and Zone resources remain independent.
+- [x] Edits and removals preserve exact undo/redo, validation modes, queued steps,
+      and central writer guards; read-only sessions disable mutations.
+- [x] Schema 16 migration initializes empty encounter resources; saves, recovery,
+      duplication, import/export, refresh, navigation, and cloud round trips retain
+      them. Invalid data, newer schemas, and conflicts preserve valid saved data.
+
 ## Zone Status panel
+
+- [x] Clock cards expose overlaid top-left pen and top-right trash icons on hover/focus and
+      touch screens without title layout shifts. Direct removal supports exact
+      undo/redo and central writer enforcement in Zone and Encounter scopes.
+      The pen opens Edit clocks with its clock selected, preserving draft-only edits
+      until Save and restoring exact changes through history.
 
 - [x] A single selected Zone exposes name, counters, clocks, tags, and notes;
       multiple Zones show a single-Zone selection prompt.
@@ -501,10 +520,14 @@ these back into `AGENT.md` or `DESIGN.md`.
 - [x] Schema 14 migrations and local/cloud round trips retain Zone status;
       invalid resources and unsupported schemas preserve valid data.
 
-- [x] Clock style is editable as Traditional or Linear. Linear boxes wrap into
+- [x] Clock style choices are alphabetical: Box, Row, Stack, Traditional.
+      Traditional remains the default. Stack fills upward and Row fills rightward
+      across the full available vertical/horizontal visual axis; all styles
+      have identical card dimensions.
+      Box segments wrap into
       rows. Two-column mini cards show name, centered visual, and current value/controls.
       /maximum sits beside the visual without shifting its center and still confirms filling.
-      Both styles retain the same bounds and progress mechanics.
+      All styles retain the same bounds and progress mechanics.
 - [x] Interface > Defaults persists Default clock style, initially Traditional;
       it affects new clocks only and synchronizes/resets with Interface preferences.
 - [x] Clock styles survive atomic editor saves, undo/redo, schema 15 migration,

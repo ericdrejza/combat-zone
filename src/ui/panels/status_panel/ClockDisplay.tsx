@@ -1,8 +1,10 @@
-import type { ClockStyle } from "@entities/zone/clockStyle";
-import { ClockLinear } from "./ClockLinear";
+import type { ClockStyle } from "@core/entity_resources/clockStyle";
+import { ClockBox } from "./ClockBox";
+import { ClockBars } from "./ClockBars";
 import { ClockRing } from "./ClockRing";
 
 /** Visual choice changes the representation of progress, never its mechanics. */
 export function ClockDisplay({ style = "traditional", ...progress }: { style?: ClockStyle; name: string; value: number; segments: number }) {
-  return style === "linear" ? <ClockLinear {...progress} /> : <ClockRing {...progress} />;
+  if (style === "stack" || style === "row") return <ClockBars style={style} {...progress} />;
+  return style === "box" ? <ClockBox {...progress} /> : <ClockRing {...progress} />;
 }

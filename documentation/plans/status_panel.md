@@ -401,10 +401,10 @@ also copy counters, clocks, and notes. No change to the existing cloning path
 was made while that question awaits an answer. It currently copies tags and
 visual properties; the new resource collections start empty on creation.
 
-### Traditional and Linear clock styles
+### Traditional and Box clock styles
 
 - Add a per-clock style, Traditional by default. Traditional keeps the radial
-  segmented rendering; Linear uses filled boxes in a four-column grid with
+  segmented rendering; Box uses filled boxes in a four-column grid with
   left-aligned segments, including partial rows.
 - Arrange clocks as mini cards in two columns, showing name, centered visual,
   then the current value/stepping controls below. Place /maximum beside the

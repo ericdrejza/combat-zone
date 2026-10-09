@@ -281,7 +281,7 @@ describe("PanelsShell", () => {
 
       expect(
         within(leftDock)
-          .getAllByRole("heading")
+          .getAllByRole("heading", { level: 2 })
           .map((heading) => heading.textContent)
       ).toEqual(["Status", "Library", "Properties", "Log"]);
     } finally {
@@ -325,7 +325,7 @@ describe("PanelsShell", () => {
 
       expect(
         within(leftDock)
-          .getAllByRole("heading")
+          .getAllByRole("heading", { level: 2 })
           .map((heading) => heading.textContent)
       ).toEqual(["Status", "Library", "Properties", "Log"]);
     } finally {
@@ -369,7 +369,7 @@ describe("PanelsShell", () => {
 
       expect(
         within(leftDock)
-          .getAllByRole("heading")
+          .getAllByRole("heading", { level: 2 })
           .map((heading) => heading.textContent)
       ).toEqual(["Library", "Properties", "Log"]);
     } finally {
@@ -468,7 +468,7 @@ describe("PanelsShell", () => {
 
     expect(
       within(leftDock)
-        .getAllByRole("heading")
+        .getAllByRole("heading", { level: 2 })
         .map((heading) => heading.textContent)
     ).toEqual(["Status", "Library", "Properties", "Log"]);
     expect(

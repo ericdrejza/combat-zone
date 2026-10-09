@@ -49,6 +49,8 @@ describe("encounter Redux history", () => {
         schemaVersion: ENCOUNTER_SCHEMA_VERSION,
         id: "active-encounter",
         name: "Untitled Encounter",
+        counters: { byId: {}, allIds: [] },
+        clocks: { byId: {}, allIds: [] },
         backgroundImage: null,
         canvasSize: { height: 640, width: 960 },
         zones: { byId: {}, allIds: [] },

@@ -24,7 +24,7 @@ describe("Zone status persistence", () => {
     const before = structuredClone(legacy);
     const migrated = migrateEncounterState(legacy);
     assertEncounterState(migrated);
-    expect(migrated.schemaVersion).toBe(15);
+    expect(migrated.schemaVersion).toBe(16);
     expect(migrated.zones.byId.z).toMatchObject({ counters: { allIds: [], byId: {} }, clocks: { allIds: [], byId: {} }, tags: before.zones.byId.z.tags });
     expect(migrated.zones.byId.z.notes).toBeUndefined(); expect(legacy).toEqual(before);
   });
@@ -37,7 +37,7 @@ describe("Zone status persistence", () => {
     expect(migrated.zones.byId.z.clocks!.byId.k).toEqual({ ...before.zones.byId.z.clocks!.byId.k, style: "traditional" });
     expect(legacy).toEqual(before);
   });
-  it.each(["traditional", "linear"] as const)("round trips %s clock styles locally and through cloud serialization", async (style) => {
+  it.each(["traditional", "box", "stack", "row"] as const)("round trips %s clock styles locally and through cloud serialization", async (style) => {
     const state = currentState(); state.zones.byId.z.clocks!.byId.k.style = style;
     const repository = new InMemoryWorkspaceRepository();
     const saved = await repository.createEncounter(state);
@@ -81,7 +81,7 @@ describe("Zone status persistence", () => {
     await expect(repository.saveEncounter(invalid, { expectedRevision: record.revision })).rejects.toThrow(/zone resources/);
     await expect(repository.saveEncounter(currentState(), { expectedRevision: record.revision + 1 })).rejects.toThrow();
     expect((await repository.getEncounter(record.id))?.state).toEqual(record.state);
-    const newer = { ...record.state, schemaVersion: 16 };
+    const newer = { ...record.state, schemaVersion: 17 };
     expect(() => assertEncounterState(newer)).toThrow(/unsupported/);
     expect(() => validateEncounter(payload(newer as never))).toThrow(/unsupported/);
   });

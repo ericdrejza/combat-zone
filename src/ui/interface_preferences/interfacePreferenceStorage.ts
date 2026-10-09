@@ -1,4 +1,4 @@
-import { DEFAULT_CLOCK_STYLE, isClockStyle, type ClockStyle } from "@entities/zone/clockStyle";
+import { DEFAULT_CLOCK_STYLE, isClockStyle, type ClockStyle } from "@core/entity_resources/clockStyle";
 import { readAudioCueVolumeDefault, readAudioRepeatDelayDefaults } from "./audioPreferences";
 import { readPanelVisibility } from "./panelPreferences";
 import { DEFAULT_DOCKABLE_PANEL_VISIBILITY, type DockablePanelId, type DockablePanelVisibility } from "@ui/panels/dockablePanelMetadata";

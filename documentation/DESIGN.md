@@ -78,6 +78,8 @@ Root runtime container.
 - actors[]
 - engagements[]
 - annotations[]
+- counters (normalized encounter-scoped collection)
+- clocks (normalized encounter-scoped collection)
 - initiativeTracker
 - validationState
 - canvasSize
@@ -773,9 +775,15 @@ Status edits short-term actor details, in this order: read-only names, health,
 hit points, counters, Conditions, Weapons, and Armor. A single selected
 Actor exposes all sections. Multiple selected Actors expose names, bulk HP,
 and markers; health editing and custom counters are hidden. Other selections
-show an Actor-or-Zone selection prompt.
+show an Actor-or-Zone selection prompt when entities are selected. With no entity
+selected, Status shows the Encounter name styled like Actor and Zone status titles, followed by
+encounter-scoped Counters and Clocks. These use the same creation, editing, naming, bounds, style,
+reset, validation, writer-boundary, history, and responsive layout rules as Zone
+resources. Encounter resources remain independent of Zone resources and persist
+with the encounter through saves, recovery, duplication, import/export, and cloud
+synchronization.
 
-The Actor and Zone counter section is labeled “Counters”.
+The Actor, Zone, and Encounter counter section is labeled “Counters”.
 
 A single selected Zone exposes its read-only name, counters, clocks, tags,
 and notes in that order. Multiple selected Zones show a single-Zone selection
@@ -793,15 +801,31 @@ from 1 through 12. New clocks start at zero with four segments; blank names use
 the first available Clock N name. Progress stays between zero and segment count,
 and shrinking a clock clamps progress. Each clock stores a style: Traditional
 (default), a segmented radial progress clock filling clockwise from the top, or
-Linear, a series of SVG boxes filling in order. Traditional clocks use contrasting
+Box, a series of SVG boxes filling in order, or Stack, a vertical stack of
+short, wide rectangles filling from bottom to top, or Row, the equivalent
+horizontal bars filling from left to right. Stack and Row fit every supported
+segment count into the available space: Stack fills the 48px visual row vertically,
+while Row stretches across the available visual width. Both distribute their
+segments across that full axis. All four styles share a 48px visual row and
+equal-height cards, so style changes do not alter card dimensions.
+Style dropdowns sort alphabetically: Box, Row, Stack, Traditional; Traditional
+remains the default. Traditional clocks use contrasting
 dividers between adjacent completed segments, including the closing divider
-when full. Linear boxes use a four-column grid with left-aligned segments,
-including partially filled rows. Arrange clocks as mini cards in a two-column grid. Each card shows the clock
+when full. Box segments use a four-column grid with left-aligned segments,
+including partially filled rows. Box segments are vertically centered with the
+maximum within the shared visual row.
+Arrange clocks as mini cards in a two-column grid with equal-height rows. Each card shows the clock
 name, a centered visualization, then the current value and stepping controls
-below. Place /maximum to the right of the visualization, outside its layout
-flow so the maximum does not shift the visualization. Linear visuals sit slightly
+below, with compact padding and gaps between the three rows. All cards use
+a vertical flex layout with space-between alignment. Clock cards expose a top-right
+red trash button and top-left pen button on hover or keyboard focus, and always on
+touch screens. These sit outside normal layout with consistent title space, so
+visibility does not shift the name. The pen opens Edit clocks with that clock
+selected; edits remain drafts until Save. Deletion removes only that clock through validated history and
+the writer boundary. Place /maximum to the right without shifting the visualization horizontally;
+include its height when sizing their shared container. Box visuals sit slightly
 left of center with more room for boxes on the left, keeping two-digit maxima
-inset from the card edge; the maximum retains its confirmed-fill action. Both styles use the same
+inset from the card edge; the maximum retains its confirmed-fill action. All styles use the same
 zero-to-segment-count bounds, progress mechanics, and exact current/total value.
 The clock editor exposes the style choice. Interface settings > Defaults stores
 a Default clock style preference, initially Traditional, used only for newly
@@ -861,7 +885,13 @@ The modal title is “Edit counters”. It keeps all edits and removals in one l
 switching counters. Changed counters show a pen indicator only beside their names inside the dropdown.
 Save commits the entire draft as one undoable change. Closing a dirty editor
 prompts to save, discard, or keep editing; invalid drafts cannot be saved.
-Removal is available inside the editor and takes effect on save.
+Removal is available inside the editor and takes effect on save. On touch devices,
+swiping a status-panel counter row right reveals a red fill with a black trash icon
+and deletes the counter on release; swiping left reveals a theme-neutral fill with
+a contrasting pen icon and opens the editor with that counter selected. The gesture
+commits after 30% of the row width (capped at 72px), or a same-direction flick
+of at least 20px at 500px/s. Shorter gestures return to rest. Vertical scrolling
+and value controls remain available; read-only rows cannot perform swipe actions.
 Minimum must not exceed maximum; all changes clamp to configured bounds. Clones
 retain values and subsequent changes remain independent. In the counter editor,
 stepping an empty current or minimum field in either direction first sets it
@@ -959,10 +989,13 @@ validation, Redux history and the writer boundary; bulk changes and HP plus
 health changes are atomic. Resources and unknown markers survive local and cloud
 round trips. Encounter schema 14 adds Zone counters, clocks, and notes. Migration from schema
 13 initializes empty counter/clock collections while preserving tags and all
-other encounter fields. Encounter schema 15 adds clock style; migration from schema 14 sets missing
+other encounter fields. Encounter schema 16 adds normalized encounter counters and clocks; migration
+from schema 15 initializes empty collections without changing Zone resources.
+Encounter schema 15 adds clock style; migration from schema 14 sets missing
 styles to Traditional without changing progress or segment counts. Missing
-legacy styles render as Traditional. The Firebase API accepts schemas 15, 14,
-13, and legacy 7, and validates clock styles when present.
+legacy styles render as Traditional. The Firebase API accepts schemas 16, 15,
+14, 13, and legacy 7, and validates encounter resources in schema 16 and clock
+styles when present.
 
 ### 7.5 Soundboard trigger updates
 

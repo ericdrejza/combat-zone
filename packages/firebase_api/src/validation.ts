@@ -1,3 +1,5 @@
+import { validateClocks } from "./clocks.js";
+import { validateCounters } from "./counters.js";
 import { validateZoneResources } from "./zoneResources.js";
 import { ApiContractValidationError } from "./errors.js";
 import { validateActorResources } from "./actorResources.js";
@@ -83,24 +85,29 @@ function validateEntityCollection(value: unknown, name: string): void {
 
 function validateEncounterStateShape(state: JsonObject): void {
   string(state.id, "encounter.state.id");
-  if (state.schemaVersion !== SUPPORTED_ENCOUNTER_SCHEMA_VERSION && state.schemaVersion !== 14 && state.schemaVersion !== 13 && state.schemaVersion !== 7) {
+  if (state.schemaVersion !== SUPPORTED_ENCOUNTER_SCHEMA_VERSION && state.schemaVersion !== 15 && state.schemaVersion !== 14 && state.schemaVersion !== 13 && state.schemaVersion !== 7) {
     throw new ApiContractValidationError("encounter.state.schemaVersion is unsupported.");
   }
   for (const key of ["zones", "edges", "actors", "engagements", "annotations"]) {
     validateEntityCollection(state[key], `encounter.state.${key}`);
   }
-  if (state.schemaVersion === 13 || state.schemaVersion === 14 || state.schemaVersion === 15) {
+  if (state.schemaVersion === 13 || state.schemaVersion === 14 || state.schemaVersion === 15 || state.schemaVersion === 16) {
     const actors = record(state.actors, "encounter.state.actors");
     Object.values(record(actors.byId, "encounter.state.actors.byId")).forEach(validateActorResources);
     for (const key of ["audioCues", "audioCueGroups"]) validateEntityCollection(state[key], `encounter.state.${key}`);
   }
-  if (state.schemaVersion === 14 || state.schemaVersion === 15) {
+  if (state.schemaVersion === 14 || state.schemaVersion === 15 || state.schemaVersion === 16) {
     const zones = record(state.zones, "encounter.state.zones");
     Object.values(record(zones.byId, "encounter.state.zones.byId")).forEach(validateZoneResources);
   }
+  if (state.schemaVersion === 16) {
+    if (state.counters === undefined || state.clocks === undefined) throw new ApiContractValidationError("Encounter resources are required.");
+    validateCounters(state.counters, "Encounter");
+    validateClocks(state.clocks, "Encounter");
+  }
   record(state.initiativeTracker, "encounter.state.initiativeTracker");
   const panelLayout = record(state.panelLayout, "encounter.state.panelLayout");
-  const panelIds = ["initiative", "library", "log", "properties", "status", ...((state.schemaVersion === 13 || state.schemaVersion === 14 || state.schemaVersion === 15) ? ["audio"] : [])];
+  const panelIds = ["initiative", "library", "log", "properties", "status", ...((state.schemaVersion === 13 || state.schemaVersion === 14 || state.schemaVersion === 15 || state.schemaVersion === 16) ? ["audio"] : [])];
   const panels = ["left", "right"].flatMap((side) => {
     const dock = panelLayout[side];
     if (!Array.isArray(dock)) {

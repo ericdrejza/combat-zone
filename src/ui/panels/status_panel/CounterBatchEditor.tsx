@@ -1,13 +1,14 @@
 import { getAvailableCounterName } from "@core/entity_resources/counters";
 import { useState } from "react";
-import type { ClockCounter as Counter } from "@entities/zone/zoneStatus";
-import { DEFAULT_CLOCK_STYLE, type ClockStyle } from "@entities/zone/clockStyle";
+import type { ClockCounter as Counter } from "@core/entity_resources/statusResources";
+import { DEFAULT_CLOCK_STYLE, type ClockStyle } from "@core/entity_resources/clockStyle";
 import { CounterEditor, createCounterDraft, isCounterDraftValid, resolveCounterDraft, type CounterDraft } from "./CounterEditor";
 import { StatusDialog } from "./StatusDialog";
 
 /** All counter edits stay local until one save commits the complete draft. */
-export function CounterBatchEditor({ counters, kind = "counter", defaultClockStyle = DEFAULT_CLOCK_STYLE, onClose, onSave }: {
+export function CounterBatchEditor({ counters, kind = "counter", defaultClockStyle = DEFAULT_CLOCK_STYLE, initialSelectedId, onClose, onSave }: {
   counters: Counter[];
+  initialSelectedId?: string;
   kind?: "counter" | "clock";
   defaultClockStyle?: ClockStyle;
   onClose: () => void;
@@ -18,7 +19,7 @@ export function CounterBatchEditor({ counters, kind = "counter", defaultClockSty
   const [originals] = useState(() => counters);
   const [entries, setEntries] = useState(() => counters);
   const [drafts, setDrafts] = useState<Record<string, CounterDraft>>(() => Object.fromEntries(counters.map((counter) => [counter.id, createCounterDraft(counter)])));
-  const [selectedId, setSelectedId] = useState(counters[0]?.id);
+  const [selectedId, setSelectedId] = useState(() => counters.find((counter) => counter.id === initialSelectedId)?.id ?? counters[0]?.id);
   const [confirmClose, setConfirmClose] = useState(false);
   const remaining = entries.filter((counter) => drafts[counter.id]);
   const isNew = (id: string) => !originals.some((counter) => counter.id === id);

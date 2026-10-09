@@ -1,3 +1,4 @@
+import { validateClocks } from "./clocks.js";
 import { ApiContractValidationError } from "./errors.js";
 import { validateCounters } from "./counters.js";
 
@@ -9,19 +10,5 @@ export function validateZoneResources(value: unknown): void {
     throw new ApiContractValidationError("Zone tags or notes are invalid.");
   }
   validateCounters(value.counters, "Zone");
-  const clocks = value.clocks;
-  if (clocks === undefined) return;
-  if (!record(clocks) || !Array.isArray(clocks.allIds) || !record(clocks.byId) || new Set(clocks.allIds).size !== clocks.allIds.length || Object.keys(clocks.byId).length !== clocks.allIds.length) {
-    throw new ApiContractValidationError("Zone clocks are invalid.");
-  }
-  const byId = clocks.byId;
-  for (const id of clocks.allIds) {
-    const clock = typeof id === "string" ? byId[id] : null;
-    if (!record(clock) || clock.id !== id || typeof clock.name !== "string" || !clock.name.trim() ||
-      (clock.style !== undefined && clock.style !== "traditional" && clock.style !== "linear") ||
-      !Number.isSafeInteger(clock.segments) || (clock.segments as number) < 1 || (clock.segments as number) > 12 ||
-      !Number.isSafeInteger(clock.value) || (clock.value as number) < 0 || (clock.value as number) > (clock.segments as number)) {
-      throw new ApiContractValidationError("Zone clock progress, segments, or style are invalid.");
-    }
-  }
+  validateClocks(value.clocks, "Zone");
 }
