@@ -53,6 +53,7 @@ function hasAmbiguousEngagementMembership(
  */
 export const PolygonPlacementValidator: Validator<EncounterState> = {
   id: "PolygonPlacementValidator",
+  movementStrategies: ["zone"],
   runsInOffMode: true,
   validate(action, { state, nextState }) {
     if (!nextState) {

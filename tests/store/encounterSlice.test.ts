@@ -1,3 +1,4 @@
+import { createDefaultGrid } from '@core/movement/types';
 import { describe, expect, it } from "vitest";
 
 import { ENCOUNTER_SCHEMA_VERSION } from "@core/encounter/types";
@@ -46,6 +47,8 @@ describe("encounter Redux history", () => {
     expect(state).toEqual({
       past: [],
       present: {
+        movementStrategy: 'zone',
+        grid: createDefaultGrid(),
         schemaVersion: ENCOUNTER_SCHEMA_VERSION,
         id: "active-encounter",
         name: "Untitled Encounter",

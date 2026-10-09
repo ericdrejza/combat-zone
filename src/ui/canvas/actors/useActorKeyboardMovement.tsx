@@ -1,3 +1,4 @@
+import { stepSpatialActors } from '@core/movement/movementStrategies';
 import { useEffect, useRef, useState } from "react";
 import { useSelector, useStore } from "react-redux";
 import type { EncounterState } from "@core/encounter/types";
@@ -37,7 +38,7 @@ export function useActorKeyboardMovement() {
   const flowRef = useRef(flow); flowRef.current = flow;
   const [suppress, setSuppress] = useState(false);
   const selectionKey = `${selection.selectedEntityType}:${selection.selectedIds.join("|")}`;
-  const eligible = (tool === "actor" || tool === "select") && selection.selectedEntityType === "actor" && selection.selectedIds.length > 0;
+  const eligible = (["actor", "select", "grid", "free"].includes(tool)) && selection.selectedEntityType === "actor" && selection.selectedIds.length > 0;
   const cancel = () => { flowRef.current = null; setFlow(null); setSuppress(false); };
   function current(draft: Workflow) {
     const state = store.getState();
@@ -105,7 +106,13 @@ export function useActorKeyboardMovement() {
       }
       const index = actionIds.findIndex((id) => matchesKeybind(event, bindings[id])); if (index < 0) return;
       event.preventDefault(); if (event.repeat || draft || !isPersistenceWritable()) return;
-      const direction = directions[index]; const origins = buildOriginMovements(encounter, selection.selectedIds, direction);
+      const direction = directions[index];
+      if (encounter.movementStrategy !== 'zone') {
+        const vector = { up: { x: 0, y: -1 }, down: { x: 0, y: 1 }, left: { x: -1, y: 0 }, right: { x: 1, y: 0 } }[direction];
+        void commit('actor.moveSpatial', { actorIds: selection.selectedIds, direction }, state => stepSpatialActors(state, selection.selectedIds, vector), () => store.getState().encounter.present === encounter && store.getState().interaction.activeToolId === tool);
+        return;
+      }
+      const origins = buildOriginMovements(encounter, selection.selectedIds, direction);
       if (!origins.some((origin) => origin.candidates.length)) return;
       const cursor = origins.findIndex((origin) => origin.candidates.length > 1);
       const next: Workflow = { token: ++nextToken.current, snapshot: encounter, selectionKey, tool, direction, origins, cursor, destinations: {}, skillActorIds: [], stage: "choose" };

@@ -1,4 +1,8 @@
-import { useDispatch } from "react-redux";
+import type { RootState } from '@store/store';
+import { TOOL_DEFINITIONS_BY_ID } from '@interaction/tools/toolRegistry';
+import { GridControls } from '@ui/toolbar/grid/GridControls';
+import { MovementStrategyCycle } from '@ui/toolbar/grid/MovementStrategyCycle';
+import { useDispatch, useSelector } from "react-redux";
 import { createPortal } from "react-dom";
 
 import type { ZoneShape } from "@entities/zone/types";
@@ -36,10 +40,12 @@ export function ZoneToolButton({
   zoneShapeMode
 }: ZoneToolButtonProps) {
   const dispatch = useDispatch();
-  const selected = activeToolId === "zone";
+  const strategy = useSelector((state: RootState) => state.encounter.present.movementStrategy);
+  tool = TOOL_DEFINITIONS_BY_ID[strategy];
+  const selected = activeToolId === strategy;
   const toolButtonClassName = selected
-    ? "border-canvas-ink bg-canvas-ink text-canvas-on-ink"
-    : "border-canvas-line bg-canvas-surface text-canvas-ink";
+    ? "border-canvas-ink bg-canvas-ink text-canvas-on-ink hover:ring-2 hover:ring-canvas-ink/40"
+    : "border-canvas-line bg-canvas-surface text-canvas-ink hover:bg-canvas";
 
   function renderOptions() {
     return (
@@ -78,8 +84,9 @@ export function ZoneToolButton({
 
   const ToolIcon = TOOL_ICONS[tool.id];
   const optionBar = selected ? (
-    <ToolbarSubtoolBar aria-label="Zone shape options">
-      {renderOptions()}
+    <ToolbarSubtoolBar aria-label={`${tool.label} options`}>
+      <MovementStrategyCycle />
+      {strategy === "zone" ? renderOptions() : strategy === "grid" ? <GridControls /> : <span className="text-xs text-canvas-muted">Drag actors freely; arrows nudge.</span>}
     </ToolbarSubtoolBar>
   ) : null;
 
@@ -92,9 +99,9 @@ export function ZoneToolButton({
             aria-haspopup="true"
             aria-label={tool.label}
             aria-pressed={selected}
-            className={`flex h-11 min-w-11 shrink-0 items-center justify-center gap-2 rounded-full border px-2 text-sm font-medium shadow-sm transition hover:bg-canvas lg:h-auto lg:min-w-0 lg:px-3 lg:py-1.5 ${toolButtonClassName}`}
+            className={`flex h-11 min-w-11 shrink-0 items-center justify-center gap-2 rounded-full border px-2 text-sm font-medium shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-canvas-ink lg:h-auto lg:min-w-0 lg:px-3 lg:py-1.5 ${toolButtonClassName}`}
             onClick={() => {
-              dispatch(setActiveTool(selected ? "select" : "zone"));
+              dispatch(setActiveTool(selected ? "select" : strategy));
             }}
             title={tool.tooltip}
             type="button"

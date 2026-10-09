@@ -3,6 +3,8 @@ import type { SelectableEntityType } from "../selection/types";
 export type ToolId =
   | "select"
   | "zone"
+  | "grid"
+  | "free"
   | "edge"
   | "actor"
   | "annotation"
@@ -104,10 +106,12 @@ export const MVP_TOOLS: ToolDefinition[] = [
 ];
 
 export const TOOL_DEFINITIONS_BY_ID: Record<ToolId, ToolDefinition> =
-  Object.fromEntries(MVP_TOOLS.map((tool) => [tool.id, tool])) as Record<
-    ToolId,
-    ToolDefinition
-  >;
+  { ...Object.fromEntries(MVP_TOOLS.map((tool) => [tool.id, tool])),
+    grid: { id: 'grid', label: 'Grid', tooltip: 'Configure square or hex grids and move actors on the grid.',
+      contract: { selectableEntityTypes: ['actor'], dragBehavior: 'Move actors between grid anchors.', clickBehavior: 'Select actors.', keyboardShortcut: 'z' } },
+    free: { id: 'free', label: 'Free', tooltip: 'Move actors freely on the canvas.',
+      contract: { selectableEntityTypes: ['actor'], dragBehavior: 'Move actors freely.', clickBehavior: 'Select actors.', keyboardShortcut: 'z' } }
+  } as Record<ToolId, ToolDefinition>;
 
 export function canToolSelectEntityType(
   toolId: ToolId,

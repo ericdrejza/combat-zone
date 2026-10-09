@@ -46,6 +46,13 @@ export function resizeEncounterCanvas(
   return {
     ...encounter,
     canvasSize,
+    grid: { ...encounter.grid, cellSize: encounter.grid.cellSize * scale,
+      origin: { x: encounter.grid.origin.x * scale, y: encounter.grid.origin.y * scale } },
+    actors: !encounter.actors.allIds.some(id => encounter.actors.byId[id].spatialPosition) ? encounter.actors : { ...encounter.actors, byId: Object.fromEntries(encounter.actors.allIds.map(id => {
+      const actor = encounter.actors.byId[id];
+      return [id, actor.spatialPosition ? { ...actor, spatialPosition: {
+        x: actor.spatialPosition.x * scale, y: actor.spatialPosition.y * scale } } : actor];
+    })) },
     zones: {
       ...encounter.zones,
       byId

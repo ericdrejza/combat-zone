@@ -10,6 +10,7 @@ import {
 
 export const MovementValidator: Validator<EncounterState> = {
   id: "MovementValidator",
+  movementStrategies: ["zone"],
   validate(action, { state }) {
     if (
       action.type !== "actor.move" &&

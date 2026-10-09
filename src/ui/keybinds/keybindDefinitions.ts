@@ -32,7 +32,7 @@ export const KEYBIND_DEFINITIONS = [
   { id: "tool.background", label: "Activate Background tool", defaultBinding: TOOL_DEFINITIONS_BY_ID.background.contract.keyboardShortcut, editable: true },
   { id: "tool.edge", label: "Activate Edge tool", defaultBinding: TOOL_DEFINITIONS_BY_ID.edge.contract.keyboardShortcut, editable: true },
   { id: "tool.select", label: "Activate Select tool", defaultBinding: TOOL_DEFINITIONS_BY_ID.select.contract.keyboardShortcut, editable: true },
-  { id: "tool.zone", label: "Activate Zone tool", defaultBinding: TOOL_DEFINITIONS_BY_ID.zone.contract.keyboardShortcut, editable: true },
+  { id: "tool.zone", label: "Activate movement tool (Zone/Grid/Free)", defaultBinding: TOOL_DEFINITIONS_BY_ID.zone.contract.keyboardShortcut, editable: true },
   { id: "workspace.save", label: "Save encounter", defaultBinding: "mod+s", editable: false }
 ] as const;
 

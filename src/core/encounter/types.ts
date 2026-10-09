@@ -12,7 +12,7 @@ import type { ImageAssetSource } from "@core/assets/imageAssetSource";
 import type { EncounterPanelLayout } from "./panelLayout";
 import type { AudioCue, AudioCueGroup } from "@entities/audio/types";
 
-export const ENCOUNTER_SCHEMA_VERSION = 16;
+export const ENCOUNTER_SCHEMA_VERSION = 18;
 export const ZONELESS_ACTOR_ZONE_ID = "zoneless";
 
 export type EncounterSchemaVersion = typeof ENCOUNTER_SCHEMA_VERSION;
@@ -45,6 +45,8 @@ export type EncounterBackgroundImage = {
 };
 
 export type EncounterState = {
+  movementStrategy: import('@core/movement/types').MovementStrategy;
+  grid: import('@core/movement/types').GridConfiguration;
   schemaVersion: EncounterSchemaVersion;
   id: EntityId;
   name: string;

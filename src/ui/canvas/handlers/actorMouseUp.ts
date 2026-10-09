@@ -1,3 +1,4 @@
+import { handleSpatialActorMouseUp } from './spatialActorMouseUp';
 import { createEncounterActionRecord } from '@core/history/createEncounterActionRecord';
 import { ZONELESS_ACTOR_ZONE_ID } from '@core/encounter/types';
 import { getActorEngagement } from '@core/encounter/inspectors';
@@ -234,6 +235,7 @@ function commitActorZoneDrop(
 
 /** Finalize an actor drag. Returns true when an actor drag was present. */
 export function handleActorMouseUp(input: MouseUpHandlerInput): boolean {
+  if (handleSpatialActorMouseUp(input)) return true;
   const { actorDrag, encounter } = input;
   if (!actorDrag) return false;
   if (!actorDrag.hasMoved) {

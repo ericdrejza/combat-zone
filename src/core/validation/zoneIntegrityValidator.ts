@@ -4,6 +4,7 @@ import { allowsZoneless, hasActor, hasZone, result } from "./validatorUtils";
 
 export const ZoneIntegrityValidator: Validator<EncounterState> = {
   id: "ZoneIntegrityValidator",
+  movementStrategies: ["zone"],
   validate(_action: ValidationAction, { state }) {
     const messages: ValidationMessage[] = [];
 

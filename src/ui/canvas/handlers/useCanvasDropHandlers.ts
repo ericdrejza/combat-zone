@@ -1,3 +1,4 @@
+import { isSpatial } from '@core/movement/movementStrategies';
 import { useState, type DragEvent } from 'react';
 
 import { ZONELESS_ACTOR_ZONE_ID } from '@core/encounter/types';
@@ -149,7 +150,7 @@ export function useCanvasDropHandlers({
       return;
     }
 
-    if (activeToolId !== 'actor' && activeToolId !== 'select') {
+    if (!['actor', 'select', 'grid', 'free'].includes(activeToolId)) {
       return;
     }
 
@@ -232,12 +233,12 @@ export function useCanvasDropHandlers({
       return;
     }
 
-    if (activeToolId !== 'actor' && activeToolId !== 'select') {
+    if (!['actor', 'select', 'grid', 'free'].includes(activeToolId)) {
       return;
     }
 
     const point = toSvgPoint(event, event.currentTarget);
-    const destinationZoneId = findZoneIdAtPoint(encounter, point);
+    const destinationZoneId = isSpatial(encounter) ? ZONELESS_ACTOR_ZONE_ID : findZoneIdAtPoint(encounter, point);
 
     if (hasZonelessActorDrag(event)) {
       event.preventDefault();
@@ -248,8 +249,7 @@ export function useCanvasDropHandlers({
 
       const actorIds = readZonelessActorIds(event).filter(
         (actorId) =>
-          encounter.actors.byId[actorId]?.currentZoneId ===
-          ZONELESS_ACTOR_ZONE_ID
+          (isSpatial(encounter) ? !!encounter.actors.byId[actorId] && !encounter.actors.byId[actorId].spatialPosition : encounter.actors.byId[actorId]?.currentZoneId === ZONELESS_ACTOR_ZONE_ID)
       );
 
       if (actorIds.length > 0) {

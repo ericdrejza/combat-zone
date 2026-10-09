@@ -78,6 +78,7 @@ function getChangedZoneIds(
 /** Blocks committed zone geometry that overlaps another zone. */
 export const ZoneOverlapValidator: Validator<EncounterState> = {
   id: 'ZoneOverlapValidator',
+  movementStrategies: ["zone"],
   runsInOffMode: true,
   validate(action, { state, nextState }) {
     if (!nextState) {

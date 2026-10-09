@@ -4,6 +4,7 @@ import { createPayloadReader, hasActor, hasZone, result } from "./validatorUtils
 
 export const EngagementValidator: Validator<EncounterState> = {
   id: "EngagementValidator",
+  movementStrategies: ["zone"],
   validate(action, { state, nextState }) {
     if (!["engagement.create", "engagement.update", "engagement.join", "engagement.merge", "engagement.groupSelected"].includes(action.type)) {
       return result([]);

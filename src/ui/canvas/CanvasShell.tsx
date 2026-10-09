@@ -1,3 +1,4 @@
+import { GridCalibrationOverlay } from './grid/GridCalibrationOverlay';
 import { useActorKeyboardMovement } from "./actors/useActorKeyboardMovement";
 import { ActorHealthKeyboard } from "./actors/ActorHealthKeyboard";
 import { useEffect, useRef, useState } from "react";
@@ -125,6 +126,7 @@ export function CanvasShell({
     encounter,
     library
   });
+  const gridCalibrationActive = useSelector((state: RootState) => state.interaction.gridCalibrationActive);
   const backgroundImage = encounter.backgroundImage;
   const { placements: actorRenderPlacements, refreshPlacements } =
     useActorRenderPlacements(encounter);
@@ -363,6 +365,7 @@ export function CanvasShell({
           />
         ) : null}
       </CanvasViewport>
+      {gridCalibrationActive ? <GridCalibrationOverlay /> : null}
       {keyboardMovement.dialog}
       <ActorHealthKeyboard />
       <CanvasToolStatusBadge
@@ -383,11 +386,11 @@ export function CanvasShell({
               onDelete={() => deleteSelectedEntities(dispatch, encounter, selection)}
               selection={selection}
             />
-            <CompactEngagementActionButtons
+            {encounter.movementStrategy === "zone" ? <CompactEngagementActionButtons
               activeToolId={activeToolId}
               encounter={encounter}
               selection={selection}
-            />
+            /> : null}
           </div>
           {!compactLayout ? (
             <div className="relative z-30 flex min-w-0 flex-1 justify-center">

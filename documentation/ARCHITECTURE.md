@@ -116,15 +116,18 @@ entry-point rules remain in the persistence decision record.
 - **GM authority is absolute outside Strict mode except geometric fit.**
   Validation is advisory unless Strict mode is explicitly enabled (see
   `documentation/DESIGN.md` §5.5 for the four validation levels). The
-  universal no-overlap and in-zone footprint invariant is the explicit
-  exception and blocks invalid actor movement/creation in every mode.
+  Zone no-overlap/in-zone fit and spatial canvas-fit/snapping invariants are
+  explicit exceptions and block invalid geometry in every validation mode.
+  Actor overlap is allowed in Grid and Free (§17).
 - **Every committed mutation goes through Redux history.** No direct
   EncounterState writes may bypass the history reducer, including "internal"
   or "derived" updates like layout recalculation after a move. See
   `documentation/ARCHITECTURE.md` if more architecture information is needed.
 - **Tool-driven UI, no global mode system.** Each tool in `interaction/tools/`
   owns its own selection rules, drag behavior, click behavior, and keyboard
-  shortcuts. Do not introduce a global "mode" enum that tools all branch on.
+  shortcuts. Encounter movement strategy (DESIGN §17) is a durable domain
+  choice independent of editing tool. Grid/Free behavior uses shared strategy
+  interfaces; do not scatter movement policy throughout tool implementations.
 - **Layout strategies are pluggable, not hardcoded.** FLEX / SEQUENTIAL /
   SPLIT_FLEX / SPLIT_SEQUENTIAL live behind a shared strategy interface in
   `core/layout/`, used by both Zones and Engagements. Adding a new strategy
@@ -139,3 +142,25 @@ entry-point rules remain in the persistence decision record.
   and routing failures are derived render state. A non-persisted route cache
   may reuse a working path across replacement, undo, and Zone movement, but it
   must never become an authoritative EncounterState fact.
+
+## Movement strategy persistence
+
+Encounter schema 17 adds movementStrategy, grid configuration, and optional
+Actor spatialPosition. Grid/Free share authoritative coordinates; Zone positions
+remain derived. Configuration drafts stay in interaction state. Geometry and
+spatial mutation strategies live in core/movement, shared grid controls in
+ui/toolbar/grid, and rendering in ui/canvas/grid. The movement strategy middleware
+reconciles tool changes and blocks suspended workflows and invalid spatial
+commits behind the existing persistence writer guard. Old supported encounter
+schemas migrate to Zone and default grid configuration. Cloud contracts accept
+schema 17 while retaining their existing schema compatibility.
+
+Encounter schema 18 adds an optional bilinear grid warp. Schema 17 migrations
+preserve regular-grid configuration and spatial coordinates. Warp coefficients
+map cell-normalized local lattice coordinates before the existing origin/rotation
+transform; this keeps canvas scaling and manual transforms consistent. The grid
+geometry engine owns forward/inverse mapping, local token scale, and lattice
+neighborhoods. Rendering uses exact quadratic SVG edge paths for warped cells.
+Spatial validation rejects non-invertible/folded geometry in every validation
+mode, including imports. Calibration mode, click samples, and detection results
+remain interaction drafts; only an applied grid enters history and persistence.

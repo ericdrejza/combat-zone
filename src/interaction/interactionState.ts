@@ -1,3 +1,4 @@
+import type { GridConfiguration } from '@core/movement/types';
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createSlice } from '@reduxjs/toolkit';
 
@@ -65,6 +66,11 @@ export type ActorToolState = {
 };
 
 export type InteractionState = {
+  gridPreview: GridConfiguration | null;
+  gridCalibrationActive: boolean;
+  gridCalibrationPoints: import('@core/layout/types').LayoutPoint[];
+  gridCalibrationMode: 'simple' | 'quadrants' | 'detect';
+  gridCalibrationType: GridConfiguration['type'];
   actorPaintBrush: boolean;
   actorTool: ActorToolState;
   audioTool: {
@@ -105,6 +111,7 @@ const initialDraft: InteractionDraftState = {
 };
 
 const initialState: InteractionState = {
+  gridPreview: null, gridCalibrationActive: false, gridCalibrationPoints: [], gridCalibrationMode: 'simple', gridCalibrationType: 'square',
   actorPaintBrush: false,
   actorTool: {
     clipboardActorId: null,
@@ -176,8 +183,21 @@ export const interactionSlice = createSlice({
   name: 'interaction',
   initialState,
   reducers: {
+    setGridPreview(state, { payload }: PayloadAction<GridConfiguration | null>) { state.gridPreview = payload; },
+    startGridCalibration: {
+      prepare(type: GridConfiguration['type'] = 'square') { return { payload: type }; },
+      reducer(state, { payload }: PayloadAction<GridConfiguration['type']>) { state.gridCalibrationActive = true; state.gridCalibrationPoints = []; state.gridPreview = null; state.gridCalibrationMode = 'simple'; state.gridCalibrationType = payload; }
+    },
+    setGridCalibrationMode(state, { payload }: PayloadAction<'simple' | 'quadrants' | 'detect'>) { state.gridCalibrationMode = payload; state.gridCalibrationPoints = []; state.gridPreview = null; },
+    setGridCalibrationType(state, { payload }: PayloadAction<GridConfiguration['type']>) { state.gridCalibrationType = payload; state.gridCalibrationPoints = []; state.gridPreview = null; },
+    addGridCalibrationPoint(state, { payload }: PayloadAction<import('@core/layout/types').LayoutPoint>) {
+      if (state.gridCalibrationActive && state.gridCalibrationPoints.length < (state.gridCalibrationMode === 'detect' ? 0 : (state.gridCalibrationType === 'square' ? 4 : 3) * (state.gridCalibrationMode === 'quadrants' ? 4 : 1))) state.gridCalibrationPoints.push(payload);
+    },
+    removeGridCalibrationPoint(state) { if (state.gridCalibrationActive) state.gridCalibrationPoints.pop(); },
+    cancelGridEditing(state) { state.gridPreview = null; state.gridCalibrationActive = false; state.gridCalibrationPoints = []; },
     setActiveTool(state, { payload }: PayloadAction<ToolId>) {
       state.activeToolId = payload;
+      state.gridPreview = null; state.gridCalibrationActive = false; state.gridCalibrationPoints = [];
       state.dragActionPreview = null;
       state.draft = initialDraft;
       state.contextualActionRequest = null;
@@ -386,6 +406,7 @@ export const interactionSlice = createSlice({
 });
 
 export const {
+  setGridPreview, startGridCalibration, setGridCalibrationMode, setGridCalibrationType, addGridCalibrationPoint, removeGridCalibrationPoint, cancelGridEditing,
   clearActorPaintBrush,
   setAudioCueType,
   setAudioCueTypePresets,

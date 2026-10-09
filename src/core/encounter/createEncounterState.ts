@@ -1,3 +1,4 @@
+import { createDefaultGrid } from '@core/movement/types';
 import type { EntityId } from "../state/entityCollection";
 import { createEmptyEntityCollection } from "../state/entityCollection";
 import type { EncounterState } from "./types";
@@ -21,6 +22,8 @@ export function createEncounterState({
   panelOrder = DEFAULT_ENCOUNTER_PANEL_ORDER
 }: CreateEncounterStateInput): EncounterState {
   return {
+    movementStrategy: 'zone',
+    grid: createDefaultGrid(),
     schemaVersion: ENCOUNTER_SCHEMA_VERSION,
     id,
     name,

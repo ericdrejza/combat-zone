@@ -9,6 +9,7 @@ import { result } from "./validatorUtils";
 /** Enforces minimum geometry while reporting assisted reshape corrections. */
 export const ZoneSizeValidator: Validator<EncounterState> = {
   id: "ZoneSizeValidator",
+  movementStrategies: ["zone"],
   runsInOffMode: true,
   validate(action, { nextState }) {
     if (action.type !== "zone.create" && action.type !== "zone.reshape") {

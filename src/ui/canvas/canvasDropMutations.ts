@@ -1,3 +1,5 @@
+import { isPersistenceWritable } from '@store/persistenceWriteGuardMiddleware';
+import { isSpatial, placeSpatialActors } from '@core/movement/movementStrategies';
 import { ZONELESS_ACTOR_ZONE_ID } from '@core/encounter/types';
 import { createEncounterActionRecord } from '@core/history/createEncounterActionRecord';
 import { prepareValidatedEncounterChangeForRuntime } from '@core/validation/validatedEncounterChange';
@@ -29,7 +31,8 @@ function commitCreatedActor(
   dropPoint?: LayoutPoint
 ): void {
   const actorId = input.id;
-  const nextEncounter = createActor(context.encounter, input);
+  let nextEncounter = createActor(context.encounter, input);
+  if (isSpatial(context.encounter) && dropPoint) nextEncounter = placeSpatialActors(nextEncounter, { [actorId]: dropPoint });
   const prepared = prepareValidatedEncounterChangeForRuntime({
     action: createEncounterActionRecord('actor.create', {
       actorId,
@@ -40,22 +43,25 @@ function commitCreatedActor(
   });
 
   const commitPrepared = (resolved: Awaited<typeof prepared>) => {
-    if (resolved.blocked) {
-      logEncounterValidationBlock(context.dispatch, resolved);
-      return;
-    }
+    context.dispatch((_dispatch, getState) => {
+      if (!isPersistenceWritable() || getState().encounter.present !== context.encounter) return;
+      if (resolved.blocked) {
+        logEncounterValidationBlock(context.dispatch, resolved);
+        return;
+      }
 
-    if (dropPoint && destinationZoneId !== ZONELESS_ACTOR_ZONE_ID) {
-      setOptimisticActorPlacement(actorId, dropPoint);
-    }
+      if (dropPoint && destinationZoneId !== ZONELESS_ACTOR_ZONE_ID) {
+        setOptimisticActorPlacement(actorId, dropPoint);
+      }
 
-    context.dispatch(
-      commitEncounterChange({
-        action: resolved.action,
-        nextEncounter: resolved.nextEncounter
-      })
-    );
-    context.dispatch(selectEntity({ entityType: 'actor', ids: [actorId] }));
+      context.dispatch(
+        commitEncounterChange({
+          action: resolved.action,
+          nextEncounter: resolved.nextEncounter
+        })
+      );
+      context.dispatch(selectEntity({ entityType: 'actor', ids: [actorId] }));
+    });
   };
 
   if (prepared instanceof Promise) {
@@ -164,7 +170,7 @@ export async function commitBackgroundFromFile(
     viewportSize: getViewportSize(),
     viewportZoom
   });
-  context.dispatch(setActiveTool('zone'));
+  context.dispatch(setActiveTool(context.encounter.movementStrategy));
 }
 
 export function moveActorsToZone(
@@ -174,13 +180,15 @@ export function moveActorsToZone(
   selectActors = false,
   dropPoint?: LayoutPoint
 ): void {
-  const nextEncounter = actorIds.reduce(
+  const nextEncounter = isSpatial(context.encounter)
+    ? placeSpatialActors(context.encounter, Object.fromEntries(actorIds.map(id => [id, dropPoint ?? null])))
+    : actorIds.reduce(
     (currentEncounter, actorId) =>
       moveActor(currentEncounter, actorId, destinationZoneId),
     context.encounter
   );
   const action = createEncounterActionRecord(
-    actorIds.length > 1 ? 'actor.moveMany' : 'actor.move',
+    isSpatial(context.encounter) ? 'actor.moveSpatial' : actorIds.length > 1 ? 'actor.moveMany' : 'actor.move',
     {
       actorIds,
       destinationZoneId
@@ -193,27 +201,30 @@ export function moveActorsToZone(
   });
 
   const commitPrepared = (resolved: Awaited<typeof prepared>) => {
-    if (resolved.blocked || nextEncounter === context.encounter) {
-      logEncounterValidationBlock(context.dispatch, resolved);
-      return;
-    }
+    context.dispatch((_dispatch, getState) => {
+      if (!isPersistenceWritable() || getState().encounter.present !== context.encounter) return;
+      if (resolved.blocked || nextEncounter === context.encounter) {
+        logEncounterValidationBlock(context.dispatch, resolved);
+        return;
+      }
 
-    if (dropPoint && destinationZoneId !== ZONELESS_ACTOR_ZONE_ID) {
-      actorIds.forEach((actorId) =>
-        setOptimisticActorPlacement(actorId, dropPoint)
+      if (dropPoint && destinationZoneId !== ZONELESS_ACTOR_ZONE_ID) {
+        actorIds.forEach((actorId) =>
+          setOptimisticActorPlacement(actorId, dropPoint)
+        );
+      }
+
+      context.dispatch(
+        commitEncounterChange({
+          action: resolved.action,
+          nextEncounter: resolved.nextEncounter
+        })
       );
-    }
 
-    context.dispatch(
-      commitEncounterChange({
-        action: resolved.action,
-        nextEncounter: resolved.nextEncounter
-      })
-    );
-
-    if (selectActors) {
-      context.dispatch(selectEntity({ entityType: 'actor', ids: actorIds }));
-    }
+      if (selectActors) {
+        context.dispatch(selectEntity({ entityType: 'actor', ids: actorIds }));
+      }
+    });
   };
 
   if (prepared instanceof Promise) {
@@ -228,6 +239,7 @@ export function getMovableActorIds(
   actorIds: string[],
   destinationZoneId: string
 ) {
+  if (isSpatial(encounter)) return actorIds.filter(id => !!encounter.actors.byId[id]?.spatialPosition);
   return actorIds.filter(
     (actorId) =>
       encounter.actors.byId[actorId]?.currentZoneId !== destinationZoneId

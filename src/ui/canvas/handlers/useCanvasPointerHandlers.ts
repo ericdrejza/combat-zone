@@ -1,3 +1,4 @@
+import { handleSpatialActorMouseUp } from './spatialActorMouseUp';
 import type { MouseEvent, PointerEvent } from 'react';
 import { useEffect } from 'react';
 
@@ -85,6 +86,15 @@ export function useCanvasPointerHandlers(input: PointerHandlerInput) {
   ]);
 
 
+  useEffect(() => {
+    setActorDrag(null); setBoxSelection(null); setEdgeDrag(null); setShapeDraft(null);
+    setVertexDrag(null); setZoneDraftPoints([]); setZoneDrag(null);
+  }, [encounter.movementStrategy]);
+
+  useEffect(() => {
+    if (encounter.movementStrategy !== 'zone' && actorDrag?.phase === 'dragging') setActorDrag(null);
+  }, [encounter]);
+
   const getDisplayedPolygon = (zone: Zone) =>
     getDisplayedZonePolygon(zone, zoneDrag, vertexDrag);
   const finishCanvasInteraction = useCanvasMouseUpHandler({
@@ -170,7 +180,7 @@ export function useCanvasPointerHandlers(input: PointerHandlerInput) {
     if (
       !entityId &&
       (event.shiftKey || (pointerType === 'touch' && touchMultiSelect)) &&
-      (activeToolId === 'actor' ||
+      (activeToolId === 'actor' || activeToolId === 'grid' || activeToolId === 'free' ||
         activeToolId === 'zone' ||
         activeToolId === 'select')
     ) {
@@ -238,7 +248,7 @@ export function useCanvasPointerHandlers(input: PointerHandlerInput) {
     point: LayoutPoint,
     event: ActorDragStartEvent
   ) {
-    if (activeToolId !== 'actor' && activeToolId !== 'select') {
+    if (!['actor', 'select', 'grid', 'free'].includes(activeToolId)) {
       return;
     }
 
@@ -252,7 +262,7 @@ export function useCanvasPointerHandlers(input: PointerHandlerInput) {
       selection.selectedEntityType === 'actor' &&
       selection.selectedIds.includes(actorId) &&
       !multiSelect
-        ? selection.selectedIds
+        ? selection.selectedIds.filter(id => encounter.movementStrategy === 'zone' || input.actorRenderPlacements.some(placement => placement.actor.id === id))
         : [actorId];
 
     if (
@@ -294,7 +304,7 @@ export function useCanvasPointerHandlers(input: PointerHandlerInput) {
       return;
     }
 
-    const target = updateIntent(actorDrag, point);
+    const target: { actorId?: string; engagementId?: string } = encounter.movementStrategy === 'zone' ? updateIntent(actorDrag, point) : {};
     setActorDrag((drag) => drag ? {
       ...drag,
       current: point,
@@ -332,6 +342,12 @@ export function useCanvasPointerHandlers(input: PointerHandlerInput) {
 
   function handleActorDragEnd(event: { stopPropagation: () => void }) {
     event.stopPropagation();
+    const pointer = event as { clientX?: number; clientY?: number; target?: EventTarget | null };
+    const target = pointer.clientX !== undefined && pointer.clientY !== undefined ? document.elementFromPoint?.(pointer.clientX, pointer.clientY) : null;
+    const dropTarget = target ?? (pointer.target instanceof Element ? pointer.target : null);
+    if (dropTarget?.closest('[data-drop-target="zoneless-actors"]') && encounter.movementStrategy !== 'zone') {
+      handleSpatialActorMouseUp({ ...input, getDisplayedPolygon }, true); return;
+    }
     void finishCanvasInteraction();
   }
 

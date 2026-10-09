@@ -33,6 +33,8 @@ export type Validator<TState> = {
     context: ValidationContext<TState>
   ): ValidationResult;
   runsInOffMode?: boolean;
+  /** Omitted validators apply in every movement strategy, including custom validators. */
+  movementStrategies?: import('@core/movement/types').MovementStrategy[];
 };
 
 export type ValidationPipelineResult = ValidationResult & {

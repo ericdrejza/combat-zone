@@ -62,6 +62,7 @@ describe("Toolbar motion and navigation", () => {
     expect(
       within(tools)
         .getAllByRole("button")
+        .filter(button => !button.closest("[data-toolbar-subtools]"))
         .map((button) => button.textContent)
     ).toEqual([
       "Library",

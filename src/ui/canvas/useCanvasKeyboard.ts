@@ -120,7 +120,7 @@ export function useCanvasKeyboard({
 
       if (
         matchesKeybind(event, bindings['selection.selectAll']) &&
-        (activeToolId === 'actor' || activeToolId === 'select')
+        (['actor', 'select', 'grid', 'free'].includes(activeToolId))
       ) {
         event.preventDefault();
         dispatch(

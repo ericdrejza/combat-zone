@@ -93,6 +93,7 @@ export function getPolygonFlexAffectedZoneIds(
   const affectedZoneIds = new Set<string>();
 
   if (
+    (action.type === "movement.changeStrategy" && nextState.movementStrategy === "zone") ||
     action.type === "canvas.resize" ||
     action.type === "background.add" ||
     action.type === "background.replace"

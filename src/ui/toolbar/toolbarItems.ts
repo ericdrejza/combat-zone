@@ -1,4 +1,6 @@
 import {
+  Grid3X3,
+  Move,
   ArrowRightFromLine,
   AudioLines,
   Bookmark,
@@ -28,6 +30,8 @@ export const TOOL_ICONS: Record<ToolId, LucideIcon> = {
   background: Image,
   edge: ArrowRightFromLine,
   select: Pointer,
+  grid: Grid3X3,
+  free: Move,
   zone: Shapes
 };
 

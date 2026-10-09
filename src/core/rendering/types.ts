@@ -1,4 +1,5 @@
 export type RenderLayer =
+  | 'grid'
   | 'background'
   | 'zones'
   | 'edges'
@@ -14,6 +15,7 @@ export type RenderLayerDefinition = {
 
 export const RENDER_LAYERS: RenderLayerDefinition[] = [
   { id: 'background', label: 'Background' },
+  { id: 'grid', label: 'Grid' },
   { id: 'zones', label: 'Zones' },
   { id: 'edges', label: 'Edges' },
   { id: 'engagements', label: 'Engagements' },

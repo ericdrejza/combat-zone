@@ -20,11 +20,13 @@ export type RunValidationPipelineInput = {
 
 function getActiveValidators(
   validators: Validator<EncounterState>[],
-  mode: ValidationMode
+  mode: ValidationMode,
+  encounter: EncounterState
 ): Validator<EncounterState>[] {
-  return mode === "OFF"
-    ? validators.filter((validator) => validator.runsInOffMode)
-    : validators;
+  return validators.filter(validator =>
+    (mode !== 'OFF' || validator.runsInOffMode) &&
+    (!validator.movementStrategies || validator.movementStrategies.includes(encounter.movementStrategy))
+  );
 }
 
 function createPipelineResult(
@@ -50,7 +52,7 @@ export function runValidationPipelineSync({
   mode = state.validationState.mode,
   validators = MVP_VALIDATORS
 }: RunValidationPipelineInput): ValidationPipelineResult {
-  const activeValidators = getActiveValidators(validators, mode);
+  const activeValidators = getActiveValidators(validators, mode, nextState ?? state);
   const validationResults = activeValidators.map((validator) =>
     validator.validate(action, { state, mode, nextState })
   );
@@ -70,7 +72,7 @@ export async function runValidationPipeline({
   mode = state.validationState.mode,
   validators = MVP_VALIDATORS
 }: RunValidationPipelineInput): Promise<ValidationPipelineResult> {
-  const activeValidators = getActiveValidators(validators, mode);
+  const activeValidators = getActiveValidators(validators, mode, nextState ?? state);
   const workerResults = runValidatorsInWorker({
     action,
     mode,

@@ -56,7 +56,7 @@ export function ToolbarOptionButton({
   const stateClassName = props.disabled
     ? "border-canvas-line bg-canvas-surface text-canvas-muted"
     : active
-    ? "border-canvas-ink bg-canvas-ink text-canvas-on-ink"
+    ? "border-canvas-ink bg-canvas-ink text-canvas-on-ink hover:ring-2 hover:ring-canvas-ink/40"
     : "border-canvas-line bg-canvas-surface text-canvas-muted hover:bg-canvas";
 
   return (
@@ -72,7 +72,7 @@ export function ToolbarOptionButton({
       <button
         {...props}
         className={joinClassNames(
-          "flex h-11 min-w-11 items-center justify-center gap-1 rounded-full border px-1.5 transition disabled:cursor-not-allowed disabled:opacity-40 lg:h-8 lg:min-w-10",
+          "flex h-11 min-w-11 items-center justify-center gap-1 rounded-full border px-1.5 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-canvas-ink disabled:cursor-not-allowed disabled:opacity-40 lg:h-8 lg:min-w-10",
           stateClassName,
           className
         )}
@@ -91,6 +91,7 @@ export function ToolbarSubtoolBar({
   return (
     <div
       {...props}
+      data-toolbar-subtools="true"
       className={joinClassNames(
         "flex min-w-max shrink-0 items-center gap-2 lg:contents",
         className

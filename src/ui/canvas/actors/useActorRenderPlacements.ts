@@ -22,7 +22,7 @@ export function useActorRenderPlacements(
 
   useEffect(() => subscribeToActorPlacementWorker(refreshPlacements), [refreshPlacements]);
   useEffect(() => {
-    if (ACTOR_LAYOUT_COMPUTATION_STRATEGY === "PROACTIVE") {
+    if (encounter.movementStrategy === "zone" && ACTOR_LAYOUT_COMPUTATION_STRATEGY === "PROACTIVE") {
       scheduleProactiveActorPlacementComputations(
         encounter,
         POLYGON_LAYOUT_SETTINGS,

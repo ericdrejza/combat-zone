@@ -1,3 +1,5 @@
+import { assertSpatialState } from '@core/movement/assertSpatialState';
+import { createDefaultGrid } from '@core/movement/types';
 import { validCounters } from "@core/entity_resources/counters";
 import { validClocks } from "@core/entity_resources/statusResources";
 import { SECTION_AUDIO_TRIGGERS, type AudioCueGroupSection } from "@entities/audio/types";
@@ -132,6 +134,7 @@ export function assertEncounterState(value: unknown, name = "encounter"): assert
   ) {
     throw new PersistenceValidationError(`${name}.backgroundImage.source is invalid.`);
   }
+  assertSpatialState(value, name);
   for (const zone of Object.values((value.zones as { byId: UnknownRecord }).byId)) {
     if (!validZoneResources(zone)) throw new PersistenceValidationError(`${name}.zone resources are invalid.`);
   }
@@ -510,10 +513,17 @@ export function migrateEncounterState(value: unknown): unknown {
     }
   }
   if (migrated.schemaVersion === 15) {
-    migrated.schemaVersion = ENCOUNTER_SCHEMA_VERSION;
+    migrated.schemaVersion = 16;
     if (migrated.counters === undefined) migrated.counters = { allIds: [], byId: {} };
     if (migrated.clocks === undefined) migrated.clocks = { allIds: [], byId: {} };
   }
+
+  if (migrated.schemaVersion === 16) {
+    migrated.schemaVersion = 17;
+    migrated.movementStrategy = 'zone';
+    migrated.grid = createDefaultGrid();
+  }
+  if (migrated.schemaVersion === 17) migrated.schemaVersion = ENCOUNTER_SCHEMA_VERSION;
 
   return migrated;
 }

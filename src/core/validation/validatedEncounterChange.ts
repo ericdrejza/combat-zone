@@ -1,3 +1,4 @@
+import { isSpatial, resnapSpatialActors } from '@core/movement/movementStrategies';
 import type { EncounterState } from "../encounter/types";
 import type { EncounterActionRecord } from "../history/types";
 import {
@@ -55,7 +56,8 @@ export function prepareValidatedEncounterChange({
     type: action.type,
     payload: action.payload
   };
-  const adjustment = adjustPolygonFlexZonesToFit(
+  if (isActorFootprintChange(action)) nextEncounter = resnapSpatialActors(nextEncounter);
+  const adjustment = isSpatial(nextEncounter) ? { nextEncounter, resizedZoneIds: [] } : adjustPolygonFlexZonesToFit(
     validationAction,
     currentEncounter,
     nextEncounter
@@ -130,7 +132,8 @@ export async function prepareValidatedEncounterChangeAsync({
     type: action.type,
     payload: action.payload
   };
-  const adjustment = adjustPolygonFlexZonesToFit(
+  if (isActorFootprintChange(action)) nextEncounter = resnapSpatialActors(nextEncounter);
+  const adjustment = isSpatial(nextEncounter) ? { nextEncounter, resizedZoneIds: [] } : adjustPolygonFlexZonesToFit(
     validationAction,
     currentEncounter,
     nextEncounter

@@ -37,7 +37,7 @@ export function handleSelectionMouseUp(input: MouseUpHandlerInput): boolean {
   if (!boxSelection) return false;
 
   const bounds = getBoxSelectionBounds(boxSelection);
-  const isActorBoxSelection = input.activeToolId === 'actor';
+  const isActorBoxSelection = input.activeToolId === 'actor' || encounter.movementStrategy !== 'zone';
   const selectedIds = isActorBoxSelection
     ? getActorRenderPlacements(encounter)
         .filter(({ point, radius }) =>

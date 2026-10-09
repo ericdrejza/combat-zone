@@ -28,6 +28,7 @@ export function PropertiesPanel({
   onOpenTokenLibraryForActor
 }: PropertiesPanelProps) {
   const selection = useSelector((state: RootState) => state.interaction.selection);
+  const movementStrategy = useSelector((state: RootState) => state.encounter.present.movementStrategy);
   const activeToolId = useSelector(
     (state: RootState) => state.interaction.activeToolId
   );
@@ -63,5 +64,6 @@ export function PropertiesPanel({
     return <EdgePropertiesPanel />;
   }
 
+  if (movementStrategy !== "zone") return <p className="text-sm text-canvas-muted">Select an actor to edit its properties.</p>;
   return <ZonePropertiesPanel />;
 }

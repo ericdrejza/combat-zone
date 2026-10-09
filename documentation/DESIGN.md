@@ -12,7 +12,7 @@
 
 A real-time encounter management tool for tabletop RPG Game Masters that enables zone-based tactical abstraction of combat while preserving narrative flexibility.
 
-The system replaces grid-based combat with:
+Zone movement offers tactical abstraction through:
 
 - Zones (polygonal spatial regions)
 - Engagement groups (melee clusters)
@@ -37,7 +37,7 @@ The goal is to reduce GM cognitive load while maintaining clarity for players.
 ### 2.3 Spatial Abstraction over Simulation
 
 - Zones represent narrative spaces, not measured distances.
-- Movement is relationship-based, not metric-based.
+- Zone movement is relationship-based. Grid and Free movement follow §17.
 
 ### 2.4 Tool-Driven Interaction
 
@@ -1113,12 +1113,13 @@ Validators:
 Render order:
 
 1. Background
-2. Zones
-3. Edges
-4. Engagement layer (connectors and tokens)
-5. Actors (free-floating and engagement participants)
-6. Annotations
-7. UI overlays
+2. Grid
+3. Zones
+4. Edges
+5. Engagement layer (connectors and tokens)
+6. Actors (free-floating and engagement participants)
+7. Annotations
+8. UI overlays
 
 The Engagement layer is after Edges and before Actors. Its connectors and
 tokens therefore render behind actor tokens. Direct connectors may share only
@@ -1160,8 +1161,8 @@ Layout strategies:
     between the hero and neutral sections. Its participants and 24px token fit
     within that section. Unengaged actors remain in their faction sections.
 
-Actor and engagement positions inside zones are not persisted in
-EncounterState. Layout strategies derive render targets from the normalized
+In Zone movement, Actor and engagement positions inside zones are not persisted
+in EncounterState. Grid/Free coordinates follow §17. Layout strategies derive render targets from the normalized
 entity collections, collection `allIds` ordering (which records the latest
 zone-entry order for actors), each entity's layout strategy, and each entity's
 layout orientation. FLEX derives deterministic polygon-footprint coordinates
@@ -1264,3 +1265,110 @@ Rule:
 - Animated transitions
 - AI-assisted GM suggestions
 - Rule system plugins per RPG
+
+## 17. Encounter Movement Strategies and Grid Layer
+
+An Encounter owns `movementStrategy` (`zone`, `grid`, or `free`) and one
+independent `grid` configuration. Zone remains the default and retains the
+existing Zone layout behavior. Movement strategy is independent of the active
+editing tool: Actor and Select apply the Encounter's strategy too.
+
+The existing Zone toolbar slot changes label, icon, and behavior to Zone, Grid,
+or Free. A standalone cycle subtool changes strategies in that order and
+selects the resulting tool. Grid shows grid configuration subtools; Free shows
+movement help. Background always exposes the same grid configuration controls,
+regardless of strategy. Outside Zone, Zone/Edge/Engagement layers and editing
+workflows are suspended and their toolbar actions are hidden. Their entities
+and relationships remain persisted and resume when returning to Zone.
+
+Actors optionally own `spatialPosition` (`x`, `y` in logical canvas units),
+shared by Grid and Free. These coordinates are authoritative only outside
+Zone; Zone placement remains derived. On departure from Zone, actors without
+saved spatial positions initialize from settled Zone placements. Actors in the
+Zoneless panel remain unplaced. Subsequent departures reuse saved positions.
+Spatial movement does not update suspended Zone or Engagement relationships.
+Outside Zone, the Zoneless panel lists actors without spatial positions;
+dropping onto the canvas assigns a position, and dropping into the panel
+removes it. New actors created on the spatial canvas start with a zoneless
+Zone assignment and a spatial position. Copies preserve spatial coordinates.
+
+Grid supports square, pointy-top hex, and flat-top hex geometry. Configuration
+includes `type`, positive `cellSize`, `origin`, `rotation` in degrees, `visible`,
+hexadecimal line `color`, and `opacity` in [0,1]. An optional bilinear `warp`
+stores two four-coefficient maps of normalized lattice coordinates; absence
+means standard alignment. Cell size is the square side
+or the distance across opposite hex sides. Origin is a square vertex or a hex
+center. Defaults are 64-unit squares at (0,0), zero rotation, hidden lines,
+#808080 color, and 0.5 opacity. Entering Grid displays its lines; hiding lines
+does not disable snapping. A separate SVG Grid Layer renders above Background
+and below Zones, clipped to the canvas. It works without a background image.
+
+Grid controls provide visibility, type/orientation, size, origin, rotation,
+color, opacity, and alignment. Manual settings use an Apply/Cancel preview
+without dimming the background. Configured zoom-in/out, fit, fit-width,
+fit-height, and reset shortcuts remain active while Grid Settings is open,
+including from focused fields; other shortcuts retain modal protection.
+Opacity uses the Zone-style percentage slider;
+visibility uses a switch. Increment/decrement first reaches the next integer
+in that direction, then steps by one. Rotation wraps at 90 degrees for squares
+and 60 degrees for hexes, respecting each geometry's symmetry. Calibration
+snaps angles within five degrees of a multiple of 45 degrees to that angle.
+
+The Waypoints alignment subtool offers simple or four-quadrant alignment.
+The user selects Square, Hex pointy, or Hex flat before choosing Simple,
+Four-quadrant, or Detect Grid. Selected compact toggles have a checkmark and
+distinct fill. Square alignment uses all four consecutive vertices around one
+cell; hex alignment uses three consecutive vertices. Four-quadrant alignment
+repeats this in top-left, top-right, bottom-right, and bottom-left cells, for
+sixteen square clicks or twelve hex clicks. Right-click removes the last point.
+The instruction panel can be moved by its handle or keyboard arrows to uncover
+vertices. Detect Grid sits beside the two manual strategies; Apply is separated
+from Cancel/Reset on the right. All samples fit a standard grid
+and optionally a smooth bilinear warped grid. If residual distortion exceeds
+3% of cell size (or one canvas unit, whichever is larger) and the warp is safe,
+the user must explicitly choose standard or warped alignment before applying.
+Both choices preview the result. Folded, singular, or non-invertible warps
+cannot be applied; the regular fit remains available. Warping is an alignment
+strategy within Grid, independent of Zone/Grid/Free movement strategy.
+
+Warped grids transform cell boundaries, snapping anchors, and adjacent-cell
+keyboard movement together. Token scale follows the smaller local stretch
+so a Medium token fits its cell; tokens retain their regular shape. Manual
+size/origin/rotation edits transform the warped grid as a whole; settings can
+return to standard alignment. Canvas resizing preserves normalized warp
+coefficients while scaling grid size/origin and actor coordinates.
+
+Grid detection analyzes background pixels locally and offers a detected
+regular grid of the selected square/hex type as an uncommitted preview.
+It requires reliable repeated line families; highly distorted, unreadable,
+or undetected images use vertex alignment.
+Numbered markers, live preview, reset, Apply, and Cancel/Escape support
+calibration. Degenerate points cannot be applied. Configuration previews,
+detection drafts, and calibration clicks are session-only.
+
+Grid movement snaps Small, Medium, and xLarge actors to cell centers. Large
+actors snap to square intersections or hex vertices shared by three cells.
+Token diameters/rectangle widths are 0.6, 0.9, 1.8, and 2.7 cell sizes for Small,
+Medium, Large, and xLarge. Free uses this same visual scale but permits any
+position. Actor overlap is allowed outside Zone. Every token's full footprint
+must stay inside the canvas in all validation modes. Invalid operations are
+rejected atomically. Grid geometry edits and actor size changes re-snap actors
+to nearby fitting anchors; appearance edits do not change positions. A group
+drag translates every selected actor by the same offset, then individually
+snaps each actor in Grid. Each complete operation is one history action.
+
+Square arrows move one neighboring anchor; hex arrows choose the adjacent
+anchor closest to the requested screen direction. Ties use top-to-bottom then
+left-to-right order. Free arrows nudge by 10 logical units. Existing viewport
+navigation remains available. No movement budgets, terrain, distance
+accounting, pathfinding, or cell occupancy restrictions are introduced.
+
+Canvas resizing uniformly scales grid size/origin and saved actor coordinates
+alongside Zone polygons. Replacing Background preserves the scaled grid;
+deleting Background retains grid and coordinates. Strategy changes, geometry
+edits, calibration, movement, and canvas changes are reversible history
+mutations. Applicable semantic validation keeps existing OFF/ADVISORY/ASSISTED/
+STRICT behavior; Zone movement/layout validators are suspended outside Zone.
+Geometric fit and snapping invariants apply in every mode. Imports validate
+these facts, supported old documents migrate to default Zone configuration,
+and unsupported newer schemas are rejected without replacing valid data.

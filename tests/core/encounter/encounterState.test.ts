@@ -1,3 +1,4 @@
+import { createDefaultGrid } from '@core/movement/types';
 import type { Actor } from '@entities/actor/types';
 import type { Annotation } from '@entities/annotation/types';
 import type { Edge } from '@entities/edge/types';
@@ -175,7 +176,9 @@ describe('EncounterState foundation', () => {
     });
 
     expect(state).toEqual({
-      schemaVersion: ENCOUNTER_SCHEMA_VERSION,
+      movementStrategy: 'zone',
+        grid: createDefaultGrid(),
+        schemaVersion: ENCOUNTER_SCHEMA_VERSION,
       id: 'encounter-empty',
       name: 'Empty Encounter',
       counters: { byId: {}, allIds: [] },

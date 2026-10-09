@@ -29,7 +29,7 @@ export function CompactSelectionDeleteButton({
   if (
     !entityType ||
     !(entityType in matchingToolByEntity) ||
-    matchingToolByEntity[entityType as keyof typeof matchingToolByEntity] !== activeToolId ||
+    (matchingToolByEntity[entityType as keyof typeof matchingToolByEntity] !== activeToolId && !(entityType === 'actor' && ['grid', 'free'].includes(activeToolId))) ||
     selection.selectedIds.length === 0
   ) {
     return null;

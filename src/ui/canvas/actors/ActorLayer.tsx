@@ -134,7 +134,7 @@ export function ActorLayer({
         selection.selectedEntityType === "actor" &&
         selection.selectedIds.includes(actor.id);
       const colors = ACTOR_LAYOUT_GROUP_COLORS[actor.layoutGroup];
-      const actorZone = encounter.zones.byId[actor.currentZoneId];
+      const actorZone = encounter.movementStrategy === "zone" ? encounter.zones.byId[actor.currentZoneId] : undefined;
       const selectedActorTextColor = actorZone
         ? getZoneNameTextColor(
             actorZone,
@@ -169,7 +169,7 @@ export function ActorLayer({
                   ? undefined
                   : () => onActorMouseLeave(actor.id)
               }
-              drag={activeToolId === "actor" || activeToolId === "select"}
+              drag={["actor", "select", "grid", "free"].includes(activeToolId)}
               dragMomentum={false}
               dragElastic={0}
               onDragStart={(event) =>

@@ -16,9 +16,14 @@ export function WorkspaceKeyboardShortcuts({ onOpenLibrary }: { onOpenLibrary: (
   const selection = useSelector((s: RootState) => s.interaction.selection);
   useEffect(() => {
     const handle = (event: KeyboardEvent) => {
-      if (ignoreShortcut(event)) return;
+      const dialogs = [...document.querySelectorAll('[aria-modal="true"]')];
+      // Grid editing needs viewport zoom to inspect its live preview, including from focused fields.
+      const gridSettingsOpen = dialogs.length === 1 && dialogs[0].hasAttribute('data-grid-settings-dialog');
+      const zoomIds: KeybindActionId[] = ['viewport.zoomOut', 'viewport.zoomIn', 'viewport.fitWidth', 'viewport.fitHeight', 'viewport.fit', 'viewport.reset'];
+      const gridZoom = gridSettingsOpen && zoomIds.some(id => matchesKeybind(event, bindings[id]));
+      if (event.defaultPrevented || (!gridZoom && ignoreShortcut(event))) return;
       // Physical Shift+Plus is also ordinary Plus on many layouts; actor sizing wins.
-      if ((tool === "actor" || tool === "select") && selection.selectedEntityType === "actor" && selection.selectedIds.length && matchesKeybind(event, bindings["actor.sizeIncrease"])) return;
+      if (!gridSettingsOpen && (tool === "actor" || tool === "select") && selection.selectedEntityType === "actor" && selection.selectedIds.length && matchesKeybind(event, bindings["actor.sizeIncrease"])) return;
       const commands: Partial<Record<KeybindActionId, () => void>> = {
         "viewport.zoomOut": viewport.zoomOut, "viewport.zoomIn": viewport.zoomIn,
         "viewport.fitWidth": viewport.zoomToFitWidth, "viewport.fitHeight": viewport.zoomToFitHeight,

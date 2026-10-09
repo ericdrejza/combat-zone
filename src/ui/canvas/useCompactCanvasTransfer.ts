@@ -1,3 +1,4 @@
+import { isSpatial } from '@core/movement/movementStrategies';
 import { useMotionValue, type MotionValue } from "motion/react";
 import { useEffect, useState } from "react";
 
@@ -79,7 +80,7 @@ export function useCompactCanvasTransfer({
           activeToolId !== "actor") ||
         (payload.kind === "zoneless-actors" &&
           activeToolId !== "actor" &&
-          activeToolId !== "select")
+          activeToolId !== "select" && activeToolId !== "grid" && activeToolId !== "free")
       ) {
         return;
       }
@@ -134,7 +135,7 @@ export function useCompactCanvasTransfer({
 
           if (insideCanvas) {
             const point = toSvgPoint(upEvent, svg);
-            const destinationZoneId = findZoneIdAtPoint(encounter, point);
+            const destinationZoneId = isSpatial(encounter) ? ZONELESS_ACTOR_ZONE_ID : findZoneIdAtPoint(encounter, point);
 
             if (payload.kind === "library-node") {
               commitActorFromLibraryNode(
@@ -153,8 +154,7 @@ export function useCompactCanvasTransfer({
             } else if (destinationZoneId) {
               const actorIds = payload.actorIds.filter(
                 (actorId) =>
-                  encounter.actors.byId[actorId]?.currentZoneId ===
-                  ZONELESS_ACTOR_ZONE_ID
+                  (isSpatial(encounter) ? !!encounter.actors.byId[actorId] && !encounter.actors.byId[actorId].spatialPosition : encounter.actors.byId[actorId]?.currentZoneId === ZONELESS_ACTOR_ZONE_ID)
               );
               if (actorIds.length > 0) {
                 moveActorsToZone(

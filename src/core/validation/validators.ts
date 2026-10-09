@@ -1,3 +1,4 @@
+import { SpatialValidator } from '@core/movement/spatialValidator';
 import { EncounterResourceValidator } from "@core/encounter/encounterResourceValidator";
 import { ZoneResourceValidator } from "@entities/zone/zoneResourceValidator";
 import type { EncounterState } from "@core/encounter/types";
@@ -27,6 +28,7 @@ export {
 import { ActorResourceValidator } from "@entities/actor/actorResourceValidator";
 
 export const MVP_VALIDATORS: Validator<EncounterState>[] = [
+  SpatialValidator,
   ActorStatusValidator,
   ActorResourceValidator,
   ZoneResourceValidator,

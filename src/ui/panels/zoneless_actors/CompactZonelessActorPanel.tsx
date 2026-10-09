@@ -1,3 +1,4 @@
+import type { MovementStrategy } from '@core/movement/types';
 import type { DragEvent, MouseEvent } from "react";
 import { useMemo, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -19,6 +20,7 @@ import { armCompactCanvasTransfer } from "@ui/canvas/compactCanvasTransfer";
 /** Drawer presentation of the authoritative zoneless actor collection. */
 export function CompactZonelessActorPanel() {
   const dispatch = useDispatch();
+  const movementStrategy = useSelector((state: RootState) => state.encounter.present.movementStrategy);
   const actors = useSelector((state: RootState) => state.encounter.present.actors);
   const activeToolId = useSelector(
     (state: RootState) => state.interaction.activeToolId
@@ -29,13 +31,13 @@ export function CompactZonelessActorPanel() {
   );
   const [groupByFaction, setGroupByFaction] = useState(true);
   const dragPreviewCleanupRef = useRef<(() => void) | null>(null);
-  const zonelessActors = useMemo(() => getZonelessActors(actors), [actors]);
+  const zonelessActors = useMemo(() => getZonelessActors(actors, movementStrategy), [actors, movementStrategy]);
   const groups = useMemo(() => getGroupedActors(zonelessActors), [zonelessActors]);
   const selectedIds =
     selection.selectedEntityType === "actor" ? selection.selectedIds : [];
 
   function selectActor(actorId: string, event: MouseEvent<HTMLButtonElement>) {
-    if (activeToolId !== "actor" && activeToolId !== "select") {
+    if (!(["actor", "select", "grid", "free"].includes(activeToolId))) {
       return;
     }
 
@@ -51,7 +53,7 @@ export function CompactZonelessActorPanel() {
   }
 
   function startDrag(actorId: string, event: DragEvent<HTMLButtonElement>) {
-    if (activeToolId !== "actor" && activeToolId !== "select") {
+    if (!(["actor", "select", "grid", "free"].includes(activeToolId))) {
       event.preventDefault();
       return;
     }

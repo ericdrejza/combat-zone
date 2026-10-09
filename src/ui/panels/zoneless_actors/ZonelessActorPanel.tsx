@@ -1,3 +1,4 @@
+import type { MovementStrategy } from '@core/movement/types';
 import type { DragEvent, MouseEvent, PointerEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -11,7 +12,7 @@ import { setActorDragImage } from "@core/rendering/actorDragPreview";
 import { ZONELESS_ACTOR_ZONE_ID } from "@core/encounter/types";
 import type { Actor, ActorLayoutGroup } from "@entities/actor/types";
 import { selectEntity } from "@interaction/interactionState";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from "@store/store";
 import { getTextColorForLuminance } from "../../canvas/canvasLuminance";
 import {
@@ -55,14 +56,14 @@ function sortActors(actors: Actor[]): Actor[] {
 }
 
 export function getZonelessActors(
-  actors: ZonelessActorPanelProps["actors"]
+  actors: ZonelessActorPanelProps["actors"], strategy: MovementStrategy = "zone"
 ): Actor[] {
   return sortActors(
     actors.allIds
       .map((actorId) => actors.byId[actorId])
       .filter(
         (actor): actor is Actor =>
-          actor?.currentZoneId === ZONELESS_ACTOR_ZONE_ID
+          !!actor && (strategy === "zone" ? actor.currentZoneId === ZONELESS_ACTOR_ZONE_ID : !actor.spatialPosition)
       )
   );
 }
@@ -85,6 +86,7 @@ export function ZonelessActorPanel({
   selection
 }: ZonelessActorPanelProps) {
   const dispatch = useDispatch();
+  const movementStrategy = useSelector((state: RootState) => state.encounter.present.movementStrategy);
   const [expanded, setExpanded] = useState(false);
   const [groupByFaction, setGroupByFaction] = useState(true);
   const dragPreviewCleanupRef = useRef<(() => void) | null>(null);
@@ -95,7 +97,7 @@ export function ZonelessActorPanel({
     size,
     startResize
   } = useResizablePanel();
-  const zonelessActors = useMemo(() => getZonelessActors(actors), [actors]);
+  const zonelessActors = useMemo(() => getZonelessActors(actors, movementStrategy), [actors, movementStrategy]);
   const groupedActors = useMemo(
     () => getGroupedActors(zonelessActors),
     [zonelessActors]
@@ -115,7 +117,7 @@ export function ZonelessActorPanel({
     actorId: string,
     event: MouseEvent<HTMLButtonElement>
   ) {
-    if (activeToolId !== "actor" && activeToolId !== "select") {
+    if (!(["actor", "select", "grid", "free"].includes(activeToolId))) {
       return;
     }
 
@@ -133,7 +135,7 @@ export function ZonelessActorPanel({
     actorId: string,
     event: DragEvent<HTMLButtonElement>
   ) {
-    if (activeToolId !== "actor" && activeToolId !== "select") {
+    if (!(["actor", "select", "grid", "free"].includes(activeToolId))) {
       event.preventDefault();
       return;
     }

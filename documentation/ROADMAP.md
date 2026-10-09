@@ -105,3 +105,17 @@ the design as future or nice-to-have work.
 - [x] Bulk actor size shortcuts and source-zone-first paste.
 - [x] Configurable chords, conflict overrides, pan presets, zoom/Library/audio shortcuts.
 - [x] Heal/damage shortcut dialog and responsive settings.
+
+## Encounter movement strategies and grid
+
+- [x] Zone/Grid/Free strategy cycle, shared Background/Grid controls, and suspended Zone workflows.
+- [x] Square and hex Grid Layer, manual settings, and three-click alignment.
+- [x] Spatial actor placement, size-dependent snapping, keyboard/group movement, and history.
+- [x] Schema 17 migration, persistence/cloud round trips, writer guards, and acceptance coverage.
+
+## Grid alignment refinements
+
+- [x] Vertex-based simple/four-quadrant alignment, explicit standard/warp choice, and bilinear movement geometry.
+- [x] Local square/hex grid detection, Waypoints alignment icon, undimmed previews, percentage opacity, visibility switch, and whole-number stepping.
+- [x] Symmetry-aware rotation wrapping and five-degree calibration tolerance.
+- [x] Schema 18 warp persistence, migration, validation, undo/redo, cloud, and responsive coverage.

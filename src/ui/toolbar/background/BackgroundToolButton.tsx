@@ -1,3 +1,4 @@
+import { GridControls } from '@ui/toolbar/grid/GridControls';
 import {
   Expand,
   BookOpen,
@@ -63,6 +64,7 @@ export function BackgroundToolButton({
     <ToolbarSubtoolBar aria-label="Background options">
       {renderOptions()}
       {renderSizingOptions()}
+      <GridControls />
     </ToolbarSubtoolBar>
   ) : null;
 
@@ -201,10 +203,10 @@ export function BackgroundToolButton({
             aria-haspopup="menu"
             aria-label={tool.label}
             aria-pressed={selected}
-            className={`flex h-11 min-w-11 shrink-0 items-center justify-center gap-2 rounded-full border px-2 text-sm font-medium shadow-sm transition hover:bg-canvas lg:h-auto lg:min-w-0 lg:px-3 lg:py-1.5 ${
+            className={`flex h-11 min-w-11 shrink-0 items-center justify-center gap-2 rounded-full border px-2 text-sm font-medium shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-canvas-ink lg:h-auto lg:min-w-0 lg:px-3 lg:py-1.5 ${
               selected
-                ? "border-canvas-ink bg-canvas-ink text-canvas-on-ink"
-                : "border-canvas-line bg-canvas-surface text-canvas-ink"
+                ? "border-canvas-ink bg-canvas-ink text-canvas-on-ink hover:ring-2 hover:ring-canvas-ink/40"
+                : "border-canvas-line bg-canvas-surface text-canvas-ink hover:bg-canvas"
             }`}
             onClick={() => {
               dispatch(setActiveTool(selected ? "select" : "background"));

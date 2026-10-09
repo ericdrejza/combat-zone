@@ -546,3 +546,29 @@ these back into `AGENT.md` or `DESIGN.md`.
 - [x] Keybind override and pan presets are atomic, persisted, and protect fixed shortcuts.
 - [x] Zoom, Library, and global audio shortcuts use existing application behaviors.
 - [x] H toggles responsive heal/damage UI with shared HP rules, dismissal, and keep-open preference.
+
+## Encounter movement strategies and grid
+
+- [x] Cycle Zone → Grid → Free → Zone using a standalone subtool; toolbar label/icon and subtools follow the strategy on desktop and compact layouts.
+- [x] Background exposes grid controls in every strategy; Grid exposes the same controls. Hidden grid lines retain snapping.
+- [x] Configure square/pointy/flat hex grids with size, origin, rotation, color, opacity, visibility, and cancellable preview.
+- [x] Align square and hex grids with three consecutive vertices; calibration is one undoable action and degenerate clicks cannot commit.
+- [x] Suspend and hide Zone, Edge, and Engagement workflows outside Zone while preserving relationships; shortcuts cannot reactivate hidden workflows.
+- [x] Grid/Free share durable positions, retain unplaced actors in the Zoneless panel, and support canvas/panel transfers and copies.
+- [x] Medium nearly fills a cell; Large uses square intersections/hex vertices, and other sizes use cell centers.
+- [x] Free permits arbitrary positions; Grid snaps movement and size/geometry edits; group moves commit atomically.
+- [x] Spatial overlap is allowed, full footprints stay in bounds, and square/hex arrows step while Free arrows nudge.
+- [x] Undo/redo restores switches, moves, grid edits, calibration, canvas scaling, transfers, and deletion. Zone behavior and validation modes remain correct.
+- [x] Schema 17 migrates supported older records; local/cloud exports and recovery preserve spatial facts and reject invalid/newer data without replacing valid records.
+- [x] Read-only guards block strategy, grid, and actor mutations; repository revision and failure handling remain intact.
+
+## Grid alignment refinements
+
+- [x] Simple alignment uses four square vertices or three hex vertices; four-quadrant alignment repeats four cells with numbered guidance, right-click point removal, movable instructions, and cancellable preview. Grid type and complexity have clear selected states.
+- [x] Distorted samples require choosing standard or warped alignment. Warp transforms rendering, snapping, adjacent movement, and token scale; unsafe warps cannot commit.
+- [x] Square/hex detection previews reliable image-based alignment without manual clicks; failure preserves the encounter and keeps vertex alignment available.
+- [x] Settings preserve background brightness, show percent opacity and a visibility switch, and step fractional size/origin/rotation values to whole numbers. Square/hex rotations wrap with their own symmetry.
+- [x] Auto-alignment snaps within five degrees of 45-degree multiples.
+- [x] Schema 18 migrates existing records and preserves warps through history, resizing, local/cloud round trips, invalid-write rejection, and writer boundaries.
+
+- [x] Grid Settings permits default/custom zoom shortcuts from focused fields without changing drafts/history; other modal shortcuts remain blocked.

@@ -20,6 +20,17 @@ function setup() {
 }
 const key = (value: string, ctrlKey = false) => fireEvent.keyDown(window, { key: value, ctrlKey });
 describe("workspace keyboard shortcuts", () => {
+  it('honors customized zoom bindings in Grid settings but keeps other modals protected', () => {
+    localStorage.setItem(KEYBIND_STORAGE_KEY, JSON.stringify({ 'viewport.zoomIn': 'ctrl+q' }));
+    const view = setup(), viewport = screen.getByLabelText('Canvas viewport');
+    const modal = document.createElement('div'); modal.setAttribute('aria-modal', 'true'); modal.setAttribute('data-grid-settings-dialog', ''); document.body.append(modal);
+    try {
+      fireEvent.keyDown(screen.getByRole('textbox'), { key: 'q', ctrlKey: true }); expect(viewport).toHaveAttribute('data-canvas-zoom', '1.1');
+      key('l'); key('p'); expect(view.open).not.toHaveBeenCalled(); expect(audio.pauseAll).not.toHaveBeenCalled();
+      modal.removeAttribute('data-grid-settings-dialog');
+      key('q', true); expect(viewport).toHaveAttribute('data-canvas-zoom', '1.1');
+    } finally { modal.remove(); }
+  });
   it("zooms with punctuation and fits each axis without encounter history", async () => {
     setup(); const viewport = screen.getByLabelText("Canvas viewport");
     Object.defineProperty(viewport, "clientWidth", { configurable: true, value: 480 });

@@ -1,3 +1,8 @@
+import { useDispatch, useSelector } from 'react-redux';
+import { addGridCalibrationPoint, removeGridCalibrationPoint } from '@interaction/interactionState';
+import { toSvgPoint } from './zones/zoneGeometry';
+import { GridLayer } from './grid/GridLayer';
+import { GridCalibrationMarkers } from './grid/GridCalibrationOverlay';
 import type {
   ReactNode,
   DragEventHandler,
@@ -155,6 +160,8 @@ export function CanvasWorkspace({
   onZoneDragEnd,
   onZoneMotionComplete
 }: CanvasWorkspaceProps) {
+  const dispatch = useDispatch();
+  const calibrating = useSelector((state: RootState) => state.interaction.gridCalibrationActive);
   return (
     <MotionConfig transformPagePoint={createCanvasMotionPointTransform(canvasRef)}>
       <motion.svg
@@ -163,29 +170,32 @@ export function CanvasWorkspace({
         ref={(svg) => {
           canvasRef.current = svg;
         }}
+        onClickCapture={event => {
+          if (calibrating) { event.stopPropagation(); dispatch(addGridCalibrationPoint(toSvgPoint(event, event.currentTarget))); }
+        }}
         onClick={handleCanvasClick}
-        onContextMenu={handleCanvasContextMenu}
+        onContextMenu={event => { if (calibrating) { event.preventDefault(); dispatch(removeGridCalibrationPoint()); } else handleCanvasContextMenu(event); }}
         // SVG zones and Motion-managed children can intercept native drag
         // events. Capture keeps the canvas the authoritative drop surface.
         onDragEnterCapture={handleCanvasDragOver}
         onDragOverCapture={handleCanvasDragOver}
         onDropCapture={handleCanvasDrop}
         onDoubleClick={handleCanvasDoubleClick}
-        onMouseDown={handleCanvasMouseDown}
+        onMouseDown={calibrating ? undefined : handleCanvasMouseDown}
         onMouseMove={handleCanvasMouseMove}
         onMouseUp={handleCanvasMouseUp}
         onPointerDown={(event) => {
-          if (event.pointerType !== "mouse") {
+          if (!calibrating && event.pointerType !== "mouse") {
             handleCanvasMouseDown(event);
           }
         }}
         onPointerMove={(event) => {
-          if (event.pointerType !== "mouse") {
+          if (!calibrating && event.pointerType !== "mouse") {
             handleCanvasMouseMove(event);
           }
         }}
         onPointerUp={(event) => {
-          if (event.pointerType !== "mouse") {
+          if (!calibrating && event.pointerType !== "mouse") {
             handleCanvasMouseUp(event);
           }
         }}
@@ -204,7 +214,8 @@ export function CanvasWorkspace({
                 canvasSize={encounter.canvasSize}
               />
             ) : null}
-            {layer.id === "zones" ? (
+            {layer.id === "grid" ? <GridLayer encounter={encounter} /> : null}
+            {layer.id === "zones" && encounter.movementStrategy === "zone" ? (
               <ZoneLayer
                 activeToolId={activeToolId}
                 actorTargetZoneId={actorTargetZoneId}
@@ -223,7 +234,7 @@ export function CanvasWorkspace({
                 zoneOpacityPreview={zoneOpacityPreview}
               />
             ) : null}
-            {layer.id === "edges" ? (
+            {layer.id === "edges" && encounter.movementStrategy === "zone" ? (
               <EdgeLayer
                 activeToolId={activeToolId}
                 edgeDrag={edgeDrag}
@@ -234,7 +245,7 @@ export function CanvasWorkspace({
                 selection={selection}
               />
             ) : null}
-            {layer.id === 'engagements' ? (
+            {layer.id === 'engagements' && encounter.movementStrategy === 'zone' ? (
               <EngagementLayer activeToolId={activeToolId} actorDrag={actorDrag} backgroundLuminanceByZoneId={backgroundLuminanceByZoneId} encounter={encounter} engagementDrag={engagementDrag} onEngagementDrag={onEngagementDrag} onEngagementDragEnd={onEngagementDragEnd} onEngagementDragReturnComplete={onEngagementDragReturnComplete} onEngagementDragStart={onEngagementDragStart} onEngagementSelect={onEngagementSelect} placements={actorRenderPlacements} selection={selection} zoneActorTranslation={zoneActorTranslation} />
             ) : null}
             {layer.id === "actors" ? (
@@ -244,7 +255,7 @@ export function CanvasWorkspace({
                 }
               >
                 <ActorLayer
-                  activeToolId={activeToolId}
+                  activeToolId={calibrating ? "background" : activeToolId}
                   actorDrag={actorDrag}
                   placements={actorRenderPlacements}
                   zoneActorTranslation={zoneActorTranslation}
@@ -274,6 +285,7 @@ export function CanvasWorkspace({
             ) : null}
           </g>
         ))}
+        {calibrating ? <GridCalibrationMarkers /> : null}
         {keyboardOverlay}
       </motion.svg>
     </MotionConfig>

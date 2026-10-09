@@ -1,3 +1,4 @@
+import { isSpatial, spatialPlacements } from '@core/movement/movementStrategies';
 import type { Actor } from '@entities/actor/types';
 import type { EncounterState } from '@core/encounter/types';
 import type {
@@ -59,6 +60,7 @@ export function getActorRenderPlacements(
   encounter: EncounterState,
   computationStrategy: LayoutComputationStrategy = ACTOR_LAYOUT_COMPUTATION_STRATEGY
 ): ActorRenderPlacement[] {
+  if (isSpatial(encounter)) return spatialPlacements(encounter);
   const cacheKey = createActorPlacementCacheKey(
     encounter,
     POLYGON_LAYOUT_SETTINGS,

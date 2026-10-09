@@ -16,7 +16,7 @@ export function CanvasToolStatusBadge({
   zoneShapeMode
 }: CanvasToolStatusBadgeProps) {
   const actorStatus =
-    (activeToolId === "actor" || activeToolId === "select") && actorNames.length > 0
+    (["actor", "select", "grid", "free"].includes(activeToolId)) && actorNames.length > 0
       ? actorNames.join(", ")
       : null;
   const zoneStatus =

@@ -1,3 +1,6 @@
+import { getEncounterLogCategory } from './encounterLogCategory';
+export { getEncounterLogCategory } from './encounterLogCategory';
+import { formatSpatialAction } from './formatSpatialAction';
 import { stringValue, stringValues, numberValue, objectStringValue } from "./logValueReaders";
 import { formatActorMovementDestinations } from "./formatActorMovementDestinations";
 import { formatStatusAction } from "./formatStatusAction";
@@ -5,7 +8,6 @@ import { ZONELESS_ACTOR_ZONE_ID } from "@core/encounter/types";
 import type { EncounterState } from "@core/encounter/types";
 import type { EncounterActionRecord } from "@core/history/types";
 import type {
-  EncounterLogCategory,
   EncounterLogEntry
 } from "./types";
 
@@ -66,23 +68,6 @@ function zoneIdsFrom(action: EncounterActionRecord): string[] {
   return ids.length > 0 ? ids : zoneId ? [zoneId] : [];
 }
 
-export function getEncounterLogCategory(
-  actionType: string
-): EncounterLogCategory {
-  const prefix = actionType.split(".")[0];
-  switch (prefix) {
-    case "actor":
-    case "zone":
-    case "engagement":
-    case "edge":
-    case "annotation":
-    case "initiative":
-    case "background":
-      return prefix;
-    default:
-      return "encounter";
-  }
-}
 
 function destinationName(
   action: EncounterActionRecord,
@@ -141,6 +126,8 @@ export function formatCommittedEncounterAction(
   const statusMessage = formatStatusAction(action, snapshots);
   if (statusMessage) return statusMessage;
   const actorNames = () => listNames(namesForActorIds(actorIdsFrom(action), snapshots));
+  const spatialMessage = formatSpatialAction(action, snapshots.after, actorNames);
+  if (spatialMessage) return spatialMessage;
   const zoneNames = () => listNames(namesForZoneIds(zoneIdsFrom(action), snapshots));
 
   switch (action.type) {

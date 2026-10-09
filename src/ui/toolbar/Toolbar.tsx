@@ -112,6 +112,7 @@ export function Toolbar({
 
   function renderTool(item: (typeof TOOLBAR_ITEMS)[number]) {
     if (item.type === "separator") {
+      if (item.id === "zone-edge" && encounter.movementStrategy !== "zone") return null;
       return (
       <span
           key={item.id}
@@ -166,6 +167,8 @@ export function Toolbar({
         />
       );
     }
+
+    if (tool.id === "edge" && encounter.movementStrategy !== "zone") return null;
 
     if (tool.id === "edge") {
       return <EdgeToolButton key={tool.id} activeToolId={visibleActiveToolId} compactLayout={compactLayout} compactSubtoolHost={compactZoomOpen || compactEncounterOpen ? null : compactSubtoolHost} edgeTool={edgeTool} encounter={encounter} tool={tool} />;
@@ -246,8 +249,8 @@ export function Toolbar({
             role="separator"
           />
           {TOOLBAR_ITEMS.map(renderTool)}
-          {!showMobileControls ? <EngageActionButton /> : null}
-          {!showMobileControls ? <DisengageActionButton /> : null}
+          {!showMobileControls && encounter.movementStrategy === "zone" ? <EngageActionButton /> : null}
+          {!showMobileControls && encounter.movementStrategy === "zone" ? <DisengageActionButton /> : null}
           {compactLayout ? (
           <CanvasZoomControls
             compactOpen={compactZoomOpen}
