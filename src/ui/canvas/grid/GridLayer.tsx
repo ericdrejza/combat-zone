@@ -1,3 +1,4 @@
+import { resolveGridGeometry } from '@core/movement/gridScale';
 import { CompletedGridClip } from './CompletedGridClip';
 import { useId } from 'react';
 import { useSelector } from 'react-redux';
@@ -12,7 +13,8 @@ export function GridLayer({ encounter }: { encounter: EncounterState }) {
   const id = useId().replace(/:/g, '');
   const { gridPreview, gridCalibrationActive, gridCalibrationPoints, gridCalibrationMode, gridCalibrationType } = useSelector((state: RootState) => state.interaction);
   const draftGrid = gridCalibrationActive ? { ...encounter.grid, type: gridCalibrationType } : encounter.grid;
-  const grid = gridPreview ?? (gridCalibrationActive && gridCalibrationMode === 'simple' ? calibrateGrid(draftGrid, gridCalibrationPoints) : null) ?? draftGrid;
+  const alignmentPreview = gridCalibrationActive ? gridPreview : null;
+  const grid = alignmentPreview ?? (gridCalibrationActive && gridCalibrationMode === 'simple' ? calibrateGrid(draftGrid, gridCalibrationPoints) : null) ?? resolveGridGeometry(draftGrid);
   if (!grid.visible && !gridCalibrationActive && !gridPreview) return null;
   const clipId = `${id}-completed`;
   if (grid.warp) return <g clipPath={`url(#${clipId})`}><defs><CompletedGridClip id={clipId} grid={grid} encounter={encounter} /></defs><WarpedGridLayer grid={grid} canvas={encounter.canvasSize} /></g>;

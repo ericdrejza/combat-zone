@@ -1,3 +1,4 @@
+import { useGridMapPreview } from './grid/useGridMapPreview';
 import { GridCalibrationOverlay } from './grid/GridCalibrationOverlay';
 import { useActorKeyboardMovement } from "./actors/useActorKeyboardMovement";
 import { ActorHealthKeyboard } from "./actors/ActorHealthKeyboard";
@@ -127,9 +128,10 @@ export function CanvasShell({
     library
   });
   const gridCalibrationActive = useSelector((state: RootState) => state.interaction.gridCalibrationActive);
-  const backgroundImage = encounter.backgroundImage;
+  const renderEncounter = useGridMapPreview(encounter);
+  const backgroundImage = renderEncounter.backgroundImage;
   const { placements: actorRenderPlacements, refreshPlacements } =
-    useActorRenderPlacements(encounter);
+    useActorRenderPlacements(renderEncounter);
   const {
     engagementDrag,
     handleEngagementDrag,
@@ -290,7 +292,7 @@ export function CanvasShell({
       ref={setCanvasShellElement}
       role="main"
     >
-      <CanvasViewport canvasSize={encounter.canvasSize}>
+      <CanvasViewport canvasSize={renderEncounter.canvasSize}>
         <CanvasWorkspace
           keyboardOverlay={keyboardMovement.overlay}
         activeToolId={activeToolId}
@@ -308,10 +310,10 @@ export function CanvasShell({
         directManipulationZoneId={
           vertexDrag?.zoneId ?? zoneDrag?.zoneId ?? null
         }
-        encounter={encounter}
+        encounter={renderEncounter}
         edgeDrag={edgeDrag}
         edgeTool={edgeTool}
-        getDisplayedPolygon={getDisplayedPolygon}
+        getDisplayedPolygon={renderEncounter === encounter ? getDisplayedPolygon : zone => zone.polygon}
         onActorDrag={handleActorDrag}
         onActorDragEnd={handleActorDragEnd}
         onActorDragStart={(actorId, point, event) => {

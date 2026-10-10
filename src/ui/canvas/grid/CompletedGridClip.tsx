@@ -1,11 +1,11 @@
+import type { GridGeometry } from '@core/movement/gridScale';
 import { useMemo } from 'react';
 import type { EncounterState } from '@core/encounter/types';
-import type { GridConfiguration } from '@core/movement/types';
 import { completedBoundaryCells, cellBoundarySegments } from '@core/movement/gridEdgeCompletion';
 import { getGridCoverage } from '@core/movement/gridCoverage';
 
 /** A union of the original map and whole perimeter cells hides newly exposed fragments. */
-export function CompletedGridClip({ id, grid, encounter }: { id: string; grid: GridConfiguration; encounter: EncounterState }) {
+export function CompletedGridClip({ id, grid, encounter }: { id: string; grid: GridGeometry; encounter: EncounterState }) {
   const coverage = getGridCoverage(encounter);
   const straight = grid.type === 'square' && !grid.warp && Math.abs(grid.rotation % 90) < 1e-8;
   const path = useMemo(() => straight ? '' : completedBoundaryCells(grid, coverage).map(points => {

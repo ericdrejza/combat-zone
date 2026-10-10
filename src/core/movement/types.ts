@@ -6,6 +6,7 @@ export type GridType = 'square' | 'hex-pointy' | 'hex-flat';
 export type GridWarp = { type: 'bilinear'; x: [number, number, number, number]; y: [number, number, number, number] };
 export type GridConfiguration = {
   type: GridType;
+  /** User-facing map scale: halving this value doubles map coverage. */
   cellSize: number;
   origin: LayoutPoint;
   rotation: number;

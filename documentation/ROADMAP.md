@@ -126,7 +126,7 @@ the design as future or nice-to-have work.
 - [x] Detect faint square grids over illustrated terrain with normalized ridge profiles.
 - [x] Temporary maximum zoom for vertex alignment, restoring on close unless manual zoom takes over.
 - [x] Hold movement keys to repeat Grid/Free steps with validation, writer guards, and individual undo/redo.
-- [x] Share Grid Properties/Background settings controls, persist configurable repeat timing, and scale Free nudges with cell size.
+- [x] Share Grid Properties/Background settings controls, persist configurable repeat timing, and keep Free nudges at 10/64 of fixed rendered spacing.
 - [x] Verify fully contained first/last square rows and columns through validation and browser dragging; refine detected periods to reduce boundary drift.
 
 
@@ -135,3 +135,11 @@ the design as future or nice-to-have work.
 ## Independent background sizing
 
 - [x] Decouple all background sizing from grid/token scale and spatial placements; use unpadded coverage and an Interface overflow preference, with history and writer safeguards.
+
+## Shared map sizing and stable actor footprints
+
+- [x] Actor footprints stay identical across Zone/Grid/Free, tools, map sizing, and warped cells.
+- [x] Cell-size edits resize coverage inversely with fixed 64-unit rendered spacing; background controls update the same scale value.
+- [x] Detection/alignment normalize map coverage and preserve fitted geometry; previews cancel without durable mutations.
+- [x] Grid settings remains inside the Grid subtool button group, matching Background on compact and desktop layouts.
+- [x] Schema 21 preserves legacy map alignment and validates local/cloud round trips, history, overflow, and writer boundaries.

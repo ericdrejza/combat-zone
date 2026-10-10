@@ -1,6 +1,7 @@
+import type { GridGeometry } from '@core/movement/gridScale';
 import type { LayoutPoint } from '@core/layout/types';
 import type { CanvasSize } from '@core/layout/polygonCanvasBounds';
-import type { GridWarp, GridConfiguration } from './types';
+import type { GridWarp } from './types';
 
 const evaluate = (terms: number[], point: LayoutPoint) => terms[0] + terms[1] * point.x + terms[2] * point.y + terms[3] * point.x * point.y;
 export function warpPoint(warp: GridWarp, point: LayoutPoint): LayoutPoint {
@@ -27,7 +28,7 @@ export function unwarpPoint(warp: GridWarp, target: LayoutPoint): LayoutPoint {
 }
 
 /** Full-canvas inversion and positive Jacobians keep calibration from folding cells. */
-export function warpFitsCanvas(grid: GridConfiguration, canvas: CanvasSize): boolean {
+export function warpFitsCanvas(grid: GridGeometry, canvas: CanvasSize): boolean {
   if (!grid.warp) return true;
   const angle = (grid.rotation + (grid.type === 'hex-pointy' ? 30 : 0)) * Math.PI / 180;
   const c = Math.cos(angle), s = Math.sin(angle);

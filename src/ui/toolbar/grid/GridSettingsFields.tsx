@@ -27,6 +27,6 @@ export function GridSettingsFields({ draft, setDraft, compact = false }: {
         </label>
       </div>
       <PreferenceSwitch ariaLabel="Grid visible" label="Show grid lines" checked={draft.visible} onChange={visible => setDraft({ ...draft, visible })} />
-      <p className="text-xs text-canvas-muted">Cell size is measured in canvas units, across opposite sides for hexes. Grid movement snaps even when lines are hidden.</p>
+      <p className="text-xs text-canvas-muted">Smaller cell-size values enlarge the map; actors and rendered grid spacing stay fixed. Grid movement snaps even when lines are hidden.</p>
   </div>;
 }

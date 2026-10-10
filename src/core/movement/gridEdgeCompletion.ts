@@ -1,10 +1,11 @@
+import type { GridGeometry } from '@core/movement/gridScale';
 import type { EncounterState } from '@core/encounter/types';
+import { resolveGridGeometry } from './gridScale';
 import { getGridCoverage } from './gridCoverage';
 import type { BackgroundFrame } from '@core/encounter/backgroundFrame';
 import type { LayoutPoint } from '@core/layout/types';
 import type { CanvasSize } from '@core/layout/polygonCanvasBounds';
 import { gridToWorld, nearbyAnchors, worldToGrid } from './gridGeometry';
-import type { GridConfiguration } from './types';
 
 type Padding = { left: number; top: number; right: number; bottom: number };
 const area = (points: LayoutPoint[]) => Math.abs(points.reduce((sum, p, i) => {
@@ -28,7 +29,7 @@ function clip(points: LayoutPoint[], canvas: CanvasSize) {
   }
   return points;
 }
-export function cellPolygon(grid: GridConfiguration, center: LayoutPoint) {
+export function cellPolygon(grid: GridGeometry, center: LayoutPoint) {
   const local = worldToGrid(grid, center), size = grid.cellSize;
   const vertices = grid.type === 'square' ? [
     { x: local.x - size / 2, y: local.y - size / 2 }, { x: local.x + size / 2, y: local.y - size / 2 },
@@ -42,7 +43,7 @@ export function cellPolygon(grid: GridConfiguration, center: LayoutPoint) {
 }
 
 /** Exact quadratic boundaries keep warped hex cells whole rather than clipping their curves. */
-export function cellBoundarySegments(grid: GridConfiguration, polygon: LayoutPoint[]) {
+export function cellBoundarySegments(grid: GridGeometry, polygon: LayoutPoint[]) {
   const stride = grid.warp && grid.type !== 'square' ? 16 : 1;
   const vertices = polygon.filter((_, index) => index % stride === 0);
   return vertices.map((start, index) => {
@@ -52,7 +53,7 @@ export function cellBoundarySegments(grid: GridConfiguration, polygon: LayoutPoi
     return { start, end, control: { x: 2 * mid.x - (start.x + end.x) / 2, y: 2 * mid.y - (start.y + end.y) / 2 } };
   });
 }
-function cellExtrema(grid: GridConfiguration, polygon: LayoutPoint[]) {
+function cellExtrema(grid: GridGeometry, polygon: LayoutPoint[]) {
   if (!grid.warp || grid.type === 'square') return polygon;
   return cellBoundarySegments(grid, polygon).flatMap(({ start, end, control }) => {
     const points = [start, end];
@@ -66,7 +67,7 @@ function cellExtrema(grid: GridConfiguration, polygon: LayoutPoint[]) {
 }
 
 /** Perimeter cells plus the original rectangle form the completed grid footprint. */
-export function completedBoundaryCells(grid: GridConfiguration, frame: BackgroundFrame): LayoutPoint[][] {
+export function completedBoundaryCells(grid: GridGeometry, frame: BackgroundFrame): LayoutPoint[][] {
   const seen = new Set<string>(), cells: LayoutPoint[][] = [];
   const inspect = (point: LayoutPoint) => {
     for (const center of nearbyAnchors(grid, point, 'medium', 1)) {
@@ -93,7 +94,7 @@ export function completedBoundaryCells(grid: GridConfiguration, frame: Backgroun
 }
 
 /** Finish the original coverage area once, avoiding newly exposed cells and cumulative expansion. */
-export function getGridEdgePadding(grid: GridConfiguration, canvas: CanvasSize, origin: LayoutPoint = { x: 0, y: 0 }): Padding {
+export function getGridEdgePadding(grid: GridGeometry, canvas: CanvasSize, origin: LayoutPoint = { x: 0, y: 0 }): Padding {
   const padding = { left: 0, top: 0, right: 0, bottom: 0 };
   if (grid.type === 'square' && !grid.warp && Math.abs(grid.rotation % 90) < 1e-8) {
     const sides = (gridOrigin: number, start: number, extent: number) => {
@@ -116,7 +117,7 @@ export function getGridEdgePadding(grid: GridConfiguration, canvas: CanvasSize, 
 
 export function completeGridEdges(state: EncounterState): EncounterState {
   const frame = getGridCoverage(state);
-  const padding = getGridEdgePadding(state.grid, frame, frame);
+  const padding = getGridEdgePadding(resolveGridGeometry(state.grid), frame, frame);
   const width = frame.width + padding.left + padding.right, height = frame.height + padding.top + padding.bottom;
   const dx = padding.left - frame.x, dy = padding.top - frame.y;
   if (Math.abs(width - state.canvasSize.width) < 1e-7 && Math.abs(height - state.canvasSize.height) < 1e-7 && Math.abs(dx) < 1e-7 && Math.abs(dy) < 1e-7) return state;

@@ -29,12 +29,12 @@ describe('grid borders and proportional Free movement', () => {
     for (const cellSize of [16, 32, 64, 128, 256]) {
       const state = { ...initial, grid: { ...initial.grid, cellSize } };
       const next = stepSpatialActors(state, ['a'], { x: 1, y: 0 });
-      expect((next.actors.byId.a.spatialPosition!.x - 200) / cellSize).toBeCloseTo(10 / 64);
+      expect((next.actors.byId.a.spatialPosition!.x - 200) / 64).toBeCloseTo(10 / 64);
     }
     const resized = resizeEncounterCanvas(initial, { canvasSize: { width: 480, height: 320 } });
     const before = resized.actors.byId.a.spatialPosition!;
     const after = stepSpatialActors(resized, ['a'], { x: 0, y: 1 }).actors.byId.a.spatialPosition!;
-    expect((after.y - before.y) / resized.grid.cellSize).toBeCloseTo(10 / 64);
+    expect((after.y - before.y) / 64).toBeCloseTo(10 / 64);
   });
 
   it.each(['OFF', 'ADVISORY', 'ASSISTED', 'STRICT'] as const)('rejects a partial edge cell when its Medium token would overflow in %s', mode => {

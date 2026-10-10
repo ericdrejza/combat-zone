@@ -49,10 +49,10 @@ describe('held-key spatial movement', () => {
 
   it.each(['ADVISORY', 'STRICT'] as const)('validates repeat steps at the canvas boundary in %s', async mode => {
     const initial = encounter(); initial.movementStrategy = 'free'; initial.validationState.mode = mode;
-    initial.actors.byId.alpha.spatialPosition = { x: 1170, y: 160 };
+    initial.actors.byId.alpha.spatialPosition = { x: 1160, y: 160 };
     setup(initial, ['alpha']);
     fireEvent.keyDown(window, { key: 'ArrowRight' });
-    await waitFor(() => expect(store.getState().encounter.present.actors.byId.alpha.spatialPosition?.x).toBe(1180));
+    await waitFor(() => expect(store.getState().encounter.present.actors.byId.alpha.spatialPosition?.x).toBe(1170));
     const before = store.getState().encounter.present;
     clock += 250;
     fireEvent.keyDown(window, { key: 'ArrowRight', repeat: true });

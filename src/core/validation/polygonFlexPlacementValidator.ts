@@ -251,6 +251,8 @@ export const PolygonPlacementValidator: Validator<EncounterState> = {
     return {
       ...result(messages),
       blocked:
+        action.type !== "grid.update" &&
+        action.type !== "grid.calibrate" &&
         action.type !== "canvas.resize" &&
         action.type !== "background.add" &&
         action.type !== "background.replace" &&

@@ -49,9 +49,14 @@ export function resizeEncounterCanvas(
     })
   );
 
+  // Normalize binary rounding so integer scale edits remain stable in settings.
+  const mapScale = Number((encounter.grid.cellSize / Math.min(
+    canvasSize.width / coverage.width, canvasSize.height / coverage.height
+  )).toPrecision(15));
   const needsCompletion = encounter.grid.visible || encounter.movementStrategy === 'grid' || Boolean(encounter.gridCoverage);
   const next: EncounterState = {
     ...encounter,
+    grid: { ...encounter.grid, cellSize: mapScale },
     canvasSize: { width: frame.x + frame.width, height: frame.y + frame.height },
     gridCoverage: !encounter.backgroundImage && needsCompletion ? frame : undefined,
     backgroundImage: encounter.backgroundImage ? { ...encounter.backgroundImage, frame } : null,

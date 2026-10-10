@@ -43,6 +43,8 @@ function getChangedZoneIds(
   }
 
   if (
+    action.type === 'grid.update' ||
+    action.type === 'grid.calibrate' ||
     action.type === 'canvas.resize' ||
     action.type === 'background.add' ||
     action.type === 'background.replace'

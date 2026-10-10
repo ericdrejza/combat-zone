@@ -54,7 +54,7 @@ describe('spatial history and validation', () => {
     const sized = prepareValidatedEncounterChange({ currentEncounter: state, nextEncounter: updateActorProperties(state, 'a', { size: 'large' }), action: createEncounterActionRecord('actor.updateProperties', { actorIds: ['a'] }) });
     expect(sized.blocked).toBe(false); expect(sized.nextEncounter.actors.byId.a.spatialPosition).toEqual({ x: 192, y: 192 });
     const resized = resizeEncounterCanvas(state, { canvasSize: { width: 480, height: 320 }, zoneScale: 0.5 });
-    expect(resized.grid.cellSize).toBe(64); expect(resized.actors.byId.a.spatialPosition).toEqual(state.actors.byId.a.spatialPosition);
+    expect(resized.grid.cellSize).toBe(128); expect(resized.actors.byId.a.spatialPosition).toEqual(state.actors.byId.a.spatialPosition);
   });
   it('supports keyboard stepping, panel transfers, duplication and undoable deletion', () => {
     const state = changeMovementStrategy(encounter(), 'free', { a: { x: 200, y: 200 } });

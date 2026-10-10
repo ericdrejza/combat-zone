@@ -1,4 +1,4 @@
-import { completeGridEdges } from '@core/movement/gridEdgeCompletion';
+import { migrateGridScale } from './migrateGridScale';
 import { validBackgroundFrame } from '@core/encounter/backgroundFrame';
 import { assertSpatialState } from '@core/movement/assertSpatialState';
 import { createDefaultGrid } from '@core/movement/types';
@@ -100,11 +100,11 @@ function validatePanelLayout(value: unknown, name: string): void {
 }
 
 /** Performs the inexpensive structural checks needed before data reaches Redux. */
-export function assertEncounterState(value: unknown, name = "encounter"): asserts value is EncounterState {
+export function assertEncounterState(value: unknown, name = "encounter", expectedVersion: number = ENCOUNTER_SCHEMA_VERSION): asserts value is EncounterState {
   if (!isRecord(value)) {
     throw new PersistenceValidationError(`${name} must be an object.`);
   }
-  if (value.schemaVersion !== ENCOUNTER_SCHEMA_VERSION) {
+  if (value.schemaVersion !== expectedVersion) {
     throw new PersistenceValidationError(
       `${name}.schemaVersion ${String(value.schemaVersion)} is unsupported.`
     );
@@ -534,12 +534,13 @@ export function migrateEncounterState(value: unknown): unknown {
   }
   if (migrated.schemaVersion === 17) migrated.schemaVersion = 18;
   if (migrated.schemaVersion === 18) migrated.schemaVersion = 19;
-  if (migrated.schemaVersion === 19) {
-    migrated.schemaVersion = ENCOUNTER_SCHEMA_VERSION;
-    // Completion changes geometry only after legacy structure has been validated.
-    assertEncounterState(migrated);
-    if (migrated.movementStrategy === 'grid' || (isRecord(migrated.grid) && migrated.grid.visible))
-      return completeGridEdges(migrated as unknown as EncounterState);
+  if (migrated.schemaVersion === 19) migrated.schemaVersion = 20;
+  if (migrated.schemaVersion === 20) {
+    // Validate old physical geometry before reinterpreting its cell-size value.
+    assertEncounterState(migrated, 'encounter', 20);
+    const normalized = migrateGridScale(migrated as unknown as EncounterState);
+    assertEncounterState(normalized);
+    return normalized;
   }
 
   return migrated;

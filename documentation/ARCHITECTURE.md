@@ -193,3 +193,18 @@ the explicit overflow policy; the shared Background commit path reads that polic
 from Interface preferences and commits resizing/unplacements in one history entry.
 Zone polygons retain uniform scaling and existing layout clamps. This adds only a
 local Interface preference, without changing the encounter schema or migrations.
+
+Encounter schema 21 reinterprets `grid.cellSize` as the authoritative user-facing
+map-scale value. Runtime grid geometry resolves physical spacing to 64 units;
+calibration/detection retain measured spacing only in transient geometry drafts.
+Actor footprints share the Zone size function in every mode, independent of warp.
+The shared core resize candidate/clamp helper serves Background and Grid controls,
+updates map scale inversely, completes edges, and applies the overflow preference
+inside one validated history operation. Alignment uses an exact resize candidate
+and rejects invalid fit instead of clamping into approximate alignment. Viewport zoom remains session-only.
+Schemas 17–20 validate with their legacy physical grid/footprint semantics before
+schema-21 conversion scales canvas, coverage, Zones, grid origin, and saved actor
+coordinates by 64/old-cell-size. Normalized warp coefficients and the old scale
+value remain unchanged. Completion recalculates after conversion; source records
+are never mutated. Current schema snapshots remain lossless. Cloud contracts
+accept schema 21 while retaining supported legacy versions.

@@ -1,17 +1,17 @@
+import type { GridGeometry } from '@core/movement/gridScale';
 import { useId, useMemo } from 'react';
 import type { EncounterState } from '@core/encounter/types';
-import type { GridConfiguration } from '@core/movement/types';
 import type { LayoutPoint } from '@core/layout/types';
 import { gridToWorld, worldToGrid } from '@core/movement/gridGeometry';
 
-function segment(grid: GridConfiguration, a: LayoutPoint, b: LayoutPoint) {
+function segment(grid: GridGeometry, a: LayoutPoint, b: LayoutPoint) {
   const start = gridToWorld(grid, a), end = gridToWorld(grid, b);
   const midpoint = gridToWorld(grid, { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
   // Bilinear transforms map oblique straight edges to exact quadratic curves.
   const control = { x: 2 * midpoint.x - (start.x + end.x) / 2, y: 2 * midpoint.y - (start.y + end.y) / 2 };
   return `M${start.x},${start.y}Q${control.x},${control.y} ${end.x},${end.y}`;
 }
-function warpedPaths(grid: GridConfiguration, canvas: EncounterState['canvasSize']) {
+function warpedPaths(grid: GridGeometry, canvas: EncounterState['canvasSize']) {
   const corners = [0, canvas.width / 2, canvas.width].flatMap(x => [0, canvas.height / 2, canvas.height].map(y => worldToGrid(grid, { x, y })));
   if (corners.some(p => !Number.isFinite(p.x) || !Number.isFinite(p.y))) return '';
   const cell = grid.cellSize;
@@ -35,7 +35,7 @@ function warpedPaths(grid: GridConfiguration, canvas: EncounterState['canvasSize
   }
   return paths.join('');
 }
-export function WarpedGridLayer({ grid, canvas }: { grid: GridConfiguration; canvas: EncounterState['canvasSize'] }) {
+export function WarpedGridLayer({ grid, canvas }: { grid: GridGeometry; canvas: EncounterState['canvasSize'] }) {
   const id = useId().replace(/:/g, '');
   const path = useMemo(() => warpedPaths(grid, canvas), [grid, canvas]);
   return <g aria-label="Warped grid overlay" pointerEvents="none">

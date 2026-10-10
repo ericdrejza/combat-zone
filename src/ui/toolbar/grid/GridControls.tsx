@@ -1,3 +1,4 @@
+import { readBackgroundResizeOverflowPreference } from '@ui/interface_preferences/InterfacePreferenceProvider';
 import { Eye, EyeOff, Waypoints, Settings2 } from 'lucide-react';
 import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -21,11 +22,11 @@ export function GridControls({ showSettings = true }: { showSettings?: boolean }
   const [busy, setBusy] = useState(false);
   async function update(grid: GridConfiguration) {
     setBusy(true);
-    try { return await commit('grid.update', {}, state => updateGridConfiguration(state, grid)); }
+    try { return await commit('grid.update', {}, state => updateGridConfiguration(state, grid, readBackgroundResizeOverflowPreference())); }
     finally { setBusy(false); }
   }
   return <>
-    <ToolbarOptionGroup aria-label="Grid controls">
+    <ToolbarOptionGroup aria-label="Grid controls" role="group">
       <ToolbarOptionButton aria-label={encounter.grid.visible ? 'Hide grid' : 'Show grid'} title={encounter.grid.visible ? 'Hide grid' : 'Show grid'} active={encounter.grid.visible} disabled={readOnly || busy}
         onClick={() => void update({ ...encounter.grid, visible: !encounter.grid.visible })} type="button">
         {encounter.grid.visible ? <Eye size={16} /> : <EyeOff size={16} />}

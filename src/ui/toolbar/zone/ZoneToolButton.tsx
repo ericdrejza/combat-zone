@@ -86,7 +86,7 @@ export function ZoneToolButton({
   const optionBar = selected ? (
     <ToolbarSubtoolBar aria-label={`${tool.label} options`}>
       <MovementStrategyCycle />
-      {strategy === "zone" ? renderOptions() : strategy === "grid" ? <GridControls showSettings={false} /> : <span className="text-xs text-canvas-muted">Drag actors freely; arrows nudge.</span>}
+      {strategy === "zone" ? renderOptions() : strategy === "grid" ? <GridControls /> : <span className="text-xs text-canvas-muted">Drag actors freely; arrows nudge.</span>}
     </ToolbarSubtoolBar>
   ) : null;
 

@@ -1,3 +1,4 @@
+import { readBackgroundResizeOverflowPreference } from '@ui/interface_preferences/InterfacePreferenceProvider';
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector, useStore } from 'react-redux';
 import type { RootState } from '@store/store';
@@ -29,7 +30,7 @@ export function GridPropertiesPanel() {
     if (readOnly || busy || aligning || !validGrid(draft)) return;
     setBusy(true); setError('');
     try {
-      if (!await commit('grid.update', {}, state => updateGridConfiguration(state, draft), () => store.getState().encounter.present === encounter && store.getState().interaction.activeToolId === 'grid' && !store.getState().interaction.gridCalibrationActive))
+      if (!await commit('grid.update', {}, state => updateGridConfiguration(state, draft, readBackgroundResizeOverflowPreference()), () => store.getState().encounter.present === encounter && store.getState().interaction.activeToolId === 'grid' && !store.getState().interaction.gridCalibrationActive))
         setError('Grid changes could not be applied. Check canvas fit and validation messages.');
     } finally { setBusy(false); }
   }}>

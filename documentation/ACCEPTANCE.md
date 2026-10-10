@@ -577,7 +577,7 @@ these back into `AGENT.md` or `DESIGN.md`.
 - [x] The vertex instruction row offers temporary 400% zoom. Apply, Cancel, Escape, and the Waypoints toggle restore prior zoom; later manual zoom commands retain their value, including commands at the maximum. Changing alignment strategy preserves temporary zoom until closing.
 - [x] Grid/Free movement accepts held-key repeats, validates each accepted step, honors the writer boundary, and restores each step through undo/redo. Pending validation does not queue movement after key release.
 - [x] Grid tool settings appear in Properties with cancellable previews, Apply history, undo/redo, and stale-validation protection. Background keeps the shared settings dialog; calibration owns its preview while active.
-- [x] Combat settings persist, validate, synchronize, and reset the held-movement interval; accepted repeats respect that interval. Free movement keeps a constant fraction of cell size after grid resizing and independent background resizing.
+- [x] Combat settings persist, validate, synchronize, and reset the held-movement interval; accepted repeats respect that interval. Free movement keeps a constant fraction of fixed rendered spacing after map resizing.
 - [x] Medium actors can occupy all fully contained outer square cells in every validation mode, and native browser drags reach both outer rows and columns.
 
 
@@ -585,6 +585,14 @@ these back into `AGENT.md` or `DESIGN.md`.
 
 ## Independent background sizing
 
-- [x] Shrink/enlarge, Fit/Width/Height, and adding/replacing images retain grid size/rotation/warp and relative spatial placements; Zone polygons retain their uniform scaling. Percentage and fit controls use unpadded image coverage, preserving its top-left anchor before shared completion rebases.
+- [x] Shrink/enlarge, Fit/Width/Height, and adding/replacing images retain rendered grid spacing/rotation/warp and relative spatial placements; Zone polygons retain their uniform scaling. Percentage and fit controls use unpadded image coverage, preserving its top-left anchor before shared completion rebases.
 - [x] Interface overflow defaults to moving affected actors to Zoneless after full-cell completion, preserving all other actor facts and suspended relationships. The alternative limits resizing to retain full token containment, including saved spatial positions in Zone mode. Preferences persist, synchronize, reset, and safely default for invalid values.
 - [x] Background resizing and overflow unplacement undo/redo together, read-only writes are blocked, and existing square/hex/warped data stays valid without a schema change.
+
+## Shared map sizing and stable actor footprints
+
+- [x] Actor footprints stay identical across Zone/Grid/Free, tools, map sizing, and warped cells.
+- [x] Cell-size edits resize coverage inversely with fixed 64-unit rendered spacing; background controls update the same scale value.
+- [x] Detection/alignment normalize map coverage and preserve fitted geometry; previews cancel without durable mutations.
+- [x] Grid settings remains inside the Grid subtool button group, matching Background on compact and desktop layouts.
+- [x] Schema 21 preserves legacy map alignment and validates local/cloud round trips, history, overflow, and writer boundaries.

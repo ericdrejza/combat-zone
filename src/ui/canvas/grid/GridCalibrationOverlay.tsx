@@ -1,10 +1,11 @@
+import { readBackgroundResizeOverflowPreference } from '@ui/interface_preferences/InterfacePreferenceProvider';
 import { TemporaryAlignmentZoom } from './TemporaryAlignmentZoom';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import type { RootState } from '@store/store';
 import { cancelGridEditing, setGridCalibrationMode, setGridCalibrationType, setGridPreview } from '@interaction/interactionState';
 import { calibrateGrid, calibrateQuadrants } from '@core/movement/gridCalibration';
-import { updateGridConfiguration } from '@core/movement/updateGridConfiguration';
+import { applyGridAlignment } from '@core/movement/updateGridConfiguration';
 import { useKeyboardEncounterCommit } from '../useKeyboardEncounterCommit';
 import { AlignmentPanel, AlignmentToggle, alignmentButton } from './AlignmentPanel';
 import { GridDetectionButton } from './GridDetectionButton';
@@ -64,7 +65,7 @@ export function GridCalibrationOverlay() {
     {needsChoice ? <fieldset className="space-y-2 rounded-lg border border-canvas-line p-2"><legend className="text-sm">The image grid appears distorted. Keep it standard or warp it?</legend>
       <div className="flex flex-wrap gap-2"><AlignmentToggle active={choice === 'standard'} onClick={() => setChoice('standard')}>Keep standard grid</AlignmentToggle>
         <AlignmentToggle active={choice === 'warped'} onClick={() => setChoice('warped')}>Warp to image</AlignmentToggle></div>
-      <p className="text-xs text-canvas-muted">Warping also changes cell snapping, movement, and token scale. Choose either option to preview it.</p>
+      <p className="text-xs text-canvas-muted">Warping changes cell snapping and movement; actor sizes stay fixed. Choose either option to preview it.</p>
     </fieldset> : null}
     {quadrants && !quadrants.warped ? <p className="text-xs text-canvas-muted">These samples cannot produce a safe warped grid across the canvas. You can apply the regular fit or reset the samples.</p> : null}
     {mode !== 'detect' && points.length === total && !calibrated ? <p role="alert" className="text-sm text-red-600">These points cannot define a regular grid. Reset and choose distinct, non-collinear points.</p> : null}
@@ -75,7 +76,7 @@ export function GridCalibrationOverlay() {
       <button type="button" className={`${button} ml-auto`} disabled={!calibrated || (needsChoice && !choice) || readOnly || busy} onClick={async () => {
         if (!calibrated) return;
         setBusy(true);
-        try { if (await commit('grid.calibrate', {}, state => updateGridConfiguration(state, calibrated))) dispatch(cancelGridEditing());
+        try { if (await commit('grid.calibrate', {}, state => applyGridAlignment(state, calibrated, readBackgroundResizeOverflowPreference()))) dispatch(cancelGridEditing());
           else setError('Alignment could not be applied. Check canvas fit and validation messages.'); }
         finally { setBusy(false); }
       }}>{busy ? 'Applying…' : 'Apply alignment'}</button>

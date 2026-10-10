@@ -25,8 +25,8 @@ describe('Grid tool Properties', () => {
     fireEvent.change(screen.getByLabelText('Cell size'), { target: { value: '80' } });
     expect(store.getState().encounter.present.canvasSize).toEqual(initial.canvasSize);
     fireEvent.click(screen.getByRole('button', { name: 'Apply' }));
-    await waitFor(() => expect(store.getState().encounter.present.canvasSize).toEqual({ width: 240, height: 240 }));
-    expect(store.getState().encounter.present.gridCoverage).toEqual({ x: 2, y: 2, width: 188, height: 188 });
+    await waitFor(() => expect(store.getState().encounter.present.canvasSize).toEqual({ width: 192, height: 192 }));
+    expect(store.getState().encounter.present.gridCoverage).toEqual({ x: 2, y: 2, width: 150.4, height: 150.4 });
     expect(store.getState().encounter.past).toHaveLength(1);
     const saved = store.getState().encounter.present;
     act(() => store.dispatch(undoEncounterChange())); expect(store.getState().encounter.present).toEqual(initial);

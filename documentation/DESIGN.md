@@ -91,7 +91,15 @@ polygon from the top-left origin. In Zone mode, Actor, Engagement, and Edge
 geometry remains
 derived from the scaled Zones. Grid geometry and saved Grid/Free actor positions
 do not scale with the background; changing background size may break alignment.
-Token size follows the grid cell size, adjusted only for the local grid warp.
+Actor diameters/rectangle widths are 45, 60, 120, and 180 logical units for
+Small, Medium, Large, and xLarge in every movement mode. Neither grid
+configuration nor local warping changes these footprints.
+The rendered lattice uses fixed 64-unit spacing (across opposite hex sides).
+Encounter `grid.cellSize` is a positive, user-facing map-scale value, initially
+64, rather than physical spacing. Changing it from A to B uniformly resizes
+unpadded coverage and Zone polygons by A/B. Background sizing updates this
+value inversely by the actual accepted resize factor. Grid edits use the same
+layout clamps, overflow preference, and history boundary as background sizing.
 Enlarging the background therefore makes tokens smaller relative to the image,
 and shrinking it makes them larger. Background images always preserve their
 intrinsic aspect ratio and fill the resulting canvas without cropping, except
@@ -1365,9 +1373,9 @@ cannot be applied; the regular fit remains available. Warping is an alignment
 strategy within Grid, independent of Zone/Grid/Free movement strategy.
 
 Warped grids transform cell boundaries, snapping anchors, and adjacent-cell
-keyboard movement together. Token scale follows the smaller local stretch
-so a Medium token fits its cell; tokens retain their regular shape. Manual
-size/origin/rotation edits transform the warped grid as a whole; settings can
+keyboard movement together. Tokens retain the same footprint and regular
+shape in every warped region. Manual origin/rotation edits transform the
+warped grid as a whole; cell-size edits resize map coverage inversely; settings can
 return to standard alignment. Background/canvas resizing leaves grid size,
 rotation, normalized warp
 coefficients, and saved actor positions fixed. Edge completion may translate
@@ -1392,9 +1400,10 @@ detection drafts, and calibration clicks are session-only.
 
 Grid movement snaps Small, Medium, and xLarge actors to cell centers. Large
 actors snap to square intersections or hex vertices shared by three cells.
-Token diameters/rectangle widths are 0.6, 0.9, 1.8, and 2.7 cell sizes for Small,
-Medium, Large, and xLarge. Free uses this same visual scale but permits any
-position. Actor overlap is allowed outside Zone. Every token's full footprint
+Token diameters/rectangle widths match Zone mode: 45, 60, 120, and 180
+logical units for Small, Medium, Large, and xLarge. Free uses this same visual
+scale but permits any position. Warping affects snapping and cell geometry,
+never actor size. Actor overlap is allowed outside Zone. Every token's full footprint
 must stay inside the canvas in all validation modes. Invalid operations are
 rejected atomically. Fully contained outer cells remain available; partial
 edge cells cannot accept a token whose footprint would extend beyond the
@@ -1423,9 +1432,8 @@ snaps each actor in Grid. Each complete operation is one history action.
 
 Square arrows move one neighboring anchor; hex arrows choose the adjacent
 anchor closest to the requested screen direction. Ties use top-to-bottom then
-left-to-right order. Free arrows nudge by 10/64 of the configured cell size (10 logical units at
-the default 64-unit size), so resizing the grid preserves movement
-as a fraction of a cell. Background resizing does not change this distance.
+left-to-right order. Free arrows nudge by 10 logical units (10/64 of fixed rendered grid spacing),
+independent of the user-facing cell-size value. Background resizing does not change this distance.
 Existing viewport
 navigation remains available. Holding a movement key repeats Grid/Free steps
 using native keyboard repeat, throttled to a global Combat preference of
@@ -1442,6 +1450,16 @@ scale Zone polygons while retaining grid geometry and saved spatial coordinates.
 Automatic completion recalculates against the new coverage; overflow follows
 the Interface preference above. Resizing and any spatial unplacements commit
 as one history action. Deleting Background retains grid and coordinates.
+Cell-size settings preview the proposed map resize without changing EncounterState;
+Cancel discards the draft. Alignment and detection preview measured grid geometry
+against the current map. Apply resizes coverage by 64/measured-spacing and
+transforms the fitted origin with the image, preserving rotation and normalized
+warp coefficients. If the exact fit violates Zone layout limits or the chosen
+actor overflow policy, reject Apply and keep the current encounter; do not
+clamp alignment into an approximate fit. Saved actor coordinates remain fixed except for shared edge
+rebasing and Grid snapping. The resulting map-scale value updates inversely.
+Grid and Background both expose visibility, settings, and alignment buttons in
+their subtool button group on compact and desktop layouts.
 Strategy changes, geometry
 edits, calibration, movement, and canvas changes are reversible history
 mutations. Applicable semantic validation keeps existing OFF/ADVISORY/ASSISTED/

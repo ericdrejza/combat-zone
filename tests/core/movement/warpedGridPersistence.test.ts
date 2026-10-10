@@ -1,3 +1,4 @@
+import { resolveGridGeometry } from '@core/movement/gridScale';
 import { completeGridEdges } from '@core/movement/gridEdgeCompletion';
 import { getGridCoverage } from '@core/movement/gridCoverage';
 import { createEncounterState } from '@core/encounter/createEncounterState';
@@ -50,9 +51,9 @@ describe('warped grid persistence and history', () => {
   });
   it('keeps warped geometry fixed when resizing the background and preserves valid data after rejected saves', async () => {
     const state = resnapSpatialActors({ ...fixture(), grid: { ...fixture().grid, warp } });
-    const point = gridToWorld(state.grid, { x: 128, y: 192 });
+    const point = gridToWorld(resolveGridGeometry(state.grid), { x: 128, y: 192 });
     const resized = resizeEncounterCanvas(state, { canvasSize: { width: 480, height: 320 }, zoneScale: 0.5 });
-    const scaled = gridToWorld(resized.grid, { x: 128, y: 192 });
+    const scaled = gridToWorld(resolveGridGeometry(resized.grid), { x: 128, y: 192 });
     const frame = getGridCoverage(resized);
     expect(scaled.x - frame.x).toBeCloseTo(point.x); expect(scaled.y - frame.y).toBeCloseTo(point.y); assertEncounterState(resized);
     const repository = new InMemoryWorkspaceRepository(), record = await repository.createEncounter(state);

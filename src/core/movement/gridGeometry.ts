@@ -1,28 +1,23 @@
+import type { GridGeometry } from '@core/movement/gridScale';
 import type { Actor, ActorSize } from '@entities/actor/types';
 import type { LayoutPoint } from '@core/layout/types';
 import type { CanvasSize } from '@core/layout/polygonCanvasBounds';
 import type { GridConfiguration } from './types';
-import { unwarpPoint, warpPoint, warpDerivative } from './gridWarp';
+import { getActorRadius } from '@core/layout/actorFootprints';
+import { unwarpPoint, warpPoint } from './gridWarp';
 
-const dimensions: Record<ActorSize, number> = { small: 0.6, medium: 0.9, large: 1.8, xLarge: 2.7 };
-export function spatialActorRadius(actor: Pick<Actor, 'size'>, grid: GridConfiguration, point?: LayoutPoint) {
-  let scale = 1;
-  if (grid.warp && point) {
-    const local = worldToGrid(grid, point);
-    const { a, b, c, d, determinant } = warpDerivative(grid.warp, { x: local.x / grid.cellSize, y: local.y / grid.cellSize });
-    const sum = a * a + b * b + c * c + d * d;
-    scale = Math.sqrt(Math.max(0, (sum - Math.sqrt(Math.max(0, sum * sum - 4 * determinant * determinant))) / 2));
-  }
-  return grid.cellSize * dimensions[actor.size] * scale / 2;
+/** Token footprints are independent of movement, map scale, and local grid warping. */
+export function spatialActorRadius(actor: Pick<Actor, 'size'>, _grid?: GridConfiguration, _point?: LayoutPoint) {
+  return getActorRadius(actor);
 }
-export const gridAngle = (grid: GridConfiguration) => (grid.rotation + (grid.type === 'hex-pointy' ? 30 : 0)) * Math.PI / 180;
+export const gridAngle = (grid: GridGeometry) => (grid.rotation + (grid.type === 'hex-pointy' ? 30 : 0)) * Math.PI / 180;
 
-export function gridToWorld(grid: GridConfiguration, point: LayoutPoint): LayoutPoint {
+export function gridToWorld(grid: GridGeometry, point: LayoutPoint): LayoutPoint {
   if (grid.warp) { const mapped = warpPoint(grid.warp, { x: point.x / grid.cellSize, y: point.y / grid.cellSize }); point = { x: mapped.x * grid.cellSize, y: mapped.y * grid.cellSize }; }
   const angle = gridAngle(grid), c = Math.cos(angle), s = Math.sin(angle);
   return { x: grid.origin.x + point.x * c - point.y * s, y: grid.origin.y + point.x * s + point.y * c };
 }
-export function worldToGrid(grid: GridConfiguration, point: LayoutPoint): LayoutPoint {
+export function worldToGrid(grid: GridGeometry, point: LayoutPoint): LayoutPoint {
   const angle = gridAngle(grid), c = Math.cos(angle), s = Math.sin(angle);
   const x = point.x - grid.origin.x, y = point.y - grid.origin.y;
   const local = { x: x * c + y * s, y: -x * s + y * c };
@@ -36,7 +31,7 @@ export function footprintFits(point: LayoutPoint, radius: number, canvas: Canvas
 }
 
 /** Local candidates avoid storing redundant cell addresses, including hex vertex anchors. */
-export function nearbyAnchors(grid: GridConfiguration, point: LayoutPoint, size: ActorSize, range = 2): LayoutPoint[] {
+export function nearbyAnchors(grid: GridGeometry, point: LayoutPoint, size: ActorSize, range = 2): LayoutPoint[] {
   const local = worldToGrid(grid, point), cell = grid.cellSize;
   const result: LayoutPoint[] = [];
   if (grid.type === 'square') {
@@ -64,19 +59,19 @@ const distanceSquared = (a: LayoutPoint, b: LayoutPoint) => (a.x - b.x) ** 2 + (
 export function nearestPoint(points: LayoutPoint[], point: LayoutPoint): LayoutPoint {
   return points.sort((a, b) => distanceSquared(a, point) - distanceSquared(b, point) || a.y - b.y || a.x - b.x)[0] ?? point;
 }
-export function snapToGrid(grid: GridConfiguration, point: LayoutPoint, size: ActorSize): LayoutPoint {
+export function snapToGrid(grid: GridGeometry, point: LayoutPoint, size: ActorSize): LayoutPoint {
   return nearestPoint(nearbyAnchors(grid, point, size), point);
 }
 
 /** Configuration changes find a nearby fitting anchor; pointer drops are validated rather than clamped. */
-export function nearestFittingAnchor(grid: GridConfiguration, point: LayoutPoint, actor: Actor, canvas: CanvasSize): LayoutPoint {
+export function nearestFittingAnchor(grid: GridGeometry, point: LayoutPoint, actor: Actor, canvas: CanvasSize): LayoutPoint {
   const radius = spatialActorRadius(actor, grid, point);
   const clamped = { x: Math.max(radius, Math.min(canvas.width - radius, point.x)),
     y: Math.max(radius, Math.min(canvas.height - radius, point.y)) };
   return nearestPoint(nearbyAnchors(grid, clamped, actor.size, 3).filter(p => footprintFits(p, spatialActorRadius(actor, grid, p), canvas)), point);
 }
 
-export function gridKeyboardStep(grid: GridConfiguration, point: LayoutPoint, size: ActorSize, direction: LayoutPoint): LayoutPoint {
+export function gridKeyboardStep(grid: GridGeometry, point: LayoutPoint, size: ActorSize, direction: LayoutPoint): LayoutPoint {
   const candidates = nearbyAnchors(grid, point, size).filter(p => distanceSquared(p, point) > 1e-8);
   // The anchor lattice is square, triangular (hex centers), or honeycomb (hex vertices).
   const local = worldToGrid(grid, point);

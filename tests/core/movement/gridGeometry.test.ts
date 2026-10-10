@@ -8,7 +8,7 @@ describe('grid geometry', () => {
   it('uses cell centers except Large square intersections', () => {
     for (const size of ['small', 'medium', 'xLarge'] as const) expect(snapToGrid(square, { x: 80, y: 75 }, size)).toEqual({ x: 96, y: 96 });
     expect(snapToGrid(square, { x: 80, y: 75 }, 'large')).toEqual({ x: 64, y: 64 });
-    expect(spatialActorRadius(buildActor({ id: 'a', currentZoneId: 'zoneless' }), square)).toBeCloseTo(28.8);
+    expect(spatialActorRadius(buildActor({ id: 'a', currentZoneId: 'zoneless' }), square)).toBeCloseTo(30);
   });
   it('respects rotated and translated square anchors', () => {
     const grid = { ...square, rotation: 37, origin: { x: -24, y: 17 } };

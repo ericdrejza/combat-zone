@@ -1,3 +1,4 @@
+import { resolveGridGeometry } from './gridScale';
 import { completeGridEdges } from './gridEdgeCompletion';
 import type { Actor } from '@entities/actor/types';
 import type { EncounterState } from '@core/encounter/types';
@@ -11,11 +12,11 @@ type SpatialStrategy = {
 };
 const free: SpatialStrategy = {
   place: (_state, _actor, point) => ({ ...point }),
-  step: (state, actor, direction) => ({ x: actor.spatialPosition!.x + direction.x * state.grid.cellSize * 10 / 64, y: actor.spatialPosition!.y + direction.y * state.grid.cellSize * 10 / 64 })
+  step: (state, actor, direction) => ({ x: actor.spatialPosition!.x + direction.x * 10, y: actor.spatialPosition!.y + direction.y * 10 })
 };
 const grid: SpatialStrategy = {
-  place: (state, actor, point) => snapToGrid(state.grid, point, actor.size),
-  step: (state, actor, direction) => gridKeyboardStep(state.grid, actor.spatialPosition!, actor.size, direction)
+  place: (state, actor, point) => snapToGrid(resolveGridGeometry(state.grid), point, actor.size),
+  step: (state, actor, direction) => gridKeyboardStep(resolveGridGeometry(state.grid), actor.spatialPosition!, actor.size, direction)
 };
 export const SPATIAL_STRATEGIES = { free, grid };
 export const isSpatial = (state: EncounterState) => state.movementStrategy === 'grid' || state.movementStrategy === 'free';
@@ -56,7 +57,7 @@ export function resnapSpatialActors(state: EncounterState): EncounterState {
   if (state.movementStrategy !== 'grid') return state;
   return placeSpatialActors(state, Object.fromEntries(state.actors.allIds.flatMap(id => {
     const actor = state.actors.byId[id];
-    return actor?.spatialPosition ? [[id, nearestFittingAnchor(state.grid, actor.spatialPosition, actor, state.canvasSize)]] : [];
+    return actor?.spatialPosition ? [[id, nearestFittingAnchor(resolveGridGeometry(state.grid), actor.spatialPosition, actor, state.canvasSize)]] : [];
   })));
 }
 export function changeMovementStrategy(state: EncounterState, strategy: MovementStrategy,

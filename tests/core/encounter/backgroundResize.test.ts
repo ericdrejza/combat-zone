@@ -1,3 +1,4 @@
+import { resolveGridGeometry } from '@core/movement/gridScale';
 import { createEncounterState } from '@core/encounter/createEncounterState';
 import { resizeEncounterCanvas } from '@core/encounter/canvasSizeMutations';
 import { createActor } from '@entities/actor/actorMutations';
@@ -40,11 +41,11 @@ describe('independent background resizing', () => {
     let state = fixture(); state.grid.type = type; state.grid.rotation = 17;
     state.grid.warp = { type: 'bilinear', x: [0, 1.05, 0, 0.0001], y: [0, 0, 1.1, 0.0001] };
     state = completeGridEdges(state);
-    const frame = getGridCoverage(state), point = gridToWorld(state.grid, { x: 150, y: 150 });
+    const frame = getGridCoverage(state), point = gridToWorld(resolveGridGeometry(state.grid), { x: 150, y: 150 });
     const radius = spatialActorRadius(state.actors.byId.inside, state.grid, point);
     const next = resizeEncounterCanvas(state, { canvasSize: { width: 1200, height: 1200 } });
-    const nextFrame = getGridCoverage(next), nextPoint = gridToWorld(next.grid, { x: 150, y: 150 });
-    expect(next.grid.cellSize).toBe(state.grid.cellSize);
+    const nextFrame = getGridCoverage(next), nextPoint = gridToWorld(resolveGridGeometry(next.grid), { x: 150, y: 150 });
+    expect(next.grid.cellSize).toBe(state.grid.cellSize / 2);
     expect(next.grid.rotation).toBe(state.grid.rotation); expect(next.grid.warp).toEqual(state.grid.warp);
     expect(nextPoint.x - nextFrame.x).toBeCloseTo(point.x - frame.x);
     expect(nextPoint.y - nextFrame.y).toBeCloseTo(point.y - frame.y);
@@ -62,7 +63,7 @@ describe('independent background resizing', () => {
   it.each(['OFF', 'ADVISORY', 'ASSISTED', 'STRICT'] as const)('unplaces only overflowing footprints after completion with exact undo/redo in %s', mode => {
     const state = fixture(); state.validationState.mode = mode;
     const next = resizeEncounterCanvas(state, { canvasSize: { width: 310, height: 310 } });
-    expect(next.canvasSize).toEqual({ width: 400, height: 400 });
+    expect(next.canvasSize).toEqual({ width: 320, height: 320 });
     expect(next.actors.byId.inside).toEqual(state.actors.byId.inside);
     for (const id of ['outside', 'partial']) {
       const { spatialPosition: _, ...expected } = state.actors.byId[id];
@@ -78,10 +79,11 @@ describe('independent background resizing', () => {
   });
   it('keeps an actor in a completed edge cell even when it exceeds background coverage', () => {
     const state = fixture(); state.movementStrategy = 'grid';
-    state.actors.byId.partial.spatialPosition = { x: 350, y: 250 };
-    const next = resizeEncounterCanvas(state, { canvasSize: { width: 310, height: 310 } });
-    expect(next.actors.byId.partial.spatialPosition).toEqual({ x: 350, y: 250 });
-    expect(footprintFits({ x: 350, y: 250 }, 45, next.canvasSize)).toBe(true);
+    state.actors.byId.partial.size = 'small';
+    state.actors.byId.partial.spatialPosition = { x: 352, y: 224 };
+    const next = resizeEncounterCanvas(state, { canvasSize: { width: 330, height: 330 } });
+    expect(next.actors.byId.partial.spatialPosition).toEqual({ x: 352, y: 224 });
+    expect(footprintFits({ x: 352, y: 224 }, 22.5, next.canvasSize)).toBe(true);
   });
   it('applies both policies to saved placements while Zone mode remains active', () => {
     const state = fixture(); state.movementStrategy = 'zone';
@@ -90,9 +92,9 @@ describe('independent background resizing', () => {
     expect(next.actors.byId.outside.currentZoneId).toBe('z'); expect(next.engagements).toBe(state.engagements);
     const clamped = clampCanvasResizeToValidLayout(state, state, { width: 310, height: 310 }, 310 / 600, 'canvas.resize', 'clamp').encounter;
     expect(overflowingSpatialActorIds(clamped)).toEqual([]);
-    expect(clamped.actors).toEqual(state.actors); expect(clamped.grid.cellSize).toBe(100);
-    expect(getGridCoverage(clamped).width).toBeGreaterThan(500);
-    expect(getGridCoverage(clamped).width).toBeLessThan(502);
+    expect(clamped.actors).toEqual(state.actors); expect(clamped.grid.cellSize).toBeCloseTo(100 * 600 / getGridCoverage(clamped).width);
+    expect(getGridCoverage(clamped).width).toBeGreaterThan(575);
+    expect(getGridCoverage(clamped).width).toBeLessThan(578);
   });
   it('round trips resized coverage and unplacements without changing the encounter schema', async () => {
     const before = fixture();
@@ -110,7 +112,7 @@ describe('independent background resizing', () => {
     localStorage.setItem(INTERFACE_PREFERENCES_STORAGE_KEY, JSON.stringify({ backgroundResizeOverflowBehavior: 'clamp' }));
     commitCanvasResize({ actionType: 'canvas.resize', dispatch: store.dispatch, encounter: state, requestedCanvasSize: { width: 310, height: 310 } });
     expect(store.getState().encounter.present.actors).toEqual(state.actors);
-    expect(getGridCoverage(store.getState().encounter.present).width).toBeGreaterThan(500);
+    expect(getGridCoverage(store.getState().encounter.present).width).toBeGreaterThan(575);
     localStorage.removeItem(INTERFACE_PREFERENCES_STORAGE_KEY);
     store.dispatch(loadEncounterState(state));
     setPersistenceWritable(false);
@@ -121,7 +123,7 @@ describe('independent background resizing', () => {
       const before = { ...state, backgroundImage }; store.dispatch(loadEncounterState(before));
       commitBackgroundImage({ dispatch: store.dispatch, encounter: before, backgroundImage: state.backgroundImage!, viewportSize: { width: 310, height: 310 }, viewportZoom: 1 });
       const after = store.getState().encounter.present;
-      expect(getGridCoverage(after).width).toBe(310); expect(after.grid.cellSize).toBe(100);
+      expect(getGridCoverage(after).width).toBe(310); expect(after.grid.cellSize).toBeCloseTo(100 * 600 / 310);
       expect(after.actors.byId.inside.spatialPosition).toEqual({ x: 150, y: 150 });
       expect(after.actors.byId.outside.spatialPosition).toBeUndefined();
       expect(store.getState().encounter.past).toHaveLength(1);

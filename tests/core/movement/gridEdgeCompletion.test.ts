@@ -1,3 +1,4 @@
+import { resolveGridGeometry } from '@core/movement/gridScale';
 import { createEncounterState } from '@core/encounter/createEncounterState';
 import { createActor } from '@entities/actor/actorMutations';
 import { createZone } from '@entities/zone/zoneMutations';
@@ -14,7 +15,7 @@ function fixture() {
   state = createActor(state, { id: 'a', currentZoneId: 'zoneless' });
   state.movementStrategy = 'grid'; state.grid.cellSize = 100;
   state.grid.origin = { x: -5, y: -5 }; state.canvasSize = { width: 290, height: 290 };
-  state.actors.byId.a.spatialPosition = { x: 145, y: 145 };
+  state.actors.byId.a.spatialPosition = { x: 155, y: 155 };
   state.backgroundImage = { source: { kind: 'url', url: 'https://example.com/grid.png' }, width: 580, height: 580, name: 'Grid', mediaType: 'image/png' };
   return state;
 }
@@ -29,11 +30,11 @@ describe('automatic complete grid edges', () => {
   it.each(['OFF', 'ADVISORY', 'ASSISTED', 'STRICT'] as const)('finishes all four edges without changing scale and supports undo/redo in %s', mode => {
     const state = fixture(); state.validationState.mode = mode;
     const next = completeGridEdges(state);
-    expect(next.canvasSize).toEqual({ width: 300, height: 300 });
+    expect(next.canvasSize).toEqual({ width: 320, height: 320 });
     expect(next.backgroundImage!.frame).toEqual({ x: 5, y: 5, width: 290, height: 290 });
     expect(next.backgroundImage!.width).toBe(580); expect(next.grid.cellSize).toBe(100);
     expect(next.grid.origin).toEqual({ x: 0, y: 0 });
-    expect(next.actors.byId.a.spatialPosition).toEqual({ x: 150, y: 150 });
+    expect(next.actors.byId.a.spatialPosition).toEqual({ x: 160, y: 160 });
     expect(next.zones.byId.z.polygon[0]).toEqual({ x: 65, y: 65 });
     for (const x of [50, 250]) for (const y of [50, 250])
       expect(footprintFits({ x, y }, spatialActorRadius(next.actors.byId.a, next.grid), next.canvasSize)).toBe(true);
@@ -52,8 +53,8 @@ describe('automatic complete grid edges', () => {
   });
   it('completes small canvases and leaves already complete grids unchanged', () => {
     const state = fixture(); state.canvasSize = { width: 90, height: 90 };
-    expect(completeGridEdges(state).canvasSize).toEqual({ width: 100, height: 100 });
-    state.grid.origin = { x: 0, y: 0 }; state.canvasSize = { width: 300, height: 300 };
+    expect(completeGridEdges(state).canvasSize).toEqual({ width: 128, height: 128 });
+    state.grid.origin = { x: 0, y: 0 }; state.canvasSize = { width: 320, height: 320 };
     expect(completeGridEdges(state)).toBe(state);
   });
   it.each(['square', 'hex-flat', 'hex-pointy'] as const)('handles rotated %s cells and keeps geometry independent of background scaling', type => {
@@ -68,7 +69,7 @@ describe('automatic complete grid edges', () => {
     expect(after.x - frame.x).toBeCloseTo(before.x); expect(after.y - frame.y).toBeCloseTo(before.y);
     const scaled = resizeEncounterCanvas(next, { canvasSize: { width: frame.width * 2, height: frame.height * 2 }, zoneScale: 2 });
     expect(scaled.backgroundImage!.frame!.width).toBe(frame.width * 2);
-    expect(scaled.grid.cellSize).toBe(next.grid.cellSize);
+    expect(scaled.grid.cellSize).toBe(next.grid.cellSize / 2);
     const scaledFrame = scaled.backgroundImage!.frame!;
     expect(scaled.grid.origin.x - scaledFrame.x).toBeCloseTo(next.grid.origin.x - frame.x);
     expect(scaled.grid.origin.y - scaledFrame.y).toBeCloseTo(next.grid.origin.y - frame.y);
@@ -87,9 +88,9 @@ describe('automatic complete grid edges', () => {
     const first = completeGridEdges(state);
     expect(first.gridCoverage).toEqual({ x: 5, y: 5, width: 290, height: 290 });
     expect(completeGridEdges(first)).toBe(first);
-    const larger = completeGridEdges({ ...first, grid: { ...first.grid, cellSize: 120 } });
-    expect(larger.canvasSize).toEqual({ width: 360, height: 360 });
-    const restored = completeGridEdges({ ...larger, grid: { ...larger.grid, cellSize: 100 } });
+    const larger = completeGridEdges({ ...first, grid: { ...first.grid, origin: { x: 20, y: 20 } } });
+    expect(larger.canvasSize).toEqual({ width: 384, height: 384 });
+    const restored = completeGridEdges({ ...larger, grid: { ...larger.grid, origin: { x: larger.gridCoverage!.x - first.gridCoverage!.x, y: larger.gridCoverage!.y - first.gridCoverage!.y } } });
     expect(restored.canvasSize).toEqual(first.canvasSize);
     expect(restored.gridCoverage).toEqual(first.gridCoverage);
   });
@@ -98,6 +99,6 @@ describe('automatic complete grid edges', () => {
     state.grid.origin = { x: -2, y: -2 }; state.canvasSize = { width: 326, height: 311 };
     const next = completeGridEdges(state);
     expect(next.grid.warp).toEqual(state.grid.warp);
-    expect(next.canvasSize.width).toBeCloseTo(330); expect(next.canvasSize.height).toBeCloseTo(315);
+    expect(next.canvasSize.width).toBeCloseTo(352); expect(next.canvasSize.height).toBeCloseTo(336);
   });
 });
