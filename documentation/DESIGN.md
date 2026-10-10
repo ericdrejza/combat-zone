@@ -1304,7 +1304,11 @@ does not disable snapping. A separate SVG Grid Layer renders above Background
 and below Zones, clipped to the canvas. It works without a background image.
 
 Grid controls provide visibility, type/orientation, size, origin, rotation,
-color, opacity, and alignment. Manual settings use an Apply/Cancel preview
+color, opacity, and alignment. Selecting the Grid tool displays manual settings
+in Properties using the same fields as the Background grid-settings dialog.
+The Grid subtools retain visibility and Waypoints; Background retains its
+settings-modal toggle. Properties drafts yield to active alignment and clear
+on tool changes. Manual settings use an Apply/Cancel preview
 without dimming the background. Configured zoom-in/out, fit, fit-width,
 fit-height, and reset shortcuts remain active while Grid Settings is open,
 including from focused fields; other shortcuts retain modal protection.
@@ -1315,14 +1319,23 @@ and 60 degrees for hexes, respecting each geometry's symmetry. Calibration
 snaps angles within five degrees of a multiple of 45 degrees to that angle.
 
 The Waypoints alignment subtool offers simple or four-quadrant alignment.
-The user selects Square, Hex pointy, or Hex flat before choosing Simple,
+Grid Settings is a toggle: its subtool is active while open, and clicking it
+again closes the dialog and cancels its unapplied preview. The Waypoints
+subtool also shows its active state; clicking it again cancels alignment,
+clearing sampled points and its unapplied preview.
+The user selects Square, Hex flat, or Hex pointy before choosing Simple,
 Four-quadrant, or Detect Grid. Selected compact toggles have a checkmark and
 distinct fill. Square alignment uses all four consecutive vertices around one
 cell; hex alignment uses three consecutive vertices. Four-quadrant alignment
 repeats this in top-left, top-right, bottom-right, and bottom-left cells, for
 sixteen square clicks or twelve hex clicks. Right-click removes the last point.
 The instruction panel can be moved by its handle or keyboard arrows to uncover
-vertices. Detect Grid sits beside the two manual strategies; Apply is separated
+vertices. A temporary maximum-zoom button sits to the right of the vertex
+instructions and sets viewport zoom to 400%. Closing alignment (including Apply,
+Cancel, Escape, or the Waypoints toggle) restores the previous zoom unless a
+subsequent manual zoom command takes over. Changing alignment strategy does not
+close the panel or restore zoom. This changes only the session viewport.
+Detect Grid sits beside the two manual strategies; Apply is separated
 from Cancel/Reset on the right. All samples fit a standard grid
 and optionally a smooth bilinear warped grid. If residual distortion exceeds
 3% of cell size (or one canvas unit, whichever is larger) and the warp is safe,
@@ -1340,6 +1353,15 @@ coefficients while scaling grid size/origin and actor coordinates.
 
 Grid detection analyzes background pixels locally and offers a detected
 regular grid of the selected square/hex type as an uncommitted preview.
+It checks a thumbnail and, for larger images, a higher-resolution pass up to
+1,152 pixels without enlarging the original. Higher-resolution matches take
+precedence to reduce downsampling artifacts and spacing aliases. Faint line
+edges remain candidates rather than filtering down to only intersections.
+Square detection can fall back to local dark-line ridges with capped contrast
+and terrain-trend removal. Projection support is normalized to prevent diagonal
+pixel sampling from creating a false repeating pattern.
+Analysis runs in a cancellable worker; closing alignment aborts it and cannot
+publish a stale preview or change the Encounter.
 It requires reliable repeated line families; highly distorted, unreadable,
 or undetected images use vertex alignment.
 Numbered markers, live preview, reset, Apply, and Cancel/Escape support
@@ -1352,15 +1374,26 @@ Token diameters/rectangle widths are 0.6, 0.9, 1.8, and 2.7 cell sizes for Small
 Medium, Large, and xLarge. Free uses this same visual scale but permits any
 position. Actor overlap is allowed outside Zone. Every token's full footprint
 must stay inside the canvas in all validation modes. Invalid operations are
-rejected atomically. Grid geometry edits and actor size changes re-snap actors
+rejected atomically. Fully contained outer cells remain available; partial
+edge cells cannot accept a token whose footprint would extend beyond the
+canvas, even when its center is inside. Grid geometry edits and actor size changes re-snap actors
 to nearby fitting anchors; appearance edits do not change positions. A group
 drag translates every selected actor by the same offset, then individually
 snaps each actor in Grid. Each complete operation is one history action.
 
 Square arrows move one neighboring anchor; hex arrows choose the adjacent
 anchor closest to the requested screen direction. Ties use top-to-bottom then
-left-to-right order. Free arrows nudge by 10 logical units. Existing viewport
-navigation remains available. No movement budgets, terrain, distance
+left-to-right order. Free arrows nudge by 10/64 of the configured cell size (10 logical units at
+the default 64-unit size), so resizing the grid/background preserves movement
+as a fraction of a cell. Existing viewport
+navigation remains available. Holding a movement key repeats Grid/Free steps
+using native keyboard repeat, throttled to a global Combat preference of
+200 ms by default (configurable from 50 to 2000 ms). The first keypress is
+immediate; the OS supplies initial hold delay. The interval saves on blur or
+Enter, survives reload/cross-tab changes, and resets with local preferences.
+Each accepted step is independently validated
+and undoable; repeat events received during pending validation are ignored
+rather than queued after key release. No movement budgets, terrain, distance
 accounting, pathfinding, or cell occupancy restrictions are introduced.
 
 Canvas resizing uniformly scales grid size/origin and saved actor coordinates

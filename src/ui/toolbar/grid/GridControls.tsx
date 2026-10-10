@@ -2,7 +2,7 @@ import { Eye, EyeOff, Waypoints, Settings2 } from 'lucide-react';
 import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import type { RootState } from '@store/store';
-import { startGridCalibration } from '@interaction/interactionState';
+import { startGridCalibration, cancelGridEditing } from '@interaction/interactionState';
 import { resnapSpatialActors } from '@core/movement/movementStrategies';
 import type { GridConfiguration } from '@core/movement/types';
 import { useKeyboardEncounterCommit } from '@ui/canvas/useKeyboardEncounterCommit';
@@ -11,8 +11,9 @@ import { ToolbarOptionButton, ToolbarOptionGroup } from '../ToolbarOption';
 import { GridSettingsDialog } from './GridSettingsDialog';
 
 /** Shared configuration surface is available in Background regardless of movement. */
-export function GridControls() {
+export function GridControls({ showSettings = true }: { showSettings?: boolean }) {
   const encounter = useSelector((state: RootState) => state.encounter.present);
+  const aligning = useSelector((state: RootState) => state.interaction.gridCalibrationActive);
   const dispatch = useDispatch();
   const { readOnly } = usePersistence();
   const commit = useKeyboardEncounterCommit();
@@ -29,8 +30,8 @@ export function GridControls() {
         onClick={() => void update({ ...encounter.grid, visible: !encounter.grid.visible })} type="button">
         {encounter.grid.visible ? <Eye size={16} /> : <EyeOff size={16} />}
       </ToolbarOptionButton>
-      <ToolbarOptionButton aria-label="Grid settings" title="Grid settings" disabled={readOnly || busy} onClick={() => setSettingsOpen(true)} type="button"><Settings2 size={16} /></ToolbarOptionButton>
-      <ToolbarOptionButton aria-label="Align grid to background" title="Align grid to background" disabled={readOnly || busy} onClick={() => dispatch(startGridCalibration(encounter.grid.type))} type="button"><Waypoints size={16} /></ToolbarOptionButton>
+      {showSettings ? <ToolbarOptionButton aria-label="Grid settings" title="Grid settings" active={settingsOpen} aria-pressed={settingsOpen} aria-expanded={settingsOpen} disabled={readOnly || busy} onClick={() => setSettingsOpen(open => !open)} type="button"><Settings2 size={16} /></ToolbarOptionButton> : null}
+      <ToolbarOptionButton aria-label="Align grid to background" title="Align grid to background" active={aligning} aria-pressed={aligning} aria-expanded={aligning} disabled={readOnly || busy} onClick={() => dispatch(aligning ? cancelGridEditing() : startGridCalibration(encounter.grid.type))} type="button"><Waypoints size={16} /></ToolbarOptionButton>
     </ToolbarOptionGroup>
     {settingsOpen ? <GridSettingsDialog encounter={encounter} busy={busy} onApply={update} onClose={() => setSettingsOpen(false)} /> : null}
   </>;

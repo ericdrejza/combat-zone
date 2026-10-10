@@ -17,6 +17,71 @@ function setup() {
   return structuredClone(state);
 }
 describe('grid settings and alignment controls', () => {
+  it.each(['Cancel', 'Escape', 'subtool'])('restores temporary max zoom on %s without encounter changes', async close => {
+    const user = userEvent.setup(), state = setup();
+    await user.click(screen.getByRole('button', { name: 'Background' }));
+    const waypoints = screen.getByRole('button', { name: 'Align grid to background' });
+    await user.click(waypoints);
+    const viewport = screen.getByLabelText('Canvas viewport');
+    fireEvent.keyDown(window, { key: '+' });
+    expect(viewport).toHaveAttribute('data-canvas-zoom', '1.1');
+    await user.click(screen.getByRole('button', { name: 'Temporary maximum zoom' }));
+    expect(viewport).toHaveAttribute('data-canvas-zoom', '4');
+    await user.click(screen.getByRole('button', { name: 'Temporary maximum zoom' }));
+    if (close === 'Escape') fireEvent.keyDown(window, { key: 'Escape' });
+    else await user.click(close === 'subtool' ? waypoints : screen.getByRole('button', { name: 'Cancel' }));
+    expect(viewport).toHaveAttribute('data-canvas-zoom', '1.1');
+    expect(store.getState().encounter.present).toEqual(state);
+    expect(store.getState().encounter.past).toHaveLength(0);
+  });
+  it('keeps manually adjusted zoom after temporary max zoom', async () => {
+    const user = userEvent.setup(); setup();
+    await user.click(screen.getByRole('button', { name: 'Background' }));
+    await user.click(screen.getByRole('button', { name: 'Align grid to background' }));
+    await user.click(screen.getByRole('button', { name: 'Temporary maximum zoom' }));
+    fireEvent.keyDown(window, { key: '-' });
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(screen.getByLabelText('Canvas viewport')).toHaveAttribute('data-canvas-zoom', '3.9');
+  });
+  it('keeps a manual zoom command even when already at the maximum', async () => {
+    const user = userEvent.setup(); setup();
+    await user.click(screen.getByRole('button', { name: 'Background' }));
+    await user.click(screen.getByRole('button', { name: 'Align grid to background' }));
+    await user.click(screen.getByRole('button', { name: 'Temporary maximum zoom' }));
+    fireEvent.keyDown(window, { key: '+' });
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(screen.getByLabelText('Canvas viewport')).toHaveAttribute('data-canvas-zoom', '4');
+  });
+  it('toggles Waypoints off as a cancellation with no encounter mutation', async () => {
+    const user = userEvent.setup(); const state = setup();
+    await user.click(screen.getByRole('button', { name: 'Background' }));
+    const waypoints = screen.getByRole('button', { name: 'Align grid to background' });
+    expect(waypoints).toHaveAttribute('aria-pressed', 'false');
+    await user.click(waypoints);
+    expect(waypoints).toHaveAttribute('aria-pressed', 'true'); expect(waypoints).toHaveAttribute('aria-expanded', 'true');
+    for (const [clientX, clientY] of [[100, 100], [150, 100], [150, 150], [100, 150]]) fireEvent.click(getCanvas(), { clientX, clientY });
+    expect(screen.getByRole('button', { name: 'Apply alignment' })).toBeEnabled();
+    await user.click(waypoints);
+    expect(waypoints).toHaveAttribute('aria-pressed', 'false'); expect(waypoints).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByRole('region', { name: 'Grid alignment' })).not.toBeInTheDocument();
+    expect(store.getState().interaction.gridCalibrationPoints).toEqual([]); expect(store.getState().interaction.gridPreview).toBeNull();
+    expect(store.getState().encounter.present).toEqual(state); expect(store.getState().encounter.past).toHaveLength(0);
+  });
+  it('toggles the settings subtool and lists flat hex before pointy hex', async () => {
+    const user = userEvent.setup(); setup();
+    await user.click(screen.getByRole('button', { name: 'Background' }));
+    const settings = screen.getByRole('button', { name: 'Grid settings' });
+    expect(settings).toHaveAttribute('aria-pressed', 'false');
+    await user.click(settings);
+    expect(settings).toHaveAttribute('aria-pressed', 'true'); expect(settings).toHaveAttribute('aria-expanded', 'true');
+    const select = screen.getByRole('combobox', { name: 'Grid type' });
+    expect(within(select).getAllByRole('option').map(option => option.getAttribute('value'))).toEqual(['square', 'hex-flat', 'hex-pointy']);
+    await user.click(settings);
+    expect(settings).toHaveAttribute('aria-pressed', 'false'); expect(settings).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByRole('dialog', { name: 'Grid settings' })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Align grid to background' }));
+    expect(within(screen.getByRole('group', { name: 'Alignment grid type' })).getAllByRole('button').map(button => button.textContent)).toEqual(['Square', 'Hex flat', 'Hex pointy']);
+  });
   it('keeps zoom keybinds available from settings fields without editing the grid', async () => {
     const user = userEvent.setup(); setup();
     await user.click(screen.getByRole('button', { name: 'Background' }));
@@ -106,10 +171,13 @@ describe('grid settings and alignment controls', () => {
     vi.mocked(detectBackgroundGrid).mockResolvedValue({ ...state.grid, cellSize: 72, origin: { x: 12, y: 8 } });
     await user.click(screen.getByRole('button', { name: 'Background' }));
     await user.click(screen.getByRole('button', { name: 'Align grid to background' }));
+    await user.click(screen.getByRole('button', { name: 'Temporary maximum zoom' }));
     await user.click(screen.getByRole('button', { name: 'Detect grid' }));
+    expect(screen.getByLabelText('Canvas viewport')).toHaveAttribute('data-canvas-zoom', '4');
     await waitFor(() => expect(store.getState().interaction.gridPreview?.cellSize).toBe(72));
     expect(store.getState().encounter.present.grid.cellSize).toBe(50);
     await user.click(screen.getByRole('button', { name: 'Apply alignment' }));
     await waitFor(() => expect(store.getState().encounter.present.grid.cellSize).toBe(72));
+    expect(screen.getByLabelText('Canvas viewport')).toHaveAttribute('data-canvas-zoom', '1');
   });
 });

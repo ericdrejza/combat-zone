@@ -1,3 +1,4 @@
+import { TemporaryAlignmentZoom } from './TemporaryAlignmentZoom';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import type { RootState } from '@store/store';
@@ -44,7 +45,7 @@ export function GridCalibrationOverlay() {
   }, [dispatch]);
   return <AlignmentPanel>
     <div role="group" aria-label="Alignment grid type" className="flex flex-wrap gap-2">
-      {([['square', 'Square'], ['hex-pointy', 'Hex pointy'], ['hex-flat', 'Hex flat']] as const).map(([value, label]) =>
+      {([['square', 'Square'], ['hex-flat', 'Hex flat'], ['hex-pointy', 'Hex pointy']] as const).map(([value, label]) =>
         <AlignmentToggle key={value} active={type === value} onClick={() => { dispatch(setGridCalibrationType(value)); setDetected(null); setChoice(null); setError(''); }}>{label}</AlignmentToggle>)}
     </div>
     <div role="group" aria-label="Alignment strategy" className="flex flex-wrap items-start gap-2">
@@ -53,8 +54,11 @@ export function GridCalibrationOverlay() {
       <GridDetectionButton encounter={encounter} grid={base} active={mode === 'detect'} disabled={readOnly || busy}
         onStart={() => reset('detect')} onDetected={setDetected} />
     </div>
-    {mode === 'detect' ? <p className="text-xs text-canvas-muted">Detect the selected grid type from the background, then review and apply the preview.</p>
-      : <p className="text-sm">{type === 'square' ? 'Click all four vertices around one square' : 'Click three consecutive vertices around one hexagon'}{mode === 'quadrants' && points.length < total ? ` in the ${quadrant} quadrant` : ''}. ({points.length}/{total})</p>}
+    <div className="flex items-center gap-2">
+      {mode === 'detect' ? <p className="min-w-0 flex-1 text-xs text-canvas-muted">Detect the selected grid type from the background, then review and apply the preview.</p>
+        : <p className="min-w-0 flex-1 text-sm">{type === 'square' ? 'Click all four vertices around one square' : 'Click three consecutive vertices around one hexagon'}{mode === 'quadrants' && points.length < total ? ` in the ${quadrant} quadrant` : ''}. ({points.length}/{total})</p>}
+      <TemporaryAlignmentZoom hidden={mode === 'detect'} />
+    </div>
     {mode === 'quadrants' ? <p className="text-xs text-canvas-muted">Use one cell in each quadrant, in the shown order. {total} vertices can fit a standard grid or a warped grid.</p> : null}
     {mode !== 'detect' ? <p className="text-xs text-canvas-muted">Right-click to remove the last point. Move these instructions using the handle.</p> : null}
     {needsChoice ? <fieldset className="space-y-2 rounded-lg border border-canvas-line p-2"><legend className="text-sm">The image grid appears distorted. Keep it standard or warp it?</legend>

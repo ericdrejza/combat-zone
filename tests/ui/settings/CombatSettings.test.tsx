@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen, waitFor, within } from "@testing-librar
 import { Provider } from "react-redux";
 import { createEncounterState } from "@core/encounter/createEncounterState";
 import { createActor } from "@entities/actor/actorMutations";
-import { CombatPreferenceProvider, COMBAT_PREFERENCES_STORAGE_KEY, readCombatPreferences } from "@ui/combat_preferences/CombatPreferenceProvider";
+import { CombatPreferenceProvider, COMBAT_PREFERENCES_STORAGE_KEY, readCombatPreferences, readMovementRepeatDelay } from "@ui/combat_preferences/CombatPreferenceProvider";
 import { CombatSettings } from "@ui/settings/CombatSettings";
 import { InterfacePreferenceProvider, INTERFACE_PREFERENCES_STORAGE_KEY } from "@ui/interface_preferences/InterfacePreferenceProvider";
 import { InterfaceSettings } from "@ui/settings/InterfaceSettings";
@@ -31,6 +31,32 @@ function configure() {
   fireEvent.change(screen.getByLabelText("Injured upper cutoff"), { target: { value: "10" } });
 }
 describe("Combat and resource label preferences", () => {
+  it('saves movement repeat timing without losing other combat preferences and syncs/reset it', () => {
+    setup();
+    const field = screen.getByLabelText('Held movement repeat delay (ms)');
+    expect(field).toHaveValue(200);
+    fireEvent.change(field, { target: { value: '350' } }); fireEvent.blur(field);
+    expect(readMovementRepeatDelay()).toBe(350);
+    fireEvent.change(screen.getByLabelText('Hit point limits'), { target: { value: 'unbounded' } });
+    expect(readMovementRepeatDelay()).toBe(350);
+    const saved = JSON.parse(localStorage.getItem(COMBAT_PREFERENCES_STORAGE_KEY)!);
+    localStorage.setItem(COMBAT_PREFERENCES_STORAGE_KEY, JSON.stringify({ ...saved, movementRepeatDelayMs: 450 }));
+    act(() => window.dispatchEvent(new StorageEvent('storage', { key: COMBAT_PREFERENCES_STORAGE_KEY })));
+    expect(field).toHaveValue(450);
+    act(() => window.dispatchEvent(new Event(LOCAL_PREFERENCES_RESET_EVENT)));
+    expect(field).toHaveValue(200);
+    expect(store.getState().encounter.past).toHaveLength(0);
+  });
+  it.each([null, 0, 49, 2001, 100.5, '300'])('defaults invalid stored repeat timing %s and rejects invalid edits', value => {
+    localStorage.setItem(COMBAT_PREFERENCES_STORAGE_KEY, JSON.stringify({ movementRepeatDelayMs: value }));
+    expect(readMovementRepeatDelay()).toBe(200);
+    setup();
+    const field = screen.getByLabelText('Held movement repeat delay (ms)');
+    const saved = localStorage.getItem(COMBAT_PREFERENCES_STORAGE_KEY);
+    fireEvent.change(field, { target: { value: '10' } }); fireEvent.blur(field);
+    expect(field).toHaveValue(200);
+    expect(localStorage.getItem(COMBAT_PREFERENCES_STORAGE_KEY)).toBe(saved);
+  });
   it("commits on Enter by blurring and clears individual cutoffs immediately", () => {
     setup();
     enableAutomation();

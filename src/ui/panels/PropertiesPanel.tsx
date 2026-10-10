@@ -7,6 +7,7 @@ import { BackgroundPropertiesPanel } from "./BackgroundPropertiesPanel";
 import { EdgePropertiesPanel } from "./EdgePropertiesPanel";
 import { EngagementPropertiesPanel } from "./EngagementPropertiesPanel";
 import { ZonePropertiesPanel } from "./ZonePropertiesPanel";
+import { GridPropertiesPanel } from "./GridPropertiesPanel";
 import { AudioPropertiesPanel } from "./AudioPropertiesPanel";
 
 export type PropertiesLibraryLocation = {
@@ -40,6 +41,8 @@ export function PropertiesPanel({
       />
     );
   }
+
+  if (activeToolId === "grid") return <GridPropertiesPanel />;
 
   if (activeToolId === "audio") return <AudioPropertiesPanel />;
 

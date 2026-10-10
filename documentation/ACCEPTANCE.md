@@ -572,3 +572,10 @@ these back into `AGENT.md` or `DESIGN.md`.
 - [x] Schema 18 migrates existing records and preserves warps through history, resizing, local/cloud round trips, invalid-write rejection, and writer boundaries.
 
 - [x] Grid Settings permits default/custom zoom shortcuts from focused fields without changing drafts/history; other modal shortcuts remain blocked.
+
+- [x] Large faint-grid images use higher-resolution evidence to recover actual cell spacing; detection workers terminate on cancellation/success, preserve Encounter state before Apply, and avoid stale previews.
+- [x] The vertex instruction row offers temporary 400% zoom. Apply, Cancel, Escape, and the Waypoints toggle restore prior zoom; later manual zoom commands retain their value, including commands at the maximum. Changing alignment strategy preserves temporary zoom until closing.
+- [x] Grid/Free movement accepts held-key repeats, validates each accepted step, honors the writer boundary, and restores each step through undo/redo. Pending validation does not queue movement after key release.
+- [x] Grid tool settings appear in Properties with cancellable previews, Apply history, undo/redo, and stale-validation protection. Background keeps the shared settings dialog; calibration owns its preview while active.
+- [x] Combat settings persist, validate, synchronize, and reset the held-movement interval; accepted repeats respect that interval. Free movement keeps a constant fraction of cell size after grid/canvas scaling.
+- [x] Medium actors can occupy all fully contained outer square cells in every validation mode, and native browser drags reach both outer rows and columns.

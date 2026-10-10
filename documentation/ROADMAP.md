@@ -119,3 +119,12 @@ the design as future or nice-to-have work.
 - [x] Local square/hex grid detection, Waypoints alignment icon, undimmed previews, percentage opacity, visibility switch, and whole-number stepping.
 - [x] Symmetry-aware rotation wrapping and five-degree calibration tolerance.
 - [x] Schema 18 warp persistence, migration, validation, undo/redo, cloud, and responsive coverage.
+
+## Grid detection reliability
+
+- [x] Preserve faint edges, check larger-resolution matches, and cancel worker analysis without stale previews.
+- [x] Detect faint square grids over illustrated terrain with normalized ridge profiles.
+- [x] Temporary maximum zoom for vertex alignment, restoring on close unless manual zoom takes over.
+- [x] Hold movement keys to repeat Grid/Free steps with validation, writer guards, and individual undo/redo.
+- [x] Share Grid Properties/Background settings controls, persist configurable repeat timing, and scale Free nudges with cell size.
+- [x] Verify fully contained first/last square rows and columns through validation and browser dragging; refine detected periods to reduce boundary drift.

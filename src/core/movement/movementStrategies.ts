@@ -10,7 +10,7 @@ type SpatialStrategy = {
 };
 const free: SpatialStrategy = {
   place: (_state, _actor, point) => ({ ...point }),
-  step: (_state, actor, direction) => ({ x: actor.spatialPosition!.x + direction.x * 10, y: actor.spatialPosition!.y + direction.y * 10 })
+  step: (state, actor, direction) => ({ x: actor.spatialPosition!.x + direction.x * state.grid.cellSize * 10 / 64, y: actor.spatialPosition!.y + direction.y * state.grid.cellSize * 10 / 64 })
 };
 const grid: SpatialStrategy = {
   place: (state, actor, point) => snapToGrid(state.grid, point, actor.size),

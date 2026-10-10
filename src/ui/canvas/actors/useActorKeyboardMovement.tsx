@@ -1,3 +1,4 @@
+import { useCombatPreferences } from '@ui/combat_preferences/CombatPreferenceProvider';
 import { stepSpatialActors } from '@core/movement/movementStrategies';
 import { useEffect, useRef, useState } from "react";
 import { useSelector, useStore } from "react-redux";
@@ -34,6 +35,9 @@ export function useActorKeyboardMovement() {
   const { warnActorDestinationsDiffer, setWarnActorDestinationsDiffer } = useInterfacePreferences();
   const commit = useKeyboardEncounterCommit();
   const nextToken = useRef(0);
+  const spatialMovePending = useRef(false);
+  const lastSpatialStep = useRef<{ direction: MoveDirection; time: number } | null>(null);
+  const { movementRepeatDelayMs } = useCombatPreferences();
   const [flow, setFlow] = useState<Workflow | null>(null);
   const flowRef = useRef(flow); flowRef.current = flow;
   const [suppress, setSuppress] = useState(false);
@@ -105,11 +109,23 @@ export function useActorKeyboardMovement() {
         return;
       }
       const index = actionIds.findIndex((id) => matchesKeybind(event, bindings[id])); if (index < 0) return;
-      event.preventDefault(); if (event.repeat || draft || !isPersistenceWritable()) return;
+      event.preventDefault(); if ((event.repeat && encounter.movementStrategy === 'zone') || draft || !isPersistenceWritable()) return;
       const direction = directions[index];
       if (encounter.movementStrategy !== 'zone') {
         const vector = { up: { x: 0, y: -1 }, down: { x: 0, y: 1 }, left: { x: -1, y: 0 }, right: { x: 1, y: 0 } }[direction];
-        void commit('actor.moveSpatial', { actorIds: selection.selectedIds, direction }, state => stepSpatialActors(state, selection.selectedIds, vector), () => store.getState().encounter.present === encounter && store.getState().interaction.activeToolId === tool);
+        // Accept native key repeat without overlapping async validation or queuing moves after release.
+        if (spatialMovePending.current) return;
+        const now = performance.now();
+        if (event.repeat && lastSpatialStep.current?.direction === direction && now - lastSpatialStep.current.time < movementRepeatDelayMs) return;
+        lastSpatialStep.current = { direction, time: now };
+        const snapshot = store.getState().encounter.present;
+        const actorIds = [...selection.selectedIds];
+        spatialMovePending.current = true;
+        void commit('actor.moveSpatial', { actorIds, direction }, state => stepSpatialActors(state, actorIds, vector), () => {
+          const current = store.getState();
+          return current.encounter.present === snapshot && current.interaction.activeToolId === tool
+            && `${current.interaction.selection.selectedEntityType}:${current.interaction.selection.selectedIds.join('|')}` === selectionKey;
+        }).finally(() => { spatialMovePending.current = false; });
         return;
       }
       const origins = buildOriginMovements(encounter, selection.selectedIds, direction);

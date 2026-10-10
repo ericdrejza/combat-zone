@@ -17,12 +17,11 @@ import type { RootState } from "@store/store";
 import { useInterfacePreferences } from "@ui/interface_preferences/InterfacePreferenceProvider";
 import {
   CANVAS_ZOOM_STEP,
-  clampZoom,
   getCenteredCanvasResizeScroll,
-  getCenteredZoomScroll,
-  getZoomScrollAtPoint,
   getZoomToFit
 } from "./canvasViewportMath";
+
+import { useCanvasZoom } from "./useCanvasZoom";
 
 type CanvasViewportValue = {
   getViewportSize: () => CanvasSize;
@@ -34,6 +33,8 @@ type CanvasViewportValue = {
   zoomIn: () => void;
   zoomOut: () => void;
   resetZoom: () => void;
+  /** Returns a release function; any later manual zoom relinquishes restoration. */
+  beginTemporaryMaxZoom: () => () => void;
   /** Changes zoom while preserving a canvas point under a viewport point. */
   setZoomAtPoint: (
     requestedZoom: number,
@@ -72,8 +73,6 @@ export function CanvasViewportProvider({ children }: PropsWithChildren) {
     height: 0,
     width: 0
   });
-  const [zoom, setZoom] = useState(1);
-  const zoomRef = useRef(zoom);
   const previousDocumentRef = useRef({ canvasSize, encounterId });
   const pendingResizeRef = useRef<{
     currentCanvasSize: CanvasSize;
@@ -85,7 +84,18 @@ export function CanvasViewportProvider({ children }: PropsWithChildren) {
   } | null>(null);
   const pendingFitRef = useRef(true);
   const pendingManualFitFrameRef = useRef<number | null>(null);
-  zoomRef.current = zoom;
+
+  /** Reads layout synchronously so commands do not depend on observer timing. */
+  const getViewportSize = useCallback(
+    () =>
+      viewportElement
+        ? readViewportSize(viewportElement, viewportSize)
+        : viewportSize,
+    [viewportElement, viewportSize]
+  );
+
+  const { zoom, zoomRef, setCenteredZoom, setZoomAtPoint, beginTemporaryMaxZoom } =
+    useCanvasZoom({ canvasSize, viewportElement, getViewportSize });
 
   const previousDocument = previousDocumentRef.current;
   const encounterChanged = previousDocument.encounterId !== encounterId;
@@ -136,75 +146,6 @@ export function CanvasViewportProvider({ children }: PropsWithChildren) {
       }
     },
     []
-  );
-
-  /** Reads layout synchronously so commands do not depend on observer timing. */
-  const getViewportSize = useCallback(
-    () =>
-      viewportElement
-        ? readViewportSize(viewportElement, viewportSize)
-        : viewportSize,
-    [viewportElement, viewportSize]
-  );
-
-  const setCenteredZoom = useCallback(
-    (requestedZoom: number) => {
-      const nextZoom = clampZoom(requestedZoom);
-      const currentZoom = zoomRef.current;
-      const scroll = viewportElement
-        ? getCenteredZoomScroll({
-            canvasSize,
-            currentZoom,
-            nextZoom,
-            scrollLeft: viewportElement.scrollLeft,
-            scrollTop: viewportElement.scrollTop,
-            viewportSize: getViewportSize()
-          })
-        : null;
-
-      zoomRef.current = nextZoom;
-      setZoom(nextZoom);
-      if (viewportElement && scroll) {
-        requestAnimationFrame(() => {
-          viewportElement.scrollLeft = scroll.left;
-          viewportElement.scrollTop = scroll.top;
-        });
-      }
-    },
-    [canvasSize, getViewportSize, viewportElement]
-  );
-
-  const setZoomAtPoint = useCallback(
-    (
-      requestedZoom: number,
-      viewportPoint: LayoutPoint,
-      canvasPoint?: LayoutPoint
-    ) => {
-      const nextZoom = clampZoom(requestedZoom);
-      const currentZoom = zoomRef.current;
-      const scroll = viewportElement
-        ? getZoomScrollAtPoint({
-            canvasPoint,
-            canvasSize,
-            currentZoom,
-            nextZoom,
-            scrollLeft: viewportElement.scrollLeft,
-            scrollTop: viewportElement.scrollTop,
-            viewportPoint,
-            viewportSize: getViewportSize()
-          })
-        : null;
-
-      zoomRef.current = nextZoom;
-      setZoom(nextZoom);
-      if (viewportElement && scroll) {
-        requestAnimationFrame(() => {
-          viewportElement.scrollLeft = scroll.left;
-          viewportElement.scrollTop = scroll.top;
-        });
-      }
-    },
-    [canvasSize, getViewportSize, viewportElement]
   );
 
   const zoomToFit = useCallback(
@@ -274,6 +215,7 @@ export function CanvasViewportProvider({ children }: PropsWithChildren) {
   const value = useMemo<CanvasViewportValue>(
     () => ({
       getViewportSize,
+      beginTemporaryMaxZoom,
       panEnabled: panWithRightClickDrag,
       pan: (direction) => {
         if (!viewportElement) return;
@@ -292,6 +234,7 @@ export function CanvasViewportProvider({ children }: PropsWithChildren) {
       zoomToFitWidth: () => zoomToFitAxis("width")
     }),
     [
+      beginTemporaryMaxZoom,
       getViewportSize,
       viewportElement,
       panWithRightClickDrag,

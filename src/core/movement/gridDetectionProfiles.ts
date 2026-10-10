@@ -1,10 +1,28 @@
 export type ProfileFit = { spacing: number; phase: number; score: number };
+
+/** Refine the accepted lattice so period rounding cannot move its outer cells past a boundary. */
+export function refineProfileFit(profile: number[], fit: ProfileFit): ProfileFit {
+  let best = fit, bestContrast = -Infinity;
+  for (let spacing = fit.spacing - 0.25; spacing <= fit.spacing + 0.25; spacing += 0.025) {
+    for (let phase = 0; phase < spacing; phase += 0.1) {
+      let sum = 0, count = 0;
+      for (let x = phase; x < profile.length - 1; x += spacing) {
+        const index = Math.floor(x), fraction = x - index;
+        sum += profile[index] * (1 - fraction) + profile[index + 1] * fraction; count++;
+      }
+      const contrast = sum / count;
+      if (contrast > bestContrast) { bestContrast = contrast; best = { ...fit, spacing, phase }; }
+    }
+  }
+  return best;
+}
+
 export function fitProfile(profile: number[]): ProfileFit | null {
   const mean = profile.reduce((sum, value) => sum + value, 0) / profile.length;
   if (mean < 0.5) return null;
   const centered = profile.map(value => value - mean);
   const candidates: { spacing: number; correlation: number }[] = [];
-  for (let spacing = 8; spacing <= Math.min(128, profile.length / 4); spacing++) {
+  for (let spacing = 8; spacing <= Math.min(256, profile.length / 4); spacing++) {
     let sum = 0, a = 0, b = 0;
     for (let i = 0; i + spacing < profile.length; i++) {
       sum += centered[i] * centered[i + spacing]; a += centered[i] ** 2; b += centered[i + spacing] ** 2;
@@ -40,7 +58,8 @@ export function imageContrasts(pixels: Uint8ClampedArray, width: number, height:
   for (let y = 1; y < height - 1; y++) for (let x = 1; x < width - 1; x++) {
     const dx = gray[y * width + x + 1] - gray[y * width + x - 1];
     const dy = gray[(y + 1) * width + x] - gray[(y - 1) * width + x];
-    if (Math.hypot(dx, dy) > 12) edges.push({ x: x - width / 2, y: y - height / 2, dx, dy });
+    // Faint lines must survive too: retaining only their intersections invents coarser diagonal patterns.
+    if (Math.hypot(dx, dy) > 2) edges.push({ x: x - width / 2, y: y - height / 2, dx, dy });
   }
   return { gray, edges };
 }

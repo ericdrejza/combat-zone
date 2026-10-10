@@ -26,15 +26,23 @@ export function readStatusVisibility(): StatusVisibility {
   try { return normalizeStatusVisibility(JSON.parse(localStorage.getItem(COMBAT_PREFERENCES_STORAGE_KEY) ?? "null")?.visibility); }
   catch { return { ...DEFAULT_STATUS_VISIBILITY }; }
 }
-const Context = createContext({ rules: DEFAULT_COMBAT_RULES, visibility: DEFAULT_STATUS_VISIBILITY, saveRules: (_rules: CombatRules, _visibility?: StatusVisibility) => {} });
+export const DEFAULT_MOVEMENT_REPEAT_DELAY_MS = 200;
+export function readMovementRepeatDelay(): number {
+  try {
+    const value = JSON.parse(localStorage.getItem(COMBAT_PREFERENCES_STORAGE_KEY) ?? 'null')?.movementRepeatDelayMs;
+    return Number.isSafeInteger(value) && value >= 50 && value <= 2000 ? value : DEFAULT_MOVEMENT_REPEAT_DELAY_MS;
+  } catch { return DEFAULT_MOVEMENT_REPEAT_DELAY_MS; }
+}
+const Context = createContext({ rules: DEFAULT_COMBAT_RULES, visibility: DEFAULT_STATUS_VISIBILITY, movementRepeatDelayMs: DEFAULT_MOVEMENT_REPEAT_DELAY_MS, setMovementRepeatDelayMs: (_delay: number) => {}, saveRules: (_rules: CombatRules, _visibility?: StatusVisibility) => {} });
 
 /** Durable global preferences; encounter recalculation remains a validated UI command. */
 export function CombatPreferenceProvider({ children }: { children: ReactNode }) {
   const [rules, setRules] = useState(readCombatPreferences);
   const [visibility, setVisibility] = useState(readStatusVisibility);
+  const [movementRepeatDelayMs, setRepeatDelay] = useState(readMovementRepeatDelay);
   useEffect(() => {
-    const reset = () => { setRules({ ...DEFAULT_COMBAT_RULES }); setVisibility({ ...DEFAULT_STATUS_VISIBILITY }); };
-    const sync = (event: StorageEvent) => { if (event.key === COMBAT_PREFERENCES_STORAGE_KEY || event.key === null) { setRules(readCombatPreferences()); setVisibility(readStatusVisibility()); } };
+    const reset = () => { setRules({ ...DEFAULT_COMBAT_RULES }); setVisibility({ ...DEFAULT_STATUS_VISIBILITY }); setRepeatDelay(DEFAULT_MOVEMENT_REPEAT_DELAY_MS); };
+    const sync = (event: StorageEvent) => { if (event.key === COMBAT_PREFERENCES_STORAGE_KEY || event.key === null) { setRules(readCombatPreferences()); setVisibility(readStatusVisibility()); setRepeatDelay(readMovementRepeatDelay()); } };
     globalThis.addEventListener(LOCAL_PREFERENCES_RESET_EVENT, reset);
     globalThis.addEventListener("storage", sync);
     return () => {
@@ -47,8 +55,14 @@ export function CombatPreferenceProvider({ children }: { children: ReactNode }) 
     setRules(next);
     const normalized = normalizeStatusVisibility(nextVisibility);
     setVisibility(normalized);
-    try { localStorage.setItem(COMBAT_PREFERENCES_STORAGE_KEY, JSON.stringify({ ...next, visibility: normalized })); } catch { /* Retain session preferences if storage is unavailable. */ }
+    try { localStorage.setItem(COMBAT_PREFERENCES_STORAGE_KEY, JSON.stringify({ ...next, visibility: normalized, movementRepeatDelayMs })); } catch { /* Retain session preferences if storage is unavailable. */ }
   }
-  return <Context.Provider value={{ rules, visibility, saveRules }}>{children}</Context.Provider>;
+  function setMovementRepeatDelayMs(delay: number) {
+    if (!Number.isSafeInteger(delay) || delay < 50 || delay > 2000) return;
+    setRepeatDelay(delay);
+    try { localStorage.setItem(COMBAT_PREFERENCES_STORAGE_KEY, JSON.stringify({ ...rules, visibility, movementRepeatDelayMs: delay })); }
+    catch { /* Keep the session preference when storage is unavailable. */ }
+  }
+  return <Context.Provider value={{ rules, visibility, saveRules, movementRepeatDelayMs, setMovementRepeatDelayMs }}>{children}</Context.Provider>;
 }
 export const useCombatPreferences = () => useContext(Context);

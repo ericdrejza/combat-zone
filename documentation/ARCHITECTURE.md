@@ -164,3 +164,9 @@ neighborhoods. Rendering uses exact quadratic SVG edge paths for warped cells.
 Spatial validation rejects non-invertible/folded geometry in every validation
 mode, including imports. Calibration mode, click samples, and detection results
 remain interaction drafts; only an applied grid enters history and persistence.
+
+Grid image detection uses a dedicated transient worker and transfers analysis
+pixel buffers. Resolution passes are capped at 384 and 1,152 pixels, retain
+native aspect ratio, and never enlarge original images. Worker cancellation
+terminates analysis immediately; previews remain interaction-only and require
+the existing writer/validated-history boundary on Apply.

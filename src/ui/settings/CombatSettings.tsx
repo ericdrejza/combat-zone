@@ -5,6 +5,7 @@ import { useCombatPreferences } from "@ui/combat_preferences/CombatPreferencePro
 import { useStatusActions } from "@ui/status/useStatusActions";
 import { StatusVisibilitySettings } from "./StatusVisibilitySettings";
 import { HealthThresholdField } from "./HealthThresholdField";
+import { MovementRepeatSettings } from "./MovementRepeatSettings";
 import { PreferenceSwitch } from "./PreferenceSwitch";
 
 export function CombatSettings() {
@@ -28,6 +29,7 @@ export function CombatSettings() {
   }
   return <section aria-labelledby="settings-combat-heading" className="space-y-5 p-5">
     <h3 id="settings-combat-heading" className="font-display text-lg font-semibold">Combat</h3>
+    <MovementRepeatSettings />
     <label className="block text-sm font-semibold">Hit point limits
       <select aria-label="Hit point limits" className="mt-2 w-full rounded-xl border border-canvas-line bg-canvas p-2 font-normal" value={draft.limits} onChange={(event) => save({ ...draft, limits: event.currentTarget.value as CombatRules["limits"] })}>
         <option value="bounded">Clamp at zero and maximum</option><option value="negative">Allow negative; cap healing at maximum</option><option value="unbounded">Allow negative and above maximum</option>
