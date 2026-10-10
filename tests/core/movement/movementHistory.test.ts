@@ -47,14 +47,14 @@ describe('spatial history and validation', () => {
     expect(prepare(placeSpatialActors(state, { a: { x: -100, y: 160 } })).blocked).toBe(true);
     expect(prepare(next).nextEncounter.engagements).toEqual(state.engagements);
   });
-  it('re-snaps grid edits and size changes, with canvas scaling preserving anchors', () => {
+  it('re-snaps grid edits and size changes, with background sizing leaving anchors fixed', () => {
     const state = changeMovementStrategy(encounter(), 'grid', { a: { x: 200, y: 200 } });
     const edited = resnapSpatialActors({ ...state, grid: { ...state.grid, cellSize: 48, rotation: 15 } });
     expect(prepareValidatedEncounterChange({ currentEncounter: state, nextEncounter: edited, action: createEncounterActionRecord('grid.update') }).blocked).toBe(false);
     const sized = prepareValidatedEncounterChange({ currentEncounter: state, nextEncounter: updateActorProperties(state, 'a', { size: 'large' }), action: createEncounterActionRecord('actor.updateProperties', { actorIds: ['a'] }) });
     expect(sized.blocked).toBe(false); expect(sized.nextEncounter.actors.byId.a.spatialPosition).toEqual({ x: 192, y: 192 });
     const resized = resizeEncounterCanvas(state, { canvasSize: { width: 480, height: 320 }, zoneScale: 0.5 });
-    expect(resized.grid.cellSize).toBe(32); expect(resized.actors.byId.a.spatialPosition).toEqual({ x: 112, y: 112 });
+    expect(resized.grid.cellSize).toBe(64); expect(resized.actors.byId.a.spatialPosition).toEqual(state.actors.byId.a.spatialPosition);
   });
   it('supports keyboard stepping, panel transfers, duplication and undoable deletion', () => {
     const state = changeMovementStrategy(encounter(), 'free', { a: { x: 200, y: 200 } });

@@ -87,8 +87,13 @@ Root runtime container.
 
 The encounter canvas defaults to 960×640 logical units. Background sizing
 commands change the persisted canvas bounds and uniformly scale every Zone
-polygon from the top-left origin. Actor, Engagement, and Edge geometry remains
-derived from the scaled Zones. Background images always preserve their
+polygon from the top-left origin. In Zone mode, Actor, Engagement, and Edge
+geometry remains
+derived from the scaled Zones. Grid geometry and saved Grid/Free actor positions
+do not scale with the background; changing background size may break alignment.
+Token size follows the grid cell size, adjusted only for the local grid warp.
+Enlarging the background therefore makes tokens smaller relative to the image,
+and shrinking it makes them larger. Background images always preserve their
 intrinsic aspect ratio and fill the resulting canvas without cropping, except
 when grid edge completion adds unscaled canvas margins. An optional
 `backgroundImage.frame` (`x`, `y`, `width`, `height`) then records its logical
@@ -97,10 +102,22 @@ placement separately from intrinsic asset dimensions.
 Adding or replacing a background sizes the canvas so the full image is as
 large as possible within the visible workspace. Deleting a background keeps
 the current canvas bounds. The Background Tool also provides one-time fit,
-fit-width, fit-height, 10% shrink, and 10% expand commands. Shrinking clamps to
-the nearest larger scale that retains valid Zone and derived actor layouts.
+fit-width, fit-height, 10% shrink, and 10% expand commands. Sizing retains the
+existing clamp for valid Zone and derived actor layouts.
+The Interface preference “When background resizing puts actors outside the
+canvas” defaults to “Move actors to Zoneless”: after edge completion, clear
+only saved spatial positions whose full token footprint exceeds canvas bounds,
+including saved positions while Zone mode is active. Preserve resources, Zone
+assignments, and suspended Engagement relationships. “Limit resizing to keep
+actors on canvas” instead clamps to the nearest larger size retaining all saved
+spatial placements. This global preference persists, synchronizes across tabs,
+resets with local preferences, and falls back to Zoneless for unknown values.
 These sizing controls remain available without an image, using the current
-canvas aspect ratio. Fit commands target the logical area visible at the
+unpadded coverage aspect ratio. Percentage commands and active fit indicators
+use the logical background frame or original coverage, excluding completed
+cell margins. Preserve its top-left anchor when sizing or replacing an image;
+a first image uses the current coverage origin. Fit commands target the logical
+area visible at the
 current viewport zoom. Every background or canvas-size mutation is one
 reversible history action.
 
@@ -1351,8 +1368,10 @@ Warped grids transform cell boundaries, snapping anchors, and adjacent-cell
 keyboard movement together. Token scale follows the smaller local stretch
 so a Medium token fits its cell; tokens retain their regular shape. Manual
 size/origin/rotation edits transform the warped grid as a whole; settings can
-return to standard alignment. Canvas resizing preserves normalized warp
-coefficients while scaling grid size/origin and actor coordinates.
+return to standard alignment. Background/canvas resizing leaves grid size,
+rotation, normalized warp
+coefficients, and saved actor positions fixed. Edge completion may translate
+all coordinates together without changing relative placement.
 
 Grid detection analyzes background pixels locally and offers a detected
 regular grid of the selected square/hex type as an uncommitted preview.
@@ -1394,7 +1413,8 @@ Left/top changes translate the grid origin, actor positions, Zone polygons,
 and background/coverage together. Settings, alignment, entering Grid, and
 background/canvas resizing complete cells within their existing history action.
 Grid changes can reduce prior margins; existing fit/snapping validation applies.
-Ordinary resizing scales coverage and background placement. Deleting a
+Background resizing changes coverage dimensions, retaining its top-left anchor
+before any shared coordinate rebase. Deleting a
 background retains its coverage; adding/replacing one establishes new coverage.
 Grid geometry edits and actor size changes re-snap actors
 to nearby fitting anchors; appearance edits do not change positions. A group
@@ -1404,8 +1424,9 @@ snaps each actor in Grid. Each complete operation is one history action.
 Square arrows move one neighboring anchor; hex arrows choose the adjacent
 anchor closest to the requested screen direction. Ties use top-to-bottom then
 left-to-right order. Free arrows nudge by 10/64 of the configured cell size (10 logical units at
-the default 64-unit size), so resizing the grid/background preserves movement
-as a fraction of a cell. Existing viewport
+the default 64-unit size), so resizing the grid preserves movement
+as a fraction of a cell. Background resizing does not change this distance.
+Existing viewport
 navigation remains available. Holding a movement key repeats Grid/Free steps
 using native keyboard repeat, throttled to a global Combat preference of
 200 ms by default (configurable from 50 to 2000 ms). The first keypress is
@@ -1416,9 +1437,12 @@ and undoable; repeat events received during pending validation are ignored
 rather than queued after key release. No movement budgets, terrain, distance
 accounting, pathfinding, or cell occupancy restrictions are introduced.
 
-Canvas resizing uniformly scales grid size/origin and saved actor coordinates
-alongside Zone polygons. Replacing Background preserves the scaled grid;
-deleting Background retains grid and coordinates. Strategy changes, geometry
+Background sizing, fitting, adding, and replacing change image coverage and
+scale Zone polygons while retaining grid geometry and saved spatial coordinates.
+Automatic completion recalculates against the new coverage; overflow follows
+the Interface preference above. Resizing and any spatial unplacements commit
+as one history action. Deleting Background retains grid and coordinates.
+Strategy changes, geometry
 edits, calibration, movement, and canvas changes are reversible history
 mutations. Applicable semantic validation keeps existing OFF/ADVISORY/ASSISTED/
 STRICT behavior; Zone movement/layout validators are suspended outside Zone.

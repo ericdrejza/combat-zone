@@ -1,3 +1,5 @@
+import { getGridCoverage } from '@core/movement/gridCoverage';
+import { unplaceOverflowingSpatialActors, type BackgroundResizeOverflowBehavior } from './backgroundResizeOverflow';
 import { completeGridEdges } from '@core/movement/gridEdgeCompletion';
 import type { CanvasSize } from "@core/layout/polygonCanvasBounds";
 import type { EncounterState } from "./types";
@@ -5,6 +7,7 @@ import type { EncounterState } from "./types";
 export type CanvasResizeInput = {
   canvasSize: CanvasSize;
   zoneScale?: number;
+  overflowBehavior?: BackgroundResizeOverflowBehavior;
 };
 
 function scaleCoordinate(value: number, scale: number): number {
@@ -12,18 +15,20 @@ function scaleCoordinate(value: number, scale: number): number {
 }
 
 /**
- * Resizes the logical canvas and uniformly scales persisted zone geometry
- * from the top-left origin. Actor, engagement, and edge geometry is derived.
+ * Resizes background coverage while leaving grid geometry and spatial actor placement fixed.
+ * Zone geometry retains its existing uniform scaling; whole-cell completion may rebase all coordinates.
  */
 export function resizeEncounterCanvas(
   encounter: EncounterState,
-  { canvasSize, zoneScale }: CanvasResizeInput
+  { canvasSize, zoneScale, overflowBehavior = 'zoneless' }: CanvasResizeInput
 ): EncounterState {
+  const coverage = getGridCoverage(encounter);
+  const frame = { x: coverage.x, y: coverage.y, ...canvasSize };
   const scale =
     zoneScale ??
     Math.min(
-      canvasSize.width / encounter.canvasSize.width,
-      canvasSize.height / encounter.canvasSize.height
+      canvasSize.width / coverage.width,
+      canvasSize.height / coverage.height
     );
   const byId = Object.fromEntries(
     encounter.zones.allIds.flatMap((zoneId) => {
@@ -44,25 +49,17 @@ export function resizeEncounterCanvas(
     })
   );
 
+  const needsCompletion = encounter.grid.visible || encounter.movementStrategy === 'grid' || Boolean(encounter.gridCoverage);
   const next: EncounterState = {
     ...encounter,
-    canvasSize,
-    gridCoverage: encounter.gridCoverage ? { x: encounter.gridCoverage.x * scale, y: encounter.gridCoverage.y * scale, width: encounter.gridCoverage.width * scale, height: encounter.gridCoverage.height * scale } : undefined,
-    backgroundImage: encounter.backgroundImage?.frame ? { ...encounter.backgroundImage,
-      frame: { x: encounter.backgroundImage.frame.x * scale, y: encounter.backgroundImage.frame.y * scale,
-        width: encounter.backgroundImage.frame.width * scale, height: encounter.backgroundImage.frame.height * scale }
-    } : encounter.backgroundImage,
-    grid: { ...encounter.grid, cellSize: encounter.grid.cellSize * scale,
-      origin: { x: encounter.grid.origin.x * scale, y: encounter.grid.origin.y * scale } },
-    actors: !encounter.actors.allIds.some(id => encounter.actors.byId[id].spatialPosition) ? encounter.actors : { ...encounter.actors, byId: Object.fromEntries(encounter.actors.allIds.map(id => {
-      const actor = encounter.actors.byId[id];
-      return [id, actor.spatialPosition ? { ...actor, spatialPosition: {
-        x: actor.spatialPosition.x * scale, y: actor.spatialPosition.y * scale } } : actor];
-    })) },
+    canvasSize: { width: frame.x + frame.width, height: frame.y + frame.height },
+    gridCoverage: !encounter.backgroundImage && needsCompletion ? frame : undefined,
+    backgroundImage: encounter.backgroundImage ? { ...encounter.backgroundImage, frame } : null,
     zones: {
       ...encounter.zones,
       byId
     }
   };
-  return next.grid.visible || next.movementStrategy === 'grid' || next.gridCoverage ? completeGridEdges(next) : next;
+  const completed = needsCompletion ? completeGridEdges(next) : next;
+  return overflowBehavior === 'zoneless' ? unplaceOverflowingSpatialActors(completed) : completed;
 }

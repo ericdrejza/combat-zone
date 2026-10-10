@@ -9,6 +9,7 @@ import { ApplyPanelOrderButton } from "./ApplyPanelOrderButton";
 import { DefaultColorSettings } from "./DefaultColorSettings";
 import { VisibilitySwitch } from "./VisibilitySwitch";
 import { PreferenceSwitch } from "./PreferenceSwitch";
+import { BackgroundResizeSettings } from "./BackgroundResizeSettings";
 import { PanelOrderSettings } from "./PanelOrderSettings";
 
 const themeOptions: Array<{
@@ -99,6 +100,7 @@ export function InterfaceSettings() {
         <legend className="pr-3 text-sm font-semibold">Navigation</legend>
         <PreferenceSwitch checked={warnActorDestinationsDiffer} label="Warn when actor destinations differ" onChange={setWarnActorDestinationsDiffer} />
         <PreferenceSwitch checked={keepHealDamageDialogOpen} label="Keep heal/damage dialog open after application" onChange={setKeepHealDamageDialogOpen} />
+        <BackgroundResizeSettings />
         <div className="mt-1 divide-y divide-canvas-line">
           <PreferenceSwitch
             checked={panWithRightClickDrag}

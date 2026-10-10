@@ -23,7 +23,7 @@ describe('grid borders and proportional Free movement', () => {
     }
   });
 
-  it('preserves the fraction of a cell moved after grid and canvas scaling', () => {
+  it('preserves the fraction of a cell moved after independent background resizing', () => {
     let initial = createActor(createEncounterState({ id: 'scale', name: 'Scale' }), { id: 'a', currentZoneId: 'zoneless' });
     initial.movementStrategy = 'free'; initial.actors.byId.a.spatialPosition = { x: 200, y: 200 };
     for (const cellSize of [16, 32, 64, 128, 256]) {

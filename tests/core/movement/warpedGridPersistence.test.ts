@@ -48,13 +48,13 @@ describe('warped grid persistence and history', () => {
     const folded = { ...next, grid: { ...next.grid, warp: { ...warp, x: [0, -1, 0, 0] as typeof warp.x } } };
     expect(prepareValidatedEncounterChange({ currentEncounter: next, nextEncounter: folded, action: createEncounterActionRecord('grid.calibrate') }).blocked).toBe(true);
   });
-  it('scales warped geometry with the canvas and preserves valid data after rejected saves', async () => {
+  it('keeps warped geometry fixed when resizing the background and preserves valid data after rejected saves', async () => {
     const state = resnapSpatialActors({ ...fixture(), grid: { ...fixture().grid, warp } });
     const point = gridToWorld(state.grid, { x: 128, y: 192 });
     const resized = resizeEncounterCanvas(state, { canvasSize: { width: 480, height: 320 }, zoneScale: 0.5 });
-    const scaled = gridToWorld(resized.grid, { x: 64, y: 96 });
+    const scaled = gridToWorld(resized.grid, { x: 128, y: 192 });
     const frame = getGridCoverage(resized);
-    expect(scaled.x - frame.x).toBeCloseTo(point.x / 2); expect(scaled.y - frame.y).toBeCloseTo(point.y / 2); assertEncounterState(resized);
+    expect(scaled.x - frame.x).toBeCloseTo(point.x); expect(scaled.y - frame.y).toBeCloseTo(point.y); assertEncounterState(resized);
     const repository = new InMemoryWorkspaceRepository(), record = await repository.createEncounter(state);
     await expect(repository.saveEncounter({ ...state, grid: { ...state.grid, warp: { ...warp, x: [0, 0, 0, 0] } } }, { expectedRevision: record.revision })).rejects.toThrow();
     expect((await repository.getEncounter(state.id))!.state).toEqual(state);

@@ -24,6 +24,7 @@ import { readImageAssetDimensions } from "./readImageFile";
 
 export function useBackgroundTool(encounter: EncounterState) {
   const dispatch = useDispatch();
+  const coverage = getGridCoverage(encounter);
   const { getViewportSize, viewportSize, zoom } = useCanvasViewport();
   const [preferredFitMode, setPreferredFitMode] =
     useState<BackgroundFitMode | null>("fit");
@@ -72,7 +73,7 @@ export function useBackgroundTool(encounter: EncounterState) {
         ? getLogicalViewportSize(currentViewportSize, zoom)
         : encounter.canvasSize;
     const requestedCanvasSize = getBackgroundFitCanvasSize(
-      encounter.backgroundImage ?? encounter.canvasSize,
+      encounter.backgroundImage ?? coverage,
       availableSize,
       mode
     );
@@ -92,7 +93,7 @@ export function useBackgroundTool(encounter: EncounterState) {
       dispatch,
       encounter,
       payload: { scale },
-      requestedCanvasSize: scaleCanvasSize(encounter.canvasSize, scale),
+      requestedCanvasSize: scaleCanvasSize(coverage, scale),
       requestedZoneScale: scale
     });
   }
@@ -101,16 +102,16 @@ export function useBackgroundTool(encounter: EncounterState) {
     viewportSize.width > 0 && viewportSize.height > 0
       ? getLogicalViewportSize(viewportSize, zoom)
       : encounter.canvasSize;
-  const aspectRatioSource = encounter.backgroundImage ?? encounter.canvasSize;
+  const aspectRatioSource = encounter.backgroundImage ?? coverage;
   const derivedFitMode = getActiveBackgroundFitMode(
-    encounter.canvasSize,
+    coverage,
     aspectRatioSource,
     availableSize
   );
   const activeFitMode =
     preferredFitMode &&
     canvasMatchesBackgroundFitMode(
-      encounter.canvasSize,
+      coverage,
       aspectRatioSource,
       availableSize,
       preferredFitMode

@@ -56,7 +56,7 @@ describe('automatic complete grid edges', () => {
     state.grid.origin = { x: 0, y: 0 }; state.canvasSize = { width: 300, height: 300 };
     expect(completeGridEdges(state)).toBe(state);
   });
-  it.each(['square', 'hex-flat', 'hex-pointy'] as const)('handles rotated %s cells and keeps alignment through subsequent scaling', type => {
+  it.each(['square', 'hex-flat', 'hex-pointy'] as const)('handles rotated %s cells and keeps geometry independent of background scaling', type => {
     const state = fixture(); state.grid.type = type; state.grid.rotation = 17; state.grid.origin = { x: 150, y: 150 };
     const vertices = type === 'square' ? [{ x: 0, y: 0 }, { x: 100, y: 0 }, { x: 100, y: 100 }, { x: 0, y: 100 }] : Array.from({ length: 6 }, (_, i) => ({ x: 100 / Math.sqrt(3) * Math.cos(i * Math.PI / 3), y: 100 / Math.sqrt(3) * Math.sin(i * Math.PI / 3) }));
     state.canvasSize = { width: Math.max(...vertices.map(p => gridToWorld(state.grid, p).x)) - 1, height: 500 };
@@ -66,9 +66,12 @@ describe('automatic complete grid edges', () => {
     expect(next.canvasSize.height).toBeGreaterThanOrEqual(state.canvasSize.height);
     const after = gridToWorld(next.grid, { x: 100, y: 100 });
     expect(after.x - frame.x).toBeCloseTo(before.x); expect(after.y - frame.y).toBeCloseTo(before.y);
-    const scaled = resizeEncounterCanvas(next, { canvasSize: { width: next.canvasSize.width * 2, height: next.canvasSize.height * 2 }, zoneScale: 2 });
+    const scaled = resizeEncounterCanvas(next, { canvasSize: { width: frame.width * 2, height: frame.height * 2 }, zoneScale: 2 });
     expect(scaled.backgroundImage!.frame!.width).toBe(frame.width * 2);
-    expect(scaled.grid.origin.x).toBe(next.grid.origin.x * 2);
+    expect(scaled.grid.cellSize).toBe(next.grid.cellSize);
+    const scaledFrame = scaled.backgroundImage!.frame!;
+    expect(scaled.grid.origin.x - scaledFrame.x).toBeCloseTo(next.grid.origin.x - frame.x);
+    expect(scaled.grid.origin.y - scaledFrame.y).toBeCloseTo(next.grid.origin.y - frame.y);
   });
   it.each(['square', 'hex-flat', 'hex-pointy'] as const)('limits each %s margin to one projected cell extent', type => {
     const state = fixture(); state.grid = { ...state.grid, type, rotation: 17 };

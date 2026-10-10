@@ -1,3 +1,6 @@
+import { getGridCoverage } from '@core/movement/gridCoverage';
+import { overflowingSpatialActorIds, type BackgroundResizeOverflowBehavior } from '@core/encounter/backgroundResizeOverflow';
+import { readBackgroundResizeOverflowPreference } from '@ui/interface_preferences/InterfacePreferenceProvider';
 import { resizeEncounterCanvas } from "@core/encounter/canvasSizeMutations";
 import type { EncounterState } from "@core/encounter/types";
 import type { EncounterBackgroundImage } from "@core/encounter/types";
@@ -33,14 +36,16 @@ type CommitCanvasResizeInput = {
   payload?: JsonObject;
   requestedCanvasSize: CanvasSize;
   requestedZoneScale?: number;
+  overflowBehavior?: BackgroundResizeOverflowBehavior;
 };
 
 function createCandidate(
   encounter: EncounterState,
   canvasSize: CanvasSize,
-  zoneScale: number
+  zoneScale: number,
+  overflowBehavior: BackgroundResizeOverflowBehavior
 ): ResizeCandidate {
-  const resized = resizeEncounterCanvas(encounter, { canvasSize, zoneScale });
+  const resized = resizeEncounterCanvas(encounter, { canvasSize, zoneScale, overflowBehavior });
   return {
     canvasSize: resized.canvasSize,
     encounter: resized,
@@ -53,6 +58,7 @@ function candidateIsValid(
   candidate: ResizeCandidate,
   actionType: CanvasActionType
 ): boolean {
+  if (overflowingSpatialActorIds(candidate.encounter).length) return false;
   return runValidationPipelineSync({
     action: { type: actionType, payload: {} },
     nextState: candidate.encounter,
@@ -66,12 +72,14 @@ export function clampCanvasResizeToValidLayout(
   encounterWithChanges: EncounterState,
   requestedCanvasSize: CanvasSize,
   requestedZoneScale: number,
-  actionType: CanvasActionType
+  actionType: CanvasActionType,
+  overflowBehavior: BackgroundResizeOverflowBehavior = 'clamp'
 ): ResizeCandidate {
   const requested = createCandidate(
     encounterWithChanges,
     requestedCanvasSize,
-    requestedZoneScale
+    requestedZoneScale,
+    overflowBehavior
   );
 
   if (candidateIsValid(currentEncounter, requested, actionType)) {
@@ -89,7 +97,8 @@ export function clampCanvasResizeToValidLayout(
         height: Math.round(requestedCanvasSize.height * validFactor),
         width: Math.round(requestedCanvasSize.width * validFactor)
       },
-      requestedZoneScale * validFactor
+      requestedZoneScale * validFactor,
+      overflowBehavior
     );
 
     if (candidateIsValid(currentEncounter, validCandidate, actionType)) {
@@ -108,7 +117,8 @@ export function clampCanvasResizeToValidLayout(
         height: Math.round(requestedCanvasSize.height * factor),
         width: Math.round(requestedCanvasSize.width * factor)
       },
-      requestedZoneScale * factor
+      requestedZoneScale * factor,
+      overflowBehavior
     );
 
     if (candidateIsValid(currentEncounter, candidate, actionType)) {
@@ -129,25 +139,29 @@ export function commitCanvasResize({
   nextEncounterBase = encounter,
   payload = {},
   requestedCanvasSize,
-  requestedZoneScale
+  requestedZoneScale,
+  overflowBehavior = readBackgroundResizeOverflowPreference()
 }: CommitCanvasResizeInput): void {
+  const coverage = getGridCoverage(encounter);
   const zoneScale =
     requestedZoneScale ??
     Math.min(
-      requestedCanvasSize.width / encounter.canvasSize.width,
-      requestedCanvasSize.height / encounter.canvasSize.height
+      requestedCanvasSize.width / coverage.width,
+      requestedCanvasSize.height / coverage.height
     );
   const candidate = clampCanvasResizeToValidLayout(
     encounter,
     nextEncounterBase,
     requestedCanvasSize,
     zoneScale,
-    actionType
+    actionType,
+    overflowBehavior
   );
   const action = createEncounterActionRecord(actionType, {
     ...payload,
     canvasSize: candidate.canvasSize,
-    zoneScale: candidate.zoneScale
+    zoneScale: candidate.zoneScale,
+    overflowBehavior
   });
   const prepared = prepareValidatedEncounterChangeForRuntime({
     action,
@@ -202,7 +216,7 @@ export function commitBackgroundImage(input: {
     nextEncounterBase: {
       ...input.encounter,
       gridCoverage: undefined,
-      backgroundImage: input.backgroundImage
+      backgroundImage: { ...input.backgroundImage, frame: getGridCoverage(input.encounter) }
     },
     payload: { backgroundImage: input.backgroundImage },
     requestedCanvasSize

@@ -131,3 +131,7 @@ the design as future or nice-to-have work.
 
 
 - [x] Automatically complete cells touching background/original canvas, preserve alignment with bounded margins, hide fragments, and retain history/persistence safeguards.
+
+## Independent background sizing
+
+- [x] Decouple all background sizing from grid/token scale and spatial placements; use unpadded coverage and an Interface overflow preference, with history and writer safeguards.

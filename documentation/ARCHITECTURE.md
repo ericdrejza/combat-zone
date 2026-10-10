@@ -158,7 +158,8 @@ schema 17 while retaining their existing schema compatibility.
 Encounter schema 18 adds an optional bilinear grid warp. Schema 17 migrations
 preserve regular-grid configuration and spatial coordinates. Warp coefficients
 map cell-normalized local lattice coordinates before the existing origin/rotation
-transform; this keeps canvas scaling and manual transforms consistent. The grid
+transform; manual transforms remain consistent while background resizing leaves
+grid geometry fixed. The grid
 geometry engine owns forward/inverse mapping, local token scale, and lattice
 neighborhoods. Rendering uses exact quadratic SVG edge paths for warped cells.
 Spatial validation rejects non-invertible/folded geometry in every validation
@@ -175,7 +176,7 @@ Encounter schema 19 adds optional `backgroundImage.frame` for edge-completion
 margins. Schema 18 migrates without changing full-canvas background rendering.
 Intrinsic media dimensions remain asset metadata; frame is the sole authority
 for explicit logical placement. Rendering, luminance sampling, detection, and
-subsequent uniform resizing use that frame. Edge completion measures original
+subsequent background sizing use that frame. Edge completion measures original
 cell coverage, translates geometry together, and commits through existing
 validation/history/repository boundaries. Cloud contracts accept schemas 17–19.
 
@@ -185,3 +186,10 @@ grid settings/calibration, strategy entry, and canvas sizing. Schema 19 active
 grids migrate to whole-cell bounds without mutating the source record. A union
 of coverage and perimeter cells clips rendered grid fragments without storing
 derived polygons. Cloud contracts accept spatial schemas 17–20.
+
+Background sizing changes coverage dimensions independently of grid geometry and
+saved spatial coordinates. The pure resize helper completes cells before applying
+the explicit overflow policy; the shared Background commit path reads that policy
+from Interface preferences and commits resizing/unplacements in one history entry.
+Zone polygons retain uniform scaling and existing layout clamps. This adds only a
+local Interface preference, without changing the encounter schema or migrations.

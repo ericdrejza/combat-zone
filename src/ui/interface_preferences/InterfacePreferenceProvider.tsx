@@ -1,3 +1,4 @@
+import { readBackgroundResizeOverflowBehavior } from '@core/encounter/backgroundResizeOverflow';
 import { isClockStyle } from "@entities/zone/clockStyle";
 import { createContext, type ReactNode, useContext, useEffect, useState } from "react";
 import { readAudioCueVolumeDefault, readAudioRepeatDelayDefaults } from "./audioPreferences";
@@ -13,6 +14,10 @@ const InterfacePreferenceContext =
 /** Reads the durable creation default for code paths outside the React provider. */
 export function readPanelOrderPreference(): EncounterPanelOrder {
   return readPreferences().panelOrder;
+}
+
+export function readBackgroundResizeOverflowPreference() {
+  return readPreferences().backgroundResizeOverflowBehavior;
 }
 
 /** Owns durable interface defaults that must not enter encounter history. */
@@ -56,6 +61,7 @@ export function InterfacePreferenceProvider({ children }: { children: ReactNode 
     <InterfacePreferenceContext.Provider
       value={{
         ...preferences,
+        setBackgroundResizeOverflowBehavior: value => updatePreferences({ backgroundResizeOverflowBehavior: readBackgroundResizeOverflowBehavior(value) }),
         setAudioCueVolumeDefault: (volume) => updatePreferences({ audioCueVolumeDefault: readAudioCueVolumeDefault(volume) }),
         setAudioMediaKeyScope: (audioMediaKeyScope) => updatePreferences({ audioMediaKeyScope }),
         autoSelectActiveActor,

@@ -1,3 +1,4 @@
+import { readBackgroundResizeOverflowBehavior, type BackgroundResizeOverflowBehavior } from '@core/encounter/backgroundResizeOverflow';
 import { DEFAULT_CLOCK_STYLE, isClockStyle, type ClockStyle } from "@core/entity_resources/clockStyle";
 import { readAudioCueVolumeDefault, readAudioRepeatDelayDefaults } from "./audioPreferences";
 import { readPanelVisibility } from "./panelPreferences";
@@ -22,6 +23,7 @@ export const DEFAULT_ZONE_COLOR_DEFAULTS: ZoneColorDefaults = {
 };
 
 export type DurableInterfacePreferences = {
+  backgroundResizeOverflowBehavior: BackgroundResizeOverflowBehavior;
   audioCueVolumeDefault: number;
   audioMediaKeyScope: "all" | "music";
   audioMasterVolume: number;
@@ -43,6 +45,7 @@ export type DurableInterfacePreferences = {
 };
 
 export type InterfacePreferences = DurableInterfacePreferences & {
+  setBackgroundResizeOverflowBehavior: (behavior: BackgroundResizeOverflowBehavior) => void;
   setAudioCueVolumeDefault: (volume: number) => void;
   setAudioMediaKeyScope: (scope: "all" | "music") => void;
   setAudioMasterVolume: (volume: number) => void;
@@ -66,6 +69,7 @@ export type InterfacePreferences = DurableInterfacePreferences & {
 };
 
 export const defaultPreferences: DurableInterfacePreferences = {
+  backgroundResizeOverflowBehavior: 'zoneless',
   audioCueVolumeDefault: 0.5,
   audioMediaKeyScope: "music",
   audioMasterVolume: 1,
@@ -88,6 +92,7 @@ export const defaultPreferences: DurableInterfacePreferences = {
 
 export const defaultValue: InterfacePreferences = {
   ...defaultPreferences,
+  setBackgroundResizeOverflowBehavior: () => undefined,
   autoSelectActiveActorDefault: true,
   setAudioCueVolumeDefault: () => undefined,
   setAudioMediaKeyScope: () => undefined,
@@ -120,6 +125,7 @@ export function readPreferences(): DurableInterfacePreferences {
       localStorage.getItem(INTERFACE_PREFERENCES_STORAGE_KEY) ?? "null"
     ) as Partial<DurableInterfacePreferences> | null;
     return {
+      backgroundResizeOverflowBehavior: readBackgroundResizeOverflowBehavior(stored?.backgroundResizeOverflowBehavior),
       audioCueVolumeDefault: readAudioCueVolumeDefault(stored?.audioCueVolumeDefault),
       audioMediaKeyScope: stored?.audioMediaKeyScope === "all" ? "all" : "music",
       audioMasterVolume:
