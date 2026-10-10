@@ -4,12 +4,18 @@ import { footprintFits, snapToGrid, spatialActorRadius } from './gridGeometry';
 import { isSpatial } from './movementStrategies';
 import { validGrid } from './types';
 import { warpFitsCanvas } from './gridWarp';
+import { validBackgroundFrame } from '@core/encounter/backgroundFrame';
 
 /** Structural grid and canvas fit rules hold even when advisory validation is off. */
 export const SpatialValidator: Validator<EncounterState> = {
   id: 'SpatialValidator', runsInOffMode: true,
   validate(_action, { state, nextState = state }) {
     const messages: ValidationMessage[] = [];
+    if (nextState.gridCoverage !== undefined && (nextState.backgroundImage !== null || !validBackgroundFrame(nextState.gridCoverage, nextState.canvasSize)))
+      messages.push({ code: 'grid.invalidCoverage', message: 'Grid coverage must fit inside the canvas without a background image.', severity: 'error' });
+    if (nextState.backgroundImage?.frame !== undefined && !validBackgroundFrame(nextState.backgroundImage.frame, nextState.canvasSize)) {
+      messages.push({ code: 'background.invalidFrame', message: 'Background placement must fit completely inside the canvas.', severity: 'error' });
+    }
     if (!validGrid(nextState.grid) || !warpFitsCanvas(nextState.grid, nextState.canvasSize) || !['zone', 'grid', 'free'].includes(nextState.movementStrategy)) {
       messages.push({ code: 'grid.invalidConfiguration', message: 'Grid configuration is invalid.', severity: 'error' });
     } else if (isSpatial(nextState)) {

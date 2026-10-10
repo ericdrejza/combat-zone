@@ -579,3 +579,6 @@ these back into `AGENT.md` or `DESIGN.md`.
 - [x] Grid tool settings appear in Properties with cancellable previews, Apply history, undo/redo, and stale-validation protection. Background keeps the shared settings dialog; calibration owns its preview while active.
 - [x] Combat settings persist, validate, synchronize, and reset the held-movement interval; accepted repeats respect that interval. Free movement keeps a constant fraction of cell size after grid/canvas scaling.
 - [x] Medium actors can occupy all fully contained outer square cells in every validation mode, and native browser drags reach both outer rows and columns.
+
+
+- [x] Automatically complete cells touching background/original canvas, preserve alignment with bounded margins, hide fragments, and retain history/persistence safeguards.

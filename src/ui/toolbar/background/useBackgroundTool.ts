@@ -1,3 +1,4 @@
+import { getGridCoverage } from '@core/movement/gridCoverage';
 import { useState } from "react";
 import { useDispatch } from "react-redux";
 
@@ -55,7 +56,8 @@ export function useBackgroundTool(encounter: EncounterState) {
         }),
         nextEncounter: {
           ...encounter,
-          backgroundImage: null
+          backgroundImage: null,
+          gridCoverage: getGridCoverage(encounter)
         }
       })
     );

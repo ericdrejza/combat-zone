@@ -3,7 +3,7 @@ import { useDispatch, useSelector, useStore } from 'react-redux';
 import type { RootState } from '@store/store';
 import { setGridPreview } from '@interaction/interactionState';
 import { validGrid } from '@core/movement/types';
-import { resnapSpatialActors } from '@core/movement/movementStrategies';
+import { updateGridConfiguration } from '@core/movement/updateGridConfiguration';
 import { usePersistence } from '@ui/persistence/PersistenceProvider';
 import { useKeyboardEncounterCommit } from '@ui/canvas/useKeyboardEncounterCommit';
 import { GridSettingsFields, gridSettingsButton } from '@ui/toolbar/grid/GridSettingsFields';
@@ -29,7 +29,7 @@ export function GridPropertiesPanel() {
     if (readOnly || busy || aligning || !validGrid(draft)) return;
     setBusy(true); setError('');
     try {
-      if (!await commit('grid.update', {}, state => resnapSpatialActors({ ...state, grid: draft }), () => store.getState().encounter.present === encounter && store.getState().interaction.activeToolId === 'grid' && !store.getState().interaction.gridCalibrationActive))
+      if (!await commit('grid.update', {}, state => updateGridConfiguration(state, draft), () => store.getState().encounter.present === encounter && store.getState().interaction.activeToolId === 'grid' && !store.getState().interaction.gridCalibrationActive))
         setError('Grid changes could not be applied. Check canvas fit and validation messages.');
     } finally { setBusy(false); }
   }}>

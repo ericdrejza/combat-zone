@@ -89,7 +89,10 @@ The encounter canvas defaults to 960×640 logical units. Background sizing
 commands change the persisted canvas bounds and uniformly scale every Zone
 polygon from the top-left origin. Actor, Engagement, and Edge geometry remains
 derived from the scaled Zones. Background images always preserve their
-intrinsic aspect ratio and fill the resulting canvas without cropping.
+intrinsic aspect ratio and fill the resulting canvas without cropping, except
+when grid edge completion adds unscaled canvas margins. An optional
+`backgroundImage.frame` (`x`, `y`, `width`, `height`) then records its logical
+placement separately from intrinsic asset dimensions.
 
 Adding or replacing a background sizes the canvas so the full image is as
 large as possible within the visible workspace. Deleting a background keeps
@@ -1376,7 +1379,24 @@ position. Actor overlap is allowed outside Zone. Every token's full footprint
 must stay inside the canvas in all validation modes. Invalid operations are
 rejected atomically. Fully contained outer cells remain available; partial
 edge cells cannot accept a token whose footprint would extend beyond the
-canvas, even when its center is inside. Grid geometry edits and actor size changes re-snap actors
+canvas, even when its center is inside. Applied grids automatically complete
+all cells with positive-area overlap with the background, or with the original
+canvas area when no background exists. There is no percentage threshold or
+manual side control. Canvas bounds extend by at most one perimeter cell's
+projected extent on each side, without scaling the background or grid.
+For hex, rotated, and warped grids, only those completed cells render;
+fragments outside their potentially irregular outline are hidden. The
+background's saved frame defines coverage. Without a background, an optional
+Encounter `gridCoverage` frame retains the original unpadded canvas area;
+it is absent when background placement already supplies that fact.
+Completion recalculates against this coverage, avoiding cumulative expansion.
+Left/top changes translate the grid origin, actor positions, Zone polygons,
+and background/coverage together. Settings, alignment, entering Grid, and
+background/canvas resizing complete cells within their existing history action.
+Grid changes can reduce prior margins; existing fit/snapping validation applies.
+Ordinary resizing scales coverage and background placement. Deleting a
+background retains its coverage; adding/replacing one establishes new coverage.
+Grid geometry edits and actor size changes re-snap actors
 to nearby fitting anchors; appearance edits do not change positions. A group
 drag translates every selected actor by the same offset, then individually
 snaps each actor in Grid. Each complete operation is one history action.

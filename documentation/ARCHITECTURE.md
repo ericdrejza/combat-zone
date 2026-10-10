@@ -170,3 +170,18 @@ pixel buffers. Resolution passes are capped at 384 and 1,152 pixels, retain
 native aspect ratio, and never enlarge original images. Worker cancellation
 terminates analysis immediately; previews remain interaction-only and require
 the existing writer/validated-history boundary on Apply.
+
+Encounter schema 19 adds optional `backgroundImage.frame` for edge-completion
+margins. Schema 18 migrates without changing full-canvas background rendering.
+Intrinsic media dimensions remain asset metadata; frame is the sole authority
+for explicit logical placement. Rendering, luminance sampling, detection, and
+subsequent uniform resizing use that frame. Edge completion measures original
+cell coverage, translates geometry together, and commits through existing
+validation/history/repository boundaries. Cloud contracts accept schemas 17–19.
+
+Encounter schema 20 adds optional `gridCoverage` only for image-less encounters.
+With a background, coverage derives from its frame. Completion is automatic in
+grid settings/calibration, strategy entry, and canvas sizing. Schema 19 active
+grids migrate to whole-cell bounds without mutating the source record. A union
+of coverage and perimeter cells clips rendered grid fragments without storing
+derived polygons. Cloud contracts accept spatial schemas 17–20.

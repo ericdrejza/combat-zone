@@ -15,8 +15,26 @@ export function validateSpatialState(state: Record<string, unknown>): void {
   const actors = state.actors as { byId: Record<string, Record<string, unknown>> };
   if (grid?.warp !== undefined) {
     const warp = grid.warp as Record<string, unknown> | null;
-    if (state.schemaVersion !== 18 || !warp || warp.type !== 'bilinear' ||
+    if ((state.schemaVersion !== 18 && state.schemaVersion !== 19 && state.schemaVersion !== 20) || !warp || warp.type !== 'bilinear' ||
       ![warp.x, warp.y].every(values => Array.isArray(values) && values.length === 4 && values.every(value => typeof value === 'number' && Number.isFinite(value)))) fail();
+  }
+  if (state.gridCoverage !== undefined) {
+    const coverage = state.gridCoverage as { x: number; y: number; width: number; height: number } | null;
+    const canvas = state.canvasSize as { width: number; height: number };
+    if (state.schemaVersion !== 20 || state.backgroundImage !== null || !coverage || !canvas ||
+        ![coverage.x, coverage.y, coverage.width, coverage.height].every(value => typeof value === 'number' && Number.isFinite(value)) ||
+        coverage.x < 0 || coverage.y < 0 || coverage.width <= 0 || coverage.height <= 0 ||
+        coverage.x + coverage.width > canvas.width + 1e-7 || coverage.y + coverage.height > canvas.height + 1e-7) fail();
+  }
+  const background = state.backgroundImage as Record<string, unknown> | null;
+  if (background?.frame !== undefined) {
+    const frame = background.frame as Record<string, unknown> | null;
+    const canvas = state.canvasSize as { width: number; height: number };
+    if ((state.schemaVersion !== 19 && state.schemaVersion !== 20) || !frame || !canvas ||
+        ![frame.x, frame.y, frame.width, frame.height].every(value => typeof value === 'number' && Number.isFinite(value)) ||
+        (frame.x as number) < 0 || (frame.y as number) < 0 || (frame.width as number) <= 0 || (frame.height as number) <= 0 ||
+        (frame.x as number) + (frame.width as number) > canvas.width + 1e-7 ||
+        (frame.y as number) + (frame.height as number) > canvas.height + 1e-7) fail();
   }
   for (const actor of Object.values(actors.byId)) {
     if (actor.spatialPosition === undefined) continue;

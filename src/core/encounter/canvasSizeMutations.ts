@@ -1,3 +1,4 @@
+import { completeGridEdges } from '@core/movement/gridEdgeCompletion';
 import type { CanvasSize } from "@core/layout/polygonCanvasBounds";
 import type { EncounterState } from "./types";
 
@@ -43,9 +44,14 @@ export function resizeEncounterCanvas(
     })
   );
 
-  return {
+  const next: EncounterState = {
     ...encounter,
     canvasSize,
+    gridCoverage: encounter.gridCoverage ? { x: encounter.gridCoverage.x * scale, y: encounter.gridCoverage.y * scale, width: encounter.gridCoverage.width * scale, height: encounter.gridCoverage.height * scale } : undefined,
+    backgroundImage: encounter.backgroundImage?.frame ? { ...encounter.backgroundImage,
+      frame: { x: encounter.backgroundImage.frame.x * scale, y: encounter.backgroundImage.frame.y * scale,
+        width: encounter.backgroundImage.frame.width * scale, height: encounter.backgroundImage.frame.height * scale }
+    } : encounter.backgroundImage,
     grid: { ...encounter.grid, cellSize: encounter.grid.cellSize * scale,
       origin: { x: encounter.grid.origin.x * scale, y: encounter.grid.origin.y * scale } },
     actors: !encounter.actors.allIds.some(id => encounter.actors.byId[id].spatialPosition) ? encounter.actors : { ...encounter.actors, byId: Object.fromEntries(encounter.actors.allIds.map(id => {
@@ -58,4 +64,5 @@ export function resizeEncounterCanvas(
       byId
     }
   };
+  return next.grid.visible || next.movementStrategy === 'grid' || next.gridCoverage ? completeGridEdges(next) : next;
 }

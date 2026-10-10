@@ -128,3 +128,6 @@ the design as future or nice-to-have work.
 - [x] Hold movement keys to repeat Grid/Free steps with validation, writer guards, and individual undo/redo.
 - [x] Share Grid Properties/Background settings controls, persist configurable repeat timing, and scale Free nudges with cell size.
 - [x] Verify fully contained first/last square rows and columns through validation and browser dragging; refine detected periods to reduce boundary drift.
+
+
+- [x] Automatically complete cells touching background/original canvas, preserve alignment with bounded margins, hide fragments, and retain history/persistence safeguards.

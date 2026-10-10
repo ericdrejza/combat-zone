@@ -8,7 +8,7 @@ export const CanvasBoundsValidator: Validator<EncounterState> = {
   id: "CanvasBoundsValidator",
   runsInOffMode: true,
   validate(action, { nextState }) {
-    if (!nextState || !["canvas.resize", "background.add", "background.replace"].includes(action.type)) {
+    if (!nextState || !["canvas.resize", "background.add", "background.replace", "grid.completeEdges", "grid.update", "grid.calibrate"].includes(action.type)) {
       return result([]);
     }
     const outsideZone = nextState.zones.allIds

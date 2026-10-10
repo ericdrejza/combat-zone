@@ -1,3 +1,4 @@
+import { getBackgroundFrame } from '@core/encounter/backgroundFrame';
 import { useEffect, useState } from "react";
 
 import type { LayoutPoint } from "@core/layout/types";
@@ -114,7 +115,7 @@ export function useCanvasBackgroundLuminance(
       }
 
       try {
-        drawCanvasBackgroundImage(context, image, canvasSize);
+        drawCanvasBackgroundImage(context, image, canvasSize, getBackgroundFrame(backgroundImage, canvasSize), theme);
         const luminanceByZoneId = Object.fromEntries(
           backgroundTextZones.map((zone) => [
             zone.id,
@@ -215,7 +216,7 @@ export function usePolygonDraftBackgroundLuminance(
       }
 
       try {
-        drawCanvasBackgroundImage(context, image, canvasSize);
+        drawCanvasBackgroundImage(context, image, canvasSize, getBackgroundFrame(backgroundImage, canvasSize), theme);
         const samplePoints =
           zoneDraftPoints.length >= 3
             ? createDeterministicSamplePoints(

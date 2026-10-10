@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import type { RootState } from '@store/store';
 import { cancelGridEditing, setGridCalibrationMode, setGridCalibrationType, setGridPreview } from '@interaction/interactionState';
 import { calibrateGrid, calibrateQuadrants } from '@core/movement/gridCalibration';
-import { resnapSpatialActors } from '@core/movement/movementStrategies';
+import { updateGridConfiguration } from '@core/movement/updateGridConfiguration';
 import { useKeyboardEncounterCommit } from '../useKeyboardEncounterCommit';
 import { AlignmentPanel, AlignmentToggle, alignmentButton } from './AlignmentPanel';
 import { GridDetectionButton } from './GridDetectionButton';
@@ -75,7 +75,7 @@ export function GridCalibrationOverlay() {
       <button type="button" className={`${button} ml-auto`} disabled={!calibrated || (needsChoice && !choice) || readOnly || busy} onClick={async () => {
         if (!calibrated) return;
         setBusy(true);
-        try { if (await commit('grid.calibrate', {}, state => resnapSpatialActors({ ...state, grid: calibrated }))) dispatch(cancelGridEditing());
+        try { if (await commit('grid.calibrate', {}, state => updateGridConfiguration(state, calibrated))) dispatch(cancelGridEditing());
           else setError('Alignment could not be applied. Check canvas fit and validation messages.'); }
         finally { setBusy(false); }
       }}>{busy ? 'Applying…' : 'Apply alignment'}</button>

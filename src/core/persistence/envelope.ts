@@ -1,3 +1,5 @@
+import { completeGridEdges } from '@core/movement/gridEdgeCompletion';
+import { validBackgroundFrame } from '@core/encounter/backgroundFrame';
 import { assertSpatialState } from '@core/movement/assertSpatialState';
 import { createDefaultGrid } from '@core/movement/types';
 import { validCounters } from "@core/entity_resources/counters";
@@ -133,6 +135,13 @@ export function assertEncounterState(value: unknown, name = "encounter"): assert
     !isImageAssetSource(value.backgroundImage.source)
   ) {
     throw new PersistenceValidationError(`${name}.backgroundImage.source is invalid.`);
+  }
+  if (isRecord(value.backgroundImage) && value.backgroundImage.frame !== undefined &&
+      !validBackgroundFrame(value.backgroundImage.frame, value.canvasSize as EncounterState['canvasSize'])) {
+    throw new PersistenceValidationError(`${name}.backgroundImage.frame is invalid.`);
+  }
+  if (value.gridCoverage !== undefined && (value.backgroundImage !== null || !validBackgroundFrame(value.gridCoverage, value.canvasSize as EncounterState['canvasSize']))) {
+    throw new PersistenceValidationError(`${name}.gridCoverage is invalid.`);
   }
   assertSpatialState(value, name);
   for (const zone of Object.values((value.zones as { byId: UnknownRecord }).byId)) {
@@ -523,7 +532,15 @@ export function migrateEncounterState(value: unknown): unknown {
     migrated.movementStrategy = 'zone';
     migrated.grid = createDefaultGrid();
   }
-  if (migrated.schemaVersion === 17) migrated.schemaVersion = ENCOUNTER_SCHEMA_VERSION;
+  if (migrated.schemaVersion === 17) migrated.schemaVersion = 18;
+  if (migrated.schemaVersion === 18) migrated.schemaVersion = 19;
+  if (migrated.schemaVersion === 19) {
+    migrated.schemaVersion = ENCOUNTER_SCHEMA_VERSION;
+    // Completion changes geometry only after legacy structure has been validated.
+    assertEncounterState(migrated);
+    if (migrated.movementStrategy === 'grid' || (isRecord(migrated.grid) && migrated.grid.visible))
+      return completeGridEdges(migrated as unknown as EncounterState);
+  }
 
   return migrated;
 }

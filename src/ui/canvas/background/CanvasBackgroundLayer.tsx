@@ -1,3 +1,4 @@
+import { getBackgroundFrame } from '@core/encounter/backgroundFrame';
 import type { RootState } from "@store/store";
 import type { CanvasSize } from "@core/layout/polygonCanvasBounds";
 import { useResolvedImageSource } from "@core/assets/ImageAssetResolver";
@@ -15,6 +16,7 @@ export function CanvasBackgroundLayer({
   backgroundImage,
   canvasSize
 }: CanvasBackgroundLayerProps) {
+  const frame = getBackgroundFrame(backgroundImage, canvasSize);
   const backgroundUrl = useResolvedImageSource(backgroundImage?.source);
   const isVideo = isVideoMediaType(backgroundImage?.mediaType);
   const { enableAssetAnimation } = useInterfacePreferences();
@@ -35,11 +37,11 @@ export function CanvasBackgroundLayer({
       {backgroundImage && backgroundUrl && isVideo && enableAssetAnimation ? (
         <foreignObject
           aria-label="Canvas background video"
-          height={canvasSize.height}
+          height={frame.height}
           pointerEvents="none"
-          width={canvasSize.width}
-          x="0"
-          y="0"
+          width={frame.width}
+          x={frame.x}
+          y={frame.y}
         >
           <ControlledVideo
             className="h-full w-full object-fill"
@@ -50,12 +52,12 @@ export function CanvasBackgroundLayer({
       ) : backgroundImage && (stillBackgroundUrl || (!isVideo && backgroundUrl)) ? (
         <image
           aria-label="Canvas background image"
-          height={canvasSize.height}
+          height={frame.height}
           href={stillBackgroundUrl ?? backgroundUrl ?? undefined}
           preserveAspectRatio="none"
-          width={canvasSize.width}
-          x="0"
-          y="0"
+          width={frame.width}
+          x={frame.x}
+          y={frame.y}
         />
       ) : null}
       <rect

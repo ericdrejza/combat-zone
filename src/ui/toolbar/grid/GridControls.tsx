@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import type { RootState } from '@store/store';
 import { startGridCalibration, cancelGridEditing } from '@interaction/interactionState';
-import { resnapSpatialActors } from '@core/movement/movementStrategies';
+import { updateGridConfiguration } from '@core/movement/updateGridConfiguration';
 import type { GridConfiguration } from '@core/movement/types';
 import { useKeyboardEncounterCommit } from '@ui/canvas/useKeyboardEncounterCommit';
 import { usePersistence } from '@ui/persistence/PersistenceProvider';
@@ -21,7 +21,7 @@ export function GridControls({ showSettings = true }: { showSettings?: boolean }
   const [busy, setBusy] = useState(false);
   async function update(grid: GridConfiguration) {
     setBusy(true);
-    try { return await commit('grid.update', {}, state => resnapSpatialActors({ ...state, grid })); }
+    try { return await commit('grid.update', {}, state => updateGridConfiguration(state, grid)); }
     finally { setBusy(false); }
   }
   return <>

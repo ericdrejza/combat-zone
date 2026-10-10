@@ -40,9 +40,10 @@ function createCandidate(
   canvasSize: CanvasSize,
   zoneScale: number
 ): ResizeCandidate {
+  const resized = resizeEncounterCanvas(encounter, { canvasSize, zoneScale });
   return {
-    canvasSize,
-    encounter: resizeEncounterCanvas(encounter, { canvasSize, zoneScale }),
+    canvasSize: resized.canvasSize,
+    encounter: resized,
     zoneScale
   };
 }
@@ -200,6 +201,7 @@ export function commitBackgroundImage(input: {
     encounter: input.encounter,
     nextEncounterBase: {
       ...input.encounter,
+      gridCoverage: undefined,
       backgroundImage: input.backgroundImage
     },
     payload: { backgroundImage: input.backgroundImage },

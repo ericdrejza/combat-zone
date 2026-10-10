@@ -67,7 +67,7 @@ afterAll(async () => {
 });
 
 describe("Firebase API service", () => {
-  it.each([17, 18])('round trips schema %s grid and actor positions and preserves data after invalid writes', async version => {
+  it.each([17, 18, 19, 20])('round trips schema %s grid and actor positions and preserves data after invalid writes', async version => {
     const command = encounterCommand();
     const grid = { type: 'square', cellSize: 64, origin: { x: 0, y: 0 }, rotation: 0, visible: true, color: '#808080', opacity: 0.5 };
     command.payload.state.schemaVersion = version;
@@ -75,14 +75,28 @@ describe("Firebase API service", () => {
     Object.assign(command.payload.state, { movementStrategy: 'grid', grid,
       counters: { byId: {}, allIds: [] }, clocks: { byId: {}, allIds: [] },
       audioCues: { byId: {}, allIds: [] }, audioCueGroups: { byId: {}, allIds: [] }, musicGroupIds: [] });
-    if (version === 18) Object.assign(grid, { warp: { type: 'bilinear', x: [0, 1, 0, 0.006], y: [0, 0, 1, 0.004] } });
+    if (version >= 18) Object.assign(grid, { warp: { type: 'bilinear', x: [0, 1, 0, 0.006], y: [0, 0, 1, 0.004] } });
     command.payload.state.actors = { allIds: ['a'], byId: { a: { id: 'a', name: 'Actor', actorType: 'creature', layoutGroup: 'neutral', size: 'medium', shape: 'circle', currentZoneId: 'zoneless', metadata: {}, statusEffects: [], counters: { byId: {}, allIds: [] }, spatialPosition: { x: 160, y: 160 } } } } as never;
+    if (version === 19) Object.assign(command.payload.state, { backgroundImage: { source: { kind: 'url', url: 'https://example.com/grid.png' }, name: 'Grid', mediaType: 'image/png', width: 940, height: 620, frame: { x: 10, y: 10, width: 940, height: 620 } } });
+    if (version === 20) Object.assign(command.payload.state, { gridCoverage: { x: 10, y: 10, width: 940, height: 620 } });
     await service.commitEncounter('alice', command);
     const ref = getFirestore().doc('users/alice/encounters/encounter-1');
     expect((await ref.get()).data()?.state).toEqual(command.payload.state);
-    if (version === 18) {
+    if (version >= 18) {
       const malformed = structuredClone(command); malformed.mutationId = 'invalid-warp'; malformed.expectedRevision = 1;
       Object.assign(malformed.payload.state, { grid: { ...grid, warp: { type: 'bilinear', x: [1, 2], y: [0, 0, 1, 0] } } });
+      expect(() => service.commitEncounter('alice', malformed)).toThrow(/spatial/);
+      expect((await ref.get()).data()?.state).toEqual(command.payload.state);
+    }
+    if (version === 19) {
+      const malformed = structuredClone(command); malformed.mutationId = 'invalid-frame'; malformed.expectedRevision = 1;
+      Object.assign(malformed.payload.state, { backgroundImage: { ...(command.payload.state as unknown as { backgroundImage: object }).backgroundImage, frame: { x: -1, y: 0, width: 940, height: 620 } } });
+      expect(() => service.commitEncounter('alice', malformed)).toThrow(/spatial/);
+      expect((await ref.get()).data()?.state).toEqual(command.payload.state);
+    }
+    if (version === 20) {
+      const malformed = structuredClone(command); malformed.mutationId = 'invalid-coverage'; malformed.expectedRevision = 1;
+      Object.assign(malformed.payload.state, { gridCoverage: { x: -1, y: 0, width: 940, height: 620 } });
       expect(() => service.commitEncounter('alice', malformed)).toThrow(/spatial/);
       expect((await ref.get()).data()?.state).toEqual(command.payload.state);
     }

@@ -1,3 +1,4 @@
+import { getBackgroundFrame } from '@core/encounter/backgroundFrame';
 import type { EncounterState } from '@core/encounter/types';
 import { analyzeGridImage } from '@core/movement/gridDetectionRuntime';
 import { detectGridAtResolutions } from '@core/movement/gridDetectionPasses';
@@ -19,8 +20,9 @@ export async function detectBackgroundGrid(url: string, encounter: EncounterStat
   if (!context) throw new Error('Image analysis is unavailable. Use vertex alignment instead.');
   await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
   if (signal.aborted) return null;
-  return detectGridAtResolutions({ imageWidth: image.width, imageHeight: image.height,
-    canvasWidth: encounter.canvasSize.width, canvasHeight: encounter.canvasSize.height, grid: encounter.grid, signal, analyze: analyzeGridImage,
+  const frame = getBackgroundFrame(encounter.backgroundImage, encounter.canvasSize);
+  const result = await detectGridAtResolutions({ imageWidth: image.width, imageHeight: image.height,
+    canvasWidth: frame.width, canvasHeight: frame.height, grid: encounter.grid, signal, analyze: analyzeGridImage,
     readPixels: (width, height) => {
       canvas.width = width; canvas.height = height;
       context.drawImage(image, 0, 0, width, height);
@@ -28,4 +30,5 @@ export async function detectBackgroundGrid(url: string, encounter: EncounterStat
       catch { throw new Error('The background does not allow pixel analysis. Use vertex alignment instead.'); }
     }
   });
+  return result ? { ...result, origin: { x: result.origin.x + frame.x, y: result.origin.y + frame.y } } : null;
 }

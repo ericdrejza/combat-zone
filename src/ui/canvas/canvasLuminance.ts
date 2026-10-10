@@ -1,3 +1,4 @@
+import type { BackgroundFrame } from '@core/encounter/backgroundFrame';
 import type { LayoutPoint } from '@core/layout/types';
 import type { CanvasSize } from '@core/layout/polygonCanvasBounds';
 import { DEFAULT_CANVAS_SIZE } from '@core/layout/polygonCanvasBounds';
@@ -86,9 +87,15 @@ export function createDeterministicSamplePoints(
 export function drawCanvasBackgroundImage(
   context: CanvasRenderingContext2D,
   image: CanvasImageSource,
-  canvasSize: CanvasSize = DEFAULT_CANVAS_SIZE
+  canvasSize: CanvasSize = DEFAULT_CANVAS_SIZE,
+  frame: BackgroundFrame = { ...canvasSize, x: 0, y: 0 },
+  theme: CanvasColorTheme = 'light'
 ) {
-  context.drawImage(image, 0, 0, canvasSize.width, canvasSize.height);
+  if (frame.x || frame.y || frame.width !== canvasSize.width || frame.height !== canvasSize.height) {
+    context.fillStyle = CANVAS_BACKGROUND_COLORS[theme];
+    context.fillRect(0, 0, canvasSize.width, canvasSize.height);
+  }
+  context.drawImage(image, frame.x, frame.y, frame.width, frame.height);
 }
 
 export function getAverageCanvasLuminance(

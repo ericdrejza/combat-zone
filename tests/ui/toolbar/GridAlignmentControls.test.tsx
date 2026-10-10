@@ -139,7 +139,7 @@ describe('grid settings and alignment controls', () => {
     expect(controls.getByRole('switch', { name: 'Grid visible' })).toHaveAttribute('aria-checked', 'false');
     expect(store.getState().interaction.gridPreview!.visible).toBe(false);
     await user.click(controls.getByRole('button', { name: 'Apply' }));
-    await waitFor(() => expect(store.getState().encounter.present.grid).toMatchObject({ cellSize: 51, rotation: 0, origin: { x: -3, y: 101 }, opacity: 0.75, visible: false }));
+    await waitFor(() => expect(store.getState().encounter.present.grid).toMatchObject({ cellSize: 51, rotation: 0, origin: { x: 0, y: 102 }, opacity: 0.75, visible: false }));
   });
   it('requires an explicit warp choice after four-quadrant sampling and preserves history', async () => {
     const user = userEvent.setup(), state = setup();

@@ -16,6 +16,22 @@ function setup() {
 describe('Grid tool Properties', () => {
   beforeEach(() => setPersistenceWritable(true));
   afterEach(() => setPersistenceWritable(true));
+  it('completes all sides automatically when settings apply, in one undoable action', async () => {
+    setup();
+    const initial = createEncounterState({ id: 'edge-ui', name: 'Edges' });
+    initial.movementStrategy = 'grid'; initial.grid.origin = { x: -2, y: -2 }; initial.canvasSize = { width: 188, height: 188 };
+    act(() => store.dispatch(loadEncounterState(initial)));
+    expect(screen.queryByRole('button', { name: /Complete edge|Finish grid/ })).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('Cell size'), { target: { value: '80' } });
+    expect(store.getState().encounter.present.canvasSize).toEqual(initial.canvasSize);
+    fireEvent.click(screen.getByRole('button', { name: 'Apply' }));
+    await waitFor(() => expect(store.getState().encounter.present.canvasSize).toEqual({ width: 240, height: 240 }));
+    expect(store.getState().encounter.present.gridCoverage).toEqual({ x: 2, y: 2, width: 188, height: 188 });
+    expect(store.getState().encounter.past).toHaveLength(1);
+    const saved = store.getState().encounter.present;
+    act(() => store.dispatch(undoEncounterChange())); expect(store.getState().encounter.present).toEqual(initial);
+    act(() => store.dispatch(redoEncounterChange())); expect(store.getState().encounter.present).toEqual(saved);
+  });
   it('discards pending validation after switching tools', async () => {
     let resolve!: (value: validationRuntime.PreparedValidatedEncounterChange) => void;
     let input!: validationRuntime.PrepareValidatedEncounterChangeInput;

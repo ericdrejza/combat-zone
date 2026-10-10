@@ -1,3 +1,5 @@
+import { completeGridEdges } from '@core/movement/gridEdgeCompletion';
+import { getGridCoverage } from '@core/movement/gridCoverage';
 import { createEncounterState } from '@core/encounter/createEncounterState';
 import { resizeEncounterCanvas } from '@core/encounter/canvasSizeMutations';
 import { createActor } from '@entities/actor/actorMutations';
@@ -21,7 +23,7 @@ const warp = { type: 'bilinear' as const, x: [0, 1, 0, 0.006] as [number, number
 describe('warped grid persistence and history', () => {
   it('migrates schema 17 while preserving spatial data', () => {
     const current = fixture(), old = { ...current, schemaVersion: 17 };
-    expect(migrateEncounterState(old)).toEqual(current); expect(old.schemaVersion).toBe(17);
+    expect(migrateEncounterState(old)).toEqual(completeGridEdges(current)); expect(old.schemaVersion).toBe(17);
   });
   it('round trips warped geometry through export, repository, and cloud contracts', async () => {
     const state = resnapSpatialActors({ ...fixture(), grid: { ...fixture().grid, warp } });
@@ -51,7 +53,8 @@ describe('warped grid persistence and history', () => {
     const point = gridToWorld(state.grid, { x: 128, y: 192 });
     const resized = resizeEncounterCanvas(state, { canvasSize: { width: 480, height: 320 }, zoneScale: 0.5 });
     const scaled = gridToWorld(resized.grid, { x: 64, y: 96 });
-    expect(scaled.x).toBeCloseTo(point.x / 2); expect(scaled.y).toBeCloseTo(point.y / 2); assertEncounterState(resized);
+    const frame = getGridCoverage(resized);
+    expect(scaled.x - frame.x).toBeCloseTo(point.x / 2); expect(scaled.y - frame.y).toBeCloseTo(point.y / 2); assertEncounterState(resized);
     const repository = new InMemoryWorkspaceRepository(), record = await repository.createEncounter(state);
     await expect(repository.saveEncounter({ ...state, grid: { ...state.grid, warp: { ...warp, x: [0, 0, 0, 0] } } }, { expectedRevision: record.revision })).rejects.toThrow();
     expect((await repository.getEncounter(state.id))!.state).toEqual(state);

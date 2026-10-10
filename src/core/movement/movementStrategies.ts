@@ -1,3 +1,4 @@
+import { completeGridEdges } from './gridEdgeCompletion';
 import type { Actor } from '@entities/actor/types';
 import type { EncounterState } from '@core/encounter/types';
 import type { LayoutPoint } from '@core/layout/types';
@@ -62,10 +63,13 @@ export function changeMovementStrategy(state: EncounterState, strategy: Movement
   settledPositions: Record<string, LayoutPoint>): EncounterState {
   if (state.movementStrategy === strategy) return state;
   let next = { ...state, movementStrategy: strategy, grid: strategy === 'grid' ? { ...state.grid, visible: true } : state.grid };
+  if (strategy === 'grid') next = completeGridEdges(next);
   if (strategy !== 'zone') {
     next = placeSpatialActors(next, Object.fromEntries(state.actors.allIds.flatMap(id => {
       const actor = state.actors.byId[id];
-      return !actor.spatialPosition && settledPositions[id] ? [[id, settledPositions[id]]] : [];
+      const settled = settledPositions[id];
+      const point = settled && strategy === 'grid' ? { x: settled.x + next.grid.origin.x - state.grid.origin.x, y: settled.y + next.grid.origin.y - state.grid.origin.y } : settled;
+      return !actor.spatialPosition && point ? [[id, point]] : [];
     })));
     next = resnapSpatialActors(next);
   }
