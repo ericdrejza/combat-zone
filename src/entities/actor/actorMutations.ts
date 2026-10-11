@@ -197,7 +197,7 @@ export function moveActor(
   };
   // A bare zone drop is an explicit disengage; joining/creating engagements
   // uses the engagement mutation, which keeps membership authoritative there.
-  return removeActorsFromEngagements(moved, [actorId]);
+  return state.movementRules.zoneLocked ? removeActorsFromEngagements(moved, [actorId]) : moved;
 }
 
 export function updateActorProperties(

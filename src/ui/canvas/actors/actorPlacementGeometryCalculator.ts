@@ -1,3 +1,4 @@
+import { packGridZone } from '@core/movement/gridZonePacking';
 import { calculateZoneLayoutFromEntities } from '@core/layout/encounterLayout';
 import type { EncounterState } from '@core/encounter/types';
 import type { LayoutPoint } from '@core/layout/types';
@@ -88,6 +89,7 @@ export function calculateActorPlacementGeometry(
   encounter: EncounterState,
   zoneIds?: readonly string[]
 ): ActorPlacementGeometry[] {
+  if (encounter.movementRules.zoneLocked && encounter.movementRules.snapToGrid) return (zoneIds ?? encounter.zones.allIds).flatMap(id => packGridZone(encounter, id).placements);
   const placements: ActorPlacementGeometry[] = [];
   const splitSectionPolygons: Record<string, LayoutPoint[]> = {};
   const requestedZoneIds = zoneIds ? new Set(zoneIds) : undefined;

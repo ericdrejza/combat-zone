@@ -1,11 +1,13 @@
+import { snapZonePolygon } from '@core/movement/zoneVertexSnapping';
 import { createEncounterActionRecord } from '@core/history/createEncounterActionRecord';
 import type { LayoutPoint } from '@core/layout/types';
-import { prepareValidatedEncounterChangeForRuntime } from '@core/validation/validatedEncounterChange';
+import { prepareValidatedEncounterChangeForRuntime } from '@core/validation/runtimeEncounterChange';
 import type { ZoneShape } from '@entities/zone/types';
 import { DEFAULT_ZONE_PALETTE_COLOR } from '@entities/zone/zoneColors';
 import { createZone } from '@entities/zone/zoneMutations';
 import { selectEntity } from '@interaction/interactionState';
 import { commitEncounterChange } from '@store/encounterSlice';
+import { isPersistenceWritable } from '@store/persistenceWriteGuardMiddleware';
 import {
   logEncounterValidationBlock,
   logEncounterValidationFailure
@@ -44,6 +46,7 @@ export function commitZoneCreate(
     zoneShowBorderDefault
   } = input;
 
+  polygon = snapZonePolygon(encounter, { shape, polygon });
   if (
     !canCommitZonePolygonForCollection(
       polygon,
@@ -100,7 +103,8 @@ export function commitZoneCreate(
     nextEncounter
   });
 
-  const commitPrepared = (resolved: Awaited<typeof prepared>) => {
+  const commitPrepared = (resolved: Awaited<typeof prepared>) => dispatch((_dispatch, getState) => {
+    if (!isPersistenceWritable() || getState().encounter.present !== encounter) { setZoneDraftPoints([]); return; }
     if (resolved.blocked) {
       logEncounterValidationBlock(dispatch, resolved);
       setZoneDraftPoints([]);
@@ -123,7 +127,7 @@ export function commitZoneCreate(
     suppressNextCanvasClickPointRef.current =
       suppressClickPoint ?? polygon[polygon.length - 1] ?? null;
     setZoneDraftPoints([]);
-  };
+  });
 
   if (prepared instanceof Promise) {
     void prepared.then(commitPrepared);

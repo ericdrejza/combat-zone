@@ -2,6 +2,7 @@ import { ChevronDown, ChevronRight, Paintbrush, Swords } from "lucide-react";
 import { useId, useState } from "react";
 
 import type { Zone } from "@entities/zone/types";
+import { getZoneEngagementColor } from "@entities/zone/zoneColors";
 import type { ZonePaintBrushState } from "@interaction/interactionState";
 import { PreferenceSwitch } from "@ui/settings/PreferenceSwitch";
 import { ColorPalette } from "./ColorPalette";
@@ -47,7 +48,7 @@ export function ZoneColorSection({
       : {
           label: "Engagements color",
           property: "colorEngagement" as const,
-          value: zone.colorEngagement ?? zone.colorBorder
+          value: getZoneEngagementColor(zone)
         };
   const opacityControl = useZoneOpacityControl({
     onCancelPreview: onCancelZoneOpacityPreview,

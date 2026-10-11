@@ -1,3 +1,4 @@
+import { MembershipChoiceDialog } from './membership/MembershipChoiceDialog';
 import { WorkspaceKeyboardShortcuts } from "./keybinds/WorkspaceKeyboardShortcuts";
 import { ignoreShortcut } from "./keybinds/keyboardGuards";
 import { CombatPreferenceProvider } from "@ui/combat_preferences/CombatPreferenceProvider";
@@ -582,6 +583,7 @@ export function App() {
               <KeybindProvider>
                 <CanvasViewportProvider>
                   <AppContent />
+                  <MembershipChoiceDialog />
                 </CanvasViewportProvider>
               </KeybindProvider>
             </SoundboardProvider>

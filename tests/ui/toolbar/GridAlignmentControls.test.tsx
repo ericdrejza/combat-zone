@@ -19,7 +19,7 @@ function setup() {
 describe('grid settings and alignment controls', () => {
   it.each(['Cancel', 'Escape', 'subtool'])('restores temporary max zoom on %s without encounter changes', async close => {
     const user = userEvent.setup(), state = setup();
-    await user.click(screen.getByRole('button', { name: 'Background' }));
+    await user.click(screen.getByRole('button', { name: 'Grid' }));
     const waypoints = screen.getByRole('button', { name: 'Align grid to background' });
     await user.click(waypoints);
     const viewport = screen.getByLabelText('Canvas viewport');
@@ -36,7 +36,7 @@ describe('grid settings and alignment controls', () => {
   });
   it('keeps manually adjusted zoom after temporary max zoom', async () => {
     const user = userEvent.setup(); setup();
-    await user.click(screen.getByRole('button', { name: 'Background' }));
+    await user.click(screen.getByRole('button', { name: 'Grid' }));
     await user.click(screen.getByRole('button', { name: 'Align grid to background' }));
     await user.click(screen.getByRole('button', { name: 'Temporary maximum zoom' }));
     fireEvent.keyDown(window, { key: '-' });
@@ -45,7 +45,7 @@ describe('grid settings and alignment controls', () => {
   });
   it('keeps a manual zoom command even when already at the maximum', async () => {
     const user = userEvent.setup(); setup();
-    await user.click(screen.getByRole('button', { name: 'Background' }));
+    await user.click(screen.getByRole('button', { name: 'Grid' }));
     await user.click(screen.getByRole('button', { name: 'Align grid to background' }));
     await user.click(screen.getByRole('button', { name: 'Temporary maximum zoom' }));
     fireEvent.keyDown(window, { key: '+' });
@@ -54,7 +54,7 @@ describe('grid settings and alignment controls', () => {
   });
   it('toggles Waypoints off as a cancellation with no encounter mutation', async () => {
     const user = userEvent.setup(); const state = setup();
-    await user.click(screen.getByRole('button', { name: 'Background' }));
+    await user.click(screen.getByRole('button', { name: 'Grid' }));
     const waypoints = screen.getByRole('button', { name: 'Align grid to background' });
     expect(waypoints).toHaveAttribute('aria-pressed', 'false');
     await user.click(waypoints);
@@ -69,12 +69,12 @@ describe('grid settings and alignment controls', () => {
   });
   it('toggles the settings subtool and lists flat hex before pointy hex', async () => {
     const user = userEvent.setup(); setup();
-    await user.click(screen.getByRole('button', { name: 'Background' }));
+    await user.click(screen.getByRole('button', { name: 'Grid' }));
     const settings = screen.getByRole('button', { name: 'Grid settings' });
     expect(settings).toHaveAttribute('aria-pressed', 'false');
     await user.click(settings);
     expect(settings).toHaveAttribute('aria-pressed', 'true'); expect(settings).toHaveAttribute('aria-expanded', 'true');
-    const select = screen.getByRole('combobox', { name: 'Grid type' });
+    const select = within(screen.getByRole('dialog', { name: 'Grid settings' })).getByRole('combobox', { name: 'Grid type' });
     expect(within(select).getAllByRole('option').map(option => option.getAttribute('value'))).toEqual(['square', 'hex-flat', 'hex-pointy']);
     await user.click(settings);
     expect(settings).toHaveAttribute('aria-pressed', 'false'); expect(settings).toHaveAttribute('aria-expanded', 'false');
@@ -84,7 +84,7 @@ describe('grid settings and alignment controls', () => {
   });
   it('keeps zoom keybinds available from settings fields without editing the grid', async () => {
     const user = userEvent.setup(); setup();
-    await user.click(screen.getByRole('button', { name: 'Background' }));
+    await user.click(screen.getByRole('button', { name: 'Grid' }));
     await user.click(screen.getByRole('button', { name: 'Grid settings' }));
     const viewport = screen.getByLabelText('Canvas viewport'), field = screen.getByRole('spinbutton', { name: 'Cell size' });
     Object.defineProperty(viewport, 'clientWidth', { configurable: true, value: 480 });
@@ -103,7 +103,7 @@ describe('grid settings and alignment controls', () => {
   });
   it('chooses grid type before complexity and right-click removes the latest vertex', async () => {
     const user = userEvent.setup(); setup();
-    await user.click(screen.getByRole('button', { name: 'Background' }));
+    await user.click(screen.getByRole('button', { name: 'Grid' }));
     await user.click(screen.getByRole('button', { name: 'Align grid to background' }));
     const types = within(screen.getByRole('group', { name: 'Alignment grid type' }));
     expect(types.getByRole('button', { name: 'Square' })).toHaveAttribute('aria-pressed', 'true');
@@ -122,7 +122,7 @@ describe('grid settings and alignment controls', () => {
     const user = userEvent.setup(), state = setup();
     state.grid.cellSize = 50.4; state.grid.rotation = 89.4; state.grid.origin = { x: -2.4, y: 100.2 };
     act(() => store.dispatch(loadEncounterState({ ...state })));
-    await user.click(screen.getByRole('button', { name: 'Background' }));
+    await user.click(screen.getByRole('button', { name: 'Grid' }));
     await user.click(screen.getByRole('button', { name: 'Grid settings' }));
     const dialog = screen.getByRole('dialog', { name: 'Grid settings' }), controls = within(dialog);
     await user.click(controls.getByRole('button', { name: 'Increase Cell size' }));
@@ -144,7 +144,7 @@ describe('grid settings and alignment controls', () => {
   it('requires an explicit warp choice after four-quadrant sampling and preserves history', async () => {
     const user = userEvent.setup(), state = setup();
     const distorted: GridConfiguration = { ...state.grid, warp: { type: 'bilinear', x: [0, 1, 0, 0.006], y: [0, 0, 1, 0.004] } };
-    await user.click(screen.getByRole('button', { name: 'Background' }));
+    await user.click(screen.getByRole('button', { name: 'Grid' }));
     await user.click(screen.getByRole('button', { name: 'Align grid to background' }));
     await user.click(screen.getByRole('button', { name: 'Four-quadrant alignment' }));
     const history = store.getState().encounter.past.length;
@@ -169,7 +169,7 @@ describe('grid settings and alignment controls', () => {
     state.backgroundImage = { source: { kind: 'embedded', dataUrl: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg"/>' }, name: 'Grid map', mediaType: 'image/svg+xml', width: 960, height: 640 };
     act(() => store.dispatch(loadEncounterState({ ...state })));
     vi.mocked(detectBackgroundGrid).mockResolvedValue({ ...state.grid, cellSize: 72, origin: { x: 12, y: 8 } });
-    await user.click(screen.getByRole('button', { name: 'Background' }));
+    await user.click(screen.getByRole('button', { name: 'Grid' }));
     await user.click(screen.getByRole('button', { name: 'Align grid to background' }));
     await user.click(screen.getByRole('button', { name: 'Temporary maximum zoom' }));
     await user.click(screen.getByRole('button', { name: 'Detect grid' }));

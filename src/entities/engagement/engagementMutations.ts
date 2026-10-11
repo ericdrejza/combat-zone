@@ -93,7 +93,7 @@ function moveActorsToZone(
   for (const actorId of actorIds) {
     const actor = byId[actorId];
     if (!actor) continue;
-    if (actor.currentZoneId !== parentZoneId) {
+    if (state.movementRules.zoneLocked && actor.currentZoneId !== parentZoneId) {
       byId[actorId] = { ...actor, currentZoneId: parentZoneId };
       changed = true;
     }

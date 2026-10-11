@@ -11,7 +11,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { setActorDragImage } from "@core/rendering/actorDragPreview";
 import { createEncounterActionRecord } from "@core/history/createEncounterActionRecord";
 import { readImageAssetDimensions } from "@ui/toolbar/background/readImageFile";
-import { prepareValidatedEncounterChangeForRuntime } from "@core/validation/validatedEncounterChange";
+import { prepareValidatedEncounterChangeForRuntime } from "@core/validation/runtimeEncounterChange";
 import { createActor } from "@entities/actor/actorMutations";
 import { clearSelection } from "@interaction/interactionState";
 import { resolveLibraryAsset } from "@library/librarySlice";

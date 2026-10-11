@@ -600,3 +600,45 @@ these back into `AGENT.md` or `DESIGN.md`.
 - [x] Detection/alignment normalize map coverage and preserve fitted geometry; previews cancel without durable mutations.
 - [x] Grid settings remains inside the Grid subtool button group, matching Background on compact and desktop layouts.
 - [x] Schema 21 preserves legacy map alignment and validates local/cloud round trips, history, overflow, and writer boundaries.
+
+
+## Independent Zone/Grid rules and Cell Tracer
+
+- Zone and Grid are separately selectable; Background contains no grid controls.
+- Zone lock and actor snapping work independently and together; Overlap cannot
+  coexist with lock. Locked snapped packing reserves all cells belonging to each
+  actor; unlocked Overlap behavior uses anchor equality.
+- Rule changes reconcile or unplace individual actors atomically; regular moves
+  reject when no viable placement exists, and adjusted grid moves are logged.
+- Zone vertex snapping is independent, reconciles existing Zones, preserves
+  generated outlines, and applies throughout geometry mutations. Zone moves
+  preserve all edge vectors with one snapped translation; incompatible warped
+  moves are rejected without history.
+- Zone drops settle from the drop position to the final position using the Actor
+  movement spring; direct dragging and reduced-motion movement remain immediate.
+  Asynchronous validation retains the drop frame until the final position is ready.
+- Zone drawing, moving, and resizing fade out the canvas Zoneless panel with a
+  200ms Motion fade and restore its previous expansion state afterward. Hiding
+  immediately disables panel interaction; reduced motion disables the fade.
+- Zone-tool double-click editing inserts/removes polygon vertices with a 12px
+  screen hit range, 24px minimum insertion spacing after snapping, and at least
+  three vertices. Generated shapes remain unchanged. Edits respect reshape
+  validation and undo/redo; invalid geometry never adds history.
+- Unlocked movement ignores edges, updates configurable Zone membership, and
+  preserves Engagements without drag activation or automatic disengagement.
+- Cross-zone Engagements reconcile on locking, dissolving when necessary without
+  unnecessarily unplacing their participants.
+- Canvas settings provides compact defaults, membership methods/fallback, ordered
+  deciders with Ask Me/fallback/cancellation, and Cell Tracer route policy.
+- Grid Properties commits type immediately and previews color/opacity until
+  blur, producing one history entry per finished edit. Clicking Line color
+  again closes the picker. Grid Settings retains every field and Apply/Cancel previews.
+- Cell Tracer requires vertex snapping and an unwarped grid, routes along cell
+  edges by edge count then turns, traces closure, removes whole incoming segments
+  on right-click, previews the closing route, and persists ordinary polygons.
+- Zone color fields show their selected swatch/hex value, open on click, and
+  close on selection or a repeat click. Matching Engagement colors preview the
+  inherited border color. Selections preserve history and multi-Zone edits.
+- Trim clips Large/xLarge hex artwork while preserving fit and hit testing.
+- Every encounter mutation and cascade is undoable, validated, writer-guarded,
+  persisted through the repository, and covered by relevant regression tests.

@@ -71,6 +71,7 @@ export function ToolbarOptionButton({
     >
       <button
         {...props}
+        title={props.title ?? props['aria-label']}
         className={joinClassNames(
           "flex h-11 min-w-11 items-center justify-center gap-1 rounded-full border px-1.5 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-canvas-ink disabled:cursor-not-allowed disabled:opacity-40 lg:h-8 lg:min-w-10",
           stateClassName,

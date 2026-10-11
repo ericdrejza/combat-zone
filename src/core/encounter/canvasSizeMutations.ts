@@ -53,7 +53,7 @@ export function resizeEncounterCanvas(
   const mapScale = Number((encounter.grid.cellSize / Math.min(
     canvasSize.width / coverage.width, canvasSize.height / coverage.height
   )).toPrecision(15));
-  const needsCompletion = encounter.grid.visible || encounter.movementStrategy === 'grid' || Boolean(encounter.gridCoverage);
+  const needsCompletion = encounter.grid.visible || encounter.movementRules.snapToGrid || Boolean(encounter.gridCoverage);
   const next: EncounterState = {
     ...encounter,
     grid: { ...encounter.grid, cellSize: mapScale },

@@ -87,12 +87,11 @@ Root runtime container.
 
 The encounter canvas defaults to 960×640 logical units. Background sizing
 commands change the persisted canvas bounds and uniformly scale every Zone
-polygon from the top-left origin. In Zone mode, Actor, Engagement, and Edge
-geometry remains
-derived from the scaled Zones. Grid geometry and saved Grid/Free actor positions
+polygon from the top-left origin. With Zone lock enabled, Actor, Engagement, and Edge geometry remains
+derived from the scaled Zones. Grid geometry and unlocked actor positions
 do not scale with the background; changing background size may break alignment.
 Actor diameters/rectangle widths are 45, 60, 120, and 180 logical units for
-Small, Medium, Large, and xLarge in every movement mode. Neither grid
+Small, Medium, Large, and xLarge under every movement rule combination. Neither grid
 configuration nor local warping changes these footprints.
 The rendered lattice uses fixed 64-unit spacing (across opposite hex sides).
 Encounter `grid.cellSize` is a positive, user-facing map-scale value, initially
@@ -115,8 +114,7 @@ existing clamp for valid Zone and derived actor layouts.
 The Interface preference “When background resizing puts actors outside the
 canvas” defaults to “Move actors to Zoneless”: after edge completion, clear
 only saved spatial positions whose full token footprint exceeds canvas bounds,
-including saved positions while Zone mode is active. Preserve resources, Zone
-assignments, and suspended Engagement relationships. “Limit resizing to keep
+Preserve resources and Engagement relationships; reevaluate unlocked Zone membership after unplacement. “Limit resizing to keep
 actors on canvas” instead clamps to the nearest larger size retaining all saved
 spatial placements. This global preference persists, synchronizes across tabs,
 resets with local preferences, and falls back to Zoneless for unknown values.
@@ -164,6 +162,10 @@ Properties:
 - clocks (Zone-owned normalized named progress clocks)
 
 Zone names trim surrounding whitespace and may be empty.
+Fill, Border, and Engagement color fields show a swatch and the current hex
+color. Their palettes start collapsed, open on a field click, and close on a
+selection or repeat field click. A selection remains one reversible color edit.
+Match border color keeps the Engagement field disabled while showing its color.
 Zone opacity previews continuously while its slider is dragged and commits the
 final value on release as one reversible history action.
 
@@ -1195,7 +1197,7 @@ Layout strategies:
     within that section. Unengaged actors remain in their faction sections.
 
 In Zone movement, Actor and engagement positions inside zones are not persisted
-in EncounterState. Grid/Free coordinates follow §17. Layout strategies derive render targets from the normalized
+in EncounterState. Unlocked actor coordinates follow §17. Layout strategies derive render targets from the normalized
 entity collections, collection `allIds` ordering (which records the latest
 zone-entry order for actors), each entity's layout strategy, and each entity's
 layout orientation. FLEX derives deterministic polygon-footprint coordinates
@@ -1299,31 +1301,120 @@ Rule:
 - AI-assisted GM suggestions
 - Rule system plugins per RPG
 
-## 17. Encounter Movement Strategies and Grid Layer
+## 17. Encounter Placement Rules and Grid Layer
 
-An Encounter owns `movementStrategy` (`zone`, `grid`, or `free`) and one
-independent `grid` configuration. Zone remains the default and retains the
-existing Zone layout behavior. Movement strategy is independent of the active
-editing tool: Actor and Select apply the Encounter's strategy too.
+An Encounter owns one independent `grid` configuration and `movementRules`:
+`zoneLocked`, `snapToGrid`, `snapZoneVertices`, `allowOverlap`, and `trimTokens`.
+These are independent rules shared by all actor-editing tools, not mutually
+exclusive movement modes. New encounters default to Zone lock on and all other
+rules off. Canvas settings can change defaults for future encounters.
 
-The existing Zone toolbar slot changes label, icon, and behavior to Zone, Grid,
-or Free. A standalone cycle subtool changes strategies in that order and
-selects the resulting tool. Grid shows grid configuration subtools; Free shows
-movement help. Background always exposes the same grid configuration controls,
-regardless of strategy. Outside Zone, Zone/Edge/Engagement layers and editing
-workflows are suspended and their toolbar actions are hidden. Their entities
-and relationships remain persisted and resume when returning to Zone.
+Zone and Grid are separate toolbar tools, with Grid immediately to the left of
+Zone and a vertical separator between them. Selecting either does not change the
+rules. Zone begins with a separate Lock/Unlock group, followed by its shape
+subtools with VectorPolygon for Polygon and Waypoints Cell Tracer last in that
+group. Grid contains Eye, Magnet (Snap Actors to Grid), and VectorSquare
+(Snap Zone Vertices to Grid) together; Blend (Overlap); LayoutGrid alignment
+followed by Grid Settings together; and Scissors (Trim). Background has no grid subtools. Zone, Edge, and Engagement
+features remain available regardless of Zone lock. The old cycling button and
+Free tool are removed.
 
-Actors optionally own `spatialPosition` (`x`, `y` in logical canvas units),
-shared by Grid and Free. These coordinates are authoritative only outside
-Zone; Zone placement remains derived. On departure from Zone, actors without
-saved spatial positions initialize from settled Zone placements. Actors in the
-Zoneless panel remain unplaced. Subsequent departures reuse saved positions.
-Spatial movement does not update suspended Zone or Engagement relationships.
-Outside Zone, the Zoneless panel lists actors without spatial positions;
-dropping onto the canvas assigns a position, and dropping into the panel
-removes it. New actors created on the spatial canvas start with a zoneless
-Zone assignment and a spatial position. Copies preserve spatial coordinates.
+With Zone lock on, actor placements remain derived from automatic Zone packing.
+With actor snapping too, packing reserves disjoint actor anchor-cell sets inside Zones,
+retaining layout strategies, split sections, orientations, and permitted
+Zone auto-resizing. Each reservation includes all four square/three hex cells
+for Large and all nine square/seven hex cells for xLarge. Full actor footprints
+must fit inside the Zone and canvas. Artwork may extend beyond its reserved
+cells. Locked arrows retain existing
+Zone/edge destinations, followed by packing. Actors placed outside all Zones go
+to the Zone list. Zone lock forces Overlap off and disables its control;
+unlocking does not restore Overlap automatically.
+
+Moving a Zone preserves every edge vector by applying one translation to all
+vertices. With vertex snapping enabled, regular square/hex grids snap that
+translation to the lattice, including rotation. On warped grids, snap the
+starting drawing control and translate rigidly; reject and log any move whose
+remaining controls cannot stay snapped. Never resnap vertices independently
+as part of a move. Reshaping and grid geometry edits retain vertex reconciliation.
+After a Zone drop, its geometry and drag offset settle from the drop position to
+the final position with the same Motion spring as Actors. Direct dragging remains
+immediate, and reduced-motion preferences disable the settling animation. Keep
+the drop frame until asynchronous validation supplies the final position.
+
+While a Zone shape or polygon/Cell Tracer draft is being drawn, or a Zone is
+being moved or resized, fade out the canvas Zoneless panel. Fade it back in when
+the interaction completes or is cancelled, preserving its expansion and sizing
+preferences. Use a 200ms Motion ease-in-out fade and make it immediate when
+animations are disabled. Keep the panel mounted; disable pointer, keyboard, and
+accessibility interaction as soon as hiding begins so it cannot obstruct editing.
+
+With the Zone tool active, double-click within 12 screen pixels of an existing
+polygon Zone edge to insert a vertex at the clicked point. Double-click within
+12 screen pixels of a vertex to remove it; vertex hits take priority over edges.
+Retain at least three vertices. New vertices must be at least 24 screen pixels
+from every existing vertex, measured after grid snapping when enabled. Screen
+distances remain consistent at every zoom. This editing applies only to polygon
+Zones, without converting generated shapes, and uses the validated, undoable
+reshape workflow. Reject edits that self-intersect, leave the canvas, overlap
+another Zone, or violate snapping. Existing multi-point drawing drafts retain
+their double-click completion behavior.
+
+With Zone lock off, optional Actor `spatialPosition` coordinates are authoritative.
+Unlocking initializes coordinates from settled placements. Actors without a
+position remain in the Zone list. Manual movement updates Zone membership,
+ignores edges, and preserves Engagement membership; engagement/disengagement
+must use buttons or hotkeys, without drag-over activation or automatic
+disengagement. Unlocked Zone moves/resizes leave actors stationary and reevaluate
+membership; deletion clears membership but retains positions. Unlocked
+Engagements may span Zones, keeping `parentZoneId` as their home Zone and deriving
+visuals around manual positions. Locking attempts to fit members into that home
+Zone. If the group cannot fit, dissolve it and resolve each actor individually;
+group failure alone does not unplace actors.
+
+With actor snapping on and Overlap off, identical anchors are occupied. Move to
+the nearest fitting open anchor, breaking distance ties top-to-bottom then
+left-to-right, and log the adjustment. Reject an ordinary move atomically if no
+anchor fits. Overlap has no effect on unsnapped movement. Rule changes attempt
+valid placement and existing permitted auto-resizing before sending actors that
+still cannot fit to the list. Every change and cascade is one history action.
+
+Zone vertex snapping is independent of actor snapping and Zone lock. Enabling it
+snaps existing Zones and repacks actors atomically, rejecting invalid results.
+User-drawn polygon vertices snap to actual cell vertices. Generated shapes snap
+drawing start/end controls and manipulated resize corners, then regenerate
+normally without snapping every sampled outline point. Maintain these constraints
+through Zone movement, grid changes, map resizing, and automatic enlargement,
+including rotated and warped grids; reject operations that cannot remain valid.
+
+Canvas settings offers actor-center, anchor-cell-center, and geometric token/Zone
+overlap membership tests. Cell-based membership has an unsnapped fallback of
+actor center (initially) or geometric overlap. Small/Medium use their center cell;
+Large uses all cells sharing its snapped intersection/vertex; xLarge uses its
+center cell plus eight touching square neighbors or six hex neighbors.
+Draggable, keyboard-reorderable deciders default to Most shared cells, Nearest
+Zone Center (polygon centroid), Keep current Zone, Ask Me. Each narrows candidates
+and passes ties onward; skip shared-cell counting without actor snapping.
+Ask Me offers fallback when another decider follows. Exhausted unresolved choices
+open a final dialog without fallback; Cancel cancels the complete action.
+Preferences apply to future membership actions and synchronize across tabs.
+
+Cell Tracer previews its closing route when hovering the starting vertex.
+Cell Tracer is available only with Zone vertex snapping on and an unwarped grid;
+actor snapping is independent. Snap selected points to vertices and route along
+square/hex cell edges, including rotation. Prefer fewest edges, then fewest turns,
+then stable top-to-bottom/left-to-right order. Insert vertices at intermediate
+turns. Right-click removes the last selected point and its entire incoming path.
+Preview the route and trace the closing segment using normal Polygon completion
+gestures. Canvas settings defaults to rejecting invalid routes; an alternative
+finds the shortest valid detour within bounds, avoiding Zone overlap and
+self-intersection. Reject selections if no route exists. Switching drawing mode,
+disabling vertex snapping, or introducing warp clears the draft. Save the result
+as an ordinary polygon without a tracer marker or persisted control points.
+
+Trim is available only with actor snapping, and disabling snapping turns it off.
+Clip Large/xLarge hex artwork to its anchor-cell union. Square and Small/Medium
+tokens do not require clipping. Trim changes neither hit testing nor footprint
+validation.
 
 Grid supports square, pointy-top hex, and flat-top hex geometry. Configuration
 includes `type`, positive `cellSize`, `origin`, `rotation` in degrees, `visible`,
@@ -1332,28 +1423,28 @@ stores two four-coefficient maps of normalized lattice coordinates; absence
 means standard alignment. Cell size is the square side
 or the distance across opposite hex sides. Origin is a square vertex or a hex
 center. Defaults are 64-unit squares at (0,0), zero rotation, hidden lines,
-#808080 color, and 0.5 opacity. Entering Grid displays its lines; hiding lines
-does not disable snapping. A separate SVG Grid Layer renders above Background
+#808080 color, and 0.5 opacity. Grid visibility is independent of snapping; hiding lines does not disable snapping. A separate SVG Grid Layer renders above Background
 and below Zones, clipped to the canvas. It works without a background image.
 
-Grid controls provide visibility, type/orientation, size, origin, rotation,
-color, opacity, and alignment. Selecting the Grid tool displays manual settings
-in Properties using the same fields as the Background grid-settings dialog.
-The Grid subtools retain visibility and Waypoints; Background retains its
-settings-modal toggle. Properties drafts yield to active alignment and clear
-on tool changes. Manual settings use an Apply/Cancel preview
-without dimming the background. Configured zoom-in/out, fit, fit-width,
-fit-height, and reset shortcuts remain active while Grid Settings is open,
-including from focused fields; other shortcuts retain modal protection.
+Grid Properties appears when the Grid tool is selected and contains only type,
+line color, and line opacity. Type changes commit immediately without Apply.
+Color and opacity preview in transient interaction state and commit once when
+focus leaves their control. Line color retains its native color input; clicking
+it again blurs the field, closes its picker, and commits its draft.
+Grid Settings retains all existing fields in an Apply/Cancel form with transient
+preview. Alignment temporarily owns previews and disables Properties editing.
+Configured zoom-in/out, fit, fit-width, fit-height, and reset shortcuts remain
+active while Grid Settings is open, including focused fields; other shortcuts
+retain modal protection.
 Opacity uses the Zone-style percentage slider;
 visibility uses a switch. Increment/decrement first reaches the next integer
 in that direction, then steps by one. Rotation wraps at 90 degrees for squares
 and 60 degrees for hexes, respecting each geometry's symmetry. Calibration
 snaps angles within five degrees of a multiple of 45 degrees to that angle.
 
-The Waypoints alignment subtool offers simple or four-quadrant alignment.
+The LayoutGrid alignment subtool offers simple or four-quadrant alignment.
 Grid Settings is a toggle: its subtool is active while open, and clicking it
-again closes the dialog and cancels its unapplied preview. The Waypoints
+again closes the dialog and cancels its unapplied preview. The LayoutGrid
 subtool also shows its active state; clicking it again cancels alignment,
 clearing sampled points and its unapplied preview.
 The user selects Square, Hex flat, or Hex pointy before choosing Simple,
@@ -1365,7 +1456,7 @@ sixteen square clicks or twelve hex clicks. Right-click removes the last point.
 The instruction panel can be moved by its handle or keyboard arrows to uncover
 vertices. A temporary maximum-zoom button sits to the right of the vertex
 instructions and sets viewport zoom to 400%. Closing alignment (including Apply,
-Cancel, Escape, or the Waypoints toggle) restores the previous zoom unless a
+Cancel, Escape, or the LayoutGrid toggle) restores the previous zoom unless a
 subsequent manual zoom command takes over. Changing alignment strategy does not
 close the panel or restore zoom. This changes only the session viewport.
 Detect Grid sits beside the two manual strategies; Apply is separated
@@ -1375,7 +1466,7 @@ and optionally a smooth bilinear warped grid. If residual distortion exceeds
 the user must explicitly choose standard or warped alignment before applying.
 Both choices preview the result. Folded, singular, or non-invertible warps
 cannot be applied; the regular fit remains available. Warping is an alignment
-strategy within Grid, independent of Zone/Grid/Free movement strategy.
+strategy within Grid, independent of actor and Zone rules.
 
 Warped grids transform cell boundaries, snapping anchors, and adjacent-cell
 keyboard movement together. Tokens retain the same footprint and regular
@@ -1403,12 +1494,11 @@ Numbered markers, live preview, reset, Apply, and Cancel/Escape support
 calibration. Degenerate points cannot be applied. Configuration previews,
 detection drafts, and calibration clicks are session-only.
 
-Grid movement snaps Small, Medium, and xLarge actors to cell centers. Large
+Actor snapping places Small, Medium, and xLarge actors to cell centers. Large
 actors snap to square intersections or hex vertices shared by three cells.
-Token diameters/rectangle widths match Zone mode: 45, 60, 120, and 180
-logical units for Small, Medium, Large, and xLarge. Free uses this same visual
-scale but permits any position. Warping affects snapping and cell geometry,
-never actor size. Actor overlap is allowed outside Zone. Every token's full footprint
+Token diameters/rectangle widths remain: 45, 60, 120, and 180
+logical units for Small, Medium, Large, and xLarge. Disabling actor snapping permits any position when Zone lock is off. Warping affects snapping and cell geometry,
+never actor size. Actor anchor occupancy follows the Overlap rule when snapping is enabled. Every token's full footprint
 must stay inside the canvas in all validation modes. Invalid operations are
 rejected atomically. Fully contained outer cells remain available; partial
 edge cells cannot accept a token whose footprint would extend beyond the
@@ -1424,7 +1514,7 @@ Encounter `gridCoverage` frame retains the original unpadded canvas area;
 it is absent when background placement already supplies that fact.
 Completion recalculates against this coverage, avoiding cumulative expansion.
 Left/top changes translate the grid origin, actor positions, Zone polygons,
-and background/coverage together. Settings, alignment, entering Grid, and
+and background/coverage together. Settings, alignment, enabling actor snapping, and
 background/canvas resizing complete cells within their existing history action.
 Grid changes can reduce prior margins; existing fit/snapping validation applies.
 Background resizing changes coverage dimensions, retaining its top-left anchor
@@ -1433,22 +1523,21 @@ background retains its coverage; adding/replacing one establishes new coverage.
 Grid geometry edits and actor size changes re-snap actors
 to nearby fitting anchors; appearance edits do not change positions. A group
 drag translates every selected actor by the same offset, then individually
-snaps each actor in Grid. Each complete operation is one history action.
+snaps each actor when actor snapping is enabled. Each complete operation is one history action.
 
 Square arrows move one neighboring anchor; hex arrows choose the adjacent
 anchor closest to the requested screen direction. Ties use top-to-bottom then
-left-to-right order. Free arrows nudge by 10 logical units (10/64 of fixed rendered grid spacing),
+left-to-right order. With Zone lock and actor snapping off, arrows nudge by 10 logical units (10/64 of fixed rendered grid spacing),
 independent of the user-facing cell-size value. Background resizing does not change this distance.
 Existing viewport
-navigation remains available. Holding a movement key repeats Grid/Free steps
+navigation remains available. Holding a movement key repeats unlocked actor steps
 using native keyboard repeat, throttled to a global Combat preference of
 200 ms by default (configurable from 50 to 2000 ms). The first keypress is
 immediate; the OS supplies initial hold delay. The interval saves on blur or
 Enter, survives reload/cross-tab changes, and resets with local preferences.
 Each accepted step is independently validated
 and undoable; repeat events received during pending validation are ignored
-rather than queued after key release. No movement budgets, terrain, distance
-accounting, pathfinding, or cell occupancy restrictions are introduced.
+rather than queued after key release. No movement budgets, terrain, distance accounting, or actor pathfinding are introduced. Cell Tracer pathfinding applies only to Zone drawing.
 
 Background sizing, fitting, adding, and replacing change image coverage and
 scale Zone polygons while retaining grid geometry and saved spatial coordinates.
@@ -1462,13 +1551,13 @@ transforms the fitted origin with the image, preserving rotation and normalized
 warp coefficients. If the exact fit violates Zone layout limits or the chosen
 actor overflow policy, reject Apply and keep the current encounter; do not
 clamp alignment into an approximate fit. Saved actor coordinates remain fixed except for shared edge
-rebasing and Grid snapping. The resulting map-scale value updates inversely.
-Grid and Background both expose visibility, settings, and alignment buttons in
-their subtool button group on compact and desktop layouts.
-Strategy changes, geometry
+rebasing and enabled actor snapping. The resulting map-scale value updates inversely.
+Only Grid exposes visibility, settings, and alignment buttons in
+its subtool groups on compact and desktop layouts.
+Rule changes, geometry
 edits, calibration, movement, and canvas changes are reversible history
 mutations. Applicable semantic validation keeps existing OFF/ADVISORY/ASSISTED/
-STRICT behavior; Zone movement/layout validators are suspended outside Zone.
+STRICT behavior; edge movement and automatic Zone layout validators require Zone lock.
 Geometric fit and snapping invariants apply in every mode. Imports validate
 these facts, supported old documents migrate to default Zone configuration,
 and unsupported newer schemas are rejected without replacing valid data.

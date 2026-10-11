@@ -14,7 +14,7 @@ export type ActorShape = "circle" | "rectangle";
 export type ActorStatus = 0 | 1 | 2 | 3;
 
 export type Actor = {
-  /** Shared Grid/Free position; Zone placement remains derived. */
+  /** Authoritative position while Zone lock is off; locked placement remains derived. */
   spatialPosition?: import('@core/layout/types').LayoutPoint;
   hitPoints?: import("./actorResources").HitPoints;
   counters?: import("./actorResources").ActorCounters;

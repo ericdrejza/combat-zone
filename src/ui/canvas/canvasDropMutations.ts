@@ -2,7 +2,7 @@ import { isPersistenceWritable } from '@store/persistenceWriteGuardMiddleware';
 import { isSpatial, placeSpatialActors } from '@core/movement/movementStrategies';
 import { ZONELESS_ACTOR_ZONE_ID } from '@core/encounter/types';
 import { createEncounterActionRecord } from '@core/history/createEncounterActionRecord';
-import { prepareValidatedEncounterChangeForRuntime } from '@core/validation/validatedEncounterChange';
+import { prepareValidatedEncounterChangeForRuntime } from '@core/validation/runtimeEncounterChange';
 import { createActor, moveActor } from '@entities/actor/actorMutations';
 import { selectEntity, setActiveTool } from '@interaction/interactionState';
 import { resolveLibraryAsset } from '@library/librarySlice';
@@ -36,6 +36,7 @@ function commitCreatedActor(
   const prepared = prepareValidatedEncounterChangeForRuntime({
     action: createEncounterActionRecord('actor.create', {
       actorId,
+      ...(dropPoint ? { requestedPositions: { [actorId]: dropPoint } } : {}),
       destinationZoneId
     }),
     currentEncounter: context.encounter,
@@ -170,7 +171,7 @@ export async function commitBackgroundFromFile(
     viewportSize: getViewportSize(),
     viewportZoom
   });
-  context.dispatch(setActiveTool(context.encounter.movementStrategy));
+  context.dispatch(setActiveTool(context.encounter.movementRules.snapToGrid ? "grid" : "actor"));
 }
 
 export function moveActorsToZone(
@@ -191,6 +192,7 @@ export function moveActorsToZone(
     isSpatial(context.encounter) ? 'actor.moveSpatial' : actorIds.length > 1 ? 'actor.moveMany' : 'actor.move',
     {
       actorIds,
+      ...(dropPoint ? { requestedPositions: Object.fromEntries(actorIds.map(id => [id, dropPoint])) } : {}),
       destinationZoneId
     }
   );

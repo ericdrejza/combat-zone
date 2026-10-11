@@ -2,7 +2,7 @@ import { useStore } from "react-redux";
 import type { EncounterState } from "@core/encounter/types";
 import { createEncounterActionRecord } from "@core/history/createEncounterActionRecord";
 import type { JsonObject } from "@core/history/types";
-import { prepareValidatedEncounterChangeForRuntime } from "@core/validation/validatedEncounterChange";
+import { prepareValidatedEncounterChangeForRuntime } from "@core/validation/runtimeEncounterChange";
 import { commitEncounterChange } from "@store/encounterSlice";
 import { logEncounterValidationBlock } from "@store/encounterLogSlice";
 import { isPersistenceWritable } from "@store/persistenceWriteGuardMiddleware";

@@ -3,7 +3,7 @@ import { useRef, useState } from 'react';
 import { createEncounterActionRecord } from '@core/history/createEncounterActionRecord';
 import type { EncounterState } from '@core/encounter/types';
 import type { LayoutPoint } from '@core/layout/types';
-import { prepareValidatedEncounterChangeForRuntime } from '@core/validation/validatedEncounterChange';
+import { prepareValidatedEncounterChangeForRuntime } from '@core/validation/runtimeEncounterChange';
 import { mergeEngagements } from '@entities/engagement/engagementMutations';
 import { selectEntity } from '@interaction/interactionState';
 import { commitEncounterChange } from '@store/encounterSlice';

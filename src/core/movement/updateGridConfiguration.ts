@@ -16,6 +16,9 @@ import { resnapSpatialActors } from './movementStrategies';
 /** Cell-size edits resize map coverage, never the physical lattice or actor footprints. */
 export function updateGridConfiguration(state: EncounterState, grid: GridConfiguration,
   overflowBehavior: BackgroundResizeOverflowBehavior = 'zoneless'): EncounterState {
+  if (grid.cellSize === state.grid.cellSize && grid.type === state.grid.type && grid.rotation === state.grid.rotation &&
+    grid.origin.x === state.grid.origin.x && grid.origin.y === state.grid.origin.y && JSON.stringify(grid.warp) === JSON.stringify(state.grid.warp))
+    return { ...state, grid };
   if (grid.cellSize === state.grid.cellSize)
     return resnapSpatialActors(completeGridEdges({ ...state, grid }));
   return resizeGridMap(state, grid, state.grid.cellSize / grid.cellSize, overflowBehavior, 'grid.update');

@@ -1,3 +1,5 @@
+import { movementRulesFor } from '@tests/core/movement/ruleFixtures';
+import { setTestMovement } from '@tests/core/movement/ruleFixtures';
 import { ZoneIntegrityValidator } from '@core/validation/zoneIntegrityValidator';
 import { createEncounterState } from '@core/encounter/createEncounterState';
 import { resizeEncounterCanvas } from '@core/encounter/canvasSizeMutations';
@@ -8,7 +10,7 @@ import { updateGridConfiguration, applyGridAlignment } from '@core/movement/upda
 import { resolveGridGeometry } from '@core/movement/gridScale';
 import { gridToWorld, spatialActorRadius } from '@core/movement/gridGeometry';
 import { getGridCoverage } from '@core/movement/gridCoverage';
-import { changeMovementStrategy, spatialPlacements } from '@core/movement/movementStrategies';
+import { spatialPlacements } from '@core/movement/movementStrategies';
 import { createEncounterHistoryState } from '@core/history/types';
 import { createEncounterActionRecord } from '@core/history/createEncounterActionRecord';
 import { prepareValidatedEncounterChange } from '@core/validation/validatedEncounterChange';
@@ -17,7 +19,7 @@ import type { GridConfiguration } from '@core/movement/types';
 
 function fixture() {
   const state = createActor(createEncounterState({ id: 'scale', name: 'Scale' }), { id: 'a', currentZoneId: 'zoneless' });
-  state.movementStrategy = 'free';
+  state.movementRules = movementRulesFor('free');
   state.actors.byId.a.spatialPosition = { x: 160, y: 160 };
   return state;
 }
@@ -27,7 +29,7 @@ describe('shared map scale and stable actor footprints', () => {
     let state = fixture(); state.actors.byId.a.size = size;
     const expected = getActorRadius(state.actors.byId.a);
     for (const strategy of ['zone', 'grid', 'free'] as const) {
-      state = changeMovementStrategy(state, strategy, {});
+      state = setTestMovement(state, strategy, { a: state.actors.byId.a.spatialPosition ?? { x: 200, y: 200 } });
       expect(spatialActorRadius(state.actors.byId.a, state.grid)).toBe(expected);
       if (strategy !== 'zone') expect(spatialPlacements(state)[0].radius).toBe(expected);
     }
@@ -87,7 +89,7 @@ describe('shared map scale and stable actor footprints', () => {
 });
 
 it.each(['ADVISORY', 'STRICT'] as const)('retains semantic validation behavior for map sizing in %s', mode => {
-  const state = fixture(); state.movementStrategy = 'zone'; state.validationState.mode = mode;
+  const state = fixture(); state.movementRules = movementRulesFor('zone'); state.validationState.mode = mode;
   state.actors.byId.a.currentZoneId = 'missing-zone';
   const next = resizeEncounterCanvas(state, { canvasSize: { width: 1920, height: 1280 } });
   const prepared = prepareValidatedEncounterChange({ currentEncounter: state, nextEncounter: next,
@@ -98,7 +100,7 @@ it.each(['ADVISORY', 'STRICT'] as const)('retains semantic validation behavior f
 
 it('rejects exact alignment below Zone layout limits without changing the encounter', () => {
   let state = createZone(fixture(), { id: 'z', polygon: [{ x: 100, y: 100 }, { x: 400, y: 100 }, { x: 400, y: 400 }, { x: 100, y: 400 }] });
-  state.movementStrategy = 'zone'; state.actors.byId.a.currentZoneId = 'z'; state.actors.byId.a.size = 'xLarge';
+  state.movementRules = movementRulesFor('zone'); state.actors.byId.a.currentZoneId = 'z'; state.actors.byId.a.size = 'xLarge';
   const before = structuredClone(state);
   const result = applyGridAlignment(state, { ...resolveGridGeometry(state.grid), cellSize: 640 });
   expect(result).toBe(state); expect(state).toEqual(before);

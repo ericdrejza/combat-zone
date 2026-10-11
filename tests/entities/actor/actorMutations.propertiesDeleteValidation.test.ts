@@ -107,7 +107,8 @@ describe('actor mutations', () => {
     expect(advisoryResult.validationResult.messages).toEqual([
       expect.objectContaining({
         code: 'movement.destinationZoneMissing'
-      })
+      }),
+      expect.objectContaining({ code: 'zoneIntegrity.actorZoneMissing' })
     ]);
   });
 });

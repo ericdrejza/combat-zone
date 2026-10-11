@@ -1,3 +1,4 @@
+import { movementRulesFor } from '@tests/core/movement/ruleFixtures';
 import { resolveGridGeometry } from '@core/movement/gridScale';
 import { act, fireEvent, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -16,7 +17,7 @@ it.each(['grid', 'free'] as const)('sizes background coverage independently of t
   Object.defineProperties(viewport, { clientWidth: { configurable: true, value: 600 }, clientHeight: { configurable: true, value: 400 } });
   fireEvent(window, new Event('resize'));
   let state = createActor(createEncounterState({ id: 'grid-sizing', name: 'Grid sizing' }), { id: 'a', currentZoneId: 'zoneless' });
-  state.movementStrategy = movementStrategy; state.grid.cellSize = 100; state.grid.visible = true;
+  state.movementRules = movementRulesFor(movementStrategy); state.grid.cellSize = 100; state.grid.visible = true;
   state.canvasSize = { width: 610, height: 410 };
   state.backgroundImage = { source: { kind: 'url', url: 'https://example.com/grid.png' }, name: 'Grid', width: 610, height: 410, mediaType: 'image/png' };
   state.actors.byId.a.spatialPosition = { x: 160, y: 160 };

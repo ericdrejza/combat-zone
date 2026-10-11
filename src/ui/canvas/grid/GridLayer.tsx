@@ -11,10 +11,11 @@ import { WarpedGridLayer } from './WarpedGridLayer';
 /** A repeating SVG pattern avoids creating one DOM element per grid cell. */
 export function GridLayer({ encounter }: { encounter: EncounterState }) {
   const id = useId().replace(/:/g, '');
-  const { gridPreview, gridCalibrationActive, gridCalibrationPoints, gridCalibrationMode, gridCalibrationType } = useSelector((state: RootState) => state.interaction);
+  const { gridAppearancePreview, gridPreview, gridCalibrationActive, gridCalibrationPoints, gridCalibrationMode, gridCalibrationType } = useSelector((state: RootState) => state.interaction);
   const draftGrid = gridCalibrationActive ? { ...encounter.grid, type: gridCalibrationType } : encounter.grid;
   const alignmentPreview = gridCalibrationActive ? gridPreview : null;
-  const grid = alignmentPreview ?? (gridCalibrationActive && gridCalibrationMode === 'simple' ? calibrateGrid(draftGrid, gridCalibrationPoints) : null) ?? resolveGridGeometry(draftGrid);
+  const geometry = alignmentPreview ?? (gridCalibrationActive && gridCalibrationMode === 'simple' ? calibrateGrid(draftGrid, gridCalibrationPoints) : null) ?? resolveGridGeometry(draftGrid);
+  const grid = !gridCalibrationActive && gridAppearancePreview ? { ...geometry, ...gridAppearancePreview } : geometry;
   if (!grid.visible && !gridCalibrationActive && !gridPreview) return null;
   const clipId = `${id}-completed`;
   if (grid.warp) return <g clipPath={`url(#${clipId})`}><defs><CompletedGridClip id={clipId} grid={grid} encounter={encounter} /></defs><WarpedGridLayer grid={grid} canvas={encounter.canvasSize} /></g>;

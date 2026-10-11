@@ -1,4 +1,4 @@
-import { movementStrategyMiddleware } from './movementStrategyMiddleware';
+import { movementRulesMiddleware } from './movementRulesMiddleware';
 import { configureStore } from "@reduxjs/toolkit";
 
 import interactionReducer from "@interaction/interactionState";
@@ -19,7 +19,7 @@ export const store = configureStore({
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(
       persistenceWriteGuardMiddleware,
-      movementStrategyMiddleware,
+      movementRulesMiddleware,
       audioTriggerMiddleware,
       encounterLogMiddleware
     )

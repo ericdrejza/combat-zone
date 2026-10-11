@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import { getActorEngagement } from '@core/encounter/inspectors';
 import { createEncounterActionRecord } from '@core/history/createEncounterActionRecord';
-import { prepareValidatedEncounterChangeForRuntime } from '@core/validation/validatedEncounterChange';
+import { prepareValidatedEncounterChangeForRuntime } from '@core/validation/runtimeEncounterChange';
 import { leaveEngagements } from '@entities/engagement/engagementMutations';
 import { commitEncounterChange } from '@store/encounterSlice';
 import { logEncounterValidationBlock } from '@store/encounterLogSlice';

@@ -93,7 +93,7 @@ export function getPolygonFlexAffectedZoneIds(
   const affectedZoneIds = new Set<string>();
 
   if (
-    (action.type === "movement.changeStrategy" && nextState.movementStrategy === "zone") ||
+    (action.type === "movement.updateRules" && nextState.movementRules.zoneLocked) ||
     action.type === "grid.update" ||
     action.type === "grid.calibrate" ||
     action.type === "canvas.resize" ||
@@ -235,6 +235,7 @@ export function adjustPolygonFlexZonesToFit(
   );
   const canResizeWithoutActorAddition =
     action.type === "zone.reshape" ||
+    action.type === "movement.updateRules" ||
     isActorFootprintChange(action) ||
     isZoneLayoutChange(action);
 
@@ -274,6 +275,7 @@ export function adjustPolygonFlexZonesToFit(
       continue;
     }
 
+    if (action.type === "movement.updateRules" && !zone.autoResize) continue;
     const actors = getNestingActorsInZone(
       adjustedEncounter,
       zoneId,

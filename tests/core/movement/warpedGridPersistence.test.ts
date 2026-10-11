@@ -1,3 +1,4 @@
+import { movementRulesFor } from '@tests/core/movement/ruleFixtures';
 import { resolveGridGeometry } from '@core/movement/gridScale';
 import { completeGridEdges } from '@core/movement/gridEdgeCompletion';
 import { getGridCoverage } from '@core/movement/gridCoverage';
@@ -17,7 +18,7 @@ import { gridToWorld } from '@core/movement/gridGeometry';
 
 function fixture() {
   const state = createActor(createEncounterState({ id: 'warp', name: 'Warp' }), { id: 'a', currentZoneId: 'zoneless' });
-  state.movementStrategy = 'grid'; state.grid.origin = { x: 100, y: 100 };
+  state.movementRules = movementRulesFor('grid'); state.grid.origin = { x: 100, y: 100 };
   return placeSpatialActors(state, { a: { x: 320, y: 320 } });
 }
 const warp = { type: 'bilinear' as const, x: [0, 1, 0, 0.006] as [number, number, number, number], y: [0, 0, 1, 0.004] as [number, number, number, number] };

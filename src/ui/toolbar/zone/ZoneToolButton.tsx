@@ -1,7 +1,7 @@
 import type { RootState } from '@store/store';
-import { TOOL_DEFINITIONS_BY_ID } from '@interaction/tools/toolRegistry';
-import { GridControls } from '@ui/toolbar/grid/GridControls';
-import { MovementStrategyCycle } from '@ui/toolbar/grid/MovementStrategyCycle';
+import { useMovementRuleControls } from '@ui/toolbar/grid/useMovementRuleControls';
+import { Lock, Unlock, Waypoints } from 'lucide-react';
+import { setCellTracerActive } from '@interaction/interactionState';
 import { useDispatch, useSelector } from "react-redux";
 import { createPortal } from "react-dom";
 
@@ -40,9 +40,9 @@ export function ZoneToolButton({
   zoneShapeMode
 }: ZoneToolButtonProps) {
   const dispatch = useDispatch();
-  const strategy = useSelector((state: RootState) => state.encounter.present.movementStrategy);
-  tool = TOOL_DEFINITIONS_BY_ID[strategy];
-  const selected = activeToolId === strategy;
+  const { encounter, toggle, disabled, error } = useMovementRuleControls();
+  const tracing = useSelector((state: RootState) => state.interaction.cellTracerActive);
+  const selected = activeToolId === 'zone';
   const toolButtonClassName = selected
     ? "border-canvas-ink bg-canvas-ink text-canvas-on-ink hover:ring-2 hover:ring-canvas-ink/40"
     : "border-canvas-line bg-canvas-surface text-canvas-ink hover:bg-canvas";
@@ -60,11 +60,12 @@ export function ZoneToolButton({
           return (
             <ToolbarOptionButton
               key={option.shape}
-              aria-checked={optionSelected}
+              aria-checked={optionSelected && !tracing}
               aria-label={option.label + " zone shape"}
-              active={optionSelected}
+              active={optionSelected && !tracing}
               onClick={() => {
                 dispatch(setActiveTool("zone"));
+                dispatch(setCellTracerActive(false));
                 dispatch(setZoneShapeMode(option.shape));
               }}
               role="radio"
@@ -72,12 +73,13 @@ export function ZoneToolButton({
               type="button"
             >
               <Icon aria-hidden="true" className="h-4 w-4" />
-              <ToolbarOptionKeybind active={optionSelected}>
+              <ToolbarOptionKeybind active={optionSelected && !tracing}>
                 {option.keybind}
               </ToolbarOptionKeybind>
             </ToolbarOptionButton>
           );
         })}
+        <ToolbarOptionButton aria-label="Cell Tracer" active={tracing} aria-pressed={tracing} disabled={disabled || !encounter.movementRules.snapZoneVertices || !!encounter.grid.warp} onClick={() => { dispatch(setZoneShapeMode('polygon')); dispatch(setCellTracerActive(!tracing)); }} type="button"><Waypoints size={16} /></ToolbarOptionButton>
       </ToolbarOptionGroup>
     );
   }
@@ -85,8 +87,11 @@ export function ZoneToolButton({
   const ToolIcon = TOOL_ICONS[tool.id];
   const optionBar = selected ? (
     <ToolbarSubtoolBar aria-label={`${tool.label} options`}>
-      <MovementStrategyCycle />
-      {strategy === "zone" ? renderOptions() : strategy === "grid" ? <GridControls /> : <span className="text-xs text-canvas-muted">Drag actors freely; arrows nudge.</span>}
+      <ToolbarOptionGroup aria-label="Zone placement rules" role="group">
+        <ToolbarOptionButton aria-label="Zone lock" active={encounter.movementRules.zoneLocked} aria-pressed={encounter.movementRules.zoneLocked} disabled={disabled} onClick={() => void toggle('zoneLocked')} type="button">{encounter.movementRules.zoneLocked ? <Lock size={16} /> : <Unlock size={16} />}</ToolbarOptionButton>
+      </ToolbarOptionGroup>
+      {renderOptions()}
+      {error ? <span role="alert" className="max-w-52 text-xs text-red-600">{error}</span> : null}
     </ToolbarSubtoolBar>
   ) : null;
 
@@ -101,7 +106,7 @@ export function ZoneToolButton({
             aria-pressed={selected}
             className={`flex h-11 min-w-11 shrink-0 items-center justify-center gap-2 rounded-full border px-2 text-sm font-medium shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-canvas-ink lg:h-auto lg:min-w-0 lg:px-3 lg:py-1.5 ${toolButtonClassName}`}
             onClick={() => {
-              dispatch(setActiveTool(selected ? "select" : strategy));
+              dispatch(setActiveTool(selected ? "select" : "zone"));
             }}
             title={tool.tooltip}
             type="button"

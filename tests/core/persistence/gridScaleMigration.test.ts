@@ -1,3 +1,4 @@
+import { movementRulesFor } from '@tests/core/movement/ruleFixtures';
 import { createEncounterState } from '@core/encounter/createEncounterState';
 import { createActor } from '@entities/actor/actorMutations';
 import { createZone } from '@entities/zone/zoneMutations';
@@ -13,7 +14,7 @@ import type { EncounterState } from '@core/encounter/types';
 function legacy(type: EncounterState['grid']['type']) {
   let state = createZone(createEncounterState({ id: 'legacy', name: 'Legacy' }), { id: 'z', polygon: [{ x: 100, y: 100 }, { x: 400, y: 100 }, { x: 400, y: 400 }, { x: 100, y: 400 }] });
   state = createActor(state, { id: 'a', currentZoneId: 'z' });
-  state.movementStrategy = 'free'; state.grid = { ...state.grid, type, cellSize: 32, origin: { x: 25, y: 40 }, rotation: 17,
+  state.movementRules = movementRulesFor('free'); state.grid = { ...state.grid, type, cellSize: 32, origin: { x: 25, y: 40 }, rotation: 17,
     warp: { type: 'bilinear', x: [0, 1, 0, 0.0001], y: [0, 0, 1, 0.0002] } };
   state.actors.byId.a.spatialPosition = { x: 200, y: 220 };
   state.backgroundImage = { name: 'Map', mediaType: 'image/png', width: 1920, height: 1280, source: { kind: 'url', url: 'https://example.com/map.png' } };
@@ -24,7 +25,7 @@ it.each(['square', 'hex-flat', 'hex-pointy'] as const)('migrates legacy %s maps 
   const old = legacy(type), original = structuredClone(old);
   const before = gridToWorld(old.grid, { x: 64, y: 96 });
   const next = migrateEncounterState(old) as EncounterState;
-  expect(old).toEqual(original); expect(next.schemaVersion).toBe(21);
+  expect(old).toEqual(original); expect(next.schemaVersion).toBe(22);
   expect(getGridCoverage(next)).toMatchObject({ width: 1920, height: 1280 });
   expect(next.grid.cellSize).toBe(32); expect(next.grid.warp).toEqual(old.grid.warp);
   expect(next.actors.byId.a.spatialPosition).toEqual({ x: 400, y: 440 });
@@ -45,6 +46,6 @@ it.each(['square', 'hex-flat', 'hex-pointy'] as const)('migrates legacy %s maps 
 it('rejects invalid legacy geometry before conversion and unsupported newer records', () => {
   const old = legacy('square');
   expect(() => migrateEncounterState({ ...old, grid: { ...old.grid, cellSize: 0 } })).toThrow();
-  const envelope = { schemaVersion: EXPORT_SCHEMA_VERSION, kind: 'encounter-export', exportedAt: 1, encounter: { ...old, schemaVersion: 22 }, library: createEmptyLibraryState() };
+  const envelope = { schemaVersion: EXPORT_SCHEMA_VERSION, kind: 'encounter-export', exportedAt: 1, encounter: { ...old, schemaVersion: 23 }, library: createEmptyLibraryState() };
   expect(() => parseExportEnvelope(envelope)).toThrow(/unsupported/);
 });

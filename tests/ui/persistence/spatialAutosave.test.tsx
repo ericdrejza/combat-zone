@@ -1,3 +1,4 @@
+import { movementRulesFor } from '@tests/core/movement/ruleFixtures';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { createEncounterState } from '@core/encounter/createEncounterState';
@@ -22,7 +23,7 @@ const mount = (repository: InMemoryWorkspaceRepository) => {
 async function fixture() {
   const repository = new InMemoryWorkspaceRepository();
   let state = createActor(createEncounterState({ id: 'spatial-save', name: 'Spatial' }), { id: 'a', currentZoneId: 'zoneless' });
-  state.movementStrategy = 'grid'; state = placeSpatialActors(state, { a: { x: 160, y: 160 } });
+  state.movementRules = movementRulesFor('grid'); state = placeSpatialActors(state, { a: { x: 160, y: 160 } });
   await repository.createEncounter(state, 'encounters-root');
   await repository.createEncounter(createEncounterState({ id: 'other', name: 'Other' }), 'encounters-root');
   await repository.saveManifest({ ...(await repository.getManifest()), activeEncounterId: state.id });
@@ -38,7 +39,7 @@ it('autosaves spatial facts and history, explicitly saves, flushes navigation, a
   act(() => store.dispatch(redoEncounterChange()));
   await act(async () => screen.getByRole('button', { name: 'Save' }).click());
   expect((await repository.getEncounter(state.id))?.state).toEqual(moved);
-  const changed = { ...moved, movementStrategy: 'free' as const, grid: { ...moved.grid, opacity: 0.25 } };
+  const changed = { ...moved, movementRules: movementRulesFor('free'), grid: { ...moved.grid, opacity: 0.25 } };
   act(() => store.dispatch(commitEncounterChange({ action: createEncounterActionRecord('movement.changeStrategy'), nextEncounter: changed })));
   await act(async () => screen.getByRole('button', { name: 'Load other' }).click());
   expect((await repository.getEncounter(state.id))?.state).toEqual(changed);

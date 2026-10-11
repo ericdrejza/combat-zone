@@ -146,6 +146,10 @@ engineering contracts:
 - Prefer icon-only controls when an icon communicates the action more clearly
   than text, while keeping accessible names through `aria-label` or equivalent
   semantics.
+- All icon buttons must have tooltips describing their action, including new
+  and changed controls. Provide desktop hover tooltips and touch-hold help
+  through the established tooltip components; accessible names alone do not
+  replace tooltips.
 - Use established icon sets for common controls such as drag handles,
   reorder affordances, chevrons, close buttons, and disclosure controls; do
   not hand-author bespoke SVGs for standard icons.

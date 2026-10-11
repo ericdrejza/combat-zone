@@ -1,6 +1,5 @@
 import {
   Grid3X3,
-  Move,
   ArrowRightFromLine,
   AudioLines,
   Bookmark,
@@ -9,7 +8,7 @@ import {
   Hexagon,
   Image,
   Pointer,
-  Pentagon,
+  VectorPolygon,
   Square,
   Shapes,
   type LucideIcon
@@ -31,7 +30,6 @@ export const TOOL_ICONS: Record<ToolId, LucideIcon> = {
   edge: ArrowRightFromLine,
   select: Pointer,
   grid: Grid3X3,
-  free: Move,
   zone: Shapes
 };
 
@@ -54,7 +52,9 @@ export type ToolbarItem =
 
 export const TOOLBAR_ITEMS: ToolbarItem[] = [
   { type: 'tool', tool: TOOL_DEFINITIONS_BY_ID.background },
-  { id: 'background-zone', type: 'separator' },
+  { id: 'background-grid', type: 'separator' },
+  { type: 'tool', tool: TOOL_DEFINITIONS_BY_ID.grid },
+  { id: 'grid-zone', type: 'separator' },
   { type: 'tool', tool: TOOL_DEFINITIONS_BY_ID.zone },
   { id: 'zone-edge', type: 'separator' },
   { type: 'tool', tool: TOOL_DEFINITIONS_BY_ID.edge },
@@ -72,5 +72,5 @@ export const ZONE_SHAPE_OPTIONS: ZoneShapeOption[] = [
   { icon: Square, keybind: '1', label: 'Rectangle', shape: 'rectangle' },
   { icon: Circle, keybind: '2', label: 'Circle', shape: 'circle' },
   { icon: Hexagon, keybind: '3', label: 'Hexagon', shape: 'hexagon' },
-  { icon: Pentagon, keybind: '4', label: 'Polygon', shape: 'polygon' }
+  { icon: VectorPolygon, keybind: '4', label: 'Polygon', shape: 'polygon' }
 ];

@@ -1,7 +1,7 @@
 import { migrateGridScale } from './migrateGridScale';
 import { validBackgroundFrame } from '@core/encounter/backgroundFrame';
 import { assertSpatialState } from '@core/movement/assertSpatialState';
-import { createDefaultGrid } from '@core/movement/types';
+import { DEFAULT_MOVEMENT_RULES, createDefaultGrid } from '@core/movement/types';
 import { validCounters } from "@core/entity_resources/counters";
 import { validClocks } from "@core/entity_resources/statusResources";
 import { SECTION_AUDIO_TRIGGERS, type AudioCueGroupSection } from "@entities/audio/types";
@@ -529,7 +529,7 @@ export function migrateEncounterState(value: unknown): unknown {
 
   if (migrated.schemaVersion === 16) {
     migrated.schemaVersion = 17;
-    migrated.movementStrategy = 'zone';
+    migrated.movementRules = { ...DEFAULT_MOVEMENT_RULES };
     migrated.grid = createDefaultGrid();
   }
   if (migrated.schemaVersion === 17) migrated.schemaVersion = 18;

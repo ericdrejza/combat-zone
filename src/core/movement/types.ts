@@ -1,6 +1,22 @@
 import type { LayoutPoint } from '@core/layout/types';
 
-export type MovementStrategy = 'zone' | 'grid' | 'free';
+/** Independent persisted constraints, shared by all actor-editing tools. */
+export type MovementRules = {
+  zoneLocked: boolean;
+  snapToGrid: boolean;
+  snapZoneVertices: boolean;
+  allowOverlap: boolean;
+  trimTokens: boolean;
+};
+export const DEFAULT_MOVEMENT_RULES: MovementRules = {
+  zoneLocked: true, snapToGrid: false, snapZoneVertices: false, allowOverlap: false, trimTokens: false
+};
+export function validMovementRules(value: unknown): value is MovementRules {
+  if (!value || typeof value !== 'object') return false;
+  const rules = value as MovementRules;
+  return Object.keys(DEFAULT_MOVEMENT_RULES).every(key => typeof rules[key as keyof MovementRules] === 'boolean') &&
+    !(rules.zoneLocked && rules.allowOverlap) && !(rules.trimTokens && !rules.snapToGrid);
+}
 export type GridType = 'square' | 'hex-pointy' | 'hex-flat';
 /** A bilinear alignment maps normalized lattice coordinates into distorted local coordinates. */
 export type GridWarp = { type: 'bilinear'; x: [number, number, number, number]; y: [number, number, number, number] };

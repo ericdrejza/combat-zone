@@ -21,6 +21,6 @@ export function migrateGridScale(state: EncounterState): EncounterState {
     actors: { ...state.actors, byId: Object.fromEntries(Object.entries(state.actors.byId)
       .map(([id, actor]) => [id, actor.spatialPosition ? { ...actor, spatialPosition: point(actor.spatialPosition) } : actor])) }
   };
-  return state.movementStrategy === 'grid' || state.grid.visible || state.gridCoverage
+  return state.movementRules.snapToGrid || state.grid.visible || state.gridCoverage
     ? completeGridEdges(next) : next;
 }

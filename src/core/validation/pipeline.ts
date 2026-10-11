@@ -25,7 +25,7 @@ function getActiveValidators(
 ): Validator<EncounterState>[] {
   return validators.filter(validator =>
     (mode !== 'OFF' || validator.runsInOffMode) &&
-    (!validator.movementStrategies || validator.movementStrategies.includes(encounter.movementStrategy))
+    (!validator.requiresZoneLock || encounter.movementRules.zoneLocked)
   );
 }
 

@@ -7,7 +7,7 @@ import { useDispatch, useSelector } from "react-redux";
 
 import { createEncounterActionRecord } from "@core/history/createEncounterActionRecord";
 import type { JsonObject } from "@core/history/types";
-import { prepareValidatedEncounterChangeForRuntime } from "@core/validation/validatedEncounterChange";
+import { prepareValidatedEncounterChangeForRuntime } from "@core/validation/runtimeEncounterChange";
 import { deleteEdges, updateEdges } from "@entities/edge/edgeMutations";
 import type { Edge, EdgeMovementRule, EdgeShape, EdgeVisibilityRule } from "@entities/edge/types";
 import { clearSelection } from "@interaction/interactionState";

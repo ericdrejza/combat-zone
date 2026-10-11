@@ -2,7 +2,7 @@ import { handleSpatialActorMouseUp } from './spatialActorMouseUp';
 import { createEncounterActionRecord } from '@core/history/createEncounterActionRecord';
 import { ZONELESS_ACTOR_ZONE_ID } from '@core/encounter/types';
 import { getActorEngagement } from '@core/encounter/inspectors';
-import { prepareValidatedEncounterChangeForRuntime } from '@core/validation/validatedEncounterChange';
+import { prepareValidatedEncounterChangeForRuntime } from '@core/validation/runtimeEncounterChange';
 import { moveActor } from '@entities/actor/actorMutations';
 import {
   createEngagement,

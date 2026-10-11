@@ -6,7 +6,7 @@ export function readBackgroundResizeOverflowBehavior(value: unknown): Background
   return value === 'clamp' ? 'clamp' : 'zoneless';
 }
 
-/** Includes saved placements while Zone mode is active. Check after edge completion. */
+/** Checks saved spatial placements after edge completion. */
 export function overflowingSpatialActorIds(state: EncounterState): string[] {
   return state.actors.allIds.filter(id => {
     const actor = state.actors.byId[id], point = actor.spatialPosition;
@@ -14,7 +14,7 @@ export function overflowingSpatialActorIds(state: EncounterState): string[] {
   });
 }
 
-/** Clearing spatial placement preserves suspended Zone/Engagement relationships and resources. */
+/** Clearing spatial placement preserves Engagement relationships and resources. */
 export function unplaceOverflowingSpatialActors(state: EncounterState): EncounterState {
   const outside = overflowingSpatialActorIds(state);
   if (!outside.length) return state;

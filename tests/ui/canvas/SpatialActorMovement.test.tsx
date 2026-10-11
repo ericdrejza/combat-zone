@@ -1,3 +1,4 @@
+import { movementRulesFor } from '@tests/core/movement/ruleFixtures';
 import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import { renderApp, getCanvas, mockCanvasBounds } from '@tests/ui/renderApp';
 import { createEncounterState } from '@core/encounter/createEncounterState';
@@ -16,7 +17,7 @@ function setup(strategy: 'grid' | 'free' = 'grid') {
   state = createActor(state, { id: 'a', name: 'Alpha', currentZoneId: 'z' });
   state = createActor(state, { id: 'b', name: 'Bravo', currentZoneId: 'z', size: 'large' });
   state = createActor(state, { id: 'c', name: 'Charlie', currentZoneId: 'zoneless' });
-  state.movementStrategy = strategy; state.grid.visible = true;
+  state.movementRules = movementRulesFor(strategy); state.grid.visible = true;
   state.actors.byId.a.spatialPosition = { x: 160, y: 160 };
   state.actors.byId.b.spatialPosition = { x: 320, y: 320 };
   act(() => { store.dispatch(loadEncounterState(state)); store.dispatch(setActiveTool('actor')); });
@@ -50,11 +51,11 @@ describe('spatial actor canvas workflows', () => {
     await waitFor(() => expect(store.getState().encounterLog.entries.some(entry => entry.actionType === 'actor.moveSpatial' && entry.kind === 'validation-block')).toBe(true));
     expect(store.getState().encounter.present).toBe(before);
   });
-  it('moves canvas actors into the panel without changing their Zone assignment', async () => {
+  it('moves canvas actors into the panel and clears their Zone assignment', async () => {
     setup();
     drag(100, 100, screen.getByRole('complementary', { name: 'Zoneless actors' }));
     await waitFor(() => expect(store.getState().encounter.present.actors.byId.a.spatialPosition).toBeUndefined());
-    expect(store.getState().encounter.present.actors.byId.a.currentZoneId).toBe('z');
+    expect(store.getState().encounter.present.actors.byId.a.currentZoneId).toBe('zoneless');
     const transfer = dataTransfer(); transfer.setData(ZONELESS_ACTOR_DRAG_TYPE, 'a');
     dropOnCanvas(getCanvas(), transfer, 200, 200);
     await waitFor(() => expect(store.getState().encounter.present.actors.byId.a.spatialPosition).toEqual({ x: 224, y: 224 }));

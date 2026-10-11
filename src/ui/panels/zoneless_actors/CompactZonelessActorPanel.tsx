@@ -1,4 +1,3 @@
-import type { MovementStrategy } from '@core/movement/types';
 import type { DragEvent, MouseEvent } from "react";
 import { useMemo, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -20,7 +19,7 @@ import { armCompactCanvasTransfer } from "@ui/canvas/compactCanvasTransfer";
 /** Drawer presentation of the authoritative zoneless actor collection. */
 export function CompactZonelessActorPanel() {
   const dispatch = useDispatch();
-  const movementStrategy = useSelector((state: RootState) => state.encounter.present.movementStrategy);
+  const zoneLocked = useSelector((state: RootState) => state.encounter.present.movementRules.zoneLocked);
   const actors = useSelector((state: RootState) => state.encounter.present.actors);
   const activeToolId = useSelector(
     (state: RootState) => state.interaction.activeToolId
@@ -31,13 +30,13 @@ export function CompactZonelessActorPanel() {
   );
   const [groupByFaction, setGroupByFaction] = useState(true);
   const dragPreviewCleanupRef = useRef<(() => void) | null>(null);
-  const zonelessActors = useMemo(() => getZonelessActors(actors, movementStrategy), [actors, movementStrategy]);
+  const zonelessActors = useMemo(() => getZonelessActors(actors, zoneLocked), [actors, zoneLocked]);
   const groups = useMemo(() => getGroupedActors(zonelessActors), [zonelessActors]);
   const selectedIds =
     selection.selectedEntityType === "actor" ? selection.selectedIds : [];
 
   function selectActor(actorId: string, event: MouseEvent<HTMLButtonElement>) {
-    if (!(["actor", "select", "grid", "free"].includes(activeToolId))) {
+    if (!(["actor", "select", "grid"].includes(activeToolId))) {
       return;
     }
 
@@ -53,7 +52,7 @@ export function CompactZonelessActorPanel() {
   }
 
   function startDrag(actorId: string, event: DragEvent<HTMLButtonElement>) {
-    if (!(["actor", "select", "grid", "free"].includes(activeToolId))) {
+    if (!(["actor", "select", "grid"].includes(activeToolId))) {
       event.preventDefault();
       return;
     }

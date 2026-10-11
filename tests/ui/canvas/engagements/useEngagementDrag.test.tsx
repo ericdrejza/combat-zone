@@ -6,7 +6,7 @@ import type { EntityCollection } from '@core/state/entityCollection';
 import { useEngagementDrag } from '@ui/canvas/engagements/useEngagementDrag';
 
 const validationState = vi.hoisted(() => ({ blocked: true }));
-vi.mock('@core/validation/validatedEncounterChange', () => ({
+vi.mock('@core/validation/runtimeEncounterChange', () => ({
   prepareValidatedEncounterChangeForRuntime: (input: {
     action: unknown;
     nextEncounter: unknown;

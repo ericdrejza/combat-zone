@@ -4,8 +4,9 @@ import { allowsZoneless, hasActor, hasZone, result } from "./validatorUtils";
 
 export const ZoneIntegrityValidator: Validator<EncounterState> = {
   id: "ZoneIntegrityValidator",
-  movementStrategies: ["zone"],
-  validate(_action: ValidationAction, { state }) {
+
+  validate(_action: ValidationAction, { state: previous, nextState }) {
+    const state = nextState ?? previous;
     const messages: ValidationMessage[] = [];
 
     for (const actorId of state.actors.allIds) {
@@ -35,7 +36,7 @@ export const ZoneIntegrityValidator: Validator<EncounterState> = {
           messages.push({ code: "zoneIntegrity.engagementParticipantMissing", message: `Engagement ${engagement.id} references missing participant ${participantId}.`, severity: "error" });
         }
         const participant = state.actors.byId[participantId];
-        if (participant && participant.currentZoneId !== engagement.parentZoneId) {
+        if (participant && state.movementRules.zoneLocked && participant.currentZoneId !== engagement.parentZoneId) {
           messages.push({ code: "zoneIntegrity.engagementParticipantOutsideParentZone", message: `Engagement ${engagement.id} contains an actor outside its parent zone.`, severity: "error" });
         }
       }

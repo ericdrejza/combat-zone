@@ -151,3 +151,18 @@ the design as future or nice-to-have work.
 - [x] Detection/alignment normalize map coverage and preserve fitted geometry; previews cancel without durable mutations.
 - [x] Grid settings remains inside the Grid subtool button group, matching Background on compact and desktop layouts.
 - [x] Schema 21 preserves legacy map alignment and validates local/cloud round trips, history, overflow, and writer boundaries.
+
+
+## Independent Zone/Grid rules
+
+- [x] Separate Zone/Grid tools and independent actor/Zone snapping rules.
+- [x] Grid-aware Zone packing, occupancy adjustments, and unlocked relationships.
+- [x] Canvas defaults, membership policies, and ordered choice dialogs.
+- [x] Cell Tracer with whole-segment removal and invalid-route policies.
+- [x] Hex token Trim and complete history/persistence/validation coverage.
+- [x] Grid appearance blur commits, collapsible Zone color fields, rigid snapped Zone moves, full-cell occupancy, and tracer closing previews.
+- [x] Zone drops settle with the Actor movement spring, retaining the drop frame during validation and respecting reduced motion.
+- [x] Hide the Zoneless panel during Zone drawing and support validated double-click polygon vertex edits with screen-based spacing.
+- [x] Fade the Zoneless panel during Zone drawing, moving, and resizing while preserving panel state and respecting reduced motion.
+
+Implementation plan: [Zone/Grid rules](plans/zone_grid_rules.md).

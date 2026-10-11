@@ -1,42 +1,40 @@
-import { resolveGridGeometry } from './gridScale';
-import { completeGridEdges } from './gridEdgeCompletion';
 import type { Actor } from '@entities/actor/types';
 import type { EncounterState } from '@core/encounter/types';
 import type { LayoutPoint } from '@core/layout/types';
-import { gridKeyboardStep, nearestFittingAnchor, snapToGrid, spatialActorRadius } from './gridGeometry';
-import type { MovementStrategy } from './types';
+import { resolveGridGeometry } from './gridScale';
+import { gridKeyboardStep, snapToGrid, spatialActorRadius, footprintFits } from './gridGeometry';
+import { anchorKey, canvasAnchors, pointDistance, pointOrder } from './gridTopology';
+import { attachFixedEngagementTokens } from './gridZonePacking';
 
-type SpatialStrategy = {
-  place(state: EncounterState, actor: Actor, point: LayoutPoint): LayoutPoint;
-  step(state: EncounterState, actor: Actor, direction: LayoutPoint): LayoutPoint;
-};
-const free: SpatialStrategy = {
-  place: (_state, _actor, point) => ({ ...point }),
-  step: (state, actor, direction) => ({ x: actor.spatialPosition!.x + direction.x * 10, y: actor.spatialPosition!.y + direction.y * 10 })
-};
-const grid: SpatialStrategy = {
-  place: (state, actor, point) => snapToGrid(resolveGridGeometry(state.grid), point, actor.size),
-  step: (state, actor, direction) => gridKeyboardStep(resolveGridGeometry(state.grid), actor.spatialPosition!, actor.size, direction)
-};
-export const SPATIAL_STRATEGIES = { free, grid };
-export const isSpatial = (state: EncounterState) => state.movementStrategy === 'grid' || state.movementStrategy === 'free';
+export const isSpatial = (state: EncounterState) => !state.movementRules.zoneLocked;
 export function spatialPlacements(state: EncounterState) {
-  return state.actors.allIds.flatMap(id => {
+  return attachFixedEngagementTokens(state, state.actors.allIds.flatMap(id => {
     const actor = state.actors.byId[id];
-    return actor?.spatialPosition ? [{ actor, point: actor.spatialPosition, radius: spatialActorRadius(actor, state.grid, actor.spatialPosition) }] : [];
-  });
+    return actor?.spatialPosition ? [{ actorId: id, point: actor.spatialPosition, radius: spatialActorRadius(actor) }] : [];
+  })).map(placement => ({ ...placement, actor: state.actors.byId[placement.actorId] }));
 }
 
-/** Coordinates are authoritative outside Zone; assignments and memberships remain suspended. */
-export function placeSpatialActors(state: EncounterState, points: Record<string, LayoutPoint | null>): EncounterState {
+function fittingPoint(state: EncounterState, actor: Actor, requested: LayoutPoint, occupied: Set<string>): LayoutPoint | undefined {
+  const snapped = snapToGrid(resolveGridGeometry(state.grid), requested, actor.size);
+  const fits = (point: LayoutPoint) => footprintFits(point, spatialActorRadius(actor), state.canvasSize) && (state.movementRules.allowOverlap || !occupied.has(anchorKey(point)));
+  if (state.movementRules.allowOverlap || !occupied.has(anchorKey(snapped))) return snapped;
+  return canvasAnchors(state, actor.size).filter(fits).sort((a, b) => pointDistance(a, requested) - pointDistance(b, requested) || pointOrder(a, b))[0];
+}
+
+/** A multi-actor move reserves anchors deterministically and fails as a whole. */
+export function placeSpatialActors(state: EncounterState, points: Record<string, LayoutPoint | null>, unplaceOnFailure = false): EncounterState {
   if (!isSpatial(state)) return state;
-  const strategy = SPATIAL_STRATEGIES[state.movementStrategy as 'grid' | 'free'];
+  const occupied = new Set(state.actors.allIds.flatMap(id => !(id in points) && state.actors.byId[id].spatialPosition ? [anchorKey(state.actors.byId[id].spatialPosition!)] : []));
   const byId = { ...state.actors.byId };
   let changed = false;
-  for (const [id, point] of Object.entries(points)) {
-    const actor = byId[id];
-    if (!actor) continue;
-    const position = point ? strategy.place(state, actor, point) : undefined;
+  for (const id of state.actors.allIds.filter(actorId => actorId in points)) {
+    const actor = byId[id], point = points[id];
+    const position = point ? state.movementRules.snapToGrid ? fittingPoint(state, actor, point, occupied) : { ...point } : undefined;
+    if (point && !position && !unplaceOnFailure) return state;
+    if (unplaceOnFailure && position && !footprintFits(position, spatialActorRadius(actor), state.canvasSize)) {
+      byId[id] = { ...actor }; delete byId[id].spatialPosition; changed = true; continue;
+    }
+    if (position) occupied.add(anchorKey(position));
     if (position?.x === actor.spatialPosition?.x && position?.y === actor.spatialPosition?.y) continue;
     byId[id] = { ...actor };
     if (position) byId[id].spatialPosition = position;
@@ -45,34 +43,22 @@ export function placeSpatialActors(state: EncounterState, points: Record<string,
   }
   return changed ? { ...state, actors: { ...state.actors, byId } } : state;
 }
+export function spatialStepTargets(state: EncounterState, ids: string[], direction: LayoutPoint): Record<string, LayoutPoint> {
+  return Object.fromEntries(ids.flatMap(id => {
+    const actor = state.actors.byId[id], point = actor?.spatialPosition;
+    if (!point) return [];
+    const target = state.movementRules.snapToGrid ? gridKeyboardStep(resolveGridGeometry(state.grid), point, actor.size, direction)
+      : { x: point.x + direction.x * 10, y: point.y + direction.y * 10 };
+    return [[id, target]];
+  }));
+}
 export function stepSpatialActors(state: EncounterState, ids: string[], direction: LayoutPoint): EncounterState {
   if (!isSpatial(state)) return state;
-  const strategy = SPATIAL_STRATEGIES[state.movementStrategy as 'grid' | 'free'];
-  return placeSpatialActors(state, Object.fromEntries(ids.flatMap(id => {
-    const actor = state.actors.byId[id];
-    return actor?.spatialPosition ? [[id, strategy.step(state, actor, direction)]] : [];
-  })));
+  return placeSpatialActors(state, spatialStepTargets(state, ids, direction));
 }
 export function resnapSpatialActors(state: EncounterState): EncounterState {
-  if (state.movementStrategy !== 'grid') return state;
+  if (!isSpatial(state) || !state.movementRules.snapToGrid) return state;
   return placeSpatialActors(state, Object.fromEntries(state.actors.allIds.flatMap(id => {
-    const actor = state.actors.byId[id];
-    return actor?.spatialPosition ? [[id, nearestFittingAnchor(resolveGridGeometry(state.grid), actor.spatialPosition, actor, state.canvasSize)]] : [];
+    const actor = state.actors.byId[id]; return actor.spatialPosition ? [[id, actor.spatialPosition]] : [];
   })));
-}
-export function changeMovementStrategy(state: EncounterState, strategy: MovementStrategy,
-  settledPositions: Record<string, LayoutPoint>): EncounterState {
-  if (state.movementStrategy === strategy) return state;
-  let next = { ...state, movementStrategy: strategy, grid: strategy === 'grid' ? { ...state.grid, visible: true } : state.grid };
-  if (strategy === 'grid') next = completeGridEdges(next);
-  if (strategy !== 'zone') {
-    next = placeSpatialActors(next, Object.fromEntries(state.actors.allIds.flatMap(id => {
-      const actor = state.actors.byId[id];
-      const settled = settledPositions[id];
-      const point = settled && strategy === 'grid' ? { x: settled.x + next.grid.origin.x - state.grid.origin.x, y: settled.y + next.grid.origin.y - state.grid.origin.y } : settled;
-      return !actor.spatialPosition && point ? [[id, point]] : [];
-    })));
-    next = resnapSpatialActors(next);
-  }
-  return next;
 }

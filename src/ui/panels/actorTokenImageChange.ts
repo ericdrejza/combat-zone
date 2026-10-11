@@ -1,6 +1,6 @@
 import { createEncounterActionRecord } from "@core/history/createEncounterActionRecord";
 import type { EncounterState } from "@core/encounter/types";
-import { prepareValidatedEncounterChangeForRuntime } from "@core/validation/validatedEncounterChange";
+import { prepareValidatedEncounterChangeForRuntime } from "@core/validation/runtimeEncounterChange";
 import { updateActorProperties } from "@entities/actor/actorMutations";
 import { resolveLibraryAsset } from "@library/librarySlice";
 import type { LibraryNode, LibrarySection } from "@library/types";

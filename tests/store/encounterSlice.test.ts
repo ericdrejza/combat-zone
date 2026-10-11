@@ -1,3 +1,4 @@
+import { movementRulesFor } from '@tests/core/movement/ruleFixtures';
 import { createDefaultGrid } from '@core/movement/types';
 import { describe, expect, it } from "vitest";
 
@@ -47,7 +48,7 @@ describe("encounter Redux history", () => {
     expect(state).toEqual({
       past: [],
       present: {
-        movementStrategy: 'zone',
+        movementRules: movementRulesFor('zone'),
         grid: createDefaultGrid(),
         schemaVersion: ENCOUNTER_SCHEMA_VERSION,
         id: "active-encounter",

@@ -1,3 +1,4 @@
+import { movementRulesFor } from '@tests/core/movement/ruleFixtures';
 import { createEncounterState } from '@core/encounter/createEncounterState';
 import { createActor } from '@entities/actor/actorMutations';
 import { InMemoryWorkspaceRepository } from '@core/persistence/memoryRepository';
@@ -6,7 +7,7 @@ import { placeSpatialActors } from '@core/movement/movementStrategies';
 async function fixture() {
   const source = new InMemoryWorkspaceRepository();
   const state = createActor(createEncounterState({ id: 'same', name: 'Imported' }), { id: 'actor', currentZoneId: 'zoneless' });
-  state.movementStrategy = 'free'; state.grid.rotation = 27;
+  state.movementRules = movementRulesFor('free'); state.grid.rotation = 27;
   await source.createEncounter(placeSpatialActors(state, { actor: { x: 121, y: 141 } }));
   return source.exportWorkspace();
 }
@@ -18,7 +19,7 @@ it('preserves spatial data through encounter-ID remapping in workspace merges', 
   expect(records).toHaveLength(2);
   const imported = records.find(record => record.state.name === 'Imported')!;
   expect(imported.id).not.toBe('same');
-  expect(imported.state).toMatchObject({ id: imported.id, movementStrategy: 'free', grid: { rotation: 27 }, actors: { byId: { actor: { spatialPosition: { x: 121, y: 141 } } } } });
+  expect(imported.state).toMatchObject({ id: imported.id, movementRules: movementRulesFor('free'), grid: { rotation: 27 }, actors: { byId: { actor: { spatialPosition: { x: 121, y: 141 } } } } });
 });
 it('rejects an invalid multi-record import atomically and retains a recoverable overwrite backup', async () => {
   const repository = new InMemoryWorkspaceRepository();

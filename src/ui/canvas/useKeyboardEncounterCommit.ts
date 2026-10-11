@@ -2,9 +2,11 @@ import { useStore } from "react-redux";
 import type { EncounterState } from "@core/encounter/types";
 import type { JsonObject } from "@core/history/types";
 import { createEncounterActionRecord } from "@core/history/createEncounterActionRecord";
-import { prepareValidatedEncounterChangeForRuntime } from "@core/validation/validatedEncounterChange";
+import { adjustedSpatialActorIds } from '@core/movement/spatialAdjustment';
+import { createCommittedEncounterLogEntry } from '@core/logging/formatEncounterLogEntry';
+import { prepareValidatedEncounterChangeForRuntime } from "@core/validation/runtimeEncounterChange";
 import { commitEncounterChange } from "@store/encounterSlice";
-import { logEncounterValidationBlock } from "@store/encounterLogSlice";
+import { appendEncounterLogEntry, logEncounterValidationBlock } from "@store/encounterLogSlice";
 import { isPersistenceWritable } from "@store/persistenceWriteGuardMiddleware";
 import type { RootState } from "@store/store";
 import { useZoneResizeApproval } from "@ui/zoneResizeApproval";
@@ -18,7 +20,16 @@ export function useKeyboardEncounterCommit() {
     if (!isPersistenceWritable() || !isCurrent()) return false;
     const current = store.getState().encounter.present;
     const next = mutate(current);
-    if (next === current) return false;
+    if (next === current) {
+      if (type === 'actor.moveSpatial' && Array.isArray(payload.actorIds) && payload.actorIds.length === 1) {
+        const adjustedActorIds = adjustedSpatialActorIds(current, payload.requestedPositions);
+        if (adjustedActorIds.length) {
+          const action = createEncounterActionRecord(type, { ...payload, adjustedActorIds });
+          store.dispatch(appendEncounterLogEntry(createCommittedEncounterLogEntry(action, { before: current, after: current })));
+        }
+      }
+      return false;
+    }
     const prepared = await prepareValidatedEncounterChangeForRuntime({ currentEncounter: current, nextEncounter: next, action: createEncounterActionRecord(type, payload) });
     const valid = () => isPersistenceWritable() && isCurrent() && store.getState().encounter.present === current;
     if (!valid()) return false;

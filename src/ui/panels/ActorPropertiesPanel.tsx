@@ -3,7 +3,7 @@ import { useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 import type { ActorType } from "@entities/actor/types";
-import { prepareValidatedEncounterChangeForRuntime } from "@core/validation/validatedEncounterChange";
+import { prepareValidatedEncounterChangeForRuntime } from "@core/validation/runtimeEncounterChange";
 import { updateActorProperties } from "@entities/actor/actorMutations";
 import { createEncounterActionRecord } from "@core/history/createEncounterActionRecord";
 import { commitEncounterChange } from "@store/encounterSlice";

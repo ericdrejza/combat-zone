@@ -1,5 +1,5 @@
 import { useCombatPreferences } from '@ui/combat_preferences/CombatPreferenceProvider';
-import { stepSpatialActors } from '@core/movement/movementStrategies';
+import { stepSpatialActors, spatialStepTargets } from '@core/movement/movementStrategies';
 import { useEffect, useRef, useState } from "react";
 import { useSelector, useStore } from "react-redux";
 import type { EncounterState } from "@core/encounter/types";
@@ -42,7 +42,7 @@ export function useActorKeyboardMovement() {
   const flowRef = useRef(flow); flowRef.current = flow;
   const [suppress, setSuppress] = useState(false);
   const selectionKey = `${selection.selectedEntityType}:${selection.selectedIds.join("|")}`;
-  const eligible = (["actor", "select", "grid", "free"].includes(tool)) && selection.selectedEntityType === "actor" && selection.selectedIds.length > 0;
+  const eligible = (["actor", "select", "grid"].includes(tool)) && selection.selectedEntityType === "actor" && selection.selectedIds.length > 0;
   const cancel = () => { flowRef.current = null; setFlow(null); setSuppress(false); };
   function current(draft: Workflow) {
     const state = store.getState();
@@ -109,9 +109,9 @@ export function useActorKeyboardMovement() {
         return;
       }
       const index = actionIds.findIndex((id) => matchesKeybind(event, bindings[id])); if (index < 0) return;
-      event.preventDefault(); if ((event.repeat && encounter.movementStrategy === 'zone') || draft || !isPersistenceWritable()) return;
+      event.preventDefault(); if ((event.repeat && encounter.movementRules.zoneLocked) || draft || !isPersistenceWritable()) return;
       const direction = directions[index];
-      if (encounter.movementStrategy !== 'zone') {
+      if (!encounter.movementRules.zoneLocked) {
         const vector = { up: { x: 0, y: -1 }, down: { x: 0, y: 1 }, left: { x: -1, y: 0 }, right: { x: 1, y: 0 } }[direction];
         // Accept native key repeat without overlapping async validation or queuing moves after release.
         if (spatialMovePending.current) return;
@@ -121,7 +121,7 @@ export function useActorKeyboardMovement() {
         const snapshot = store.getState().encounter.present;
         const actorIds = [...selection.selectedIds];
         spatialMovePending.current = true;
-        void commit('actor.moveSpatial', { actorIds, direction }, state => stepSpatialActors(state, actorIds, vector), () => {
+        void commit('actor.moveSpatial', { actorIds, direction, requestedPositions: Object.fromEntries(Object.entries(spatialStepTargets(snapshot, actorIds, vector)).map(([id, p]) => [id, { x: p.x, y: p.y }])) }, state => stepSpatialActors(state, actorIds, vector), () => {
           const current = store.getState();
           return current.encounter.present === snapshot && current.interaction.activeToolId === tool
             && `${current.interaction.selection.selectedEntityType}:${current.interaction.selection.selectedIds.join('|')}` === selectionKey;

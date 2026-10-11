@@ -18,7 +18,7 @@ export function CanvasDragOverlay({
   canvasSize,
   encounter
 }: CanvasDragOverlayProps) {
-  if (encounter.movementStrategy !== "zone") return null;
+  if (!encounter.movementRules.zoneLocked) return null;
   return (
     <svg
       aria-hidden="true"

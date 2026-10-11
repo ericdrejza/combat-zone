@@ -1,7 +1,7 @@
 import { useDispatch, useSelector } from "react-redux";
 
 import { createEncounterActionRecord } from "@core/history/createEncounterActionRecord";
-import { prepareValidatedEncounterChangeForRuntime } from "@core/validation/validatedEncounterChange";
+import { prepareValidatedEncounterChangeForRuntime } from "@core/validation/runtimeEncounterChange";
 import type { Zone } from "@entities/zone/types";
 import {
   deleteZone,

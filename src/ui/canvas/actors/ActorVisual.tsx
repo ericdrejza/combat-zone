@@ -12,6 +12,7 @@ import { isAnimatedAsset } from "@library/mediaAsset";
 
 type ActorVisualProps = {
   actor: Actor;
+  artworkClipId?: string;
   fillColor: string;
   outlineColor: string;
   radius: number;
@@ -29,6 +30,7 @@ type ActorVisualProps = {
  */
 export const ActorVisual = memo(function ActorVisual({
   actor,
+  artworkClipId,
   fillColor,
   outlineColor,
   radius,
@@ -65,6 +67,7 @@ export const ActorVisual = memo(function ActorVisual({
 
   return (
     <>
+      <g clipPath={artworkClipId ? `url(#${artworkClipId})` : undefined}>
       {actor.shape === "rectangle" ? (
         <motion.rect
           className="stroke-white"
@@ -155,6 +158,7 @@ export const ActorVisual = memo(function ActorVisual({
           {actor.name.toUpperCase()}
         </text>
       )}
+      </g>
       {selected ? (
         actor.shape === "rectangle" ? (
           <motion.rect

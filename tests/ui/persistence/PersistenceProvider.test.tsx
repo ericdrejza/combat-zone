@@ -1,3 +1,5 @@
+import { CANVAS_PREFERENCES_KEY, DEFAULT_CANVAS_PREFERENCES, saveCanvasPreferences } from '@ui/canvas_preferences/canvasPreferenceStorage';
+import { DEFAULT_MOVEMENT_RULES } from '@core/movement/types';
 import { COMBAT_PREFERENCES_STORAGE_KEY } from "@ui/combat_preferences/CombatPreferenceProvider";
 import { act, render, screen, waitFor } from "@testing-library/react";
 import { Provider, useSelector } from "react-redux";
@@ -50,6 +52,7 @@ describe("PersistenceProvider", () => {
     localStorage.removeItem(THEME_STORAGE_KEY);
     localStorage.removeItem(INTERFACE_PREFERENCES_STORAGE_KEY);
     localStorage.removeItem(COMBAT_PREFERENCES_STORAGE_KEY);
+    localStorage.removeItem(CANVAS_PREFERENCES_KEY);
     localStorage.removeItem("unrelated-origin-key");
   });
 
@@ -98,6 +101,7 @@ describe("PersistenceProvider", () => {
     localStorage.setItem(THEME_STORAGE_KEY, "dark");
     localStorage.setItem(INTERFACE_PREFERENCES_STORAGE_KEY, "{}");
     localStorage.setItem(COMBAT_PREFERENCES_STORAGE_KEY, "{}");
+    saveCanvasPreferences({ ...DEFAULT_CANVAS_PREFERENCES, defaults: { ...DEFAULT_MOVEMENT_RULES, zoneLocked: false, snapToGrid: true } });
     localStorage.setItem(IMAGE_COMPRESSION_STORAGE_KEY, "lossy_webp");
     localStorage.setItem("unrelated-origin-key", "keep");
     renderPersistence(repository);
@@ -116,6 +120,8 @@ describe("PersistenceProvider", () => {
       expect(localStorage.getItem(THEME_STORAGE_KEY)).toBeNull();
       expect(localStorage.getItem(INTERFACE_PREFERENCES_STORAGE_KEY)).toBeNull();
       expect(localStorage.getItem(COMBAT_PREFERENCES_STORAGE_KEY)).toBeNull();
+      expect(localStorage.getItem(CANVAS_PREFERENCES_KEY)).toBeNull();
+      expect((await repository.getRecoveryDraft())?.state.movementRules).toEqual(DEFAULT_MOVEMENT_RULES);
       expect(localStorage.getItem(IMAGE_COMPRESSION_STORAGE_KEY)).toBeNull();
       expect(localStorage.getItem("unrelated-origin-key")).toBe("keep");
     });
@@ -146,4 +152,15 @@ describe("PersistenceProvider", () => {
       ]
     });
   });
+  it('copies Canvas defaults into new drafts without mutating an existing encounter', async () => {
+    const defaults = { ...DEFAULT_MOVEMENT_RULES, zoneLocked: false, snapToGrid: true };
+    saveCanvasPreferences({ ...DEFAULT_CANVAS_PREFERENCES, defaults });
+    const repository = new InMemoryWorkspaceRepository();
+    renderPersistence(repository);
+    await screen.findByText('Untitled Encounter');
+    expect(store.getState().encounter.present.movementRules).toEqual(defaults);
+    saveCanvasPreferences(DEFAULT_CANVAS_PREFERENCES);
+    expect(store.getState().encounter.present.movementRules).toEqual(defaults);
+  });
+
 });

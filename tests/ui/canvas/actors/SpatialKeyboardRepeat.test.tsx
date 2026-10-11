@@ -1,3 +1,4 @@
+import { movementRulesFor } from '@tests/core/movement/ruleFixtures';
 import { act, fireEvent, waitFor } from '@testing-library/react';
 import { store } from '@store/store';
 import { redoEncounterChange, undoEncounterChange } from '@store/encounterSlice';
@@ -11,7 +12,7 @@ describe('held-key spatial movement', () => {
   afterEach(() => { vi.restoreAllMocks(); localStorage.removeItem(COMBAT_PREFERENCES_STORAGE_KEY); });
   it.each(['grid', 'free'] as const)('repeats %s movement with independently undoable steps', async strategy => {
     const initial = encounter();
-    initial.movementStrategy = strategy;
+    initial.movementRules = movementRulesFor(strategy);
     initial.actors.byId.alpha.spatialPosition = { x: 160, y: 160 };
     setup(initial, ['alpha']);
     const distance = strategy === 'grid' ? 64 : 10;
@@ -34,7 +35,7 @@ describe('held-key spatial movement', () => {
   });
 
   it.each(['grid', 'free'] as const)('does not queue %s repeat events received during pending validation', async strategy => {
-    const initial = encounter(); initial.movementStrategy = strategy;
+    const initial = encounter(); initial.movementRules = movementRulesFor(strategy);
     initial.actors.byId.alpha.spatialPosition = { x: 160, y: 160 };
     setup(initial, ['alpha']);
     fireEvent.keyDown(window, { key: 'ArrowRight' });
@@ -48,7 +49,7 @@ describe('held-key spatial movement', () => {
   });
 
   it.each(['ADVISORY', 'STRICT'] as const)('validates repeat steps at the canvas boundary in %s', async mode => {
-    const initial = encounter(); initial.movementStrategy = 'free'; initial.validationState.mode = mode;
+    const initial = encounter(); initial.movementRules = movementRulesFor('free'); initial.validationState.mode = mode;
     initial.actors.byId.alpha.spatialPosition = { x: 1160, y: 160 };
     setup(initial, ['alpha']);
     fireEvent.keyDown(window, { key: 'ArrowRight' });
@@ -63,7 +64,7 @@ describe('held-key spatial movement', () => {
 
   it.each([200, 500])('throttles native repeats to the configured %sms interval', async delay => {
     localStorage.setItem(COMBAT_PREFERENCES_STORAGE_KEY, JSON.stringify({ movementRepeatDelayMs: delay }));
-    const initial = encounter(); initial.movementStrategy = 'grid';
+    const initial = encounter(); initial.movementRules = movementRulesFor('grid');
     initial.actors.byId.alpha.spatialPosition = { x: 160, y: 160 };
     setup(initial, ['alpha']);
     fireEvent.keyDown(window, { key: 'ArrowRight' });
@@ -79,7 +80,7 @@ describe('held-key spatial movement', () => {
   });
 
   it('does not bypass the writer boundary on repeated movement', async () => {
-    const initial = encounter(); initial.movementStrategy = 'grid';
+    const initial = encounter(); initial.movementRules = movementRulesFor('grid');
     initial.actors.byId.alpha.spatialPosition = { x: 160, y: 160 };
     setup(initial, ['alpha']);
     try {

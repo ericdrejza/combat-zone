@@ -34,7 +34,7 @@ export type Validator<TState> = {
   ): ValidationResult;
   runsInOffMode?: boolean;
   /** Omitted validators apply in every movement strategy, including custom validators. */
-  movementStrategies?: import('@core/movement/types').MovementStrategy[];
+  requiresZoneLock?: boolean;
 };
 
 export type ValidationPipelineResult = ValidationResult & {

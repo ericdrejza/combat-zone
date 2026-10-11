@@ -54,6 +54,7 @@ describe("ZonePropertiesPanel", () => {
     expect(
       screen.queryByRole("switch", { name: "Show border" })
     ).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Fill color" }));
     await user.click(screen.getByRole("button", { name: "Fill color #365314" }));
     act(() => {
       fireEvent.change(screen.getByLabelText("Zone opacity"), {
@@ -73,12 +74,10 @@ describe("ZonePropertiesPanel", () => {
       name: "Match border color"
     });
     expect(matchBorder).toBeChecked();
-    expect(screen.getByRole("group", { name: "Engagements color palette" }))
-      .toHaveAttribute("aria-disabled", "true");
-    expect(
-      screen.getByRole("button", { name: "Engagements color #bfdbfe" })
-    ).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Engagements color" })).toBeDisabled();
+    expect(screen.queryByRole("group", { name: "Engagements color palette" })).not.toBeInTheDocument();
     await user.click(matchBorder);
+    await user.click(screen.getByRole("button", { name: "Engagements color" }));
     await user.click(
       screen.getByRole("button", { name: "Engagements color #bfdbfe" })
     );
@@ -260,6 +259,7 @@ describe("ZonePropertiesPanel", () => {
       screen.getByRole("button", { name: "Export first selected zone properties" })
     ).toBeInTheDocument();
 
+    await user.click(screen.getByRole("button", { name: "Fill color" }));
     await user.click(screen.getByRole("button", { name: "Fill color #bfdbfe" }));
     act(() => {
       fireEvent.change(screen.getByLabelText("Zone opacity"), {

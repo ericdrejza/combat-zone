@@ -1,4 +1,3 @@
-import { GridControls } from '@ui/toolbar/grid/GridControls';
 import {
   Expand,
   BookOpen,
@@ -64,7 +63,7 @@ export function BackgroundToolButton({
     <ToolbarSubtoolBar aria-label="Background options">
       {renderOptions()}
       {renderSizingOptions()}
-      <GridControls />
+
     </ToolbarSubtoolBar>
   ) : null;
 

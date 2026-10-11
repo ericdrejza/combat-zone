@@ -67,12 +67,12 @@ afterAll(async () => {
 });
 
 describe("Firebase API service", () => {
-  it.each([17, 18, 19, 20, 21])('round trips schema %s grid and actor positions and preserves data after invalid writes', async version => {
+  it.each([17, 18, 19, 20, 21, 22])('round trips schema %s grid and actor positions and preserves data after invalid writes', async version => {
     const command = encounterCommand();
     const grid = { type: 'square', cellSize: 64, origin: { x: 0, y: 0 }, rotation: 0, visible: true, color: '#808080', opacity: 0.5 };
     command.payload.state.schemaVersion = version;
     command.payload.state.panelLayout.right.push({ id: 'audio', collapsed: false });
-    Object.assign(command.payload.state, { movementStrategy: 'grid', grid,
+    Object.assign(command.payload.state, { ...(version < 22 ? { movementStrategy: 'grid' } : {}), movementRules: { zoneLocked: false, snapToGrid: true, snapZoneVertices: false, allowOverlap: true, trimTokens: false }, grid,
       counters: { byId: {}, allIds: [] }, clocks: { byId: {}, allIds: [] },
       audioCues: { byId: {}, allIds: [] }, audioCueGroups: { byId: {}, allIds: [] }, musicGroupIds: [] });
     if (version >= 18) Object.assign(grid, { warp: { type: 'bilinear', x: [0, 1, 0, 0.006], y: [0, 0, 1, 0.004] } });

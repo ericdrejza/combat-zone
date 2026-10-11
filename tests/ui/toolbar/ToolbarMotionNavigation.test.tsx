@@ -67,6 +67,7 @@ describe("Toolbar motion and navigation", () => {
     ).toEqual([
       "Library",
       "Background",
+      "Grid",
       "Zone",
       "Edge",
       "Annotation",
@@ -81,7 +82,10 @@ describe("Toolbar motion and navigation", () => {
     expect(screen.getByRole("button", { name: "Engage selected actors" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Disengage selected actors" })).toBeDisabled();
     expect(screen.queryByRole("button", { name: "Delete" })).not.toBeInTheDocument();
-    expect(within(tools).getAllByRole("separator")).toHaveLength(7);
+    expect(within(tools).getAllByRole("separator")).toHaveLength(8);
+    const separator = within(tools).getByRole('separator', { name: 'Grid and Zone tools' });
+    expect(screen.getByRole('button', { name: 'Grid' }).compareDocumentPosition(separator) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(separator.compareDocumentPosition(screen.getByRole('button', { name: 'Zone' })) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it("shows drag action previews with the activated toolbar color", () => {

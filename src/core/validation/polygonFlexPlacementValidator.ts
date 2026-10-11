@@ -1,3 +1,4 @@
+import { packGridZone } from '@core/movement/gridZonePacking';
 import type { EncounterState } from "../encounter/types";
 import { getActorRadius, toNestingActor } from "../layout/actorFootprints";
 import { packEngagementParticipants } from "../layout/engagementPacking";
@@ -52,8 +53,8 @@ function hasAmbiguousEngagementMembership(
  * the same fit check.
  */
 export const PolygonPlacementValidator: Validator<EncounterState> = {
-  id: "PolygonPlacementValidator",
-  movementStrategies: ["zone"],
+  id: "PolygonPlacementValidator", requiresZoneLock: true,
+
   runsInOffMode: true,
   validate(action, { state, nextState }) {
     if (!nextState) {
@@ -75,6 +76,10 @@ export const PolygonPlacementValidator: Validator<EncounterState> = {
         continue;
       }
 
+      if (nextState.movementRules.snapToGrid) {
+        if (!packGridZone(nextState, zoneId).fits) messages.push({ code: 'layout.gridZoneNoSpace', message: `Actors cannot fit on distinct grid anchors inside ${zone.name}.`, severity: 'error' });
+        continue;
+      }
       const previousZone = state.zones.byId[zoneId];
       const attemptedPolygon =
         action.payload.requestedPolygon ?? action.payload.polygon;

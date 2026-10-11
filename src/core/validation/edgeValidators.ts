@@ -5,7 +5,7 @@ import { createPayloadReader, hasZone, result } from "./validatorUtils";
 
 export const EdgeValidator: Validator<EncounterState> = {
   id: "EdgeValidator",
-  movementStrategies: ["zone"],
+
   validate(action, { state, nextState }) {
     if (!["edge.create", "edge.replace", "edge.update", "edge.updateProperties"].includes(action.type)) {
       return result([]);
@@ -41,7 +41,7 @@ export const EdgeValidator: Validator<EncounterState> = {
 /** Emits render diagnostics without making Edge graph validity geometric. */
 export const EdgeRouteDiagnosticValidator: Validator<EncounterState> = {
   id: "EdgeRouteDiagnosticValidator",
-  movementStrategies: ["zone"],
+
   runsInOffMode: true,
   validate(action, { nextState, state }) {
     if (!action.type.startsWith("edge.") && action.type !== "zone.move" && action.type !== "zone.reshape") {

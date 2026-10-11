@@ -80,7 +80,7 @@ export function useCompactCanvasTransfer({
           activeToolId !== "actor") ||
         (payload.kind === "zoneless-actors" &&
           activeToolId !== "actor" &&
-          activeToolId !== "select" && activeToolId !== "grid" && activeToolId !== "free")
+          activeToolId !== "select" && activeToolId !== "grid")
       ) {
         return;
       }

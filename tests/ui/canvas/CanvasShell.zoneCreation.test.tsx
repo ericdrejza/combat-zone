@@ -173,6 +173,7 @@ describe("CanvasShell zone creation", () => {
     const firstZoneId = firstZone.getAttribute("data-entity-id") ?? "";
 
     fireEvent.click(firstZone, { clientX: 120, clientY: 120 });
+    await user.click(screen.getByRole("button", { name: "Fill color" }));
     await user.click(screen.getByRole("button", { name: "Fill color #bfdbfe" }));
     fireEvent.change(screen.getByLabelText("Zone opacity"), {
       target: { value: "0.45" }

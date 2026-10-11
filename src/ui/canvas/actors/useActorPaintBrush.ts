@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 
 import { createEncounterActionRecord } from '@core/history/createEncounterActionRecord';
-import { prepareValidatedEncounterChangeForRuntime } from '@core/validation/validatedEncounterChange';
+import { prepareValidatedEncounterChangeForRuntime } from '@core/validation/runtimeEncounterChange';
 import { updateActorProperties } from '@entities/actor/actorMutations';
 import { commitEncounterChange } from '@store/encounterSlice';
 import { logEncounterValidationBlock } from '@store/encounterLogSlice';

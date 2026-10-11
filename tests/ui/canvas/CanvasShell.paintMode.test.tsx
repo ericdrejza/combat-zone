@@ -27,6 +27,7 @@ describe("CanvasShell paint mode", () => {
     const firstZoneId = firstZone.getAttribute("data-entity-id");
 
     fireEvent.click(firstZone, { clientX: 120, clientY: 120 });
+    await user.click(screen.getByRole("button", { name: "Fill color" }));
     await user.click(screen.getByRole("button", { name: "Fill color #bfdbfe" }));
     fireEvent.change(screen.getByLabelText("Zone opacity"), {
       target: { value: "0.25" }
@@ -37,6 +38,7 @@ describe("CanvasShell paint mode", () => {
     await user.click(
       screen.getByRole("checkbox", { name: "Match border color" })
     );
+    await user.click(screen.getByRole("button", { name: "Engagements color" }));
     await user.click(
       screen.getByRole("button", { name: "Engagements color #fed7aa" })
     );
@@ -47,6 +49,7 @@ describe("CanvasShell paint mode", () => {
     });
 
     await user.click(screen.getByRole("tab", { name: "Fill" }));
+    await user.click(screen.getByRole("button", { name: "Fill color" }));
     await user.click(screen.getByRole("button", { name: "Fill color #bbf7d0" }));
     fireEvent.change(screen.getByLabelText("Zone opacity"), {
       target: { value: "0.4" }

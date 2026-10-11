@@ -1,5 +1,5 @@
 import { createEncounterActionRecord } from "@core/history/createEncounterActionRecord";
-import { prepareValidatedEncounterChangeForRuntime } from "@core/validation/validatedEncounterChange";
+import { prepareValidatedEncounterChangeForRuntime } from "@core/validation/runtimeEncounterChange";
 import { replaceEncounterLibraryAssetReferences } from "@library/libraryReferences";
 import type { LibraryImageAsset, LibrarySection } from "@library/types";
 import { commitEncounterChange } from "@store/encounterSlice";

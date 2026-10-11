@@ -1,3 +1,4 @@
+import { movementRulesFor } from '@tests/core/movement/ruleFixtures';
 import { createEncounterState } from '@core/encounter/createEncounterState';
 import { createActor } from '@entities/actor/actorMutations';
 import { placeSpatialActors } from '@core/movement/movementStrategies';
@@ -14,7 +15,7 @@ import { setPersistenceWritable } from '@store/persistenceWriteGuardMiddleware';
 
 function spatial() {
   const state = createActor(createEncounterState({ id: 'spatial', name: 'Spatial' }), { id: 'a', currentZoneId: 'zoneless' });
-  state.movementStrategy = 'grid'; state.grid.type = 'hex-flat'; state.grid.origin = { x: 200, y: 200 }; state.grid.rotation = 15;
+  state.movementRules = movementRulesFor('grid'); state.grid.type = 'hex-flat'; state.grid.origin = { x: 200, y: 200 }; state.grid.rotation = 15;
   return placeSpatialActors(state, { a: { x: 200, y: 200 } });
 }
 const exportState = (state = spatial()) => ({ kind: 'encounter-export', schemaVersion: EXPORT_SCHEMA_VERSION, exportedAt: 1, encounter: state, library: createEmptyLibraryState() });
@@ -23,10 +24,10 @@ describe('spatial persistence', () => {
   afterEach(() => setPersistenceWritable(true));
   it('migrates schema 16 without mutating input or inventing positions', () => {
     const old = { ...spatial(), schemaVersion: 16 } as Record<string, unknown>;
-    delete old.grid; delete old.movementStrategy;
+    delete old.grid; delete old.movementRules;
     const before = structuredClone(old);
     const migrated = migrateEncounterState(old); assertEncounterState(migrated);
-    expect(migrated.movementStrategy).toBe('zone'); expect(migrated.grid).toMatchObject({ type: 'square', cellSize: 64, visible: false });
+    expect(migrated.movementRules).toEqual(movementRulesFor('zone')); expect(migrated.grid).toMatchObject({ type: 'square', cellSize: 64, visible: false });
     expect(old).toEqual(before);
   });
   it('round trips exports, recovery snapshots and cloud payloads losslessly', async () => {

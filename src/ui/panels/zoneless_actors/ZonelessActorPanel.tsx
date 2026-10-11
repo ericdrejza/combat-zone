@@ -1,4 +1,3 @@
-import type { MovementStrategy } from '@core/movement/types';
 import type { DragEvent, MouseEvent, PointerEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -22,6 +21,7 @@ import {
 import { useResizablePanel } from "../../canvas/useResizablePanel";
 import { ZonelessActorPanelToken } from "./ZonelessActorPanelToken";
 import { armCompactCanvasTransfer } from "@ui/canvas/compactCanvasTransfer";
+import { ZonelessPanelVisibility } from './ZonelessPanelVisibility';
 
 type ZonelessActorPanelProps = {
   activeToolId: RootState["interaction"]["activeToolId"];
@@ -29,6 +29,7 @@ type ZonelessActorPanelProps = {
   canvasBackgroundLuminance: number;
   isInBottomRow?: boolean;
   isActorDragActive: boolean;
+  isZoneEditing?: boolean;
   onActorCreationDragOver: (event: DragEvent<HTMLElement>) => void;
   onActorCreationDrop: (event: DragEvent<HTMLElement>) => void;
   selection: RootState["interaction"]["selection"];
@@ -56,14 +57,14 @@ function sortActors(actors: Actor[]): Actor[] {
 }
 
 export function getZonelessActors(
-  actors: ZonelessActorPanelProps["actors"], strategy: MovementStrategy = "zone"
+  actors: ZonelessActorPanelProps["actors"], zoneLocked = true
 ): Actor[] {
   return sortActors(
     actors.allIds
       .map((actorId) => actors.byId[actorId])
       .filter(
         (actor): actor is Actor =>
-          !!actor && (strategy === "zone" ? actor.currentZoneId === ZONELESS_ACTOR_ZONE_ID : !actor.spatialPosition)
+          !!actor && (zoneLocked ? actor.currentZoneId === ZONELESS_ACTOR_ZONE_ID : !actor.spatialPosition)
       )
   );
 }
@@ -81,12 +82,13 @@ export function ZonelessActorPanel({
   canvasBackgroundLuminance,
   isInBottomRow = false,
   isActorDragActive,
+  isZoneEditing = false,
   onActorCreationDragOver,
   onActorCreationDrop,
   selection
 }: ZonelessActorPanelProps) {
   const dispatch = useDispatch();
-  const movementStrategy = useSelector((state: RootState) => state.encounter.present.movementStrategy);
+  const zoneLocked = useSelector((state: RootState) => state.encounter.present.movementRules.zoneLocked);
   const [expanded, setExpanded] = useState(false);
   const [groupByFaction, setGroupByFaction] = useState(true);
   const dragPreviewCleanupRef = useRef<(() => void) | null>(null);
@@ -97,7 +99,7 @@ export function ZonelessActorPanel({
     size,
     startResize
   } = useResizablePanel();
-  const zonelessActors = useMemo(() => getZonelessActors(actors, movementStrategy), [actors, movementStrategy]);
+  const zonelessActors = useMemo(() => getZonelessActors(actors, zoneLocked), [actors, zoneLocked]);
   const groupedActors = useMemo(
     () => getGroupedActors(zonelessActors),
     [zonelessActors]
@@ -117,7 +119,7 @@ export function ZonelessActorPanel({
     actorId: string,
     event: MouseEvent<HTMLButtonElement>
   ) {
-    if (!(["actor", "select", "grid", "free"].includes(activeToolId))) {
+    if (!(["actor", "select", "grid"].includes(activeToolId))) {
       return;
     }
 
@@ -135,7 +137,7 @@ export function ZonelessActorPanel({
     actorId: string,
     event: DragEvent<HTMLButtonElement>
   ) {
-    if (!(["actor", "select", "grid", "free"].includes(activeToolId))) {
+    if (!(["actor", "select", "grid"].includes(activeToolId))) {
       event.preventDefault();
       return;
     }
@@ -194,7 +196,8 @@ export function ZonelessActorPanel({
   }
 
   return (
-    <aside
+    <ZonelessPanelVisibility
+      visible={!isZoneEditing}
       aria-label="Zoneless actors"
       className={`${isInBottomRow ? "relative min-w-0 translate-x-0" : "absolute bottom-3 left-1/2 min-w-min -translate-x-1/2"} z-40 flex max-w-full flex-col overflow-hidden border p-2 ${
         expanded
@@ -343,6 +346,6 @@ export function ZonelessActorPanel({
           />
         </>
       ) : null}
-    </aside>
+    </ZonelessPanelVisibility>
   );
 }

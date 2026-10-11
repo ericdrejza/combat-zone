@@ -1,3 +1,4 @@
+import { CanvasSettings } from './CanvasSettings';
 import { CombatSettings } from "./CombatSettings";
 import { X } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -40,6 +41,7 @@ export function SettingsModal(props: SettingsModalProps) {
         <CloudSyncSettings />
       </section>
     );
+    if (activeTab === "canvas") return <CanvasSettings />;
     if (activeTab === "combat") return <CombatSettings />;
     if (activeTab === "audio") return <AudioSettings />;
     if (activeTab === "data") return <DataSettings {...props} />;

@@ -1,3 +1,4 @@
+import { reconcileZoneVertices } from '@core/movement/zoneVertexSnapping';
 import { isSpatial, resnapSpatialActors } from '@core/movement/movementStrategies';
 import type { EncounterState } from "../encounter/types";
 import type { EncounterActionRecord } from "../history/types";
@@ -31,13 +32,6 @@ export type PreparedValidatedEncounterChange = {
   validationResult: ValidationPipelineResult;
 };
 
-export function prepareValidatedEncounterChangeForRuntime(
-  input: PrepareValidatedEncounterChangeInput
-): PreparedValidatedEncounterChange | Promise<PreparedValidatedEncounterChange> {
-  return typeof Worker === "undefined"
-    ? prepareValidatedEncounterChange(input)
-    : prepareValidatedEncounterChangeAsync(input);
-}
 
 function isActorFootprintChange(action: EncounterActionRecord): boolean {
   return (
@@ -52,6 +46,7 @@ export function prepareValidatedEncounterChange({
   action,
   validators
 }: PrepareValidatedEncounterChangeInput): PreparedValidatedEncounterChange {
+  nextEncounter = reconcileZoneVertices(nextEncounter);
   const validationAction: ValidationAction = {
     type: action.type,
     payload: action.payload
@@ -77,9 +72,9 @@ export function prepareValidatedEncounterChange({
     isActorFootprintChange(action) &&
     currentEncounter.validationState.mode === "ASSISTED" &&
     adjustment.resizedZoneIds.length > 0;
-  const effectiveNextEncounter = shouldAutoResize || requiresConfirmation
+  const effectiveNextEncounter = reconcileZoneVertices(shouldAutoResize || requiresConfirmation
     ? adjustment.nextEncounter
-    : nextEncounter;
+    : nextEncounter);
   const validationResult = runValidationPipelineSync({
     state: currentEncounter,
     nextState: effectiveNextEncounter,
@@ -117,17 +112,20 @@ export async function prepareValidatedEncounterChangeAsync({
   action,
   validators
 }: PrepareValidatedEncounterChangeInput): Promise<PreparedValidatedEncounterChange> {
-  const workerPreparation = prepareEncounterChangeInWorker({
-    currentEncounter,
-    nextEncounter,
-    action,
-    validators
-  });
-
-  if (workerPreparation) {
-    return workerPreparation;
+  try {
+    const workerPreparation = prepareEncounterChangeInWorker({
+      currentEncounter,
+      nextEncounter,
+      action,
+      validators
+    });
+    if (workerPreparation) return await workerPreparation;
+  } catch {
+    // Worker startup and runtime failures must preserve validation and mutations.
+    return prepareValidatedEncounterChange({ currentEncounter, nextEncounter, action, validators });
   }
 
+  nextEncounter = reconcileZoneVertices(nextEncounter);
   const validationAction: ValidationAction = {
     type: action.type,
     payload: action.payload
@@ -153,9 +151,9 @@ export async function prepareValidatedEncounterChangeAsync({
     isActorFootprintChange(action) &&
     currentEncounter.validationState.mode === "ASSISTED" &&
     adjustment.resizedZoneIds.length > 0;
-  const effectiveNextEncounter = shouldAutoResize || requiresConfirmation
+  const effectiveNextEncounter = reconcileZoneVertices(shouldAutoResize || requiresConfirmation
     ? adjustment.nextEncounter
-    : nextEncounter;
+    : nextEncounter);
   const validationResult = await runValidationPipeline({
     state: currentEncounter,
     nextState: effectiveNextEncounter,

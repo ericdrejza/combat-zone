@@ -8,7 +8,7 @@ import type { EncounterBackgroundImage } from "@core/encounter/types";
 import type { CanvasSize } from "@core/layout/polygonCanvasBounds";
 import { createEncounterActionRecord } from "@core/history/createEncounterActionRecord";
 import type { JsonObject } from "@core/history/types";
-import { prepareValidatedEncounterChangeForRuntime } from "@core/validation/validatedEncounterChange";
+import { prepareValidatedEncounterChangeForRuntime } from "@core/validation/runtimeEncounterChange";
 import { commitEncounterChange } from "@store/encounterSlice";
 import { logEncounterValidationBlock } from "@store/encounterLogSlice";
 import type { AppDispatch } from "@store/store";

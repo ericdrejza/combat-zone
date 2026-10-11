@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 import { createEncounterActionRecord } from "@core/history/createEncounterActionRecord";
-import { prepareValidatedEncounterChangeForRuntime } from "@core/validation/validatedEncounterChange";
+import { prepareValidatedEncounterChangeForRuntime } from "@core/validation/runtimeEncounterChange";
 import { createActor } from "@entities/actor/actorMutations";
 import type { ActorImageInput } from "@entities/actor/actorMutations";
 import { ACTOR_LAYOUT_GROUP_COLORS } from "@entities/actor/actorVisuals";

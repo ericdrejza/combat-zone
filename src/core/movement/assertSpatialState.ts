@@ -1,12 +1,12 @@
 import type { EncounterState } from '@core/encounter/types';
 import { PersistenceValidationError } from '@core/persistence/types';
 import { SpatialValidator } from './spatialValidator';
-import { validGrid } from './types';
+import { validGrid, validMovementRules } from './types';
 
 /** Import validation checks geometry before an encounter can reach Redux. */
 export function assertSpatialState(value: Record<string, unknown>, name: string): void {
-  if (!validGrid(value.grid) || !['zone', 'grid', 'free'].includes(String(value.movementStrategy))) {
-    throw new PersistenceValidationError(`${name}.grid or movementStrategy is invalid.`);
+  if (!validGrid(value.grid) || !validMovementRules(value.movementRules)) {
+    throw new PersistenceValidationError(`${name}.grid or movementRules is invalid.`);
   }
   const state = value as unknown as EncounterState;
   if (!state.actors?.byId || !state.canvasSize) return;

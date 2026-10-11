@@ -10,7 +10,7 @@ export function useZoneActorTranslation(
   zoneDrag: ZoneDragState | null
 ) {
   return useMemo<ActorPlacementTranslation | null>(() => {
-    if (!zoneDrag) {
+    if (!zoneDrag || !encounter.movementRules.zoneLocked) {
       return null;
     }
 

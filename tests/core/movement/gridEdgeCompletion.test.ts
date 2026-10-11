@@ -1,3 +1,4 @@
+import { movementRulesFor } from '@tests/core/movement/ruleFixtures';
 import { resolveGridGeometry } from '@core/movement/gridScale';
 import { createEncounterState } from '@core/encounter/createEncounterState';
 import { createActor } from '@entities/actor/actorMutations';
@@ -13,7 +14,7 @@ import reducer, { commitEncounterChange, undoEncounterChange, redoEncounterChang
 function fixture() {
   let state = createZone(createEncounterState({ id: 'edge', name: 'Edge' }), { id: 'z', polygon: [{ x: 60, y: 60 }, { x: 120, y: 60 }, { x: 120, y: 120 }, { x: 60, y: 120 }] });
   state = createActor(state, { id: 'a', currentZoneId: 'zoneless' });
-  state.movementStrategy = 'grid'; state.grid.cellSize = 100;
+  state.movementRules = movementRulesFor('grid'); state.grid.cellSize = 100;
   state.grid.origin = { x: -5, y: -5 }; state.canvasSize = { width: 290, height: 290 };
   state.actors.byId.a.spatialPosition = { x: 155, y: 155 };
   state.backgroundImage = { source: { kind: 'url', url: 'https://example.com/grid.png' }, width: 580, height: 580, name: 'Grid', mediaType: 'image/png' };

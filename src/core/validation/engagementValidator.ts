@@ -4,7 +4,7 @@ import { createPayloadReader, hasActor, hasZone, result } from "./validatorUtils
 
 export const EngagementValidator: Validator<EncounterState> = {
   id: "EngagementValidator",
-  movementStrategies: ["zone"],
+
   validate(action, { state, nextState }) {
     if (!["engagement.create", "engagement.update", "engagement.join", "engagement.merge", "engagement.groupSelected"].includes(action.type)) {
       return result([]);
@@ -40,7 +40,7 @@ export const EngagementValidator: Validator<EncounterState> = {
         }
         for (const actorId of engagement.participantIds) {
           const actor = nextState.actors.byId[actorId];
-          if (!actor || actor.currentZoneId !== engagement.parentZoneId) {
+          if (!actor || (nextState.movementRules.zoneLocked && actor.currentZoneId !== engagement.parentZoneId)) {
             messages.push({ code: "engagement.participantOutsideParentZone", message: "Engagement participants must be in the engagement's zone.", severity: "error" });
           }
           const owner = ownerByActorId.get(actorId);

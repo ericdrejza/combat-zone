@@ -1,3 +1,5 @@
+import { packGridZone } from '@core/movement/gridZonePacking';
+import { snapZonePolygon } from '@core/movement/zoneVertexSnapping';
 import type { EncounterState } from '../encounter/types';
 import { toNestingActor } from '../layout/actorFootprints';
 import { packEngagementParticipants } from '../layout/engagementPacking';
@@ -142,10 +144,13 @@ export function findPolygonFlexZoneFit(
   polygon: LayoutPoint[],
   actors: NestingActor[]
 ): PolygonFlexZoneFit | null {
+  if (encounter.movementRules.snapToGrid) actors = actors.map(actor => ({ ...actor, radius: Math.min(actor.radius, 12) }));
   const isPolygonAllowed = (candidate: LayoutPoint[]) =>
     canExpandWithoutZoneOverlap(encounter, zoneId, candidate);
   const isAdditionalLayoutFit = (candidate: LayoutPoint[]) =>
-    engagementLayoutFitsPolygon(encounter, zoneId, actors, candidate);
+    encounter.movementRules.snapToGrid
+      ? packGridZone({ ...encounter, zones: { ...encounter.zones, byId: { ...encounter.zones.byId, [zoneId]: { ...encounter.zones.byId[zoneId], polygon: snapZonePolygon(encounter, { ...encounter.zones.byId[zoneId], polygon: candidate }) } } } }, zoneId).fits
+      : engagementLayoutFitsPolygon(encounter, zoneId, actors, candidate);
   const requestedAnchor =
     action.type === 'zone.reshape' ? getResizeAnchor(action) : undefined;
 

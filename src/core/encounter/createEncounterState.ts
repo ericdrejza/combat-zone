@@ -1,4 +1,4 @@
-import { createDefaultGrid } from '@core/movement/types';
+import { DEFAULT_MOVEMENT_RULES, type MovementRules, createDefaultGrid } from '@core/movement/types';
 import type { EntityId } from "../state/entityCollection";
 import { createEmptyEntityCollection } from "../state/entityCollection";
 import type { EncounterState } from "./types";
@@ -14,15 +14,17 @@ export type CreateEncounterStateInput = {
   id: EntityId;
   name: string;
   panelOrder?: EncounterPanelOrder;
+  movementRules?: MovementRules;
 };
 
 export function createEncounterState({
   id,
   name,
+  movementRules = DEFAULT_MOVEMENT_RULES,
   panelOrder = DEFAULT_ENCOUNTER_PANEL_ORDER
 }: CreateEncounterStateInput): EncounterState {
   return {
-    movementStrategy: 'zone',
+    movementRules: { ...movementRules },
     grid: createDefaultGrid(),
     schemaVersion: ENCOUNTER_SCHEMA_VERSION,
     id,

@@ -1,3 +1,9 @@
+import { useSelector } from 'react-redux';
+import type { RootState } from '@store/store';
+import { useCellTracerDraft } from './useCellTracerDraft';
+import { getZoneVertexEdit } from '@ui/canvas/zones/zoneVertexEditing';
+import { commitZoneVertexEdit } from '@ui/canvas/zones/zoneVertexEditActions';
+import { nearestGridVertex } from '@core/movement/gridTopology';
 import type { MouseEvent } from 'react';
 
 import { createEncounterActionRecord } from '@core/history/createEncounterActionRecord';
@@ -74,6 +80,9 @@ export function useCanvasClickHandlers(input: ClickHandlerInput) {
     zonePaintBrush,
     zoneShapeMode
   } = input;
+
+  const tracing = useSelector((state: RootState) => state.interaction.cellTracerActive);
+  const tracer = useCellTracerDraft(encounter, tracing, zoneDraftPoints, setZoneDraftPoints);
 
   function handleCanvasClick(event: MouseEvent<SVGSVGElement>) {
     const target = event.target as Element;
@@ -174,7 +183,8 @@ export function useCanvasClickHandlers(input: ClickHandlerInput) {
     if (!entityId && activeToolId === 'zone' && zoneShapeMode === 'polygon') {
       dispatch(clearSelection());
       closeZoneShapeMenu();
-      const nextPoint = toSvgPoint(event, event.currentTarget);
+      const rawPoint = toSvgPoint(event, event.currentTarget);
+      const nextPoint = encounter.movementRules.snapZoneVertices ? nearestGridVertex(encounter, rawPoint) : rawPoint;
 
       if (!isPointWithinCanvas(nextPoint, encounter.canvasSize)) {
         return;
@@ -187,16 +197,18 @@ export function useCanvasClickHandlers(input: ClickHandlerInput) {
         zoneDraftPoints.length >= 3 &&
         distance(startPoint, nextPoint) <= CLOSE_DISTANCE
       ) {
-        void commitZoneCreate(input, zoneDraftPoints, 'polygon');
+        const closed = tracing ? tracer.append(startPoint, true) : zoneDraftPoints;
+        if (closed) void commitZoneCreate(input, closed, 'polygon');
         return;
       }
 
-      const nextPoints = [...zoneDraftPoints, nextPoint];
+      const nextPoints = tracing ? tracer.append(nextPoint) : [...zoneDraftPoints, nextPoint];
+      if (!nextPoints) { logEncounterValidationFailure(dispatch, encounter, { actionType: 'zone.create', code: 'zone.tracerInvalidRoute', message: 'Cell Tracer could not find a valid route to that vertex.', payload: {} }); return; }
 
       if (
         (nextPoints.length >= 3 &&
           !isPolygonWithinCanvas(nextPoints, encounter.canvasSize)) ||
-        doesZoneOverlapExistingInCollection(nextPoints, encounter.zones)
+        (!tracing && doesZoneOverlapExistingInCollection(nextPoints, encounter.zones))
       ) {
         return;
       }
@@ -248,12 +260,23 @@ export function useCanvasClickHandlers(input: ClickHandlerInput) {
       return;
     }
 
-    if (activeToolId !== 'zone' || vertexDrag || zoneShapeMode !== 'polygon') {
+    if (activeToolId === 'zone' && !vertexDrag && !zoneDrag && !shapeDraft && !zonePaintBrush && zoneDraftPoints.length < 2) {
+      const edit = getZoneVertexEdit(encounter, toSvgPoint(event, event.currentTarget), event.currentTarget);
+      if (edit) {
+        setZoneDraftPoints([]);
+        commitZoneVertexEdit(encounter, dispatch, edit);
+        return;
+      }
+    }
+
+    if (activeToolId !== 'zone' || vertexDrag || zoneShapeMode !== 'polygon' || entityId) {
       return;
     }
 
+    if (tracing && zoneDraftPoints.length < 2) return;
     const point = toSvgPoint(event, event.currentTarget);
-    const polygon = [...zoneDraftPoints, point];
+    const polygon = tracing ? tracer.append(zoneDraftPoints[0], true) : [...zoneDraftPoints, encounter.movementRules.snapZoneVertices ? nearestGridVertex(encounter, point) : point];
+    if (!polygon) return;
 
     if (
       polygon.length >= 3 &&
@@ -300,7 +323,8 @@ export function useCanvasClickHandlers(input: ClickHandlerInput) {
       zoneDraftPoints.length > 0
     ) {
       event.preventDefault();
-      setZoneDraftPoints((points) => points.slice(0, -1));
+      if (tracing) tracer.remove();
+      else setZoneDraftPoints((points) => points.slice(0, -1));
     }
   }
 

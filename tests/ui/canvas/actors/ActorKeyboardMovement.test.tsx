@@ -1,4 +1,5 @@
-import * as validationRuntime from "@core/validation/validatedEncounterChange";
+import * as validationPreparation from '@core/validation/validatedEncounterChange';
+import * as validationRuntime from "@core/validation/runtimeEncounterChange";
 import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { store } from "@store/store";
 import { loadEncounterState, redoEncounterChange, undoEncounterChange } from "@store/encounterSlice";
@@ -16,15 +17,15 @@ async function moved(id = "alpha", zone = "b") { await waitFor(() => expect(stor
 
 describe("actor keyboard movement workflows", () => {
   it("does not commit a validation result after selection changes", async () => {
-    let resolve!: (result: validationRuntime.PreparedValidatedEncounterChange) => void;
-    let input!: validationRuntime.PrepareValidatedEncounterChangeInput;
+    let resolve!: (result: validationPreparation.PreparedValidatedEncounterChange) => void;
+    let input!: validationPreparation.PrepareValidatedEncounterChangeInput;
     const spy = vi.spyOn(validationRuntime, "prepareValidatedEncounterChangeForRuntime").mockImplementation((request) => {
       input = request; return new Promise((done) => { resolve = done; });
     });
     try {
       setup(); right();
       act(() => store.dispatch(selectEntity({ entityType: "actor", ids: ["alpha"] })));
-      await act(async () => { resolve(validationRuntime.prepareValidatedEncounterChange(input)); });
+      await act(async () => { resolve(validationPreparation.prepareValidatedEncounterChange(input)); });
       expect(store.getState().encounter.past).toHaveLength(0);
       expect(store.getState().encounter.present.actors.byId.alpha.currentZoneId).toBe(zoneA.id);
     } finally { spy.mockRestore(); }

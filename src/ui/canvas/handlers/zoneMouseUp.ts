@@ -1,5 +1,7 @@
+import { zoneSnappingValid } from '@core/movement/zoneVertexSnapping';
+import { isPersistenceWritable } from '@store/persistenceWriteGuardMiddleware';
 import { createEncounterActionRecord } from '@core/history/createEncounterActionRecord';
-import { prepareValidatedEncounterChangeForRuntime } from '@core/validation/validatedEncounterChange';
+import { prepareValidatedEncounterChangeForRuntime } from '@core/validation/runtimeEncounterChange';
 import { selectEntity } from '@interaction/interactionState';
 import { commitEncounterChange } from '@store/encounterSlice';
 import {
@@ -25,6 +27,20 @@ function commitZoneMove(input: MouseUpHandlerInput): boolean {
     const nextPolygon = input.getDisplayedPolygon(
       encounter.zones.byId[zoneDrag.zoneId]
     );
+    if (nextPolygon.every((point, i) => Math.hypot(point.x - zoneDrag.originalPolygon[i].x, point.y - zoneDrag.originalPolygon[i].y) < 1e-6)) {
+      input.setZoneDrag({ ...zoneDrag, phase: 'committed' });
+      return true;
+    }
+    const movedZone = { ...encounter.zones.byId[zoneDrag.zoneId], polygon: nextPolygon };
+    if (encounter.movementRules.snapZoneVertices && !zoneSnappingValid(encounter, movedZone)) {
+      logEncounterValidationFailure(input.dispatch, encounter, {
+        actionType: 'zone.move', code: 'zone.unsnappedVertices',
+        message: 'This move cannot preserve the Zone shape and keep its vertices snapped to the warped grid.',
+        payload: { polygon: nextPolygon, zoneId: zoneDrag.zoneId }
+      });
+      input.setZoneDrag(null);
+      return true;
+    }
     if (
       !canCommitZonePolygonForCollection(
         nextPolygon,
@@ -48,30 +64,24 @@ function commitZoneMove(input: MouseUpHandlerInput): boolean {
       zoneDrag.zoneId,
       nextPolygon
     );
-    cacheActorRenderPlacementsForZoneMove(
-      nextEncounter,
-      input.actorRenderPlacements,
-      zoneDrag.zoneId,
-      {
-        x: zoneDrag.current.x - zoneDrag.start.x,
-        y: zoneDrag.current.y - zoneDrag.start.y
+    const prepared = prepareValidatedEncounterChangeForRuntime({ currentEncounter: encounter, nextEncounter,
+      action: createEncounterActionRecord('zone.move', { polygon: nextPolygon, zoneId: zoneDrag.zoneId }) });
+    const apply = (resolved: Awaited<typeof prepared>) => input.dispatch((_dispatch, getState) => {
+      if (!isPersistenceWritable() || getState().encounter.present !== encounter || logEncounterValidationBlock(input.dispatch, resolved)) {
+        input.setZoneDrag(null);
+        return;
       }
-    );
-    input.dispatch(
-      commitEncounterChange({
-        action: createEncounterActionRecord('zone.move', {
-          polygon: nextPolygon,
-          zoneId: zoneDrag.zoneId
-        }),
-        nextEncounter
-      })
-    );
-    input.dispatch(selectEntity({ entityType: 'zone', ids: [zoneDrag.zoneId] }));
+      if (encounter.movementRules.zoneLocked && !encounter.movementRules.snapToGrid) cacheActorRenderPlacementsForZoneMove(resolved.nextEncounter, input.actorRenderPlacements, zoneDrag.zoneId,
+        { x: nextPolygon[0].x - zoneDrag.originalPolygon[0].x, y: nextPolygon[0].y - zoneDrag.originalPolygon[0].y });
+      input.dispatch(commitEncounterChange({ action: resolved.action, nextEncounter: resolved.nextEncounter }));
+      input.dispatch(selectEntity({ entityType: 'zone', ids: [zoneDrag.zoneId] }));
+      // Keep the drop frame until validation supplies the authoritative target.
+      input.setZoneDrag({ ...zoneDrag, phase: 'committed' });
+    });
+    if (prepared instanceof Promise) void prepared.then(apply); else apply(prepared);
   }
 
-  input.setZoneDrag(
-    zoneDrag.hasMoved ? { ...zoneDrag, phase: 'committed' } : null
-  );
+  if (!zoneDrag.hasMoved) input.setZoneDrag(null);
   return true;
 }
 
@@ -132,7 +142,8 @@ function commitZoneReshape(input: MouseUpHandlerInput): boolean {
     currentEncounter: encounter,
     nextEncounter
   });
-  const commitPrepared = (resolved: Awaited<typeof prepared>) => {
+  const commitPrepared = (resolved: Awaited<typeof prepared>) => input.dispatch((_dispatch, getState) => {
+    if (!isPersistenceWritable() || getState().encounter.present !== encounter) { input.setVertexDrag(null); return; }
     const committedPolygon =
       resolved.nextEncounter.zones.byId[vertexDrag.zoneId]?.polygon ??
       vertexDrag.polygon;
@@ -172,7 +183,7 @@ function commitZoneReshape(input: MouseUpHandlerInput): boolean {
     );
     input.dispatch(selectEntity({ entityType: 'zone', ids: [vertexDrag.zoneId] }));
     input.setVertexDrag(null);
-  };
+  });
   if (prepared instanceof Promise) void prepared.then(commitPrepared);
   else commitPrepared(prepared);
   return true;

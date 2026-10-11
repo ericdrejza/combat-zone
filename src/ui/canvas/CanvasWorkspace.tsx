@@ -1,3 +1,8 @@
+import { useMemo, useState } from 'react';
+import { buildCellGraph, traceCellRoute } from '@core/movement/cellTracer';
+import { CLOSE_DISTANCE } from './canvasConstants';
+import { nearestGridVertex, pointDistance } from '@core/movement/gridTopology';
+import { readCanvasPreferences } from '@ui/canvas_preferences/canvasPreferenceStorage';
 import { useDispatch, useSelector } from 'react-redux';
 import { addGridCalibrationPoint, removeGridCalibrationPoint } from '@interaction/interactionState';
 import { toSvgPoint } from './zones/zoneGeometry';
@@ -161,6 +166,12 @@ export function CanvasWorkspace({
   onZoneMotionComplete
 }: CanvasWorkspaceProps) {
   const dispatch = useDispatch();
+  const tracing = useSelector((state: RootState) => state.interaction.cellTracerActive);
+  const [tracerPointer, setTracerPointer] = useState<LayoutPoint | null>(null);
+  const tracerGraph = useMemo(() => tracing ? buildCellGraph(encounter) : undefined, [tracing, encounter.grid, encounter.canvasSize]);
+  const tracerTarget = tracerPointer ? nearestGridVertex(encounter, tracerPointer) : null;
+  const closingTracer = !!tracerTarget && zoneDraftPoints.length >= 3 && pointDistance(tracerTarget, zoneDraftPoints[0]) <= CLOSE_DISTANCE;
+  const tracerPreview = tracing && tracerTarget && zoneDraftPoints.length && tracerGraph ? traceCellRoute(encounter, zoneDraftPoints[zoneDraftPoints.length - 1], closingTracer ? zoneDraftPoints[0] : tracerTarget, zoneDraftPoints, readCanvasPreferences().tracerInvalidRoute, closingTracer, tracerGraph) : null;
   const calibrating = useSelector((state: RootState) => state.interaction.gridCalibrationActive);
   return (
     <MotionConfig transformPagePoint={createCanvasMotionPointTransform(canvasRef)}>
@@ -182,7 +193,7 @@ export function CanvasWorkspace({
         onDropCapture={handleCanvasDrop}
         onDoubleClick={handleCanvasDoubleClick}
         onMouseDown={calibrating ? undefined : handleCanvasMouseDown}
-        onMouseMove={handleCanvasMouseMove}
+        onMouseMove={event => { if (tracing) setTracerPointer(toSvgPoint(event, event.currentTarget)); handleCanvasMouseMove(event); }}
         onMouseUp={handleCanvasMouseUp}
         onPointerDown={(event) => {
           if (!calibrating && event.pointerType !== "mouse") {
@@ -215,7 +226,7 @@ export function CanvasWorkspace({
               />
             ) : null}
             {layer.id === "grid" ? <GridLayer encounter={encounter} /> : null}
-            {layer.id === "zones" && encounter.movementStrategy === "zone" ? (
+            {layer.id === "zones" ? (
               <ZoneLayer
                 activeToolId={activeToolId}
                 actorTargetZoneId={actorTargetZoneId}
@@ -234,7 +245,7 @@ export function CanvasWorkspace({
                 zoneOpacityPreview={zoneOpacityPreview}
               />
             ) : null}
-            {layer.id === "edges" && encounter.movementStrategy === "zone" ? (
+            {layer.id === "edges" ? (
               <EdgeLayer
                 activeToolId={activeToolId}
                 edgeDrag={edgeDrag}
@@ -245,7 +256,7 @@ export function CanvasWorkspace({
                 selection={selection}
               />
             ) : null}
-            {layer.id === 'engagements' && encounter.movementStrategy === 'zone' ? (
+            {layer.id === 'engagements' ? (
               <EngagementLayer activeToolId={activeToolId} actorDrag={actorDrag} backgroundLuminanceByZoneId={backgroundLuminanceByZoneId} encounter={encounter} engagementDrag={engagementDrag} onEngagementDrag={onEngagementDrag} onEngagementDragEnd={onEngagementDragEnd} onEngagementDragReturnComplete={onEngagementDragReturnComplete} onEngagementDragStart={onEngagementDragStart} onEngagementSelect={onEngagementSelect} placements={actorRenderPlacements} selection={selection} zoneActorTranslation={zoneActorTranslation} />
             ) : null}
             {layer.id === "actors" ? (
@@ -286,6 +297,7 @@ export function CanvasWorkspace({
           </g>
         ))}
         {calibrating ? <GridCalibrationMarkers /> : null}
+        {tracerPreview ? <polyline data-cell-tracer-preview points={tracerPreview.map(p => `${p.x},${p.y}`).join(" ")} fill="none" stroke={polygonDraftColor} strokeWidth={2} strokeDasharray="6 4" pointerEvents="none" /> : null}
         {keyboardOverlay}
       </motion.svg>
     </MotionConfig>

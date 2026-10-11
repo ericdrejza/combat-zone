@@ -67,6 +67,7 @@ export type ActorToolState = {
 
 export type InteractionState = {
   gridPreview: GridConfiguration | null;
+  gridAppearancePreview: Pick<GridConfiguration, 'color' | 'opacity'> | null;
   gridCalibrationActive: boolean;
   gridCalibrationPoints: import('@core/layout/types').LayoutPoint[];
   gridCalibrationMode: 'simple' | 'quadrants' | 'detect';
@@ -87,6 +88,7 @@ export type InteractionState = {
   contextualActionRequest: ContextualActionRequest | null;
   zoneOpacityPreview: ZoneOpacityPreview | null;
   zonePaintBrush: ZonePaintBrushState | null;
+  cellTracerActive: boolean;
   zoneShapeMode: ZoneShape;
 };
 
@@ -111,7 +113,7 @@ const initialDraft: InteractionDraftState = {
 };
 
 const initialState: InteractionState = {
-  gridPreview: null, gridCalibrationActive: false, gridCalibrationPoints: [], gridCalibrationMode: 'simple', gridCalibrationType: 'square',
+  gridAppearancePreview: null, gridPreview: null, gridCalibrationActive: false, gridCalibrationPoints: [], gridCalibrationMode: 'simple', gridCalibrationType: 'square',
   actorPaintBrush: false,
   actorTool: {
     clipboardActorId: null,
@@ -137,6 +139,7 @@ const initialState: InteractionState = {
   contextualActionRequest: null,
   zoneOpacityPreview: null,
   zonePaintBrush: null,
+  cellTracerActive: false,
   zoneShapeMode: 'rectangle'
 };
 
@@ -183,10 +186,11 @@ export const interactionSlice = createSlice({
   name: 'interaction',
   initialState,
   reducers: {
+    setGridAppearancePreview(state, { payload }: PayloadAction<Pick<GridConfiguration, 'color' | 'opacity'> | null>) { state.gridAppearancePreview = payload; },
     setGridPreview(state, { payload }: PayloadAction<GridConfiguration | null>) { state.gridPreview = payload; },
     startGridCalibration: {
       prepare(type: GridConfiguration['type'] = 'square') { return { payload: type }; },
-      reducer(state, { payload }: PayloadAction<GridConfiguration['type']>) { state.gridCalibrationActive = true; state.gridCalibrationPoints = []; state.gridPreview = null; state.gridCalibrationMode = 'simple'; state.gridCalibrationType = payload; }
+      reducer(state, { payload }: PayloadAction<GridConfiguration['type']>) { state.gridAppearancePreview = null; state.gridCalibrationActive = true; state.gridCalibrationPoints = []; state.gridPreview = null; state.gridCalibrationMode = 'simple'; state.gridCalibrationType = payload; }
     },
     setGridCalibrationMode(state, { payload }: PayloadAction<'simple' | 'quadrants' | 'detect'>) { state.gridCalibrationMode = payload; state.gridCalibrationPoints = []; state.gridPreview = null; },
     setGridCalibrationType(state, { payload }: PayloadAction<GridConfiguration['type']>) { state.gridCalibrationType = payload; state.gridCalibrationPoints = []; state.gridPreview = null; },
@@ -197,6 +201,7 @@ export const interactionSlice = createSlice({
     cancelGridEditing(state) { state.gridPreview = null; state.gridCalibrationActive = false; state.gridCalibrationPoints = []; },
     setActiveTool(state, { payload }: PayloadAction<ToolId>) {
       state.activeToolId = payload;
+      state.gridAppearancePreview = null;
       state.gridPreview = null; state.gridCalibrationActive = false; state.gridCalibrationPoints = [];
       state.dragActionPreview = null;
       state.draft = initialDraft;
@@ -263,7 +268,9 @@ export const interactionSlice = createSlice({
     setActorClipboardActor(state, { payload }: PayloadAction<string | null>) {
       state.actorTool.clipboardActorId = payload;
     },
+    setCellTracerActive(state, { payload }: PayloadAction<boolean>) { state.cellTracerActive = payload; },
     setZoneShapeMode(state, { payload }: PayloadAction<ZoneShape>) {
+      state.cellTracerActive = false;
       state.zoneShapeMode = payload;
       state.draft.polygonPointIds = [];
     },
@@ -406,7 +413,7 @@ export const interactionSlice = createSlice({
 });
 
 export const {
-  setGridPreview, startGridCalibration, setGridCalibrationMode, setGridCalibrationType, addGridCalibrationPoint, removeGridCalibrationPoint, cancelGridEditing,
+  setGridAppearancePreview, setGridPreview, startGridCalibration, setGridCalibrationMode, setGridCalibrationType, addGridCalibrationPoint, removeGridCalibrationPoint, cancelGridEditing,
   clearActorPaintBrush,
   setAudioCueType,
   setAudioCueTypePresets,
@@ -432,6 +439,7 @@ export const {
   setEdgeVisibilityRule,
   setZoneOpacityPreview,
   setPolygonDraftPointIds,
+  setCellTracerActive,
   setZoneShapeMode,
   resetEdgePreset,
   toggleEdgeMovementRule,

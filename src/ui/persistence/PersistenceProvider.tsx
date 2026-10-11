@@ -1,3 +1,5 @@
+import { DEFAULT_MOVEMENT_RULES } from '@core/movement/types';
+import { CANVAS_PREFERENCES_KEY, readCanvasPreferences } from '@ui/canvas_preferences/canvasPreferenceStorage';
 import { COMBAT_PREFERENCES_STORAGE_KEY } from "@ui/combat_preferences/CombatPreferenceProvider";
 import {
   type PropsWithChildren,
@@ -59,6 +61,7 @@ function createDraft(): EncounterState {
   return createEncounterState({
     id: createEncounterId(),
     name: "Untitled Encounter",
+    movementRules: readCanvasPreferences().defaults,
     panelOrder: readPanelOrderPreference()
   });
 }
@@ -399,11 +402,12 @@ export function PersistenceProvider({
     encounterTimerRef.current = null;
     libraryTimerRef.current = null;
     const draft = createDraft();
+    draft.movementRules = { ...DEFAULT_MOVEMENT_RULES };
     const emptyLibrary = createEmptyLibraryState();
     await resetLocalPersistence(repository, draft, [
       MOTION_OVERRIDE_STORAGE_KEY,
       INTERFACE_PREFERENCES_STORAGE_KEY,
-      COMBAT_PREFERENCES_STORAGE_KEY,
+      COMBAT_PREFERENCES_STORAGE_KEY, CANVAS_PREFERENCES_KEY,
       IMAGE_COMPRESSION_STORAGE_KEY,
       THEME_STORAGE_KEY
     ]);
@@ -437,7 +441,7 @@ export function PersistenceProvider({
           await recoverInterruptedLocalReset(repository, [
             MOTION_OVERRIDE_STORAGE_KEY,
             INTERFACE_PREFERENCES_STORAGE_KEY,
-            COMBAT_PREFERENCES_STORAGE_KEY,
+            COMBAT_PREFERENCES_STORAGE_KEY, CANVAS_PREFERENCES_KEY,
             IMAGE_COMPRESSION_STORAGE_KEY,
             THEME_STORAGE_KEY
           ]);

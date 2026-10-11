@@ -1,6 +1,7 @@
 import {
   Swords,
   Database,
+  Grid3X3,
   Headphones,
   Keyboard,
   Monitor,
@@ -17,6 +18,7 @@ type Tab = { id: SettingsTabId; icon: LucideIcon; label: string };
 
 const generalTabs: Tab[] = [
   { id: "audio", icon: Headphones, label: "Audio" },
+  { id: "canvas", icon: Grid3X3, label: "Canvas" },
   { id: "combat", icon: Swords, label: "Combat" },
   { id: "interface", icon: Monitor, label: "Interface" },
   { id: "keybinds", icon: Keyboard, label: "Keybinds" }

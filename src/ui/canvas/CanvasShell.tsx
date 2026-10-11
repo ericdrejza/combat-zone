@@ -308,7 +308,8 @@ export function CanvasShell({
         canvasBackgroundLuminance={backgroundLuminance.canvas}
         canvasRef={canvasRef}
         directManipulationZoneId={
-          vertexDrag?.zoneId ?? zoneDrag?.zoneId ?? null
+          vertexDrag?.zoneId ??
+          (zoneDrag?.phase === "dragging" ? zoneDrag.zoneId : null)
         }
         encounter={renderEncounter}
         edgeDrag={edgeDrag}
@@ -388,7 +389,7 @@ export function CanvasShell({
               onDelete={() => deleteSelectedEntities(dispatch, encounter, selection)}
               selection={selection}
             />
-            {encounter.movementStrategy === "zone" ? <CompactEngagementActionButtons
+            {true ? <CompactEngagementActionButtons
               activeToolId={activeToolId}
               encounter={encounter}
               selection={selection}
@@ -397,6 +398,7 @@ export function CanvasShell({
           {!compactLayout ? (
             <div className="relative z-30 flex min-w-0 flex-1 justify-center">
               <ZonelessActorPanel
+                isZoneEditing={activeToolId === "zone" && Boolean(shapeDraft || zoneDraftPoints.length || vertexDrag || zoneDrag)}
                 activeToolId={activeToolId}
                 actors={encounter.actors}
                 canvasBackgroundLuminance={backgroundLuminance.canvas}
@@ -423,6 +425,7 @@ export function CanvasShell({
       ) : null}
       {!compactLayout && !showMobileControls ? (
         <ZonelessActorPanel
+          isZoneEditing={activeToolId === "zone" && Boolean(shapeDraft || zoneDraftPoints.length || vertexDrag || zoneDrag)}
           activeToolId={activeToolId}
           actors={encounter.actors}
           canvasBackgroundLuminance={backgroundLuminance.canvas}

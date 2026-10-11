@@ -43,6 +43,8 @@ function getChangedZoneIds(
   }
 
   if (
+    action.type === 'movement.updateRules' ||
+    action.type === 'zone.move' ||
     action.type === 'grid.update' ||
     action.type === 'grid.calibrate' ||
     action.type === 'canvas.resize' ||
@@ -80,7 +82,7 @@ function getChangedZoneIds(
 /** Blocks committed zone geometry that overlaps another zone. */
 export const ZoneOverlapValidator: Validator<EncounterState> = {
   id: 'ZoneOverlapValidator',
-  movementStrategies: ["zone"],
+
   runsInOffMode: true,
   validate(action, { state, nextState }) {
     if (!nextState) {

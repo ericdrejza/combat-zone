@@ -30,7 +30,7 @@ export function useDragActionPreview(
     actorDrag?.phase === 'dragging' &&
     Boolean(getActorEngagement(encounter, actorDrag.actorId)) &&
     !isWithinEngagementTether(actorDrag.start, actorDrag.current);
-  const preview = encounter.movementStrategy !== "zone" ? null :
+  const preview = !encounter.movementRules.zoneLocked ? null :
     engagementHoverActive || actorEngagementHoverActive
       ? 'engage'
       : actorDisengageActive

@@ -1,3 +1,4 @@
+import { reconcileZoneVertices } from '@core/movement/zoneVertexSnapping';
 import type { EncounterState } from './types';
 import type { CanvasSize } from '@core/layout/polygonCanvasBounds';
 import { resizeEncounterCanvas } from './canvasSizeMutations';
@@ -13,7 +14,7 @@ function createCandidate(
   overflowBehavior: BackgroundResizeOverflowBehavior,
   finalize: (state: EncounterState) => EncounterState
 ): ResizeCandidate {
-  const candidate = finalize(resizeEncounterCanvas(encounter, { canvasSize, zoneScale, overflowBehavior: 'clamp' }));
+  const candidate = reconcileZoneVertices(finalize(resizeEncounterCanvas(encounter, { canvasSize, zoneScale, overflowBehavior: 'clamp' })));
   const resized = overflowBehavior === 'zoneless' ? unplaceOverflowingSpatialActors(candidate) : candidate;
   return {
     canvasSize: resized.canvasSize,

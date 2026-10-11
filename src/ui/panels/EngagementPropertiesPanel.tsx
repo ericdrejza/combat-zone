@@ -2,7 +2,7 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import type { LayoutOrientation } from '@core/layout/types';
 import { createEncounterActionRecord } from '@core/history/createEncounterActionRecord';
-import { prepareValidatedEncounterChangeForRuntime } from '@core/validation/validatedEncounterChange';
+import { prepareValidatedEncounterChangeForRuntime } from '@core/validation/runtimeEncounterChange';
 import { updateEngagementProperties } from '@entities/engagement/engagementMutations';
 import type { Engagement } from '@entities/engagement/types';
 import { commitEncounterChange } from '@store/encounterSlice';

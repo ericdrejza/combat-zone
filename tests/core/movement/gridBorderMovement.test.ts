@@ -1,3 +1,4 @@
+import { movementRulesFor } from '@tests/core/movement/ruleFixtures';
 import { createEncounterState } from '@core/encounter/createEncounterState';
 import { createActor } from '@entities/actor/actorMutations';
 import { placeSpatialActors, stepSpatialActors } from '@core/movement/movementStrategies';
@@ -9,7 +10,7 @@ import { refineProfileFit } from '@core/movement/gridDetectionProfiles';
 describe('grid borders and proportional Free movement', () => {
   it.each(['OFF', 'ADVISORY', 'ASSISTED', 'STRICT'] as const)('allows Medium actors in every outer square cell in %s', mode => {
     let state = createActor(createEncounterState({ id: 'border', name: 'Border' }), { id: 'a', currentZoneId: 'zoneless' });
-    state.movementStrategy = 'grid'; state.validationState.mode = mode;
+    state.movementRules = movementRulesFor('grid'); state.validationState.mode = mode;
     state.canvasSize = { width: 640, height: 640 }; state.grid.cellSize = 64;
     state.actors.byId.a.spatialPosition = { x: 160, y: 160 };
     for (let index = 0; index < 10; index++) for (const target of [
@@ -25,7 +26,7 @@ describe('grid borders and proportional Free movement', () => {
 
   it('preserves the fraction of a cell moved after independent background resizing', () => {
     let initial = createActor(createEncounterState({ id: 'scale', name: 'Scale' }), { id: 'a', currentZoneId: 'zoneless' });
-    initial.movementStrategy = 'free'; initial.actors.byId.a.spatialPosition = { x: 200, y: 200 };
+    initial.movementRules = movementRulesFor('free'); initial.actors.byId.a.spatialPosition = { x: 200, y: 200 };
     for (const cellSize of [16, 32, 64, 128, 256]) {
       const state = { ...initial, grid: { ...initial.grid, cellSize } };
       const next = stepSpatialActors(state, ['a'], { x: 1, y: 0 });
@@ -39,7 +40,7 @@ describe('grid borders and proportional Free movement', () => {
 
   it.each(['OFF', 'ADVISORY', 'ASSISTED', 'STRICT'] as const)('rejects a partial edge cell when its Medium token would overflow in %s', mode => {
     let state = createActor(createEncounterState({ id: 'partial', name: 'Partial' }), { id: 'a', currentZoneId: 'zoneless' });
-    state.movementStrategy = 'grid'; state.validationState.mode = mode;
+    state.movementRules = movementRulesFor('grid'); state.validationState.mode = mode;
     state.grid.origin = { x: -8, y: -8 }; state.canvasSize = { width: 256, height: 256 };
     state.actors.byId.a.spatialPosition = { x: 88, y: 88 };
     for (const target of [{ x: 24, y: 88 }, { x: 88, y: 24 }]) {

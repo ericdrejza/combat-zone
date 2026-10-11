@@ -1,3 +1,4 @@
+import { ActorTrim } from './ActorTrim';
 import { motion } from "motion/react";
 
 import type { LayoutPoint } from "@core/layout/types";
@@ -134,7 +135,7 @@ export function ActorLayer({
         selection.selectedEntityType === "actor" &&
         selection.selectedIds.includes(actor.id);
       const colors = ACTOR_LAYOUT_GROUP_COLORS[actor.layoutGroup];
-      const actorZone = encounter.movementStrategy === "zone" ? encounter.zones.byId[actor.currentZoneId] : undefined;
+      const actorZone = encounter.zones.byId[actor.currentZoneId];
       const selectedActorTextColor = actorZone
         ? getZoneNameTextColor(
             actorZone,
@@ -169,7 +170,7 @@ export function ActorLayer({
                   ? undefined
                   : () => onActorMouseLeave(actor.id)
               }
-              drag={["actor", "select", "grid", "free"].includes(activeToolId)}
+              drag={["actor", "select", "grid"].includes(activeToolId)}
               dragMomentum={false}
               dragElastic={0}
               onDragStart={(event) =>
@@ -207,7 +208,8 @@ export function ActorLayer({
                 }
               }}
             >
-              <ActorVisual
+              <ActorTrim encounter={encounter} actor={actor} point={renderedPoint}>{artworkClipId => <ActorVisual
+                artworkClipId={artworkClipId}
                 actor={actor}
                 clipId={clipId}
                 fillColor={colors.fill}
@@ -217,7 +219,8 @@ export function ActorLayer({
                 selectedTextColor={selectedActorTextColor}
                 showFactionOutline={showFactionOutlines}
                 transition={actorTransition}
-              />
+              />}
+              </ActorTrim>
             </motion.g>
           )}
         </ActorMotionTrack>

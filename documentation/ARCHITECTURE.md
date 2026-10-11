@@ -125,9 +125,9 @@ entry-point rules remain in the persistence decision record.
   `documentation/ARCHITECTURE.md` if more architecture information is needed.
 - **Tool-driven UI, no global mode system.** Each tool in `interaction/tools/`
   owns its own selection rules, drag behavior, click behavior, and keyboard
-  shortcuts. Encounter movement strategy (DESIGN §17) is a durable domain
-  choice independent of editing tool. Grid/Free behavior uses shared strategy
-  interfaces; do not scatter movement policy throughout tool implementations.
+  shortcuts. Encounter movement rules (DESIGN §17) are durable domain
+  constraints independent of editing tool. Shared movement helpers enforce them;
+  do not scatter policy throughout tool implementations.
 - **Layout strategies are pluggable, not hardcoded.** FLEX / SEQUENTIAL /
   SPLIT_FLEX / SPLIT_SEQUENTIAL live behind a shared strategy interface in
   `core/layout/`, used by both Zones and Engagements. Adding a new strategy
@@ -143,17 +143,18 @@ entry-point rules remain in the persistence decision record.
   may reuse a working path across replacement, undo, and Zone movement, but it
   must never become an authoritative EncounterState fact.
 
-## Movement strategy persistence
+## Movement rule persistence
 
-Encounter schema 17 adds movementStrategy, grid configuration, and optional
-Actor spatialPosition. Grid/Free share authoritative coordinates; Zone positions
-remain derived. Configuration drafts stay in interaction state. Geometry and
-spatial mutation strategies live in core/movement, shared grid controls in
-ui/toolbar/grid, and rendering in ui/canvas/grid. The movement strategy middleware
-reconciles tool changes and blocks suspended workflows and invalid spatial
-commits behind the existing persistence writer guard. Old supported encounter
-schemas migrate to Zone and default grid configuration. Cloud contracts accept
-schema 17 while retaining their existing schema compatibility.
+Encounter schema 22 persists independent movementRules and grid configuration.
+Actor spatialPosition is authoritative while Zone lock is off; locked positions
+remain derived. Configuration and drawing drafts stay in interaction state.
+Geometry, membership, occupancy, and spatial mutations live in core/movement;
+shared grid controls live in ui/toolbar/grid and rendering in ui/canvas/grid.
+The movement rules middleware cancels ineligible Cell Tracer drafts and blocks
+invalid spatial commits behind the persistence writer guard. Historical schema
+migrations retain their existing conversion steps; there is no old-mode-to-rule
+migration requirement for this feature. Cloud contracts accept schema 22 while
+retaining historical wire validation.
 
 Encounter schema 18 adds an optional bilinear grid warp. Schema 17 migrations
 preserve regular-grid configuration and spatial coordinates. Warp coefficients
@@ -182,7 +183,7 @@ validation/history/repository boundaries. Cloud contracts accept schemas 17–19
 
 Encounter schema 20 adds optional `gridCoverage` only for image-less encounters.
 With a background, coverage derives from its frame. Completion is automatic in
-grid settings/calibration, strategy entry, and canvas sizing. Schema 19 active
+grid settings/calibration, enabling actor snapping, and canvas sizing. Schema 19 active
 grids migrate to whole-cell bounds without mutating the source record. A union
 of coverage and perimeter cells clips rendered grid fragments without storing
 derived polygons. Cloud contracts accept spatial schemas 17–20.
@@ -208,3 +209,24 @@ coordinates by 64/old-cell-size. Normalized warp coefficients and the old scale
 value remain unchanged. Completion recalculates after conversion; source records
 are never mutated. Current schema snapshots remain lossless. Cloud contracts
 accept schema 21 while retaining supported legacy versions.
+
+## Independent canvas rules (schema 22)
+
+Schema 22 replaces movementStrategy with movementRules (zoneLocked, snapToGrid,
+snapZoneVertices, allowOverlap, trimTokens). Zone and Grid are separate editing
+tools. Locked placements remain derived; unlocked placements use Actor
+spatialPosition. Grid topology, occupancy, membership deciders, grid-aware Zone
+packing, vertex snapping, and Cell Tracer edge routing share core/movement
+geometry. Membership choice dialogs resolve on the main thread before validated
+history commits; workers never perform UI decisions. Cell Tracer checkpoints and
+paths are transient, and completed Zones persist as ordinary polygons.
+
+Canvas defaults and membership/tracer policies are namespaced global preferences
+with cross-tab/reset support. Grid Properties commits type immediately and
+color/opacity once on blur. A separate gridAppearancePreview updates only the
+SVG Grid Layer, avoiding history and map/layout previews while dragging. The
+full settings dialog retains transient Apply/Cancel previews.
+All changes use validated history and the central writer boundary. No movement
+mode migration is added for schema 22; repository, envelopes, and cloud contracts
+validate the new shape. Trim clips artwork only and never changes actor fit or
+hit testing.

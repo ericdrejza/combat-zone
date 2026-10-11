@@ -12,8 +12,7 @@ import type {
   ZoneDragState
 } from "../canvasInteractionTypes";
 import {
-  CANVAS_SPRING_TRANSITION,
-  DIRECT_MANIPULATION_TRANSITION
+  getCanvasTransition
 } from "../canvasMotion";
 import { getZoneNameTextColor } from "../canvasLuminance";
 import {
@@ -85,12 +84,12 @@ export function ZoneLayer({
     const renderedOpacity = previewingOpacity
       ? zoneOpacityPreview.opacity
       : zone.opacity;
-    const zoneGeometryTransition =
-      directManipulationZoneId === zone.id ||
-      previewingOpacity ||
+    // Release direct manipulation at drop so the polygon and drag offset
+    // settle together with the same spring used by actor movement.
+    const zoneGeometryTransition = getCanvasTransition(
+      directManipulationZoneId === zone.id || previewingOpacity,
       animationsDisabled
-        ? DIRECT_MANIPULATION_TRANSITION
-        : CANVAS_SPRING_TRANSITION;
+    );
     const actorTargeted = actorTargetZoneId === zone.id;
     const resizeHandles = getZoneResizeHandles(zone, polygon);
     const namePosition = getZoneNamePosition(zone, polygon);

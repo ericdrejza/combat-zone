@@ -6,7 +6,7 @@ import { GridNumberField } from './GridNumberField';
 const control = 'min-h-11 w-full rounded-lg border border-canvas-line bg-canvas-surface p-2 text-canvas-ink hover:border-canvas-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-canvas-ink disabled:cursor-not-allowed disabled:opacity-50';
 export const gridSettingsButton = 'min-h-11 rounded-full border border-canvas-line px-4 hover:bg-canvas-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-canvas-ink disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent';
 
-/** The Properties panel and Background dialog edit exactly the same grid configuration. */
+/** The full settings dialog retains a draft until Apply; Properties commits type immediately and appearance on blur. */
 export function GridSettingsFields({ draft, setDraft, compact = false }: {
   draft: GridConfiguration; setDraft: (grid: GridConfiguration) => void; compact?: boolean;
 }) {

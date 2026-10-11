@@ -1,3 +1,4 @@
+import { packGridZone } from '@core/movement/gridZonePacking';
 import { isSpatial, spatialPlacements } from '@core/movement/movementStrategies';
 import type { Actor } from '@entities/actor/types';
 import type { EncounterState } from '@core/encounter/types';
@@ -61,6 +62,7 @@ export function getActorRenderPlacements(
   computationStrategy: LayoutComputationStrategy = ACTOR_LAYOUT_COMPUTATION_STRATEGY
 ): ActorRenderPlacement[] {
   if (isSpatial(encounter)) return spatialPlacements(encounter);
+  if (encounter.movementRules.snapToGrid) return encounter.zones.allIds.flatMap(id => packGridZone(encounter, id).placements).map(p => ({ ...p, actor: encounter.actors.byId[p.actorId] }));
   const cacheKey = createActorPlacementCacheKey(
     encounter,
     POLYGON_LAYOUT_SETTINGS,

@@ -1,3 +1,4 @@
+import { movementRulesFor } from '@tests/core/movement/ruleFixtures';
 import { resolveGridGeometry } from '@core/movement/gridScale';
 import { createEncounterState } from '@core/encounter/createEncounterState';
 import { resizeEncounterCanvas } from '@core/encounter/canvasSizeMutations';
@@ -24,7 +25,7 @@ function fixture() {
   let state = createZone(createEncounterState({ id: 'background', name: 'Background' }), { id: 'z', polygon: [{ x: 100, y: 100 }, { x: 400, y: 100 }, { x: 400, y: 400 }, { x: 100, y: 400 }] });
   for (const id of ['inside', 'outside', 'partial']) state = createActor(state, { id, currentZoneId: 'z' });
   state = createEngagement(state, { id: 'g', parentZoneId: 'z', participantIds: ['inside', 'outside'] });
-  state.movementStrategy = 'free'; state.grid.visible = true; state.grid.cellSize = 100;
+  state.movementRules = movementRulesFor('free'); state.grid.visible = true; state.grid.cellSize = 100;
   state.grid.origin = { x: 0, y: 0 };
   state.canvasSize = { width: 600, height: 600 };
   state.backgroundImage = { source: { kind: 'url', url: 'https://example.com/map.png' }, width: 1200, height: 1200, name: 'Map', mediaType: 'image/png', frame: { x: 0, y: 0, width: 600, height: 600 } };
@@ -78,7 +79,7 @@ describe('independent background resizing', () => {
     history = reducer(history, redoEncounterChange()); expect(history.present).toEqual(next);
   });
   it('keeps an actor in a completed edge cell even when it exceeds background coverage', () => {
-    const state = fixture(); state.movementStrategy = 'grid';
+    const state = fixture(); state.movementRules = movementRulesFor('grid');
     state.actors.byId.partial.size = 'small';
     state.actors.byId.partial.spatialPosition = { x: 352, y: 224 };
     const next = resizeEncounterCanvas(state, { canvasSize: { width: 330, height: 330 } });
@@ -86,7 +87,7 @@ describe('independent background resizing', () => {
     expect(footprintFits({ x: 352, y: 224 }, 22.5, next.canvasSize)).toBe(true);
   });
   it('applies both policies to saved placements while Zone mode remains active', () => {
-    const state = fixture(); state.movementStrategy = 'zone';
+    const state = fixture(); state.movementRules = movementRulesFor('zone');
     const next = resizeEncounterCanvas(state, { canvasSize: { width: 310, height: 310 } });
     expect(next.actors.byId.outside.spatialPosition).toBeUndefined();
     expect(next.actors.byId.outside.currentZoneId).toBe('z'); expect(next.engagements).toBe(state.engagements);
@@ -111,7 +112,8 @@ describe('independent background resizing', () => {
     const state = fixture(); store.dispatch(loadEncounterState(state));
     localStorage.setItem(INTERFACE_PREFERENCES_STORAGE_KEY, JSON.stringify({ backgroundResizeOverflowBehavior: 'clamp' }));
     commitCanvasResize({ actionType: 'canvas.resize', dispatch: store.dispatch, encounter: state, requestedCanvasSize: { width: 310, height: 310 } });
-    expect(store.getState().encounter.present.actors).toEqual(state.actors);
+    expect(store.getState().encounter.present.actors.byId.outside.spatialPosition).toEqual(state.actors.byId.outside.spatialPosition);
+    expect(store.getState().encounter.present.actors.byId.outside.currentZoneId).toBe('zoneless');
     expect(getGridCoverage(store.getState().encounter.present).width).toBeGreaterThan(575);
     localStorage.removeItem(INTERFACE_PREFERENCES_STORAGE_KEY);
     store.dispatch(loadEncounterState(state));

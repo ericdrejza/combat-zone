@@ -1,3 +1,4 @@
+import { movementRulesFor } from '@tests/core/movement/ruleFixtures';
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { renderApp } from '@tests/ui/renderApp';
 import { createEncounterState } from '@core/encounter/createEncounterState';
@@ -13,10 +14,10 @@ it.each([false, true])('includes functional Grid settings in its subtool group (
     addEventListener: vi.fn(), removeEventListener: vi.fn(), addListener: vi.fn(), removeListener: vi.fn(), dispatchEvent: vi.fn() }));
   const app = renderApp();
   try {
-    const state = createEncounterState({ id: 'settings-group', name: 'Settings' }); state.movementStrategy = 'grid'; state.grid.visible = true;
+    const state = createEncounterState({ id: 'settings-group', name: 'Settings' }); state.movementRules = movementRulesFor('grid'); state.grid.visible = true;
     act(() => { store.dispatch(loadEncounterState(state)); store.dispatch(setActiveTool('grid')); });
-    const group = within(screen.getByRole('group', { name: 'Grid controls' }));
-    expect(group.getByRole('button', { name: 'Hide grid' })).toBeInTheDocument();
+    const group = within(screen.getByRole('group', { name: 'Grid alignment and settings' }));
+    expect(screen.getByRole('button', { name: 'Hide grid' })).toBeInTheDocument();
     expect(group.getByRole('button', { name: 'Align grid to background' })).toBeInTheDocument();
     fireEvent.click(group.getByRole('button', { name: 'Grid settings' }));
     const dialog = within(screen.getByRole('dialog', { name: 'Grid settings' }));
@@ -36,7 +37,8 @@ it.each([false, true])('includes functional Grid settings in its subtool group (
     act(() => store.dispatch(undoEncounterChange())); expect(store.getState().encounter.present).toEqual(state);
     act(() => store.dispatch(redoEncounterChange())); expect(store.getState().encounter.present).toEqual(saved);
     act(() => store.dispatch(setActiveTool('background')));
-    expect(within(screen.getByRole('group', { name: 'Grid controls' })).getByRole('button', { name: 'Grid settings' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Grid settings' })).not.toBeInTheDocument();
+    act(() => store.dispatch(setActiveTool('grid')));
     act(() => setPersistenceWritable(false));
     fireEvent.click(screen.getByRole('button', { name: 'Grid settings' }));
     const guarded = screen.queryByRole('dialog', { name: 'Grid settings' });

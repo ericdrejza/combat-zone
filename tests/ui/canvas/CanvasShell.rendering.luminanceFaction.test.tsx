@@ -35,6 +35,7 @@ describe("CanvasShell rendering", () => {
     createCircleZone(canvas);
 
     await screen.findByLabelText("Zone 1");
+    await user.click(screen.getByRole("button", { name: "Fill color" }));
     await user.click(screen.getByRole("button", { name: "Fill color #991b1b" }));
     fireEvent.change(screen.getByLabelText("Zone opacity"), {
       target: { value: "1" }

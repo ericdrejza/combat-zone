@@ -1,82 +1,94 @@
-import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { renderApp } from '@tests/ui/renderApp';
 import { createEncounterState } from '@core/encounter/createEncounterState';
 import { store } from '@store/store';
 import { loadEncounterState, undoEncounterChange, redoEncounterChange } from '@store/encounterSlice';
-import { cancelGridEditing, setActiveTool, setGridPreview, startGridCalibration } from '@interaction/interactionState';
-import * as validationRuntime from '@core/validation/validatedEncounterChange';
+import { setActiveTool, startGridCalibration } from '@interaction/interactionState';
 import { setPersistenceWritable } from '@store/persistenceWriteGuardMiddleware';
-
 function setup() {
   renderApp();
-  const state = createEncounterState({ id: 'properties-grid', name: 'Grid' }); state.movementStrategy = 'grid';
+  const state = createEncounterState({ id: 'properties-grid', name: 'Grid' });
   act(() => { store.dispatch(loadEncounterState(state)); store.dispatch(setActiveTool('grid')); });
   return state;
 }
-describe('Grid tool Properties', () => {
-  beforeEach(() => setPersistenceWritable(true));
+describe('Grid Properties appearance drafts', () => {
   afterEach(() => setPersistenceWritable(true));
-  it('completes all sides automatically when settings apply, in one undoable action', async () => {
-    setup();
-    const initial = createEncounterState({ id: 'edge-ui', name: 'Edges' });
-    initial.movementStrategy = 'grid'; initial.grid.origin = { x: -2, y: -2 }; initial.canvasSize = { width: 188, height: 188 };
-    act(() => store.dispatch(loadEncounterState(initial)));
-    expect(screen.queryByRole('button', { name: /Complete edge|Finish grid/ })).not.toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText('Cell size'), { target: { value: '80' } });
-    expect(store.getState().encounter.present.canvasSize).toEqual(initial.canvasSize);
-    fireEvent.click(screen.getByRole('button', { name: 'Apply' }));
-    await waitFor(() => expect(store.getState().encounter.present.canvasSize).toEqual({ width: 192, height: 192 }));
-    expect(store.getState().encounter.present.gridCoverage).toEqual({ x: 2, y: 2, width: 150.4, height: 150.4 });
+  it('previews colors without history until focus leaves the picker, then supports undo/redo', async () => {
+    const initial = setup();
+    expect(screen.queryByLabelText('Cell size')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Apply' })).not.toBeInTheDocument();
+    const field = screen.getByLabelText('Grid line color');
+    fireEvent.change(field, { target: { value: '#ff0000' } });
+    await waitFor(() => expect(store.getState().interaction.gridAppearancePreview?.color).toBe('#ff0000'));
+    expect(store.getState().encounter.present).toEqual(initial);
+    expect(store.getState().encounter.past).toHaveLength(0);
+    fireEvent.blur(field, { relatedTarget: screen.getByLabelText('Line opacity') });
+    await waitFor(() => expect(store.getState().encounter.present.grid.color).toBe('#ff0000'));
+    expect(store.getState().interaction.gridAppearancePreview).toBeNull();
     expect(store.getState().encounter.past).toHaveLength(1);
     const saved = store.getState().encounter.present;
+    expect(saved.canvasSize).toEqual(initial.canvasSize);
     act(() => store.dispatch(undoEncounterChange())); expect(store.getState().encounter.present).toEqual(initial);
     act(() => store.dispatch(redoEncounterChange())); expect(store.getState().encounter.present).toEqual(saved);
   });
-  it('discards pending validation after switching tools', async () => {
-    let resolve!: (value: validationRuntime.PreparedValidatedEncounterChange) => void;
-    let input!: validationRuntime.PrepareValidatedEncounterChangeInput;
-    const spy = vi.spyOn(validationRuntime, 'prepareValidatedEncounterChangeForRuntime').mockImplementation(request => {
-      input = request; return new Promise(done => { resolve = done; });
-    });
-    try {
-      const initial = setup();
-      fireEvent.change(screen.getByLabelText('Cell size'), { target: { value: '80' } });
-      fireEvent.click(screen.getByRole('button', { name: 'Apply' }));
-      act(() => store.dispatch(setActiveTool('actor')));
-      await act(async () => resolve(validationRuntime.prepareValidatedEncounterChange(input)));
-      expect(store.getState().encounter.present).toEqual(initial);
-      expect(store.getState().encounter.past).toHaveLength(0);
-      expect(store.getState().interaction.gridPreview).toBeNull();
-    } finally { spy.mockRestore(); }
+  it('closes the color picker on a second click and commits only once', async () => {
+    setup(); const user = userEvent.setup();
+    const opener = screen.getByLabelText('Grid line color');
+    await user.click(opener);
+    fireEvent.change(screen.getByLabelText('Grid line color'), { target: { value: '#aa0000' } });
+    await user.click(opener);
+    expect(opener).not.toHaveFocus();
+    expect(opener).toHaveAttribute('type', 'color');
+    await waitFor(() => expect(store.getState().encounter.present.grid.color).toBe('#aa0000'));
+    expect(store.getState().encounter.past).toHaveLength(1);
   });
-  it('previews, cancels, and commits shared grid controls with undo/redo', async () => {
-    const initial = setup(), form = within(screen.getByRole('form', { name: 'Grid properties' }));
-    expect(screen.queryByRole('dialog', { name: 'Grid settings' })).not.toBeInTheDocument();
-    fireEvent.change(form.getByLabelText('Cell size'), { target: { value: '80' } });
-    expect(store.getState().interaction.gridPreview!.cellSize).toBe(80);
+  it('previews rapid opacity changes and commits one history entry on blur', async () => {
+    const initial = setup(), field = screen.getByLabelText('Line opacity');
+    for (const value of ['0.1', '0.2', '0.4', '0.6']) fireEvent.change(field, { target: { value } });
+    await waitFor(() => expect(store.getState().interaction.gridAppearancePreview?.opacity).toBe(0.6));
+    expect(store.getState().encounter.present).toEqual(initial);
     expect(store.getState().encounter.past).toHaveLength(0);
-    fireEvent.click(form.getByRole('button', { name: 'Cancel' }));
-    expect(form.getByLabelText('Cell size')).toHaveValue(64);
-    fireEvent.change(form.getByLabelText('Grid type'), { target: { value: 'hex-flat' } });
-    fireEvent.change(form.getByLabelText('Cell size'), { target: { value: '80' } });
-    fireEvent.click(form.getByRole('button', { name: 'Apply' }));
-    await waitFor(() => expect(store.getState().encounter.present.grid).toMatchObject({ type: 'hex-flat', cellSize: 80 }));
-    const saved = store.getState().encounter.present;
+    fireEvent.pointerUp(field);
+    expect(store.getState().encounter.past).toHaveLength(0);
+    fireEvent.blur(field);
+    await waitFor(() => expect(store.getState().encounter.present.grid.opacity).toBe(0.6));
+    expect(store.getState().encounter.past).toHaveLength(1);
     act(() => store.dispatch(undoEncounterChange())); expect(store.getState().encounter.present).toEqual(initial);
-    act(() => store.dispatch(redoEncounterChange())); expect(store.getState().encounter.present).toEqual(saved);
+    act(() => store.dispatch(redoEncounterChange())); expect(store.getState().encounter.present.grid.opacity).toBe(0.6);
   });
-  it('yields its preview to Waypoints and clears drafts when leaving the tool', () => {
+  it('serializes final color and opacity edits without losing either field', async () => {
+    setup();
+    const color = screen.getByLabelText('Grid line color');
+    fireEvent.change(color, { target: { value: '#ff0000' } });
+    fireEvent.blur(color);
+    const opacity = screen.getByLabelText('Line opacity');
+    fireEvent.change(opacity, { target: { value: '0.2' } }); fireEvent.blur(opacity);
+    await waitFor(() => expect(store.getState().encounter.present.grid).toMatchObject({ color: '#ff0000', opacity: 0.2 }));
+    expect(store.getState().encounter.past).toHaveLength(2);
+  });
+  it('commits a blurred appearance field when switching tools', async () => {
+    setup(); const user = userEvent.setup();
+    await user.click(screen.getByLabelText('Line opacity'));
+    fireEvent.change(screen.getByLabelText('Line opacity'), { target: { value: '0.2' } });
+    await user.click(screen.getByRole('button', { name: 'Zone' }));
+    await waitFor(() => expect(store.getState().encounter.present.grid.opacity).toBe(0.2));
+    expect(store.getState().interaction.gridAppearancePreview).toBeNull();
+  });
+  it('changes geometry immediately and yields to alignment', async () => {
+    setup();
+    fireEvent.change(screen.getByLabelText('Grid type'), { target: { value: 'hex-flat' } });
+    await waitFor(() => expect(store.getState().encounter.present.grid.type).toBe('hex-flat'));
+    act(() => store.dispatch(startGridCalibration('hex-flat')));
+    expect(screen.getByLabelText('Grid type')).toBeDisabled();
+    expect(store.getState().interaction.gridAppearancePreview).toBeNull();
+  });
+  it('enforces the writer boundary for preview and commit', async () => {
     const initial = setup();
-    fireEvent.change(screen.getByLabelText('Cell size'), { target: { value: '80' } });
-    act(() => store.dispatch(startGridCalibration('square')));
-    const calibration = { ...initial.grid, cellSize: 72 };
-    act(() => store.dispatch(setGridPreview(calibration)));
-    expect(screen.getByLabelText('Cell size')).toBeDisabled();
-    expect(store.getState().interaction.gridPreview).toEqual(calibration);
-    act(() => store.dispatch(cancelGridEditing()));
-    expect(store.getState().interaction.gridPreview!.cellSize).toBe(80);
-    act(() => store.dispatch(setActiveTool('actor')));
-    expect(store.getState().interaction.gridPreview).toBeNull();
+    act(() => setPersistenceWritable(false));
+    fireEvent.change(screen.getByLabelText('Line opacity'), { target: { value: '0.2' } });
+    fireEvent.blur(screen.getByLabelText('Line opacity'));
+    await act(async () => {});
     expect(store.getState().encounter.present).toEqual(initial);
   });
 });
