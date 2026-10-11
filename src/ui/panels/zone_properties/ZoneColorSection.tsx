@@ -129,21 +129,16 @@ export function ZoneColorSection({
             role="tabpanel"
           >
             {activeTab === "engagements" ? (
-              <label className="flex items-center justify-between gap-3 rounded-xl border border-canvas-line px-3 py-2">
-                <span className="font-semibold text-canvas-ink">
-                  Match border color
-                </span>
-                <input
+              <div className="rounded-xl border border-canvas-line px-3">
+                <PreferenceSwitch
                   checked={matchesBorder}
-                  className="h-5 w-5 accent-canvas-ink"
-                  onChange={(event) =>
-                    onCommitZoneProperties({
-                      matchEngagementColorToBorder: event.currentTarget.checked
-                    })
+                  compact
+                  label="Match border color"
+                  onChange={(matchEngagementColorToBorder) =>
+                    onCommitZoneProperties({ matchEngagementColorToBorder })
                   }
-                  type="checkbox"
                 />
-              </label>
+              </div>
             ) : null}
             <ColorPalette
               disabled={activeTab === "engagements" && matchesBorder}

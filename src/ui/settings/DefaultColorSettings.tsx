@@ -58,7 +58,7 @@ function HexColorInput({
           aria-label={label}
           aria-describedby={invalid ? errorId : undefined}
           aria-invalid={invalid}
-          className="min-w-0 flex-1 rounded-xl border border-canvas-line bg-canvas-surface px-3 py-2 font-mono text-sm uppercase"
+          className="min-w-0 flex-1 rounded-xl border border-canvas-line bg-canvas-surface px-3 py-2 font-mono text-sm uppercase hover:border-canvas-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-canvas-ink"
           onBlur={commit}
           onChange={(event) => {
             setDraft(event.currentTarget.value);
@@ -119,7 +119,7 @@ export function DefaultColorSettings() {
           </div>
           <input
             aria-label="Default zone opacity"
-            className="w-full accent-canvas-ink"
+            className="w-full cursor-pointer accent-canvas-ink focus-visible:rounded focus-visible:ring-2 focus-visible:ring-canvas-ink"
             max="1"
             min="0"
             onChange={(event) =>

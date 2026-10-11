@@ -3,7 +3,7 @@ import { useId } from "react";
 import type { CombatRules } from "@entities/actor/actorResources";
 import { RepeatButton } from "@ui/controls/RepeatButton";
 
-const buttonClassName = "rounded p-2 enabled:hover:bg-canvas-surface enabled:hover:text-canvas-ink focus-visible:ring-2 focus-visible:ring-canvas-ink disabled:cursor-not-allowed disabled:text-canvas-muted disabled:opacity-40";
+const buttonClassName = "rounded-lg border border-transparent p-2 enabled:hover:border-canvas-line enabled:hover:bg-canvas-surface enabled:hover:text-canvas-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-canvas-ink disabled:cursor-not-allowed disabled:text-canvas-muted disabled:opacity-40";
 
 /** Keeps numeric entry separate from repeatable steps that save immediately. */
 export function HealthThresholdField({ label, value, unit, onChange, onCommit, onBlur }: {
@@ -30,7 +30,7 @@ export function HealthThresholdField({ label, value, unit, onChange, onCommit, o
     <div className="flex shrink-0 items-center gap-1">
       <button type="button" aria-label={`Clear ${label.toLowerCase()} cutoff`} title={value === null ? "No cutoff configured" : `Clear ${label.toLowerCase()} cutoff`} disabled={value === null} className={buttonClassName} onClick={() => onCommit(null)}><X aria-hidden="true" className="h-4 w-4" /></button>
       <RepeatButton type="button" aria-label={`Decrease ${label.toLowerCase()} cutoff`} title={decreaseDisabled ? "Minimum cutoff reached" : `Decrease ${label.toLowerCase()} cutoff`} disabled={decreaseDisabled} className={buttonClassName} onClick={() => step(-1)}><Minus aria-hidden="true" className="h-4 w-4" /></RepeatButton>
-      <label htmlFor={id} className="inline-flex w-24 items-center justify-center rounded border border-canvas-line bg-canvas px-2 py-2 focus-within:ring-2 focus-within:ring-canvas-ink">
+      <label htmlFor={id} className="inline-flex w-24 items-center justify-center rounded-xl border border-canvas-line bg-canvas-surface px-2 py-2 focus-within:ring-2 focus-within:ring-canvas-ink">
         <input id={id} aria-label={`${label} upper cutoff`} className="min-w-0 bg-transparent p-0 text-center tabular-nums outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" style={{ width: `${value === null ? 2 : String(value).length}ch` }} type="number" step="1" min={percentage ? 0 : undefined} max={percentage ? 100 : undefined} value={value ?? ""} onChange={(event) => onChange(event.currentTarget.value === "" ? null : Number(event.currentTarget.value))} onBlur={onBlur} onKeyDown={(event) => {
           if (event.key === "Enter") {
             event.preventDefault();

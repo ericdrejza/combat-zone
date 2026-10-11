@@ -8,7 +8,7 @@ export function BackgroundResizeSettings() {
     <label className="flex flex-col gap-2 py-3 text-sm">
       <span>When background resizing puts actors outside the canvas</span>
       <select
-        className="w-full rounded-xl border border-canvas-line bg-canvas-surface px-3 py-2 hover:border-canvas-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-canvas-ink"
+        className="w-full rounded-xl border border-canvas-line bg-canvas-surface px-3 py-2 text-sm hover:border-canvas-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-canvas-ink"
         value={backgroundResizeOverflowBehavior}
         onChange={event => setBackgroundResizeOverflowBehavior(readBackgroundResizeOverflowBehavior(event.currentTarget.value))}
       >

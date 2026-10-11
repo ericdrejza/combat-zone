@@ -7,7 +7,7 @@ export function MovementRepeatSettings() {
   useEffect(() => setDraft(String(movementRepeatDelayMs)), [movementRepeatDelayMs]);
   return <label className="block space-y-2 text-sm font-semibold">Held movement repeat delay (ms)
     <input aria-label="Held movement repeat delay (ms)" type="number" min="50" max="2000" step="10" value={draft}
-      className="w-full rounded-xl border border-canvas-line bg-canvas p-2 font-normal hover:border-canvas-ink focus-visible:ring-2 focus-visible:ring-canvas-ink"
+      className="w-full rounded-xl border border-canvas-line bg-canvas-surface px-3 py-2 text-sm font-normal hover:border-canvas-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-canvas-ink"
       onChange={event => setDraft(event.currentTarget.value)} onBlur={() => {
         const value = Number(draft);
         if (Number.isSafeInteger(value) && value >= 50 && value <= 2000) setMovementRepeatDelayMs(value);

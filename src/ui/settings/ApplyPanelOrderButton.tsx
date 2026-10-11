@@ -39,7 +39,7 @@ export function ApplyPanelOrderButton({ order }: { order: EncounterPanelOrder })
   }
 
   return <button
-    className="mt-3 rounded-xl border border-canvas-line bg-canvas-surface px-3 py-2 text-sm font-medium hover:bg-canvas disabled:cursor-not-allowed disabled:opacity-50"
+    className="mt-3 rounded-xl border border-canvas-line bg-canvas-surface px-3 py-2 text-sm font-medium enabled:hover:bg-canvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-canvas-ink disabled:cursor-not-allowed disabled:opacity-50"
     disabled={readOnly}
     onClick={applyOrder}
     type="button"

@@ -6,7 +6,6 @@ import { useInterfacePreferences } from "@ui/interface_preferences/InterfacePref
 import { DOCKABLE_PANEL_DEFINITIONS } from "@ui/panels/dockablePanelMetadata";
 import { useTheme, type Theme } from "@ui/theme/ThemeProvider";
 import { ApplyPanelOrderButton } from "./ApplyPanelOrderButton";
-import { DefaultColorSettings } from "./DefaultColorSettings";
 import { VisibilitySwitch } from "./VisibilitySwitch";
 import { PreferenceSwitch } from "./PreferenceSwitch";
 import { BackgroundResizeSettings } from "./BackgroundResizeSettings";
@@ -47,14 +46,16 @@ export function InterfaceSettings() {
   } = useInterfacePreferences();
 
   return (
-    <section aria-labelledby="settings-interface-heading" className="p-5">
-      <h3 className="font-display text-lg font-semibold" id="settings-interface-heading">
-        Interface
-      </h3>
-      <p className="mt-1 text-sm text-canvas-muted">
-        Choose the color theme used throughout Combat Zone.
-      </p>
-      <fieldset className="mt-5">
+    <section aria-labelledby="settings-interface-heading" className="space-y-6 p-5">
+      <div>
+        <h3 className="font-display text-lg font-semibold" id="settings-interface-heading">
+          Interface
+        </h3>
+        <p className="mt-1 text-sm text-canvas-muted">
+          Choose the color theme used throughout Combat Zone.
+        </p>
+      </div>
+      <fieldset>
         <legend className="mb-2 text-sm font-semibold">Theme</legend>
         <div className="relative grid w-full max-w-xs grid-cols-2 rounded-2xl border border-canvas-line bg-canvas p-1" role="radiogroup">
           <motion.span
@@ -87,7 +88,7 @@ export function InterfaceSettings() {
           ))}
         </div>
       </fieldset>
-      <fieldset className="mt-7 max-w-lg border-t border-canvas-line pt-5">
+      <fieldset className="max-w-lg border-t border-canvas-line pt-5">
         <legend className="pr-3 text-sm font-semibold">Accessibility</legend>
         <div className="mt-1 divide-y divide-canvas-line">
           <PreferenceSwitch
@@ -97,7 +98,7 @@ export function InterfaceSettings() {
           />
         </div>
       </fieldset>
-      <fieldset className="mt-4 max-w-lg border-t border-canvas-line pt-5">
+      <fieldset className="max-w-lg border-t border-canvas-line pt-5">
         <legend className="pr-3 text-sm font-semibold">Navigation</legend>
         <PreferenceSwitch checked={warnActorDestinationsDiffer} label="Warn when actor destinations differ" onChange={setWarnActorDestinationsDiffer} />
         <PreferenceSwitch checked={keepHealDamageDialogOpen} label="Keep heal/damage dialog open after application" onChange={setKeepHealDamageDialogOpen} />
@@ -110,14 +111,14 @@ export function InterfaceSettings() {
           />
         </div>
       </fieldset>
-      <fieldset className="mt-4 max-w-lg border-t border-canvas-line pt-5">
+      <fieldset className="max-w-lg border-t border-canvas-line pt-5">
         <legend className="pr-3 text-sm font-semibold">Defaults</legend>
         <div className="mt-1 divide-y divide-canvas-line">
           <label className="flex min-h-12 items-center justify-between gap-4 py-3">
             <span className="text-sm">Tool auto-select upon encounter creation</span>
             <select
               aria-label="Tool auto-select upon encounter creation"
-              className="rounded-xl border border-canvas-line bg-canvas-surface px-3 py-2 text-sm"
+              className="rounded-xl border border-canvas-line bg-canvas-surface px-3 py-2 text-sm hover:border-canvas-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-canvas-ink"
               onChange={(event) =>
                 setEncounterCreationTool(
                   event.currentTarget.value as "background" | "zone"
@@ -135,11 +136,10 @@ export function InterfaceSettings() {
             onChange={setAutoSelectActiveActorDefault}
           />
           <ClockStyleSelect label="Default clock style" value={clockStyleDefault} onChange={setClockStyleDefault} />
-          <DefaultColorSettings />
         </div>
       </fieldset>
       <LibraryInterfaceSettings />
-      <section aria-labelledby="interface-panels-heading" className="mt-4 border-t border-canvas-line pt-5">
+      <section aria-labelledby="interface-panels-heading" className="border-t border-canvas-line pt-5">
         <h4 className="text-sm font-semibold" id="interface-panels-heading">Panels</h4>
         <div className="mt-3 grid gap-5 lg:grid-cols-[minmax(0,1fr)_1px_minmax(0,1fr)] lg:gap-6">
           <fieldset className="min-w-0">
@@ -173,7 +173,7 @@ export function InterfaceSettings() {
           />
         </div>
         <label className="mt-3 flex items-center justify-between gap-3 text-sm">Health counter name
-          <input aria-label="Health counter name" className="w-40 rounded border border-canvas-line bg-canvas p-2" defaultValue={healthCounterName} key={healthCounterName} onBlur={(event) => setHealthCounterName(event.currentTarget.value)} />
+          <input aria-label="Health counter name" className="w-40 rounded-xl border border-canvas-line bg-canvas-surface px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-canvas-ink" defaultValue={healthCounterName} key={healthCounterName} onBlur={(event) => setHealthCounterName(event.currentTarget.value)} />
         </label>
       </section>
     </section>

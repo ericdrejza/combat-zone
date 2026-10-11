@@ -98,7 +98,7 @@ export function PanelOrderSettings({ onChange, order }: PanelOrderSettingsProps)
               >
                 <button
                   aria-label={`Reorder ${panel.title} panel`}
-                  className="flex w-full min-w-0 touch-none cursor-grab items-center gap-1 rounded-xl border border-canvas-line bg-canvas-surface px-2 py-2 text-left shadow-sm active:cursor-grabbing"
+                  className="flex w-full min-w-0 touch-none cursor-grab items-center gap-1 rounded-xl border border-canvas-line bg-canvas-surface px-2 py-2 text-left shadow-sm transition hover:border-canvas-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-canvas-ink active:cursor-grabbing"
                   draggable={false}
                   onDragEnd={endDrag}
                   onDragStart={(event) => {

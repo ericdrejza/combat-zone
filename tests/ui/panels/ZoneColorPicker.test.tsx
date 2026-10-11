@@ -57,7 +57,7 @@ it('provides collapsed Border and Engagement fields and honors Match border colo
   await user.click(screen.getByRole('tab', { name: 'Engagements' }));
   expect(screen.getByRole('button', { name: 'Engagements color' })).toBeDisabled();
   expect(screen.getByRole('img', { name: 'Engagements color preview #1d4ed8' })).toBeInTheDocument();
-  await user.click(screen.getByRole('checkbox', { name: 'Match border color' }));
+  await user.click(screen.getByRole('switch', { name: 'Match border color' }));
   await user.click(screen.getByRole('button', { name: 'Engagements color' }));
   await user.click(screen.getByRole('button', { name: 'Engagements color #bfdbfe' }));
   await waitFor(() => expect(screen.getByRole('img', { name: 'Engagements color preview #bfdbfe' })).toBeInTheDocument());

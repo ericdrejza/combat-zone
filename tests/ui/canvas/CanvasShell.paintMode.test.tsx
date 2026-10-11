@@ -36,7 +36,7 @@ describe("CanvasShell paint mode", () => {
     await user.click(screen.getByRole("switch", { name: /Show border/ }));
     await user.click(screen.getByRole("tab", { name: "Engagements" }));
     await user.click(
-      screen.getByRole("checkbox", { name: "Match border color" })
+      screen.getByRole("switch", { name: "Match border color" })
     );
     await user.click(screen.getByRole("button", { name: "Engagements color" }));
     await user.click(

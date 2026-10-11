@@ -52,21 +52,21 @@ export function CloudSyncSettings() {
           </p>
           <div className="mt-3 flex gap-2">
             {!cloud.driveConnected ? (
-              <button className="flex items-center gap-2 rounded-xl border border-canvas-line bg-canvas-surface px-3 py-2 font-medium" onClick={() => void cloud.connectGoogleDrive().catch(() => undefined)} type="button">
+              <button className="flex items-center gap-2 rounded-xl border border-canvas-line bg-canvas-surface px-3 py-2 font-medium transition hover:bg-canvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-canvas-ink" onClick={() => void cloud.connectGoogleDrive().catch(() => undefined)} type="button">
                 <Cloud className="h-4 w-4" /> Connect Drive
               </button>
             ) : null}
-            <button className="flex items-center gap-2 rounded-xl border border-canvas-line bg-canvas-surface px-3 py-2 font-medium" onClick={() => void cloud.retry()} type="button">
+            <button className="flex items-center gap-2 rounded-xl border border-canvas-line bg-canvas-surface px-3 py-2 font-medium transition hover:bg-canvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-canvas-ink" onClick={() => void cloud.retry()} type="button">
               <RefreshCw className="h-4 w-4" /> Retry
             </button>
-            <button className="flex items-center gap-2 rounded-xl border border-canvas-line bg-canvas-surface px-3 py-2 font-medium" onClick={() => void cloud.signOut()} type="button">
+            <button className="flex items-center gap-2 rounded-xl border border-canvas-line bg-canvas-surface px-3 py-2 font-medium transition hover:bg-canvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-canvas-ink" onClick={() => void cloud.signOut()} type="button">
               <LogOut className="h-4 w-4" /> Sign out
             </button>
           </div>
         </div>
       ) : (
         <button
-          className="mt-4 flex items-center gap-2 rounded-xl bg-canvas-ink px-4 py-2 text-sm font-semibold text-canvas-on-ink disabled:opacity-50"
+          className="mt-4 flex items-center gap-2 rounded-xl bg-canvas-ink px-4 py-2 text-sm font-semibold text-canvas-on-ink transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-canvas-ink disabled:cursor-not-allowed disabled:opacity-50"
           disabled={!cloud.backendAvailable || cloud.status === "authenticating"}
           onClick={() => void cloud.signIn()}
           type="button"

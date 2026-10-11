@@ -3,7 +3,7 @@ import { type KeyboardEvent, useState } from "react";
 import { formatKeybind, FIXED_SHORTCUT_REFERENCES, KEYBIND_DEFINITIONS, keybindFromEvent, useKeybinds, type KeybindActionId, type KeybindMap } from "@ui/keybinds";
 import { ConfirmStatusDialog } from "@ui/panels/status_panel/StatusDialog";
 
-const buttonClass = "rounded-lg border border-canvas-line px-2 py-2 text-xs enabled:hover:bg-canvas focus-visible:ring-2 focus-visible:ring-canvas-ink disabled:cursor-not-allowed disabled:opacity-40";
+const buttonClass = "rounded-lg border border-canvas-line bg-canvas-surface px-2 py-2 text-xs transition enabled:hover:bg-canvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-canvas-ink disabled:cursor-not-allowed disabled:opacity-40";
 const directions = ["Up", "Down", "Left", "Right"] as const;
 
 /** Assignments and presets share an atomic, explicit conflict override. */
@@ -42,21 +42,21 @@ export function KeybindSettings() {
   function preset(keys: string[]) {
     assign(Object.fromEntries(directions.map((direction, index) => [`viewport.pan${direction}`, keys[index]])));
   }
-  return <section aria-labelledby="settings-keybinds-heading" className="min-w-0 p-5">
+  return <section aria-labelledby="settings-keybinds-heading" className="min-w-0 space-y-5 p-5">
     <div className="flex flex-wrap items-start justify-between gap-3">
       <div><h3 className="font-display text-lg font-semibold" id="settings-keybinds-heading">Keybinds</h3><p className="mt-1 text-sm text-canvas-muted">Choose shortcuts or clear an assignment. While recording, Backspace clears it. Conflicting shortcuts require an override.</p></div>
-      <button className={`${buttonClass} flex items-center gap-2`} onClick={() => { resetBindings(); setRecording(null); setError(null); setPending(null); }} type="button"><RotateCcw aria-hidden="true" className="h-4 w-4" />Reset defaults</button>
+      <button className={`${buttonClass} flex items-center gap-2 text-sm font-medium`} onClick={() => { resetBindings(); setRecording(null); setError(null); setPending(null); }} type="button"><RotateCcw aria-hidden="true" className="h-4 w-4" />Reset defaults</button>
     </div>
     {error ? <p role="alert" className="mt-3 text-sm text-red-600">{error}</p> : null}
-    <fieldset className="mt-5 rounded-2xl border border-canvas-line bg-canvas-surface p-3">
+    <fieldset className="rounded-2xl border border-canvas-line bg-canvas-surface p-3">
       <legend className="px-1 text-sm font-semibold">Pan viewport</legend>
       <div className="grid min-w-0 grid-cols-4 gap-1 sm:gap-3">{directions.map((direction) => <div className="min-w-0" key={direction}><p className="mb-1 text-center text-xs">{direction}</p>{control(`viewport.pan${direction}`, `Pan ${direction.toLowerCase()}`, true)}</div>)}</div>
       <div className="mt-3 flex flex-wrap items-center gap-2"><span className="text-xs text-canvas-muted">Quick select</span><button className={buttonClass} onClick={() => preset(["w", "s", "a", "d"])} type="button">WASD</button><button className={buttonClass} onClick={() => preset(["arrowup", "arrowdown", "arrowleft", "arrowright"])} type="button">Arrow keys</button><button className={buttonClass} onClick={() => preset(["", "", "", ""])} type="button">Clear pan</button></div>
     </fieldset>
-    <h4 className="mt-5 text-sm font-semibold">Customizable</h4>
-    <div className="mt-2 divide-y divide-canvas-line rounded-2xl border border-canvas-line bg-canvas-surface">{KEYBIND_DEFINITIONS.filter(({ editable, id }) => editable && !id.startsWith("viewport.pan")).map(({ id, label }) => <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-3" key={id}><span className="text-sm font-medium">{label}</span>{control(id, label)}</div>)}</div>
-    <h4 className="mt-5 text-sm font-semibold">Read-only shortcuts</h4>
-    <div className="mt-2 divide-y divide-canvas-line rounded-2xl border border-canvas-line bg-canvas-surface">{FIXED_SHORTCUT_REFERENCES.map(({ binding, label }) => <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-3" key={`${binding}-${label}`}><span className="text-sm">{label}</span><span aria-label={`${label} keybind`} className="font-mono text-xs">{binding}</span></div>)}</div>
+    <section className="space-y-2"><h4 className="text-sm font-semibold">Customizable</h4>
+    <div className="divide-y divide-canvas-line rounded-2xl border border-canvas-line bg-canvas-surface">{KEYBIND_DEFINITIONS.filter(({ editable, id }) => editable && !id.startsWith("viewport.pan")).map(({ id, label }) => <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-3" key={id}><span className="text-sm font-medium">{label}</span>{control(id, label)}</div>)}</div></section>
+    <section className="space-y-2"><h4 className="text-sm font-semibold">Read-only shortcuts</h4>
+    <div className="divide-y divide-canvas-line rounded-2xl border border-canvas-line bg-canvas-surface">{FIXED_SHORTCUT_REFERENCES.map(({ binding, label }) => <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-3" key={`${binding}-${label}`}><span className="text-sm">{label}</span><span aria-label={`${label} keybind`} className="font-mono text-xs">{binding}</span></div>)}</div></section>
     {pending ? <ConfirmStatusDialog title="Override conflicting keybinds?" confirmLabel="Continue" onClose={() => setPending(null)} onConfirm={() => { const conflicts = applyBindings(pending.updates, true); if (conflicts.length) setError("The assignment could not be applied."); else { setRecording(null); setError(null); } setPending(null); }}><p>These actions will become unassigned:</p><ul className="mt-2 list-disc pl-5">{pending.conflicts.map((id) => <li key={id}>{KEYBIND_DEFINITIONS.find((d) => d.id === id)?.label}</li>)}</ul></ConfirmStatusDialog> : null}
   </section>;
 }

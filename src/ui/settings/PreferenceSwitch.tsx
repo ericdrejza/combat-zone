@@ -6,7 +6,8 @@ export function PreferenceSwitch({
   title,
   checked,
   label,
-  onChange
+  onChange,
+  compact = false
 }: {
   ariaLabel?: string;
   disabled?: boolean;
@@ -14,9 +15,10 @@ export function PreferenceSwitch({
   checked: boolean;
   label: string;
   onChange: (checked: boolean) => void;
+  compact?: boolean;
 }) {
   return (
-    <div className="flex min-h-12 items-center justify-between gap-4 py-3">
+    <div className={`flex items-center justify-between gap-4 ${compact ? "py-1" : "min-h-12 py-3"}`}>
       <span className="text-sm">{label}</span>
       <button
         disabled={disabled}

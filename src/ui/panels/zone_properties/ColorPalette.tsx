@@ -34,7 +34,7 @@ export function ColorPalette({ disabled = false, label, onCommitZoneProperties, 
     {open && !disabled ? <div id={id} aria-label={`${label} palette`} role="group" className="grid grid-cols-5 gap-2">
       {ZONE_COLOR_PALETTE.map(color => <TouchTooltip key={color} label={`${label} ${color}`}>
         <button aria-label={`${label} ${color}`} aria-pressed={value.toLowerCase() === color.toLowerCase()} title={`${label} ${color}`}
-          className={`min-h-11 w-full rounded-full border enabled:hover:ring-2 enabled:hover:ring-canvas-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-canvas-ink ${value.toLowerCase() === color.toLowerCase() ? 'border-canvas-ink ring-2 ring-canvas-ink/25' : 'border-canvas-line'}`}
+          className={`h-8 w-full rounded-full border enabled:hover:ring-2 enabled:hover:ring-canvas-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-canvas-ink ${value.toLowerCase() === color.toLowerCase() ? 'border-canvas-ink ring-2 ring-canvas-ink/25' : 'border-canvas-line'}`}
           onClick={() => { onCommitZoneProperties({ [property]: color }); setOpen(false); opener.current?.focus(); }}
           style={{ backgroundColor: color }} type="button" />
       </TouchTooltip>)}

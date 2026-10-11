@@ -27,11 +27,11 @@ export function CombatSettings() {
       void commit("actor.recalculateHealth", { rules: saved }, (state) => recalculateHealthStatuses(state, saved), () => generation.current === revision);
     }
   }
-  return <section aria-labelledby="settings-combat-heading" className="space-y-5 p-5">
-    <h3 id="settings-combat-heading" className="font-display text-lg font-semibold">Combat</h3>
+  return <section aria-labelledby="settings-combat-heading" className="space-y-6 p-5">
+    <div><h3 id="settings-combat-heading" className="font-display text-lg font-semibold">Combat</h3><p className="mt-1 text-sm text-canvas-muted">Movement, health, and status behavior for encounters.</p></div>
     <MovementRepeatSettings />
-    <label className="block text-sm font-semibold">Hit point limits
-      <select aria-label="Hit point limits" className="mt-2 w-full rounded-xl border border-canvas-line bg-canvas p-2 font-normal" value={draft.limits} onChange={(event) => save({ ...draft, limits: event.currentTarget.value as CombatRules["limits"] })}>
+    <label className="block space-y-2 text-sm font-medium">Hit point limits
+      <select aria-label="Hit point limits" className="w-full rounded-xl border border-canvas-line bg-canvas-surface px-3 py-2 text-sm font-normal hover:border-canvas-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-canvas-ink" value={draft.limits} onChange={(event) => save({ ...draft, limits: event.currentTarget.value as CombatRules["limits"] })}>
         <option value="bounded">Clamp at zero and maximum</option><option value="negative">Allow negative; cap healing at maximum</option><option value="unbounded">Allow negative and above maximum</option>
       </select>
     </label>
@@ -40,7 +40,7 @@ export function CombatSettings() {
       <PreferenceSwitch title="Recalculate health when hit points or cutoffs change" checked={draft.automaticHealth} label="Automatically update health status" onChange={(automaticHealth) => save({ ...rules, automaticHealth })} />
       {draft.automaticHealth ? <>
       <p className="text-sm text-canvas-muted">Set upper cutoffs for the statuses you want to automate. Leave a cutoff blank to control that status manually. Equal cutoffs use the most severe status.</p>
-      <label className="block text-sm">Threshold units<select aria-label="Threshold units" className="ml-3 rounded border border-canvas-line bg-canvas p-2" value={draft.unit} onChange={(event) => save({ ...draft, unit: event.currentTarget.value as CombatRules["unit"] })}><option value="fixed">Fixed hit points</option><option value="percent">Percentage of maximum</option></select></label>
+      <label className="block space-y-2 text-sm">Threshold units<select aria-label="Threshold units" className="w-full rounded-xl border border-canvas-line bg-canvas-surface px-3 py-2 text-sm hover:border-canvas-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-canvas-ink sm:w-auto" value={draft.unit} onChange={(event) => save({ ...draft, unit: event.currentTarget.value as CombatRules["unit"] })}><option value="fixed">Fixed hit points</option><option value="percent">Percentage of maximum</option></select></label>
       {["Dead", "Unconscious / severely injured", "Injured"].map((label, index) => <HealthThresholdField key={label} label={label} value={draft.thresholds[index]} unit={draft.unit} onChange={(value) => {
         const thresholds = [...draft.thresholds] as CombatRules["thresholds"];
         thresholds[index] = value;

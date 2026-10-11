@@ -70,7 +70,7 @@ describe("ZonePropertiesPanel", () => {
     expect(
       screen.queryByRole("switch", { name: "Show border" })
     ).not.toBeInTheDocument();
-    const matchBorder = screen.getByRole("checkbox", {
+    const matchBorder = screen.getByRole("switch", {
       name: "Match border color"
     });
     expect(matchBorder).toBeChecked();

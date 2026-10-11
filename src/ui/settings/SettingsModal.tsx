@@ -60,7 +60,7 @@ export function SettingsModal(props: SettingsModalProps) {
       <div className="flex h-[min(42rem,90vh)] w-[min(56rem,94vw)] flex-col overflow-hidden rounded-3xl border border-canvas-line bg-canvas-panel shadow-2xl">
         <header className="flex items-center justify-between border-b border-canvas-line px-5 py-4">
           <h2 className="font-display text-xl font-semibold">Settings</h2>
-          <button aria-label="Close settings" className="flex h-9 w-9 items-center justify-center rounded-full border border-canvas-line bg-canvas-surface text-canvas-muted transition hover:bg-canvas" onClick={props.onClose} type="button"><X aria-hidden="true" className="h-4 w-4" /></button>
+          <button aria-label="Close settings" className="flex h-9 w-9 items-center justify-center rounded-full border border-canvas-line bg-canvas-surface text-canvas-muted transition hover:bg-canvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-canvas-ink" onClick={props.onClose} title="Close settings" type="button"><X aria-hidden="true" className="h-4 w-4" /></button>
         </header>
         <div className="flex min-h-0 flex-1">
           <SettingsSidebar

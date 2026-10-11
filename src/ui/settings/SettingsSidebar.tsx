@@ -46,7 +46,7 @@ function TabButton({
     <button
       aria-selected={selected}
       aria-label={tab.label}
-      className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-medium transition ${selected ? "bg-canvas-ink text-canvas-on-ink" : "text-canvas-muted hover:bg-canvas-surface hover:text-canvas-ink"}`}
+      className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-canvas-ink ${selected ? "bg-canvas-ink text-canvas-on-ink" : "text-canvas-muted hover:bg-canvas-surface hover:text-canvas-ink"}`}
       onClick={() => onSelect(tab.id)}
       role="tab"
       type="button"
@@ -88,7 +88,7 @@ export function SettingsSidebar({
               : "Expand settings navigation"
           }
           aria-expanded={expanded}
-          className="mb-3 flex h-9 w-full items-center gap-2 rounded-xl px-3 text-sm font-medium text-canvas-muted transition hover:bg-canvas-surface hover:text-canvas-ink"
+          className="mb-3 flex h-9 w-full items-center gap-2 rounded-xl px-3 text-sm font-medium text-canvas-muted transition hover:bg-canvas-surface hover:text-canvas-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-canvas-ink"
           onClick={onToggle}
           type="button"
         >
