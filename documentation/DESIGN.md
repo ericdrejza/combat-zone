@@ -1177,6 +1177,11 @@ Layout strategies:
   - For non-circles, start with populating the zone just inside the corners (verticies)
   - For circles, start populating inside the circle at the top and work clockwise
 - SPLIT (SPLIT is not a layout strategy, but rather a category of layout strategies)
+  - With exactly one active faction section and no Engagements, use the
+    corresponding non-split strategy, including its spacing defaults.
+    Hero and Ally share one faction section. Retain the saved split strategy
+    so additional factions automatically restore splitting. Engagements retain
+    their dedicated sections even when all actors belong to one faction.
   - SPLIT_FLEX
     - Each faction is an isolated section whose tokens use section-scoped FLEX
       space-around distribution.

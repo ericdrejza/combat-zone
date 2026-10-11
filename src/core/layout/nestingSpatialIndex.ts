@@ -1,9 +1,7 @@
 import type { LayoutPoint } from './types';
 import type { NestingActor } from './nesting_ts';
-import {
-  footprintsOverlap as polygonFootprintsOverlap,
-  getFootprint
-} from './polygonGeometry';
+import { getFootprint } from './polygonGeometry';
+import { engagementFootprintsAreSeparate } from './engagementFootprintGeometry';
 
 type Bounds = {
   minX: number;
@@ -46,12 +44,18 @@ function footprintsOverlap(
     return false;
   }
 
-  return polygonFootprintsOverlap(first.polygon, second.polygon);
+  // Inscribed circle polygons omit rendered area between their vertices.
+  // Match the final audit so packing keeps searching past invalid candidates.
+  return !engagementFootprintsAreSeparate(
+    { point: first.center, radius: first.radius, shape: first.actor.shape },
+    { point: second.center, radius: second.radius, shape: second.actor.shape },
+    0
+  );
 }
 
 /**
  * Broad-phases actor collision checks into local grid cells. Only nearby
- * footprints reach the existing authoritative polygon narrow phase.
+ * footprints reach the authoritative rendered-shape narrow phase.
  */
 export class NestingSpatialIndex {
   private readonly cells = new Map<string, number[]>();

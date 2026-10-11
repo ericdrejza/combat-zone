@@ -11,6 +11,14 @@ After completing a numbered section (## X.), move the completed section to the e
 
 ## 15. MVP Acceptance Hardening
 
+- [x] Use the non-split layout for single-faction zones without Engagements;
+      retain dedicated Engagement sections and verify faction-entry/departure
+      history, validation, and rendering.
+
+- [x] Fix mixed-size FLEX and same-faction SPLIT_FLEX actor entry with complete
+      rendered-shape collision checks and a size-aware packing fallback; verify
+      validation modes, asynchronous packing, and exact undo/redo.
+
 - [x] Add touch-only counter swipes for deletion and targeted editing, preserving
       vertical scrolling, value controls, writer enforcement, and undo/redo.
 

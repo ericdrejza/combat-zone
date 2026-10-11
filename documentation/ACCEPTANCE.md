@@ -104,6 +104,10 @@ truth.
 - [x] SPLIT_FLEX lays out each faction independently with section-scoped FLEX
       space-around distribution; actors in another section do not affect its
       internal shape or spacing.
+- [x] Single-faction zones without Engagements use the corresponding non-split
+      layout and spacing defaults while retaining their saved split strategy;
+      faction entry/departure restores splitting automatically. Dedicated
+      Engagement sections remain active even with a single faction.
 - [x] SPLIT_SEQUENTIAL centers collection-ordered actors on aligned lines
       inside each faction section and wraps to a new line when full.
 - [x] Split layouts expose a persisted section-divider visibility control

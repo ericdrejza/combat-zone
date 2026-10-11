@@ -2,6 +2,10 @@ import type { LayoutOrientation, LayoutPoint } from './types';
 import { getBorderSpacingsForInput, tryPack } from './nestingPacking';
 import { getCollisionActorGap, MINIMUM_ACTOR_GAP } from './nestingSpacing';
 import { tryPackSplitSections } from './splitSectionPacking';
+import {
+  getEffectiveLayoutStrategy,
+  resolvePolygonLayoutInput
+} from './effectiveLayoutStrategy';
 
 export type NestingActor = {
   id: string;
@@ -138,9 +142,12 @@ function mergeSettings(
 
 /** Resolves strategy-specific defaults for both synchronous and worker packing. */
 export function resolvePolygonNestingSettings(
-  input: Pick<PolygonNestingInput, 'layoutStrategy' | 'settings'>
+  input: Pick<PolygonNestingInput, 'layoutStrategy' | 'settings'> &
+    Partial<Pick<PolygonNestingInput, 'actors'>>
 ): PolygonNestingSettings {
-  const layoutStrategy = input.layoutStrategy ?? 'FLEX';
+  const layoutStrategy = input.actors
+    ? getEffectiveLayoutStrategy(input.layoutStrategy ?? 'FLEX', input.actors)
+    : input.layoutStrategy ?? 'FLEX';
 
   return mergeSettings(
     input.settings,
@@ -152,6 +159,7 @@ export function resolvePolygonNestingSettings(
 
 /** Deterministic polygon-footprint packing used by polygon layouts. */
 export function packPolygonActors(input: PolygonNestingInput): PolygonNestingResult {
+  input = resolvePolygonLayoutInput(input);
   const settings = resolvePolygonNestingSettings(input);
   const collisionGap = getCollisionActorGap(
     input.layoutStrategy,

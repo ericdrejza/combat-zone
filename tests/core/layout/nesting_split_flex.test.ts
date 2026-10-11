@@ -45,7 +45,7 @@ describe('polygon nesting layout', () => {
     expect(rightmostNeutral).toBeLessThanOrEqual(leftmostEnemy);
   });
 
-  it('uses the shared minimum gap for SPLIT_FLEX actors', () => {
+  it('uses full-zone FLEX spacing for a single SPLIT_FLEX faction', () => {
     const result = packPolygonActors({
       actors: [
         { ...actor('hero-one'), layoutGroup: 'hero' as const },
@@ -75,7 +75,7 @@ describe('polygon nesting layout', () => {
     expect(Math.hypot(first.x - second.x, first.y - second.y)).toBeGreaterThanOrEqual(
       actor('hero-one').radius * 2 + DEFAULT_SPLIT_FLEX_ACTOR_GAP
     );
-    expect(Math.hypot(first.x - second.x, first.y - second.y)).toBeLessThan(
+    expect(Math.hypot(first.x - second.x, first.y - second.y)).toBe(
       Math.hypot(legacyFirst.x - legacySecond.x, legacyFirst.y - legacySecond.y)
     );
   });

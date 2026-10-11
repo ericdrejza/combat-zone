@@ -23,7 +23,7 @@ export type SplitLayoutSection = {
   polygon: LayoutPoint[];
 };
 
-export function getSplitGroupRank(actor: NestingActor): number {
+export function getSplitGroupRank(actor: Pick<NestingActor, 'layoutGroup'>): number {
   return actor.layoutGroup === 'ally' || actor.layoutGroup === 'hero'
     ? 0
     : actor.layoutGroup === 'neutral'

@@ -4,6 +4,7 @@ import type { Zone } from '@entities/zone/types';
 import type { EncounterState } from '../encounter/types';
 import { getEntities } from '../state/entityCollection';
 import { getLayoutStrategy } from './strategies';
+import { getEffectiveLayoutStrategy } from './effectiveLayoutStrategy';
 import type { LayoutDescriptor, LayoutEntity } from './types';
 
 export type ZoneLayoutResult = {
@@ -60,6 +61,12 @@ export function calculateZoneLayoutFromEntities(
   actors: Actor[],
   engagements: Engagement[]
 ): ZoneLayoutResult {
+  if (engagements.length === 0) {
+    zone = {
+      ...zone,
+      layoutStrategy: getEffectiveLayoutStrategy(zone.layoutStrategy, actors)
+    };
+  }
   if (
     zone.layoutStrategy === 'SPLIT_FLEX' ||
     zone.layoutStrategy === 'SPLIT_SEQUENTIAL'

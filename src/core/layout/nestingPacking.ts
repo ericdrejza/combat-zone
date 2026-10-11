@@ -57,6 +57,46 @@ export function tryPack(
   settings: PolygonNestingSettings,
   borderSpacing: number
 ): PolygonNestingResult {
+  const preferred = tryPackTargets(input, settings, borderSpacing);
+  if (
+    preferred.fits ||
+    (input.layoutStrategy ?? 'FLEX') !== 'FLEX' ||
+    input.targetPoints ||
+    new Set(input.actors.map((actor) => actor.radius)).size <= 1
+  ) {
+    return preferred;
+  }
+
+  // A largest-radius target grid can strand spare room beside a large actor.
+  // Retry with size-aware rows before concluding that the polygon is full.
+  // Targets are only preferences; the same full-shape checks remain mandatory.
+  const actors = [...input.actors].sort(
+    (first, second) => second.radius - first.radius
+  );
+  const targets = getTargetPoints(
+    actors,
+    input.polygon,
+    borderSpacing,
+    'SEQUENTIAL',
+    getCollisionActorGap(input.layoutStrategy, settings.actorGap, actors.length)
+  );
+  return tryPackTargets(
+    {
+      ...input,
+      targetPoints: Object.fromEntries(
+        actors.map((actor, index) => [actor.id, targets[index]])
+      )
+    },
+    settings,
+    borderSpacing
+  );
+}
+
+function tryPackTargets(
+  input: PolygonNestingInput,
+  settings: PolygonNestingSettings,
+  borderSpacing: number
+): PolygonNestingResult {
   const layoutStrategy = input.layoutStrategy ?? 'FLEX';
   const collisionGap = getCollisionActorGap(
     input.layoutStrategy,

@@ -1,12 +1,13 @@
 import { getNestingCandidatePoints } from './nestingCandidates';
 import {
-  footprintsOverlap,
   getFootprint,
   isFootprintInsideZone
 } from './polygonGeometry';
 import { getTargetPoints } from './nestingTargets';
 import { getBorderSpacingsForInput } from './nestingPacking';
 import { getCollisionActorGap } from './nestingSpacing';
+import { NestingSpatialIndex } from './nestingSpatialIndex';
+import { resolvePolygonLayoutInput } from './effectiveLayoutStrategy';
 import type { LayoutPoint } from './types';
 import {
   resolvePolygonNestingSettings,
@@ -34,6 +35,7 @@ export async function packPolygonActorsWithCandidateRanker(
   input: PolygonNestingInput,
   rankCandidates: NestingCandidateRanker
 ): Promise<PolygonNestingResult> {
+  input = resolvePolygonLayoutInput(input);
   if (
     input.layoutStrategy === 'SPLIT_FLEX' ||
     input.layoutStrategy === 'SPLIT_SEQUENTIAL'
@@ -66,13 +68,8 @@ export async function packPolygonActorsWithCandidateRanker(
     }
   }
 
-  return {
-    fits: false,
-    placements: {},
-    borderSpacing: settings.minimumBorderSpacing,
-    incomingDropPoint: input.incomingDropPoint,
-    reason: 'no-space'
-  };
+  // Include the shared size-aware fallback before rejecting a ranked search.
+  return packPolygonActors(input);
 }
 
 async function tryPackWithRanker(
@@ -115,7 +112,10 @@ async function tryPackWithRanker(
     };
   }
   const placements: Record<string, LayoutPoint> = {};
-  const placedFootprints: LayoutPoint[][] = [];
+  const spatialIndex = new NestingSpatialIndex(
+    Math.max(1, ...actors.map((actor) => actor.radius)) * 2 + collisionGap,
+    settings.circleSegments
+  );
 
   for (const actor of actors) {
     const actorIndex = actorIndexes.get(actor.id) ?? 0;
@@ -143,18 +143,15 @@ async function tryPackWithRanker(
         borderSpacing,
         settings.circleSegments
       );
-      const collisionFootprint = getFootprint(
+      const collisionFootprint = spatialIndex.createFootprint(
         actor,
         point,
-        collisionGap / 2,
-        settings.circleSegments
+        collisionGap / 2
       );
 
       if (
         isFootprintInsideZone(footprint, input.polygon) &&
-        placedFootprints.every(
-          (placed) => !footprintsOverlap(collisionFootprint, placed)
-        )
+        !spatialIndex.overlaps(collisionFootprint)
       ) {
         candidate = point;
         break;
@@ -172,12 +169,11 @@ async function tryPackWithRanker(
     }
 
     placements[actor.id] = candidate;
-    placedFootprints.push(
-      getFootprint(
+    spatialIndex.insert(
+      spatialIndex.createFootprint(
         actor,
         candidate,
-        collisionGap / 2,
-        settings.circleSegments
+        collisionGap / 2
       )
     );
   }

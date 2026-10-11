@@ -8,6 +8,7 @@ import {
   resolvePolygonNestingSettings
 } from './nesting_ts';
 import type { LayoutPoint } from './types';
+import { resolvePolygonLayoutInput } from './effectiveLayoutStrategy';
 
 export type SplitSectionDivider = {
   end: LayoutPoint;
@@ -23,6 +24,9 @@ export function getSplitSectionDividers(
   settings: PolygonNestingSettings,
   borderSpacing: number
 ): SplitSectionDivider[] {
+  if (!resolvePolygonLayoutInput(input).layoutStrategy?.startsWith('SPLIT')) {
+    return [];
+  }
   const internalStrategy =
     input.layoutStrategy === 'SPLIT_SEQUENTIAL' ? 'SEQUENTIAL' : 'FLEX';
   const sections =

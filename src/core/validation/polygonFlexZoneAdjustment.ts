@@ -3,6 +3,7 @@ import { toNestingActor } from '../layout/actorFootprints';
 import { packEngagementParticipants } from '../layout/engagementPacking';
 import { isPolygonWithinCanvas } from '../layout/polygonCanvasBounds';
 import { orderActorsForEngagementPacking } from '../layout/engagementPackingOrder';
+import { getEngagementAwareSplitInput } from '@core/layout/engagementSplitLayout';
 import { findSmallestPolygonFlexZoneExpansion } from '../layout/polygonFlexZoneExpansion';
 import { doPolygonsOverlap } from '../layout/polygonCollision';
 import {
@@ -176,6 +177,9 @@ export function getNestingActorsInZone(
   zoneId: string,
   _strategy: string
 ): NestingActor[] {
+  if (encounter.zones.byId[zoneId]?.layoutStrategy.startsWith('SPLIT')) {
+    return getEngagementAwareSplitInput(encounter, zoneId).actors;
+  }
   const zoneActors = encounter.actors.allIds.flatMap((actorId) => {
     const actor = encounter.actors.byId[actorId];
 
