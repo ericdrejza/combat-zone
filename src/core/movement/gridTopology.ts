@@ -1,3 +1,4 @@
+import { isSquareTopology } from './gridProjection';
 import type { EncounterState } from '@core/encounter/types';
 import type { ActorSize } from '@entities/actor/types';
 import type { LayoutPoint } from '@core/layout/types';
@@ -14,15 +15,15 @@ export function canvasCellCenters(state: EncounterState): LayoutPoint[] {
   const grid = resolveGridGeometry(state.grid), { width, height } = state.canvasSize;
   const corners = [{ x: 0, y: 0 }, { x: width, y: 0 }, { x: width, y: height }, { x: 0, y: height }].map(p => worldToGrid(grid, p));
   if (corners.some(p => !Number.isFinite(p.x + p.y))) return [];
-  const size = grid.cellSize, spacingX = grid.type === 'square' ? size : size * Math.sqrt(3) / 2;
+  const size = grid.cellSize, spacingX = isSquareTopology(grid.type) ? size : size * Math.sqrt(3) / 2;
   const minQ = Math.floor(Math.min(...corners.map(p => p.x)) / spacingX) - 3;
   const maxQ = Math.ceil(Math.max(...corners.map(p => p.x)) / spacingX) + 3;
   const minY = Math.min(...corners.map(p => p.y)), maxY = Math.max(...corners.map(p => p.y));
   const points: LayoutPoint[] = [];
   for (let q = minQ; q <= maxQ; q++) {
-    const shift = grid.type === 'square' ? 0.5 : q / 2;
+    const shift = isSquareTopology(grid.type) ? 0.5 : q / 2;
     for (let r = Math.floor(minY / size - shift) - 3; r <= Math.ceil(maxY / size - shift) + 3; r++) {
-      points.push(gridToWorld(grid, { x: (q + (grid.type === 'square' ? 0.5 : 0)) * spacingX, y: (r + shift) * size }));
+      points.push(gridToWorld(grid, { x: (q + (isSquareTopology(grid.type) ? 0.5 : 0)) * spacingX, y: (r + shift) * size }));
     }
   }
   return points;
@@ -30,7 +31,7 @@ export function canvasCellCenters(state: EncounterState): LayoutPoint[] {
 
 export function cellVertices(grid: GridGeometry, center: LayoutPoint): LayoutPoint[] {
   const local = worldToGrid(grid, center), size = grid.cellSize;
-  return (grid.type === 'square' ? [
+  return (isSquareTopology(grid.type) ? [
     { x: local.x - size / 2, y: local.y - size / 2 }, { x: local.x + size / 2, y: local.y - size / 2 },
     { x: local.x + size / 2, y: local.y + size / 2 }, { x: local.x - size / 2, y: local.y + size / 2 }
   ] : Array.from({ length: 6 }, (_, k) => ({ x: local.x + size / Math.sqrt(3) * Math.cos(k * Math.PI / 3), y: local.y + size / Math.sqrt(3) * Math.sin(k * Math.PI / 3) }))).map(p => gridToWorld(grid, p));
@@ -53,7 +54,7 @@ export function actorAnchorCells(state: EncounterState, point: LayoutPoint, size
   const centers = nearbyAnchors(grid, point, 'medium', 2).filter(center => {
     if (size === 'large') return cellVertices(grid, center).some(vertex => pointDistance(vertex, point) < 1e-5);
     const other = worldToGrid(grid, center);
-    if (size === 'xLarge') return grid.type === 'square'
+    if (size === 'xLarge') return isSquareTopology(grid.type)
       ? Math.abs(other.x - local.x) <= grid.cellSize + 1e-5 && Math.abs(other.y - local.y) <= grid.cellSize + 1e-5
       : pointDistance(other, local) <= grid.cellSize + 1e-5;
     return pointDistance(other, local) < 1e-5;

@@ -1,4 +1,5 @@
 import { ActorTrim } from './ActorTrim';
+import { useCanvasPreferences } from '@ui/canvas_preferences/useCanvasPreferences';
 import { motion } from "motion/react";
 
 import type { LayoutPoint } from "@core/layout/types";
@@ -99,6 +100,9 @@ export function ActorLayer({
   onActorReturnComplete
 }: ActorLayerProps) {
   const { animationsDisabled } = useMotionPreference();
+  const { preferences } = useCanvasPreferences();
+  const projectionRotation = encounter.grid.type === 'isometric' && preferences.projectIsometricTokens
+    ? encounter.grid.rotation : undefined;
 
   return placements.map(
     ({ actor, incomingPoint: placementIncomingPoint, point, radius }) => {
@@ -211,6 +215,7 @@ export function ActorLayer({
               <ActorTrim encounter={encounter} actor={actor} point={renderedPoint}>{artworkClipId => <ActorVisual
                 artworkClipId={artworkClipId}
                 actor={actor}
+                projectionRotation={projectionRotation} projectionAngle={encounter.grid.isometricAngle}
                 clipId={clipId}
                 fillColor={colors.fill}
                 outlineColor={colors.outline}

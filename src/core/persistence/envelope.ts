@@ -535,6 +535,14 @@ export function migrateEncounterState(value: unknown): unknown {
   if (migrated.schemaVersion === 17) migrated.schemaVersion = 18;
   if (migrated.schemaVersion === 18) migrated.schemaVersion = 19;
   if (migrated.schemaVersion === 19) migrated.schemaVersion = 20;
+  // Legacy modes become the independent rules introduced by schema 22.
+  if (typeof migrated.schemaVersion === 'number' && migrated.schemaVersion >= 17 && migrated.schemaVersion <= 21 && migrated.movementRules === undefined) {
+    const mode = migrated.movementStrategy;
+    if (mode === 'zone' || mode === 'grid' || mode === 'free') {
+      migrated.movementRules = { ...DEFAULT_MOVEMENT_RULES, zoneLocked: mode === 'zone', snapToGrid: mode === 'grid', allowOverlap: mode === 'grid' };
+      delete migrated.movementStrategy;
+    }
+  }
   if (migrated.schemaVersion === 20) {
     // Validate old physical geometry before reinterpreting its cell-size value.
     assertEncounterState(migrated, 'encounter', 20);
@@ -543,6 +551,10 @@ export function migrateEncounterState(value: unknown): unknown {
     return normalized;
   }
 
+  if (migrated.schemaVersion === 21 || migrated.schemaVersion === 22 || migrated.schemaVersion === 23) {
+    assertEncounterState(migrated, 'encounter', migrated.schemaVersion);
+    migrated.schemaVersion = ENCOUNTER_SCHEMA_VERSION;
+  }
   return migrated;
 }
 

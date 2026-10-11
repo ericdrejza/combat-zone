@@ -230,3 +230,25 @@ All changes use validated history and the central writer boundary. No movement
 mode migration is added for schema 22; repository, envelopes, and cloud contracts
 validate the new shape. Trim clips artwork only and never changes actor fit or
 hit testing.
+
+## Isometric grids (schema 23)
+
+Schema 23 adds `isometric` to GridType. Schema 22 migrates without geometry
+changes; earlier migrations retain their placement-rule conversions. Local
+envelope validation and Firebase contracts reject isometric grids in older
+schemas and reject unsupported newer versions before mutation.
+
+The shared grid projection maps square lattice coordinates to 2:1 diamonds
+after logical warp and before origin/rotation, with an exact inverse. Square
+topology serves reservations, Zone snapping, tracer paths, and boundary cells.
+Calibration and image detection use the existing worker and preview boundaries.
+Canvas token projection uses nested Motion transforms, separate from logical
+hit areas and upright labels. Its Canvas preference is browser-local, defaults
+off, and uses established reset and cross-tab synchronization.
+
+Schema 24 adds optional grid.isometricAngle in [1,45] degrees. Absence preserves
+the exact prior 2:1 projection; schema 23 migrates without geometry changes.
+Local/Firebase validators reject explicit angles in older schemas. The shared
+projection and its inverse, SVG pattern, warp checks, calibration, and token
+presentation all derive from this single field. Detection fits two line-family
+orientations to estimate projection angle separately from grid rotation.

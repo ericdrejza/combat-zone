@@ -1,3 +1,4 @@
+import { calibrationVertexCount } from '@core/movement/gridProjection';
 import type { GridConfiguration } from '@core/movement/types';
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createSlice } from '@reduxjs/toolkit';
@@ -195,7 +196,7 @@ export const interactionSlice = createSlice({
     setGridCalibrationMode(state, { payload }: PayloadAction<'simple' | 'quadrants' | 'detect'>) { state.gridCalibrationMode = payload; state.gridCalibrationPoints = []; state.gridPreview = null; },
     setGridCalibrationType(state, { payload }: PayloadAction<GridConfiguration['type']>) { state.gridCalibrationType = payload; state.gridCalibrationPoints = []; state.gridPreview = null; },
     addGridCalibrationPoint(state, { payload }: PayloadAction<import('@core/layout/types').LayoutPoint>) {
-      if (state.gridCalibrationActive && state.gridCalibrationPoints.length < (state.gridCalibrationMode === 'detect' ? 0 : (state.gridCalibrationType === 'square' ? 4 : 3) * (state.gridCalibrationMode === 'quadrants' ? 4 : 1))) state.gridCalibrationPoints.push(payload);
+      if (state.gridCalibrationActive && state.gridCalibrationPoints.length < (state.gridCalibrationMode === 'detect' ? 0 : calibrationVertexCount(state.gridCalibrationType) * (state.gridCalibrationMode === 'quadrants' ? 4 : 1))) state.gridCalibrationPoints.push(payload);
     },
     removeGridCalibrationPoint(state) { if (state.gridCalibrationActive) state.gridCalibrationPoints.pop(); },
     cancelGridEditing(state) { state.gridPreview = null; state.gridCalibrationActive = false; state.gridCalibrationPoints = []; },

@@ -40,7 +40,7 @@ export function GridPropertiesPanel() {
     <h3 className="font-display text-lg font-semibold">Grid properties</h3>
     <fieldset disabled={readOnly || aligning} className="space-y-4 disabled:opacity-50">
       <label className="block space-y-1 text-sm">Grid type<select aria-label="Grid type" className={control} value={encounter.grid.type} onChange={event => update({ type: event.currentTarget.value as GridConfiguration['type'] })}>
-        <option value="square">Square</option><option value="hex-flat">Hex — flat top</option><option value="hex-pointy">Hex — pointy top</option>
+        <option value="square">Square</option><option value="isometric">Isometric</option><option value="hex-flat">Hex — flat top</option><option value="hex-pointy">Hex — pointy top</option>
       </select></label>
       <label className="block space-y-1 text-sm">Line color<input aria-label="Grid line color" className={control} type="color" value={appearance.color}
         onChange={event => appearance.preview({ color: event.currentTarget.value })}

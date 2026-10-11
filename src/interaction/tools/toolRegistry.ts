@@ -106,7 +106,7 @@ export const MVP_TOOLS: ToolDefinition[] = [
 
 export const TOOL_DEFINITIONS_BY_ID: Record<ToolId, ToolDefinition> =
   { ...Object.fromEntries(MVP_TOOLS.map((tool) => [tool.id, tool])),
-    grid: { id: 'grid', label: 'Grid', tooltip: 'Configure square or hex grids and move actors on the grid.',
+    grid: { id: 'grid', label: 'Grid', tooltip: 'Configure square, hex, or isometric grids and move actors on the grid.',
       contract: { selectableEntityTypes: ['actor'], dragBehavior: 'Move actors between grid anchors.', clickBehavior: 'Select actors.', keyboardShortcut: '' } },
   } as Record<ToolId, ToolDefinition>;
 

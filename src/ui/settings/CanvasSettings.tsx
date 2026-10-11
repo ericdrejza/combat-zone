@@ -4,6 +4,7 @@ import { useCanvasPreferences } from '@ui/canvas_preferences/useCanvasPreference
 import type { MembershipDecider } from '@ui/canvas_preferences/canvasPreferenceStorage';
 import { ToolbarOptionButton, ToolbarOptionGroup } from '@ui/toolbar/ToolbarOption';
 import type { MovementRules } from '@core/movement/types';
+import { PreferenceSwitch } from './PreferenceSwitch';
 
 const control = 'min-h-11 w-full rounded-lg border border-canvas-line bg-canvas-surface p-2 hover:border-canvas-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-canvas-ink';
 const labels: Record<MembershipDecider, string> = { cells: 'Most shared cells', nearest: 'Nearest Zone Center', current: 'Keep current Zone', ask: 'Ask Me' };
@@ -43,5 +44,9 @@ export function CanvasSettings() {
       <p className="text-xs text-canvas-muted">Changes apply to future membership decisions.</p>
     </div>
     <div className="space-y-3"><h4 className="font-semibold">Cell Tracer</h4><label className="block space-y-1 text-sm">Invalid routes<select aria-label="Cell Tracer invalid route" className={control} value={preferences.tracerInvalidRoute} onChange={event => save({ ...preferences, tracerInvalidRoute: event.currentTarget.value as typeof preferences.tracerInvalidRoute })}><option value="reject">Reject invalid route</option><option value="detour">Find shortest valid detour</option></select></label></div>
+    <div className="space-y-2"><h4 className="font-semibold">Isometric tokens</h4>
+      <PreferenceSwitch ariaLabel="Project tokens on isometric grids" label="Project tokens on isometric grids" checked={preferences.projectIsometricTokens} onChange={projectIsometricTokens => save({ ...preferences, projectIsometricTokens })} />
+      <p className="text-xs text-canvas-muted">Project canvas token artwork and outlines onto the isometric grid. Names stay upright; placement and collision footprints stay unchanged.</p>
+    </div>
   </section>;
 }

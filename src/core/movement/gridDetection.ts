@@ -4,6 +4,7 @@ import { calibratedRotation } from './gridRotation';
 import { fitProfile, refineProfileFit, imageContrasts, lineProfile, centralPhase, type ProfileFit } from './gridDetectionProfiles';
 import { imageRidges, ridgeProfile } from './gridDetectionRidges';
 import { detectHexGrid } from './hexGridDetection';
+import { detectIsometricGrid } from './isometricGridDetection';
 
 /** Contrast projections identify repeated straight square-grid lines without interpreting map content. */
 export function detectSquareGrid(pixels: Uint8ClampedArray, width: number, height: number,
@@ -50,6 +51,7 @@ export function detectSquareGrid(pixels: Uint8ClampedArray, width: number, heigh
 }
 
 export function detectGrid(pixels: Uint8ClampedArray, width: number, height: number, canvasWidth: number, canvasHeight: number, grid: GridConfiguration) {
+  if (grid.type === 'isometric') return detectIsometricGrid(pixels, width, height, canvasWidth, canvasHeight, grid);
   return grid.type === 'square' ? detectSquareGrid(pixels, width, height, canvasWidth, canvasHeight, grid)
     : detectHexGrid(pixels, width, height, canvasWidth, canvasHeight, grid);
 }

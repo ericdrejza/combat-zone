@@ -20,7 +20,7 @@ it('backtracks across entire cell sets when the preferred multi-cell placement b
   expect(result?.get(1)).toEqual({ x: 3, y: 3 });
 });
 
-it.each(['square', 'hex-flat', 'hex-pointy'] as const)('reserves every Large/xLarge cell in rotated %s Zones', type => {
+it.each(['square', 'hex-flat', 'hex-pointy', 'isometric'] as const)('reserves every Large/xLarge cell in rotated %s Zones', type => {
   let state = createZone(createEncounterState({ id: type, name: type }), {
     id: 'z', polygon: [{ x: 0, y: 0 }, { x: 768, y: 0 }, { x: 768, y: 576 }, { x: 0, y: 576 }]
   });

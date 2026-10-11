@@ -51,9 +51,9 @@ describe('completed edge persistence and cloud contract', () => {
     const parsed = parseExportEnvelope(envelope);
     expect(parsed.kind).toBe('encounter-export');
     if (parsed.kind === 'encounter-export') {
-      expect(parsed.encounter.schemaVersion).toBe(22);
+      expect(parsed.encounter.schemaVersion).toBe(24);
       expect(getBackgroundFrame(parsed.encounter.backgroundImage, parsed.encounter.canvasSize)).toEqual({ ...initial.canvasSize, x: 0, y: 0 });
     }
-    expect(() => parseExportEnvelope({ ...envelope, encounter: { ...initial, schemaVersion: 23 } })).toThrow(/unsupported/);
+    expect(() => parseExportEnvelope({ ...envelope, encounter: { ...initial, schemaVersion: 25 } })).toThrow(/unsupported/);
   });
 });

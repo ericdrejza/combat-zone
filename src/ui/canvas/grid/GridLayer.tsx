@@ -1,3 +1,4 @@
+import { isometricSlope, isSquareTopology } from '@core/movement/gridProjection';
 import { resolveGridGeometry } from '@core/movement/gridScale';
 import { CompletedGridClip } from './CompletedGridClip';
 import { useId } from 'react';
@@ -20,13 +21,13 @@ export function GridLayer({ encounter }: { encounter: EncounterState }) {
   const clipId = `${id}-completed`;
   if (grid.warp) return <g clipPath={`url(#${clipId})`}><defs><CompletedGridClip id={clipId} grid={grid} encounter={encounter} /></defs><WarpedGridLayer grid={grid} canvas={encounter.canvasSize} /></g>;
   const cell = grid.cellSize, radius = cell / Math.sqrt(3);
-  const width = grid.type === 'square' ? cell : 3 * radius;
+  const width = isSquareTopology(grid.type) ? cell : 3 * radius;
   const hexagon = (x: number, y: number) => Array.from({ length: 6 }, (_, k) => `${x + radius * Math.cos(k * Math.PI / 3)},${y + radius * Math.sin(k * Math.PI / 3)}`).join(' ');
   return <g aria-label="Grid overlay" pointerEvents="none" clipPath={`url(#${clipId})`}>
     <defs><CompletedGridClip id={clipId} grid={grid} encounter={encounter} /><pattern id={id} patternUnits="userSpaceOnUse" width={width} height={cell}
-      patternTransform={`translate(${grid.origin.x} ${grid.origin.y}) rotate(${gridAngle(grid) * 180 / Math.PI})`}>
+      patternTransform={`translate(${grid.origin.x} ${grid.origin.y}) rotate(${gridAngle(grid) * 180 / Math.PI})${grid.type === 'isometric' ? ` matrix(0.5 ${isometricSlope(grid) / 2} -0.5 ${isometricSlope(grid) / 2} 0 0)` : ''}`}>
       <g fill="none" stroke={grid.color} strokeWidth={1}>
-        {grid.type === 'square' ? <path d={`M ${cell} 0 L 0 0 0 ${cell}`} /> : <>
+        {isSquareTopology(grid.type) ? <path d={`M ${cell} 0 L 0 0 0 ${cell}`} /> : <>
           <polygon points={hexagon(0, 0)} /><polygon points={hexagon(0, cell)} />
           <polygon points={hexagon(1.5 * radius, cell / 2)} />
           <polygon points={hexagon(3 * radius, 0)} /><polygon points={hexagon(3 * radius, cell)} />

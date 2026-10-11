@@ -1,3 +1,4 @@
+import { isSquareTopology } from './gridProjection';
 import type { GridGeometry } from '@core/movement/gridScale';
 import type { EncounterState } from '@core/encounter/types';
 import { resolveGridGeometry } from './gridScale';
@@ -31,20 +32,20 @@ function clip(points: LayoutPoint[], canvas: CanvasSize) {
 }
 export function cellPolygon(grid: GridGeometry, center: LayoutPoint) {
   const local = worldToGrid(grid, center), size = grid.cellSize;
-  const vertices = grid.type === 'square' ? [
+  const vertices = isSquareTopology(grid.type) ? [
     { x: local.x - size / 2, y: local.y - size / 2 }, { x: local.x + size / 2, y: local.y - size / 2 },
     { x: local.x + size / 2, y: local.y + size / 2 }, { x: local.x - size / 2, y: local.y + size / 2 }
   ] : Array.from({ length: 6 }, (_, i) => ({ x: local.x + size / Math.sqrt(3) * Math.cos(i * Math.PI / 3), y: local.y + size / Math.sqrt(3) * Math.sin(i * Math.PI / 3) }));
   // Square edges stay straight under bilinear warps. Hex edges need curved-edge samples.
   return vertices.flatMap((a, i) => {
-    const b = vertices[(i + 1) % vertices.length], count = grid.warp && grid.type !== 'square' ? 16 : 1;
+    const b = vertices[(i + 1) % vertices.length], count = grid.warp && !isSquareTopology(grid.type) ? 16 : 1;
     return Array.from({ length: count }, (_, step) => gridToWorld(grid, { x: a.x + (b.x - a.x) * step / count, y: a.y + (b.y - a.y) * step / count }));
   });
 }
 
 /** Exact quadratic boundaries keep warped hex cells whole rather than clipping their curves. */
 export function cellBoundarySegments(grid: GridGeometry, polygon: LayoutPoint[]) {
-  const stride = grid.warp && grid.type !== 'square' ? 16 : 1;
+  const stride = grid.warp && !isSquareTopology(grid.type) ? 16 : 1;
   const vertices = polygon.filter((_, index) => index % stride === 0);
   return vertices.map((start, index) => {
     const end = vertices[(index + 1) % vertices.length];
@@ -54,7 +55,7 @@ export function cellBoundarySegments(grid: GridGeometry, polygon: LayoutPoint[])
   });
 }
 function cellExtrema(grid: GridGeometry, polygon: LayoutPoint[]) {
-  if (!grid.warp || grid.type === 'square') return polygon;
+  if (!grid.warp || isSquareTopology(grid.type)) return polygon;
   return cellBoundarySegments(grid, polygon).flatMap(({ start, end, control }) => {
     const points = [start, end];
     for (const axis of ['x', 'y'] as const) {

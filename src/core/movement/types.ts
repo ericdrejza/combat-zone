@@ -17,7 +17,8 @@ export function validMovementRules(value: unknown): value is MovementRules {
   return Object.keys(DEFAULT_MOVEMENT_RULES).every(key => typeof rules[key as keyof MovementRules] === 'boolean') &&
     !(rules.zoneLocked && rules.allowOverlap) && !(rules.trimTokens && !rules.snapToGrid);
 }
-export type GridType = 'square' | 'hex-pointy' | 'hex-flat';
+export const DEFAULT_ISOMETRIC_ANGLE = Math.atan(0.5) * 180 / Math.PI;
+export type GridType = 'square' | 'isometric' | 'hex-pointy' | 'hex-flat';
 /** A bilinear alignment maps normalized lattice coordinates into distorted local coordinates. */
 export type GridWarp = { type: 'bilinear'; x: [number, number, number, number]; y: [number, number, number, number] };
 export type GridConfiguration = {
@@ -26,6 +27,8 @@ export type GridConfiguration = {
   cellSize: number;
   origin: LayoutPoint;
   rotation: number;
+  /** Diamond edge angle; absent retains the original 2:1 projection. */
+  isometricAngle?: number;
   visible: boolean;
   color: string;
   opacity: number;
@@ -40,12 +43,13 @@ export function createDefaultGrid(): GridConfiguration {
 export function validGrid(value: unknown): value is GridConfiguration {
   if (!value || typeof value !== 'object') return false;
   const grid = value as GridConfiguration;
-  return ['square', 'hex-pointy', 'hex-flat'].includes(grid.type) &&
+  return ['square', 'isometric', 'hex-pointy', 'hex-flat'].includes(grid.type) &&
     Number.isFinite(grid.cellSize) && grid.cellSize > 0 &&
     !!grid.origin && Number.isFinite(grid.origin.x) && Number.isFinite(grid.origin.y) &&
     Number.isFinite(grid.rotation) && typeof grid.visible === 'boolean' &&
     typeof grid.color === 'string' && /^#[0-9a-f]{6}$/i.test(grid.color) &&
     Number.isFinite(grid.opacity) && grid.opacity >= 0 && grid.opacity <= 1 &&
+    (grid.isometricAngle === undefined || (Number.isFinite(grid.isometricAngle) && grid.isometricAngle >= 1 && grid.isometricAngle <= 45)) &&
     (grid.warp === undefined || validGridWarp(grid.warp));
 }
 

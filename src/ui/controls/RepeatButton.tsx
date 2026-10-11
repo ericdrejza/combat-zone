@@ -5,7 +5,8 @@ export const REPEAT_INTERVAL_MS = 80;
 type Hold = { element: HTMLButtonElement; ownerWindow: Window; pointerId: number; delay?: number; interval?: number; cleanup: () => void };
 
 /** Repeats native clicks, preserving the latest handler and existing mutation semantics. */
-export function RepeatButton({ disabled, title, onClick, onPointerDown, onPointerMove, onPointerLeave, onPointerUp, onPointerCancel, onLostPointerCapture, ...props }: ButtonHTMLAttributes<HTMLButtonElement>) {
+export function RepeatButton({ disabled, title, onClick, onRepeat, onPointerDown, onPointerMove, onPointerLeave, onPointerUp, onPointerCancel, onLostPointerCapture, ...props }: ButtonHTMLAttributes<HTMLButtonElement> & { onRepeat?: () => void }) {
+  const repeatCallback = useRef(onRepeat); repeatCallback.current = onRepeat;
   const hold = useRef<Hold | null>(null);
   const suppressReleaseClick = useRef(false);
   function stop() {
@@ -54,7 +55,7 @@ export function RepeatButton({ disabled, title, onClick, onPointerDown, onPointe
     suppressReleaseClick.current = true;
     const repeat = () => {
       if (element.disabled || !element.isConnected) { stop(); return; }
-      element.click();
+      if (repeatCallback.current) repeatCallback.current(); else element.click();
     };
     active.delay = ownerWindow.setTimeout(() => { if (hold.current !== active) return; repeat(); if (hold.current === active) active.interval = ownerWindow.setInterval(repeat, REPEAT_INTERVAL_MS); }, REPEAT_DELAY_MS);
   }} onPointerMove={(event) => {

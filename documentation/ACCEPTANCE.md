@@ -642,3 +642,16 @@ these back into `AGENT.md` or `DESIGN.md`.
 - Trim clips Large/xLarge hex artwork while preserving fit and hit testing.
 - Every encounter mutation and cascade is undoable, validated, writer-guarded,
   persisted through the repository, and covered by relevant regression tests.
+
+## 2:1 isometric grids
+
+- [x] Isometric renders 64×32 diamonds, shares Square reservations, and supports actor snapping, Zone packing, rigid moves, Cell Tracer, boundary completion, and directional stepping.
+- [x] Simple and quadrant alignment accept four vertices in either winding; detection previews rotated isometric grids. Isometric is the last alignment type option.
+- [x] Properties retains immediate type history; Settings and alignment retain Apply/Cancel. Read-only guards prevent writes.
+- [x] Rotation clicks step 0.1 degrees, repeat after a 400ms hold, reach the next whole degree in fractional steps before accelerating to 1 degree, stop on release/cancellation, and round to hundredths.
+- [x] Optional Canvas token projection defaults off, keeps names upright and logical footprints intact, and supports reset and cross-tab preferences.
+- [x] Schema 23 round trips isometric grids through local exports/repository and Firebase validation; schema 22 geometry is preserved and unsupported schemas are rejected.
+
+- [x] Four-quadrant alignment provides initial top-left and subsequent top-right, bottom-right, and bottom-left jumps, retaining zoom, temporary zoom restoration, sampled points, and Encounter history; undoing/resetting samples updates the destination.
+
+- [x] Isometric angle accepts 1–45° in Apply/Cancel Settings, drives geometry and token projection, is estimated automatically, and preserves default 2:1 geometry through schema 24 migration.

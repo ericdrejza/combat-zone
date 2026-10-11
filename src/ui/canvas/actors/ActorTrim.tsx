@@ -1,3 +1,4 @@
+import { isSquareTopology } from '@core/movement/gridProjection';
 import { getActorRadius } from '@core/layout/actorFootprints';
 import type { ReactNode } from 'react';
 import type { EncounterState } from '@core/encounter/types';
@@ -8,7 +9,7 @@ import { resolveGridGeometry } from '@core/movement/gridScale';
 import { cellBoundarySegments } from '@core/movement/gridEdgeCompletion';
 
 export function ActorTrim({ encounter, actor, point, children }: { encounter: EncounterState; actor: Actor; point: LayoutPoint; children: (clipId?: string) => ReactNode }) {
-  if (!encounter.movementRules.trimTokens || !encounter.movementRules.snapToGrid || encounter.grid.type === 'square' || (actor.size !== 'large' && actor.size !== 'xLarge')) return <>{children()}</>;
+  if (!encounter.movementRules.trimTokens || !encounter.movementRules.snapToGrid || isSquareTopology(encounter.grid.type) || (actor.size !== 'large' && actor.size !== 'xLarge')) return <>{children()}</>;
   const radius = getActorRadius(actor);
   const id = `actor-trim-${actor.id}`, grid = resolveGridGeometry(encounter.grid);
   const local = (p: LayoutPoint) => `${p.x - point.x},${p.y - point.y}`;

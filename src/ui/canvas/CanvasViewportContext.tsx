@@ -18,7 +18,8 @@ import { useInterfacePreferences } from "@ui/interface_preferences/InterfacePref
 import {
   CANVAS_ZOOM_STEP,
   getCenteredCanvasResizeScroll,
-  getZoomToFit
+  getZoomToFit,
+  getZoomScrollAtPoint
 } from "./canvasViewportMath";
 
 import { useCanvasZoom } from "./useCanvasZoom";
@@ -27,6 +28,8 @@ type CanvasViewportValue = {
   getViewportSize: () => CanvasSize;
   panEnabled: boolean;
   pan: (direction: "up" | "down" | "left" | "right") => void;
+  /** Navigate without changing zoom or relinquishing temporary zoom restoration. */
+  panToPoint: (point: LayoutPoint) => void;
   registerViewport: (element: HTMLDivElement | null) => void;
   viewportSize: CanvasSize;
   zoom: number;
@@ -217,6 +220,16 @@ export function CanvasViewportProvider({ children }: PropsWithChildren) {
       getViewportSize,
       beginTemporaryMaxZoom,
       panEnabled: panWithRightClickDrag,
+      panToPoint: (canvasPoint) => {
+        if (!viewportElement) return;
+        const size = getViewportSize();
+        const scroll = getZoomScrollAtPoint({ canvasPoint, canvasSize,
+          currentZoom: zoomRef.current, nextZoom: zoomRef.current,
+          scrollLeft: viewportElement.scrollLeft, scrollTop: viewportElement.scrollTop,
+          viewportPoint: { x: size.width / 2, y: size.height / 2 }, viewportSize: size });
+        viewportElement.scrollLeft = Math.min(scroll.left, Math.max(0, canvasSize.width * zoomRef.current - size.width));
+        viewportElement.scrollTop = Math.min(scroll.top, Math.max(0, canvasSize.height * zoomRef.current - size.height));
+      },
       pan: (direction) => {
         if (!viewportElement) return;
         viewportElement.scrollLeft += direction === "left" ? -40 : direction === "right" ? 40 : 0;
@@ -235,6 +248,7 @@ export function CanvasViewportProvider({ children }: PropsWithChildren) {
     }),
     [
       beginTemporaryMaxZoom,
+      canvasSize,
       getViewportSize,
       viewportElement,
       panWithRightClickDrag,

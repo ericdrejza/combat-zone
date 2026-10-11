@@ -9,6 +9,7 @@ import { useInterfacePreferences } from "@ui/interface_preferences/InterfacePref
 import { ControlledVideo } from "@core/rendering/ControlledVideo";
 import { useStillImageSource } from "@core/assets/useStillImageSource";
 import { isAnimatedAsset } from "@library/mediaAsset";
+import { ActorProjection } from './ActorProjection';
 
 type ActorVisualProps = {
   actor: Actor;
@@ -21,6 +22,8 @@ type ActorVisualProps = {
   showFactionOutline: boolean;
   clipId: string;
   transition: Transition;
+  projectionRotation?: number;
+  projectionAngle?: number;
 };
 
 /**
@@ -38,7 +41,8 @@ export const ActorVisual = memo(function ActorVisual({
   selectedTextColor,
   showFactionOutline,
   clipId,
-  transition
+  transition,
+  projectionRotation, projectionAngle
 }: ActorVisualProps) {
   const innerRadius = Math.max(radius - 3, 1);
   const selectionRadius = radius + 5;
@@ -67,7 +71,11 @@ export const ActorVisual = memo(function ActorVisual({
 
   return (
     <>
+      {projectionRotation !== undefined ? actor.shape === 'rectangle'
+        ? <rect x={-radius} y={-radius} width={radius * 2} height={radius * 2} fill="transparent" pointerEvents="all" data-actor-logical-hit-area />
+        : <circle r={radius} fill="transparent" pointerEvents="all" data-actor-logical-hit-area /> : null}
       <g clipPath={artworkClipId ? `url(#${artworkClipId})` : undefined}>
+      <ActorProjection rotation={projectionRotation} angle={projectionAngle} transition={transition}>
       {actor.shape === "rectangle" ? (
         <motion.rect
           className="stroke-white"
@@ -148,7 +156,10 @@ export const ActorVisual = memo(function ActorVisual({
             />
           )}
         </>
-      ) : (
+      ) : null}
+      </ActorProjection>
+      </g>
+      {!imageUrl ? (
         <text
           className="pointer-events-none text-[10px] font-bold"
           dominantBaseline="middle"
@@ -157,8 +168,8 @@ export const ActorVisual = memo(function ActorVisual({
         >
           {actor.name.toUpperCase()}
         </text>
-      )}
-      </g>
+      ) : null}
+      <ActorProjection rotation={projectionRotation} angle={projectionAngle} transition={transition}>
       {selected ? (
         actor.shape === "rectangle" ? (
           <motion.rect
@@ -216,6 +227,7 @@ export const ActorVisual = memo(function ActorVisual({
           />
         )
       ) : null}
+      </ActorProjection>
       {showExternalActorName ? (
         <motion.text
           className="pointer-events-none text-[10px] font-bold z-10"

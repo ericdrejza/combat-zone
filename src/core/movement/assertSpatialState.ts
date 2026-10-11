@@ -5,7 +5,7 @@ import { validGrid, validMovementRules } from './types';
 
 /** Import validation checks geometry before an encounter can reach Redux. */
 export function assertSpatialState(value: Record<string, unknown>, name: string): void {
-  if (!validGrid(value.grid) || !validMovementRules(value.movementRules)) {
+  if (!validGrid(value.grid) || !validMovementRules(value.movementRules) || (value.schemaVersion !== 23 && value.schemaVersion !== 24 && value.grid.type === 'isometric') || (value.schemaVersion !== 24 && value.grid.isometricAngle !== undefined)) {
     throw new PersistenceValidationError(`${name}.grid or movementRules is invalid.`);
   }
   const state = value as unknown as EncounterState;

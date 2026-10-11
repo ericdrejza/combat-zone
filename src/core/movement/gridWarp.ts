@@ -2,6 +2,7 @@ import type { GridGeometry } from '@core/movement/gridScale';
 import type { LayoutPoint } from '@core/layout/types';
 import type { CanvasSize } from '@core/layout/polygonCanvasBounds';
 import type { GridWarp } from './types';
+import { unprojectGridPoint } from './gridProjection';
 
 const evaluate = (terms: number[], point: LayoutPoint) => terms[0] + terms[1] * point.x + terms[2] * point.y + terms[3] * point.x * point.y;
 export function warpPoint(warp: GridWarp, point: LayoutPoint): LayoutPoint {
@@ -35,7 +36,7 @@ export function warpFitsCanvas(grid: GridGeometry, canvas: CanvasSize): boolean 
   const sources: LayoutPoint[] = [];
   for (const x of [0, canvas.width / 2, canvas.width]) for (const y of [0, canvas.height / 2, canvas.height]) {
     const dx = (x - grid.origin.x) / grid.cellSize, dy = (y - grid.origin.y) / grid.cellSize;
-    const source = unwarpPoint(grid.warp, { x: dx * c + dy * s, y: -dx * s + dy * c });
+    const source = unwarpPoint(grid.warp, unprojectGridPoint(grid, { x: dx * c + dy * s, y: -dx * s + dy * c }));
     if (!Number.isFinite(source.x) || !Number.isFinite(source.y)) return false;
     sources.push(source);
   }

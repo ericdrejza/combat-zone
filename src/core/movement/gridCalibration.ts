@@ -4,9 +4,12 @@ import type { GridConfiguration } from './types';
 import { calibratedRotation, rotationPeriod } from './gridRotation';
 import { gridAngle, gridToWorld, snapToGrid, worldToGrid } from './gridGeometry';
 import { fitGridWarp, warpFitsCanvas } from './gridWarp';
+import { calibrationVertexCount, isSquareTopology } from './gridProjection';
+import { calibrateIsometricGrid } from './isometricCalibration';
 
 /** Square corners or consecutive hex vertices provide visible calibration references. */
 export function calibrateGrid(grid: GridConfiguration, points: LayoutPoint[]): GridConfiguration | null {
+  if (grid.type === 'isometric') return calibrateIsometricGrid(grid, points);
   if (points.length !== (grid.type === 'square' ? 4 : 3)) return null;
   const [a, b, c] = points;
   const u = { x: b.x - a.x, y: b.y - a.y }, v = { x: c.x - b.x, y: c.y - b.y };
@@ -39,7 +42,7 @@ export function calibrateGrid(grid: GridConfiguration, points: LayoutPoint[]): G
 export type QuadrantAlignment = { standard: GridConfiguration; warped: GridConfiguration | null; distortion: number };
 /** Four cell samples estimate lattice addresses, then fit every observed vertex. */
 export function calibrateQuadrants(grid: GridConfiguration, points: LayoutPoint[], canvas: CanvasSize): QuadrantAlignment | null {
-  const count = grid.type === 'square' ? 4 : 3;
+  const count = calibrationVertexCount(grid.type);
   if (points.length !== count * 4) return null;
   const fits = Array.from({ length: 4 }, (_, i) => calibrateGrid(grid, points.slice(i * count, i * count + count)));
   if (fits.some(fit => !fit)) return null;
@@ -49,7 +52,7 @@ export function calibrateQuadrants(grid: GridConfiguration, points: LayoutPoint[
   let standard = { ...valid[0], cellSize: valid.reduce((s, fit) => s + fit.cellSize, 0) / 4,
     rotation: calibratedRotation(angle, grid.type) };
   const offsets = valid.map(fit => {
-    const nearest = snapToGrid(standard, fit.origin, grid.type === 'square' ? 'large' : 'medium');
+    const nearest = snapToGrid(standard, fit.origin, isSquareTopology(grid.type) ? 'large' : 'medium');
     return { x: fit.origin.x - nearest.x, y: fit.origin.y - nearest.y };
   });
   standard = { ...standard, origin: { x: standard.origin.x + offsets.reduce((s, p) => s + p.x, 0) / 4,
@@ -59,7 +62,17 @@ export function calibrateQuadrants(grid: GridConfiguration, points: LayoutPoint[
     const [a, b, c] = points.slice(i * count, i * count + count);
     const sign = Math.sign((b.x - a.x) * (c.y - b.y) - (b.y - a.y) * (c.x - b.x));
     let vertices: LayoutPoint[];
-    if (grid.type === 'square') {
+    if (grid.type === 'isometric') {
+      const first = worldToGrid(standard, snapToGrid(standard, a, 'large'));
+      const localB = worldToGrid(standard, b), localA = worldToGrid(standard, a);
+      const dx = localB.x - localA.x, dy = localB.y - localA.y;
+      const edge = Math.abs(dx) >= Math.abs(dy) ? { x: Math.sign(dx) * standard.cellSize, y: 0 }
+        : { x: 0, y: Math.sign(dy) * standard.cellSize };
+      const turn = { x: -sign * edge.y, y: sign * edge.x };
+      vertices = [first, { x: first.x + edge.x, y: first.y + edge.y },
+        { x: first.x + edge.x + turn.x, y: first.y + edge.y + turn.y },
+        { x: first.x + turn.x, y: first.y + turn.y }];
+    } else if (grid.type === 'square') {
       const first = worldToGrid(standard, snapToGrid(standard, a, 'large'));
       const theta = Math.atan2(b.y - a.y, b.x - a.x) - gridAngle(standard);
       const direction = Math.round(theta / (Math.PI / 2)) * Math.PI / 2;

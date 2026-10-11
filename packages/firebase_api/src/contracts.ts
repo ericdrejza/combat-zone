@@ -1,6 +1,6 @@
 export const FIREBASE_API_VERSION = 1 as const;
 export const CLOUD_RECORD_SCHEMA_VERSION = 2 as const;
-export const SUPPORTED_ENCOUNTER_SCHEMA_VERSION = 22 as const;
+export const SUPPORTED_ENCOUNTER_SCHEMA_VERSION = 24 as const;
 
 export type JsonPrimitive = boolean | number | string | null;
 export type JsonValue = JsonPrimitive | JsonObject | JsonValue[];

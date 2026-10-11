@@ -1,3 +1,4 @@
+import { isSquareTopology } from '@core/movement/gridProjection';
 import type { GridGeometry } from '@core/movement/gridScale';
 import { useId, useMemo } from 'react';
 import type { EncounterState } from '@core/encounter/types';
@@ -18,7 +19,7 @@ function warpedPaths(grid: GridGeometry, canvas: EncounterState['canvasSize']) {
   const minX = Math.floor(Math.min(...corners.map(p => p.x)) / cell) - 3, maxX = Math.ceil(Math.max(...corners.map(p => p.x)) / cell) + 3;
   const minY = Math.floor(Math.min(...corners.map(p => p.y)) / cell) - 3, maxY = Math.ceil(Math.max(...corners.map(p => p.y)) / cell) + 3;
   const paths: string[] = [];
-  if (grid.type === 'square') {
+  if (isSquareTopology(grid.type)) {
     for (let x = minX; x <= maxX; x++) paths.push(segment(grid, { x: x * cell, y: minY * cell }, { x: x * cell, y: maxY * cell }));
     for (let y = minY; y <= maxY; y++) paths.push(segment(grid, { x: minX * cell, y: y * cell }, { x: maxX * cell, y: y * cell }));
   } else {

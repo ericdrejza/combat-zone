@@ -93,7 +93,9 @@ do not scale with the background; changing background size may break alignment.
 Actor diameters/rectangle widths are 45, 60, 120, and 180 logical units for
 Small, Medium, Large, and xLarge under every movement rule combination. Neither grid
 configuration nor local warping changes these footprints.
-The rendered lattice uses fixed 64-unit spacing (across opposite hex sides).
+The rendered lattice uses fixed 64-unit spacing (across opposite hex sides);
+Isometric cells are diamonds 64 units wide and 64×tan(angle) units high;
+the default angle atan(0.5), approximately 26.565°, preserves 2:1 (64×32).
 Encounter `grid.cellSize` is a positive, user-facing map-scale value, initially
 64, rather than physical spacing. Changing it from A to B uniformly resizes
 unpadded coverage and Zone polygons by A/B. Background sizing updates this
@@ -1412,17 +1414,18 @@ disabling vertex snapping, or introducing warp clears the draft. Save the result
 as an ordinary polygon without a tracer marker or persisted control points.
 
 Trim is available only with actor snapping, and disabling snapping turns it off.
-Clip Large/xLarge hex artwork to its anchor-cell union. Square and Small/Medium
+Clip Large/xLarge hex artwork to its anchor-cell union. Square, isometric, and Small/Medium
 tokens do not require clipping. Trim changes neither hit testing nor footprint
 validation.
 
-Grid supports square, pointy-top hex, and flat-top hex geometry. Configuration
+Grid supports square, pointy-top hex, flat-top hex, and configurable isometric geometry. Configuration
 includes `type`, positive `cellSize`, `origin`, `rotation` in degrees, `visible`,
 hexadecimal line `color`, and `opacity` in [0,1]. An optional bilinear `warp`
 stores two four-coefficient maps of normalized lattice coordinates; absence
-means standard alignment. Cell size is the square side
-or the distance across opposite hex sides. Origin is a square vertex or a hex
-center. Defaults are 64-unit squares at (0,0), zero rotation, hidden lines,
+means standard alignment. Cell size is the map-scale value described above.
+Origin is a square/isometric vertex or a hex center. Isometric grids project
+square lattice coordinates using x=(u-v)/2, y=(u+v)×tan(angle)/2 before origin and rotation;
+they retain square adjacency and full-cell reservations. Defaults are 64-unit squares at (0,0), zero rotation, hidden lines,
 #808080 color, and 0.5 opacity. Grid visibility is independent of snapping; hiding lines does not disable snapping. A separate SVG Grid Layer renders above Background
 and below Zones, clipped to the canvas. It works without a background image.
 
@@ -1432,14 +1435,20 @@ Color and opacity preview in transient interaction state and commit once when
 focus leaves their control. Line color retains its native color input; clicking
 it again blurs the field, closes its picker, and commits its draft.
 Grid Settings retains all existing fields in an Apply/Cancel form with transient
-preview. Alignment temporarily owns previews and disables Properties editing.
+preview. Isometric also offers a projection-angle field from 1–45°. Detection
+estimates this angle automatically; manual alignment uses the configured angle. Alignment temporarily owns previews and disables Properties editing.
 Configured zoom-in/out, fit, fit-width, fit-height, and reset shortcuts remain
 active while Grid Settings is open, including focused fields; other shortcuts
 retain modal protection.
 Opacity uses the Zone-style percentage slider;
 visibility uses a switch. Increment/decrement first reaches the next integer
-in that direction, then steps by one. Rotation wraps at 90 degrees for squares
-and 60 degrees for hexes, respecting each geometry's symmetry. Calibration
+in that direction, then steps by one, except rotation. Rotation clicks step by
+0.1 degrees; holding for 400ms repeats every 80ms, continuing by 0.1 degrees
+until reaching the next whole degree without overshoot, then stepping by 1
+degree until release.
+Rotation values round to the nearest hundredth. Rotation wraps at 90 degrees
+for squares, 180 degrees for isometric grids, and 60 degrees for hexes,
+respecting each geometry's symmetry. Calibration
 snaps angles within five degrees of a multiple of 45 degrees to that angle.
 
 The LayoutGrid alignment subtool offers simple or four-quadrant alignment.
@@ -1447,12 +1456,17 @@ Grid Settings is a toggle: its subtool is active while open, and clicking it
 again closes the dialog and cancels its unapplied preview. The LayoutGrid
 subtool also shows its active state; clicking it again cancels alignment,
 clearing sampled points and its unapplied preview.
-The user selects Square, Hex flat, or Hex pointy before choosing Simple,
+The user selects Square, Hex flat, Hex pointy, or Isometric (last) before choosing Simple,
 Four-quadrant, or Detect Grid. Selected compact toggles have a checkmark and
-distinct fill. Square alignment uses all four consecutive vertices around one
+distinct fill. Square/isometric alignment uses all four consecutive vertices around one
 cell; hex alignment uses three consecutive vertices. Four-quadrant alignment
 repeats this in top-left, top-right, bottom-right, and bottom-left cells, for
-sixteen square clicks or twelve hex clicks. Right-click removes the last point.
+sixteen square/isometric clicks or twelve hex clicks. A jump button initially
+navigates to the far top-left corner, then advances to top-right, bottom-right,
+and bottom-left after each completed cell. It remains available while sampling
+the current quadrant, preserves zoom and temporary zoom restoration, and hides
+after all samples are placed. Right-click removes the last point and updates
+the required jump destination. Reset returns the jump destination to top-left.
 The instruction panel can be moved by its handle or keyboard arrows to uncover
 vertices. A temporary maximum-zoom button sits to the right of the vertex
 instructions and sets viewport zoom to 400%. Closing alignment (including Apply,
@@ -1478,7 +1492,7 @@ coefficients, and saved actor positions fixed. Edge completion may translate
 all coordinates together without changing relative placement.
 
 Grid detection analyzes background pixels locally and offers a detected
-regular grid of the selected square/hex type as an uncommitted preview.
+regular grid of the selected square/isometric/hex type as an uncommitted preview.
 It checks a thumbnail and, for larger images, a higher-resolution pass up to
 1,152 pixels without enlarging the original. Higher-resolution matches take
 precedence to reduce downsampling artifacts and spacing aliases. Faint line
@@ -1561,3 +1575,18 @@ STRICT behavior; edge movement and automatic Zone layout validators require Zone
 Geometric fit and snapping invariants apply in every mode. Imports validate
 these facts, supported old documents migrate to default Zone configuration,
 and unsupported newer schemas are rejected without replacing valid data.
+
+### Isometric presentation
+
+Isometric grids use Square reservations: Large occupies four cells about a
+vertex and xLarge nine about a center. Zone snapping, Cell Tracer, completed
+boundary cells, and independent actor/Zone rules use the projected lattice.
+Arrow movement chooses among four edge-sharing neighbors by screen-direction
+alignment, breaking ties clockwise so all four neighbors remain reachable.
+
+The final section of Settings > Canvas offers “Project tokens on isometric grids”, off by default.
+This browser-local preference projects canvas artwork, backgrounds, and outlines
+with nominal grid rotation, without local warp distortion. Names stay upright;
+logical footprints, hit areas, reservations, and EncounterState stay unchanged.
+Library, Zoneless, and external transfer previews stay upright. Motion honors
+reduced-motion preferences. Isometric Trim uses Square behavior.

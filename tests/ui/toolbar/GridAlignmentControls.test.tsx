@@ -75,12 +75,12 @@ describe('grid settings and alignment controls', () => {
     await user.click(settings);
     expect(settings).toHaveAttribute('aria-pressed', 'true'); expect(settings).toHaveAttribute('aria-expanded', 'true');
     const select = within(screen.getByRole('dialog', { name: 'Grid settings' })).getByRole('combobox', { name: 'Grid type' });
-    expect(within(select).getAllByRole('option').map(option => option.getAttribute('value'))).toEqual(['square', 'hex-flat', 'hex-pointy']);
+    expect(within(select).getAllByRole('option').map(option => option.getAttribute('value'))).toEqual(['square', 'isometric', 'hex-flat', 'hex-pointy']);
     await user.click(settings);
     expect(settings).toHaveAttribute('aria-pressed', 'false'); expect(settings).toHaveAttribute('aria-expanded', 'false');
     expect(screen.queryByRole('dialog', { name: 'Grid settings' })).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Align grid to background' }));
-    expect(within(screen.getByRole('group', { name: 'Alignment grid type' })).getAllByRole('button').map(button => button.textContent)).toEqual(['Square', 'Hex flat', 'Hex pointy']);
+    expect(within(screen.getByRole('group', { name: 'Alignment grid type' })).getAllByRole('button').map(button => button.textContent)).toEqual(['Square', 'Hex flat', 'Hex pointy', 'Isometric']);
   });
   it('keeps zoom keybinds available from settings fields without editing the grid', async () => {
     const user = userEvent.setup(); setup();
@@ -118,7 +118,7 @@ describe('grid settings and alignment controls', () => {
     fireEvent.contextMenu(getCanvas()); fireEvent.contextMenu(getCanvas()); expect(store.getState().interaction.gridCalibrationPoints).toEqual([]);
     expect(store.getState().encounter.present.grid.type).toBe('square');
   });
-  it('uses percentage opacity, a visibility switch, integer stepping, and rotation wrapping', async () => {
+  it('uses percentage opacity, a visibility switch, integer field stepping, and fractional rotation', async () => {
     const user = userEvent.setup(), state = setup();
     state.grid.cellSize = 50.4; state.grid.rotation = 89.4; state.grid.origin = { x: -2.4, y: 100.2 };
     act(() => store.dispatch(loadEncounterState({ ...state })));
@@ -128,7 +128,7 @@ describe('grid settings and alignment controls', () => {
     await user.click(controls.getByRole('button', { name: 'Increase Cell size' }));
     expect(controls.getByRole('spinbutton', { name: 'Cell size' })).toHaveValue(51);
     await user.click(controls.getByRole('button', { name: 'Increase Rotation (degrees)' }));
-    expect(controls.getByRole('spinbutton', { name: 'Rotation (degrees)' })).toHaveValue(0);
+    expect(controls.getByRole('spinbutton', { name: 'Rotation (degrees)' })).toHaveValue(89.5);
     fireEvent.keyDown(controls.getByRole('spinbutton', { name: 'Origin X' }), { key: 'ArrowDown' });
     expect(controls.getByRole('spinbutton', { name: 'Origin X' })).toHaveValue(-3);
     fireEvent.keyDown(controls.getByRole('spinbutton', { name: 'Origin Y' }), { key: 'ArrowUp' });
@@ -139,7 +139,7 @@ describe('grid settings and alignment controls', () => {
     expect(controls.getByRole('switch', { name: 'Grid visible' })).toHaveAttribute('aria-checked', 'false');
     expect(store.getState().interaction.gridPreview!.visible).toBe(false);
     await user.click(controls.getByRole('button', { name: 'Apply' }));
-    await waitFor(() => expect(store.getState().encounter.present.grid).toMatchObject({ cellSize: 51, rotation: 0, origin: { x: -3, y: 101 }, opacity: 0.75, visible: false }));
+    await waitFor(() => expect(store.getState().encounter.present.grid).toMatchObject({ cellSize: 51, rotation: 89.5, origin: { x: -3, y: 101 }, opacity: 0.75, visible: false }));
   });
   it('requires an explicit warp choice after four-quadrant sampling and preserves history', async () => {
     const user = userEvent.setup(), state = setup();

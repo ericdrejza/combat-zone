@@ -1,3 +1,4 @@
+import { isSquareTopology } from './gridProjection';
 import { resolveGridGeometry } from './gridScale';
 import { gridToWorld, snapToGrid } from './gridGeometry';
 import type { EncounterState } from '@core/encounter/types';
@@ -37,7 +38,7 @@ export function translateSnappedZone(state: EncounterState, zone: Pick<Zone, 'sh
   let translation = offset;
   if (state.movementRules.snapZoneVertices && !state.grid.warp) {
     const grid = resolveGridGeometry(state.grid);
-    const reference = gridToWorld(grid, grid.type === 'square' ? { x: grid.cellSize / 2, y: grid.cellSize / 2 } : { x: 0, y: 0 });
+    const reference = gridToWorld(grid, isSquareTopology(grid.type) ? { x: grid.cellSize / 2, y: grid.cellSize / 2 } : { x: 0, y: 0 });
     const target = snapToGrid(grid, { x: reference.x + offset.x, y: reference.y + offset.y }, 'medium');
     translation = { x: target.x - reference.x, y: target.y - reference.y };
   } else if (state.movementRules.snapZoneVertices && polygon.length) {

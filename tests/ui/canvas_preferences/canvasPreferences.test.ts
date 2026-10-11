@@ -39,3 +39,15 @@ it('uses another tab’s preferences after a storage event', () => {
   window.dispatchEvent(new StorageEvent('storage', { key: CANVAS_PREFERENCES_KEY }));
   expect(readCanvasPreferences()).toEqual(value);
 });
+
+
+it('defaults legacy projection preferences off and synchronizes explicit choices', () => {
+  localStorage.setItem(CANVAS_PREFERENCES_KEY, JSON.stringify({ membership: 'cells' }));
+  expect(readCanvasPreferences().projectIsometricTokens).toBe(false);
+  const next = { ...readCanvasPreferences(), projectIsometricTokens: true };
+  saveCanvasPreferences(next);
+  expect(readCanvasPreferences().projectIsometricTokens).toBe(true);
+  localStorage.setItem(CANVAS_PREFERENCES_KEY, JSON.stringify({ ...next, projectIsometricTokens: false }));
+  window.dispatchEvent(new StorageEvent('storage', { key: CANVAS_PREFERENCES_KEY }));
+  expect(readCanvasPreferences().projectIsometricTokens).toBe(false);
+});

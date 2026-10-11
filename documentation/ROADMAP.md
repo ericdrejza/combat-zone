@@ -166,3 +166,16 @@ the design as future or nice-to-have work.
 - [x] Fade the Zoneless panel during Zone drawing, moving, and resizing while preserving panel state and respecting reduced motion.
 
 Implementation plan: [Zone/Grid rules](plans/zone_grid_rules.md).
+
+## 2:1 isometric grids
+
+- [x] Projected Square topology, reservations, Zone interactions, rendering, alignment, and detection.
+- [x] Browser-local token projection with upright names and unchanged logical placement.
+- [x] Schema 23 migrations and synchronized local/Firebase validation.
+- [x] Fractional rotation controls with accelerated holds and hundredth precision.
+
+Implementation plan: [Isometric grids](plans/isometric_grid.md).
+
+- [x] Navigate directly to each required quadrant during complex alignment, including the initial top-left corner, without changing zoom or encounter history.
+
+- [x] Configurable 1–45° isometric angle, automatic angle detection, and schema 24 migration preserving prior geometry.

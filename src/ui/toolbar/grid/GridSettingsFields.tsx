@@ -1,3 +1,4 @@
+import { isometricAngle } from '@core/movement/gridProjection';
 import type { GridConfiguration } from '@core/movement/types';
 import { normalizeGridRotation } from '@core/movement/gridRotation';
 import { PreferenceSwitch } from '@ui/settings/PreferenceSwitch';
@@ -13,12 +14,13 @@ export function GridSettingsFields({ draft, setDraft, compact = false }: {
   const button = gridSettingsButton;
   return <div className="space-y-4">
       <label className="block space-y-1 text-sm">Grid type<select aria-label="Grid type" className={control} value={draft.type} onChange={e => setDraft({ ...draft, type: e.currentTarget.value as GridConfiguration['type'] })}>
-        <option value="square">Square</option><option value="hex-flat">Hex — flat top</option><option value="hex-pointy">Hex — pointy top</option>
+        <option value="square">Square</option><option value="isometric">Isometric</option><option value="hex-flat">Hex — flat top</option><option value="hex-pointy">Hex — pointy top</option>
       </select></label>
       {draft.warp ? <div className="space-y-2 text-sm"><p>Warped alignment is active.</p><button className={button} type="button" onClick={() => { const { warp: _warp, ...regular } = draft; setDraft(regular); }}>Use standard alignment</button></div> : null}
       <div className={`grid gap-3 ${compact ? 'grid-cols-1' : 'grid-cols-2'}`}>
+        {draft.type === 'isometric' ? <label className="block space-y-1 text-sm">Isometric angle (degrees)<input aria-label="Isometric angle (degrees)" type="number" min="1" max="45" step="any" className={control} value={Number.isFinite(isometricAngle(draft)) ? Math.round(isometricAngle(draft) * 1000) / 1000 : ''} onChange={event => setDraft({ ...draft, isometricAngle: event.currentTarget.valueAsNumber })} /></label> : null}
         <GridNumberField label="Cell size" value={draft.cellSize} positive onChange={cellSize => setDraft({ ...draft, cellSize })} />
-        <GridNumberField label="Rotation (degrees)" value={normalizeGridRotation(draft.rotation, draft.type)} onChange={rotation => setDraft({ ...draft, rotation: Number.isFinite(rotation) ? normalizeGridRotation(rotation, draft.type) : rotation })} />
+        <GridNumberField rotation label="Rotation (degrees)" value={normalizeGridRotation(draft.rotation, draft.type)} onChange={rotation => setDraft({ ...draft, rotation: Number.isFinite(rotation) ? normalizeGridRotation(rotation, draft.type) : rotation })} />
         <GridNumberField label="Origin X" value={draft.origin.x} onChange={x => setDraft({ ...draft, origin: { ...draft.origin, x } })} />
         <GridNumberField label="Origin Y" value={draft.origin.y} onChange={y => setDraft({ ...draft, origin: { ...draft.origin, y } })} />
         <label className="space-y-1 text-sm">Line color<input aria-label="Grid line color" className={control} type="color" value={draft.color} onChange={e => setDraft({ ...draft, color: e.currentTarget.value })} /></label>
