@@ -18,6 +18,6 @@ export function ActorTrim({ encounter, actor, point, children }: { encounter: En
     return `M${local(segments[0].start)} ${segments.map(segment => encounter.grid.warp ? `Q${local(segment.control)} ${local(segment.end)}` : `L${local(segment.end)}`).join(' ')} Z`;
   }).join(' ');
   return <><defs><clipPath id={id} clipPathUnits="userSpaceOnUse"><path d={path} /></clipPath></defs>
-    {actor.shape === 'rectangle' ? <rect x={-radius} y={-radius} width={radius * 2} height={radius * 2} fill="transparent" pointerEvents="all" /> : <circle r={radius} fill="transparent" pointerEvents="all" />}
+    {actor.shape !== 'circle' ? <rect x={-radius} y={-radius} width={radius * 2} height={radius * 2} fill="transparent" pointerEvents="all" /> : <circle r={radius} fill="transparent" pointerEvents="all" />}
     {children(id)}</>;
 }

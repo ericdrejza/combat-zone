@@ -152,6 +152,7 @@ export function ZonelessActorPanel({
       dragPreviewCleanupRef.current?.();
       dragPreviewCleanupRef.current = setActorDragImage(event.dataTransfer, {
         image: actor.image,
+        imageFlippedHorizontal: actor.imageFlippedHorizontal,
         layoutGroup: actor.layoutGroup,
         name: actor.name,
         shape: actor.shape,

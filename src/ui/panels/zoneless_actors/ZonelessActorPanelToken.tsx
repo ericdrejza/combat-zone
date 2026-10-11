@@ -1,3 +1,4 @@
+import { motion } from "motion/react";
 import type { DragEvent, MouseEvent, PointerEvent } from "react";
 
 import { ACTOR_LAYOUT_GROUP_COLORS, ACTOR_SIZE_MULTIPLIERS } from "@entities/actor/actorVisuals";
@@ -59,18 +60,18 @@ export function ZonelessActorPanelToken({
       type="button"
     >
       <span
-        className={`flex ${actorSizeClass(actor)} items-center justify-center overflow-hidden rounded-full border-2 border-white text-[9px] font-bold shadow-sm ${
-          actor.shape === "rectangle" ? "rounded-md" : ""
+        className={`flex ${actorSizeClass(actor)} items-center justify-center overflow-hidden text-[9px] font-bold ${
+          actor.shape === "transparent" ? "" : `border-2 border-white shadow-sm ${actor.shape === "rectangle" ? "rounded-md" : "rounded-full"}`
         }`}
         style={{
-          backgroundColor: colors.fill,
-          color: getReadableTextColor(colors.fill)
+          backgroundColor: actor.shape === "transparent" ? undefined : colors.fill,
+          color: actor.shape === "transparent" ? undefined : getReadableTextColor(colors.fill)
         }}
       >
         {imageUrl ? (
-          <img
+          <motion.img initial={false} animate={{ scaleX: actor.imageFlippedHorizontal ? -1 : 1 }}
             alt=""
-            className="h-full w-full object-cover"
+            className={`h-full w-full ${actor.shape === "transparent" ? "object-contain" : "object-cover"}`}
             draggable={false}
             src={imageUrl}
           />

@@ -1,3 +1,4 @@
+import { actorLabelOffset } from './actorLabelGeometry';
 import { motion, type Transition } from "motion/react";
 import { memo } from "react";
 
@@ -44,7 +45,7 @@ export const ActorVisual = memo(function ActorVisual({
   transition,
   projectionRotation, projectionAngle
 }: ActorVisualProps) {
-  const innerRadius = Math.max(radius - 3, 1);
+  const innerRadius = Math.max(radius - (actor.shape === 'transparent' ? 0 : 3), 1);
   const selectionRadius = radius + 5;
   const factionRadius = radius + 9;
   const imageUrl = useResolvedImageSource(actor.image);
@@ -71,12 +72,12 @@ export const ActorVisual = memo(function ActorVisual({
 
   return (
     <>
-      {projectionRotation !== undefined ? actor.shape === 'rectangle'
+      {projectionRotation !== undefined || actor.shape === 'transparent' ? actor.shape !== 'circle'
         ? <rect x={-radius} y={-radius} width={radius * 2} height={radius * 2} fill="transparent" pointerEvents="all" data-actor-logical-hit-area />
         : <circle r={radius} fill="transparent" pointerEvents="all" data-actor-logical-hit-area /> : null}
       <g clipPath={artworkClipId ? `url(#${artworkClipId})` : undefined}>
       <ActorProjection rotation={projectionRotation} angle={projectionAngle} transition={transition}>
-      {actor.shape === "rectangle" ? (
+      {actor.shape === "transparent" ? null : actor.shape === "rectangle" ? (
         <motion.rect
           className="stroke-white"
           fill={fillColor}
@@ -102,7 +103,7 @@ export const ActorVisual = memo(function ActorVisual({
       )}
       {imageUrl ? (
         <>
-          <clipPath id={clipId}>
+          {actor.shape !== 'transparent' ? <clipPath id={clipId}>
             {actor.shape === "rectangle" ? (
               <motion.rect
                 initial={false}
@@ -122,7 +123,9 @@ export const ActorVisual = memo(function ActorVisual({
                 transition={transition}
               />
             )}
-          </clipPath>
+          </clipPath> : null}
+          <motion.g initial={false} animate={{ scaleX: actor.imageFlippedHorizontal ? -1 : 1 }}
+            style={{ transformOrigin: "0px 0px" }} transition={transition} data-actor-image-artwork>
           {isVideo && enableAssetAnimation ? (
             <motion.foreignObject
               height={innerRadius * 2}
@@ -135,14 +138,14 @@ export const ActorVisual = memo(function ActorVisual({
               y={-innerRadius}
             >
               <ControlledVideo
-                className={`h-full w-full object-cover ${actor.shape === "circle" ? "rounded-full" : "rounded"}`}
+                className={actor.shape === "transparent" ? "h-full w-full object-contain" : `h-full w-full object-cover ${actor.shape === "circle" ? "rounded-full" : "rounded"}`}
                 play={enableAssetAnimation}
                 src={imageUrl}
               />
             </motion.foreignObject>
           ) : (
             <motion.image
-              clipPath={`url(#${clipId})`}
+              clipPath={actor.shape === "transparent" ? undefined : `url(#${clipId})`}
               href={renderedImageUrl ?? undefined}
               initial={false}
               animate={{
@@ -151,10 +154,11 @@ export const ActorVisual = memo(function ActorVisual({
                 height: innerRadius * 2,
                 width: innerRadius * 2
               }}
-              preserveAspectRatio="xMidYMid slice"
+              preserveAspectRatio={actor.shape === "transparent" ? "xMidYMid meet" : "xMidYMid slice"}
               transition={transition}
             />
           )}
+          </motion.g>
         </>
       ) : null}
       </ActorProjection>
@@ -163,7 +167,7 @@ export const ActorVisual = memo(function ActorVisual({
         <text
           className="pointer-events-none text-[10px] font-bold"
           dominantBaseline="middle"
-          fill={getReadableTextColor(fillColor)}
+          fill={actor.shape === "transparent" ? selectedTextColor : getReadableTextColor(fillColor)}
           textAnchor="middle"
         >
           {actor.name.toUpperCase()}
@@ -171,7 +175,7 @@ export const ActorVisual = memo(function ActorVisual({
       ) : null}
       <ActorProjection rotation={projectionRotation} angle={projectionAngle} transition={transition}>
       {selected ? (
-        actor.shape === "rectangle" ? (
+        actor.shape !== "circle" ? (
           <motion.rect
             className="pointer-events-none fill-none"
             initial={false}
@@ -201,8 +205,8 @@ export const ActorVisual = memo(function ActorVisual({
           />
         )
       ) : null}
-      {showFactionOutline ? (
-        actor.shape === "rectangle" ? (
+      {showFactionOutline && actor.shape !== "transparent" ? (
+        actor.shape !== "circle" ? (
           <motion.rect
             className="pointer-events-none fill-none"
             initial={false}
@@ -234,7 +238,7 @@ export const ActorVisual = memo(function ActorVisual({
           dominantBaseline="middle"
           fill={selectedTextColor}
           initial={false}
-          animate={{ dy: radius + 16 }}
+          animate={{ dy: actorLabelOffset(actor.shape, radius, projectionRotation, projectionAngle) }}
           textAnchor="middle"
           transition={transition}
         >

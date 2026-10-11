@@ -252,3 +252,14 @@ Local/Firebase validators reject explicit angles in older schemas. The shared
 projection and its inverse, SVG pattern, warp checks, calibration, and token
 presentation all derive from this single field. Detection fits two line-family
 orientations to estimate projection angle separately from grid rotation.
+
+Actor shape schema 25 adds `transparent`. Domain shape remains authoritative;
+`actorFootprintShape` derives its rectangular placement geometry without storing
+a duplicate field. Migrations preserve schema 24 actor and grid geometry, and
+both local and Firebase boundaries reject this shape in older schema claims.
+Projected label offsets are derived from presentation transforms only.
+
+Optional Actor `imageFlippedHorizontal` is a compatible schema 25 field, with
+absence resolving to false. Local and Firebase boundaries require a boolean
+when present. Header and body use one Actor Properties mutation hook; rendering
+reflects the image inside the token projection without changing layout facts.

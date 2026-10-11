@@ -25,7 +25,7 @@ it('renders a 64×32 diamond and retains fixed token and map-scale sizes', () =>
   expect(resolveGridGeometry({ ...encounter.grid, cellSize: 32 }).cellSize).toBe(64);
   expect(spatialActorRadius({ size: 'medium' }, encounter.grid)).toBe(30);
   expect(normalizeGridRotation(90, 'isometric')).toBe(90);
-  expect(normalizeGridRotation(180, 'isometric')).toBe(0);
+  expect(normalizeGridRotation(180, 'isometric')).toBe(180);
 });
 
 it.each([0, 31, 90])('inverts rotated and warped projection at %s°', rotation => {

@@ -27,6 +27,7 @@ import type { PanelLayout } from "./panels/panelLayout";
 import { PanelsShell } from "./panels/PanelsShell";
 import { PropertiesPanel } from "./panels/PropertiesPanel";
 import { SidebarDock } from "./panels/SidebarDock";
+import { ActorPropertiesHeaderActions } from "./panels/ActorPropertiesPanel";
 import { ZonePropertiesHeaderActions } from "./panels/ZonePropertiesPanel";
 import { Toolbar } from "./toolbar/Toolbar";
 import type { RootState } from "@store/store";
@@ -416,7 +417,7 @@ function AppContent() {
     }
 
     if (panel.id === "properties") {
-      return <ZonePropertiesHeaderActions />;
+      return <><ActorPropertiesHeaderActions /><ZonePropertiesHeaderActions /></>;
     }
 
     if (panel.id === "log") {

@@ -145,8 +145,8 @@ export function ActorCreationModal({
         <div className="flex justify-center rounded-xl border border-canvas-line bg-canvas p-4">
           <span
             aria-label="Actor preview"
-            className={`flex h-20 w-20 touch-none cursor-grab select-none items-center justify-center overflow-hidden border-4 border-white text-center text-xs font-bold uppercase shadow-sm active:cursor-grabbing ${
-              actorTool.shape === "rectangle" ? "rounded-xl" : "rounded-full"
+            className={`flex h-20 w-20 touch-none cursor-grab select-none items-center justify-center overflow-hidden text-center text-xs font-bold uppercase active:cursor-grabbing ${
+              actorTool.shape === "transparent" ? "" : `border-4 border-white shadow-sm ${actorTool.shape === "rectangle" ? "rounded-xl" : "rounded-full"}`
             }`}
             data-actor-preview="true"
             onPointerDown={(event) => {
@@ -165,14 +165,14 @@ export function ActorCreationModal({
               );
             }}
             style={{
-              backgroundColor: colors.fill,
-              color: getReadableTextColor(colors.fill)
+              backgroundColor: actorTool.shape === "transparent" ? undefined : colors.fill,
+              color: actorTool.shape === "transparent" ? undefined : getReadableTextColor(colors.fill)
             }}
           >
             {imageUrl ? (
               <img
                 alt="Actor image"
-                className="h-full w-full object-cover"
+                className={`h-full w-full ${actorTool.shape === "transparent" ? "object-contain" : "object-cover"}`}
                 draggable={false}
                 src={imageUrl}
               />

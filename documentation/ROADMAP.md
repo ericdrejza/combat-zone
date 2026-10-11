@@ -179,3 +179,9 @@ Implementation plan: [Isometric grids](plans/isometric_grid.md).
 - [x] Navigate directly to each required quadrant during complex alignment, including the initial top-left corner, without changing zoom or encounter history.
 
 - [x] Configurable 1–45° isometric angle, automatic angle detection, and schema 24 migration preserving prior geometry.
+
+- [x] Transparent Actor shape uses SquareDashed controls with tooltips, keeps aspect-preserving unframed artwork and square placement, and supports history and schema 25 persistence.
+- [x] Projected Actor names follow token size, angle, and rotation with a constant gap.
+- [x] Manual grid rotation accepts a full turn and wraps 360° to 0° while retaining hundredth precision and fractional-to-whole held steps.
+
+- [x] Actor Properties header mirrors the selected image with SquareCenterlineDashedHorizontal, tooltip and toggle feedback, preserving upright labels, placement, history, and local/cloud persistence.

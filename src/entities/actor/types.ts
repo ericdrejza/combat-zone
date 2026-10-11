@@ -10,7 +10,7 @@ export type ActorType =
 /** Visual faction; allies share Hero's section in split Zone layouts. */
 export type ActorLayoutGroup = "hero" | "ally" | "enemy" | "neutral";
 export type ActorSize = "small" | "medium" | "large" | "xLarge";
-export type ActorShape = "circle" | "rectangle";
+export type ActorShape = "circle" | "rectangle" | "transparent";
 export type ActorStatus = 0 | 1 | 2 | 3;
 
 export type Actor = {
@@ -26,6 +26,8 @@ export type Actor = {
   size: ActorSize;
   shape: ActorShape;
   image?: ImageAssetSource;
+  /** Reflect artwork about its vertical axis; absent legacy values mean false. */
+  imageFlippedHorizontal?: boolean;
   currentZoneId: ActorZoneAssignment;
   statusEffects: string[];
   /** Overall health; absent legacy/session values resolve to healthy (3). */

@@ -1,3 +1,4 @@
+import { actorFootprintShape } from '@entities/actor/actorFootprintShape';
 import type { Actor } from '@entities/actor/types';
 import { ACTOR_SIZE_MULTIPLIERS } from '@entities/actor/actorVisuals';
 import type { NestingActor } from './nesting_ts';
@@ -17,7 +18,7 @@ export function toNestingActor(actor: Actor): NestingActor {
   return {
     id: actor.id,
     radius: getActorRadius(actor),
-    shape: actor.shape,
+    shape: actorFootprintShape(actor.shape),
     layoutGroup: actor.layoutGroup
   };
 }

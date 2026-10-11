@@ -37,6 +37,7 @@ export type CreateActorInput = {
 export type UpdateActorPropertiesInput = {
   actorType?: ActorType;
   image?: ImageAssetSource;
+  imageFlippedHorizontal?: boolean;
   imageAssetAnimated?: boolean | null;
   imageAssetMediaType?: string | null;
   imageAssetName?: string | null;

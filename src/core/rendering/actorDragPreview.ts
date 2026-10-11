@@ -13,6 +13,7 @@ import { isVideoMediaType } from '@library/mediaAsset';
 
 type ActorDragPreviewInput = {
   image?: ImageAssetSource;
+  imageFlippedHorizontal?: boolean;
   imageUrl?: string | null;
   mediaType?: string;
   layoutGroup: ActorLayoutGroup;
@@ -25,6 +26,7 @@ const PREVIEW_TOKEN_SIZE = 56;
 
 function createPreviewElement({
   image,
+  imageFlippedHorizontal,
   imageUrl: resolvedImageUrl,
   mediaType,
   layoutGroup,
@@ -52,9 +54,9 @@ function createPreviewElement({
   preview.style.zIndex = '9999';
 
   token.style.alignItems = 'center';
-  token.style.backgroundColor = colors.fill;
-  token.style.border = '3px solid white';
-  token.style.borderRadius = shape === 'circle' ? '50%' : '8px';
+  token.style.backgroundColor = shape === 'transparent' ? 'transparent' : colors.fill;
+  token.style.border = shape === 'transparent' ? 'none' : '3px solid white';
+  token.style.borderRadius = shape === 'transparent' ? '0' : shape === 'circle' ? '50%' : '8px';
   token.style.boxSizing = 'border-box';
   token.style.color = 'white';
   token.style.display = 'flex';
@@ -75,8 +77,9 @@ function createPreviewElement({
 
     imageElement.setAttribute('alt', '');
     imageElement.src = imageUrl;
+    imageElement.style.transform = imageFlippedHorizontal ? "scaleX(-1)" : "";
     imageElement.style.height = '100%';
-    imageElement.style.objectFit = 'cover';
+    imageElement.style.objectFit = shape === 'transparent' ? 'contain' : 'cover';
     imageElement.style.width = '100%';
     if (imageElement instanceof HTMLVideoElement) {
       imageElement.autoplay = true;

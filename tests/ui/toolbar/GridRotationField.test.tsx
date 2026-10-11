@@ -5,7 +5,7 @@ import { normalizeGridRotation } from '@core/movement/gridRotation';
 import { REPEAT_DELAY_MS, REPEAT_INTERVAL_MS } from '@ui/controls/RepeatButton';
 
 function Harness() {
-  const [value, setValue] = useState(89.95);
+  const [value, setValue] = useState(359.95);
   return <GridNumberField rotation label="Rotation" value={value} onChange={next => setValue(normalizeGridRotation(next, 'square'))} />;
 }
 beforeEach(() => vi.useFakeTimers());
@@ -64,4 +64,15 @@ it('decrements fractional held values to a whole degree before taking whole step
   act(() => vi.advanceTimersByTime(REPEAT_INTERVAL_MS)); expect(field).toHaveValue(17);
   act(() => vi.advanceTimersByTime(REPEAT_INTERVAL_MS)); expect(field).toHaveValue(16);
   fireEvent.pointerUp(decrease, { pointerId: 1 });
+});
+
+it('retains full-turn angles, wraps both directions, and accepts hundredths in the form', () => {
+  render(<Harness />);
+  const field = screen.getByRole('spinbutton', { name: 'Rotation' });
+  fireEvent.change(field, { target: { value: '270.24' } });
+  expect(field).toHaveValue(270.24);
+  expect((field as HTMLInputElement).checkValidity()).toBe(true);
+  fireEvent.change(field, { target: { value: '360' } }); expect(field).toHaveValue(0);
+  fireEvent.click(screen.getByRole('button', { name: 'Decrease Rotation' })); expect(field).toHaveValue(359.9);
+  fireEvent.click(screen.getByRole('button', { name: 'Increase Rotation' })); expect(field).toHaveValue(0);
 });

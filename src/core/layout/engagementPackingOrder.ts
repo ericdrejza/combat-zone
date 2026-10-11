@@ -1,3 +1,4 @@
+import { actorFootprintShape } from '@entities/actor/actorFootprintShape';
 import type { EncounterState } from '@core/encounter/types';
 import type { Actor } from '@entities/actor/types';
 import { getActorRadius } from './actorFootprints';
@@ -5,7 +6,7 @@ import { ENGAGEMENT_TOKEN_RADIUS } from './engagementGeometryConstants';
 
 export function getActorFootprintArea(actor: Actor): number {
   const radius = getActorRadius(actor);
-  return actor.shape === 'rectangle'
+  return actorFootprintShape(actor.shape) === 'rectangle'
     ? (radius * 2) ** 2
     : Math.PI * radius ** 2;
 }

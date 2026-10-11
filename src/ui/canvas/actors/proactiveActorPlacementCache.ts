@@ -1,3 +1,4 @@
+import { actorFootprintShape } from '@entities/actor/actorFootprintShape';
 import type { EncounterState } from '@core/encounter/types';
 import type { LayoutComputationStrategy } from '@core/layout/types';
 import type {
@@ -35,7 +36,7 @@ const PROACTIVE_ACTOR_SIZES: ActorSize[] = [
   'large',
   'xLarge'
 ];
-const PROACTIVE_ACTOR_SHAPES: ActorShape[] = ['circle', 'rectangle'];
+const PROACTIVE_ACTOR_SHAPES: ActorShape[] = ['circle', 'rectangle', 'transparent'];
 
 export type ProactivePlacementCalculator = (
   zone: Zone,
@@ -71,14 +72,14 @@ function toNestingActors(
   const nestingActors = actors.map((actor) => ({
     id: actor.id,
     radius: getActorRadius(actor),
-    shape: actor.shape
+    shape: actorFootprintShape(actor.shape)
   }));
 
   if (incomingSize && incomingShape) {
     nestingActors.push({
       id: PROACTIVE_ACTOR_ID,
       radius: ACTOR_TOKEN_BASE_RADIUS * ACTOR_SIZE_MULTIPLIERS[incomingSize],
-      shape: incomingShape
+      shape: actorFootprintShape(incomingShape)
     });
   }
 

@@ -1,3 +1,4 @@
+import { actorFootprintShape } from '@entities/actor/actorFootprintShape';
 import type { EncounterState } from '@core/encounter/types';
 import type { LayoutPoint } from '@core/layout/types';
 import { getActorRadius, toNestingActor } from '@core/layout/actorFootprints';
@@ -18,7 +19,7 @@ import type { Actor } from '@entities/actor/types';
 export type GridPlacement = { actorId: string; point: LayoutPoint; radius: number; sectionPolygon?: LayoutPoint[]; engagementTokenPoint?: LayoutPoint };
 
 export function actorFitsPolygon(actor: Actor, point: LayoutPoint, polygon: LayoutPoint[]) {
-  if (actor.shape === 'rectangle') return isFootprintInsideZone(getFootprint(toNestingActor(actor), point, 0, 48), polygon);
+  if (actorFootprintShape(actor.shape) === 'rectangle') return isFootprintInsideZone(getFootprint(toNestingActor(actor), point, 0, 48), polygon);
   return isPointInPolygon(point, polygon) && distanceToPolygonBoundary(point, polygon) >= getActorRadius(actor) - 1e-6;
 }
 

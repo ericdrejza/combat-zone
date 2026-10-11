@@ -1,19 +1,17 @@
 import { BookOpen, Link2 } from "lucide-react";
 import { useRef } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 
 import type { ActorType } from "@entities/actor/types";
-import { prepareValidatedEncounterChangeForRuntime } from "@core/validation/runtimeEncounterChange";
-import { updateActorProperties } from "@entities/actor/actorMutations";
-import { createEncounterActionRecord } from "@core/history/createEncounterActionRecord";
-import { commitEncounterChange } from "@store/encounterSlice";
-import { logEncounterValidationBlock } from "@store/encounterLogSlice";
 import type { RootState } from "@store/store";
-import { useZoneResizeApproval } from "../zoneResizeApproval";
 import { getLibraryNodePath } from "@library/librarySlice";
 import { ActorPropertyOptionGroups } from "./ActorPropertyOptionGroups";
 import { LibraryPathField } from "./LibraryPathField";
 import type { PropertiesLibraryLocation } from "./PropertiesPanel";
+
+import { useActorPropertiesActions } from "./actor_properties/useActorPropertiesActions";
+
+export { ActorPropertiesHeaderActions } from "./actor_properties/ActorPropertiesHeaderActions";
 
 type ActorPropertiesPanelProps = {
   onOpenTokenLibrary?: (location?: PropertiesLibraryLocation) => void;
@@ -29,14 +27,8 @@ const ACTOR_TYPES: ActorType[] = [
 export function ActorPropertiesPanel({
   onOpenTokenLibrary
 }: ActorPropertiesPanelProps) {
-  const dispatch = useDispatch();
   const tokenInputRef = useRef<HTMLInputElement>(null);
-  const { requestApproval } = useZoneResizeApproval();
-  const encounter = useSelector((state: RootState) => state.encounter.present);
-  const selection = useSelector((state: RootState) => state.interaction.selection);
-  const selectedActorId =
-    selection.selectedEntityType === "actor" ? selection.selectedIds[0] : undefined;
-  const actor = selectedActorId ? encounter.actors.byId[selectedActorId] : undefined;
+  const { actor, commitActorProperties } = useActorPropertiesActions();
   const tokens = useSelector((state: RootState) => state.library.sections.tokens);
 
   if (!actor) {
@@ -45,62 +37,6 @@ export function ActorPropertiesPanel({
         Select an actor to edit its name, type, faction, image, and size.
       </p>
     );
-  }
-
-  function commitActorProperties(
-    properties: Parameters<typeof updateActorProperties>[2]
-  ) {
-    if (!actor) {
-      return;
-    }
-
-    const nextEncounter = updateActorProperties(
-      encounter,
-      actor.id,
-      properties
-    );
-
-    if (nextEncounter === encounter) {
-      return;
-    }
-
-    const prepared = prepareValidatedEncounterChangeForRuntime({
-      action: createEncounterActionRecord("actor.updateProperties", {
-        actorId: actor.id,
-        properties
-      }),
-      currentEncounter: encounter,
-      nextEncounter
-    });
-
-    const commitPreparedChange = (resolved: Awaited<typeof prepared>) => {
-      dispatch(
-        commitEncounterChange({
-          action: resolved.action,
-          nextEncounter: resolved.nextEncounter
-        })
-      );
-    };
-
-    const handlePrepared = (resolved: Awaited<typeof prepared>) => {
-      if (logEncounterValidationBlock(dispatch, resolved)) {
-        return;
-      }
-      if (resolved.requiresConfirmation) {
-        requestApproval({ onApprove: () => commitPreparedChange(resolved) });
-        return;
-      }
-
-      if (!resolved.blocked) {
-        commitPreparedChange(resolved);
-      }
-    };
-
-    if (prepared instanceof Promise) {
-      void prepared.then(handlePrepared);
-    } else {
-      handlePrepared(prepared);
-    }
   }
 
   const libraryNodeId = typeof actor.metadata.sourceLibraryNodeId === "string"

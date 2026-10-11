@@ -165,3 +165,32 @@ describe("ActorPropertiesPanel token image source", () => {
       .not.toHaveProperty("sourceLibraryNodeId", tokenNodeId);
   });
 });
+
+it("offers Transparent shape in Properties and preserves shape through undo and redo", async () => {
+  const user = userEvent.setup(); renderApp(); act(selectTestActor);
+  const control = screen.getByRole("button", { name: "Set actor shape to Transparent" });
+  expect(control).toHaveAttribute("title", "Transparent");
+  await user.click(control);
+  expect(store.getState().encounter.present.actors.byId["actor-one"].shape).toBe("transparent");
+  act(() => store.dispatch(undoEncounterChange()));
+  expect(store.getState().encounter.present.actors.byId["actor-one"].shape).toBe("circle");
+  act(() => store.dispatch(redoEncounterChange()));
+  expect(store.getState().encounter.present.actors.byId["actor-one"].shape).toBe("transparent");
+});
+
+it("flips the selected actor image from the Properties header with undo and redo", async () => {
+  const user = userEvent.setup(); renderApp(); act(selectTestActor);
+  const button = screen.getByRole("button", { name: "Flip actor image" });
+  expect(button).toHaveAttribute("title", "Flip actor image");
+  expect(button).toHaveAttribute("aria-pressed", "false");
+  const before = store.getState().encounter.present;
+  await user.click(button);
+  expect(store.getState().encounter.present.actors.byId["actor-one"].imageFlippedHorizontal).toBe(true);
+  expect(button).toHaveAttribute("aria-pressed", "true");
+  act(() => store.dispatch(undoEncounterChange()));
+  expect(store.getState().encounter.present).toEqual(before);
+  act(() => store.dispatch(redoEncounterChange()));
+  expect(button).toHaveAttribute("aria-pressed", "true");
+  await user.click(button);
+  expect(store.getState().encounter.present.actors.byId["actor-one"].imageFlippedHorizontal).toBe(false);
+});

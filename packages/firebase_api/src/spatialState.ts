@@ -7,24 +7,24 @@ export function validateSpatialState(state: Record<string, unknown>): void {
   const origin = grid?.origin as Record<string, unknown> | null;
   const rules = state.movementRules as Record<string, unknown> | null;
   const validRules = !!rules && ['zoneLocked', 'snapToGrid', 'snapZoneVertices', 'allowOverlap', 'trimTokens'].every(key => typeof rules[key] === 'boolean') && !(rules.zoneLocked && rules.allowOverlap) && !(rules.trimTokens && !rules.snapToGrid);
-  if (((state.schemaVersion === 22 || (state.schemaVersion === 23 || state.schemaVersion === 24)) ? !validRules : !['zone', 'grid', 'free'].includes(String(state.movementStrategy))) ||
-    !grid || !['square', 'hex-pointy', 'hex-flat', ...((state.schemaVersion === 23 || state.schemaVersion === 24) ? ['isometric'] : [])].includes(String(grid.type)) ||
+  if (((state.schemaVersion === 22 || (state.schemaVersion === 23 || state.schemaVersion === 24 || state.schemaVersion === 25)) ? !validRules : !['zone', 'grid', 'free'].includes(String(state.movementStrategy))) ||
+    !grid || !['square', 'hex-pointy', 'hex-flat', ...((state.schemaVersion === 23 || state.schemaVersion === 24 || state.schemaVersion === 25) ? ['isometric'] : [])].includes(String(grid.type)) ||
     typeof grid.cellSize !== 'number' || !Number.isFinite(grid.cellSize) || grid.cellSize <= 0 ||
     !origin || typeof origin.x !== 'number' || !Number.isFinite(origin.x) || typeof origin.y !== 'number' || !Number.isFinite(origin.y) ||
     typeof grid.rotation !== 'number' || !Number.isFinite(grid.rotation) || typeof grid.visible !== 'boolean' ||
     typeof grid.color !== 'string' || !/^#[0-9a-f]{6}$/i.test(grid.color) ||
     typeof grid.opacity !== 'number' || !Number.isFinite(grid.opacity) || grid.opacity < 0 || grid.opacity > 1) fail();
-  if (grid?.isometricAngle !== undefined && (state.schemaVersion !== 24 || typeof grid.isometricAngle !== 'number' || !Number.isFinite(grid.isometricAngle) || grid.isometricAngle < 1 || grid.isometricAngle > 45)) fail();
+  if (grid?.isometricAngle !== undefined && ((state.schemaVersion !== 24 && state.schemaVersion !== 25) || typeof grid.isometricAngle !== 'number' || !Number.isFinite(grid.isometricAngle) || grid.isometricAngle < 1 || grid.isometricAngle > 45)) fail();
   const actors = state.actors as { byId: Record<string, Record<string, unknown>> };
   if (grid?.warp !== undefined) {
     const warp = grid.warp as Record<string, unknown> | null;
-    if ((state.schemaVersion !== 18 && state.schemaVersion !== 19 && state.schemaVersion !== 20 && state.schemaVersion !== 21 && state.schemaVersion !== 22 && state.schemaVersion !== 23 && state.schemaVersion !== 24) || !warp || warp.type !== 'bilinear' ||
+    if ((state.schemaVersion !== 18 && state.schemaVersion !== 19 && state.schemaVersion !== 20 && state.schemaVersion !== 21 && state.schemaVersion !== 22 && state.schemaVersion !== 23 && state.schemaVersion !== 24 && state.schemaVersion !== 25) || !warp || warp.type !== 'bilinear' ||
       ![warp.x, warp.y].every(values => Array.isArray(values) && values.length === 4 && values.every(value => typeof value === 'number' && Number.isFinite(value)))) fail();
   }
   if (state.gridCoverage !== undefined) {
     const coverage = state.gridCoverage as { x: number; y: number; width: number; height: number } | null;
     const canvas = state.canvasSize as { width: number; height: number };
-    if (state.schemaVersion !== 20 && state.schemaVersion !== 21 && state.schemaVersion !== 22 && state.schemaVersion !== 23 && state.schemaVersion !== 24 || state.backgroundImage !== null || !coverage || !canvas ||
+    if (state.schemaVersion !== 20 && state.schemaVersion !== 21 && state.schemaVersion !== 22 && state.schemaVersion !== 23 && (state.schemaVersion !== 24 && state.schemaVersion !== 25) || state.backgroundImage !== null || !coverage || !canvas ||
         ![coverage.x, coverage.y, coverage.width, coverage.height].every(value => typeof value === 'number' && Number.isFinite(value)) ||
         coverage.x < 0 || coverage.y < 0 || coverage.width <= 0 || coverage.height <= 0 ||
         coverage.x + coverage.width > canvas.width + 1e-7 || coverage.y + coverage.height > canvas.height + 1e-7) fail();
@@ -33,13 +33,14 @@ export function validateSpatialState(state: Record<string, unknown>): void {
   if (background?.frame !== undefined) {
     const frame = background.frame as Record<string, unknown> | null;
     const canvas = state.canvasSize as { width: number; height: number };
-    if ((state.schemaVersion !== 19 && state.schemaVersion !== 20 && state.schemaVersion !== 21 && state.schemaVersion !== 22 && state.schemaVersion !== 23 && state.schemaVersion !== 24) || !frame || !canvas ||
+    if ((state.schemaVersion !== 19 && state.schemaVersion !== 20 && state.schemaVersion !== 21 && state.schemaVersion !== 22 && state.schemaVersion !== 23 && state.schemaVersion !== 24 && state.schemaVersion !== 25) || !frame || !canvas ||
         ![frame.x, frame.y, frame.width, frame.height].every(value => typeof value === 'number' && Number.isFinite(value)) ||
         (frame.x as number) < 0 || (frame.y as number) < 0 || (frame.width as number) <= 0 || (frame.height as number) <= 0 ||
         (frame.x as number) + (frame.width as number) > canvas.width + 1e-7 ||
         (frame.y as number) + (frame.height as number) > canvas.height + 1e-7) fail();
   }
   for (const actor of Object.values(actors.byId)) {
+    if (actor.shape === 'transparent' && state.schemaVersion !== 25) fail();
     if (actor.spatialPosition === undefined) continue;
     const point = actor.spatialPosition as Record<string, unknown> | null;
     if (!point || typeof point.x !== 'number' || !Number.isFinite(point.x) || typeof point.y !== 'number' || !Number.isFinite(point.y)) fail();

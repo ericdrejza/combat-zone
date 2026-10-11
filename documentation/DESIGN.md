@@ -244,6 +244,8 @@ Properties:
   in split layouts)
 - image
 - size
+- shape (circle / rectangle / transparent)
+- imageFlippedHorizontal (optional boolean, defaults to false)
 - stats (optional system-specific blob)
 - currentZoneId | zoneless
 - statusEffects[] (stable condition IDs and namespaced weapon/armor markers)
@@ -253,6 +255,19 @@ Properties:
 - status (ordinal overall health: 0 dead, 1 unconscious / severely injured,
   2 injured, 3 healthy; defaults to healthy)
 - metadata
+
+Actor Properties adds a SquareCenterlineDashedHorizontal header toggle with
+“Flip actor image” tooltip. It mirrors the selected Actor artwork across its
+vertical axis, leaving names, outlines, and placement unchanged. It is disabled
+without an image. This Actor property persists through saves, exports, and sync
+and supports undo/redo; absent flags in older encounters mean unflipped.
+
+Transparent uses the SquareDashed icon in Actor toolbar and Properties, with
+“Transparent” tooltips. Its artwork preserves aspect ratio within the existing
+square token-size box, without fill, border, or clipping. Placement and hit
+testing use that square box; selection adds only a temporary outline. Actors
+without an image retain their name fallback. Preview artwork follows the same
+presentation. Schema 25 adds this shape while preserving older geometry.
 
 Engagement membership is owned by Engagement `participants[]`; Actors do not
 store a duplicate engagement reference.
@@ -1446,9 +1461,9 @@ in that direction, then steps by one, except rotation. Rotation clicks step by
 0.1 degrees; holding for 400ms repeats every 80ms, continuing by 0.1 degrees
 until reaching the next whole degree without overshoot, then stepping by 1
 degree until release.
-Rotation values round to the nearest hundredth. Rotation wraps at 90 degrees
-for squares, 180 degrees for isometric grids, and 60 degrees for hexes,
-respecting each geometry's symmetry. Calibration
+Rotation values round to the nearest hundredth. All grid types accept a full
+turn, wrapping 360 degrees to 0 and decrementing below 0 to the end of the turn.
+Calibration
 snaps angles within five degrees of a multiple of 45 degrees to that angle.
 
 The LayoutGrid alignment subtool offers simple or four-quadrant alignment.
@@ -1586,7 +1601,9 @@ alignment, breaking ties clockwise so all four neighbors remain reachable.
 
 The final section of Settings > Canvas offers “Project tokens on isometric grids”, off by default.
 This browser-local preference projects canvas artwork, backgrounds, and outlines
-with nominal grid rotation, without local warp distortion. Names stay upright;
+with nominal grid rotation, without local warp distortion. Names stay upright
+and sit 16 canvas units below the projected token extent, accounting for size,
+angle, and rotation;
 logical footprints, hit areas, reservations, and EncounterState stay unchanged.
 Library, Zoneless, and external transfer previews stay upright. Motion honors
 reduced-motion preferences. Isometric Trim uses Square behavior.

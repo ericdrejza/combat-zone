@@ -156,3 +156,14 @@ describe("Toolbar tools and options", () => {
     expect(store.getState().interaction.actorPaintBrush).toBe(false);
   });
 });
+
+it("selects Transparent actor shape with a tooltip", async () => {
+  const user = userEvent.setup();
+  renderApp();
+  await user.click(screen.getByRole("button", { name: "Actor" }));
+  const button = screen.getByRole("button", { name: "Transparent actor shape" });
+  expect(button).toHaveAttribute("title", "Transparent");
+  await user.click(button);
+  expect(button).toHaveAttribute("aria-pressed", "true");
+  expect(store.getState().interaction.actorTool.shape).toBe("transparent");
+});

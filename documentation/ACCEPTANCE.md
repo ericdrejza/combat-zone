@@ -655,3 +655,9 @@ these back into `AGENT.md` or `DESIGN.md`.
 - [x] Four-quadrant alignment provides initial top-left and subsequent top-right, bottom-right, and bottom-left jumps, retaining zoom, temporary zoom restoration, sampled points, and Encounter history; undoing/resetting samples updates the destination.
 
 - [x] Isometric angle accepts 1–45° in Apply/Cancel Settings, drives geometry and token projection, is estimated automatically, and preserves default 2:1 geometry through schema 24 migration.
+
+- [x] Transparent Actor shape uses SquareDashed controls with tooltips, keeps aspect-preserving unframed artwork and square placement, and supports history and schema 25 persistence.
+- [x] Projected Actor names follow token size, angle, and rotation with a constant gap.
+- [x] Manual grid rotation accepts a full turn and wraps 360° to 0° while retaining hundredth precision and fractional-to-whole held steps.
+
+- [x] Actor Properties header mirrors the selected image with SquareCenterlineDashedHorizontal, tooltip and toggle feedback, preserving upright labels, placement, history, and local/cloud persistence.

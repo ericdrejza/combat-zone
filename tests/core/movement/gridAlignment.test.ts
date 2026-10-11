@@ -7,13 +7,13 @@ import type { GridConfiguration } from '@core/movement/types';
 
 const base = { ...createDefaultGrid(), cellSize: 50, origin: { x: 100, y: 100 } };
 describe('grid alignment strategies', () => {
-  it.each([0, 45, 90, 135, -45, 360])('snaps within five degrees of %s and wraps square symmetry', angle => {
-    for (const delta of [-5, -3, 0, 4, 5]) expect(calibratedRotation(angle + delta, 'square')).toBe(normalizeGridRotation(angle, 'square'));
-    expect(calibratedRotation(angle + 6, 'square')).toBe(normalizeGridRotation(angle + 6, 'square'));
+  it.each([0, 45, 90, 135, -45, 360])('snaps calibration near %s and preserves canonical square orientation', angle => {
+    for (const delta of [-5, -3, 0, 4, 5]) expect(calibratedRotation(angle + delta, 'square')).toBe(normalizeGridRotation(angle, 'square') % 90);
+    expect(calibratedRotation(angle + 6, 'square')).toBe(normalizeGridRotation(angle + 6, 'square') % 90);
   });
-  it('keeps hex symmetry at 60 degrees and steps fractional fields to integers', () => {
-    expect(normalizeGridRotation(60, 'hex-flat')).toBe(0);
-    expect(normalizeGridRotation(90, 'hex-pointy')).toBe(30);
+  it('retains hex angles across a full turn and steps fractional fields to integers', () => {
+    expect(normalizeGridRotation(60, 'hex-flat')).toBe(60);
+    expect(normalizeGridRotation(90, 'hex-pointy')).toBe(90);
     expect(stepWholeNumber(2.3, 1)).toBe(3); expect(stepWholeNumber(2.3, -1)).toBe(2);
     expect(stepWholeNumber(-2.3, 1)).toBe(-2); expect(stepWholeNumber(-2.3, -1)).toBe(-3);
   });
@@ -58,4 +58,11 @@ describe('grid alignment strategies', () => {
     expect(warpFitsCanvas({ ...base, warp: { type: 'bilinear', x: [0, -1, 0, 0], y: [0, 0, 1, 0] } }, { width: 960, height: 640 })).toBe(false);
     expect(warpFitsCanvas({ ...base, warp: { type: 'bilinear', x: [0, 0, 0, 0], y: [0, 0, 0, 0] } }, { width: 960, height: 640 })).toBe(false);
   });
+});
+
+it.each(['square', 'hex-flat', 'hex-pointy', 'isometric'] as const)('wraps %s rotation at 360 degrees', type => {
+  expect(normalizeGridRotation(359.99, type)).toBe(359.99);
+  expect(normalizeGridRotation(360, type)).toBe(0);
+  expect(normalizeGridRotation(720.1, type)).toBe(0.1);
+  expect(normalizeGridRotation(-0.1, type)).toBe(359.9);
 });

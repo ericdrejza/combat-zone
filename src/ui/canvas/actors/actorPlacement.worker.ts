@@ -1,3 +1,4 @@
+import { actorFootprintShape } from '@entities/actor/actorFootprintShape';
 import { getActorRadius } from '@core/layout/actorFootprints';
 import type { ActorSize, ActorShape } from '@entities/actor/types';
 import { createActorPlacementCacheKey } from './actorPlacementCache';
@@ -26,7 +27,7 @@ const PROACTIVE_ACTOR_SIZES: ActorSize[] = [
   'large',
   'xLarge'
 ];
-const PROACTIVE_ACTOR_SHAPES: ActorShape[] = ['circle', 'rectangle'];
+const PROACTIVE_ACTOR_SHAPES: ActorShape[] = ['circle', 'rectangle', 'transparent'];
 
 function toNestingActors(
   actors: Actor[],
@@ -36,14 +37,14 @@ function toNestingActors(
   const nestingActors = actors.map((actor) => ({
     id: actor.id,
     radius: getActorRadius(actor),
-    shape: actor.shape
+    shape: actorFootprintShape(actor.shape)
   }));
 
   if (incomingSize && incomingShape) {
     nestingActors.push({
       id: PROACTIVE_ACTOR_ID,
       radius: ACTOR_TOKEN_BASE_RADIUS * ACTOR_SIZE_MULTIPLIERS[incomingSize],
-      shape: incomingShape
+      shape: actorFootprintShape(incomingShape)
     });
   }
 

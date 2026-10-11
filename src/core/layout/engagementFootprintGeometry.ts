@@ -1,3 +1,4 @@
+import { actorFootprintShape } from '@entities/actor/actorFootprintShape';
 import type { ActorShape } from '@entities/actor/types';
 import {
   distanceToSegment,
@@ -12,7 +13,7 @@ export type EngagementFootprint = {
 };
 
 function shapeOf(footprint: EngagementFootprint): ActorShape {
-  return footprint.shape ?? 'circle';
+  return actorFootprintShape(footprint.shape ?? 'circle');
 }
 
 /** Returns whether two complete rendered footprints retain the given gap. */

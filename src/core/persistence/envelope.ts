@@ -155,6 +155,9 @@ export function assertEncounterState(value: unknown, name = "encounter", expecte
     if (isRecord(actor) && actor.status !== undefined && !isActorStatus(actor.status)) {
       throw new PersistenceValidationError(`${name}.actors.${actorId}.status is invalid.`);
     }
+    if (isRecord(actor) && actor.imageFlippedHorizontal !== undefined && typeof actor.imageFlippedHorizontal !== "boolean") {
+      throw new PersistenceValidationError(`${name}.actors.${actorId}.imageFlippedHorizontal is invalid.`);
+    }
     if (isRecord(actor) && actor.image !== undefined && !isImageAssetSource(actor.image)) {
       throw new PersistenceValidationError(`${name}.actors.${actorId}.image is invalid.`);
     }
@@ -551,7 +554,7 @@ export function migrateEncounterState(value: unknown): unknown {
     return normalized;
   }
 
-  if (migrated.schemaVersion === 21 || migrated.schemaVersion === 22 || migrated.schemaVersion === 23) {
+  if (migrated.schemaVersion === 21 || migrated.schemaVersion === 22 || migrated.schemaVersion === 23 || migrated.schemaVersion === 24) {
     assertEncounterState(migrated, 'encounter', migrated.schemaVersion);
     migrated.schemaVersion = ENCOUNTER_SCHEMA_VERSION;
   }

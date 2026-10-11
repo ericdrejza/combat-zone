@@ -5,7 +5,10 @@ import { imageRidges, ridgeProfile } from './gridDetectionRidges';
 
 type Line = { angle: number; fit: ProfileFit };
 type Pair = { lines: [Line, Line]; angle: number; rotation: number; score: number };
-const rotationDistance = (a: number, b: number) => Math.min(Math.abs(a - b), 180 - Math.abs(a - b));
+const rotationDistance = (a: number, b: number) => {
+  const distance = Math.abs(((a % 180) + 180) % 180 - ((b % 180) + 180) % 180);
+  return Math.min(distance, 180 - distance);
+};
 
 /** Estimate both oblique families: their separation determines projection independently of rotation. */
 export function detectIsometricGrid(pixels: Uint8ClampedArray, width: number, height: number,

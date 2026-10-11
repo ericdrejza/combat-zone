@@ -1,3 +1,4 @@
+import { actorFootprintShape } from '@entities/actor/actorFootprintShape';
 import {
   type EngagementParticipantPoint
 } from './engagementPacking';
@@ -234,7 +235,7 @@ export function routeEngagementConnectorGroups(
     area: group.participants.reduce(
       (total, participant) =>
         total +
-        (participant.shape === 'rectangle'
+        (actorFootprintShape(participant.shape ?? 'circle') === 'rectangle'
           ? (participant.radius * 2) ** 2
           : Math.PI * participant.radius ** 2),
       Math.PI * ENGAGEMENT_TOKEN_RADIUS ** 2

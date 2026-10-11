@@ -15,7 +15,7 @@ export function GridNumberField({ label, value, onChange, positive = false, rota
   const StepButton = rotation ? RepeatButton : 'button';
   return <label className="block space-y-1 text-sm">{label}
     <span className="flex min-h-11 overflow-hidden rounded-lg border border-canvas-line focus-within:ring-2 focus-within:ring-canvas-ink">
-      <input aria-label={label} type="number" step={rotation ? '0.1' : 'any'} value={Number.isFinite(value) ? value : ''}
+      <input aria-label={label} type="number" step={rotation ? '0.01' : 'any'} value={Number.isFinite(value) ? value : ''}
         className="min-w-0 flex-1 bg-canvas-surface p-2 text-canvas-ink outline-none hover:bg-canvas [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
         onChange={event => onChange(event.currentTarget.valueAsNumber)}
         onBlur={() => { keyboardHold.current = null; }} onKeyUp={() => { keyboardHold.current = null; }}

@@ -1,3 +1,4 @@
+import { actorFootprintShape } from '@entities/actor/actorFootprintShape';
 import type { LayoutPoint } from './types';
 import {
   distanceToPolygonBoundary,
@@ -60,7 +61,7 @@ export function footprintFitsPolygon(
   boundaryClearance = 0,
   shape: ActorShape = 'circle'
 ): boolean {
-  if (shape === 'rectangle') {
+  if (actorFootprintShape(shape) === 'rectangle') {
     const extent = radius + boundaryClearance;
     return isFootprintInsideZone(
       [

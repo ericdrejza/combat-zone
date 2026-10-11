@@ -139,9 +139,9 @@ export function ActorToolButton({
               type="button"
             >
               <Icon aria-hidden="true" className="h-4 w-4 fill-current" />
-              <ToolbarOptionKeybind active={actorTool.shape === value}>
+              {keybind ? <ToolbarOptionKeybind active={actorTool.shape === value}>
                 {keybind}
-              </ToolbarOptionKeybind>
+              </ToolbarOptionKeybind> : null}
             </ToolbarOptionButton>
           ))}
         </ToolbarOptionGroup>

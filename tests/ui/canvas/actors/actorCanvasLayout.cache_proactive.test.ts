@@ -138,7 +138,7 @@ describe('actor canvas layout', () => {
       );
       await vi.runAllTimersAsync();
 
-      expect(getProactivePlanCount()).toBe(8);
+      expect(getProactivePlanCount()).toBe(12);
 
       const incomingActor = zonedActor('incoming', zoneId);
       const nextEncounter = {
@@ -150,7 +150,7 @@ describe('actor canvas layout', () => {
         'PROACTIVE'
       );
 
-      expect(getProactivePlanCount()).toBe(8);
+      expect(getProactivePlanCount()).toBe(12);
       expect(plannedPlacements).toHaveLength(2);
       expect(plannedPlacements.map(({ actor: current }) => current.id)).toEqual([
         existingActor.id,

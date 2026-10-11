@@ -1,4 +1,4 @@
-import { Circle, Square } from "lucide-react";
+import { Circle, Square, SquareDashed } from "lucide-react";
 import type { ComponentType, SVGProps } from "react";
 
 import type {
@@ -36,13 +36,14 @@ export const ACTOR_SIZE_OPTIONS: Array<{
 
 export const ACTOR_SHAPE_OPTIONS: Array<{
   Icon: typeof Circle;
-  keybind: string;
+  keybind?: string;
   label: string;
   title: string;
   value: ActorShape;
 }> = [
   { Icon: Circle, keybind: "9", label: "Circle actor shape", title: "Circle", value: "circle" },
-  { Icon: Square, keybind: "0", label: "Rectangle actor shape", title: "Rectangle", value: "rectangle" }
+  { Icon: Square, keybind: "0", label: "Rectangle actor shape", title: "Rectangle", value: "rectangle" },
+  { Icon: SquareDashed, label: "Transparent actor shape", title: "Transparent", value: "transparent" }
 ];
 
 function SmallTokenIcon(props: TokenSizeIconProps) {
