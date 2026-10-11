@@ -152,7 +152,7 @@ export function AssetContextMenu({
         <button className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left transition hover:bg-canvas disabled:cursor-not-allowed disabled:text-canvas-muted" disabled={readOnly}
           onClick={() => onSetAudioIcon(node, audioAsset.audioIcon === "music" ? "audio" : "music")} role="menuitem" type="button">
           {audioAsset.audioIcon === "music" ? <AudioLines aria-hidden="true" className="h-4 w-4" /> : <Music aria-hidden="true" className="h-4 w-4" />}
-          {audioAsset.audioIcon === "music" ? "Set icon to audio" : "Set icon to music"}
+          {audioAsset.audioIcon === "music" ? "Mark as Effect" : "Mark as Track"}
         </button>
       ) : null}
       {isImageAsset ? (

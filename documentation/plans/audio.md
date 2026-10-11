@@ -18,7 +18,12 @@ runtime playback state.
   multiple groups from its own section; groups do not cross entity sections.
 - Groups own configuration. Entities store only ordered group references, and
   selectors derive cues and inheritors without duplicating either relationship.
-- Audio cues have two types selected with icon radio buttons: Track and Effect.
+- Audio cues have two persisted types: Track and Effect. The Audio tool offers
+  FileHeadphone Use asset cue type, Timer Use duration threshold, Track, and
+  Effect, in that order. Timer uses the saved Audio Defaults duration threshold
+  even when the Ambience default is another mode. Asset mode uses each
+  Library asset's Music/Audio icon as Track/Effect, including links. Explicit tool
+  choices override Ambience defaults; Zone/Actor permit only Effect tool choices.
   Soundboard cue-type buttons use Music for Track and AudioLines for Effect.
   Zone and Actor groups accept Effects only; Music groups accept Tracks only.
   Ambience accepts either type.
@@ -37,6 +42,19 @@ runtime playback state.
   cue advances to the next cue and the final cue wraps to the first. With group
   Repeat disabled, the current track finishes without advancing. Toggling this
   setting during playback takes effect at the current track's end.
+- Soundboard groups have an idle Play control immediately left of the drag handle.
+  Play starts all group cues, or the first track for Music; Pause/resume affects
+  only the group and follows section transport behavior.
+- Audio Settings has a Defaults section for cue volume, Effect repeat delays,
+  Music cue Repeat (initially off), and new Music group Loop (initially on).
+  Ambience type defaults offer Asset Icon (initially selected), Duration threshold
+  (initially 30 seconds), Effect and Track. The threshold is always editable as
+  an independent setting shared by Timer and duration-based Soundboard additions.
+  Strictly longer durations become Tracks;
+  equality and shorter durations become Effects. Missing duration falls back to
+  Asset Icon. Read metadata without playback; keep duration transient, and commit
+  a directory batch and new group atomically after metadata resolves. Creation
+  preferences do not change existing cues or groups.
 - Master volume and new-cue defaults are interface preferences. Cue and group
   configuration is durable Encounter state. Playback position, timers, paused
   state, disclosure state, and audio elements are session-only.
@@ -64,7 +82,7 @@ runtime playback state.
   between the controls. Switching grid/list relocates the same media player
   without restarting playback. Cards themselves have no transport buttons.
   Audio cards default to AudioLines instead of an image placeholder. Their
-  context menu toggles between Audio and Music icons. The optional icon
+  context menu offers Mark as Track/Effect, toggling Music/Audio icons. The optional icon
   preference belongs to the original asset and is shared by all its links.
 - Activating Audio opens the docked Library to Audio. Each group ends with an
   Add Cue card shell containing a plus. Selecting it opens the full Library
@@ -151,6 +169,8 @@ one undoable action while retaining groups and valid-source cues.
   playback paused. A Track need not repeat.
 - Plays immediately. Repeat on loops continuously; Repeat off finishes once.
 - Cards show elapsed time left of the scrub bar and total duration right of it.
+  Stop sits to the left of Play/Pause. Pause preserves position and Stop resets it.
+  A paused track can resume individually while its group or section stays paused.
 - Global Pause preserves position; global Play resumes it.
 
 ### Effect

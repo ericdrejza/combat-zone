@@ -1,9 +1,10 @@
-import { AudioLines, BookHeadphones, CircleUserRound, Globe2, Music, Pause, Play, Shapes, Square } from "lucide-react";
+import { AudioLines, BookHeadphones, CircleUserRound, FileHeadphone, Globe2, Music, Pause, Play, Shapes, Square, Timer } from "lucide-react";
 import { createPortal } from "react-dom";
 import { useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
-import type { AudioCueType, AudioSectionType } from "@entities/audio/types";
+import type { AudioCueTypeChoice } from "@interaction/audioToolTypes";
+import type { AudioSectionType } from "@entities/audio/types";
 import { setAudioCueType, setAudioCueTypePresets, setAudioSectionType } from "@interaction/interactionState";
 import type { ToolDefinition, ToolId } from "@interaction/tools/toolRegistry";
 import type { RootState } from "@store/store";
@@ -20,6 +21,8 @@ const OWNERS = [
   { value: "actor" as const, label: "Actor audio", Icon: CircleUserRound }
 ];
 const TYPES = [
+  { value: "asset" as const, label: "Use asset cue type", Icon: FileHeadphone },
+  { value: "duration" as const, label: "Use duration threshold", Icon: Timer },
   { value: "track" as const, label: "Track cue", Icon: Music },
   { value: "effect" as const, label: "Effect cue", Icon: AudioLines }
 ];
@@ -45,8 +48,8 @@ export function AudioToolButton({ activeToolId, compactLayout, compactSubtoolHos
     </ToolbarOptionGroup>
     <ToolbarOptionGroup aria-label="Audio section" role="radiogroup">{OWNERS.map(({ Icon, label, value }) => <ToolbarOptionButton active={audioTool.sectionType === value} aria-checked={audioTool.sectionType === value} aria-label={label} key={value} onClick={() => dispatch(setAudioSectionType(value as AudioSectionType))} role="radio" title={label} type="button"><Icon aria-hidden="true" className="h-4 w-4" /></ToolbarOptionButton>)}</ToolbarOptionGroup>
     <ToolbarOptionGroup aria-label="Audio cue type" role="radiogroup">{TYPES.map(({ Icon, label, value }) => {
-      const disabled = (audioTool.sectionType === "actor" || audioTool.sectionType === "zone") && value === "track";
-      return <ToolbarOptionButton active={audioTool.cueTypeBySection[audioTool.sectionType] === value} aria-checked={audioTool.cueTypeBySection[audioTool.sectionType] === value} aria-label={label} disabled={disabled} key={value} onClick={() => dispatch(setAudioCueType(value as AudioCueType))} role="radio" title={disabled ? "Zone and Actor groups use Effects." : label} type="button"><Icon aria-hidden="true" className="h-4 w-4" /></ToolbarOptionButton>;
+      const disabled = (audioTool.sectionType === "actor" || audioTool.sectionType === "zone") && value !== "effect";
+      return <ToolbarOptionButton active={audioTool.cueTypeBySection[audioTool.sectionType] === value} aria-checked={audioTool.cueTypeBySection[audioTool.sectionType] === value} aria-label={label} disabled={disabled} key={value} onClick={() => dispatch(setAudioCueType(value as AudioCueTypeChoice))} role="radio" title={disabled ? "Zone and Actor groups use Effects." : label} type="button"><Icon aria-hidden="true" className="h-4 w-4" /></ToolbarOptionButton>;
     })}</ToolbarOptionGroup>
   </ToolbarSubtoolBar> : null;
   return <><ToolbarOptionRow className="max-lg:contents"><ToolButton activeToolId={activeToolId} tool={tool} />{!compactLayout ? optionBar : null}</ToolbarOptionRow>{compactLayout && compactSubtoolHost && optionBar ? createPortal(optionBar, compactSubtoolHost) : null}</>;

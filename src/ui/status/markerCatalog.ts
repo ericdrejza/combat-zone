@@ -9,14 +9,14 @@ import {
 
 export type StatusMarker = { id: string; label: string; Icon: LucideIcon };
 const conditions: [string, LucideIcon][] = [
-  ["Aiming", Crosshair], ["Assisted / Helped", Handshake], ["Bleeding", Droplet],
+  ["Aiming", Crosshair], ["Asleep", EyeClosed], ["Assisted / Helped", Handshake], ["Bleeding", Droplet],
   ["Blessed", Sparkle], ["Blinded", EyeOff], ["Bolstered", BicepsFlexed], ["Burning", Flame],
   ["Charmed", Magnet], ["Concentrating", Brain], ["Confused", Shell], ["Cover", BrickWallShield],
   ["Cursed", BadgeX], ["Deafened", EarOff], ["Disguised", HatGlasses], ["Enchanted", WandSparkles],
   ["Energized", Zap], ["Exhausted / Fatigued", BatteryLow], ["Flying", Feather], ["Frightened", Ghost],
   ["Grappled / Grabbed", HandGrab], ["Guarded / Shielded", ShieldCheck], ["Hasted / Quickened", SportShoe],
   ["Hidden / Concealed", EyeDashed], ["Immobilized", Anchor], ["Incapacitated", Ban], ["Inspired", Lightbulb],
-  ["Invisible", EyeClosed], ["Marked", LocateFixed], ["Muted / Silenced", MouthOff], ["Paralyzed", LockKeyhole],
+  ["Invisible", EyeDashed], ["Marked", LocateFixed], ["Muted / Silenced", MouthOff], ["Paralyzed", LockKeyhole],
   ["Petrified", Stone], ["Poisoned", Biohazard], ["Powerless", ZapOff], ["Prone", ArrowDownToLine],
   ["Resistant", ShieldHalf], ["Restrained", Link], ["Sickened", Thermometer], ["Slowed", Snail], ["Stunned", Galaxy]
 ];

@@ -10,6 +10,7 @@ import { DefaultColorSettings } from "./DefaultColorSettings";
 import { VisibilitySwitch } from "./VisibilitySwitch";
 import { PreferenceSwitch } from "./PreferenceSwitch";
 import { BackgroundResizeSettings } from "./BackgroundResizeSettings";
+import { LibraryInterfaceSettings } from "./LibraryInterfaceSettings";
 import { PanelOrderSettings } from "./PanelOrderSettings";
 
 const themeOptions: Array<{
@@ -137,6 +138,7 @@ export function InterfaceSettings() {
           <DefaultColorSettings />
         </div>
       </fieldset>
+      <LibraryInterfaceSettings />
       <section aria-labelledby="interface-panels-heading" className="mt-4 border-t border-canvas-line pt-5">
         <h4 className="text-sm font-semibold" id="interface-panels-heading">Panels</h4>
         <div className="mt-3 grid gap-5 lg:grid-cols-[minmax(0,1fr)_1px_minmax(0,1fr)] lg:gap-6">

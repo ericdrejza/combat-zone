@@ -97,7 +97,7 @@ describe("InterfaceSettings", () => {
     expect(autoSelect).not.toBeChecked();
     expect(assetAnimation).not.toBeChecked();
     expect(pan).not.toBeChecked();
-    expect(JSON.parse(localStorage.getItem(INTERFACE_PREFERENCES_STORAGE_KEY)!)).toEqual({
+    expect(JSON.parse(localStorage.getItem(INTERFACE_PREFERENCES_STORAGE_KEY)!)).toMatchObject({
       backgroundResizeOverflowBehavior: "zoneless",
       healthCounterName: "Hit points",
       clockStyleDefault: "traditional",

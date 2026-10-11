@@ -13,7 +13,7 @@ import { MVP_TOOLS } from "@interaction/tools/toolRegistry";
 import { CanvasShell } from "./canvas/CanvasShell";
 import { CanvasViewportProvider } from "./canvas/CanvasViewportContext";
 import type { DockPanelDefinition, DockSide, DropTarget } from "./panels/PanelsShell";
-import { LibraryPanel, LibraryPanelViewToggle } from "./panels/LibraryPanel";
+import { LibraryPanel, LibraryPanelHeaderActions } from "./panels/LibraryPanel";
 import { LogPanel, LogPanelHeaderActions } from "./panels/LogPanel";
 import { InitiativePanel } from "./panels/InitiativePanel";
 import { InitiativePopoutProvider } from "./panels/initiative/InitiativePopoutProvider";
@@ -101,7 +101,7 @@ function AppContent() {
   const dispatch = useDispatch();
   const { bindings } = useKeybinds();
   const { getViewportSize, zoom: viewportZoom } = useCanvasViewport();
-  const { panelVisibility } = useInterfacePreferences();
+  const { panelVisibility, libraryPanelViewDefault } = useInterfacePreferences();
   const activeToolId = useSelector(
     (state: RootState) => state.interaction.activeToolId
   );
@@ -124,8 +124,8 @@ function AppContent() {
     useState<LibraryPanelFocusRequest | null>(null);
   const [actorCreationImage, setActorCreationImage] =
     useState<ActorImageInput | null>(null);
-  const [libraryViewMode, setLibraryViewMode] =
-    useState<LibraryViewMode>("list");
+  const [libraryViewOverride, setLibraryViewMode] = useState<LibraryViewMode | null>(null);
+  const libraryViewMode = libraryViewOverride ?? libraryPanelViewDefault;
   const [renameModalOpen, setRenameModalOpen] = useState(false);
   const [encounterRenameOpen, setEncounterRenameOpen] = useState(false);
   const [showAudioCueVolumes, setShowAudioCueVolumes] = useState(false);
@@ -360,6 +360,12 @@ function AppContent() {
     );
   }
 
+  function openLibraryForActiveTool() {
+    persistenceUi.openLibrary(
+      activeToolId === "background" ? "backgrounds" : activeToolId === "actor" ? "tokens" : activeToolId === "audio" ? "audio" : "encounters"
+    );
+  }
+
   function renderPanelContent(
     panel: DockPanelDefinition | CompactPanelDefinition
   ) {
@@ -407,9 +413,11 @@ function AppContent() {
     if (panel.id === "initiative") return <InitiativeLauncherButton />;
     if (panel.id === "library") {
       return (
-        <LibraryPanelViewToggle
+        <LibraryPanelHeaderActions
+          libraryOpen={persistenceUi.libraryOpen}
+          onOpenLibrary={openLibraryForActiveTool}
           onToggle={() =>
-            setLibraryViewMode((mode) => (mode === "list" ? "grid" : "list"))
+            setLibraryViewMode(libraryViewMode === "list" ? "grid" : "list")
           }
           viewMode={libraryViewMode}
         />
@@ -447,9 +455,7 @@ function AppContent() {
           }
         >
       <ZoneResizeApprovalProvider>
-      <WorkspaceKeyboardShortcuts onOpenLibrary={() => persistenceUi.openLibrary(
-        activeToolId === "background" ? "backgrounds" : activeToolId === "actor" ? "tokens" : activeToolId === "audio" ? "audio" : "encounters"
-      )} />
+      <WorkspaceKeyboardShortcuts onOpenLibrary={openLibraryForActiveTool} />
       <InitiativePopoutProvider>
       <Toolbar
         actorCreationImage={actorCreationImage}
@@ -461,17 +467,7 @@ function AppContent() {
         libraryOpen={persistenceUi.libraryOpen}
         onActorToolSelected={expandAutoCollapsedLibraryPanel}
         onActorCreationImageHandled={() => setActorCreationImage(null)}
-        onOpenLibrary={() =>
-          persistenceUi.openLibrary(
-            activeToolId === "background"
-              ? "backgrounds"
-              : activeToolId === "actor"
-                ? "tokens"
-                : activeToolId === "audio"
-                  ? "audio"
-                : "encounters"
-          )
-        }
+        onOpenLibrary={openLibraryForActiveTool}
         onOpenSettings={persistenceUi.openSettings}
         onRenameEncounter={() => setEncounterRenameOpen(true)}
         onSaveEncounter={() => void persistenceUi.requestSave()}

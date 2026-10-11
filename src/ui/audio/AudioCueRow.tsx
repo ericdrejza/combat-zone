@@ -12,6 +12,7 @@ import { commitEncounterChange } from "@store/encounterSlice";
 import type { RootState } from "@store/store";
 import { useAudioPlayback } from "./AudioPlaybackProvider";
 import { TriggerChoices, TriggerIndicators } from "./AudioCueTriggers";
+import { TrackPlaybackControls } from "./TrackPlaybackControls";
 import { CueBehaviorButtons } from "./CueBehaviorButtons";
 import { openAudioLibraryForRelink } from "./audioLibraryEvents";
 import { AUDIO_REPEAT_DELAYS as DELAYS, formatAudioRepeatDelay as delayLabel } from "./audioRepeatDelay";
@@ -56,7 +57,7 @@ export function AudioCueRow({ configurable = false, cue, dropSide, onDragStart, 
   const showCueVolume = configurable || showVolume;
   const playButton = !asset
     ? <button aria-label={`Relink ${name}`} className="flex h-7 w-7 items-center justify-center rounded-full border border-red-600 text-red-600 dark:border-red-500 dark:text-red-500" onClick={() => openAudioLibraryForRelink(cue.id)} title="Choose a new Library audio source" type="button"><BookHeadphones aria-hidden="true" className="h-4 w-4" /></button>
-    : <PlayButton active={active} disabled={!active && !sourceUrl} name={name} onClick={() => active ? playback.stop(cue.id) : sourceUrl && void playback.play(cue, sourceUrl)} />;
+    : cue.type === "track" ? <TrackPlaybackControls cue={cue} name={name} sourceUrl={sourceUrl} /> : <PlayButton active={active} disabled={!active && !sourceUrl} name={name} onClick={() => active ? playback.stop(cue.id) : sourceUrl && void playback.play(cue, sourceUrl)} />;
 
   return <motion.article className={`group/cue relative space-y-1.5 rounded-lg border ${highlighted ? "border-blue-500" : status === "paused" ? "border-yellow-500" : "border-canvas-line"} bg-canvas-surface p-2`} data-audio-cue-id={cue.id} layout="position" onDragOver={(event) => { if (onDropCue) { event.preventDefault(); onPreviewDrop?.(cue.id, getCueDropSide(event)); } }} onDrop={(event) => { if (onDropCue) { event.stopPropagation(); onDropCue(cue.id, getCueDropSide(event)); } }}>
     {dropSide ? <div aria-label={`Insert cue ${dropSide} ${name}`} aria-orientation="vertical" role="separator" className={`absolute bottom-1 top-1 w-0.5 bg-canvas-ink ${dropSide === "before" ? "-left-1.5" : "-right-1.5"}`} data-testid="cue-drop-preview" /> : null}

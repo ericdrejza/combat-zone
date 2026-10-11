@@ -9,8 +9,9 @@ import { store } from "@store/store";
 import { renderApp } from "@tests/ui/renderApp";
 import { INTERFACE_PREFERENCES_STORAGE_KEY } from "@ui/interface_preferences/InterfacePreferenceProvider";
 
-function openLibrary(type: "track" | "effect") {
+function openLibrary(type: "track" | "effect", musicDefaults?: { audioMusicCueRepeatDefault: boolean; audioMusicGroupLoopDefault: boolean }) {
   localStorage.setItem(INTERFACE_PREFERENCES_STORAGE_KEY, JSON.stringify({
+    ...musicDefaults,
     audioCueVolumeDefault: 0,
     audioRepeatDelayDefaults: { minimumDelaySeconds: 0, maximumDelaySeconds: 120 }
   }));
@@ -59,13 +60,22 @@ describe("normal Library audio assignment", () => {
     expect(screen.queryByRole("dialog", { name: "Name new cue group" })).not.toBeInTheDocument();
     const added = store.getState().encounter.present;
     const cue = added.audioCues.byId[added.audioCues.allIds[0]];
-    expect(cue).toMatchObject({ type: "track", volume: 0, repeatDelay: { minimumDelaySeconds: 0, maximumDelaySeconds: 120 } });
-    expect(added.audioCueGroups.byId[cue.placement.groupId]).toMatchObject({ section: "music", name: "Battle tracks" });
+    expect(cue).toMatchObject({ type: "track", repeat: false, volume: 0, repeatDelay: { minimumDelaySeconds: 0, maximumDelaySeconds: 120 } });
+    expect(added.audioCueGroups.byId[cue.placement.groupId]).toMatchObject({ section: "music", name: "Battle tracks", repeat: true });
     expect(store.getState().encounter.past).toHaveLength(historyLength + 1);
     act(() => store.dispatch(undoEncounterChange()));
     expect(store.getState().encounter.present).toEqual(before);
     act(() => store.dispatch(redoEncounterChange()));
     expect(store.getState().encounter.present).toEqual(added);
+  });
+  it("uses saved Music creation preferences", () => {
+    const dialog = openLibrary("track", { audioMusicCueRepeatDefault: true, audioMusicGroupLoopDefault: false });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Create new Music group" }));
+    fireEvent.click(within(screen.getByRole("dialog", { name: "Name new cue group" })).getByRole("button", { name: "Create" }));
+    const encounter = store.getState().encounter.present;
+    const cue = encounter.audioCues.byId[encounter.audioCues.allIds[0]];
+    expect(cue.repeat).toBe(true);
+    expect(encounter.audioCueGroups.byId[cue.placement.groupId].repeat).toBe(false);
   });
   it("offers only Ambience destinations for Effects and applies defaults to an existing group", () => {
     const dialog = openLibrary("effect");

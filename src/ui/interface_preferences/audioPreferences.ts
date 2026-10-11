@@ -17,3 +17,13 @@ export function readAudioRepeatDelayDefaults(value: unknown): AudioRepeatDelaySe
     maximumDelaySeconds: Math.max(minimum, allowedDelay(stored.maximumDelaySeconds, DEFAULT_AUDIO_REPEAT_DELAY_SETTINGS.maximumDelaySeconds))
   };
 }
+
+export type AmbienceCueTypeDefault = "asset_icon" | "duration_threshold" | "effect" | "track";
+
+export function readAmbienceCueTypeDefault(value: unknown): AmbienceCueTypeDefault {
+  return value === "duration_threshold" || value === "effect" || value === "track" ? value : "asset_icon";
+}
+
+export function readAmbienceDurationThreshold(value: unknown): number {
+  return typeof value === "number" && Number.isFinite(value) && value >= 0 ? value : 30;
+}

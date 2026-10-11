@@ -11,6 +11,34 @@ After completing a numbered section (## X.), move the completed section to the e
 
 ## 15. MVP Acceptance Hardening
 
+- [x] Add the Independent Library grid card sizes switch with Encounter,
+      Background, Token, and Audio sliders; preserve shared/individual values
+      across mode changes and apply the selected size in both Library containers.
+      Verify preference persistence, synchronization, reset, and size selection.
+
+- [x] Add Timer after the Audio tool asset-type choice; share the always-editable
+      Audio Defaults duration threshold with Soundboard default classification.
+      Verify destination filtering, metadata fallback, stale reads and undo/redo.
+
+- [x] Add Interface Library preferences for outside-click dismissal (off),
+      independent modal/panel view defaults (Grid), and grid card minimum width
+      (80–256px, initially 128px). Verify persistence, reset, synchronization,
+      modal interactions, independent views, and unchanged encounter history.
+
+- [x] Add the Library panel header launcher before Grid/List; share toolbar
+      section selection and verify desktop/compact launch, view controls,
+      and absence of encounter history changes.
+
+- [x] Add Ambience type defaults (Asset Icon, Duration threshold, Effect, Track),
+      metadata classification with icon fallback, and explicit asset-type Audio
+      tool choice; label Library marks as Track/Effect. Verify linked assets,
+      atomic creation and undo/redo, preferences, and responsive tool controls.
+
+- [x] Add group Play/Pause before reorder, idle group playback and first-track
+      Music playback; add track Stop before Play/Pause with position preservation
+      and individual resume. Group Audio Settings defaults with Music Repeat off
+      and new Music group Loop on; verify preferences, creation history and playback.
+
 - [x] Use the non-split layout for single-faction zones without Engagements;
       retain dedicated Engagement sections and verify faction-entry/departure
       history, validation, and rendering.

@@ -190,6 +190,7 @@ describe("Audio panel volume controls", () => {
     ]));
     expect(within(soundboardBehindLibrary).getByRole("radiogroup", { name: /Type for/ })).toBeInTheDocument();
     act(() => fireEvent.click(within(soundboardBehindLibrary).getByRole("radio", { name: "Effect" })));
+    act(() => fireEvent.click(within(soundboardBehindLibrary).getByRole("button", { name: "Enable repeat" })));
     expect(within(soundboardBehindLibrary).getAllByRole("option", { name: "15m" })).toHaveLength(2);
 
     act(() => fireEvent.click(within(soundboardBehindLibrary).getByRole("button", { name: "Collapse Ambience subsection" })));

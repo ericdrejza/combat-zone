@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useRef, useState, type PropsWithChildren } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type PropsWithChildren } from "react";
 import { directImageSourceUrl, type ImageAssetSource } from "./imageAssetSource";
 
 export type ImageAssetResolver = (source: ImageAssetSource) => Promise<Blob | string>;
@@ -76,6 +76,19 @@ export function ImageAssetResolverProvider({
   resolve
 }: PropsWithChildren<{ resolve: ImageAssetResolver | null }>) {
   return <ResolverContext.Provider value={resolve}>{children}</ResolverContext.Provider>;
+}
+
+/** Acquires a source for an imperative reader; release it after reading metadata. */
+export function useImageSourceLease() {
+  const resolver = useContext(ResolverContext);
+  return useCallback(async (source: ImageAssetSource) => {
+    const direct = directImageSourceUrl(source);
+    if (direct) return { url: direct, release: () => undefined };
+    if (!resolver) return null;
+    const acquired = acquireResolvedSource(resolver, source);
+    try { return { url: await acquired.promise, release: acquired.release }; }
+    catch { acquired.release(); return null; }
+  }, [resolver]);
 }
 
 /** Resolves provider-backed sources to short-lived object URLs without persisting them in domain state. */

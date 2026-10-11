@@ -15,7 +15,8 @@ import type {
 } from './selection/types';
 import { canToolSelectEntityType, type ToolId } from './tools/toolRegistry';
 import type { ZoneShape } from '@entities/zone/types';
-import type { AudioCueType, AudioSectionType } from '@entities/audio/types';
+import type { AudioCueTypeChoice } from './audioToolTypes';
+import type { AudioSectionType } from '@entities/audio/types';
 import {
   DEFAULT_EDGE_PRESET,
   type EdgePreset
@@ -77,7 +78,7 @@ export type InteractionState = {
   actorTool: ActorToolState;
   audioTool: {
     sectionType: AudioSectionType;
-    cueTypeBySection: Record<AudioSectionType, AudioCueType>;
+    cueTypeBySection: Record<AudioSectionType, AudioCueTypeChoice>;
   };
   activeToolId: ToolId;
   /** Session-only modifier used by touch selection controls. */
@@ -229,15 +230,15 @@ export const interactionSlice = createSlice({
         state.selection = initialSelection;
       }
     },
-    setAudioCueType(state, { payload }: PayloadAction<AudioCueType>) {
-      if ((state.audioTool.sectionType === 'actor' || state.audioTool.sectionType === 'zone') && payload === 'track') return;
+    setAudioCueType(state, { payload }: PayloadAction<AudioCueTypeChoice>) {
+      if ((state.audioTool.sectionType === 'actor' || state.audioTool.sectionType === 'zone') && payload !== 'effect') return;
       state.audioTool.cueTypeBySection[state.audioTool.sectionType] = payload;
     },
-    setAudioCueTypePresets(state, { payload }: PayloadAction<Record<AudioSectionType, AudioCueType>>) {
+    setAudioCueTypePresets(state, { payload }: PayloadAction<Record<AudioSectionType, AudioCueTypeChoice>>) {
       state.audioTool.cueTypeBySection = {
         ...payload,
-        actor: payload.actor === 'track' ? 'effect' : payload.actor,
-        zone: payload.zone === 'track' ? 'effect' : payload.zone
+        actor: 'effect',
+        zone: 'effect'
       };
     },
     setTouchMultiSelect(state, { payload }: PayloadAction<boolean>) {

@@ -28,11 +28,7 @@ import {
 } from '../../panels/zoneless_actors/zonelessActorDrag';
 import { toSvgPoint } from '../zones/zoneGeometry';
 import { useCanvasViewport } from '../CanvasViewportContext';
-import { createAudioCue } from '@entities/audio/audioMutations';
-import { createEncounterActionRecord } from '@core/history/createEncounterActionRecord';
-import { commitEncounterChange } from '@store/encounterSlice';
 import { resolveLibraryAsset } from '@library/librarySlice';
-import { useInterfacePreferences } from '@ui/interface_preferences/InterfacePreferenceProvider';
 import { useAudioCueAssignment } from '@ui/audio/useAudioCueAssignment';
 import type { AudioCuePlacement } from '@entities/audio/types';
 
@@ -58,7 +54,6 @@ export function useCanvasDropHandlers({
   encounter,
   library
 }: UseCanvasDropHandlersInput) {
-  const { audioRepeatDelayDefaults, audioCueVolumeDefault } = useInterfacePreferences();
   const audioAssignment = useAudioCueAssignment();
   const [pendingAudioDrop, setPendingAudioDrop] = useState<PendingAudioDrop | null>(null);
   const { getViewportSize, zoom: viewportZoom } = useCanvasViewport();
@@ -70,22 +65,10 @@ export function useCanvasDropHandlers({
   };
 
   function commitAudioDrop(nodeId: string, placement: AudioCuePlacement) {
-    const cueId = `audio-${crypto.randomUUID?.() ?? Date.now()}`;
-    dispatch(commitEncounterChange({
-      action: createEncounterActionRecord('audio.createCue', { cueId, libraryNodeId: nodeId }),
-      nextEncounter: createAudioCue(encounter, {
-        id: cueId,
-        repeatDelay: { ...audioRepeatDelayDefaults },
-        volume: audioCueVolumeDefault,
-        libraryNodeId: nodeId,
-        placement,
-        type: encounter.audioCueGroups.byId[placement.groupId]?.section === 'music'
-          ? 'track'
-          : audioTool.cueTypeBySection[encounter.audioCueGroups.byId[placement.groupId]?.section === 'ambiance'
-            ? 'encounter'
-            : encounter.audioCueGroups.byId[placement.groupId]?.section === 'actor' ? 'actor' : 'zone']
-      })
-    }));
+    const group = encounter.audioCueGroups.byId[placement.groupId];
+    const node = library.sections.audio.nodesById[nodeId];
+    if (!group || !node) return;
+    audioAssignment.addToGroup(node, placement, group.section === 'music' ? 'track' : audioTool.cueTypeBySection[group.section === 'ambiance' ? 'encounter' : group.section]);
   }
 
   function choosePendingAudioGroup(groupId: string) {

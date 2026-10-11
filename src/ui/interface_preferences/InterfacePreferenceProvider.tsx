@@ -1,7 +1,8 @@
+import { readLibraryGridCardSize, readLibraryViewDefault } from "./libraryPreferences";
 import { readBackgroundResizeOverflowBehavior } from '@core/encounter/backgroundResizeOverflow';
 import { isClockStyle } from "@entities/zone/clockStyle";
 import { createContext, type ReactNode, useContext, useEffect, useState } from "react";
-import { readAudioCueVolumeDefault, readAudioRepeatDelayDefaults } from "./audioPreferences";
+import { readAudioCueVolumeDefault, readAudioRepeatDelayDefaults, readAmbienceCueTypeDefault, readAmbienceDurationThreshold } from "./audioPreferences";
 import { LOCAL_PREFERENCES_RESET_EVENT } from "@ui/motion_preferences/MotionPreferenceProvider";
 import type { EncounterPanelOrder } from "@core/encounter/panelLayout";
 import { INTERFACE_PREFERENCES_STORAGE_KEY, defaultPreferences, defaultValue, readPreferences, type InterfacePreferences } from "./interfacePreferenceStorage";
@@ -42,9 +43,9 @@ export function InterfacePreferenceProvider({ children }: { children: ReactNode 
     };
   }, []);
 
-  function updatePreferences(update: Partial<typeof defaultPreferences>) {
+  function updatePreferences(update: Partial<typeof defaultPreferences> | ((current: typeof defaultPreferences) => Partial<typeof defaultPreferences>)) {
     setPreferences((current) => {
-      const next = { ...current, ...update };
+      const next = { ...current, ...(typeof update === "function" ? update(current) : update) };
       try {
         localStorage.setItem(
           INTERFACE_PREFERENCES_STORAGE_KEY,
@@ -63,6 +64,10 @@ export function InterfacePreferenceProvider({ children }: { children: ReactNode 
         ...preferences,
         setBackgroundResizeOverflowBehavior: value => updatePreferences({ backgroundResizeOverflowBehavior: readBackgroundResizeOverflowBehavior(value) }),
         setAudioCueVolumeDefault: (volume) => updatePreferences({ audioCueVolumeDefault: readAudioCueVolumeDefault(volume) }),
+        setAudioAmbienceCueTypeDefault: (value) => updatePreferences({ audioAmbienceCueTypeDefault: readAmbienceCueTypeDefault(value) }),
+        setAudioAmbienceDurationThreshold: (value) => updatePreferences({ audioAmbienceDurationThreshold: readAmbienceDurationThreshold(value) }),
+        setAudioMusicCueRepeatDefault: (audioMusicCueRepeatDefault) => updatePreferences({ audioMusicCueRepeatDefault }),
+        setAudioMusicGroupLoopDefault: (audioMusicGroupLoopDefault) => updatePreferences({ audioMusicGroupLoopDefault }),
         setAudioMediaKeyScope: (audioMediaKeyScope) => updatePreferences({ audioMediaKeyScope }),
         autoSelectActiveActor,
         autoSelectActiveActorDefault: preferences.autoSelectActiveActor,
@@ -73,6 +78,14 @@ export function InterfacePreferenceProvider({ children }: { children: ReactNode 
           updatePreferences({ autoSelectActiveActor: enabled }),
         setEncounterCreationTool: (encounterCreationTool) =>
           updatePreferences({ encounterCreationTool }),
+        setLibraryCloseOnOutsideClick: (libraryCloseOnOutsideClick) => updatePreferences({ libraryCloseOnOutsideClick }),
+        setLibraryModalViewDefault: (view) => updatePreferences({ libraryModalViewDefault: readLibraryViewDefault(view) }),
+        setLibraryPanelViewDefault: (view) => updatePreferences({ libraryPanelViewDefault: readLibraryViewDefault(view) }),
+        setLibraryGridCardSize: (size) => updatePreferences({ libraryGridCardSize: readLibraryGridCardSize(size) }),
+        setLibraryIndependentGridCardSizes: (libraryIndependentGridCardSizes) => updatePreferences({ libraryIndependentGridCardSizes }),
+        setLibrarySectionGridCardSize: (sectionId, size) => updatePreferences((current) => ({
+          libraryGridCardSizes: { ...current.libraryGridCardSizes, [sectionId]: readLibraryGridCardSize(size) }
+        })),
         setPanelOrder: (panelOrder) => updatePreferences({ panelOrder }),
         setEnableAssetAnimation: (enabled) =>
           updatePreferences({ enableAssetAnimation: enabled }),

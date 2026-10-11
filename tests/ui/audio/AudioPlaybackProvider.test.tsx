@@ -62,6 +62,10 @@ function Harness() {
     <button onClick={() => void playback.play(effectCue, "effect.mp3")}>Effect</button>
     <button onClick={() => void playback.play(effectCue, "effect.mp3", `trigger-${FakeAudio.instances.length}`)}>Triggered effect</button>
     <button onClick={() => void playback.play(nonRepeatingTrackCue, "single-track.mp3")}>Single track</button>
+    <button onClick={() => void playback.play({ ...trackCue, id: "other", placement: { type: "group", groupId: "other" } }, "other.mp3")}>Other group</button>
+    <button onClick={() => playback.pauseSection({ groupId: "ambience" })}>Pause group</button>
+    <button onClick={() => playback.resumeSection({ groupId: "ambience" })}>Resume group</button>
+    <output aria-label="other status">{playback.getStatus("other")}</output>
     <button onClick={playback.pauseAll}>Pause all</button>
     <button onClick={playback.resumeAll}>Resume all</button>
     <button onClick={playback.pauseMusic}>Pause music</button>
@@ -99,6 +103,22 @@ describe("AudioPlaybackProvider", () => {
 
   afterEach(() => vi.unstubAllGlobals());
 
+  it("pauses and resumes only the selected group and gates its new playback", async () => {
+    render(<AudioPlaybackProvider><Harness /></AudioPlaybackProvider>);
+    await act(async () => fireEvent.click(screen.getByText("Track")));
+    await act(async () => fireEvent.click(screen.getByText("Other group")));
+    FakeAudio.instances[0].currentTime = 12;
+    fireEvent.click(screen.getByText("Pause group"));
+    expect(screen.getByLabelText("playback status")).toHaveTextContent("running:paused:idle");
+    expect(screen.getByLabelText("other status")).toHaveTextContent("playing");
+    expect(FakeAudio.instances[1].pause).not.toHaveBeenCalled();
+    await act(async () => fireEvent.click(screen.getByText("Single track")));
+    expect(FakeAudio.instances[2].play).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByText("Resume group"));
+    expect(FakeAudio.instances[0].currentTime).toBe(12);
+    expect(FakeAudio.instances[2].play).toHaveBeenCalledOnce();
+    expect(screen.getByLabelText("other status")).toHaveTextContent("playing");
+  });
   it("applies master and cue volume and stops with a reset", async () => {
     render(<AudioPlaybackProvider><Harness /></AudioPlaybackProvider>);
     await act(async () => fireEvent.click(screen.getByRole("button", { name: "Track" })));

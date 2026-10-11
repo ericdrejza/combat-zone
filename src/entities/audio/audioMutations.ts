@@ -66,9 +66,9 @@ export function deleteAudioCue(state: EncounterState, cueId: string): EncounterS
   return { ...state, audioCues: { byId, allIds: state.audioCues.allIds.filter((id) => id !== cueId) } };
 }
 
-export function createAudioCueGroup(state: EncounterState, input: { id: string; name?: string; section: AudioCueGroupSection }): EncounterState {
+export function createAudioCueGroup(state: EncounterState, input: { id: string; name?: string; repeat?: boolean; section: AudioCueGroupSection }): EncounterState {
   if (state.audioCueGroups.byId[input.id]) return state;
-  const group: AudioCueGroup = { id: input.id, name: input.name?.trim() || getDefaultAudioCueGroupName(input.section), repeat: false, section: input.section };
+  const group: AudioCueGroup = { id: input.id, name: input.name?.trim() || getDefaultAudioCueGroupName(input.section), repeat: input.section === "music" && (input.repeat ?? false), section: input.section };
   return {
     ...state,
     audioCueGroups: upsert(state.audioCueGroups, group),

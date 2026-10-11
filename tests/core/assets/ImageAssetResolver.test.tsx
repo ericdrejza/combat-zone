@@ -4,7 +4,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   ImageAssetResolverProvider,
-  useResolvedImageSource
+  useResolvedImageSource,
+  useImageSourceLease
 } from "@core/assets/ImageAssetResolver";
 import type { ImageAssetSource } from "@core/assets/imageAssetSource";
 
@@ -35,6 +36,24 @@ describe("ImageAssetResolver", () => {
     expect(revokeObjectURL).not.toHaveBeenCalled();
     second.unmount();
     expect(revokeObjectURL).toHaveBeenCalledWith("blob:shared");
+  });
+
+  it("keeps an imperative metadata lease until both readers release the URL", async () => {
+    const source: ImageAssetSource = { kind: "local_asset", assetId: "c".repeat(64), byteLength: 5 };
+    const resolver = vi.fn(async () => new Blob(["asset"]));
+    vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:metadata");
+    const revoke = vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => undefined);
+    const wrapper = ({ children }: PropsWithChildren) => <ImageAssetResolverProvider resolve={resolver}>{children}</ImageAssetResolverProvider>;
+    const rendered = renderHook(() => useResolvedImageSource(source), { wrapper });
+    const reader = renderHook(() => useImageSourceLease(), { wrapper });
+    const lease = await reader.result.current(source);
+    await waitFor(() => expect(rendered.result.current).toBe("blob:metadata"));
+    expect(lease?.url).toBe("blob:metadata");
+    expect(resolver).toHaveBeenCalledOnce();
+    rendered.unmount();
+    expect(revoke).not.toHaveBeenCalled();
+    lease?.release();
+    expect(revoke).toHaveBeenCalledWith("blob:metadata");
   });
 
   it("keeps the resolved URL when an equivalent source object replaces the original", async () => {

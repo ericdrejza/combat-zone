@@ -1,6 +1,8 @@
+import type { LibrarySectionId } from "@library/types";
+import { DEFAULT_LIBRARY_GRID_CARD_SIZE, DEFAULT_LIBRARY_GRID_CARD_SIZES, readLibraryGridCardSizes, type LibraryGridCardSizes, readLibraryGridCardSize, readLibraryViewDefault, type LibraryViewDefault } from "./libraryPreferences";
 import { readBackgroundResizeOverflowBehavior, type BackgroundResizeOverflowBehavior } from '@core/encounter/backgroundResizeOverflow';
 import { DEFAULT_CLOCK_STYLE, isClockStyle, type ClockStyle } from "@core/entity_resources/clockStyle";
-import { readAudioCueVolumeDefault, readAudioRepeatDelayDefaults } from "./audioPreferences";
+import { readAudioCueVolumeDefault, readAudioRepeatDelayDefaults, readAmbienceCueTypeDefault, readAmbienceDurationThreshold, type AmbienceCueTypeDefault } from "./audioPreferences";
 import { readPanelVisibility } from "./panelPreferences";
 import { DEFAULT_DOCKABLE_PANEL_VISIBILITY, type DockablePanelId, type DockablePanelVisibility } from "@ui/panels/dockablePanelMetadata";
 import { DEFAULT_AUDIO_REPEAT_DELAY_SETTINGS, type AudioRepeatDelaySettings } from "@entities/audio/types";
@@ -25,12 +27,22 @@ export const DEFAULT_ZONE_COLOR_DEFAULTS: ZoneColorDefaults = {
 export type DurableInterfacePreferences = {
   backgroundResizeOverflowBehavior: BackgroundResizeOverflowBehavior;
   audioCueVolumeDefault: number;
+  audioAmbienceCueTypeDefault: AmbienceCueTypeDefault;
+  audioAmbienceDurationThreshold: number;
+  audioMusicCueRepeatDefault: boolean;
+  audioMusicGroupLoopDefault: boolean;
   audioMediaKeyScope: "all" | "music";
   audioMasterVolume: number;
   audioRepeatDelayDefaults: AudioRepeatDelaySettings;
   autoSelectActiveActor: boolean;
   enableAssetAnimation: boolean;
   encounterCreationTool: EncounterCreationTool;
+  libraryCloseOnOutsideClick: boolean;
+  libraryModalViewDefault: LibraryViewDefault;
+  libraryPanelViewDefault: LibraryViewDefault;
+  libraryGridCardSize: number;
+  libraryIndependentGridCardSizes: boolean;
+  libraryGridCardSizes: LibraryGridCardSizes;
   panelOrder: EncounterPanelOrder;
   panelVisibility: DockablePanelVisibility;
   panWithRightClickDrag: boolean;
@@ -47,12 +59,22 @@ export type DurableInterfacePreferences = {
 export type InterfacePreferences = DurableInterfacePreferences & {
   setBackgroundResizeOverflowBehavior: (behavior: BackgroundResizeOverflowBehavior) => void;
   setAudioCueVolumeDefault: (volume: number) => void;
+  setAudioAmbienceCueTypeDefault: (value: AmbienceCueTypeDefault) => void;
+  setAudioAmbienceDurationThreshold: (seconds: number) => void;
+  setAudioMusicCueRepeatDefault: (enabled: boolean) => void;
+  setAudioMusicGroupLoopDefault: (enabled: boolean) => void;
   setAudioMediaKeyScope: (scope: "all" | "music") => void;
   setAudioMasterVolume: (volume: number) => void;
   setAudioRepeatDelayDefaults: (settings: AudioRepeatDelaySettings) => void;
   autoSelectActiveActorDefault: boolean;
   setAutoSelectActiveActor: (enabled: boolean) => void;
   setEncounterCreationTool: (tool: EncounterCreationTool) => void;
+  setLibraryCloseOnOutsideClick: (enabled: boolean) => void;
+  setLibraryModalViewDefault: (view: LibraryViewDefault) => void;
+  setLibraryPanelViewDefault: (view: LibraryViewDefault) => void;
+  setLibraryGridCardSize: (size: number) => void;
+  setLibraryIndependentGridCardSizes: (enabled: boolean) => void;
+  setLibrarySectionGridCardSize: (sectionId: LibrarySectionId, size: number) => void;
   setPanelOrder: (order: EncounterPanelOrder) => void;
   setEnableAssetAnimation: (enabled: boolean) => void;
   setAutoSelectActiveActorDefault: (enabled: boolean) => void;
@@ -71,12 +93,22 @@ export type InterfacePreferences = DurableInterfacePreferences & {
 export const defaultPreferences: DurableInterfacePreferences = {
   backgroundResizeOverflowBehavior: 'zoneless',
   audioCueVolumeDefault: 0.5,
+  audioAmbienceCueTypeDefault: "asset_icon",
+  audioAmbienceDurationThreshold: 30,
+  audioMusicCueRepeatDefault: false,
+  audioMusicGroupLoopDefault: true,
   audioMediaKeyScope: "music",
   audioMasterVolume: 1,
   audioRepeatDelayDefaults: { ...DEFAULT_AUDIO_REPEAT_DELAY_SETTINGS },
   autoSelectActiveActor: true,
   enableAssetAnimation: true,
   encounterCreationTool: "zone",
+  libraryCloseOnOutsideClick: false,
+  libraryModalViewDefault: "grid",
+  libraryPanelViewDefault: "grid",
+  libraryGridCardSize: DEFAULT_LIBRARY_GRID_CARD_SIZE,
+  libraryIndependentGridCardSizes: false,
+  libraryGridCardSizes: DEFAULT_LIBRARY_GRID_CARD_SIZES,
   panelOrder: DEFAULT_ENCOUNTER_PANEL_ORDER,
   panelVisibility: DEFAULT_DOCKABLE_PANEL_VISIBILITY,
   panWithRightClickDrag: true,
@@ -95,11 +127,21 @@ export const defaultValue: InterfacePreferences = {
   setBackgroundResizeOverflowBehavior: () => undefined,
   autoSelectActiveActorDefault: true,
   setAudioCueVolumeDefault: () => undefined,
+  setAudioAmbienceCueTypeDefault: () => undefined,
+  setAudioAmbienceDurationThreshold: () => undefined,
+  setAudioMusicCueRepeatDefault: () => undefined,
+  setAudioMusicGroupLoopDefault: () => undefined,
   setAudioMediaKeyScope: () => undefined,
   setAudioMasterVolume: () => undefined,
   setAudioRepeatDelayDefaults: () => undefined,
   setAutoSelectActiveActor: () => undefined,
   setEncounterCreationTool: () => undefined,
+  setLibraryCloseOnOutsideClick: () => undefined,
+  setLibraryModalViewDefault: () => undefined,
+  setLibraryPanelViewDefault: () => undefined,
+  setLibraryGridCardSize: () => undefined,
+  setLibraryIndependentGridCardSizes: () => undefined,
+  setLibrarySectionGridCardSize: () => undefined,
   setPanelOrder: () => undefined,
   setEnableAssetAnimation: () => undefined,
   setAutoSelectActiveActorDefault: () => undefined,
@@ -127,6 +169,10 @@ export function readPreferences(): DurableInterfacePreferences {
     return {
       backgroundResizeOverflowBehavior: readBackgroundResizeOverflowBehavior(stored?.backgroundResizeOverflowBehavior),
       audioCueVolumeDefault: readAudioCueVolumeDefault(stored?.audioCueVolumeDefault),
+      audioAmbienceCueTypeDefault: readAmbienceCueTypeDefault(stored?.audioAmbienceCueTypeDefault),
+      audioAmbienceDurationThreshold: readAmbienceDurationThreshold(stored?.audioAmbienceDurationThreshold),
+      audioMusicCueRepeatDefault: typeof stored?.audioMusicCueRepeatDefault === "boolean" ? stored.audioMusicCueRepeatDefault : false,
+      audioMusicGroupLoopDefault: typeof stored?.audioMusicGroupLoopDefault === "boolean" ? stored.audioMusicGroupLoopDefault : true,
       audioMediaKeyScope: stored?.audioMediaKeyScope === "all" ? "all" : "music",
       audioMasterVolume:
         typeof stored?.audioMasterVolume === "number" && stored.audioMasterVolume >= 0 && stored.audioMasterVolume <= 1
@@ -146,6 +192,12 @@ export function readPreferences(): DurableInterfacePreferences {
         stored?.encounterCreationTool === "zone"
           ? stored.encounterCreationTool
           : defaultPreferences.encounterCreationTool,
+      libraryCloseOnOutsideClick: stored?.libraryCloseOnOutsideClick === true,
+      libraryModalViewDefault: readLibraryViewDefault(stored?.libraryModalViewDefault),
+      libraryPanelViewDefault: readLibraryViewDefault(stored?.libraryPanelViewDefault),
+      libraryGridCardSize: readLibraryGridCardSize(stored?.libraryGridCardSize),
+      libraryIndependentGridCardSizes: stored?.libraryIndependentGridCardSizes === true,
+      libraryGridCardSizes: readLibraryGridCardSizes(stored?.libraryGridCardSizes),
       panelOrder: isEncounterPanelOrder(stored?.panelOrder)
         ? stored.panelOrder
         : DEFAULT_ENCOUNTER_PANEL_ORDER,

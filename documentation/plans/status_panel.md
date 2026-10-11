@@ -104,44 +104,45 @@ The complete approved catalog is:
 | # | Condition | Lucide icon |
 | --- | --- | --- |
 | 1 | Aiming | Crosshair |
-| 2 | Assisted / Helped | Handshake |
-| 3 | Bleeding | Droplet |
-| 4 | Blessed | Sparkle |
-| 5 | Blinded | EyeOff |
-| 6 | Bolstered | BicepsFlexed |
-| 7 | Burning | Flame |
-| 8 | Charmed | Magnet |
-| 9 | Concentrating | Brain |
-| 10 | Confused | Shell |
-| 11 | Cover | BrickWallShield |
-| 12 | Cursed | BadgeX |
-| 13 | Deafened | EarOff |
-| 14 | Disguised | HatGlasses |
-| 15 | Enchanted | WandSparkles |
-| 16 | Energized | Zap |
-| 17 | Exhausted / Fatigued | BatteryLow |
-| 18 | Flying | Feather |
-| 19 | Frightened | Ghost |
-| 20 | Grappled / Grabbed | HandGrab |
-| 21 | Guarded / Shielded | ShieldCheck |
-| 22 | Hasted / Quickened | SportShoe |
-| 23 | Hidden / Concealed | EyeDashed |
-| 24 | Immobilized | Anchor |
-| 25 | Incapacitated | Ban |
-| 26 | Inspired | Lightbulb |
-| 27 | Invisible | EyeClosed |
-| 28 | Marked | LocateFixed |
-| 29 | Muted / Silenced | MouthOff |
-| 30 | Paralyzed | LockKeyhole |
-| 31 | Petrified | Stone |
-| 32 | Poisoned | Biohazard |
-| 33 | Powerless | ZapOff |
-| 34 | Prone | ArrowDownToLine |
-| 35 | Resistant | ShieldHalf |
-| 36 | Restrained | Link |
-| 37 | Sickened | Thermometer |
-| 38 | Slowed | Snail |
-| 39 | Stunned | Galaxy |
+| 2 | Asleep | EyeClosed |
+| 3 | Assisted / Helped | Handshake |
+| 4 | Bleeding | Droplet |
+| 5 | Blessed | Sparkle |
+| 6 | Blinded | EyeOff |
+| 7 | Bolstered | BicepsFlexed |
+| 8 | Burning | Flame |
+| 9 | Charmed | Magnet |
+| 10 | Concentrating | Brain |
+| 11 | Confused | Shell |
+| 12 | Cover | BrickWallShield |
+| 13 | Cursed | BadgeX |
+| 14 | Deafened | EarOff |
+| 15 | Disguised | HatGlasses |
+| 16 | Enchanted | WandSparkles |
+| 17 | Energized | Zap |
+| 18 | Exhausted / Fatigued | BatteryLow |
+| 19 | Flying | Feather |
+| 20 | Frightened | Ghost |
+| 21 | Grappled / Grabbed | HandGrab |
+| 22 | Guarded / Shielded | ShieldCheck |
+| 23 | Hasted / Quickened | SportShoe |
+| 24 | Hidden / Concealed | EyeDashed |
+| 25 | Immobilized | Anchor |
+| 26 | Incapacitated | Ban |
+| 27 | Inspired | Lightbulb |
+| 28 | Invisible | EyeDashed |
+| 29 | Marked | LocateFixed |
+| 30 | Muted / Silenced | MouthOff |
+| 31 | Paralyzed | LockKeyhole |
+| 32 | Petrified | Stone |
+| 33 | Poisoned | Biohazard |
+| 34 | Powerless | ZapOff |
+| 35 | Prone | ArrowDownToLine |
+| 36 | Resistant | ShieldHalf |
+| 37 | Restrained | Link |
+| 38 | Sickened | Thermometer |
+| 39 | Slowed | Snail |
+| 40 | Stunned | Galaxy |
 
 Use stable lowercase kebab-case condition IDs based on the first label before a
 slash, preserving existing IDs such as `hidden`. Cover belongs to Conditions.

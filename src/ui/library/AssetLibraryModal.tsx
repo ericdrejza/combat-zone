@@ -112,7 +112,7 @@ export function AssetLibraryModal({
   });
   const persistence = usePersistence();
   const encounterContextMenu = useEncounterContextMenu();
-  const { enableAssetAnimation } = useInterfacePreferences();
+  const { enableAssetAnimation, libraryCloseOnOutsideClick } = useInterfacePreferences();
   const cloud = useOptionalCloudSync();
   const activeBackgroundImage = useSelector(
     (state: RootState) => state.encounter.present.backgroundImage
@@ -448,6 +448,9 @@ export function AssetLibraryModal({
       aria-modal="true"
       className="viewport-overlay z-[100] flex items-center justify-center bg-black/40 p-2 lg:p-6"
       role="dialog"
+      onMouseDown={(event) => {
+        if (libraryCloseOnOutsideClick && event.button === 0 && event.target === event.currentTarget && !controller.draggedNodeId && !pointerDragPreview && !encounterPointerDragPreview) onClose();
+      }}
     >
       <div className="flex h-full max-h-[44rem] w-full max-w-[68rem] flex-col overflow-hidden rounded-2xl border border-canvas-line bg-canvas-panel shadow-2xl lg:rounded-3xl">
         <header className="flex items-center justify-between border-b border-canvas-line px-3 py-3 lg:px-5 lg:py-4">

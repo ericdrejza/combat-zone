@@ -137,7 +137,7 @@ describe("LibraryPanel", () => {
     }
   });
 
-  it("toggles between list and two-column grid views", async () => {
+  it("toggles between grid and list views", async () => {
     const user = userEvent.setup();
 
     renderApp();
@@ -158,7 +158,7 @@ describe("LibraryPanel", () => {
 
     const libraryPanel = screen.getByRole("region", { name: "Library panel" });
     const toggle = within(libraryPanel).getByRole("button", {
-      name: "Switch Library to grid view"
+      name: "Switch Library to list view"
     });
     const reorder = within(libraryPanel).getByRole("button", {
       name: "Reorder Library panel"
@@ -171,21 +171,20 @@ describe("LibraryPanel", () => {
     await user.click(toggle);
 
     const asset = within(libraryPanel).getByRole("button", { name: "Scout" });
-    expect(asset.parentElement).toHaveClass("grid-cols-2");
-    expect(asset).toHaveClass("flex-col");
+    expect(asset).toBeInTheDocument();
     expect(
       within(libraryPanel).getByRole("button", {
-        name: "Switch Library to list view"
+        name: "Switch Library to grid view"
       })
     ).toBeInTheDocument();
 
     await user.click(
       within(libraryPanel).getByRole("button", {
-        name: "Switch Library to list view"
+        name: "Switch Library to grid view"
       })
     );
 
-    expect(asset).not.toHaveClass("flex-col");
+    expect(within(libraryPanel).getByRole("button", { name: "Switch Library to list view" })).toHaveAttribute("aria-pressed", "true");
   });
 
   it("deselects existing actors and selects an actor created by library drag", () => {

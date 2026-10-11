@@ -1,3 +1,4 @@
+import { resolveLibraryGridCardSize } from "@ui/interface_preferences/libraryPreferences";
 import { Folder, FolderUp, Grid2X2, HardDrive, Headphones, List, Play } from "lucide-react";
 import { useTime, useTransform } from "motion/react";
 import { useEffect, useRef, useState } from "react";
@@ -7,6 +8,7 @@ import { resolveLibraryAsset } from "@library/librarySlice";
 import type { LibraryNode, LibrarySection } from "@library/types";
 import { hasLeftDragSurface } from "./libraryDrag";
 import { getAlphabetizedChildren } from "./libraryUi";
+import { libraryGridStyle } from "./libraryGridStyle";
 import { AssetLibraryContentNode } from "./AssetLibraryContentNode";
 import { AssetLibraryEncounterItem } from "./AssetLibraryEncounterItem";
 import { AssetLibraryPreview } from "./AssetLibraryPreview";
@@ -114,15 +116,17 @@ export function AssetLibraryContents({
   const encounterCardRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const libraryNodeCardRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const [localViewMode, setLocalViewMode] =
-    useState<AssetLibraryViewMode>("grid");
+    useState<AssetLibraryViewMode | null>(null);
   const [localContextButtonState, setLocalContextButtonState] = useState(
     DEFAULT_ASSET_LIBRARY_CONTEXT_BUTTON_STATE
   );
   const contextButtonState =
     controlledContextButtonState ?? localContextButtonState;
   const { playAnimations, previewAudio, showAssetSizes } = contextButtonState;
-  const { enableAssetAnimation } = useInterfacePreferences();
-  const viewMode = controlledViewMode ?? localViewMode;
+  const preferences = useInterfacePreferences();
+  const { enableAssetAnimation, libraryModalViewDefault } = preferences;
+  const libraryGridCardSize = resolveLibraryGridCardSize(preferences, activeSection.id);
+  const viewMode = controlledViewMode ?? localViewMode ?? libraryModalViewDefault;
 
   function updateContextButtonState(
     update: Partial<AssetLibraryContextButtonState>
@@ -308,7 +312,8 @@ export function AssetLibraryContents({
         : "min-h-0 flex-1 overflow-auto"}>
         <div
           aria-label="Current directory contents"
-          className={viewMode === "grid" ? "grid grid-cols-[repeat(auto-fill,minmax(8rem,1fr))] gap-3" : "space-y-2 lg:overflow-y-auto"}
+          className={viewMode === "grid" ? "grid gap-3" : "space-y-2 lg:overflow-y-auto"}
+          style={viewMode === "grid" ? libraryGridStyle(libraryGridCardSize) : undefined}
           role="group"
         >
           {activeSection.id === "encounters" && currentFolder.id === activeSection.rootId && recentEncounterIds.length > 0 ? (

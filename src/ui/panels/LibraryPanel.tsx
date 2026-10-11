@@ -1,9 +1,5 @@
-import {
-  ChevronLeft,
-  Folder,
-  Grid2X2,
-  List
-} from "lucide-react";
+import { resolveLibraryGridCardSize } from "@ui/interface_preferences/libraryPreferences";
+import { ChevronLeft, Folder } from "lucide-react";
 import type { DragEvent } from "react";
 import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -27,6 +23,8 @@ import { commitBackgroundImage } from "@ui/toolbar/background/backgroundCanvasAc
 import { useCanvasViewport } from "@ui/canvas/CanvasViewportContext";
 import { armCompactCanvasTransfer } from "@ui/canvas/compactCanvasTransfer";
 import { useOptionalCloudSync } from "@ui/cloud_sync";
+import { useInterfacePreferences } from "@ui/interface_preferences/InterfacePreferenceProvider";
+import { libraryGridStyle } from "@ui/library/libraryGridStyle";
 import { useAudioCueAssignment } from "@ui/audio/useAudioCueAssignment";
 
 function getPanelSectionId(activeToolId: ToolId): LibrarySectionId | null {
@@ -57,44 +55,14 @@ type LibraryPanelProps = {
   viewMode: LibraryViewMode;
 };
 
-type LibraryPanelViewToggleProps = {
-  onToggle: () => void;
-  viewMode: LibraryViewMode;
-};
-
-/** Keeps the library layout preference next to the library-specific panel UI. */
-export function LibraryPanelViewToggle({
-  onToggle,
-  viewMode
-}: LibraryPanelViewToggleProps) {
-  const showingGrid = viewMode === "grid";
-
-  return (
-    <button
-      aria-label={
-        showingGrid
-          ? "Switch Library to list view"
-          : "Switch Library to grid view"
-      }
-      aria-pressed={showingGrid}
-      className="flex h-8 w-8 items-center justify-center rounded-full border border-canvas-line bg-canvas-surface text-canvas-muted transition hover:bg-canvas"
-      onClick={onToggle}
-      type="button"
-    >
-      {showingGrid ? (
-        <List aria-hidden="true" className="h-4 w-4" />
-      ) : (
-        <Grid2X2 aria-hidden="true" className="h-4 w-4" />
-      )}
-    </button>
-  );
-}
+export { LibraryPanelHeaderActions, LibraryPanelViewToggle } from "./LibraryPanelHeaderActions";
 
 export function LibraryPanel({
   focusRequest,
   onFocusRequestHandled,
   viewMode
 }: LibraryPanelProps) {
+  const preferences = useInterfacePreferences();
   const dispatch = useDispatch();
   const cloud = useOptionalCloudSync();
   const audioAssignment = useAudioCueAssignment();
@@ -161,6 +129,7 @@ export function LibraryPanel({
   }
 
   const activeSectionId = sectionId;
+  const libraryGridCardSize = resolveLibraryGridCardSize(preferences, activeSectionId);
   const section = library.sections[activeSectionId];
   const currentFolderId = (
     currentFolderBySection[activeSectionId] &&
@@ -322,8 +291,9 @@ export function LibraryPanel({
       ) : null}
       <div
         className={
-          viewMode === "grid" ? "grid grid-cols-2 gap-2" : "space-y-2"
+          viewMode === "grid" ? "grid gap-2" : "space-y-2"
         }
+        style={viewMode === "grid" ? libraryGridStyle(libraryGridCardSize) : undefined}
       >
         {children.map((node) => {
           return (

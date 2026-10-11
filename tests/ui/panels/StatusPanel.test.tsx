@@ -57,7 +57,7 @@ describe("StatusPanel", () => {
     expect(within(screen.getByRole("group", { name: "Buffs" })).getAllByRole("button").map((button) => button.getAttribute("aria-label"))).toEqual(buffLabels);
     expect(within(screen.getByRole("group", { name: "Debuffs" })).getAllByRole("button").map((button) => button.getAttribute("aria-label"))).toEqual(CONDITIONS.filter(({ label }) => !buffLabels.includes(label)).map(({ label }) => label));
     expect(within(screen.getByRole("group", { name: "Debuffs" })).getByRole("button", { name: "Concentrating" })).toBeInTheDocument();
-    expect(buttons).toHaveLength(39);
+    expect(buttons).toHaveLength(40);
     expect(screen.getByRole("radio", { name: "Healthy" })).toHaveAttribute("aria-checked", "true");
     expect(screen.getByRole("button", { name: "Stunned" })).toBeInTheDocument();
   });

@@ -766,6 +766,26 @@ side panels are hidden.
 
 Panels update based on selection context.
 
+The Library panel header has an icon-only BookOpen Library launcher immediately
+left of the Grid/List toggle on desktop and compact layouts. It opens the same
+Library section as the toolbar for the active tool, with desktop hover and
+touch-hold help. Opening the Library does not change encounter history.
+Interface Settings includes Library preferences: closing the modal by clicking
+outside it (initially off), separate modal and panel default views (both initially
+Grid), and a shared grid card minimum width slider from 80 to 256 pixels
+(initially 128). An Independent Library grid card sizes switch, initially off,
+shows separate Encounter, Background, Token, and Audio sliders when enabled,
+and the shared slider when disabled. Each individual size starts at 128 pixels
+and uses the same 80–256 range. Shared and individual values are retained when
+switching modes; both Library containers use the active asset type’s size.
+Card grids fit the available width without overflowing compact
+screens. Manual modal tab views and panel view choices remain session-only and
+take precedence over defaults; new tabs/sessions use the configured default.
+Preferences persist locally, synchronize across tabs, reset with application
+preferences, and do not enter encounter history. Clicking inside the Library or
+on a nested dialog backdrop does not dismiss the Library. Outside-click dismissal
+is suppressed while dragging; the explicit Close button remains available.
+
 Initiative can open in its own browser window through a ContactRound launcher
 in the panel header immediately left of its drag control,
 or the customizable I shortcut, which toggles the window from either window.
@@ -955,7 +975,7 @@ in that direction.
 Shared Systems templates
 are future work.
 
-The 39 approved Conditions in `plans/status_panel.md` are independent markers,
+The 40 approved Conditions in `plans/status_panel.md` are independent markers,
 grouped into Buffs and Debuffs in the Actor Status panel, each sorted alphabetically
 by display label with a muted subsection heading. Buffs are Aiming, Assisted /
 Helped, Blessed, Bolstered, Cover, Disguised, Enchanted, Energized, Flying,
@@ -1045,6 +1065,32 @@ legacy styles render as Traditional. The Firebase API accepts schemas 16, 15,
 styles when present.
 
 ### 7.5 Soundboard trigger updates
+
+Soundboard group headers have a Play/Pause control immediately left of the drag
+handle. An idle group can start all its cues; Music starts its first track only.
+Pause/resume applies to that group with the existing section transport behavior.
+Track cards have Stop to the left of Play/Pause; Pause retains the seek position
+and Stop resets playback. A paused track’s Play control resumes that track alone
+even when its group or section is paused, leaving other cues paused.
+Audio Settings groups creation preferences under Defaults, including cue volume
+and Effect repeat delay. Music cue Repeat defaults off; new Music group Loop
+defaults on. Both are switch preferences, apply to newly created cues/groups,
+and reset with application preferences. Existing cue/group values are preserved.
+Ambience cue type defaults offer Asset Icon (initial default), Duration threshold,
+Effect, and Track. Library Music icons mark Track assets and Audio icons mark
+Effect assets. The asset context menu offers Mark as Track or Mark as Effect
+according to the current mark; links share their original asset's mark.
+Duration threshold is an independent Audio Defaults setting, always editable
+regardless of the selected default type. It starts at 30 seconds: strictly longer
+sounds become Tracks, and equal/shorter sounds become Effects. Unavailable
+metadata falls back to the asset mark. Defaults apply to newly created Ambience
+cues with no explicit tool type; explicit Track/Effect choices take precedence.
+The Audio tool has a FileHeadphone Use asset cue type button, followed by a Timer
+Use duration threshold button, then Track and Effect. Asset mode classifies each
+cue by its asset mark; Timer mode uses the same saved duration threshold as
+duration-based Soundboard additions, including the asset-mark fallback. Zone/Actor groups remain
+Effect-only and Music remains Track-only. Classification does not modify
+existing cues or add a second persisted type to Library assets.
 
 Creating an audio group scrolls the Soundboard to reveal the entire group below
 its sticky header. Actor audio combines entering and leaving a zone into one

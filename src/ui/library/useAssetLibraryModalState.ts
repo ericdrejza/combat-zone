@@ -5,6 +5,7 @@ import type { LibrarySectionId } from "@library/types";
 import type { RootState } from "@store/store";
 import type { AssetLibraryViewMode } from "./assetLibraryView";
 import type { ContextMenuState } from "./AssetLibraryMenus";
+import { useInterfacePreferences } from "@ui/interface_preferences/InterfacePreferenceProvider";
 import { getFolderAncestorIds, getImageNodes } from "./libraryUi";
 
 export type LibraryFolderBySection = Partial<Record<LibrarySectionId, string>>;
@@ -35,6 +36,7 @@ export function useAssetLibraryModalState({
   onViewModeChange,
   viewModeBySection
 }: AssetLibraryModalStateOptions) {
+  const { libraryModalViewDefault } = useInterfacePreferences();
   const library = useSelector((state: RootState) => state.library);
   function getRememberedFolderId(sectionId: LibrarySectionId) {
     const section = library.sections[sectionId];
@@ -91,7 +93,7 @@ export function useAssetLibraryModalState({
   const currentFolder =
     activeSection.nodesById[currentFolderId] ??
     activeSection.nodesById[activeSection.rootId];
-  const viewMode = viewModeBySection[activeSectionId] ?? "grid";
+  const viewMode = viewModeBySection[activeSectionId] ?? libraryModalViewDefault;
   const contextNode = contextMenu
     ? activeSection.nodesById[contextMenu.nodeId]
     : null;

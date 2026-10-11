@@ -1,5 +1,7 @@
 import { Info, Pause, Play, SkipBack, SkipForward, Square } from "lucide-react";
 
+import type { AudioCueGroupSection } from "@entities/audio/types";
+
 import { useAudioPlayback } from "./AudioPlaybackProvider";
 import type { AudioPlaybackScope } from "./audioPlaybackTypes";
 
@@ -27,5 +29,25 @@ export function MusicSectionControls({ infoFirst = false }: { infoFirst?: boolea
 export function SectionPlaybackButton({ label, scope }: { label: string; scope: AudioPlaybackScope }) {
   const playback = useAudioPlayback();
   const paused = playback.isSectionPaused(scope);
-  return <button aria-label={`${paused ? "Resume" : "Pause"} ${label}`} className="flex h-8 w-8 items-center justify-center rounded-full disabled:opacity-40" disabled={!playback.hasSectionPlayback(scope)} onClick={() => paused ? playback.resumeSection(scope) : playback.pauseSection(scope)} type="button">{paused ? <Play aria-hidden="true" className="h-4 w-4" /> : <Pause aria-hidden="true" className="h-4 w-4" />}</button>;
+  return <button aria-label={`${paused ? "Resume" : "Pause"} ${label}`} title={`${paused ? "Resume" : "Pause"} ${label}`} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full enabled:hover:bg-canvas enabled:hover:ring-2 enabled:hover:ring-canvas-muted focus-visible:ring-2 focus-visible:ring-canvas-ink disabled:cursor-not-allowed disabled:opacity-40" disabled={!playback.hasSectionPlayback(scope)} onClick={() => paused ? playback.resumeSection(scope) : playback.pauseSection(scope)} type="button">{paused ? <Play aria-hidden="true" className="h-4 w-4" /> : <Pause aria-hidden="true" className="h-4 w-4" />}</button>;
+}
+
+/** Idle groups can start their cues; Music starts at the first playlist track. */
+export function GroupPlaybackButton({ cueIds, groupId, label, section }: { cueIds: string[]; groupId: string; label: string; section: AudioCueGroupSection }) {
+  const playback = useAudioPlayback();
+  const scope = { groupId };
+  const active = cueIds.some((id) => ["playing", "waiting", "paused"].includes(playback.getStatus(id)));
+  const paused = playback.isSectionPaused(scope) || active && cueIds.filter((id) => ["playing", "waiting", "paused"].includes(playback.getStatus(id))).every((id) => playback.getStatus(id) === "paused");
+  const action = active && !paused ? "Pause" : active ? "Resume" : "Play";
+  function toggle() {
+    if (active) {
+      if (paused) playback.resumeSection(scope);
+      else playback.pauseSection(scope);
+      return;
+    }
+    playback.resumeSection(scope);
+    for (const cueId of section === "music" ? cueIds.slice(0, 1) : cueIds) playback.playRegistered(cueId);
+    playback.resumeSection(scope);
+  }
+  return <button aria-label={`${action} ${label}`} title={`${action} ${label}`} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full enabled:hover:bg-canvas enabled:hover:ring-2 enabled:hover:ring-canvas-muted focus-visible:ring-2 focus-visible:ring-canvas-ink disabled:cursor-not-allowed disabled:opacity-40" disabled={!cueIds.length} onClick={toggle} type="button">{action === "Pause" ? <Pause aria-hidden="true" className="h-4 w-4" /> : <Play aria-hidden="true" className="h-4 w-4" />}</button>;
 }

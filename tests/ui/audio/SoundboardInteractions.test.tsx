@@ -82,7 +82,8 @@ describe("Soundboard interactions", () => {
     await act(async () => fireEvent.click(within(first).getByRole("button", { name: "Play Track" })));
     expect(within(first).getByRole("button", { name: "Stop Track" })).toBeInTheDocument();
     expect(within(first).getByRole("slider", { name: "Playback progress for Track" })).toHaveAttribute("max", "120");
-    expect(within(screen.getByLabelText("Audio panel")).getByRole("button", { name: "Stop Track" })).toBeInTheDocument();
+    expect(within(screen.getByLabelText("Audio panel")).getAllByRole("button", { name: "Stop Track" }).filter((button) => !(button as HTMLButtonElement).disabled)).toHaveLength(1);
+    expect(within(first).getByRole("button", { name: "Pause Track" })).toBeInTheDocument();
     fireEvent.click(within(first).getByRole("button", { name: "Stop Track" }));
     expect(board).toBeInTheDocument();
     expect(within(first).getByRole("button", { name: "Play Track" })).toBeInTheDocument();

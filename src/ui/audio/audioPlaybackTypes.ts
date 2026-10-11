@@ -1,6 +1,6 @@
 import type { AudioCue, AudioCueGroupSection } from "@entities/audio/types";
 
-export type AudioPlaybackScope = AudioCueGroupSection | "encounter";
+export type AudioPlaybackScope = AudioCueGroupSection | "encounter" | { groupId: string };
 
 export type AudioPlaybackStatus = "idle" | "playing" | "waiting" | "paused" | "error";
 export type MusicGroupPlayback = { cueIds: string[]; repeat: boolean };

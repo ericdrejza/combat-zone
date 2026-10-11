@@ -56,12 +56,12 @@ describe("Audio Library preview", () => {
     const card = within(dialog).getByRole("button", { name: "Theme" });
     const alias = within(dialog).getByRole("button", { name: "Alias" });
     fireEvent.contextMenu(card);
-    fireEvent.click(screen.getByRole("menuitem", { name: "Set icon to music" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Mark as Track" }));
     expect(within(card).getByRole("img", { name: "Music asset" })).toBeInTheDocument();
     expect(within(alias).getByRole("img", { name: "Music asset" })).toBeInTheDocument();
     fireEvent.contextMenu(alias);
-    expect(screen.queryByRole("menuitem", { name: "Set icon to music" })).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("menuitem", { name: "Set icon to audio" }));
+    expect(screen.queryByRole("menuitem", { name: "Mark as Track" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("menuitem", { name: "Mark as Effect" }));
     expect(resolveLibraryAsset(store.getState().library.sections.audio, originalId)?.audioIcon).toBeUndefined();
     expect(within(card).getByRole("img", { name: "Audio asset" })).toBeInTheDocument();
     expect(within(alias).getByRole("img", { name: "Audio asset" })).toBeInTheDocument();
