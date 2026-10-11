@@ -173,9 +173,18 @@ export function useAppPersistenceUi({
     }
   }
 
+  // Confirmation workflows suspend their source dialog until they are resolved.
+  // Render one modal here so visibility never depends on competing z-indexes.
+  const activeDialog = importTypeMismatch ? "import-type-mismatch"
+    : draftDialogOpen ? "unsaved-draft"
+    : deletedDialogOpen ? "deleted-encounter"
+    : settingsOpen ? "settings"
+    : libraryOpen ? "library"
+    : null;
+
   const dialogs = (
     <>
-      {libraryOpen ? (
+      {activeDialog === "library" ? (
         <AssetLibraryModal
           currentFolderBySection={currentFolderBySection}
           contextButtonState={contextButtonState}
@@ -272,7 +281,7 @@ export function useAppPersistenceUi({
           tokenSubmitLabel={tokenActorId ? "Set Actor Image" : "Create Actor"}
         />
       ) : null}
-      {settingsOpen ? (
+      {activeDialog === "settings" ? (
         <SettingsModal
           onClose={() => setSettingsOpen(false)}
           onExportWorkspace={() => {
@@ -287,7 +296,7 @@ export function useAppPersistenceUi({
           readOnly={persistence.readOnly}
         />
       ) : null}
-      {draftDialogOpen ? (
+      {activeDialog === "unsaved-draft" ? (
         <UnsavedDraftDialog
           onCancel={() => {
             pendingDraftActionRef.current = null;
@@ -304,7 +313,7 @@ export function useAppPersistenceUi({
           }}
         />
       ) : null}
-      {deletedDialogOpen ? (
+      {activeDialog === "deleted-encounter" ? (
         <DeletedEncounterDialog
           onCreate={() => {
             setDeletedDialogOpen(false);
@@ -319,7 +328,7 @@ export function useAppPersistenceUi({
           }}
         />
       ) : null}
-      {importTypeMismatch ? (
+      {activeDialog === "import-type-mismatch" && importTypeMismatch ? (
         <ImportTypeMismatchDialog
           expected={importTypeMismatch}
           onClose={() => setImportTypeMismatch(null)}
@@ -332,7 +341,7 @@ export function useAppPersistenceUi({
     dialogs,
     encounterToolSelectionRequest,
     hasSavedEncounter: Boolean(persistence.activeRecord),
-    libraryOpen,
+    libraryOpen: activeDialog === "library",
     openLibrary: (target) => {
       setAudioRelinkCueId(null);
       setAudioCuePlacement(null);
