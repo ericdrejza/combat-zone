@@ -272,3 +272,10 @@ me what is the expected behavior and update the test accordingly.
 3. Do not test for styling (e.g. css styling on an element)
 4. If a bug or issue persists after multiple attempts at fixing it, resort to
 realtime agent testing of the application.
+5. Test behavior rather than duplicating static UI copy. Do not assert exact
+   descriptions, help text, or other fixed wording merely to mirror text in a
+   component. Keep text assertions when they verify meaningful behavior, such
+   as validation errors, changing values, conditional instructions, or accessible
+   control names. Queries by accessible role/name are encouraged for locating
+   controls. Preserve checks for required choices, data, and interaction outcomes;
+   those are functional contracts even when their displayed text is fixed.

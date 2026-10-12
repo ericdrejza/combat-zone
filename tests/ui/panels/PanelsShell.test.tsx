@@ -84,9 +84,6 @@ describe("PanelsShell", () => {
 
     fireEvent.click(clearButton);
 
-    expect(
-      screen.getByText("Actions and blocked validation attempts will appear here.")
-    ).toBeInTheDocument();
     expect(store.getState().encounterLog.entries).toEqual([]);
   });
 
@@ -95,18 +92,9 @@ describe("PanelsShell", () => {
 
     renderApp();
 
-    expect(screen.getByText("Actor, Background, or Audio tools show library assets here.")).toBeInTheDocument();
-    expect(
-      screen.getByText("Add actors to begin tracking initiative.")
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText("Actions and blocked validation attempts will appear here.")
-    ).toBeInTheDocument();
-
     await user.click(
       screen.getByRole("button", { name: "Collapse Library panel" })
     );
-
     expect(
       screen.getByText("Add actors to begin tracking initiative.")
     ).toBeInTheDocument();
