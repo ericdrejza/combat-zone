@@ -1,3 +1,5 @@
+import { runEncounterOperation } from "@core/history/encounterOperations";
+import { consumeEncounterChange } from "@store/consumeEncounterChange";
 import { resolveLibraryGridCardSize } from "@ui/interface_preferences/libraryPreferences";
 import { ChevronLeft, Folder } from "lucide-react";
 import type { DragEvent } from "react";
@@ -166,7 +168,7 @@ export function LibraryPanel({
     if (asset.width && asset.height) {
       commitImage({ ...asset, height: asset.height, width: asset.width });
     } else {
-      void readImageAssetDimensions(asset, cloud?.resolveImageAsset).then(commitImage);
+      void runEncounterOperation(() => readImageAssetDimensions(asset, cloud?.resolveImageAsset).then(commitImage));
     }
   }
 
@@ -254,11 +256,7 @@ export function LibraryPanel({
       );
     };
 
-    if (prepared instanceof Promise) {
-      void prepared.then(commitPrepared);
-    } else {
-      commitPrepared(prepared);
-    }
+    void consumeEncounterChange(prepared, encounter, dispatch, commitPrepared);
   }
 
   function createAudioCueForTarget(node: LibraryNode) {

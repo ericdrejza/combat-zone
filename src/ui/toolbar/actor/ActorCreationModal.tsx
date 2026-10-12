@@ -1,3 +1,4 @@
+import { consumeEncounterChange } from "@store/consumeEncounterChange";
 import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
@@ -97,11 +98,7 @@ export function ActorCreationModal({
       close();
     };
 
-    if (prepared instanceof Promise) {
-      void prepared.then(commitPrepared);
-    } else {
-      commitPrepared(prepared);
-    }
+    void consumeEncounterChange(prepared, encounter, dispatch, commitPrepared);
   }
 
   function getDragData(): NewActorDragData {

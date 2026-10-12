@@ -1,3 +1,5 @@
+import { isPersistenceWritable } from "@store/persistenceWriteGuardMiddleware";
+import { consumeEncounterPreparation } from "@core/history/encounterOperations";
 import { useRef, useState } from 'react';
 
 import { createEncounterActionRecord } from '@core/history/createEncounterActionRecord';
@@ -110,7 +112,12 @@ export function useEngagementDrag(
       currentEncounter: encounter,
       nextEncounter
     });
-    const commit = (resolved: Awaited<typeof prepared>) => {
+    const commit = (resolved: Awaited<typeof prepared>) => dispatch((_dispatch, getState) => {
+      if (!isPersistenceWritable() || getState().encounter.present !== encounter) {
+        currentPointRef.current = null;
+        updateDragState(null);
+        return;
+      }
       logEncounterValidationBlock(dispatch, resolved);
       if (!resolved.blocked) {
         dispatch(
@@ -129,8 +136,8 @@ export function useEngagementDrag(
           phase: 'returning'
         });
       }
-    };
-    if (prepared instanceof Promise) void prepared.then(commit); else commit(prepared);
+    });
+    void consumeEncounterPreparation(prepared, commit, () => { currentPointRef.current = null; updateDragState(null); });
   };
   const handleEngagementDragReturnComplete = () => {
     currentPointRef.current = null;

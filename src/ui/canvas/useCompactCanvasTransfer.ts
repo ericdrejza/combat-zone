@@ -71,7 +71,9 @@ export function useCompactCanvasTransfer({
   const pointerY = useMotionValue(0);
 
   useEffect(() => {
+    let cancelTransfer: (() => void) | undefined;
     function handleTransferStart(event: Event) {
+      cancelTransfer?.();
       const { detail } = event as CustomEvent<CompactCanvasTransferDetail>;
       const { payload, pointerId } = detail;
 
@@ -110,7 +112,9 @@ export function useCompactCanvasTransfer({
         window.removeEventListener("pointercancel", handleCancel);
         setPreview(null);
         detail.onTransferEnd?.();
+        cancelTransfer = undefined;
       };
+      cancelTransfer = cleanup;
       const handleMove = (moveEvent: PointerEvent) => {
         if (moveEvent.pointerId === pointerId) {
           // Pointer-frequency movement stays outside React so the canvas tree
@@ -182,8 +186,10 @@ export function useCompactCanvasTransfer({
     }
 
     window.addEventListener(COMPACT_CANVAS_TRANSFER_EVENT, handleTransferStart);
-    return () =>
+    return () => {
+      cancelTransfer?.();
       window.removeEventListener(COMPACT_CANVAS_TRANSFER_EVENT, handleTransferStart);
+    };
   }, [
     activeToolId,
     actorTool,

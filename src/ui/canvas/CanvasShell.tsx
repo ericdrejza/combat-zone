@@ -1,3 +1,5 @@
+import { EncounterHistoryControls } from "@ui/history/EncounterHistoryControls";
+import { useEncounterOperation } from "@ui/history/useEncounterOperation";
 import { useGridMapPreview } from './grid/useGridMapPreview';
 import { GridCalibrationOverlay } from './grid/GridCalibrationOverlay';
 import { useActorKeyboardMovement } from "./actors/useActorKeyboardMovement";
@@ -267,6 +269,8 @@ export function CanvasShell({
     library
   });
 
+  useEncounterOperation(Boolean(actorDrag?.phase === "dragging" || edgeDrag || zoneDrag?.phase === "dragging" || vertexDrag || shapeDraft || boxSelection || zoneDraftPoints.length || engagementDrag?.phase === "dragging" || compactTransferPreview || gridCalibrationActive || pendingAudioDrop));
+
   const polygonDraftColor = getTextColorForLuminance(
     polygonDraftBackgroundLuminance
   );
@@ -371,7 +375,9 @@ export function CanvasShell({
       {gridCalibrationActive ? <GridCalibrationOverlay /> : null}
       {keyboardMovement.dialog}
       <ActorHealthKeyboard />
+      {compactLayout ? <div className="absolute left-3 top-3 z-30"><EncounterHistoryControls /></div> : null}
       <CanvasToolStatusBadge
+        belowHistoryControls={compactLayout}
         movementSummary={keyboardMovement.summary}
         activeToolId={activeToolId}
         actorNames={canvasStatus.actorNames}

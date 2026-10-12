@@ -1,3 +1,4 @@
+import { consumeEncounterChange } from "@store/consumeEncounterChange";
 import { useDispatch, useSelector } from "react-redux";
 
 import {
@@ -44,8 +45,7 @@ export function useInitiativeActions() {
       }
     };
 
-    if (prepared instanceof Promise) void prepared.then(handlePrepared);
-    else handlePrepared(prepared);
+    void consumeEncounterChange(prepared, encounter, dispatch, handlePrepared);
   }
 
   function logInvalidInitiativeValue(actorId: string, input: string) {

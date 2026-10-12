@@ -1,3 +1,4 @@
+import { runEncounterOperation } from "@core/history/encounterOperations";
 import { getGridCoverage } from '@core/movement/gridCoverage';
 import { useState } from "react";
 import { useDispatch } from "react-redux";
@@ -30,19 +31,21 @@ export function useBackgroundTool(encounter: EncounterState) {
     useState<BackgroundFitMode | null>("fit");
 
   async function addBackgroundFromUrl(url: string, name?: string) {
-    const asset = createWebImageAsset(url);
-    const nextBackgroundImage = await readImageAssetDimensions(
-      { ...asset, name: name?.trim() ?? "" }
-    );
-    setPreferredFitMode("fit");
-    commitBackgroundImage({
-      backgroundImage: nextBackgroundImage,
-      dispatch,
-      encounter,
-      viewportSize: getViewportSize(),
-      viewportZoom: zoom
+    return runEncounterOperation(async () => {
+      const asset = createWebImageAsset(url);
+      const nextBackgroundImage = await readImageAssetDimensions(
+        { ...asset, name: name?.trim() ?? "" }
+      );
+      setPreferredFitMode("fit");
+      commitBackgroundImage({
+        backgroundImage: nextBackgroundImage,
+        dispatch,
+        encounter,
+        viewportSize: getViewportSize(),
+        viewportZoom: zoom
+      });
+      dispatch(setActiveTool("zone"));
     });
-    dispatch(setActiveTool("zone"));
   }
 
   function deleteBackground() {

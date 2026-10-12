@@ -1,3 +1,4 @@
+import { consumeEncounterPreparation } from "@core/history/encounterOperations";
 import { placeSpatialActors } from '@core/movement/movementStrategies';
 import { adjustedSpatialActorIds } from '@core/movement/spatialAdjustment';
 import { createEncounterActionRecord } from '@core/history/createEncounterActionRecord';
@@ -39,6 +40,6 @@ export function handleSpatialActorMouseUp(input: MouseUpHandlerInput, remove = f
     }
     });
   };
-  if (prepared instanceof Promise) void prepared.then(apply); else apply(prepared);
+  void consumeEncounterPreparation(prepared, apply, () => input.setActorDrag(null));
   return true;
 }

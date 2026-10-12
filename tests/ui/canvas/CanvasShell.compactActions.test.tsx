@@ -77,6 +77,8 @@ describe("CanvasShell compact actions", () => {
           Array.from(canvas.querySelectorAll("button"))
             .map((button) => button.getAttribute("aria-label"))
         ).toEqual([
+          "Undo",
+          "Redo",
           "Touch multi-select",
           "Delete 2 selected actors",
           "Engage selected actors",

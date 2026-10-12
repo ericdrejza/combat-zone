@@ -1,3 +1,4 @@
+import { consumeEncounterChange } from "@store/consumeEncounterChange";
 import { useDispatch, useSelector } from 'react-redux';
 
 import type { LayoutOrientation } from '@core/layout/types';
@@ -33,7 +34,7 @@ export function EngagementPropertiesPanel() {
       logEncounterValidationBlock(dispatch, resolved);
       if (!resolved.blocked) dispatch(commitEncounterChange({ action: resolved.action, nextEncounter: resolved.nextEncounter }));
     };
-    if (prepared instanceof Promise) void prepared.then(commit); else commit(prepared);
+    void consumeEncounterChange(prepared, encounter, dispatch, commit);
   }
 
   return (

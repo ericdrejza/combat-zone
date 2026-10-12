@@ -1,6 +1,8 @@
 import { TOOL_DEFINITIONS_BY_ID } from "@interaction/tools/toolRegistry";
 
 export const KEYBIND_DEFINITIONS = [
+  { id: "history.undo", label: "Undo encounter change", defaultBinding: "mod+z", editable: true },
+  { id: "history.redo", label: "Redo encounter change", defaultBinding: "mod+shift+z", editable: true },
   { id: "actor.moveUp", label: "Move actors up", defaultBinding: "arrowup", editable: true },
   { id: "actor.moveDown", label: "Move actors down", defaultBinding: "arrowdown", editable: true },
   { id: "actor.moveLeft", label: "Move actors left", defaultBinding: "arrowleft", editable: true },

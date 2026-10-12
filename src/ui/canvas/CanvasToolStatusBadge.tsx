@@ -1,4 +1,5 @@
 type CanvasToolStatusBadgeProps = {
+  belowHistoryControls?: boolean;
   movementSummary?: string;
   actorNames: string[];
   activeToolId: string;
@@ -8,6 +9,7 @@ type CanvasToolStatusBadgeProps = {
 };
 
 export function CanvasToolStatusBadge({
+  belowHistoryControls = false,
   movementSummary,
   actorNames,
   activeToolId,
@@ -37,9 +39,9 @@ export function CanvasToolStatusBadge({
     (activeToolId === "zone" ? `Zone shape: ${zoneShapeMode}` : null);
 
   return (
-    <div hidden={info == null} className="pointer-events-none absolute left-4
-      top-4 max-h-[30%] max-w-[calc(100%-2rem)] overflow-y-auto break-words rounded-xl border border-canvas-line bg-canvas-panel/90
-      mr-4 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-canvas-muted"
+    <div hidden={info == null} className={`pointer-events-none absolute left-4
+      ${belowHistoryControls ? "top-16" : "top-4"} max-h-[30%] max-w-[calc(100%-2rem)] overflow-y-auto break-words rounded-xl border border-canvas-line bg-canvas-panel/90
+      mr-4 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-canvas-muted`}
     >
       {info}
     </div>

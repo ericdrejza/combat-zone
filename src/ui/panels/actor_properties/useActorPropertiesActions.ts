@@ -1,3 +1,4 @@
+import { consumeEncounterChange } from "@store/consumeEncounterChange";
 import { useDispatch, useSelector } from "react-redux";
 import { prepareValidatedEncounterChangeForRuntime } from "@core/validation/runtimeEncounterChange";
 import { updateActorProperties } from "@entities/actor/actorMutations";
@@ -55,7 +56,7 @@ export function useActorPropertiesActions() {
         return;
       }
       if (resolved.requiresConfirmation) {
-        requestApproval({ onApprove: () => commitPreparedChange(resolved) });
+        requestApproval({ onApprove: () => { void consumeEncounterChange(resolved, encounter, dispatch, commitPreparedChange); } });
         return;
       }
 
@@ -64,11 +65,7 @@ export function useActorPropertiesActions() {
       }
     };
 
-    if (prepared instanceof Promise) {
-      void prepared.then(handlePrepared);
-    } else {
-      handlePrepared(prepared);
-    }
+    void consumeEncounterChange(prepared, encounter, dispatch, handlePrepared);
   }
 
   return { actor, commitActorProperties };

@@ -1,3 +1,4 @@
+import { encounterDispatchSpy } from "./dispatchSpy";
 import { act, renderHook } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -36,13 +37,13 @@ describe('useEngagementDrag', () => {
       { actor: encounter.actors.byId.a!, point: { x: 70, y: 100 }, radius: 15 },
       { actor: encounter.actors.byId.b!, point: { x: 220, y: 100 }, radius: 15 }
     ];
-    const dispatch = vi.fn();
+    const { dispatch, actions } = encounterDispatchSpy(encounter);
     const { result } = renderHook(() => useEngagementDrag(dispatch, encounter, placements));
 
     act(() => {
       result.current.handleEngagementDragStart('melee', { x: 145, y: 100 });
     });
-    expect(dispatch).not.toHaveBeenCalled();
+    expect(actions).not.toHaveBeenCalled();
     act(() => {
       result.current.handleEngagementDrag({ x: 20, y: 260 });
     });
@@ -54,7 +55,7 @@ describe('useEngagementDrag', () => {
       current: { x: 20, y: 260 },
       phase: 'returning'
     }));
-    expect(dispatch).not.toHaveBeenCalled();
+    expect(actions).not.toHaveBeenCalled();
 
     act(() => result.current.handleEngagementDragReturnComplete());
     expect(result.current.engagementDrag).toBeNull();
@@ -81,7 +82,7 @@ describe('useEngagementDrag', () => {
       { actor: encounter.actors.byId.c!, point: { x: 230, y: 220 }, radius: 15 },
       { actor: encounter.actors.byId.d!, point: { x: 330, y: 220 }, radius: 15 }
     ];
-    const dispatch = vi.fn();
+    const { dispatch, actions } = encounterDispatchSpy(encounter);
     const { result } = renderHook(() => useEngagementDrag(dispatch, encounter, placements));
 
     act(() => result.current.handleEngagementDragStart('source', { x: 145, y: 100 }));
@@ -94,7 +95,7 @@ describe('useEngagementDrag', () => {
     expect(result.current.engagementDrag).toEqual(expect.objectContaining({ phase: 'returning' }));
     // Validation prevented the history commit, and dragging alone does not
     // change selection.
-    expect(dispatch).not.toHaveBeenCalled();
+    expect(actions).not.toHaveBeenCalled();
 
     act(() => result.current.handleEngagementDragReturnComplete());
     expect(result.current.engagementDrag).toBeNull();
@@ -122,7 +123,7 @@ describe('useEngagementDrag', () => {
       { actor: encounter.actors.byId.c!, point: { x: 230, y: 200 }, radius: 15 },
       { actor: encounter.actors.byId.d!, point: { x: 350, y: 200 }, radius: 15 }
     ];
-    const dispatch = vi.fn();
+    const { dispatch, actions } = encounterDispatchSpy(encounter);
     const { result } = renderHook(() =>
       useEngagementDrag(dispatch, encounter, placements)
     );
@@ -133,7 +134,7 @@ describe('useEngagementDrag', () => {
       result.current.handleEngagementDragEnd();
     });
 
-    const commit = dispatch.mock.calls[0]?.[0];
+    const commit = actions.mock.calls[0]?.[0];
     expect(commit?.payload.nextEncounter.engagements.allIds).toEqual([
       'target'
     ]);
@@ -156,7 +157,7 @@ describe('useEngagementDrag', () => {
         layoutStrategy: 'FLEX' as const
       }])
     };
-    const dispatch = vi.fn();
+    const { dispatch, actions } = encounterDispatchSpy(encounter);
     const { result } = renderHook(() =>
       useEngagementDrag(dispatch, encounter, [])
     );
@@ -164,7 +165,7 @@ describe('useEngagementDrag', () => {
     act(() => result.current.handleEngagementSelect('melee'));
     act(() => result.current.handleEngagementSelect('melee', true));
 
-    expect(dispatch).toHaveBeenNthCalledWith(
+    expect(actions).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({
         payload: {
@@ -174,7 +175,7 @@ describe('useEngagementDrag', () => {
         }
       })
     );
-    expect(dispatch).toHaveBeenNthCalledWith(
+    expect(actions).toHaveBeenNthCalledWith(
       2,
       expect.objectContaining({
         payload: {

@@ -1,3 +1,4 @@
+import { historyInteractionMiddleware } from "./historyInteractionMiddleware";
 import { movementRulesMiddleware } from './movementRulesMiddleware';
 import { configureStore } from "@reduxjs/toolkit";
 
@@ -19,6 +20,7 @@ export const store = configureStore({
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(
       persistenceWriteGuardMiddleware,
+      historyInteractionMiddleware,
       movementRulesMiddleware,
       audioTriggerMiddleware,
       encounterLogMiddleware

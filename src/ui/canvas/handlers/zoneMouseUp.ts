@@ -1,3 +1,4 @@
+import { consumeEncounterPreparation } from "@core/history/encounterOperations";
 import { zoneSnappingValid } from '@core/movement/zoneVertexSnapping';
 import { isPersistenceWritable } from '@store/persistenceWriteGuardMiddleware';
 import { createEncounterActionRecord } from '@core/history/createEncounterActionRecord';
@@ -78,7 +79,7 @@ function commitZoneMove(input: MouseUpHandlerInput): boolean {
       // Keep the drop frame until validation supplies the authoritative target.
       input.setZoneDrag({ ...zoneDrag, phase: 'committed' });
     });
-    if (prepared instanceof Promise) void prepared.then(apply); else apply(prepared);
+    void consumeEncounterPreparation(prepared, apply, () => input.setZoneDrag(null));
   }
 
   if (!zoneDrag.hasMoved) input.setZoneDrag(null);
@@ -184,8 +185,7 @@ function commitZoneReshape(input: MouseUpHandlerInput): boolean {
     input.dispatch(selectEntity({ entityType: 'zone', ids: [vertexDrag.zoneId] }));
     input.setVertexDrag(null);
   });
-  if (prepared instanceof Promise) void prepared.then(commitPrepared);
-  else commitPrepared(prepared);
+  void consumeEncounterPreparation(prepared, commitPrepared, () => input.setVertexDrag(null));
   return true;
 }
 

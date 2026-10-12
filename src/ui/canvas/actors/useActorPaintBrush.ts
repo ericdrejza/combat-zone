@@ -1,3 +1,4 @@
+import { consumeEncounterChange } from "@store/consumeEncounterChange";
 import { useEffect, useRef } from 'react';
 
 import { createEncounterActionRecord } from '@core/history/createEncounterActionRecord';
@@ -98,7 +99,7 @@ export function useActorPaintBrush({
       };
 
       if (resolved.requiresConfirmation) {
-        requestApproval({ onApprove: commitPreparedChange });
+        requestApproval({ onApprove: () => { void consumeEncounterChange(resolved, encounter, dispatch, commitPreparedChange); } });
         return;
       }
 
@@ -107,11 +108,7 @@ export function useActorPaintBrush({
       }
     };
 
-    if (prepared instanceof Promise) {
-      void prepared.then(handlePrepared);
-    } else {
-      handlePrepared(prepared);
-    }
+    void consumeEncounterChange(prepared, encounter, dispatch, handlePrepared);
   }, [
     actorPaintBrush,
     actorTool.layoutGroup,

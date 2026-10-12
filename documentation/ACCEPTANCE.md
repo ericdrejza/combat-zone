@@ -401,14 +401,24 @@ truth.
 
 ## Undo/redo
 
-- [ ] Every state-changing action type listed above (zone create/delete/reshape,
+- [x] Every state-changing action type listed above (zone create/delete/reshape,
       actor move, engagement create/merge/split, edge create/delete,
       initiative reorder) has a passing Vitest test verifying undo exactly
       restores prior state.
-- [ ] Rapid sequential actions (10+ commits in quick succession) followed
+- [x] Rapid sequential actions (10+ commits in quick succession) followed
       by 10 undos returns to the exact original state (no drift).
-- [ ] Redo after undo re-applies the exact same state, not a re-derived
+- [x] Redo after undo re-applies the exact same state, not a re-derived
       approximation.
+
+- [x] Undo/Redo remain available beside the expanded left sidebar toggle,
+      beneath the collapsed toggle, in an empty left dock, and at the compact
+      canvas top-left, with accessible names and desktop/touch tooltips.
+- [x] Configurable Ctrl/Cmd+Z and Ctrl/Cmd+Shift+Z replay committed snapshots,
+      preserve native text editing, and yield to modal workflows.
+- [x] Unfinished operations and read-only tabs block both controls and direct
+      history actions; stale asynchronous results cannot replace newer state.
+- [x] Replay retains valid selections, removes invalid references, and does not
+      automatically reselect restored entities on redo.
 
 ## Local persistence
 

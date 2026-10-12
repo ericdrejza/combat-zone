@@ -1,3 +1,4 @@
+import { runEncounterOperation } from "@core/history/encounterOperations";
 import { useEffect, useRef } from "react";
 import { useDispatch, useSelector, useStore } from "react-redux";
 
@@ -75,6 +76,6 @@ export function useAudioCueCreation() {
     }
     if (section !== "ambiance" || mode !== "duration_threshold") { commit([]); return; }
     if (request.durations) { commit(request.durations); return; }
-    void readDurations(assets).then(commit);
+    void runEncounterOperation(() => readDurations(assets).then(commit));
   };
 }

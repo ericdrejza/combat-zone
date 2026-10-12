@@ -1,3 +1,4 @@
+import { consumeEncounterChange } from "@store/consumeEncounterChange";
 import { createEncounterActionRecord } from "@core/history/createEncounterActionRecord";
 import { prepareValidatedEncounterChangeForRuntime } from "@core/validation/runtimeEncounterChange";
 import { replaceEncounterLibraryAssetReferences } from "@library/libraryReferences";
@@ -42,9 +43,5 @@ export function syncLibraryAssetReferences(options: {
     }
   };
 
-  if (prepared instanceof Promise) {
-    void prepared.then(commit);
-  } else {
-    commit(prepared);
-  }
+  void consumeEncounterChange(prepared, options.encounter, options.dispatch, commit);
 }

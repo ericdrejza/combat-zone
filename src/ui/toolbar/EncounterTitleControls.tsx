@@ -1,3 +1,4 @@
+import { consumeEncounterChange } from "@store/consumeEncounterChange";
 import { Lock, SaveCheck, SavePen, TriangleAlert } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -57,11 +58,7 @@ export function EncounterTitleControls({
       );
     };
 
-    if (prepared instanceof Promise) {
-      void prepared.then(commitPrepared);
-    } else {
-      commitPrepared(prepared);
-    }
+    void consumeEncounterChange(prepared, encounter, dispatch, commitPrepared);
   }
 
   const SaveIcon =

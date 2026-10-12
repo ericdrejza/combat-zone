@@ -1,3 +1,4 @@
+import { consumeEncounterChange } from "@store/consumeEncounterChange";
 import { applyTagChanges } from "@core/entity_resources/tags";
 import { useStatusActions } from "@ui/status/useStatusActions";
 import { NotesEditor } from "@ui/controls/NotesEditor";
@@ -58,7 +59,7 @@ export function EdgePropertiesPanel() {
     const finish = (resolved: Awaited<typeof prepared>) => {
       if (!logEncounterValidationBlock(dispatch, resolved)) dispatch(commitEncounterChange({ action: resolved.action, nextEncounter: resolved.nextEncounter }));
     };
-    if (prepared instanceof Promise) void prepared.then(finish); else finish(prepared);
+    void consumeEncounterChange(prepared, encounter, dispatch, finish);
   }
 
   function toggleMovement(rule: EdgeMovementRule) {

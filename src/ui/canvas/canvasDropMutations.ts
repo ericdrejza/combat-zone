@@ -1,3 +1,4 @@
+import { consumeEncounterPreparation, runEncounterOperation } from "@core/history/encounterOperations";
 import { isPersistenceWritable } from '@store/persistenceWriteGuardMiddleware';
 import { isSpatial, placeSpatialActors } from '@core/movement/movementStrategies';
 import { ZONELESS_ACTOR_ZONE_ID } from '@core/encounter/types';
@@ -65,11 +66,7 @@ function commitCreatedActor(
     });
   };
 
-  if (prepared instanceof Promise) {
-    void prepared.then(commitPrepared);
-  } else {
-    commitPrepared(prepared);
-  }
+  void consumeEncounterPreparation(prepared, commitPrepared);
 }
 
 export function commitActorFromLibraryNode(
@@ -139,22 +136,24 @@ export async function commitActorFromImage(
   destinationZoneId: string,
   dropPoint?: LayoutPoint
 ) {
-  const image = await readImageFile(file);
-  const actorId = `actor-${Date.now()}`;
-  commitCreatedActor(
-    context,
-    {
-      currentZoneId: destinationZoneId,
-      id: actorId,
-      image,
-      layoutGroup: context.actorTool.layoutGroup,
-      name: getFileNameWithoutExtension(image.name),
-      shape: context.actorTool.shape,
-      size: context.actorTool.size
-    },
-    destinationZoneId,
-    dropPoint
-  );
+  return runEncounterOperation(async () => {
+    const image = await readImageFile(file);
+    const actorId = `actor-${Date.now()}`;
+    commitCreatedActor(
+      context,
+      {
+        currentZoneId: destinationZoneId,
+        id: actorId,
+        image,
+        layoutGroup: context.actorTool.layoutGroup,
+        name: getFileNameWithoutExtension(image.name),
+        shape: context.actorTool.shape,
+        size: context.actorTool.size
+      },
+      destinationZoneId,
+      dropPoint
+    );
+  });
 }
 
 export async function commitBackgroundFromFile(
@@ -163,15 +162,17 @@ export async function commitBackgroundFromFile(
   getViewportSize: () => CanvasSize,
   viewportZoom: number
 ) {
-  const nextBackgroundImage = await readImageFile(file);
-  commitBackgroundImage({
-    backgroundImage: nextBackgroundImage,
-    dispatch: context.dispatch,
-    encounter: context.encounter,
-    viewportSize: getViewportSize(),
-    viewportZoom
+  return runEncounterOperation(async () => {
+    const nextBackgroundImage = await readImageFile(file);
+    commitBackgroundImage({
+      backgroundImage: nextBackgroundImage,
+      dispatch: context.dispatch,
+      encounter: context.encounter,
+      viewportSize: getViewportSize(),
+      viewportZoom
+    });
+    context.dispatch(setActiveTool(context.encounter.movementRules.snapToGrid ? "grid" : "actor"));
   });
-  context.dispatch(setActiveTool(context.encounter.movementRules.snapToGrid ? "grid" : "actor"));
 }
 
 export function moveActorsToZone(
@@ -229,11 +230,7 @@ export function moveActorsToZone(
     });
   };
 
-  if (prepared instanceof Promise) {
-    void prepared.then(commitPrepared);
-  } else {
-    commitPrepared(prepared);
-  }
+  void consumeEncounterPreparation(prepared, commitPrepared);
 }
 
 export function getMovableActorIds(

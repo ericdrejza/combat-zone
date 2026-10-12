@@ -1,3 +1,4 @@
+import { consumeEncounterChange } from "@store/consumeEncounterChange";
 import { Swords } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -39,7 +40,7 @@ export function EngageActionButton({ compact = false }: EngageActionButtonProps)
       logEncounterValidationBlock(dispatch, resolved);
       if (!resolved.blocked) dispatch(commitEncounterChange({ action: resolved.action, nextEncounter: resolved.nextEncounter }));
     };
-    if (prepared instanceof Promise) void prepared.then(commit); else commit(prepared);
+    void consumeEncounterChange(prepared, encounter, dispatch, commit);
   }
 
   return (

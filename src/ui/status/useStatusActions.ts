@@ -1,3 +1,4 @@
+import { runEncounterOperation } from "@core/history/encounterOperations";
 import { useStore } from "react-redux";
 import type { EncounterState } from "@core/encounter/types";
 import { createEncounterActionRecord } from "@core/history/createEncounterActionRecord";
@@ -28,5 +29,5 @@ export function useStatusActions() {
     store.dispatch(commitEncounterChange({ action: prepared.action, nextEncounter: prepared.nextEncounter }));
     return true;
   }
-  return commit;
+  return (...args: Parameters<typeof commit>) => runEncounterOperation(() => commit(...args));
 }

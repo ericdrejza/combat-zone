@@ -1,3 +1,4 @@
+import { consumeEncounterPreparation } from "@core/history/encounterOperations";
 import type { EncounterState } from '@core/encounter/types';
 import { createEncounterActionRecord } from '@core/history/createEncounterActionRecord';
 import { isSimplePolygon } from '@core/layout/polygonValidity';
@@ -38,5 +39,5 @@ export function commitZoneVertexEdit(encounter: EncounterState, dispatch: AppDis
     dispatch(commitEncounterChange({ action: resolved.action, nextEncounter: resolved.nextEncounter }));
     dispatch(selectEntity({ entityType: 'zone', ids: [zone.id] }));
   });
-  if (prepared instanceof Promise) void prepared.then(apply); else apply(prepared);
+  void consumeEncounterPreparation(prepared, apply);
 }

@@ -1,3 +1,4 @@
+import { runEncounterOperation } from "@core/history/encounterOperations";
 import { snapZonePolygon, translateSnappedZone } from '@core/movement/zoneVertexSnapping';
 import { nearestGridVertex } from '@core/movement/gridTopology';
 import { handleSpatialActorMouseUp } from './spatialActorMouseUp';
@@ -373,7 +374,7 @@ export function useCanvasPointerHandlers(input: PointerHandlerInput) {
           : undefined;
       setEdgeDrag(null);
       if (targetZoneId) {
-        void import('../edges/edgeCreationActions').then(({ commitEdgeDrag }) =>
+        void runEncounterOperation(() => import('../edges/edgeCreationActions').then(({ commitEdgeDrag }) =>
           commitEdgeDrag({
             dispatch,
             encounter,
@@ -381,7 +382,7 @@ export function useCanvasPointerHandlers(input: PointerHandlerInput) {
             preset: edgeTool,
             toZoneId: targetZoneId
           })
-        );
+        ));
       }
       return;
     }

@@ -1,3 +1,4 @@
+import { runEncounterOperation } from "@core/history/encounterOperations";
 import { useStore } from "react-redux";
 import type { EncounterState } from "@core/encounter/types";
 import type { JsonObject } from "@core/history/types";
@@ -16,7 +17,7 @@ export function useKeyboardEncounterCommit() {
   const store = useStore<RootState>();
   const { requestApproval } = useZoneResizeApproval();
   return async (type: string, payload: JsonObject, mutate: (state: EncounterState) => EncounterState,
-    isCurrent: () => boolean = () => true, onCommit?: () => void): Promise<boolean> => {
+    isCurrent: () => boolean = () => true, onCommit?: () => void): Promise<boolean> => runEncounterOperation(async () => {
     if (!isPersistenceWritable() || !isCurrent()) return false;
     const current = store.getState().encounter.present;
     const next = mutate(current);
@@ -45,5 +46,5 @@ export function useKeyboardEncounterCommit() {
     if (logEncounterValidationBlock(store.dispatch, prepared)) return false;
     apply();
     return true;
-  };
+  });
 }

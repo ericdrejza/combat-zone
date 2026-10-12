@@ -1,3 +1,5 @@
+import { TouchTooltip } from "@ui/toolbar/TouchTooltip";
+import { EncounterHistoryControls } from "@ui/history/EncounterHistoryControls";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { ReactNode } from "react";
 
@@ -38,17 +40,21 @@ export function SidebarDock({
       aria-label={`${side} sidebar`}
       className="flex min-h-0 flex-col gap-2 overflow-hidden"
     >
-      {hideToggle ? null : <button
+      <div className={`flex gap-2 ${collapsed || hideToggle ? "flex-col" : "items-center"} ${side === "right" ? "self-end" : "self-start"}`}>
+      {hideToggle ? null : <TouchTooltip label={collapsed ? expandLabel : collapseLabel}><button
+        title={collapsed ? expandLabel : collapseLabel}
         aria-expanded={!collapsed}
         aria-label={collapsed ? expandLabel : collapseLabel}
         className={`flex h-10 w-10 shrink-0 items-center justify-center ${
           side === "left" ? "self-start" : "self-end"
-        } rounded-full border border-canvas-line bg-canvas-panel text-canvas-muted shadow-sm transition hover:bg-canvas-surface`}
+        } rounded-full border border-canvas-line bg-canvas-panel text-canvas-muted shadow-sm hover:bg-canvas-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-canvas-ink`}
         onClick={onToggle}
         type="button"
       >
         <ToggleIcon aria-hidden="true" className="h-5 w-5" />
-      </button>}
+      </button></TouchTooltip>}
+      {side === "left" ? <EncounterHistoryControls vertical={collapsed || hideToggle} /> : null}
+      </div>
       {collapsed ? null : children}
       {footer ? (
         <div className={collapsed ? "mt-auto" : "mt-auto pt-1"}>{footer}</div>

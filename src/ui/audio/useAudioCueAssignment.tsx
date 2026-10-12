@@ -1,3 +1,4 @@
+import { runEncounterOperation } from "@core/history/encounterOperations";
 import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector, useStore } from "react-redux";
 
@@ -74,11 +75,11 @@ export function useAudioCueAssignment() {
       const current = generation.current;
       setPending(null);
       const assets = request.nodes.map((node) => resolveLibraryAsset(audioLibrary, node.id));
-      void readDurations(assets).then((durations) => {
+      void runEncounterOperation(() => readDurations(assets).then((durations) => {
         if (current === generation.current && store.getState().encounter.present.id === request.encounterId) {
           setPending({ ...request, durations, askSubdirectories: false });
         }
-      });
+      }));
     } else setPending({ ...request, askSubdirectories: false });
   }
 

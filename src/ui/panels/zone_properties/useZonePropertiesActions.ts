@@ -1,3 +1,4 @@
+import { consumeEncounterChange } from "@store/consumeEncounterChange";
 import { useDispatch, useSelector } from "react-redux";
 
 import { createEncounterActionRecord } from "@core/history/createEncounterActionRecord";
@@ -121,11 +122,7 @@ export function useZonePropertiesActions() {
       }
     };
 
-    if (prepared instanceof Promise) {
-      void prepared.then(commitPrepared);
-    } else {
-      commitPrepared(prepared);
-    }
+    void consumeEncounterChange(prepared, encounter, dispatch, commitPrepared);
   }
 
   function commitZoneDelete() {
@@ -222,11 +219,7 @@ export function useZonePropertiesActions() {
       );
     };
 
-    if (prepared instanceof Promise) {
-      void prepared.then(commitPrepared);
-    } else {
-      commitPrepared(prepared);
-    }
+    void consumeEncounterChange(prepared, encounter, dispatch, commitPrepared);
   }
 
   return {

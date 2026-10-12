@@ -1,3 +1,4 @@
+import { consumeEncounterPreparation } from "@core/history/encounterOperations";
 import { snapZonePolygon } from '@core/movement/zoneVertexSnapping';
 import { createEncounterActionRecord } from '@core/history/createEncounterActionRecord';
 import type { LayoutPoint } from '@core/layout/types';
@@ -129,9 +130,5 @@ export function commitZoneCreate(
     setZoneDraftPoints([]);
   });
 
-  if (prepared instanceof Promise) {
-    void prepared.then(commitPrepared);
-  } else {
-    commitPrepared(prepared);
-  }
+  void consumeEncounterPreparation(prepared, commitPrepared, () => setZoneDraftPoints([]));
 }

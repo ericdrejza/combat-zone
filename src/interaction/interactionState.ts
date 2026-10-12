@@ -1,3 +1,5 @@
+import type { EncounterState } from "@core/encounter/types";
+import { reconcileReferences } from "./history_operations/reconcileReferences";
 import { calibrationVertexCount } from '@core/movement/gridProjection';
 import type { GridConfiguration } from '@core/movement/types';
 import type { PayloadAction } from '@reduxjs/toolkit';
@@ -408,6 +410,9 @@ export const interactionSlice = createSlice({
     setPolygonDraftPointIds(state, { payload }: PayloadAction<string[]>) {
       state.draft.polygonPointIds = payload;
     },
+    reconcileInteractionReferences(state, { payload }: PayloadAction<EncounterState>) {
+      reconcileReferences(state, payload);
+    },
     resetInteractionState() {
       return initialState;
     }
@@ -415,6 +420,7 @@ export const interactionSlice = createSlice({
 });
 
 export const {
+  reconcileInteractionReferences,
   setGridAppearancePreview, setGridPreview, startGridCalibration, setGridCalibrationMode, setGridCalibrationType, addGridCalibrationPoint, removeGridCalibrationPoint, cancelGridEditing,
   clearActorPaintBrush,
   setAudioCueType,

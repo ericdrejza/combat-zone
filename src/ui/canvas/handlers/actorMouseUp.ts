@@ -1,3 +1,5 @@
+import { isPersistenceWritable } from "@store/persistenceWriteGuardMiddleware";
+import { consumeEncounterPreparation } from "@core/history/encounterOperations";
 import { handleSpatialActorMouseUp } from './spatialActorMouseUp';
 import { createEncounterActionRecord } from '@core/history/createEncounterActionRecord';
 import { ZONELESS_ACTOR_ZONE_ID } from '@core/encounter/types';
@@ -138,7 +140,8 @@ function commitActorEngagementDrop(
     currentEncounter: encounter,
     nextEncounter
   });
-  const commitPrepared = (resolved: Awaited<typeof prepared>) => {
+  const commitPrepared = (resolved: Awaited<typeof prepared>) => input.dispatch((_dispatch, getState) => {
+    if (!isPersistenceWritable() || getState().encounter.present !== encounter) { input.setActorDrag(null); return; }
     if (!resolved.blocked) {
       cacheActorDropPoints(actorDrag, input.actorRenderPlacements);
       input.dispatch(
@@ -159,9 +162,8 @@ function commitActorEngagementDrop(
     }
     logEncounterValidationBlock(input.dispatch, resolved);
     input.setActorDrag(createSnapBackDrag(actorDrag));
-  };
-  if (prepared instanceof Promise) void prepared.then(commitPrepared);
-  else commitPrepared(prepared);
+  });
+  void consumeEncounterPreparation(prepared, commitPrepared, () => input.setActorDrag(null));
   return true;
 }
 
@@ -215,7 +217,8 @@ function commitActorZoneDrop(
     currentEncounter: encounter,
     nextEncounter
   });
-  const commitPrepared = (resolved: Awaited<typeof prepared>) => {
+  const commitPrepared = (resolved: Awaited<typeof prepared>) => input.dispatch((_dispatch, getState) => {
+    if (!isPersistenceWritable() || getState().encounter.present !== encounter) { input.setActorDrag(null); return; }
     if (!resolved.blocked && nextEncounter !== encounter) {
       commitPreparedActorChange(
         input,
@@ -228,9 +231,8 @@ function commitActorZoneDrop(
     }
     logEncounterValidationBlock(input.dispatch, resolved);
     input.setActorDrag(createSnapBackDrag(actorDrag));
-  };
-  if (prepared instanceof Promise) void prepared.then(commitPrepared);
-  else commitPrepared(prepared);
+  });
+  void consumeEncounterPreparation(prepared, commitPrepared, () => input.setActorDrag(null));
 }
 
 /** Finalize an actor drag. Returns true when an actor drag was present. */

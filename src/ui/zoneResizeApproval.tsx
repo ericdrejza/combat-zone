@@ -1,3 +1,4 @@
+import { useEncounterOperation } from "@ui/history/useEncounterOperation";
 import {
   createContext,
   useCallback,
@@ -21,6 +22,7 @@ export function ZoneResizeApprovalProvider({
   children
 }: { children: ReactNode }) {
   const [request, setRequest] = useState<ZoneResizeApprovalRequest | null>(null);
+  useEncounterOperation(request !== null);
   const requestApproval = useCallback(
     (nextRequest: ZoneResizeApprovalRequest) => setRequest(nextRequest),
     []

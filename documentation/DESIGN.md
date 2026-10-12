@@ -1148,6 +1148,33 @@ Redux-managed history architecture:
 - Action records are retained as metadata for auditing, validation messages,
   persistence triggers, and future tooling.
 
+### 10.1 Controls and interaction safety
+
+- Undo and Redo are icon-only controls, in that order, immediately to the right
+  of the expanded left sidebar collapse button. With the sidebar collapsed,
+  they stack vertically beneath its expand button. An empty left dock retains
+  the vertical history controls while its sidebar toggle remains hidden.
+- Below 1024px, Undo and Redo appear horizontally at the canvas top-left; the
+  canvas status badge sits below them. Controls have desktop tooltips,
+  touch-hold help, and visible keyboard focus.
+- Configurable shortcuts default to Ctrl/Cmd+Z for Undo and Ctrl/Cmd+Shift+Z
+  for Redo. Text editing retains native undo/redo, and modal workflows retain
+  their keyboard handling. Repeated history keydown events are ignored.
+- Controls are disabled when their history stack is empty, the workspace is
+  read-only, or an operation is unfinished. History replay waits for active
+  canvas drafts, drags, transfers, grid calibration, asynchronous mutations,
+  and mutation approval workflows to finish or cancel. Settled return
+  animations do not delay replay.
+- Asynchronous results and approval callbacks must honor the writer boundary
+  and must not overwrite a newer encounter snapshot. Failed or cancelled
+  operations release their history blocker.
+- After replay, retain selected entities that still exist and remove invalid
+  session references. Redo does not automatically reselect restored entities.
+- Ineffective commits do not create history or erase redo. Selection, viewport
+  navigation, tool choices, interface preferences, and standalone Library
+  records retain their existing separate behavior. History is session-only
+  and starts fresh when an encounter loads.
+
 ## 11. Persistence
 
 ### 11.1 Storage

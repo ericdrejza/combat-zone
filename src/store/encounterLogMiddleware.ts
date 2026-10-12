@@ -37,6 +37,8 @@ export const encounterLogMiddleware: Middleware<unknown, StateWithEncounter> =
     const result = next(action);
     const after = storeApi.getState().encounter.present;
 
+    if (after === before) return result;
+
     if ((isUndo || isRedo) && !historicalAction) {
       return result;
     }

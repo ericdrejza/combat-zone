@@ -1,3 +1,4 @@
+import { consumeEncounterChange } from "@store/consumeEncounterChange";
 import { createEncounterActionRecord } from "@core/history/createEncounterActionRecord";
 import type { EncounterState } from "@core/encounter/types";
 import { prepareValidatedEncounterChangeForRuntime } from "@core/validation/runtimeEncounterChange";
@@ -52,6 +53,5 @@ export function applyActorTokenFromLibrary({
     }
   };
 
-  if (prepared instanceof Promise) void prepared.then(commit);
-  else commit(prepared);
+  void consumeEncounterChange(prepared, encounter, dispatch, commit);
 }

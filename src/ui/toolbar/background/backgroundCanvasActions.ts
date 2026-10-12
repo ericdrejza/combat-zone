@@ -1,3 +1,4 @@
+import { consumeEncounterChange } from "@store/consumeEncounterChange";
 import { getGridCoverage } from '@core/movement/gridCoverage';
 import { type BackgroundResizeOverflowBehavior } from '@core/encounter/backgroundResizeOverflow';
 import { readBackgroundResizeOverflowPreference } from '@ui/interface_preferences/InterfacePreferenceProvider';
@@ -83,11 +84,7 @@ export function commitCanvasResize({
     }
   };
 
-  if (prepared instanceof Promise) {
-    void prepared.then(commitPrepared);
-  } else {
-    commitPrepared(prepared);
-  }
+  void consumeEncounterChange(prepared, encounter, dispatch, commitPrepared);
 }
 
 export function commitBackgroundImage(input: {

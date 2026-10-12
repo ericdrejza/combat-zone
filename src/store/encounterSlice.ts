@@ -1,5 +1,5 @@
 import type { PayloadAction } from "@reduxjs/toolkit";
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, original } from "@reduxjs/toolkit";
 
 import { createEncounterState } from "@core/encounter/createEncounterState";
 import type { EncounterState } from "@core/encounter/types";
@@ -26,6 +26,7 @@ const encounterSlice = createSlice({
       state,
       { payload }: PayloadAction<CommitEncounterChangePayload>
     ) {
+      if (payload.nextEncounter === original(state.present)) return;
       const nextEncounter = payload.action.validationResult
         ? {
             ...payload.nextEncounter,

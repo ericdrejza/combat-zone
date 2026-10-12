@@ -58,10 +58,8 @@ describe("encounter log store", () => {
       id: "same-action",
       timestamp: 42
     };
-    const payload = { action, nextEncounter: current };
-
-    store.dispatch(commitEncounterChange(payload));
-    store.dispatch(commitEncounterChange(payload));
+    store.dispatch(commitEncounterChange({ action, nextEncounter: { ...current, name: "First" } }));
+    store.dispatch(commitEncounterChange({ action, nextEncounter: { ...current, name: "Second" } }));
 
     expect(store.getState().encounterLog.entries.map(({ id }) => id)).toEqual([
       "same-action:commit",

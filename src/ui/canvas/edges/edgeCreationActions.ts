@@ -1,3 +1,5 @@
+import { runEncounterOperation } from "@core/history/encounterOperations";
+import { isPersistenceWritable } from "@store/persistenceWriteGuardMiddleware";
 import { createEncounterActionRecord } from "@core/history/createEncounterActionRecord";
 import { prepareValidatedEncounterChangeForRuntime } from "@core/validation/runtimeEncounterChange";
 import {
@@ -18,6 +20,7 @@ export async function commitEdgeDrag(input: {
   preset: EdgePreset;
   toZoneId: string;
 }) {
+  return runEncounterOperation(async () => {
   const { dispatch, encounter, fromZoneId, preset, toZoneId } = input;
   if (fromZoneId === toZoneId) return;
   const occupied = getEdgeForSlot(encounter, fromZoneId, toZoneId, preset.directionality);
@@ -43,7 +46,11 @@ export async function commitEdgeDrag(input: {
     currentEncounter: encounter,
     nextEncounter: result.nextEncounter
   });
+  dispatch((_dispatch, getState) => {
+  if (!isPersistenceWritable() || getState().encounter.present !== encounter) return;
   if (logEncounterValidationBlock(dispatch, prepared)) return;
   dispatch(commitEncounterChange({ action: prepared.action, nextEncounter: prepared.nextEncounter }));
   dispatch(selectEntity({ entityType: "edge", ids: [edgeId] }));
+  });
+  });
 }

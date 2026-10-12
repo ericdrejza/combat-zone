@@ -1,3 +1,4 @@
+import { consumeEncounterChange } from "@store/consumeEncounterChange";
 import { Unlink2 } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -51,8 +52,7 @@ export function DisengageActionButton({ compact = false }: DisengageActionButton
         );
       }
     };
-    if (prepared instanceof Promise) void prepared.then(commit);
-    else commit(prepared);
+    void consumeEncounterChange(prepared, encounter, dispatch, commit);
   }
 
   return (

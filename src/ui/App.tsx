@@ -1,3 +1,6 @@
+import { useEncounterOperation } from "@ui/history/useEncounterOperation";
+import { runEncounterOperation } from "@core/history/encounterOperations";
+import { EncounterHistoryKeyboard } from "@ui/history/EncounterHistoryKeyboard";
 import { MembershipChoiceDialog } from './membership/MembershipChoiceDialog';
 import { WorkspaceKeyboardShortcuts } from "./keybinds/WorkspaceKeyboardShortcuts";
 import { ignoreShortcut } from "./keybinds/keyboardGuards";
@@ -119,6 +122,7 @@ function AppContent() {
       right: false
     });
   const [draggedPanelId, setDraggedPanelId] = useState<string | null>(null);
+  useEncounterOperation(draggedPanelId !== null);
   const [dropTarget, setDropTarget] = useState<DropTarget | null>(null);
   const [libraryFocusRequest, setLibraryFocusRequest] =
     useState<LibraryPanelFocusRequest | null>(null);
@@ -282,7 +286,7 @@ function AppContent() {
     if (asset.width && asset.height) {
       commitImage({ ...asset, height: asset.height, width: asset.width });
     } else {
-      void readImageAssetDimensions(asset, cloud?.resolveImageAsset).then(commitImage);
+      void runEncounterOperation(() => readImageAssetDimensions(asset, cloud?.resolveImageAsset).then(commitImage));
     }
   }
 
@@ -455,6 +459,7 @@ function AppContent() {
           }
         >
       <ZoneResizeApprovalProvider>
+      <EncounterHistoryKeyboard />
       <WorkspaceKeyboardShortcuts onOpenLibrary={openLibraryForActiveTool} />
       <InitiativePopoutProvider>
       <Toolbar

@@ -1,3 +1,4 @@
+import { encounterDispatchSpy } from "./dispatchSpy";
 import { act, renderHook } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -61,7 +62,7 @@ describe('useEngagementDrag merge validation', () => {
       { actor: encounter.actors.byId.c!, point: { x: 280, y: 220 }, radius: 15 },
       { actor: encounter.actors.byId.d!, point: { x: 400, y: 220 }, radius: 15 }
     ];
-    const dispatch = vi.fn();
+    const { dispatch, actions } = encounterDispatchSpy(encounter);
     const { result } = renderHook(() =>
       useEngagementDrag(dispatch, encounter, placements)
     );
@@ -72,7 +73,7 @@ describe('useEngagementDrag merge validation', () => {
       result.current.handleEngagementDragEnd();
     });
 
-    const commit = dispatch.mock.calls[0]?.[0];
+    const commit = actions.mock.calls[0]?.[0];
     expect(commit?.payload.action.type).toBe('engagement.merge');
     expect(commit?.payload.nextEncounter.engagements.allIds).toEqual([
       'target'

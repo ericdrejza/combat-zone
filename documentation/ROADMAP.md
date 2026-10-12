@@ -102,14 +102,17 @@ After completing a numbered section (## X.), move the completed section to the e
   Redux history undo/redo coverage.
 - [ ] Create an acceptance test matrix covering every item in
   `ACCEPTANCE.md`.
-- [ ] Verify every state-changing action type has an undo test.
+- [x] Verify every state-changing action type has an undo test.
   - Zone create/delete/reshape
   - Actor move
   - Engagement create/merge/split
   - Edge create/delete
   - Initiative reorder
-- [ ] Verify Redux history remains exact under rapid sequential actions.
-- [ ] Verify no direct state mutation paths bypass Redux history.
+- [x] Verify Redux history remains exact under rapid sequential actions.
+- [x] Add responsive Undo/Redo controls and configurable shortcuts, preserving
+      native editing and writer safeguards; verify active-operation blocking,
+      stale-result rejection, selection cleanup, and exact mixed-action replay.
+- [x] Verify no direct state mutation paths bypass Redux history.
 - [ ] Verify tool switching never leaves stale interaction state.
 - [ ] Verify non-Strict validation does not block GM actions.
 - [ ] Verify state-based assertions for destructive/cascading behaviors.
