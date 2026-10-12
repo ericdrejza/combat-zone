@@ -12,6 +12,7 @@ import type { GridGeometry } from './gridScale';
 import { GRID_SPACING } from './gridScale';
 import { completeGridEdges } from './gridEdgeCompletion';
 import { resnapSpatialActors } from './movementStrategies';
+import { reconcileZoneVertices } from './zoneVertexSnapping';
 
 /** Cell-size edits resize map coverage, never the physical lattice or actor footprints. */
 export function updateGridConfiguration(state: EncounterState, grid: GridConfiguration,
@@ -33,7 +34,8 @@ export function applyGridAlignment(state: EncounterState, fitted: GridGeometry,
   const resized = resizeEncounterCanvas(base, { canvasSize: {
     width: coverage.width * scale, height: coverage.height * scale
   }, zoneScale: scale, overflowBehavior: 'clamp' });
-  const next = finishGridMapResize(state, resized, overflowBehavior, fitted.origin);
+  // Check the reconciled geometry, as the commit pipeline does for ordinary grid edits.
+  const next = reconcileZoneVertices(finishGridMapResize(state, resized, overflowBehavior, fitted.origin));
   // A larger clamped map would no longer match the measured image cells.
   const fit = runValidationPipelineSync({ state, nextState: next, mode: 'OFF',
     action: { type: 'grid.calibrate', payload: {} },

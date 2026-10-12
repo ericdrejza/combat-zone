@@ -620,10 +620,15 @@ these back into `AGENT.md` or `DESIGN.md`.
   actor; unlocked Overlap behavior uses anchor equality.
 - Rule changes reconcile or unplace individual actors atomically; regular moves
   reject when no viable placement exists, and adjusted grid moves are logged.
-- Zone vertex snapping is independent, reconciles existing Zones, preserves
-  generated outlines, and applies throughout geometry mutations. Zone moves
+- Zone vertex snapping is independent, reconciles existing Zones, snaps
+  interactable polygon/rectangle corners while keeping edge samples collinear,
+  preserves hexagon/circle outlines by snapping their bounding resize controls,
+  and applies throughout geometry mutations. Zone moves
   preserve all edge vectors with one snapped translation; incompatible warped
   moves are rejected without history.
+- Consecutive Polygon vertices that snap to the same grid vertex merge, including
+  the closing pair and collapsed-edge samples. Undo restores every original
+  vertex; fewer than three distinct corners and self-intersections remain blocked.
 - Zone drops settle from the drop position to the final position using the Actor
   movement spring; direct dragging and reduced-motion movement remain immediate.
   Asynchronous validation retains the drop frame until the final position is ready.

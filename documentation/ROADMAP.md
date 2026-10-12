@@ -187,6 +187,9 @@ the design as future or nice-to-have work.
 ## Independent Zone/Grid rules
 
 - [x] Separate Zone/Grid tools and independent actor/Zone snapping rules.
+- [x] Reconcile existing Zone vertices before grid alignment fit checks, retaining invalid-geometry rejection and undo/redo.
+- [x] Snap interactable polygon/rectangle corners and hexagon/circle bounding resize controls, retaining outline samples with rotated/warped grid and undo/redo coverage.
+- [x] Merge consecutive coincident Polygon vertices during snapping with atomic undo/redo and invalid-geometry validation.
 - [x] Grid-aware Zone packing, occupancy adjustments, and unlocked relationships.
 - [x] Canvas defaults, membership policies, and ordered choice dialogs.
 - [x] Cell Tracer with whole-segment removal and invalid-route policies.

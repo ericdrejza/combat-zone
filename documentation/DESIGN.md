@@ -1470,9 +1470,17 @@ still cannot fit to the list. Every change and cascade is one history action.
 
 Zone vertex snapping is independent of actor snapping and Zone lock. Enabling it
 snaps existing Zones and repacks actors atomically, rejecting invalid results.
-User-drawn polygon vertices snap to actual cell vertices. Generated shapes snap
-drawing start/end controls and manipulated resize corners, then regenerate
-normally without snapping every sampled outline point. Maintain these constraints
+Polygon and rectangle Zones snap their interactable corner vertices to the
+nearest cell vertices. Intermediate samples on straight edges
+retain their fractional position between the snapped neighboring corners and
+remain collinear; they are not snapped independently. When consecutive Polygon
+vertices snap to the same cell vertex, merge them into one, including the closing
+first/last pair and samples on a collapsed edge. Reject results with fewer than
+three distinct corners or invalid geometry. Nonconsecutive coincident vertices
+remain subject to self-intersection validation. Hexagons and circles snap
+their drawing start/end controls and manipulated bounding-box resize corners,
+then regenerate normally. Their actual outline vertices and samples are not
+snapped independently. Maintain these constraints
 through Zone movement, grid changes, map resizing, and automatic enlargement,
 including rotated and warped grids; reject operations that cannot remain valid.
 

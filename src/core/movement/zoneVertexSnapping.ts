@@ -5,12 +5,18 @@ import type { EncounterState } from '@core/encounter/types';
 import type { Zone } from '@entities/zone/types';
 import type { LayoutPoint } from '@core/layout/types';
 import { getPolygonBounds } from '@core/layout/polygonGeometry';
+import { getPolygonCornerIndices, mergeConsecutivePolygonPoints, remapPolygonCorners } from '@core/layout/polygonCorners';
 import { nearestGridVertex, pointDistance } from './gridTopology';
 
-/** Generated shapes retain their outline; only their bounding drawing controls snap. */
+const usesBoundingResizeControls = (shape: Zone['shape']) => shape === 'circle' || shape === 'hexagon';
+
+/** Hexagons/circles snap resize bounds; other outlines retain samples along snapped edges. */
 export function snapZonePolygon(state: EncounterState, zone: Pick<Zone, 'shape' | 'polygon'>): LayoutPoint[] {
   if (!state.movementRules.snapZoneVertices) return zone.polygon;
-  if (zone.shape === 'polygon') return zone.polygon.map(point => nearestGridVertex(state, point));
+  if (!usesBoundingResizeControls(zone.shape)) {
+    const polygon = remapPolygonCorners(zone.polygon, point => nearestGridVertex(state, point));
+    return zone.shape === 'polygon' ? mergeConsecutivePolygonPoints(polygon) : polygon;
+  }
   const bounds = getPolygonBounds(zone.polygon);
   const first = nearestGridVertex(state, { x: bounds.minX, y: bounds.minY });
   const last = nearestGridVertex(state, { x: bounds.maxX, y: bounds.maxY });
@@ -22,13 +28,14 @@ export function reconcileZoneVertices(state: EncounterState): EncounterState {
   const byId = { ...state.zones.byId }; let changed = false;
   for (const id of state.zones.allIds) {
     const zone = byId[id], polygon = snapZonePolygon(state, zone);
-    if (polygon.some((point, i) => pointDistance(point, zone.polygon[i]) > 1e-6)) { byId[id] = { ...zone, polygon }; changed = true; }
+    if (polygon.length !== zone.polygon.length || polygon.some((point, i) => pointDistance(point, zone.polygon[i]) > 1e-6)) { byId[id] = { ...zone, polygon }; changed = true; }
   }
   return changed ? { ...state, zones: { ...state.zones, byId } } : state;
 }
 export function zoneSnappingValid(state: EncounterState, zone: Zone) {
   const bounds = getPolygonBounds(zone.polygon);
-  const points = zone.shape === 'polygon' ? zone.polygon : [{ x: bounds.minX, y: bounds.minY }, { x: bounds.maxX, y: bounds.maxY }];
+  const points = !usesBoundingResizeControls(zone.shape) ? getPolygonCornerIndices(zone.polygon).map(index => zone.polygon[index])
+    : [{ x: bounds.minX, y: bounds.minY }, { x: bounds.maxX, y: bounds.maxY }];
   return points.every(point => pointDistance(point, nearestGridVertex(state, point)) < 1e-5);
 }
 
@@ -43,7 +50,7 @@ export function translateSnappedZone(state: EncounterState, zone: Pick<Zone, 'sh
     translation = { x: target.x - reference.x, y: target.y - reference.y };
   } else if (state.movementRules.snapZoneVertices && polygon.length) {
     const bounds = getPolygonBounds(polygon);
-    const reference = zone.shape === 'polygon' ? polygon[0] : { x: bounds.minX, y: bounds.minY };
+    const reference = !usesBoundingResizeControls(zone.shape) ? polygon[getPolygonCornerIndices(polygon)[0] ?? 0] : { x: bounds.minX, y: bounds.minY };
     const target = nearestGridVertex(state, { x: reference.x + offset.x, y: reference.y + offset.y });
     translation = { x: target.x - reference.x, y: target.y - reference.y };
   }
