@@ -4,6 +4,7 @@ import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { LOCAL_PREFERENCES_RESET_EVENT } from "@ui/motion_preferences/MotionPreferenceProvider";
+import { CanvasSettings } from "@ui/settings/CanvasSettings";
 import { InterfaceSettings } from "@ui/settings/InterfaceSettings";
 import {
   DEFAULT_ZONE_COLOR_DEFAULTS,
@@ -25,12 +26,12 @@ describe("InterfaceSettings", () => {
     delete document.documentElement.dataset.theme;
   });
 
-  function renderSettings() {
+  function renderSettings(content = <InterfaceSettings />) {
     return render(
       <Provider store={store}>
       <ThemeProvider>
         <InterfacePreferenceProvider>
-          <InterfaceSettings />
+          {content}
         </InterfacePreferenceProvider>
       </ThemeProvider>
       </Provider>
@@ -39,7 +40,7 @@ describe("InterfaceSettings", () => {
 
   it.each(["box", "stack", "row"])("persists %s as the default clock style and resets to Traditional", (style) => {
     const view = renderSettings();
-    const defaults = screen.getByRole("group", { name: "Defaults" });
+    const defaults = screen.getByRole("group", { name: "Status" });
     const select = within(defaults).getByRole("combobox", { name: "Default clock style" });
     expect(select).toHaveValue("traditional");
     expect(within(select).getAllByRole("option").map((option) => option.textContent)).toEqual(["Box", "Row", "Stack", "Traditional"]);
@@ -76,7 +77,7 @@ describe("InterfaceSettings", () => {
     renderSettings();
 
     const accessibility = screen.getByRole("group", { name: "Accessibility" });
-    const defaults = screen.getByRole("group", { name: "Defaults" });
+    const defaults = screen.getByRole("group", { name: "Initiative" });
     const autoSelect = within(defaults).getByRole("switch", {
       name: "Auto-select active actor in initiative"
     });
@@ -118,9 +119,9 @@ describe("InterfaceSettings", () => {
 
   it("persists the default tool for newly created encounters", async () => {
     const user = userEvent.setup();
-    renderSettings();
+    renderSettings(<CanvasSettings />);
 
-    const defaults = screen.getByRole("group", { name: "Defaults" });
+    const defaults = screen.getByRole("group", { name: "New encounter defaults" });
     const toolSelect = within(defaults).getByRole("combobox", {
       name: "Tool auto-select upon encounter creation"
     });
@@ -163,7 +164,7 @@ describe("InterfaceSettings", () => {
 
   it("persists panel order separately from encounter layouts", () => {
     renderSettings();
-    const order = screen.getByRole("group", { name: "Order" });
+    const order = screen.getByRole("group", { name: "Default layout" });
     const left = within(order).getByRole("list", { name: "Default left panel order" });
     const right = within(order).getByRole("list", { name: "Default right panel order" });
 

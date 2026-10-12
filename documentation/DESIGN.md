@@ -282,7 +282,7 @@ remove from initiative, dead, unconscious / severely injured, injured, healthy.
 Each icon has a descriptive tooltip. Removing an entry preserves Actor status.
 Dead participants have muted row text and are skipped when starting combat or
 stepping forward/backward. Their names also have a strikethrough by default;
-the standard switch at the bottom of Interface settings > Panels toggles this
+the standard switch in Interface settings > Panels > Initiative toggles this
 decoration. This durable interface preference applies in the docked list and
 popout and does not change Actor status or encounter history.
 Marking the current Actor dead retains its turn
@@ -778,12 +778,12 @@ records that link to existing token assets and retain state across encounters;
 character behavior and its data contract will be specified with that feature.
 Interface Settings includes Library preferences: closing the modal by clicking
 outside it (initially off), separate modal and panel default views (initially
-Grid and Two columns respectively), and a modal grid card size slider with four
+Grid and Two columns respectively), and a modal card size slider with four
 discrete steps: Small, Medium (default), Large, and Extra large. These use minimum
 card widths of 80, 128, 192, and 256 pixels so the number of cards adapts to the
 available screen width. Older pixel preferences map to the nearest step.
-An Independent Library grid card sizes switch, initially off, shows separate
-Encounter, Background, Character and Token, and Audio sliders when enabled, and the shared
+An Independent Library card sizes switch, initially off, shows separate
+Audio, Background, Character and Token, and Encounter sliders when enabled, and the shared
 slider when disabled. Each individual size starts at Medium. Shared and
 individual values are retained when switching modes. Characters and Tokens use
 the same card size preference. Card size preferences apply
@@ -909,7 +909,7 @@ include its height when sizing their shared container. Box visuals sit slightly
 left of center with more room for boxes on the left, keeping two-digit maxima
 inset from the card edge; the maximum retains its confirmed-fill action. All styles use the same
 zero-to-segment-count bounds, progress mechanics, and exact current/total value.
-The clock editor exposes the style choice. Interface settings > Defaults stores
+The clock editor exposes the style choice. Interface settings > Panels > Status stores
 a Default clock style preference, initially Traditional, used only for newly
 created clocks (including creation from the shared editor). Existing clocks keep
 their own style when that default changes. The preference persists, synchronizes
@@ -1008,7 +1008,7 @@ Markers have active/inactive/mixed accessible states and descriptive tooltips.
 Condition, weapon, and armor icon tooltips appear immediately on pointer hover
 or keyboard focus, remain within the viewport, and retain touch-hold help.
 
-Interface settings > Panels persists a global Health counter name, defaulting
+Combat settings > Health persists a global Health counter name, defaulting
 to “Hit points”. Trimmed empty input restores that default; the label is not
 stored separately on Actors.
 
@@ -1051,7 +1051,7 @@ recalculations create no history. HP-limit changes apply to subsequent HP edits.
 With automation enabled, effective current/maximum HP changes also recalculate
 health. Manual overrides persist until an effective HP change or cutoff recalculation; no-op HP commands preserve them.
 
-Combat settings also autosave global Status panel visibility. All conditions
+Interface settings > Panels > Status autosaves global Status panel visibility. All conditions
 and equipment sections are shown by
 default. Conditions are individual icon toggles in an alphabetically sorted,
 wrapped row; the Status panel sorts within its Buffs and Debuffs subsections. Eye/EyeOff section controls match
@@ -1087,7 +1087,7 @@ Pause/resume applies to that group with the existing section transport behavior.
 Track cards have Stop to the left of Play/Pause; Pause retains the seek position
 and Stop resets playback. A paused track’s Play control resumes that track alone
 even when its group or section is paused, leaving other cues paused.
-Audio Settings groups creation preferences under Defaults, including cue volume
+Audio Settings groups creation preferences under Cue defaults, including cue volume
 and Effect repeat delay. Music cue Repeat defaults off; new Music group Loop
 defaults on. Both are switch preferences, apply to newly created cues/groups,
 and reset with application preferences. Existing cue/group values are preserved.
@@ -1095,7 +1095,7 @@ Ambience cue type defaults offer Asset Icon (initial default), Duration threshol
 Effect, and Track. Library Music icons mark Track assets and Audio icons mark
 Effect assets. The asset context menu offers Mark as Track or Mark as Effect
 according to the current mark; links share their original asset's mark.
-Duration threshold is an independent Audio Defaults setting, always editable
+Duration threshold is an independent Audio Cue defaults setting, always editable
 regardless of the selected default type. It starts at 30 seconds: strictly longer
 sounds become Tracks, and equal/shorter sounds become Effects. Unavailable
 metadata falls back to the asset mark. Defaults apply to newly created Ambience
@@ -1123,7 +1123,7 @@ when the Actor changes to the selected status. Undo/redo does not play triggers.
 - System default
 - Extensible theme system (future)
 
-Interface settings optionally persist default Zone fill and border colors as
+Canvas settings > New encounter defaults > Zone appearance optionally persists default Zone fill and border colors as
 six-digit hex values and persist a default Zone opacity from 0–100%. Blank
 Zone fill or border defaults use the first color in the Zone palette. The
 optional default Engagement color is blank by default: new Zones then match
@@ -1133,9 +1133,13 @@ fields display the effective default hex value as their placeholder. Cloned
 Zones retain the source Zone's opacity instead of applying the new-Zone
 default. A Show border setting, enabled by default, controls border visibility
 for newly created Zones; clones retain their source Zone's setting.
-The Interface panel controls are grouped under General, Defaults (including
-the Colors subsection), and Panel Visibility.
-Panels > Order edits the default left/right panel arrangement by dragging panel
+Settings use a consistent Category → Section → optional Subsection → Setting
+hierarchy, described in `plans/settings_consistency.md`. Workspace categories
+are Audio, Canvas, Combat, Interface, and Keybinds; Account and Data are grouped
+separately. Settings navigation remembers the selected category and its scroll
+position when closed and reopened during the active application session. This
+navigation state is not stored durably and resets on refresh.
+Interface > Panels > Default layout edits the default left/right panel arrangement by dragging panel
 names, with a line preview at the drop position and no arrow controls. Its last
 control, Apply to current encounter, applies those sides and order to the active
 Encounter through undo/redo while preserving each panel's expanded/collapsed

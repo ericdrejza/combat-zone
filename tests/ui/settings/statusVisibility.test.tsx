@@ -9,7 +9,7 @@ import { resetAppStore } from "@tests/ui/renderApp";
 import { CombatPreferenceProvider, COMBAT_PREFERENCES_STORAGE_KEY } from "@ui/combat_preferences/CombatPreferenceProvider";
 import { DEFAULT_STATUS_VISIBILITY } from "@ui/combat_preferences/statusVisibility";
 import { LOCAL_PREFERENCES_RESET_EVENT } from "@ui/motion_preferences/MotionPreferenceProvider";
-import { CombatSettings } from "@ui/settings/CombatSettings";
+import { PanelInterfaceSettings } from "@ui/settings/PanelInterfaceSettings";
 import { StatusPanel } from "@ui/panels/StatusPanel";
 import { CONDITIONS } from "@ui/status/markerCatalog";
 
@@ -21,7 +21,7 @@ function setup(ids = ["a"]) {
   store.dispatch(loadEncounterState(state));
   store.dispatch(setActiveTool("select"));
   store.dispatch(selectEntity({ entityType: "actor", ids }));
-  return render(<Provider store={store}><CombatPreferenceProvider><CombatSettings /><StatusPanel /></CombatPreferenceProvider></Provider>);
+  return render(<Provider store={store}><CombatPreferenceProvider><PanelInterfaceSettings /><StatusPanel /></CombatPreferenceProvider></Provider>);
 }
 function conditions() { return within(screen.getByRole("group", { name: "Conditions" })); }
 

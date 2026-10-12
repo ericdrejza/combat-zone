@@ -11,6 +11,12 @@ After completing a numbered section (## X.), move the completed section to the e
 
 ## 15. MVP Acceptance Hardening
 
+- [x] Standardize Settings category, section, subsection, and row presentation;
+      regroup defaults and panel presentation by purpose. Rename the category
+      group Workspace, simplify card size labels, and retain category/scroll
+      navigation in memory for the active session. Verify saving, history,
+      category placement, accessibility, and compact/desktop layouts.
+
 - [x] Move actor destination warnings and heal/damage dialog preferences to
       Combat, and background resize overflow and Navigation panning to Canvas.
       Verify category placement and preservation of saved preference values.
@@ -24,8 +30,8 @@ After completing a numbered section (## X.), move the completed section to the e
       modal size steps and reset hidden-scrollbar visual previews on asset changes.
       Verify view cycling, saved preference compatibility, and preview scroll reset.
 
-- [x] Add the Independent Library grid card sizes switch with Encounter,
-      Background, Token, and Audio sliders; preserve shared/individual values
+- [x] Add the Independent Library card sizes switch with Encounter,
+      Background, Character and Token, and Audio sliders; preserve shared/individual values
       across mode changes and apply the selected size in the Library modal.
       Verify preference persistence, synchronization, reset, and size selection.
 

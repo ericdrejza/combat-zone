@@ -1,3 +1,4 @@
+import { TouchTooltip } from "@ui/toolbar/TouchTooltip";
 import { GripVertical } from "lucide-react";
 import { motion } from "motion/react";
 import { useState, type DragEvent } from "react";
@@ -58,7 +59,7 @@ export function PanelOrderSettings({ onChange, order }: PanelOrderSettingsProps)
     />;
   }
 
-  return <div className="grid grid-cols-2 gap-3" data-panel-order-preview>
+  return <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 [&_span[data-touch-tooltip-label]]:w-full" data-panel-order-preview>
     {(["left", "right"] as const).map((side) => {
       const endTarget = { side, index: order[side].length };
       return <section className="min-w-0 rounded-2xl border border-canvas-line bg-canvas p-2" key={side}>
@@ -96,7 +97,8 @@ export function PanelOrderSettings({ onChange, order }: PanelOrderSettingsProps)
                   if (acceptDrag(event)) dropPanel(rowTarget(event));
                 }}
               >
-                <button
+                <TouchTooltip label={`Reorder ${panel.title} panel`}><button
+                  title={`Reorder ${panel.title} panel`}
                   aria-label={`Reorder ${panel.title} panel`}
                   className="flex w-full min-w-0 touch-none cursor-grab items-center gap-1 rounded-xl border border-canvas-line bg-canvas-surface px-2 py-2 text-left shadow-sm transition hover:border-canvas-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-canvas-ink active:cursor-grabbing"
                   draggable={false}
@@ -118,7 +120,7 @@ export function PanelOrderSettings({ onChange, order }: PanelOrderSettingsProps)
                 >
                   <GripVertical aria-hidden="true" className="h-4 w-4 shrink-0 text-canvas-muted" />
                   <span className="min-w-0 flex-1 truncate text-xs font-medium">{panel.title}</span>
-                </button>
+                </button></TouchTooltip>
               </div>
             </motion.li>;
           })}

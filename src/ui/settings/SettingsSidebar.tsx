@@ -10,13 +10,14 @@ import {
   UserRound,
   type LucideIcon
 } from "lucide-react";
+import { TouchTooltip } from "@ui/toolbar/TouchTooltip";
 import { motion } from "motion/react";
 
 import type { SettingsTabId } from "./settingsTabs";
 
 type Tab = { id: SettingsTabId; icon: LucideIcon; label: string };
 
-const generalTabs: Tab[] = [
+const workspaceTabs: Tab[] = [
   { id: "audio", icon: Headphones, label: "Audio" },
   { id: "canvas", icon: Grid3X3, label: "Canvas" },
   { id: "combat", icon: Swords, label: "Combat" },
@@ -33,27 +34,34 @@ function TabButton({
   activeTab,
   expanded,
   onSelect,
-  tab
+  tab,
+  tabIdPrefix,
+  panelId
 }: {
   activeTab: SettingsTabId;
   expanded: boolean;
   onSelect: (tab: SettingsTabId) => void;
   tab: Tab;
+  tabIdPrefix?: string;
+  panelId?: string;
 }) {
   const Icon = tab.icon;
   const selected = activeTab === tab.id;
   return (
-    <button
+    <TouchTooltip label={tab.label}><button
+      id={tabIdPrefix ? `${tabIdPrefix}-${tab.id}` : undefined}
+      aria-controls={panelId}
       aria-selected={selected}
       aria-label={tab.label}
-      className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-canvas-ink ${selected ? "bg-canvas-ink text-canvas-on-ink" : "text-canvas-muted hover:bg-canvas-surface hover:text-canvas-ink"}`}
+      title={tab.label}
+      className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-canvas-ink ${selected ? "bg-canvas-ink text-canvas-on-ink hover:ring-2 hover:ring-inset hover:ring-canvas-muted" : "text-canvas-muted hover:bg-canvas-surface hover:text-canvas-ink"}`}
       onClick={() => onSelect(tab.id)}
       role="tab"
       type="button"
     >
       <Icon aria-hidden="true" className="h-4 w-4" />
       {expanded ? <span className="whitespace-nowrap">{tab.label}</span> : null}
-    </button>
+    </button></TouchTooltip>
   );
 }
 
@@ -62,13 +70,17 @@ export function SettingsSidebar({
   compact,
   expanded,
   onSelect,
-  onToggle
+  onToggle,
+  tabIdPrefix,
+  panelId
 }: {
   activeTab: SettingsTabId;
   compact: boolean;
   expanded: boolean;
   onSelect: (tab: SettingsTabId) => void;
   onToggle: () => void;
+  tabIdPrefix?: string;
+  panelId?: string;
 }) {
   const showLabels = !compact || expanded;
 
@@ -76,17 +88,18 @@ export function SettingsSidebar({
     <motion.aside
       animate={{ width: showLabels ? 176 : 64 }}
       aria-label="Settings sections"
-      className="flex shrink-0 flex-col overflow-hidden border-r border-canvas-line bg-canvas p-3"
+      className="flex shrink-0 flex-col overflow-hidden [&_span[data-touch-tooltip-label]]:w-full border-r border-canvas-line bg-canvas p-3"
       initial={false}
       transition={{ duration: 0.18, ease: "easeOut" }}
     >
       {compact ? (
-        <button
+        <TouchTooltip label={expanded ? "Collapse settings navigation" : "Expand settings navigation"}><button
           aria-label={
             expanded
               ? "Collapse settings navigation"
               : "Expand settings navigation"
           }
+          title={expanded ? "Collapse settings navigation" : "Expand settings navigation"}
           aria-expanded={expanded}
           className="mb-3 flex h-9 w-full items-center gap-2 rounded-xl px-3 text-sm font-medium text-canvas-muted transition hover:bg-canvas-surface hover:text-canvas-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-canvas-ink"
           onClick={onToggle}
@@ -98,22 +111,24 @@ export function SettingsSidebar({
             <PanelLeftOpen aria-hidden="true" className="h-4 w-4 shrink-0" />
           )}
           {expanded ? <span className="whitespace-nowrap">Collapse</span> : null}
-        </button>
+        </button></TouchTooltip>
       ) : null}
       <div>
         {showLabels ? (
           <h3 className="px-3 pb-2 text-xs font-semibold uppercase tracking-wide text-canvas-muted">
-            General
+            Workspace
           </h3>
         ) : null}
-        <div aria-label="General settings" className="space-y-1" role="tablist">
-          {generalTabs.map((tab) => (
+        <div aria-label="Workspace settings" className="space-y-1" role="tablist">
+          {workspaceTabs.map((tab) => (
             <TabButton
               activeTab={activeTab}
               expanded={showLabels}
               key={tab.id}
               onSelect={onSelect}
               tab={tab}
+              tabIdPrefix={tabIdPrefix}
+              panelId={panelId}
             />
           ))}
         </div>
@@ -121,7 +136,7 @@ export function SettingsSidebar({
       <div className="mt-auto border-t border-canvas-line pt-3">
         {showLabels ? (
           <h3 className="px-3 pb-2 text-xs font-semibold uppercase tracking-wide text-canvas-muted">
-            Account
+            Account &amp; data
           </h3>
         ) : null}
         <div aria-label="Account settings" className="space-y-1" role="tablist">
@@ -132,6 +147,8 @@ export function SettingsSidebar({
               key={tab.id}
               onSelect={onSelect}
               tab={tab}
+              tabIdPrefix={tabIdPrefix}
+              panelId={panelId}
             />
           ))}
         </div>

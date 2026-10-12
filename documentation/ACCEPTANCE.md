@@ -345,7 +345,7 @@ truth.
       validation/history, cancellation preserves it, and read-only removal is
       disabled. Equipment markers are excluded.
 
-- [x] A default-on standard switch at the bottom of Interface > Panels toggles
+- [x] A default-on standard switch in Interface > Panels > Initiative toggles
       strikethrough on dead Actor names in the list and popout; the preference
       persists independently of encounter history and resets to enabled.
 - [x] Initiative opens from the ContactRound header control before the drag
@@ -472,7 +472,7 @@ these back into `AGENT.md` or `DESIGN.md`.
       set to minimum (zero if unset) or maximum, and the latter is disabled
       with its Set to maximum tooltip when the maximum is unset. An unset minimum
       adds (0 by default) to the Set to minimum tooltip.
-- [x] Combat settings autosave condition visibility using the approved wrapped icon
+- [x] Interface > Panels > Status autosaves condition visibility using the approved wrapped icon
       toggles. Eye/EyeOff controls show/hide Conditions (preserving individual
       choices), Weapons, and Armor. Hidden conditions remain visible if active
       on any selected Actor; hidden equipment sections stay hidden. Preferences
@@ -542,7 +542,7 @@ these back into `AGENT.md` or `DESIGN.md`.
       rows. Two-column mini cards show name, centered visual, and current value/controls.
       /maximum sits beside the visual without shifting its center and still confirms filling.
       All styles retain the same bounds and progress mechanics.
-- [x] Interface > Defaults persists Default clock style, initially Traditional;
+- [x] Interface > Panels > Status persists Default clock style, initially Traditional;
       it affects new clocks only and synchronizes/resets with Interface preferences.
 - [x] Clock styles survive atomic editor saves, undo/redo, schema 15 migration,
       persistence, and cloud round trips; invalid styles are rejected.
@@ -676,3 +676,17 @@ these back into `AGENT.md` or `DESIGN.md`.
 - [x] Manual grid rotation accepts a full turn and wraps 360° to 0° while retaining hundredth precision and fractional-to-whole held steps.
 
 - [x] Actor Properties header mirrors the selected image with SquareCenterlineDashedHorizontal, tooltip and toggle feedback, preserving upright labels, placement, history, and local/cloud persistence.
+
+
+## Settings presentation and navigation
+
+- [x] All categories share predictable category, section, subsection, and setting
+  styles, responsive controls, accessible labels/help, and save timing hints.
+- [x] Creation tool and Zone appearance defaults live in Canvas; health counter
+  naming lives in Combat. Initiative and Status presentation live in Interface
+  > Panels, including default clock style.
+- [x] Workspace labels the main category group. Closing and reopening Settings
+  restores the category and scroll position during the active session; refresh
+  resets navigation without adding durable preferences.
+- [x] Library card size labels omit “grid”; independent card sliders remain
+  alphabetical, with the shared Character and Token size preference.

@@ -2,6 +2,7 @@ import { useEffect, useId, useState } from "react";
 
 import { DEFAULT_ZONE_PALETTE_COLOR } from "@entities/zone/zoneColors";
 import { useInterfacePreferences } from "@ui/interface_preferences/InterfacePreferenceProvider";
+import { SettingsRow, SettingsField, SettingsSubsection, SETTINGS_CONTROL, SETTINGS_SLIDER } from "./SettingsLayout";
 import { PreferenceSwitch } from "./PreferenceSwitch";
 
 const HEX_COLOR_PATTERN = /^#[0-9a-f]{6}$/i;
@@ -22,6 +23,8 @@ function HexColorInput({
   const [draft, setDraft] = useState(value ?? "");
   const [invalid, setInvalid] = useState(false);
   const errorId = useId();
+  const inputId = useId();
+  const helpId = useId();
 
   useEffect(() => {
     setDraft(value ?? "");
@@ -46,8 +49,7 @@ function HexColorInput({
   }
 
   return (
-    <label className="block space-y-1.5 py-2">
-      <span className="text-sm font-medium">{label}</span>
+    <SettingsRow label={label} controlId={inputId} descriptionId={helpId} description={`${description ?? ""} Saves when you leave the field or press Enter.`}>
       <div className="flex items-center gap-2">
         <span
           aria-hidden="true"
@@ -56,9 +58,10 @@ function HexColorInput({
         />
         <input
           aria-label={label}
-          aria-describedby={invalid ? errorId : undefined}
+          id={inputId}
+          aria-describedby={[helpId, invalid ? errorId : null].filter(Boolean).join(" ")}
           aria-invalid={invalid}
-          className="min-w-0 flex-1 rounded-xl border border-canvas-line bg-canvas-surface px-3 py-2 font-mono text-sm uppercase hover:border-canvas-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-canvas-ink"
+          className={`${SETTINGS_CONTROL} font-mono uppercase`}
           onBlur={commit}
           onChange={(event) => {
             setDraft(event.currentTarget.value);
@@ -73,13 +76,12 @@ function HexColorInput({
           value={draft}
         />
       </div>
-      {description ? <span className="block text-xs text-canvas-muted">{description}</span> : null}
       {invalid ? (
         <span className="block text-xs text-red-700 dark:text-red-500" id={errorId} role="alert">
           Enter a six-digit hex color beginning with #.
         </span>
       ) : null}
-    </label>
+    </SettingsRow>
   );
 }
 
@@ -95,11 +97,7 @@ export function DefaultColorSettings() {
   } = useInterfacePreferences();
 
   return (
-    <section aria-labelledby="default-colors-heading" className="py-3">
-      <h4 className="text-sm font-semibold" id="default-colors-heading">Colors</h4>
-      <p className="mt-1 text-xs text-canvas-muted">
-        Applied when creating a new zone.
-      </p>
+    <SettingsSubsection title="Zone appearance" description="Applied when creating a new Zone." region>
       <div className="mt-2 divide-y divide-canvas-line">
         <HexColorInput
           description="Leave blank to use the first palette color."
@@ -110,16 +108,10 @@ export function DefaultColorSettings() {
           placeholder={DEFAULT_ZONE_PALETTE_COLOR}
           value={zoneColorDefaults.zone}
         />
-        <label className="block space-y-2 py-3">
-          <div className="flex items-center justify-between gap-3">
-            <span className="text-sm font-medium">Default zone opacity</span>
-            <span className="font-mono text-[11px] text-canvas-muted">
-              {Math.round(zoneOpacityDefault * 100)}%
-            </span>
-          </div>
+        <SettingsField label="Default zone opacity" fullWidth valueLabel={`${Math.round(zoneOpacityDefault * 100)}%`}>
           <input
             aria-label="Default zone opacity"
-            className="w-full cursor-pointer accent-canvas-ink focus-visible:rounded focus-visible:ring-2 focus-visible:ring-canvas-ink"
+            className={SETTINGS_SLIDER}
             max="1"
             min="0"
             onChange={(event) =>
@@ -129,7 +121,7 @@ export function DefaultColorSettings() {
             type="range"
             value={zoneOpacityDefault}
           />
-        </label>
+        </SettingsField>
         <HexColorInput
           description="Leave blank to use the first palette color."
           label="Default border color"
@@ -156,6 +148,6 @@ export function DefaultColorSettings() {
           value={zoneColorDefaults.engagement}
         />
       </div>
-    </section>
+    </SettingsSubsection>
   );
 }

@@ -1,3 +1,5 @@
+import { SettingsRow } from "./SettingsLayout";
+import { useId } from "react";
 import { motion } from "motion/react";
 
 export function PreferenceSwitch({
@@ -7,7 +9,8 @@ export function PreferenceSwitch({
   checked,
   label,
   onChange,
-  compact = false
+  compact = false,
+  description
 }: {
   ariaLabel?: string;
   disabled?: boolean;
@@ -16,13 +19,18 @@ export function PreferenceSwitch({
   label: string;
   onChange: (checked: boolean) => void;
   compact?: boolean;
+  description?: string;
 }) {
+  const controlId = useId();
+  const helpId = `${controlId}-help`;
   return (
-    <div className={`flex items-center justify-between gap-4 ${compact ? "py-1" : "min-h-12 py-3"}`}>
-      <span className="text-sm">{label}</span>
+    <SettingsRow controlId={controlId} label={label} descriptionId={helpId} description={description} compact={compact}>
+      <div className="flex justify-end">
       <button
+        id={controlId}
         disabled={disabled}
         title={title}
+        aria-describedby={description ? helpId : undefined}
         aria-checked={checked}
         aria-label={ariaLabel ?? label}
         className={`disabled:cursor-not-allowed disabled:opacity-40 enabled:hover:ring-2 enabled:hover:ring-canvas-muted focus-visible:ring-2 focus-visible:ring-canvas-ink relative h-6 w-11 shrink-0 rounded-full border transition-colors ${
@@ -44,6 +52,7 @@ export function PreferenceSwitch({
           transition={{ duration: 0.18, ease: "easeOut" }}
         />
       </button>
-    </div>
+      </div>
+    </SettingsRow>
   );
 }

@@ -18,6 +18,7 @@ import {
   type AssetLibraryMode
 } from "@ui/library/AssetLibraryModal";
 import { SettingsModal } from "@ui/settings/SettingsModal";
+import { createSettingsSession } from "@ui/settings/settingsSession";
 import type { SaveStatus } from "@ui/toolbar/EncounterTitleControls";
 import { useOptionalCloudSync } from "@ui/cloud_sync";
 import { DeletedEncounterDialog } from "./DeletedEncounterDialog";
@@ -86,6 +87,7 @@ export function useAppPersistenceUi({
   const [audioRelinkCueId, setAudioRelinkCueId] = useState<string | null>(null);
   const [encounterToolSelectionRequest, setEncounterToolSelectionRequest] =
     useState(0);
+  const settingsSession = useRef(createSettingsSession());
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [draftDialogOpen, setDraftDialogOpen] = useState(false);
   const [deletedDialogOpen, setDeletedDialogOpen] = useState(false);
@@ -283,6 +285,7 @@ export function useAppPersistenceUi({
       ) : null}
       {activeDialog === "settings" ? (
         <SettingsModal
+          session={settingsSession.current}
           onClose={() => setSettingsOpen(false)}
           onExportWorkspace={() => {
             void persistence.exportWorkspace().then((envelope) =>

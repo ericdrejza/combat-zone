@@ -5,7 +5,6 @@ import { createActor } from "@entities/actor/actorMutations";
 import { CombatPreferenceProvider, COMBAT_PREFERENCES_STORAGE_KEY, readCombatPreferences, readMovementRepeatDelay } from "@ui/combat_preferences/CombatPreferenceProvider";
 import { CombatSettings } from "@ui/settings/CombatSettings";
 import { InterfacePreferenceProvider, INTERFACE_PREFERENCES_STORAGE_KEY } from "@ui/interface_preferences/InterfacePreferenceProvider";
-import { InterfaceSettings } from "@ui/settings/InterfaceSettings";
 import { LOCAL_PREFERENCES_RESET_EVENT } from "@ui/motion_preferences/MotionPreferenceProvider";
 import { loadEncounterState, undoEncounterChange, redoEncounterChange } from "@store/encounterSlice";
 import { store } from "@store/store";
@@ -230,7 +229,7 @@ describe("Combat and resource label preferences", () => {
     expect(screen.queryByLabelText("Dead upper cutoff")).not.toBeInTheDocument();
   });
   it("persists the health label, trims names, falls back on blank, and resets", () => {
-    render(<Provider store={store}><InterfacePreferenceProvider><InterfaceSettings /></InterfacePreferenceProvider></Provider>);
+    render(<Provider store={store}><InterfacePreferenceProvider><CombatSettings /></InterfacePreferenceProvider></Provider>);
     const input = screen.getByLabelText("Health counter name");
     expect(input).toHaveValue("Hit points");
     fireEvent.change(input, { target: { value: "  Vitality  " } }); fireEvent.blur(input);

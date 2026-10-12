@@ -52,4 +52,47 @@ describe("Settings categories", () => {
     expect(within(dialog).getByRole("switch", { name: panLabel })).toBeChecked();
     expect(within(dialog).getByRole("combobox", { name: backgroundLabel })).toHaveValue("zoneless");
   });
+  it("restores the category and scroll position on reopen without persisting navigation", () => {
+    const view = renderApp();
+    const open = () => fireEvent.click(screen.getByRole("button", { name: "Open settings" }));
+    open();
+    expect(screen.getByRole("tablist", { name: "Workspace settings" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("tab", { name: "Interface" }));
+    fireEvent.scroll(screen.getByRole("tabpanel"), { target: { scrollTop: 420 } });
+    fireEvent.click(screen.getByRole("button", { name: "Close settings" }));
+    open();
+    expect(screen.getByRole("tab", { name: "Interface" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tabpanel").scrollTop).toBe(420);
+    fireEvent.click(screen.getByRole("tab", { name: "Audio" }));
+    expect(screen.getByRole("tabpanel").scrollTop).toBe(0);
+    fireEvent.click(screen.getByRole("tab", { name: "Interface" }));
+    expect(screen.getByRole("tabpanel").scrollTop).toBe(420);
+    view.unmount();
+    renderApp();
+    open();
+    expect(screen.getByRole("tab", { name: "Audio" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tabpanel").scrollTop).toBe(0);
+  });
+
+  it("groups defaults and panel presentation in their assigned categories", () => {
+    renderApp();
+    fireEvent.click(screen.getByRole("button", { name: "Open settings" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Canvas" }));
+    expect(within(screen.getByRole("group", { name: "New encounter defaults" }))
+      .getByRole("combobox", { name: "Tool auto-select upon encounter creation" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("tab", { name: "Combat" }));
+    const health = within(screen.getByRole("group", { name: "Health" }));
+    expect(health.getByRole("textbox", { name: "Health counter name" })).toHaveAccessibleDescription(/Saves when you leave/);
+    expect(screen.queryByRole("switch", { name: "Show conditions" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("tab", { name: "Interface" }));
+    const initiative = within(screen.getByRole("group", { name: "Initiative" }));
+    expect(initiative.getByRole("switch", { name: "Auto-select active actor in initiative" })).toBeInTheDocument();
+    expect(initiative.getByRole("switch", { name: "Strikethrough dead actor names in initiative" })).toBeInTheDocument();
+    const status = within(screen.getByRole("group", { name: "Status" }));
+    expect(status.getByRole("switch", { name: "Show conditions" })).toBeInTheDocument();
+    expect(status.getByRole("combobox", { name: "Default clock style" })).toHaveAccessibleDescription(/new clocks/);
+    expect(screen.queryByRole("textbox", { name: "Health counter name" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("combobox", { name: "Tool auto-select upon encounter creation" })).not.toBeInTheDocument();
+  });
+
 });

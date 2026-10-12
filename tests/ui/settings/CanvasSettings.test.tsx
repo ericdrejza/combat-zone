@@ -31,7 +31,7 @@ describe("CanvasSettings", () => {
     const user = userEvent.setup();
     renderSettings();
 
-    const colors = within(screen.getByRole("region", { name: "Colors" }));
+    const colors = within(screen.getByRole("region", { name: "Zone appearance" }));
     const zoneColor = colors.getByRole("textbox", { name: "Default zone color" });
     const borderColor = colors.getByRole("textbox", { name: "Default border color" });
     const zoneOpacity = colors.getByRole("slider", { name: "Default zone opacity" });

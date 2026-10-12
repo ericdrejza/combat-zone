@@ -89,7 +89,7 @@ describe("SettingsModal local reset", () => {
     renderSettings();
 
     expect(
-      within(screen.getByRole("tablist", { name: "General settings" }))
+      within(screen.getByRole("tablist", { name: "Workspace settings" }))
         .getAllByRole("tab")
         .map((tab) => tab.textContent)
     ).toEqual(["Audio", "Canvas", "Combat", "Interface", "Keybinds"]);

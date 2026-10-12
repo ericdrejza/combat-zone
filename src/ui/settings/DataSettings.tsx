@@ -1,3 +1,4 @@
+import { SettingsCategory, SettingsSection, SettingsField, SETTINGS_CONTROL, SETTINGS_BUTTON } from "./SettingsLayout";
 import { Download, FileUp, Trash2 } from "lucide-react";
 import { useState } from "react";
 
@@ -49,48 +50,40 @@ export function DataSettings({ onClose, onExportWorkspace, onResetLocalData, onI
   }
 
   return (
-    <section className="space-y-5 p-5" aria-labelledby="settings-data-heading">
-      <h3 id="settings-data-heading" className="font-display text-lg font-semibold">Data</h3>
-      <p className="mt-1 text-sm text-canvas-muted">Export a backup or permanently remove this application's local data.</p>
-      <label className="mt-5 flex max-w-lg items-start justify-between gap-4 border-b border-canvas-line pb-5">
-        <span className="pt-2 text-sm font-medium">Image compression strategy</span>
-        <span className="w-60">
-          <select
-            aria-label="Image compression strategy"
-            className="w-full rounded-xl border border-canvas-line bg-canvas-surface px-3 py-2 text-sm hover:border-canvas-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-canvas-ink"
-            onChange={(event) => updateCompressionStrategy(event.currentTarget.value as ImageCompressionStrategyId)}
-            value={compressionStrategy}
-          >
+    <SettingsCategory title="Data" description="Asset storage, workspace backups, and local data management.">
+      <SettingsSection title="Asset storage">
+        <SettingsField label="Image compression strategy" description={compressionDescription}>
+          <select aria-label="Image compression strategy" className={SETTINGS_CONTROL} onChange={(event) => updateCompressionStrategy(event.currentTarget.value as ImageCompressionStrategyId)} value={compressionStrategy}>
             {IMAGE_COMPRESSION_OPTIONS.map(({ label, value }) => <option key={value} value={value}>{label}</option>)}
           </select>
-          <span className="mt-1 block text-xs text-canvas-muted">{compressionDescription}</span>
-        </span>
-      </label>
+        </SettingsField>
+      </SettingsSection>
+      <SettingsSection title="Workspace backups" description="Export a workspace backup or import a workspace JSON file on this device.">
       <div className="flex flex-wrap gap-2">
-        <button className="flex items-center gap-2 rounded-xl border border-canvas-line bg-canvas-surface px-4 py-2 text-sm font-medium transition hover:bg-canvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-canvas-ink" onClick={onExportWorkspace} type="button"><Download aria-hidden="true" className="h-4 w-4" />Export workspace</button>
-        <label className={`flex items-center gap-2 rounded-xl border border-canvas-line bg-canvas-surface px-4 py-2 text-sm font-medium transition focus-within:ring-2 focus-within:ring-canvas-ink ${readOnly ? "cursor-not-allowed opacity-50" : "cursor-pointer hover:bg-canvas"}`}>
+        <button className={SETTINGS_BUTTON} onClick={onExportWorkspace} type="button"><Download aria-hidden="true" className="h-4 w-4" />Export workspace</button>
+        <label className={`${SETTINGS_BUTTON} focus-within:ring-2 focus-within:ring-canvas-ink ${readOnly ? "cursor-not-allowed bg-canvas text-canvas-muted opacity-50" : "cursor-pointer hover:bg-canvas"}`}>
           <FileUp aria-hidden="true" className="h-4 w-4" />Import workspace
           <input accept="application/json,.json" aria-label="Import workspace JSON" className="sr-only" disabled={readOnly} onChange={(event) => { const file = event.target.files?.[0]; event.target.value = ""; if (file) void onImportWorkspaceFile(file); }} type="file" />
         </label>
       </div>
-      <div className="rounded-2xl border border-red-300 bg-red-50 p-4 dark:border-red-800 dark:bg-red-950">
-        <h4 className="font-semibold text-red-900 dark:text-red-500">Danger zone</h4>
+      </SettingsSection>
+      <SettingsSection title="Reset local data" danger>
         {!resetOpen ? (
-          <button className="mt-3 flex items-center gap-2 rounded-xl bg-red-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-800 disabled:cursor-not-allowed disabled:opacity-50" disabled={readOnly} onClick={() => setResetOpen(true)} type="button"><Trash2 aria-hidden="true" className="h-4 w-4" />Reset local data</button>
+          <button className="mt-3 min-h-11 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-700 flex items-center gap-2 rounded-xl bg-red-700 px-4 py-2 text-sm font-semibold text-white transition enabled:hover:bg-red-800 disabled:cursor-not-allowed disabled:opacity-50" disabled={readOnly} onClick={() => setResetOpen(true)} type="button"><Trash2 aria-hidden="true" className="h-4 w-4" />Reset local data</button>
         ) : (
           <div className="mt-3">
             <p className="text-sm text-red-900 dark:text-red-500">This permanently removes local encounters, drafts, assets, backups, and preferences. Remote cloud data is not deleted.</p>
-            <button className="mt-3 flex items-center gap-2 rounded-xl border border-canvas-line bg-canvas-surface px-3 py-2 text-sm font-medium transition hover:bg-canvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-canvas-ink" onClick={onExportWorkspace} type="button"><Download aria-hidden="true" className="h-4 w-4" />Export workspace first</button>
-            <label className="mt-4 block text-sm font-medium text-red-950 dark:text-red-500">Type {RESET_CONFIRMATION} to continue<input aria-label="Local reset confirmation" autoComplete="off" className="mt-1 w-full rounded-xl border border-red-300 bg-canvas-surface px-3 py-2 font-mono text-sm outline-none focus-visible:ring-2 focus-visible:ring-red-700 dark:border-red-800 dark:text-red-500 dark:focus-visible:ring-red-500" onChange={(event) => setConfirmation(event.target.value)} value={confirmation} /></label>
+            <button className={`${SETTINGS_BUTTON} mt-3`} onClick={onExportWorkspace} type="button"><Download aria-hidden="true" className="h-4 w-4" />Export workspace first</button>
+            <label className="mt-4 block text-sm font-medium text-red-950 dark:text-red-500">Type {RESET_CONFIRMATION} to continue<input aria-label="Local reset confirmation" autoComplete="off" className="mt-1 min-h-11 w-full rounded-xl border border-red-300 bg-canvas-surface px-3 py-2 font-mono text-sm outline-none focus-visible:ring-2 focus-visible:ring-red-700 dark:border-red-800 dark:text-red-500 dark:focus-visible:ring-red-500" onChange={(event) => setConfirmation(event.target.value)} value={confirmation} /></label>
             {error ? <p className="mt-2 text-sm text-red-800 dark:text-red-500" role="alert">{error}</p> : null}
             <div className="mt-4 flex justify-end gap-2">
-              <button className="rounded-xl border border-canvas-line bg-canvas-surface px-4 py-2 text-sm font-medium transition hover:bg-canvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-canvas-ink disabled:cursor-not-allowed disabled:opacity-50" disabled={resetting} onClick={() => { setResetOpen(false); setConfirmation(""); }} type="button">Cancel</button>
-              <button className="rounded-xl bg-red-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-700 disabled:cursor-not-allowed disabled:opacity-50" disabled={confirmation !== RESET_CONFIRMATION || resetting} onClick={() => void handleReset()} type="button">{resetting ? "Resetting…" : "Reset local data"}</button>
+              <button className={SETTINGS_BUTTON} disabled={resetting} onClick={() => { setResetOpen(false); setConfirmation(""); }} type="button">Cancel</button>
+              <button className="min-h-11 rounded-xl bg-red-700 px-4 py-2 text-sm font-semibold text-white transition enabled:hover:bg-red-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-700 disabled:cursor-not-allowed disabled:opacity-50" disabled={confirmation !== RESET_CONFIRMATION || resetting} onClick={() => void handleReset()} type="button">{resetting ? "Resetting…" : "Reset local data"}</button>
             </div>
           </div>
         )}
         {readOnly ? <p className="mt-2 text-xs text-red-800 dark:text-red-500">Close the editing tab before resetting local data here.</p> : null}
-      </div>
-    </section>
+      </SettingsSection>
+    </SettingsCategory>
   );
 }

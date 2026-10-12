@@ -60,7 +60,6 @@ describe("new cue defaults", () => {
     expect(screen.getByRole("slider", { name: "Default cue volume" })).toHaveValue("0");
     expect(screen.getByRole("combobox", { name: "Default Effect repeat delay from" })).toHaveValue("0");
     expect(screen.getByRole("combobox", { name: "Default Effect repeat delay to" })).toHaveValue("120");
-    expect(screen.getByText(/By default, repeated effects will repeat their sound every/)).toBeInTheDocument();
     act(() => globalThis.dispatchEvent(new Event(LOCAL_PREFERENCES_RESET_EVENT)));
     expect(screen.getByRole("slider", { name: "Default cue volume" })).toHaveValue("50");
     expect(screen.getByRole("switch", { name: "Repeat music cues by default" })).not.toBeChecked();

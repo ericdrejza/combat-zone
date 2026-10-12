@@ -35,7 +35,7 @@ describe("PanelOrderSettings dragging", () => {
     const onChange = renderOrder();
     const library = screen.getByRole("button", { name: "Reorder Library panel" });
     const log = screen.getByRole("button", { name: "Reorder Log panel" });
-    const row = log.parentElement!;
+    const row = log.closest<HTMLElement>("[data-panel-drop-kind=panel]")!;
     vi.spyOn(row, "getBoundingClientRect").mockReturnValue({ top: 100, height: 40 } as DOMRect);
     fireEvent.dragStart(library, { dataTransfer });
     dragAt("dragOver", row, 110);
