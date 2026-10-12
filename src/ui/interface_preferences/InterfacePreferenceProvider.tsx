@@ -1,4 +1,4 @@
-import { readLibraryGridCardSize, readLibraryViewDefault } from "./libraryPreferences";
+import { readLibraryGridCardSize, readLibraryViewDefault, readLibraryPanelViewDefault } from "./libraryPreferences";
 import { readBackgroundResizeOverflowBehavior } from '@core/encounter/backgroundResizeOverflow';
 import { isClockStyle } from "@entities/zone/clockStyle";
 import { createContext, type ReactNode, useContext, useEffect, useState } from "react";
@@ -80,7 +80,7 @@ export function InterfacePreferenceProvider({ children }: { children: ReactNode 
           updatePreferences({ encounterCreationTool }),
         setLibraryCloseOnOutsideClick: (libraryCloseOnOutsideClick) => updatePreferences({ libraryCloseOnOutsideClick }),
         setLibraryModalViewDefault: (view) => updatePreferences({ libraryModalViewDefault: readLibraryViewDefault(view) }),
-        setLibraryPanelViewDefault: (view) => updatePreferences({ libraryPanelViewDefault: readLibraryViewDefault(view) }),
+        setLibraryPanelViewDefault: (view) => updatePreferences({ libraryPanelViewDefault: readLibraryPanelViewDefault(view) }),
         setLibraryGridCardSize: (size) => updatePreferences({ libraryGridCardSize: readLibraryGridCardSize(size) }),
         setLibraryIndependentGridCardSizes: (libraryIndependentGridCardSizes) => updatePreferences({ libraryIndependentGridCardSizes }),
         setLibrarySectionGridCardSize: (sectionId, size) => updatePreferences((current) => ({

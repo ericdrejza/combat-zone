@@ -14,6 +14,7 @@ export function PersistentLibraryPreview({ children, container, className, onPoi
   useLayoutEffect(() => {
     const destination = container ?? inlineContainer;
     if (!destination) return;
+    host.className = "h-full min-h-0";
     const audio = host.querySelector("audio");
     const wasPlaying = audio && !audio.paused;
     destination.appendChild(host);
@@ -23,6 +24,6 @@ export function PersistentLibraryPreview({ children, container, className, onPoi
   useEffect(() => () => { host.remove(); }, [host]);
   return <>
     <div className={container ? "hidden" : className} ref={setInlineContainer} />
-    {createPortal(<div onPointerEnter={onPointerEnter} onPointerLeave={onPointerLeave}>{children}</div>, host)}
+    {createPortal(<div className="h-full min-h-0" onPointerEnter={onPointerEnter} onPointerLeave={onPointerLeave}>{children}</div>, host)}
   </>;
 }

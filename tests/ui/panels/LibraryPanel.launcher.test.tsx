@@ -33,11 +33,16 @@ describe("Library panel launcher", () => {
       expect(within(screen.getByRole("dialog", { name: "Asset Library" })).getByRole("tab", { name: "Audio" })).toHaveAttribute("aria-selected", "true");
     } finally { window.matchMedia = originalMatchMedia; }
   });
-  it("preserves the Grid/List toggle", () => {
+  it("cycles panel views without changing encounter history", () => {
     renderApp();
     const controls = within(screen.getByRole("region", { name: "Library panel" })).getByRole("group", { name: "Library panel controls" });
+    const before = store.getState().encounter;
     fireEvent.click(within(controls).getByRole("button", { name: "Switch Library to list view" }));
-    expect(within(controls).getByRole("button", { name: "Switch Library to grid view" })).toHaveAttribute("aria-pressed", "false");
+    expect(within(controls).getByRole("button", { name: "Switch Library to one-column view" })).toHaveAttribute("aria-pressed", "false");
+    fireEvent.click(within(controls).getByRole("button", { name: "Switch Library to one-column view" }));
+    fireEvent.click(within(controls).getByRole("button", { name: "Switch Library to two-column view" }));
+    expect(within(controls).getByRole("button", { name: "Switch Library to list view" })).toBeInTheDocument();
+    expect(store.getState().encounter).toBe(before);
     expect(within(controls).getByRole("button", { name: "Open asset library" })).toBeEnabled();
   });
 });

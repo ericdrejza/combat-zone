@@ -1,5 +1,5 @@
 import type { LibrarySectionId } from "@library/types";
-import { DEFAULT_LIBRARY_GRID_CARD_SIZE, DEFAULT_LIBRARY_GRID_CARD_SIZES, readLibraryGridCardSizes, type LibraryGridCardSizes, readLibraryGridCardSize, readLibraryViewDefault, type LibraryViewDefault } from "./libraryPreferences";
+import { DEFAULT_LIBRARY_GRID_CARD_SIZE, DEFAULT_LIBRARY_GRID_CARD_SIZES, readLibraryGridCardSizes, type LibraryGridCardSizes, readLibraryGridCardSize, readLibraryViewDefault, type LibraryViewDefault, readLibraryPanelViewDefault, type LibraryPanelViewMode } from "./libraryPreferences";
 import { readBackgroundResizeOverflowBehavior, type BackgroundResizeOverflowBehavior } from '@core/encounter/backgroundResizeOverflow';
 import { DEFAULT_CLOCK_STYLE, isClockStyle, type ClockStyle } from "@core/entity_resources/clockStyle";
 import { readAudioCueVolumeDefault, readAudioRepeatDelayDefaults, readAmbienceCueTypeDefault, readAmbienceDurationThreshold, type AmbienceCueTypeDefault } from "./audioPreferences";
@@ -39,7 +39,7 @@ export type DurableInterfacePreferences = {
   encounterCreationTool: EncounterCreationTool;
   libraryCloseOnOutsideClick: boolean;
   libraryModalViewDefault: LibraryViewDefault;
-  libraryPanelViewDefault: LibraryViewDefault;
+  libraryPanelViewDefault: LibraryPanelViewMode;
   libraryGridCardSize: number;
   libraryIndependentGridCardSizes: boolean;
   libraryGridCardSizes: LibraryGridCardSizes;
@@ -71,7 +71,7 @@ export type InterfacePreferences = DurableInterfacePreferences & {
   setEncounterCreationTool: (tool: EncounterCreationTool) => void;
   setLibraryCloseOnOutsideClick: (enabled: boolean) => void;
   setLibraryModalViewDefault: (view: LibraryViewDefault) => void;
-  setLibraryPanelViewDefault: (view: LibraryViewDefault) => void;
+  setLibraryPanelViewDefault: (view: LibraryPanelViewMode) => void;
   setLibraryGridCardSize: (size: number) => void;
   setLibraryIndependentGridCardSizes: (enabled: boolean) => void;
   setLibrarySectionGridCardSize: (sectionId: LibrarySectionId, size: number) => void;
@@ -105,7 +105,7 @@ export const defaultPreferences: DurableInterfacePreferences = {
   encounterCreationTool: "zone",
   libraryCloseOnOutsideClick: false,
   libraryModalViewDefault: "grid",
-  libraryPanelViewDefault: "grid",
+  libraryPanelViewDefault: "two-column",
   libraryGridCardSize: DEFAULT_LIBRARY_GRID_CARD_SIZE,
   libraryIndependentGridCardSizes: false,
   libraryGridCardSizes: DEFAULT_LIBRARY_GRID_CARD_SIZES,
@@ -194,7 +194,7 @@ export function readPreferences(): DurableInterfacePreferences {
           : defaultPreferences.encounterCreationTool,
       libraryCloseOnOutsideClick: stored?.libraryCloseOnOutsideClick === true,
       libraryModalViewDefault: readLibraryViewDefault(stored?.libraryModalViewDefault),
-      libraryPanelViewDefault: readLibraryViewDefault(stored?.libraryPanelViewDefault),
+      libraryPanelViewDefault: readLibraryPanelViewDefault(stored?.libraryPanelViewDefault),
       libraryGridCardSize: readLibraryGridCardSize(stored?.libraryGridCardSize),
       libraryIndependentGridCardSizes: stored?.libraryIndependentGridCardSizes === true,
       libraryGridCardSizes: readLibraryGridCardSizes(stored?.libraryGridCardSizes),

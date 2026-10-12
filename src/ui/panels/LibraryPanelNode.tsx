@@ -58,8 +58,8 @@ export function LibraryPanelNode({
   if (node.type === "folder") {
     return (
       <button
-        className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm transition hover:bg-canvas ${
-          viewMode === "grid" ? "min-w-0 flex-col justify-center" : ""
+        className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm transition hover:bg-canvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-canvas-ink ${
+          viewMode !== "list" ? "min-w-0 flex-col justify-center" : ""
         }`}
         onClick={onNavigate}
         type="button"
@@ -77,8 +77,8 @@ export function LibraryPanelNode({
   return (
     <button
       aria-label={isAudio ? node.name : undefined}
-      className={`group flex w-full touch-none select-none rounded-xl px-3 py-2 text-left text-sm transition hover:bg-canvas ${
-        viewMode === "grid"
+      className={`group flex w-full touch-none select-none rounded-xl px-3 py-2 text-left text-sm transition hover:bg-canvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-canvas-ink ${
+        viewMode !== "list"
           ? "min-w-0 flex-col items-stretch gap-1"
           : "items-center gap-3"
       } ${
@@ -99,7 +99,7 @@ export function LibraryPanelNode({
     >
       <span
         className={`flex items-center justify-center overflow-hidden rounded-lg border border-canvas-line bg-canvas-surface ${
-          viewMode === "grid" ? "aspect-square w-full" : "h-16 w-16 flex-none"
+          viewMode !== "list" ? "aspect-square w-full" : "h-16 w-16 flex-none"
         }`}
       >
         {isAudio ? (

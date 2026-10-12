@@ -38,7 +38,7 @@ describe("LibraryPanelNode animation", () => {
           onDragEnd={() => undefined}
           onDragStart={() => undefined}
           onNavigate={() => undefined}
-          viewMode="grid"
+          viewMode="two-column"
         />
       </InterfacePreferenceProvider>
     );

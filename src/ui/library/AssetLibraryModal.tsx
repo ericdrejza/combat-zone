@@ -2,7 +2,8 @@ import { CircleUserRound, Crosshair, Target, X } from "lucide-react";
 import { useRef, useState } from "react";
 import { useSelector } from "react-redux";
 
-import { LIBRARY_SECTION_IDS, LIBRARY_SECTION_LABELS } from "@library/types";
+import { AssetLibraryTabs } from "./AssetLibraryTabs";
+import { AssetLibraryCharactersTab } from "./AssetLibraryCharactersTab";
 import { resolveLibraryAsset } from "@library/librarySlice";
 import { getDirectoryAudioNodes } from "@ui/audio/audioLibraryDirectory";
 import { getAudioDeletionImpact } from "./audioDeletionImpact";
@@ -131,6 +132,7 @@ export function AssetLibraryModal({
   const [focusedNodeId, setFocusedNodeId] = useState<string | null>(
     initialFocusedNodeId ?? null
   );
+  const [showCharacters, setShowCharacters] = useState(false);
   const [showEncounterActorTokens, setShowEncounterActorTokens] = useState(false);
   const [audioPreviewContainer, setAudioPreviewContainer] = useState<HTMLDivElement | null>(null);
   const [renameTarget, setRenameTarget] = useState<
@@ -464,31 +466,22 @@ export function AssetLibraryModal({
             <X aria-hidden="true" className="h-4 w-4" />
           </button>
         </header>
-        <div className="scrollbar-hidden flex shrink-0 overflow-x-auto border-b border-canvas-line px-3 pt-3 lg:px-5" role="tablist">
-          {(lockedSectionId ? [lockedSectionId] : encounterOnly ? (["encounters"] as const) : LIBRARY_SECTION_IDS).map((sectionId) => (
-            <button
-              key={sectionId}
-              aria-selected={controller.activeSectionId === sectionId}
-              className={`shrink-0 rounded-t-xl border border-b-0 px-4 py-2 text-sm font-medium transition ${
-                controller.activeSectionId === sectionId
-                  ? "border-canvas-line bg-canvas-surface text-canvas-ink"
-                  : "border-transparent text-canvas-muted hover:bg-canvas"
-              }`}
-              onClick={() => {
-                controller.setActiveSectionId(sectionId);
-                controller.setContextMenu(null);
-                setFocusedEncounterId(null);
-                setFocusedFolderId(null);
-                setFocusedNodeId(null);
-              }}
-              role="tab"
-              type="button"
-            >
-              {LIBRARY_SECTION_LABELS[sectionId]}
-            </button>
-          ))}
-        </div>
+        <AssetLibraryTabs
+          activeTabId={showCharacters ? "characters" : controller.activeSectionId}
+          lockedSectionId={lockedSectionId}
+          encounterOnly={encounterOnly}
+          onSelect={(tabId) => {
+            setShowCharacters(tabId === "characters");
+            if (tabId !== "characters") controller.setActiveSectionId(tabId);
+            controller.setAddMenuOpen(false);
+            controller.setContextMenu(null);
+            setFocusedEncounterId(null);
+            setFocusedFolderId(null);
+            setFocusedNodeId(null);
+          }}
+        />
         <div className="grid min-h-0 flex-1 grid-cols-1 grid-rows-[minmax(11rem,40%)_minmax(0,1fr)] lg:grid-cols-[18rem_minmax(0,1fr)] lg:grid-rows-1">
+          {showCharacters ? <AssetLibraryCharactersTab /> : <>
           <aside className="min-h-0 overflow-hidden border-b border-canvas-line p-3 lg:border-b-0 lg:border-r lg:p-4">
             <div className="mb-3 flex items-center justify-between gap-2">
               <h3 className="text-sm font-semibold">
@@ -690,8 +683,9 @@ export function AssetLibraryModal({
             focusedNodeId={focusedNodeId}
             visibleNodeIds={visibleTokenNodeIds}
           />
+          </>}
         </div>
-        {mode === "save-destination" || mode === "import-destination" ? (
+        {showCharacters ? null : mode === "save-destination" || mode === "import-destination" ? (
           <footer className="flex items-center justify-between border-t border-canvas-line px-5 py-3">
             <p className="text-sm text-canvas-muted">
               {mode === "save-destination" ? "Save" : "Import"} to {controller.currentFolder.name}

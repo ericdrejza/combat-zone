@@ -8,7 +8,6 @@ import { useTheme, type Theme } from "@ui/theme/ThemeProvider";
 import { ApplyPanelOrderButton } from "./ApplyPanelOrderButton";
 import { VisibilitySwitch } from "./VisibilitySwitch";
 import { PreferenceSwitch } from "./PreferenceSwitch";
-import { BackgroundResizeSettings } from "./BackgroundResizeSettings";
 import { LibraryInterfaceSettings } from "./LibraryInterfaceSettings";
 import { PanelOrderSettings } from "./PanelOrderSettings";
 
@@ -26,22 +25,18 @@ export function InterfaceSettings() {
   const { setTheme, theme } = useTheme();
   const {
     healthCounterName, setHealthCounterName,
-    keepHealDamageDialogOpen, setKeepHealDamageDialogOpen,
-    warnActorDestinationsDiffer, setWarnActorDestinationsDiffer,
     clockStyleDefault, setClockStyleDefault,
     autoSelectActiveActorDefault,
     enableAssetAnimation,
     encounterCreationTool,
     panelOrder,
     panelVisibility,
-    panWithRightClickDrag,
     strikethroughDeadInitiativeNames,
     setAutoSelectActiveActorDefault,
     setEnableAssetAnimation,
     setEncounterCreationTool,
     setPanelOrder,
     setPanelVisible,
-    setPanWithRightClickDrag,
     setStrikethroughDeadInitiativeNames
   } = useInterfacePreferences();
 
@@ -95,19 +90,6 @@ export function InterfaceSettings() {
             checked={enableAssetAnimation}
             label="Enable animations"
             onChange={setEnableAssetAnimation}
-          />
-        </div>
-      </fieldset>
-      <fieldset className="max-w-lg border-t border-canvas-line pt-5">
-        <legend className="pr-3 text-sm font-semibold">Navigation</legend>
-        <PreferenceSwitch checked={warnActorDestinationsDiffer} label="Warn when actor destinations differ" onChange={setWarnActorDestinationsDiffer} />
-        <PreferenceSwitch checked={keepHealDamageDialogOpen} label="Keep heal/damage dialog open after application" onChange={setKeepHealDamageDialogOpen} />
-        <BackgroundResizeSettings />
-        <div className="mt-1 divide-y divide-canvas-line">
-          <PreferenceSwitch
-            checked={panWithRightClickDrag}
-            label="Pan with right-click drag"
-            onChange={setPanWithRightClickDrag}
           />
         </div>
       </fieldset>

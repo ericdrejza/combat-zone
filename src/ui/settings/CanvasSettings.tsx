@@ -6,11 +6,14 @@ import { ToolbarOptionButton, ToolbarOptionGroup } from '@ui/toolbar/ToolbarOpti
 import type { MovementRules } from '@core/movement/types';
 import { PreferenceSwitch } from './PreferenceSwitch';
 import { DefaultColorSettings } from './DefaultColorSettings';
+import { BackgroundResizeSettings } from './BackgroundResizeSettings';
+import { useInterfacePreferences } from '@ui/interface_preferences/InterfacePreferenceProvider';
 
 const control = 'min-h-11 w-full rounded-xl border border-canvas-line bg-canvas-surface px-3 py-2 text-sm hover:border-canvas-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-canvas-ink';
 const labels: Record<MembershipDecider, string> = { cells: 'Most shared cells', nearest: 'Nearest Zone Center', current: 'Keep current Zone', ask: 'Ask Me' };
 export function CanvasSettings() {
   const { preferences, save } = useCanvasPreferences();
+  const { panWithRightClickDrag, setPanWithRightClickDrag } = useInterfacePreferences();
   function toggle(key: keyof MovementRules) {
     const defaults = { ...preferences.defaults, [key]: !preferences.defaults[key] };
     if (defaults.zoneLocked) defaults.allowOverlap = false;
@@ -24,6 +27,14 @@ export function CanvasSettings() {
   }
   return <section className="space-y-6 p-5" aria-labelledby="canvas-settings-heading">
     <div><h3 id="canvas-settings-heading" className="font-display text-lg font-semibold">Canvas</h3><p className="mt-1 text-sm text-canvas-muted">Defaults and behavior for the encounter canvas.</p></div>
+    <fieldset className="max-w-lg border-t border-canvas-line pt-5">
+      <legend className="pr-3 text-sm font-semibold">Navigation</legend>
+      <PreferenceSwitch checked={panWithRightClickDrag} label="Pan with right-click drag" onChange={setPanWithRightClickDrag} />
+    </fieldset>
+    <fieldset className="max-w-lg border-t border-canvas-line pt-5">
+      <legend className="pr-3 text-sm font-semibold">Background</legend>
+      <BackgroundResizeSettings />
+    </fieldset>
     <div className="space-y-3"><h4 className="font-semibold">Defaults</h4>
       <div className="flex flex-wrap items-center gap-3"><span className="text-sm">New encounters</span><ToolbarOptionGroup aria-label="New encounter placement defaults">
         {([{ key: 'zoneLocked', label: 'Default Zone lock', Icon: Lock }, { key: 'snapToGrid', label: 'Default actor snapping', Icon: Magnet }, { key: 'snapZoneVertices', label: 'Default Zone vertex snapping', Icon: VectorSquare }, { key: 'allowOverlap', label: 'Default Overlap', Icon: Blend }] as const).map(({ key, label, Icon }) => <ToolbarOptionButton key={key} aria-label={label} active={preferences.defaults[key]} aria-pressed={preferences.defaults[key]} disabled={key === 'allowOverlap' && preferences.defaults.zoneLocked} onClick={() => toggle(key)} type="button"><Icon size={16} /></ToolbarOptionButton>)}

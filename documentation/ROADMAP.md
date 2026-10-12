@@ -11,9 +11,22 @@ After completing a numbered section (## X.), move the completed section to the e
 
 ## 15. MVP Acceptance Hardening
 
+- [x] Move actor destination warnings and heal/damage dialog preferences to
+      Combat, and background resize overflow and Navigation panning to Canvas.
+      Verify category placement and preservation of saved preference values.
+
+- [x] Separate Encounters from alphabetized asset tabs and add an empty Characters
+      scaffold using shared explorer/card views with adding disabled. Verify tab
+      restrictions, view controls, and unchanged Library/encounter state.
+
+- [x] Cycle Library panel views through List, One column, and Two columns,
+      independently of modal card sizing. Use Small/Medium/Large/Extra large
+      modal size steps and reset hidden-scrollbar visual previews on asset changes.
+      Verify view cycling, saved preference compatibility, and preview scroll reset.
+
 - [x] Add the Independent Library grid card sizes switch with Encounter,
       Background, Token, and Audio sliders; preserve shared/individual values
-      across mode changes and apply the selected size in both Library containers.
+      across mode changes and apply the selected size in the Library modal.
       Verify preference persistence, synchronization, reset, and size selection.
 
 - [x] Add Timer after the Audio tool asset-type choice; share the always-editable
@@ -21,11 +34,11 @@ After completing a numbered section (## X.), move the completed section to the e
       Verify destination filtering, metadata fallback, stale reads and undo/redo.
 
 - [x] Add Interface Library preferences for outside-click dismissal (off),
-      independent modal/panel view defaults (Grid), and grid card minimum width
-      (80–256px, initially 128px). Verify persistence, reset, synchronization,
+      independent modal/panel view defaults (Grid/Two columns), and discrete modal
+      card sizes (Small, Medium, Large, Extra large; initially Medium). Verify persistence, reset, synchronization,
       modal interactions, independent views, and unchanged encounter history.
 
-- [x] Add the Library panel header launcher before Grid/List; share toolbar
+- [x] Add the Library panel header launcher before the view cycle control; share toolbar
       section selection and verify desktop/compact launch, view controls,
       and absence of encounter history changes.
 

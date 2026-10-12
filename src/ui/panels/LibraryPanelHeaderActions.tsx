@@ -1,6 +1,7 @@
-import { BookOpen, Grid2X2, List } from "lucide-react";
+import { BookOpen, Grid2X2, List, Square } from "lucide-react";
 
 import { TouchTooltip } from "@ui/toolbar/TouchTooltip";
+import { nextLibraryPanelView } from "@ui/interface_preferences/libraryPreferences";
 import type { LibraryViewMode } from "./LibraryPanel";
 
 type ViewToggleProps = { onToggle: () => void; viewMode: LibraryViewMode };
@@ -19,11 +20,13 @@ export function LibraryPanelHeaderActions({ libraryOpen, onOpenLibrary, ...view 
 }
 
 export function LibraryPanelViewToggle({ onToggle, viewMode }: ViewToggleProps) {
-  const showingGrid = viewMode === "grid";
-  const label = showingGrid ? "Switch Library to list view" : "Switch Library to grid view";
+  const nextView = nextLibraryPanelView(viewMode);
+  const viewLabels = { list: "list", "one-column": "one-column", "two-column": "two-column" };
+  const label = `Switch Library to ${viewLabels[nextView]} view`;
+  const Icon = nextView === "list" ? List : nextView === "one-column" ? Square : Grid2X2;
   return <TouchTooltip label={label}>
-    <button aria-label={label} aria-pressed={showingGrid} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-canvas-line bg-canvas-surface text-canvas-muted enabled:hover:bg-canvas enabled:hover:ring-2 enabled:hover:ring-canvas-muted focus-visible:ring-2 focus-visible:ring-canvas-ink" onClick={onToggle} title={label} type="button">
-      {showingGrid ? <List aria-hidden="true" className="h-4 w-4" /> : <Grid2X2 aria-hidden="true" className="h-4 w-4" />}
+    <button aria-label={label} aria-pressed={viewMode !== "list"} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-canvas-line bg-canvas-surface text-canvas-muted enabled:hover:bg-canvas enabled:hover:ring-2 enabled:hover:ring-canvas-muted focus-visible:ring-2 focus-visible:ring-canvas-ink" onClick={onToggle} title={label} type="button">
+      <Icon aria-hidden="true" className="h-4 w-4" />
     </button>
   </TouchTooltip>;
 }

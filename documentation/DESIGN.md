@@ -113,7 +113,7 @@ large as possible within the visible workspace. Deleting a background keeps
 the current canvas bounds. The Background Tool also provides one-time fit,
 fit-width, fit-height, 10% shrink, and 10% expand commands. Sizing retains the
 existing clamp for valid Zone and derived actor layouts.
-The Interface preference “When background resizing puts actors outside the
+The Canvas preference “When background resizing puts actors outside the
 canvas” defaults to “Move actors to Zoneless”: after edge completion, clear
 only saved spatial positions whose full token footprint exceeds canvas bounds,
 Preserve resources and Engagement relationships; reevaluate unlocked Zone membership after unplacement. “Limit resizing to keep
@@ -662,7 +662,7 @@ occurs until all choices complete. Escape, backdrop, or close cancels the batch.
 After adjudication, differing final destinations (including stationary actors)
 require “Actor destinations differ” Cancel/Continue confirmation. “Don't show
 this warning again” persists only on Continue, resets with Interface preferences,
-and can be restored in Interface settings.
+and can be restored in Combat settings.
 
 H toggles a compact heal/damage dialog in Actor and Select tools with actor
 selection. Alphabetically ordered actor names wrap with centered spacing on their
@@ -670,7 +670,7 @@ own row below the close button. Minus,
 centered positive-integer amount, plus appear above Apply Heal (left) and Apply
 Damage (right). Existing HP bounds, skipped-actor confirmation, writer boundary,
 and history rules apply. H, Escape, backdrop, and close dismiss without applying.
-Successful application closes by default; Interface settings can keep it open.
+Successful application closes by default; Combat settings can keep it open.
 The Status panel also places the amount decrement control before its value. The amount
 field fits its content with a comfortable two-digit minimum; the dialog uses a
 compact width to keep its controls close. Enter in the amount field retains the
@@ -767,20 +767,35 @@ side panels are hidden.
 Panels update based on selection context.
 
 The Library panel header has an icon-only BookOpen Library launcher immediately
-left of the Grid/List toggle on desktop and compact layouts. It opens the same
+left of the view cycle control on desktop and compact layouts. It opens the same
 Library section as the toolbar for the active tool, with desktop hover and
 touch-hold help. Opening the Library does not change encounter history.
+The Asset Library shows Encounters first, separated by a vertical rule from
+alphabetized asset tabs: Audio, Backgrounds, Characters, and Tokens. Characters
+currently shows an empty scaffold using the shared asset explorer and card views,
+with adding disabled. The future Characters feature will store separate character
+records that link to existing token assets and retain state across encounters;
+character behavior and its data contract will be specified with that feature.
 Interface Settings includes Library preferences: closing the modal by clicking
-outside it (initially off), separate modal and panel default views (both initially
-Grid), and a shared grid card minimum width slider from 80 to 256 pixels
-(initially 128). An Independent Library grid card sizes switch, initially off,
-shows separate Encounter, Background, Token, and Audio sliders when enabled,
-and the shared slider when disabled. Each individual size starts at 128 pixels
-and uses the same 80–256 range. Shared and individual values are retained when
-switching modes; both Library containers use the active asset type’s size.
+outside it (initially off), separate modal and panel default views (initially
+Grid and Two columns respectively), and a modal grid card size slider with four
+discrete steps: Small, Medium (default), Large, and Extra large. These use minimum
+card widths of 80, 128, 192, and 256 pixels so the number of cards adapts to the
+available screen width. Older pixel preferences map to the nearest step.
+An Independent Library grid card sizes switch, initially off, shows separate
+Encounter, Background, Character and Token, and Audio sliders when enabled, and the shared
+slider when disabled. Each individual size starts at Medium. Shared and
+individual values are retained when switching modes. Characters and Tokens use
+the same card size preference. Card size preferences apply
+only to the Library modal. The Library panel cycles through List, One column,
+and Two columns; List retains compact rows, and column views show cards filling
+one or two equal-width columns regardless of modal card size.
 Card grids fit the available width without overflowing compact
 screens. Manual modal tab views and panel view choices remain session-only and
 take precedence over defaults; new tabs/sessions use the configured default.
+Visual assets in the Library preview fit its width and scroll vertically when
+taller than the preview area, with the scrollbar hidden. Selecting another asset
+resets preview scrolling to the top.
 Preferences persist locally, synchronize across tabs, reset with application
 preferences, and do not enter encounter history. Clicking inside the Library or
 on a nested dialog backdrop does not dismiss the Library. Outside-click dismissal

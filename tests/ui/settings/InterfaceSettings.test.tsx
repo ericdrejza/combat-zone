@@ -76,27 +76,20 @@ describe("InterfaceSettings", () => {
     renderSettings();
 
     const accessibility = screen.getByRole("group", { name: "Accessibility" });
-    const navigation = screen.getByRole("group", { name: "Navigation" });
     const defaults = screen.getByRole("group", { name: "Defaults" });
     const autoSelect = within(defaults).getByRole("switch", {
       name: "Auto-select active actor in initiative"
-    });
-    const pan = within(navigation).getByRole("switch", {
-      name: "Pan with right-click drag"
     });
     const assetAnimation = within(accessibility).getByRole("switch", {
       name: "Enable animations"
     });
     expect(autoSelect).toBeChecked();
     expect(assetAnimation).toBeChecked();
-    expect(pan).toBeChecked();
 
     await user.click(autoSelect);
     await user.click(assetAnimation);
-    await user.click(pan);
     expect(autoSelect).not.toBeChecked();
     expect(assetAnimation).not.toBeChecked();
-    expect(pan).not.toBeChecked();
     expect(JSON.parse(localStorage.getItem(INTERFACE_PREFERENCES_STORAGE_KEY)!)).toMatchObject({
       backgroundResizeOverflowBehavior: "zoneless",
       healthCounterName: "Hit points",
@@ -113,7 +106,7 @@ describe("InterfaceSettings", () => {
       encounterCreationTool: "zone",
       panelOrder: DEFAULT_ENCOUNTER_PANEL_ORDER,
       panelVisibility: DEFAULT_DOCKABLE_PANEL_VISIBILITY,
-      panWithRightClickDrag: false,
+      panWithRightClickDrag: true,
       warnActorDestinationsDiffer: true,
       keepHealDamageDialogOpen: false,
       strikethroughDeadInitiativeNames: true,

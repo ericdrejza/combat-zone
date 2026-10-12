@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { validThresholds, type CombatRules } from "@entities/actor/actorResources";
 import { recalculateHealthStatuses } from "@entities/actor/statusMutations";
+import { useInterfacePreferences } from "@ui/interface_preferences/InterfacePreferenceProvider";
 import { useCombatPreferences } from "@ui/combat_preferences/CombatPreferenceProvider";
 import { useStatusActions } from "@ui/status/useStatusActions";
 import { StatusVisibilitySettings } from "./StatusVisibilitySettings";
@@ -10,6 +11,10 @@ import { PreferenceSwitch } from "./PreferenceSwitch";
 
 export function CombatSettings() {
   const { rules, visibility, saveRules } = useCombatPreferences();
+  const {
+    warnActorDestinationsDiffer, setWarnActorDestinationsDiffer,
+    keepHealDamageDialogOpen, setKeepHealDamageDialogOpen
+  } = useInterfacePreferences();
   const generation = useRef(0);
   const commit = useStatusActions();
   const [draft, setDraft] = useState(rules);
@@ -29,7 +34,9 @@ export function CombatSettings() {
   }
   return <section aria-labelledby="settings-combat-heading" className="space-y-6 p-5">
     <div><h3 id="settings-combat-heading" className="font-display text-lg font-semibold">Combat</h3><p className="mt-1 text-sm text-canvas-muted">Movement, health, and status behavior for encounters.</p></div>
+    <PreferenceSwitch checked={warnActorDestinationsDiffer} label="Warn when actor destinations differ" onChange={setWarnActorDestinationsDiffer} />
     <MovementRepeatSettings />
+    <PreferenceSwitch checked={keepHealDamageDialogOpen} label="Keep heal/damage dialog open after application" onChange={setKeepHealDamageDialogOpen} />
     <label className="block space-y-2 text-sm font-medium">Hit point limits
       <select aria-label="Hit point limits" className="w-full rounded-xl border border-canvas-line bg-canvas-surface px-3 py-2 text-sm font-normal hover:border-canvas-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-canvas-ink" value={draft.limits} onChange={(event) => save({ ...draft, limits: event.currentTarget.value as CombatRules["limits"] })}>
         <option value="bounded">Clamp at zero and maximum</option><option value="negative">Allow negative; cap healing at maximum</option><option value="unbounded">Allow negative and above maximum</option>

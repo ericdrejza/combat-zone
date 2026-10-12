@@ -1,3 +1,4 @@
+import { nextLibraryPanelView } from "@ui/interface_preferences/libraryPreferences";
 import { useEncounterOperation } from "@ui/history/useEncounterOperation";
 import { runEncounterOperation } from "@core/history/encounterOperations";
 import { EncounterHistoryKeyboard } from "@ui/history/EncounterHistoryKeyboard";
@@ -421,7 +422,7 @@ function AppContent() {
           libraryOpen={persistenceUi.libraryOpen}
           onOpenLibrary={openLibraryForActiveTool}
           onToggle={() =>
-            setLibraryViewMode(libraryViewMode === "list" ? "grid" : "list")
+            setLibraryViewMode(nextLibraryPanelView(libraryViewMode))
           }
           viewMode={libraryViewMode}
         />

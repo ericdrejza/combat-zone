@@ -183,14 +183,14 @@ export function AssetLibraryContents({
 
   function getNodePreviewTarget(node: LibraryNode): AssetLibraryPreviewTarget | null {
     const asset = resolveLibraryAsset(activeSection, node.id);
-    return asset ? { asset, name: node.name } : null;
+    return asset ? { asset, id: node.id, name: node.name } : null;
   }
 
   function getEncounterPreviewTarget(
     record: EncounterRecord
   ): AssetLibraryPreviewTarget | null {
     const asset = record.state.backgroundImage;
-    return asset ? { asset, name: record.state.name } : null;
+    return asset ? { asset, id: record.id, name: record.state.name } : null;
   }
 
   const children = getAlphabetizedChildren(activeSection, currentFolder.id).filter(

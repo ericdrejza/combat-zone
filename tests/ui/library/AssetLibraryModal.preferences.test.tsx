@@ -38,7 +38,7 @@ describe("Library modal preference behavior", () => {
     const library = open({ libraryModalViewDefault: modalView, libraryPanelViewDefault: panelView });
     expect(within(library).getByRole("button", { name: `Switch library contents to ${modalView === "grid" ? "list" : "grid"} view` })).toBeInTheDocument();
     fireEvent.click(within(library).getByRole("button", { name: "Close Asset Library" }));
-    expect(within(screen.getByRole("region", { name: "Library panel" })).getByRole("button", { name: `Switch Library to ${panelView === "grid" ? "list" : "grid"} view` })).toBeInTheDocument();
+    expect(within(screen.getByRole("region", { name: "Library panel" })).getByRole("button", { name: `Switch Library to ${panelView === "grid" ? "list" : "one-column"} view` })).toBeInTheDocument();
   });
   it("remembers explicit choices while defaults apply to unvisited tabs", () => {
     const library = open({ libraryModalViewDefault: "list" });

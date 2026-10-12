@@ -1,6 +1,6 @@
 import { runEncounterOperation } from "@core/history/encounterOperations";
 import { consumeEncounterChange } from "@store/consumeEncounterChange";
-import { resolveLibraryGridCardSize } from "@ui/interface_preferences/libraryPreferences";
+import type { LibraryPanelViewMode } from "@ui/interface_preferences/libraryPreferences";
 import { ChevronLeft, Folder } from "lucide-react";
 import type { DragEvent } from "react";
 import { useEffect, useRef, useState } from "react";
@@ -25,8 +25,6 @@ import { commitBackgroundImage } from "@ui/toolbar/background/backgroundCanvasAc
 import { useCanvasViewport } from "@ui/canvas/CanvasViewportContext";
 import { armCompactCanvasTransfer } from "@ui/canvas/compactCanvasTransfer";
 import { useOptionalCloudSync } from "@ui/cloud_sync";
-import { useInterfacePreferences } from "@ui/interface_preferences/InterfacePreferenceProvider";
-import { libraryGridStyle } from "@ui/library/libraryGridStyle";
 import { useAudioCueAssignment } from "@ui/audio/useAudioCueAssignment";
 
 function getPanelSectionId(activeToolId: ToolId): LibrarySectionId | null {
@@ -43,7 +41,7 @@ function getPanelSectionId(activeToolId: ToolId): LibrarySectionId | null {
   return null;
 }
 
-export type LibraryViewMode = "list" | "grid";
+export type LibraryViewMode = LibraryPanelViewMode;
 
 export type LibraryPanelFocusRequest = {
   folderId: string;
@@ -64,7 +62,6 @@ export function LibraryPanel({
   onFocusRequestHandled,
   viewMode
 }: LibraryPanelProps) {
-  const preferences = useInterfacePreferences();
   const dispatch = useDispatch();
   const cloud = useOptionalCloudSync();
   const audioAssignment = useAudioCueAssignment();
@@ -131,7 +128,6 @@ export function LibraryPanel({
   }
 
   const activeSectionId = sectionId;
-  const libraryGridCardSize = resolveLibraryGridCardSize(preferences, activeSectionId);
   const section = library.sections[activeSectionId];
   const currentFolderId = (
     currentFolderBySection[activeSectionId] &&
@@ -289,9 +285,8 @@ export function LibraryPanel({
       ) : null}
       <div
         className={
-          viewMode === "grid" ? "grid gap-2" : "space-y-2"
+          viewMode === "list" ? "space-y-2" : viewMode === "one-column" ? "grid grid-cols-1 gap-2" : "grid grid-cols-2 gap-2"
         }
-        style={viewMode === "grid" ? libraryGridStyle(libraryGridCardSize) : undefined}
       >
         {children.map((node) => {
           return (

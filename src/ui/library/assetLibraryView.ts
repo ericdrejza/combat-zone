@@ -15,6 +15,7 @@ export const DEFAULT_ASSET_LIBRARY_CONTEXT_BUTTON_STATE: AssetLibraryContextButt
 };
 
 export type AssetLibraryPreviewTarget = {
+  id?: string;
   asset: LibraryImageAsset;
   name: string;
 };
