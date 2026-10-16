@@ -1,3 +1,4 @@
+import { ZoneSelectionOutline } from "./ZoneSelectionOutline";
 import type { MouseEvent, PointerEvent } from "react";
 import { motion } from "motion/react";
 
@@ -195,16 +196,7 @@ export function ZoneLayer({
           </>
         ) : null}
         {selected ? (
-          <motion.polygon
-            animate={{
-              points: polygonPoints,
-              strokeDasharray: "8 8",
-              strokeWidth: 2
-            }}
-            className="pointer-events-none fill-none stroke-canvas-ink stroke-2"
-            initial={false}
-            transition={zoneGeometryTransition}
-          />
+          <ZoneSelectionOutline points={polygonPoints} transition={zoneGeometryTransition} />
         ) : null}
         {actorTargeted ? (
           <motion.polygon

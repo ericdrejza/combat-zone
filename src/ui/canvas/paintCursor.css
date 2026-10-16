@@ -1,0 +1,5 @@
+/* Entity drag/pointer cursors must not obscure the active paint tool. */
+.canvas-paint-cursor,
+.canvas-paint-cursor * {
+  cursor: url("@assets/images/paintbrush_cursor.svg") 13 29, crosshair !important;
+}

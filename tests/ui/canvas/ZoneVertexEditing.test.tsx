@@ -157,3 +157,21 @@ it('keeps the Zoneless panel mounted but noninteractive while resizing and movin
   expect(screen.getByRole('complementary', { name: 'Zoneless actors' })).toBe(panel);
   expect(store.getState().encounter.past).toHaveLength(2);
 });
+
+it('enables double-click editing only after manual Polygon conversion', async () => {
+  const { canvas, state } = setup('rectangle');
+  act(() => store.dispatch(selectEntity({ entityType: 'zone', ids: ['z'] })));
+  fireEvent.doubleClick(canvas, { clientX: 160, clientY: 64 });
+  expect(store.getState().encounter.past).toHaveLength(0);
+  fireEvent.click(screen.getByRole('button', { name: 'Convert to polygon' }));
+  await waitFor(() => expect(store.getState().encounter.present.zones.byId.z.shape).toBe('polygon'));
+  expect(store.getState().encounter.present.zones.byId.z.polygon).toEqual(polygon);
+  fireEvent.doubleClick(canvas, { clientX: 160, clientY: 64 });
+  await waitFor(() => expect(store.getState().encounter.past).toHaveLength(2));
+  expect(store.getState().encounter.present.zones.byId.z.polygon).toHaveLength(5);
+  act(() => store.dispatch(undoEncounterChange()));
+  expect(store.getState().encounter.present.zones.byId.z.shape).toBe('polygon');
+  expect(store.getState().encounter.present.zones.byId.z.polygon).toEqual(polygon);
+  act(() => store.dispatch(undoEncounterChange()));
+  expect(store.getState().encounter.present).toEqual(state);
+});

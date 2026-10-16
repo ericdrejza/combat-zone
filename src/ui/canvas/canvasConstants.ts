@@ -4,8 +4,7 @@ export {
 } from '@core/layout/polygonCanvasBounds';
 export const CLOSE_DISTANCE = 16;
 export const MIN_SHAPE_SIZE = 8;
-export const CIRCLE_SEGMENTS = 60;
-export const HEXAGON_SEGMENTS = 6;
+export { CIRCLE_SEGMENTS, HEXAGON_SEGMENTS } from "@entities/zone/zoneShapeGeometry";
 // These hex values mirror --color-canvas-panel so contrast calculations follow
 // the surface surrounding the workable canvas area in both supported themes.
 export const CANVAS_BACKGROUND_COLORS = {

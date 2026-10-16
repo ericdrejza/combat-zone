@@ -1,3 +1,5 @@
+import { ZoneShapeSection } from "./zone_properties/ZoneShapeSection";
+import { useZoneShapeConversion } from "./zone_properties/useZoneShapeConversion";
 import { useState } from "react";
 
 import { calculateZoneLayout } from "@core/layout/encounterLayout";
@@ -12,6 +14,7 @@ import { useZonePropertiesActions } from "./zone_properties/useZonePropertiesAct
 export { ZonePropertiesHeaderActions };
 
 export function ZonePropertiesPanel() {
+  const convertShape = useZoneShapeConversion();
   const [colorSectionOpen, setColorSectionOpen] = useState(true);
   const {
     activateZonePaintBrush,
@@ -54,6 +57,7 @@ export function ZonePropertiesPanel() {
         zone={selectedZone}
         zonePaintBrush={zonePaintBrush}
       />
+      <ZoneShapeSection zone={selectedZone} onConvert={convertShape} />
       <ZoneLayoutDescriptor descriptor={layoutDescriptor} />
       <ZoneDeleteButton onDeleteZone={commitZoneDelete} />
     </div>

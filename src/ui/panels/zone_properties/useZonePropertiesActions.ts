@@ -1,3 +1,5 @@
+import { getPaintableZoneProperties } from "@ui/canvas/zones/zonePropertyTransfers";
+import { isPersistenceWritable } from "@store/persistenceWriteGuardMiddleware";
 import { consumeEncounterChange } from "@store/consumeEncounterChange";
 import { useDispatch, useSelector } from "react-redux";
 
@@ -161,11 +163,28 @@ export function useZonePropertiesActions() {
   }
 
   function activateZonePaintBrush() {
-    if (!selectedZone) {
-      return;
-    }
-
+    if (!selectedZone || !isPersistenceWritable()) return;
     dispatch(toggleZonePaintBrush({ sourceZoneId: selectedZone.id }));
+    if (zonePaintBrush || selectedZoneIds.length < 2) return;
+    const properties = getPaintableZoneProperties(selectedZone);
+    const targetZoneIds = [...new Set(selectedZoneIds)].filter(id => {
+      const target = encounter.zones.byId[id];
+      return target && id !== selectedZone.id && Object.entries(properties).some(
+        ([key, value]) => target[key as keyof Zone] !== value);
+    });
+    const nextEncounter = targetZoneIds.reduce(
+      (state, id) => updateZoneProperties(state, id, properties), encounter);
+    if (nextEncounter === encounter) return;
+    const prepared = prepareValidatedEncounterChangeForRuntime({
+      currentEncounter: encounter, nextEncounter,
+      action: createEncounterActionRecord("zone.paintColors", {
+        sourceZoneId: selectedZone.id, targetZoneIds, properties
+      })
+    });
+    void consumeEncounterChange(prepared, encounter, dispatch, resolved => {
+      if (logEncounterValidationBlock(dispatch, resolved)) return;
+      dispatch(commitEncounterChange({ action: resolved.action, nextEncounter: resolved.nextEncounter }));
+    });
   }
 
   function previewZoneOpacity(opacity: number) {

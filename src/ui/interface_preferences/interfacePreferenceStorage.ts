@@ -1,3 +1,8 @@
+import type { SelectionOutlineMode } from "@core/rendering/SelectionOutline";
+import {
+  DEFAULT_ACTOR_SELECTION_OUTLINE_WIDTH, DEFAULT_ZONE_SELECTION_OUTLINE_WIDTH,
+  readSelectionOutlineMode, readSelectionOutlineWidth
+} from "./selectionOutlinePreferences";
 import type { LibrarySectionId } from "@library/types";
 import { DEFAULT_LIBRARY_GRID_CARD_SIZE, DEFAULT_LIBRARY_GRID_CARD_SIZES, readLibraryGridCardSizes, type LibraryGridCardSizes, readLibraryGridCardSize, readLibraryViewDefault, type LibraryViewDefault, readLibraryPanelViewDefault, type LibraryPanelViewMode } from "./libraryPreferences";
 import { readBackgroundResizeOverflowBehavior, type BackgroundResizeOverflowBehavior } from '@core/encounter/backgroundResizeOverflow';
@@ -36,6 +41,10 @@ export type DurableInterfacePreferences = {
   audioRepeatDelayDefaults: AudioRepeatDelaySettings;
   autoSelectActiveActor: boolean;
   enableAssetAnimation: boolean;
+  actorSelectionOutline: SelectionOutlineMode;
+  zoneSelectionOutline: SelectionOutlineMode;
+  actorSelectionOutlineWidth: number;
+  zoneSelectionOutlineWidth: number;
   encounterCreationTool: EncounterCreationTool;
   libraryCloseOnOutsideClick: boolean;
   libraryModalViewDefault: LibraryViewDefault;
@@ -77,6 +86,10 @@ export type InterfacePreferences = DurableInterfacePreferences & {
   setLibrarySectionGridCardSize: (sectionId: LibrarySectionId, size: number) => void;
   setPanelOrder: (order: EncounterPanelOrder) => void;
   setEnableAssetAnimation: (enabled: boolean) => void;
+  setActorSelectionOutline: (mode: SelectionOutlineMode) => void;
+  setZoneSelectionOutline: (mode: SelectionOutlineMode) => void;
+  setActorSelectionOutlineWidth: (width: number) => void;
+  setZoneSelectionOutlineWidth: (width: number) => void;
   setAutoSelectActiveActorDefault: (enabled: boolean) => void;
   setPanelVisible: (panelId: DockablePanelId, visible: boolean) => void;
   setPanWithRightClickDrag: (enabled: boolean) => void;
@@ -102,6 +115,10 @@ export const defaultPreferences: DurableInterfacePreferences = {
   audioRepeatDelayDefaults: { ...DEFAULT_AUDIO_REPEAT_DELAY_SETTINGS },
   autoSelectActiveActor: true,
   enableAssetAnimation: true,
+  actorSelectionOutline: "static",
+  zoneSelectionOutline: "static",
+  actorSelectionOutlineWidth: DEFAULT_ACTOR_SELECTION_OUTLINE_WIDTH,
+  zoneSelectionOutlineWidth: DEFAULT_ZONE_SELECTION_OUTLINE_WIDTH,
   encounterCreationTool: "zone",
   libraryCloseOnOutsideClick: false,
   libraryModalViewDefault: "grid",
@@ -144,6 +161,10 @@ export const defaultValue: InterfacePreferences = {
   setLibrarySectionGridCardSize: () => undefined,
   setPanelOrder: () => undefined,
   setEnableAssetAnimation: () => undefined,
+  setActorSelectionOutline: () => undefined,
+  setZoneSelectionOutline: () => undefined,
+  setActorSelectionOutlineWidth: () => undefined,
+  setZoneSelectionOutlineWidth: () => undefined,
   setAutoSelectActiveActorDefault: () => undefined,
   setPanelVisible: () => undefined,
   setPanWithRightClickDrag: () => undefined,
@@ -187,6 +208,10 @@ export function readPreferences(): DurableInterfacePreferences {
         typeof stored?.enableAssetAnimation === "boolean"
           ? stored.enableAssetAnimation
           : true,
+      actorSelectionOutline: readSelectionOutlineMode(stored?.actorSelectionOutline),
+      zoneSelectionOutline: readSelectionOutlineMode(stored?.zoneSelectionOutline),
+      actorSelectionOutlineWidth: readSelectionOutlineWidth(stored?.actorSelectionOutlineWidth, DEFAULT_ACTOR_SELECTION_OUTLINE_WIDTH),
+      zoneSelectionOutlineWidth: readSelectionOutlineWidth(stored?.zoneSelectionOutlineWidth, DEFAULT_ZONE_SELECTION_OUTLINE_WIDTH),
       encounterCreationTool:
         stored?.encounterCreationTool === "background" ||
         stored?.encounterCreationTool === "zone"

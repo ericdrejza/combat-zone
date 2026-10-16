@@ -1,3 +1,4 @@
+import { SelectionOutlineSettings } from "./SelectionOutlineSettings";
 import { Reorder } from 'motion/react';
 import { MoveUp, MoveDown, GripVertical, Lock, Magnet, VectorSquare, Blend } from 'lucide-react';
 import { useCanvasPreferences } from '@ui/canvas_preferences/useCanvasPreferences';
@@ -42,6 +43,7 @@ export function CanvasSettings() {
       </SettingsSubsection>
       <DefaultColorSettings />
     </SettingsSection>
+    <SelectionOutlineSettings />
     <SettingsSection title="Navigation">
       <PreferenceSwitch checked={panWithRightClickDrag} label="Pan with right-click drag" onChange={setPanWithRightClickDrag} />
     </SettingsSection>

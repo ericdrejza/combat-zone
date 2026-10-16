@@ -1,3 +1,4 @@
+import { usePersistence } from "@ui/persistence/PersistenceProvider";
 import { ChevronDown, ChevronRight, Paintbrush, Swords } from "lucide-react";
 import { useId, useState } from "react";
 
@@ -38,6 +39,7 @@ export function ZoneColorSection({
   zone,
   zonePaintBrush
 }: ZoneColorSectionProps) {
+  const { readOnly } = usePersistence();
   const [activeTab, setActiveTab] = useState<ZoneColorTab>("fill");
   const tabPanelId = useId();
   const matchesBorder = zone.matchEngagementColorToBorder !== false;
@@ -63,7 +65,7 @@ export function ZoneColorSection({
       <div className="flex items-center justify-between gap-2">
         <button
           aria-expanded={colorSectionOpen}
-          className="inline-flex items-center gap-2 font-semibold text-canvas-ink"
+          className="inline-flex items-center gap-2 rounded font-semibold text-canvas-ink hover:text-canvas-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-canvas-ink"
           onClick={onToggleColorSection}
           type="button"
         >
@@ -76,10 +78,11 @@ export function ZoneColorSection({
         </button>
         <button
           aria-pressed={zonePaintBrush?.sourceZoneId === zone.id}
-          className={`inline-flex h-8 w-8 items-center justify-center rounded-full border transition ${
+          disabled={readOnly}
+          className={`inline-flex h-8 w-8 items-center justify-center rounded-full border transition enabled:hover:ring-2 enabled:hover:ring-canvas-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-canvas-ink disabled:cursor-not-allowed disabled:opacity-50 ${
             zonePaintBrush?.sourceZoneId === zone.id
               ? "border-canvas-ink bg-canvas-ink text-canvas-on-ink"
-              : "border-canvas-line text-canvas-ink hover:bg-canvas"
+              : "border-canvas-line text-canvas-ink enabled:hover:bg-canvas"
           }`}
           onClick={onActivateZonePaintBrush}
           title="Paint zone colors"
@@ -128,10 +131,18 @@ export function ZoneColorSection({
             id={tabPanelId}
             role="tabpanel"
           >
+            <ColorPalette
+              disabled={readOnly || (activeTab === "engagements" && matchesBorder)}
+              label={palette.label}
+              onCommitZoneProperties={onCommitZoneProperties}
+              property={palette.property}
+              value={palette.value}
+            />
             {activeTab === "engagements" ? (
               <div className="rounded-xl border border-canvas-line px-3">
                 <PreferenceSwitch
                   checked={matchesBorder}
+                  disabled={readOnly}
                   compact
                   label="Match border color"
                   onChange={(matchEngagementColorToBorder) =>
@@ -140,13 +151,6 @@ export function ZoneColorSection({
                 />
               </div>
             ) : null}
-            <ColorPalette
-              disabled={activeTab === "engagements" && matchesBorder}
-              label={palette.label}
-              onCommitZoneProperties={onCommitZoneProperties}
-              property={palette.property}
-              value={palette.value}
-            />
             {activeTab === "fill" ? (
               <label className="block space-y-2">
                 <div className="flex items-center justify-between">
@@ -157,6 +161,7 @@ export function ZoneColorSection({
                 </div>
                 <input
                   aria-label="Zone opacity"
+                  disabled={readOnly}
                   className="w-full accent-canvas-ink"
                   max="1"
                   min="0"
@@ -175,6 +180,8 @@ export function ZoneColorSection({
               <div className="rounded-xl border border-canvas-line px-3">
                 <PreferenceSwitch
                   checked={zone.showBorder}
+                  disabled={readOnly}
+                  compact
                   label="Show border"
                   onChange={(showBorder) => onCommitZoneProperties({ showBorder })}
                 />

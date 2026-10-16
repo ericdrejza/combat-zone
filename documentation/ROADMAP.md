@@ -238,3 +238,14 @@ Implementation plan: [Isometric grids](plans/isometric_grid.md).
 - [x] Manual grid rotation accepts a full turn and wraps 360° to 0° while retaining hundredth precision and fractional-to-whole held steps.
 
 - [x] Actor Properties header mirrors the selected image with SquareCenterlineDashedHorizontal, tooltip and toggle feedback, preserving upright labels, placement, history, and local/cloud persistence.
+
+## Zone Properties conversion and color controls (#85, #39)
+
+- [x] Add manual shape conversion using current bounds, validated reshaping,
+      first-selected-Zone semantics, and atomic shape/outline undo/redo.
+- [x] Apply colors immediately to selected Zones when activating the paintbrush,
+      retaining existing painting and export-all behavior with atomic history.
+- [x] Keep Show border inline and place Match border color below its picker.
+- [x] Add separate Canvas Actor/Zone selection outline modes and thickness
+      preferences with persistence, cross-tab synchronization, reset, and
+      reduced-motion coverage; expose Polygon editing help for keyboard/touch.

@@ -1,3 +1,5 @@
+import { SelectionOutline } from "@core/rendering/SelectionOutline";
+import { useSelectionOutlineMode } from "@ui/canvas/useSelectionOutlineMode";
 import { actorLabelOffset } from './actorLabelGeometry';
 import { motion, type Transition } from "motion/react";
 import { memo } from "react";
@@ -45,6 +47,7 @@ export const ActorVisual = memo(function ActorVisual({
   transition,
   projectionRotation, projectionAngle
 }: ActorVisualProps) {
+  const selectionOutlineMode = useSelectionOutlineMode("actor");
   const innerRadius = Math.max(radius - (actor.shape === 'transparent' ? 0 : 3), 1);
   const selectionRadius = radius + 5;
   const factionRadius = radius + 9;
@@ -54,7 +57,7 @@ export const ActorVisual = memo(function ActorVisual({
       ? actor.metadata.sourceAssetMediaType
       : undefined
   );
-  const { enableAssetAnimation } = useInterfacePreferences();
+  const { enableAssetAnimation, actorSelectionOutlineWidth } = useInterfacePreferences();
   const isAnimatedWebp = Boolean(actor.image) && isAnimatedAsset({
     animated: actor.metadata.sourceAssetAnimated === true,
     mediaType: typeof actor.metadata.sourceAssetMediaType === "string"
@@ -175,35 +178,37 @@ export const ActorVisual = memo(function ActorVisual({
       ) : null}
       <ActorProjection rotation={projectionRotation} angle={projectionAngle} transition={transition}>
       {selected ? (
-        actor.shape !== "circle" ? (
-          <motion.rect
-            className="pointer-events-none fill-none"
-            initial={false}
-            animate={{
-              attrX: -selectionRadius,
-              attrY: -selectionRadius,
-              height: selectionRadius * 2,
-              strokeDasharray: "5 5",
-              strokeWidth: 2,
-              width: selectionRadius * 2
-            }}
-            rx="8"
-            stroke={selectedTextColor}
-            transition={transition}
-          />
-        ) : (
-          <motion.circle
-            className="pointer-events-none fill-none"
-            initial={false}
-            animate={{
-              r: selectionRadius,
-              strokeDasharray: "5 5",
-              strokeWidth: 2
-            }}
-            stroke={selectedTextColor}
-            transition={transition}
-          />
-        )
+        <SelectionOutline mode={selectionOutlineMode}>
+          {actor.shape !== "circle" ? (
+            <motion.rect
+              className="pointer-events-none fill-none"
+              initial={false}
+              animate={{
+                attrX: -selectionRadius,
+                attrY: -selectionRadius,
+                height: selectionRadius * 2,
+                strokeDasharray: "5 5",
+                strokeWidth: actorSelectionOutlineWidth,
+                width: selectionRadius * 2
+              }}
+              rx="8"
+              stroke={selectedTextColor}
+              transition={transition}
+            />
+          ) : (
+            <motion.circle
+              className="pointer-events-none fill-none"
+              initial={false}
+              animate={{
+                r: selectionRadius,
+                strokeDasharray: "5 5",
+                strokeWidth: actorSelectionOutlineWidth
+              }}
+              stroke={selectedTextColor}
+              transition={transition}
+            />
+          )}
+        </SelectionOutline>
       ) : null}
       {showFactionOutline && actor.shape !== "transparent" ? (
         actor.shape !== "circle" ? (

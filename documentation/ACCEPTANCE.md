@@ -48,6 +48,23 @@ truth.
       ratio when possible, keeping rectangles rectangular, and rejecting
       expansions that overlap another zone.
 
+- [x] Zone Properties converts the first selected Zone among Rectangle, Circle,
+      Hexagon, and Polygon with one undoable shape/outline change. Generated
+      targets use polygon bounds without requiring outline matching; Polygon
+      conversion retains the outline subject to snapping. Existing validation,
+      actor-fit adjustment, writer protection, and stale-result guards apply.
+- [x] Generated shapes require manual Polygon conversion before double-click
+      vertex editing; existing insertion/removal and undo/redo rules then apply.
+- [x] Activating the color paintbrush copies the first selected Zone's paintable
+      appearance to the remaining selected Zones as one validated history entry,
+      retains selection and brush mode, and leaves unselected Zones untouched.
+      Deactivation and matching colors create no new history.
+- [x] Show border stays beside its switch on one line; Match border color follows
+      the Engagements color picker, retaining linked-color and disabled behavior.
+
+- [x] Polygon Shape editing help appears only for Polygon and is available through
+  keyboard focus and touch hold without triggering conversion.
+
 ## Actors (drag/drop)
 
 - [x] Zoneless actors are represented in a collapsible bottom-center panel on
@@ -690,3 +707,9 @@ these back into `AGENT.md` or `DESIGN.md`.
   resets navigation without adding durable preferences.
 - [x] Library card size labels omit “grid”; independent card sliders remain
   alphabetical, with the shared Character and Token size preference.
+
+- [x] Canvas > Selection outlines stores separate Actor and Zone Static/Pulse/
+  Pulse limited modes and whole-unit thickness from 1–8, preserving Actor 2 and
+  Zone 3 defaults. Preferences survive reload, synchronize across tabs, reset
+  cleanly, and remain usable after storage write failures. Animation overrides
+  keep saved choices while rendering static outlines.

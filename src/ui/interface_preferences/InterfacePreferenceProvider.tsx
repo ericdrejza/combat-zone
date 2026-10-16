@@ -1,3 +1,7 @@
+import {
+  DEFAULT_ACTOR_SELECTION_OUTLINE_WIDTH, DEFAULT_ZONE_SELECTION_OUTLINE_WIDTH,
+  readSelectionOutlineMode, readSelectionOutlineWidth
+} from "./selectionOutlinePreferences";
 import { readLibraryGridCardSize, readLibraryViewDefault, readLibraryPanelViewDefault } from "./libraryPreferences";
 import { readBackgroundResizeOverflowBehavior } from '@core/encounter/backgroundResizeOverflow';
 import { isClockStyle } from "@entities/zone/clockStyle";
@@ -87,6 +91,10 @@ export function InterfacePreferenceProvider({ children }: { children: ReactNode 
           libraryGridCardSizes: { ...current.libraryGridCardSizes, [sectionId]: readLibraryGridCardSize(size) }
         })),
         setPanelOrder: (panelOrder) => updatePreferences({ panelOrder }),
+        setActorSelectionOutlineWidth: width => updatePreferences({ actorSelectionOutlineWidth: readSelectionOutlineWidth(width, DEFAULT_ACTOR_SELECTION_OUTLINE_WIDTH) }),
+        setZoneSelectionOutlineWidth: width => updatePreferences({ zoneSelectionOutlineWidth: readSelectionOutlineWidth(width, DEFAULT_ZONE_SELECTION_OUTLINE_WIDTH) }),
+        setActorSelectionOutline: mode => updatePreferences({ actorSelectionOutline: readSelectionOutlineMode(mode) }),
+        setZoneSelectionOutline: mode => updatePreferences({ zoneSelectionOutline: readSelectionOutlineMode(mode) }),
         setEnableAssetAnimation: (enabled) =>
           updatePreferences({ enableAssetAnimation: enabled }),
         setPanelVisible: (panelId, visible) =>

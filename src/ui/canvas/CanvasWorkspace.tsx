@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { buildCellGraph, traceCellRoute } from '@core/movement/cellTracer';
 import { CLOSE_DISTANCE } from './canvasConstants';
+import { useCanvasPaintCursor } from './useCanvasPaintCursor';
 import { nearestGridVertex, pointDistance } from '@core/movement/gridTopology';
 import { readCanvasPreferences } from '@ui/canvas_preferences/canvasPreferenceStorage';
 import { useDispatch, useSelector } from 'react-redux';
@@ -165,6 +166,7 @@ export function CanvasWorkspace({
   onZoneDragEnd,
   onZoneMotionComplete
 }: CanvasWorkspaceProps) {
+  const paintCursorClass = useCanvasPaintCursor();
   const dispatch = useDispatch();
   const tracing = useSelector((state: RootState) => state.interaction.cellTracerActive);
   const [tracerPointer, setTracerPointer] = useState<LayoutPoint | null>(null);
@@ -177,7 +179,7 @@ export function CanvasWorkspace({
     <MotionConfig transformPagePoint={createCanvasMotionPointTransform(canvasRef)}>
       <motion.svg
         aria-label="SVG encounter workspace"
-        className="h-full min-h-0 w-full bg-canvas-panel"
+        className={`h-full min-h-0 w-full bg-canvas-panel${paintCursorClass}`}
         ref={(svg) => {
           canvasRef.current = svg;
         }}

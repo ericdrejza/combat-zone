@@ -146,6 +146,7 @@ Properties:
 - id
 - name
 - polygon
+- shape (rectangle, circle, hexagon, or polygon)
 - colorFill
 - colorBorder
 - colorEngagement
@@ -167,9 +168,36 @@ Zone names trim surrounding whitespace and may be empty.
 Fill, Border, and Engagement color fields show a swatch and the current hex
 color. Their palettes start collapsed, open on a field click, and close on a
 selection or repeat field click. A selection remains one reversible color edit.
-Match border color keeps the Engagement field disabled while showing its color.
+The Border tab keeps Show border on one line beside its switch. The Engagements
+tab places Match border color below the color picker; matching keeps the
+Engagement field disabled while showing its color.
 Zone opacity previews continuously while its slider is dragged and commits the
 final value on release as one reversible history action.
+
+Zone Properties orders its sections as Name, Layout, Color, then Shape. When
+Polygon is selected, the Shape section shows a top-right information tooltip
+explaining double-click edge insertion and vertex removal with the Zone tool.
+Zone Properties provides icon buttons to convert the first selected Zone to
+Rectangle (including square), Circle, Hexagon, or Polygon. Generated shapes use
+the current polygon's bounding-box minimum and maximum corners as their resize
+controls. Any Polygon can convert without matching the target outline. Converting
+to Polygon retains the outline, subject to existing snapping reconciliation.
+Conversions follow validated reshaping, including actor-fit adjustments and hard
+placement constraints, and commit shape and geometry as one reversible action.
+Selecting the existing shape does nothing. Generated shapes must be converted
+manually in Properties before double-click vertex editing becomes available.
+
+Activating the Zone color paintbrush with multiple Zones selected immediately
+copies the first selected Zone's fill, border, Engagement color, color-matching
+setting, opacity, and border visibility to the other selected Zones. This is one
+validated, reversible action; a blocked batch changes no Zone. The brush stays
+active for subsequent canvas painting. While either Zone or Actor paint mode is
+active in an editable tab, the canvas and its entity hit areas use a paintbrush
+cursor. Leaving paint mode restores normal cursors. Deactivation does not copy properties,
+and identical colors do not create history. Property fields still edit only the
+first selected Zone; Status still requires one selected Zone. The existing
+export-all visual/layout action remains available and excludes shape/geometry
+and Zone status fields.
 
 Zone contents are derived from actor `currentZoneId` values and engagement
 `parentZoneId` values. Points of interest are Actors with the appropriate
@@ -1133,6 +1161,19 @@ fields display the effective default hex value as their placeholder. Cloned
 Zones retain the source Zone's opacity instead of applying the new-Zone
 default. A Show border setting, enabled by default, controls border visibility
 for newly created Zones; clones retain their source Zone's setting.
+Canvas settings > Selection outlines provides separate Selected Actor outline
+and Selected Zone outline choices: Static (default), Pulse, and Pulse limited.
+Pulse varies only the selection outline's opacity continuously; Pulse limited
+runs two one-second pulses when an entity becomes selected, then leaves its
+outline fully visible. Other entity updates do not restart those pulses.
+Reselecting an entity or changing its outline mode restarts its animation.
+Separate Actor and Zone outline thickness sliders use whole canvas units from
+1 through 8, defaulting to Actor 2 and Zone 3. Zone outlines retain their dashed
+stroke. These browser-local preferences persist and synchronize across tabs, reset with application
+preferences, and stay outside encounter history. Unknown saved modes use Static; invalid thicknesses use their entity defaults.
+Disabled animations and the existing reduced-motion policy render both outlines
+statically while retaining the saved choices.
+
 Settings use a consistent Category → Section → optional Subsection → Setting
 hierarchy, described in `plans/settings_consistency.md`. Workspace categories
 are Audio, Canvas, Combat, Interface, and Keybinds; Account and Data are grouped
