@@ -1,6 +1,7 @@
+import { ResetSettingsButton } from "./ResetSettingsButton";
 import { TouchTooltip } from "@ui/toolbar/TouchTooltip";
 import { SettingsCategory, SettingsSection, SettingsRow, SETTINGS_BUTTON } from "./SettingsLayout";
-import { RotateCcw, X } from "lucide-react";
+import { X } from "lucide-react";
 import { type KeyboardEvent, useState } from "react";
 import { formatKeybind, FIXED_SHORTCUT_REFERENCES, KEYBIND_DEFINITIONS, keybindFromEvent, useKeybinds, type KeybindActionId, type KeybindMap } from "@ui/keybinds";
 import { ConfirmStatusDialog } from "@ui/panels/status_panel/StatusDialog";
@@ -45,7 +46,7 @@ export function KeybindSettings() {
     assign(Object.fromEntries(directions.map((direction, index) => [`viewport.pan${direction}`, keys[index]])));
   }
   return <SettingsCategory title="Keybinds" description="Choose shortcuts or clear an assignment. While recording, Backspace clears it. Conflicting shortcuts require an override."
-    actions={<button className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl border border-canvas-muted bg-canvas-surface px-3 py-2 text-sm font-semibold text-canvas-ink shadow-sm hover:border-canvas-ink hover:bg-canvas-ink hover:text-canvas-on-ink hover:shadow-md active:border-canvas-muted active:bg-canvas-muted active:text-canvas-on-ink active:shadow-inner focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-canvas-ink focus-visible:ring-offset-2 focus-visible:ring-offset-canvas-panel" onClick={() => { resetBindings(); setRecording(null); setError(null); setPending(null); }} type="button"><RotateCcw aria-hidden="true" className="h-4 w-4" />Reset defaults</button>}>
+    actions={<ResetSettingsButton category="Keybinds" onReset={() => { resetBindings(); setRecording(null); setError(null); setPending(null); }} />}>
     {error ? <p role="alert" className="mt-3 text-sm text-red-600">{error}</p> : null}
     <SettingsSection title="Viewport panning">
       <div className="grid min-w-0 grid-cols-4 gap-1 sm:gap-3">{directions.map((direction) => <div className="min-w-0" key={direction}><p className="mb-1 text-center text-xs">{direction}</p>{control(`viewport.pan${direction}`, `Pan ${direction.toLowerCase()}`, true)}</div>)}</div>

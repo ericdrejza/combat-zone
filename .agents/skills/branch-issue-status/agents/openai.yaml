@@ -1,0 +1,3 @@
+interface:
+  display_name: "Branch Issue Status"
+  short_description: "Set issue status from current branch work"

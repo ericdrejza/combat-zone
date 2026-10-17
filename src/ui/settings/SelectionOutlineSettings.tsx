@@ -7,6 +7,7 @@ import { SettingsField, SettingsSection, SETTINGS_CONTROL, SETTINGS_SLIDER } fro
 export function SelectionOutlineSettings() {
   const {
     actorSelectionOutline, setActorSelectionOutline,
+    edgeSelectionAnimation, setEdgeSelectionAnimation,
     zoneSelectionOutline, setZoneSelectionOutline,
     actorSelectionOutlineWidth, setActorSelectionOutlineWidth,
     zoneSelectionOutlineWidth, setZoneSelectionOutlineWidth
@@ -36,6 +37,14 @@ export function SelectionOutlineSettings() {
           </SettingsField>
         </div>
       ))}
+      <SettingsField label="Selected Edge arrow">
+        <select className={SETTINGS_CONTROL} value={edgeSelectionAnimation}
+          onChange={event => setEdgeSelectionAnimation(readSelectionOutlineMode(event.currentTarget.value))}>
+          <option value="static">Static</option>
+          <option value="pulse">Pulse</option>
+          <option value="pulse_limited">Pulse limited</option>
+        </select>
+      </SettingsField>
     </SettingsSection>
   );
 }

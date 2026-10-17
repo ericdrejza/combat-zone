@@ -1,3 +1,5 @@
+import { ResetSettingsButton } from "./ResetSettingsButton";
+import { useResetSettingsCategory } from "./useResetSettingsCategory";
 import { useInterfacePreferences } from "@ui/interface_preferences/InterfacePreferenceProvider";
 import { AUDIO_REPEAT_DELAYS, formatAudioRepeatDelay } from "@ui/audio/audioRepeatDelay";
 import type { AmbienceCueTypeDefault } from "@ui/interface_preferences/audioPreferences";
@@ -5,6 +7,7 @@ import { PreferenceSwitch } from "./PreferenceSwitch";
 import { SettingsCategory, SettingsSection, SettingsSubsection, SettingsField, SettingsRow, SETTINGS_CONTROL, SETTINGS_SLIDER } from "./SettingsLayout";
 
 export function AudioSettings() {
+  const resetCategory = useResetSettingsCategory("audio");
   const preferences = useInterfacePreferences();
   const repeatDelay = preferences.audioRepeatDelayDefaults;
   function updateDelay(key: "minimumDelaySeconds" | "maximumDelaySeconds", value: number) {
@@ -12,7 +15,7 @@ export function AudioSettings() {
     if (next.maximumDelaySeconds < next.minimumDelaySeconds) next.maximumDelaySeconds = next.minimumDelaySeconds;
     preferences.setAudioRepeatDelayDefaults(next);
   }
-  return <SettingsCategory title="Audio" description="Playback on this device and defaults for newly assigned cues.">
+  return <SettingsCategory actions={<ResetSettingsButton category="Audio" onReset={resetCategory} />} title="Audio" description="Playback on this device and defaults for newly assigned cues.">
     <SettingsSection title="Playback">
       <SettingsField label="Master volume" fullWidth valueLabel={`${Math.round(preferences.audioMasterVolume * 100)}%`}>
         <input aria-label="Master volume" className={SETTINGS_SLIDER} max="100" min="0" onChange={(event) => preferences.setAudioMasterVolume(Number(event.target.value) / 100)} type="range" value={Math.round(preferences.audioMasterVolume * 100)} />

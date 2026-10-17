@@ -1,3 +1,4 @@
+import type { PreferenceCategory } from "./preferenceCategories";
 import type { SelectionOutlineMode } from "@core/rendering/SelectionOutline";
 import {
   DEFAULT_ACTOR_SELECTION_OUTLINE_WIDTH, DEFAULT_ZONE_SELECTION_OUTLINE_WIDTH,
@@ -43,6 +44,7 @@ export type DurableInterfacePreferences = {
   enableAssetAnimation: boolean;
   actorSelectionOutline: SelectionOutlineMode;
   zoneSelectionOutline: SelectionOutlineMode;
+  edgeSelectionAnimation: SelectionOutlineMode;
   actorSelectionOutlineWidth: number;
   zoneSelectionOutlineWidth: number;
   encounterCreationTool: EncounterCreationTool;
@@ -66,6 +68,7 @@ export type DurableInterfacePreferences = {
 };
 
 export type InterfacePreferences = DurableInterfacePreferences & {
+  resetCategory: (category: PreferenceCategory) => void;
   setBackgroundResizeOverflowBehavior: (behavior: BackgroundResizeOverflowBehavior) => void;
   setAudioCueVolumeDefault: (volume: number) => void;
   setAudioAmbienceCueTypeDefault: (value: AmbienceCueTypeDefault) => void;
@@ -88,6 +91,7 @@ export type InterfacePreferences = DurableInterfacePreferences & {
   setEnableAssetAnimation: (enabled: boolean) => void;
   setActorSelectionOutline: (mode: SelectionOutlineMode) => void;
   setZoneSelectionOutline: (mode: SelectionOutlineMode) => void;
+  setEdgeSelectionAnimation: (mode: SelectionOutlineMode) => void;
   setActorSelectionOutlineWidth: (width: number) => void;
   setZoneSelectionOutlineWidth: (width: number) => void;
   setAutoSelectActiveActorDefault: (enabled: boolean) => void;
@@ -117,6 +121,7 @@ export const defaultPreferences: DurableInterfacePreferences = {
   enableAssetAnimation: true,
   actorSelectionOutline: "static",
   zoneSelectionOutline: "static",
+  edgeSelectionAnimation: "static",
   actorSelectionOutlineWidth: DEFAULT_ACTOR_SELECTION_OUTLINE_WIDTH,
   zoneSelectionOutlineWidth: DEFAULT_ZONE_SELECTION_OUTLINE_WIDTH,
   encounterCreationTool: "zone",
@@ -141,6 +146,7 @@ export const defaultPreferences: DurableInterfacePreferences = {
 
 export const defaultValue: InterfacePreferences = {
   ...defaultPreferences,
+  resetCategory: () => undefined,
   setBackgroundResizeOverflowBehavior: () => undefined,
   autoSelectActiveActorDefault: true,
   setAudioCueVolumeDefault: () => undefined,
@@ -163,6 +169,7 @@ export const defaultValue: InterfacePreferences = {
   setEnableAssetAnimation: () => undefined,
   setActorSelectionOutline: () => undefined,
   setZoneSelectionOutline: () => undefined,
+  setEdgeSelectionAnimation: () => undefined,
   setActorSelectionOutlineWidth: () => undefined,
   setZoneSelectionOutlineWidth: () => undefined,
   setAutoSelectActiveActorDefault: () => undefined,
@@ -210,6 +217,7 @@ export function readPreferences(): DurableInterfacePreferences {
           : true,
       actorSelectionOutline: readSelectionOutlineMode(stored?.actorSelectionOutline),
       zoneSelectionOutline: readSelectionOutlineMode(stored?.zoneSelectionOutline),
+      edgeSelectionAnimation: readSelectionOutlineMode(stored?.edgeSelectionAnimation),
       actorSelectionOutlineWidth: readSelectionOutlineWidth(stored?.actorSelectionOutlineWidth, DEFAULT_ACTOR_SELECTION_OUTLINE_WIDTH),
       zoneSelectionOutlineWidth: readSelectionOutlineWidth(stored?.zoneSelectionOutlineWidth, DEFAULT_ZONE_SELECTION_OUTLINE_WIDTH),
       encounterCreationTool:

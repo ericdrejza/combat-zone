@@ -1,4 +1,6 @@
 import { motion } from "motion/react";
+import { SelectionOutline } from "@core/rendering/SelectionOutline";
+import { useSelectionOutlineMode } from "@ui/canvas/useSelectionOutlineMode";
 
 import type { LayoutPoint } from "@core/layout/types";
 import { getEdgeSlotKey, type EdgePreset } from "@entities/edge/edgeMutations";
@@ -34,6 +36,7 @@ function pairKey(edge: Pick<Edge, "fromZoneId" | "toZoneId">) {
 }
 
 export function EdgeLayer({ activeToolId, edgeDrag, edgeTool, encounter, canvasBackgroundLuminance, getDisplayedPolygon, selection }: Props) {
+  const selectionMode = useSelectionOutlineMode("edge");
   const edges = encounter.edges.allIds.map((id) => encounter.edges.byId[id]).filter((edge): edge is Edge => Boolean(edge));
   const previewEdge: Edge | undefined = edgeDrag?.targetZoneId ? {
     ...edgeTool,
@@ -122,6 +125,7 @@ export function EdgeLayer({ activeToolId, edgeDrag, edgeTool, encounter, canvasB
           <marker id={`edge-arrow-start-${edge.id}`} markerHeight="8" markerWidth="8" orient={cardinalStartAngle ?? "auto-start-reverse"} refX="7" refY="4"><path d="M 0 0 L 8 4 L 0 8 z" fill={edgeColor} /></marker>
         </defs>
         {d ? <>
+          <SelectionOutline mode={selected && !preview ? selectionMode : "static"} pointerEvents="auto">
           <motion.path 
             animate={{ d }} 
             aria-label={`${edge.directionality} edge from ${from.name} to ${to.name}`} 
@@ -138,6 +142,7 @@ export function EdgeLayer({ activeToolId, edgeDrag, edgeTool, encounter, canvasB
             strokeDasharray={dash} 
             strokeWidth={selected ? 2 : 1} 
           />
+          </SelectionOutline>
           {!preview && <path className="cursor-pointer fill-none stroke-transparent" d={d} data-entity-id={edge.id} data-entity-type="edge" strokeWidth={14} />}
           {badgePoint && !preview ? <EdgeBadges edge={edge} edgeColor={edgeColor} point={badgePoint} /> : null}
         </> : null}

@@ -33,7 +33,7 @@ export function readMovementRepeatDelay(): number {
     return Number.isSafeInteger(value) && value >= 50 && value <= 2000 ? value : DEFAULT_MOVEMENT_REPEAT_DELAY_MS;
   } catch { return DEFAULT_MOVEMENT_REPEAT_DELAY_MS; }
 }
-const Context = createContext({ rules: DEFAULT_COMBAT_RULES, visibility: DEFAULT_STATUS_VISIBILITY, movementRepeatDelayMs: DEFAULT_MOVEMENT_REPEAT_DELAY_MS, setMovementRepeatDelayMs: (_delay: number) => {}, saveRules: (_rules: CombatRules, _visibility?: StatusVisibility) => {} });
+const Context = createContext({ resetCombatPreferences: () => {}, rules: DEFAULT_COMBAT_RULES, visibility: DEFAULT_STATUS_VISIBILITY, movementRepeatDelayMs: DEFAULT_MOVEMENT_REPEAT_DELAY_MS, setMovementRepeatDelayMs: (_delay: number) => {}, saveRules: (_rules: CombatRules, _visibility?: StatusVisibility) => {} });
 
 /** Durable global preferences; encounter recalculation remains a validated UI command. */
 export function CombatPreferenceProvider({ children }: { children: ReactNode }) {
@@ -63,6 +63,13 @@ export function CombatPreferenceProvider({ children }: { children: ReactNode }) 
     try { localStorage.setItem(COMBAT_PREFERENCES_STORAGE_KEY, JSON.stringify({ ...rules, visibility, movementRepeatDelayMs: delay })); }
     catch { /* Keep the session preference when storage is unavailable. */ }
   }
-  return <Context.Provider value={{ rules, visibility, saveRules, movementRepeatDelayMs, setMovementRepeatDelayMs }}>{children}</Context.Provider>;
+  function resetCombatPreferences() {
+    const next = structuredClone(DEFAULT_COMBAT_RULES);
+    setRules(next);
+    setRepeatDelay(DEFAULT_MOVEMENT_REPEAT_DELAY_MS);
+    try { localStorage.setItem(COMBAT_PREFERENCES_STORAGE_KEY, JSON.stringify({ ...next, visibility, movementRepeatDelayMs: DEFAULT_MOVEMENT_REPEAT_DELAY_MS })); }
+    catch { /* Keep the session defaults when storage is unavailable. */ }
+  }
+  return <Context.Provider value={{ resetCombatPreferences, rules, visibility, saveRules, movementRepeatDelayMs, setMovementRepeatDelayMs }}>{children}</Context.Provider>;
 }
 export const useCombatPreferences = () => useContext(Context);

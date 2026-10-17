@@ -1,3 +1,4 @@
+import { PREFERENCE_CATEGORY_KEYS } from "./preferenceCategories";
 import {
   DEFAULT_ACTOR_SELECTION_OUTLINE_WIDTH, DEFAULT_ZONE_SELECTION_OUTLINE_WIDTH,
   readSelectionOutlineMode, readSelectionOutlineWidth
@@ -66,6 +67,11 @@ export function InterfacePreferenceProvider({ children }: { children: ReactNode 
     <InterfacePreferenceContext.Provider
       value={{
         ...preferences,
+        resetCategory: category => {
+          const defaults = Object.fromEntries(PREFERENCE_CATEGORY_KEYS[category].map(key => [key, structuredClone(defaultPreferences[key])]));
+          updatePreferences(defaults);
+          if (category === "interface") setAutoSelectActiveActor(defaultPreferences.autoSelectActiveActor);
+        },
         setBackgroundResizeOverflowBehavior: value => updatePreferences({ backgroundResizeOverflowBehavior: readBackgroundResizeOverflowBehavior(value) }),
         setAudioCueVolumeDefault: (volume) => updatePreferences({ audioCueVolumeDefault: readAudioCueVolumeDefault(volume) }),
         setAudioAmbienceCueTypeDefault: (value) => updatePreferences({ audioAmbienceCueTypeDefault: readAmbienceCueTypeDefault(value) }),
@@ -95,6 +101,7 @@ export function InterfacePreferenceProvider({ children }: { children: ReactNode 
         setZoneSelectionOutlineWidth: width => updatePreferences({ zoneSelectionOutlineWidth: readSelectionOutlineWidth(width, DEFAULT_ZONE_SELECTION_OUTLINE_WIDTH) }),
         setActorSelectionOutline: mode => updatePreferences({ actorSelectionOutline: readSelectionOutlineMode(mode) }),
         setZoneSelectionOutline: mode => updatePreferences({ zoneSelectionOutline: readSelectionOutlineMode(mode) }),
+        setEdgeSelectionAnimation: mode => updatePreferences({ edgeSelectionAnimation: readSelectionOutlineMode(mode) }),
         setEnableAssetAnimation: (enabled) =>
           updatePreferences({ enableAssetAnimation: enabled }),
         setPanelVisible: (panelId, visible) =>

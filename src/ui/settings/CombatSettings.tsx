@@ -1,3 +1,5 @@
+import { ResetSettingsButton } from "./ResetSettingsButton";
+import { useResetSettingsCategory } from "./useResetSettingsCategory";
 import { useEffect, useId, useRef, useState } from "react";
 import { validThresholds, type CombatRules } from "@entities/actor/actorResources";
 import { recalculateHealthStatuses } from "@entities/actor/statusMutations";
@@ -10,6 +12,7 @@ import { MovementRepeatSettings } from "./MovementRepeatSettings";
 import { PreferenceSwitch } from "./PreferenceSwitch";
 
 export function CombatSettings() {
+  const resetCategory = useResetSettingsCategory("combat");
   const { rules, saveRules } = useCombatPreferences();
   const {
     warnActorDestinationsDiffer, setWarnActorDestinationsDiffer,
@@ -35,7 +38,7 @@ export function CombatSettings() {
       void commit("actor.recalculateHealth", { rules: saved }, (state) => recalculateHealthStatuses(state, saved), () => generation.current === revision);
     }
   }
-  return <SettingsCategory title="Combat" description="Movement decisions, health behavior, and automatic health status.">
+  return <SettingsCategory actions={<ResetSettingsButton category="Combat" onReset={() => { generation.current += 1; resetCategory(); }} />} title="Combat" description="Movement decisions, health behavior, and automatic health status.">
     <SettingsSection title="Movement">
     <PreferenceSwitch checked={warnActorDestinationsDiffer} label="Warn when actor destinations differ" onChange={setWarnActorDestinationsDiffer} />
     <MovementRepeatSettings />

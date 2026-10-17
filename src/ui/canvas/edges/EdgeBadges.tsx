@@ -98,7 +98,7 @@ export function EdgeBadges({ edge, edgeColor, point }: {
             fill="transparent"
             height={20}
             width={18}
-            x={point.x - (icons.length * 18) / 2 + index * 18 - 2}
+            x={point.x - (icons.length * 18) / 2 + index * 18}
             y={point.y - 10}
           />
           <Icon
@@ -106,7 +106,7 @@ export function EdgeBadges({ edge, edgeColor, point }: {
             color={iconColor}
             height={14}
             width={14}
-            x={point.x - (icons.length * 18) / 2 + index * 18}
+            x={point.x - (icons.length * 18) / 2 + index * 18 + 2}
             y={point.y - 7}
           />
         </g>

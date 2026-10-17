@@ -410,6 +410,9 @@ history entry. Endpoints and directionality are immutable after creation.
 Shape is an icon radio group in both the toolbar and Edge Properties: Lucide
 MoveRight for straight, CornerDownRight for right-angled, Spline for curved,
 and Activity for sigmoid.
+For selected Edges, the Status panel contains Movement, Visibility, Tags, and
+Notes. Movement and Visibility support multiple selected Edges; Tags and Notes
+require one selected Edge. Edge Properties retains Connection, Shape, and Delete.
 
 Rendered routes attach to the closest available derived boundary anchors and
 prefer the shortest collision-free path. Multiple Edges in a Zone pair use
@@ -424,7 +427,7 @@ boundaries. Each rendered rule icon has a tooltip of at most two words. Visible
 is the assumed visibility and has no path icon; obscured uses the Lucide
 dashed-eye icon, hidden uses eye-off, and difficult movement uses
 chevrons-down. Interaction tags are entered individually with Enter and render
-as removable pills in Edge Properties. Edges with tags show a tag icon, while
+as removable pills in the Edge Status panel. Edges with tags show a tag icon, while
 Edges with notes show an info icon last in the badge. Hovering these icons
 shows the tag pills or note contents; canvas tag pills use the sampled canvas
 contrast color and are not removable from the canvas. Routes update while Zones move. The free drag preview
@@ -1169,10 +1172,21 @@ outline fully visible. Other entity updates do not restart those pulses.
 Reselecting an entity or changing its outline mode restarts its animation.
 Separate Actor and Zone outline thickness sliders use whole canvas units from
 1 through 8, defaulting to Actor 2 and Zone 3. Zone outlines retain their dashed
-stroke. These browser-local preferences persist and synchronize across tabs, reset with application
+stroke.
+Zone selection outlines use the readable color calculated from their border
+color's luminance, falling back to the Zone name's color when no border color
+exists. Actor selection outlines use the Zone name's luminance-derived readable
+color; zoneless Actors use the canvas background luminance.
+These browser-local preferences persist and synchronize across tabs, reset with application
 preferences, and stay outside encounter history. Unknown saved modes use Static; invalid thicknesses use their entity defaults.
 Disabled animations and the existing reduced-motion policy render both outlines
 statically while retaining the saved choices.
+The same Canvas section provides a separate Selected Edge arrow choice:
+Static (default), Pulse, or Pulse limited. It animates the selected Edge's
+arrow path and arrowheads with the same opacity timing and accessibility
+overrides as Actor and Zone selection outlines. Badges and route diagnostics
+remain steady. This browser-local preference follows the same persistence,
+cross-tab synchronization, reset, and invalid-value fallback rules.
 
 Settings use a consistent Category → Section → optional Subsection → Setting
 hierarchy, described in `plans/settings_consistency.md`. Workspace categories
@@ -1180,6 +1194,14 @@ are Audio, Canvas, Combat, Interface, and Keybinds; Account and Data are grouped
 separately. Settings navigation remembers the selected category and its scroll
 position when closed and reopened during the active application session. This
 navigation state is not stored durably and resets on refresh.
+Each Workspace settings category (Audio, Canvas, Combat, Interface, and
+Keybinds) has a Reset to defaults action with a confirmation dialog. Cancel
+preserves preferences; confirming restores only that category's defaults,
+including preferences owned by shared providers. Category resets preserve
+encounter data and history. Interface reset restores presentation defaults
+without applying the default panel layout to the current encounter; Combat
+reset disables automatic health without recalculating existing Actor status.
+Account and Data do not provide category preference resets.
 Interface > Panels > Default layout edits the default left/right panel arrangement by dragging panel
 names, with a line preview at the drop position and no arrow controls. Its last
 control, Apply to current encounter, applies those sides and order to the active

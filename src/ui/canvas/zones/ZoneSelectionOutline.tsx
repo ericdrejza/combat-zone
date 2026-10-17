@@ -4,7 +4,8 @@ import { SelectionOutline } from "@core/rendering/SelectionOutline";
 import { useInterfacePreferences } from "@ui/interface_preferences/InterfacePreferenceProvider";
 import { useSelectionOutlineMode } from "@ui/canvas/useSelectionOutlineMode";
 
-export function ZoneSelectionOutline({ points, transition }: {
+export function ZoneSelectionOutline({ color, points, transition }: {
+  color: string;
   points: string;
   transition: Transition;
 }) {
@@ -13,8 +14,8 @@ export function ZoneSelectionOutline({ points, transition }: {
   return (
     <SelectionOutline mode={mode}>
       <motion.polygon
-        animate={{ points, strokeDasharray: "8 8", strokeWidth: zoneSelectionOutlineWidth }}
-        className="pointer-events-none fill-none stroke-canvas-ink"
+        animate={{ points, stroke: color, strokeDasharray: "8 8", strokeWidth: zoneSelectionOutlineWidth }}
+        className="pointer-events-none fill-none"
         initial={false}
         transition={transition}
       />

@@ -1,3 +1,5 @@
+import { ResetSettingsButton } from "./ResetSettingsButton";
+import { useResetSettingsCategory } from "./useResetSettingsCategory";
 import { SelectionOutlineSettings } from "./SelectionOutlineSettings";
 import { Reorder } from 'motion/react';
 import { MoveUp, MoveDown, GripVertical, Lock, Magnet, VectorSquare, Blend } from 'lucide-react';
@@ -14,6 +16,7 @@ import { SettingsCategory, SettingsSection, SettingsSubsection, SettingsField, S
 
 const labels: Record<MembershipDecider, string> = { cells: 'Most shared cells', nearest: 'Nearest Zone Center', current: 'Keep current Zone', ask: 'Ask Me' };
 export function CanvasSettings() {
+  const resetCategory = useResetSettingsCategory("canvas");
   const { preferences, save } = useCanvasPreferences();
   const { panWithRightClickDrag, setPanWithRightClickDrag, encounterCreationTool, setEncounterCreationTool } = useInterfacePreferences();
   function toggle(key: keyof MovementRules) {
@@ -27,7 +30,7 @@ export function CanvasSettings() {
     [order[index], order[target]] = [order[target], order[index]];
     save({ ...preferences, deciders: order });
   }
-  return <SettingsCategory title="Canvas" description="Canvas navigation, creation defaults, and placement behavior.">
+  return <SettingsCategory actions={<ResetSettingsButton category="Canvas" onReset={resetCategory} />} title="Canvas" description="Canvas navigation, creation defaults, and placement behavior.">
     <SettingsSection title="New encounter defaults" description="These defaults apply when creating encounters and Zones.">
       <SettingsField label="Tool auto-select upon encounter creation">
         <select aria-label="Tool auto-select upon encounter creation" className={SETTINGS_CONTROL} value={encounterCreationTool} onChange={event => setEncounterCreationTool(event.currentTarget.value as "background" | "zone")}>

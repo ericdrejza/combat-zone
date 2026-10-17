@@ -5,15 +5,16 @@ export type SelectionOutlineMode = "static" | "pulse" | "pulse_limited";
 
 const PULSE_OPACITY = [1, 0.35, 1];
 
-/** Mounting a newly selected outline starts its pulses; geometry updates do not. */
-export function SelectionOutline({ children, mode }: {
+/** Mounting a newly selected visual starts its pulses; geometry updates do not. */
+export function SelectionOutline({ children, mode, pointerEvents = "none" }: {
   children: ReactNode;
+  pointerEvents?: "none" | "auto";
   mode: SelectionOutlineMode;
 }) {
   return (
     <motion.g
       key={mode}
-      pointerEvents="none"
+      pointerEvents={pointerEvents}
       initial={{ opacity: 1 }}
       animate={{ opacity: mode === "static" ? 1 : PULSE_OPACITY }}
       transition={{

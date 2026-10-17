@@ -15,7 +15,7 @@ import type {
 import {
   getCanvasTransition
 } from "../canvasMotion";
-import { getZoneNameTextColor } from "../canvasLuminance";
+import { getReadableTextColor, getZoneNameTextColor } from "../canvasLuminance";
 import {
   getZoneNamePosition,
   getZoneResizeHandles,
@@ -196,7 +196,7 @@ export function ZoneLayer({
           </>
         ) : null}
         {selected ? (
-          <ZoneSelectionOutline points={polygonPoints} transition={zoneGeometryTransition} />
+          <ZoneSelectionOutline color={zone.colorBorder ? getReadableTextColor(zone.colorBorder) : zoneNameTextColor} points={polygonPoints} transition={zoneGeometryTransition} />
         ) : null}
         {actorTargeted ? (
           <motion.polygon

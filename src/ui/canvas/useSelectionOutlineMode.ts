@@ -4,11 +4,11 @@ import { readSelectionOutlineMode } from "@ui/interface_preferences/selectionOut
 import { useMotionPreference } from "@ui/motion_preferences/MotionPreferenceProvider";
 
 /** Accessibility overrides animation without replacing either saved preference. */
-export function useSelectionOutlineMode(entity: "actor" | "zone"): SelectionOutlineMode {
+export function useSelectionOutlineMode(entity: "actor" | "zone" | "edge"): SelectionOutlineMode {
   const preferences = useInterfacePreferences();
   const { animationsDisabled } = useMotionPreference();
   if (animationsDisabled || !preferences.enableAssetAnimation) return "static";
   return readSelectionOutlineMode(entity === "actor"
     ? preferences.actorSelectionOutline
-    : preferences.zoneSelectionOutline);
+    : entity === "zone" ? preferences.zoneSelectionOutline : preferences.edgeSelectionAnimation);
 }
