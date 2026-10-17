@@ -5,6 +5,7 @@ export const CANVAS_PREFERENCES_EVENT = 'combat-zone:canvas-preferences';
 export type MembershipMethod = 'center' | 'cells' | 'overlap';
 export type MembershipDecider = 'cells' | 'nearest' | 'current' | 'ask';
 export type CanvasPreferences = {
+  selectOnUndoRedo: boolean;
   projectIsometricTokens: boolean;
   defaults: MovementRules;
   membership: MembershipMethod;
@@ -13,6 +14,7 @@ export type CanvasPreferences = {
   tracerInvalidRoute: 'reject' | 'detour';
 };
 export const DEFAULT_CANVAS_PREFERENCES: CanvasPreferences = {
+  selectOnUndoRedo: false,
   projectIsometricTokens: false,
   defaults: DEFAULT_MOVEMENT_RULES, membership: 'center', fallback: 'center',
   deciders: ['cells', 'nearest', 'current', 'ask'], tracerInvalidRoute: 'reject'
@@ -29,6 +31,7 @@ export function readCanvasPreferences(): CanvasPreferences {
   try {
     const value = JSON.parse(localStorage.getItem(CANVAS_PREFERENCES_KEY) ?? 'null') as Partial<CanvasPreferences> | null;
     return {
+      selectOnUndoRedo: value?.selectOnUndoRedo === true,
       projectIsometricTokens: value?.projectIsometricTokens === true,
       defaults: validMovementRules(value?.defaults) ? { ...value.defaults } : { ...DEFAULT_MOVEMENT_RULES },
       membership: value?.membership === 'cells' || value?.membership === 'overlap' ? value.membership : 'center',

@@ -1164,6 +1164,15 @@ fields display the effective default hex value as their placeholder. Cloned
 Zones retain the source Zone's opacity instead of applying the new-Zone
 default. A Show border setting, enabled by default, controls border visibility
 for newly created Zones; clones retain their source Zone's setting.
+Canvas settings > Selection > Select on undo/redo is disabled by default.
+When enabled, undo and redo select existing elements changed by the restored
+snapshot, using the action's primary entity type for cascading changes.
+Removed elements cannot be selected; if no affected elements of that type
+remain, existing selection is only pruned for invalid references. Actions
+without a selectable primary entity type preserve valid selection. Switch
+to Select only when the active tool cannot select the affected type.
+This browser-local preference persists, synchronizes across tabs, resets with
+Canvas defaults, and stays outside encounter history.
 Canvas settings > Selection outlines provides separate Selected Actor outline
 and Selected Zone outline choices: Static (default), Pulse, and Pulse limited.
 Pulse varies only the selection outline's opacity continuously; Pulse limited

@@ -46,6 +46,9 @@ export function CanvasSettings() {
       </SettingsSubsection>
       <DefaultColorSettings />
     </SettingsSection>
+    <SettingsSection title="Selection">
+      <PreferenceSwitch label="Select on undo/redo" description="Select affected elements when undoing or redoing an action." checked={preferences.selectOnUndoRedo} onChange={selectOnUndoRedo => save({ ...preferences, selectOnUndoRedo })} />
+    </SettingsSection>
     <SelectionOutlineSettings />
     <SettingsSection title="Navigation">
       <PreferenceSwitch checked={panWithRightClickDrag} label="Pan with right-click drag" onChange={setPanWithRightClickDrag} />
