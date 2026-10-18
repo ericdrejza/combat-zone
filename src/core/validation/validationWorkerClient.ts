@@ -1,4 +1,5 @@
 import type { ComputationResource } from '@core/computationResource';
+import { copyWithStructuralSharing } from '@reduxjs/toolkit/query';
 import type { EncounterState } from '@core/encounter/types';
 import { MVP_VALIDATORS } from './validators';
 import type {
@@ -120,7 +121,12 @@ export function prepareEncounterChangeInWorker({
   };
 
   return new Promise((resolve, reject) => {
-    pendingChanges.set(requestId, { reject, resolve });
+    pendingChanges.set(requestId, { reject, resolve: prepared => resolve({
+      ...prepared,
+      // Worker messages clone every entity. Restore unchanged references so a
+      // one-Zone edit does not invalidate all geometry caches and React visuals.
+      nextEncounter: copyWithStructuralSharing(nextEncounter, prepared.nextEncounter)
+    }) });
     validationWorker.postMessage(request);
   });
 }

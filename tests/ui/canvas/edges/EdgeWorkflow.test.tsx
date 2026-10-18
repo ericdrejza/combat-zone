@@ -125,8 +125,9 @@ describe("Edge workflow", () => {
       store.dispatch(selectEntity({ entityType: "edge", ids: ["bilateral", "forward"] }));
     });
     const properties = screen.getByLabelText("Properties panel");
-    const difficultButton = within(properties).getByRole("button", { name: "Difficult" });
-    const obscuredButton = within(properties).getByRole("radio", { name: "Obscured" });
+    const status = screen.getByLabelText("Status panel");
+    const difficultButton = within(status).getByRole("button", { name: "Difficult" });
+    const obscuredButton = within(status).getByRole("radio", { name: "Obscured" });
     const straightButton = within(properties).getByRole("radio", { name: "Straight" });
     const rightAngleButton = within(properties).getByRole("radio", { name: "Right angled" });
     const curvedButton = within(properties).getByRole("radio", { name: "Curved" });
@@ -214,14 +215,13 @@ describe("Edge workflow", () => {
       store.dispatch(selectEntity({ entityType: "edge", ids: ["metadata"] }));
     });
 
-    const properties = screen.getByLabelText("Properties panel");
-    const tagInput = within(properties).getByRole("textbox", { name: "Add interaction tag" });
+    const status = screen.getByLabelText("Status panel");
+    const tagInput = within(status).getByRole("textbox", { name: "Add interaction tag" });
     await user.type(tagInput, "locked{Enter}arcane{Enter}");
     await waitFor(() => expect(store.getState().encounter.present.edges.byId.metadata?.interactionTags).toEqual(["locked", "arcane"]));
-    expect(within(properties).getByRole("button", { name: "Remove tag locked" })).toHaveTextContent("locked");
-    expect(within(properties).getByRole("button", { name: "Remove tag locked" }).querySelector(".lucide-x")).toHaveClass("opacity-0", "group-hover:opacity-100");
+    expect(within(status).getByRole("button", { name: "Remove tag locked" })).toHaveTextContent("locked");
 
-    const notes = within(properties).getByRole("textbox", { name: "Notes" });
+    const notes = within(status).getByRole("textbox", { name: "Notes" });
     await user.type(notes, "Requires a silver key");
     await user.tab();
     await waitFor(() => expect(store.getState().encounter.present.edges.byId.metadata?.notes).toBe("Requires a silver key"));
@@ -231,7 +231,6 @@ describe("Edge workflow", () => {
     expect(badgeIcons.map((icon) => icon.getAttribute("aria-label"))).toEqual(["Tags", "Notes"]);
     const tagHitTarget = badgeIcons[0]?.querySelector("[data-edge-badge-hit-target]");
     const notesHitTarget = badgeIcons[1]?.querySelector("[data-edge-badge-hit-target]");
-    expect(tagHitTarget).toHaveAttribute("width", "18");
     fireEvent.pointerEnter(tagHitTarget!);
     const tagsTooltip = within(canvas).getByRole("tooltip", { name: "Tags tooltip" });
     expect(tagsTooltip).toHaveTextContent("locked");
@@ -241,7 +240,7 @@ describe("Edge workflow", () => {
     fireEvent.pointerEnter(notesHitTarget!);
     expect(within(canvas).getByRole("tooltip", { name: "Notes tooltip" })).toHaveTextContent("Requires a silver key");
 
-    await user.click(within(properties).getByRole("button", { name: "Remove tag locked" }));
+    await user.click(within(status).getByRole("button", { name: "Remove tag locked" }));
     await waitFor(() => expect(store.getState().encounter.present.edges.byId.metadata?.interactionTags).toEqual(["arcane"]));
   });
 

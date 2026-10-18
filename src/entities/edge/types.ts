@@ -3,7 +3,11 @@ export type EdgeMovementRule = "blocked" | "skillCheck" | "difficult";
 export type EdgeVisibilityRule = "visible" | "obscured" | "hidden";
 export type EdgeShape = "straight" | "rightAngled" | "curved" | "sigmoid";
 
+export type EdgeRoutePreferences = { flipped: boolean; curvature: number };
+
 export type Edge = {
+  routePreferences?: EdgeRoutePreferences;
+  color?: string | null;
   id: string;
   fromZoneId: string;
   toZoneId: string;

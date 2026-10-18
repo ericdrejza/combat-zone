@@ -3,7 +3,7 @@ import type { LayoutPoint } from '@core/layout/types';
 import { getZoneEngagementColor } from '@entities/zone/zoneColors';
 import type { RootState } from '@store/store';
 import type { ActorRenderPlacement } from '../actors/actorCanvasLayout';
-import type { ActorPlacementTranslation } from '../actors/actorPlacementTranslation';
+import { transformZoneActorPoint, type ActorPlacementTranslation } from '@ui/canvas/actors/actorPlacementTranslation';
 import type {
   ActorDragState,
   EngagementDragState
@@ -44,19 +44,6 @@ function addOffset(point: LayoutPoint, offset: LayoutPoint): LayoutPoint {
   return { x: point.x + offset.x, y: point.y + offset.y };
 }
 
-function translateZonePoint(
-  point: LayoutPoint,
-  zoneId: string,
-  translation: ActorPlacementTranslation | null
-): LayoutPoint {
-  return translation?.zoneId === zoneId
-    ? {
-        x: point.x + translation.offset.x,
-        y: point.y + translation.offset.y
-      }
-    : point;
-}
-
 /** Engagement connectors/tokens deliberately render behind the Actor layer. */
 export function EngagementLayer({
   activeToolId,
@@ -79,7 +66,7 @@ export function EngagementLayer({
   const actorObstacles: EngagementParticipantPoint[] = placements.map(
     (placement) => ({
       actorId: placement.actor.id,
-      point: translateZonePoint(
+      point: transformZoneActorPoint(
         placement.point,
         placement.actor.currentZoneId,
         zoneActorTranslation
@@ -119,7 +106,7 @@ export function EngagementLayer({
         );
       const participants = settledParticipants.map((participant) => ({
         ...participant,
-        point: translateZonePoint(
+        point: transformZoneActorPoint(
           participant.point,
           engagement.parentZoneId,
           zoneActorTranslation
@@ -133,7 +120,7 @@ export function EngagementLayer({
           backgroundLuminanceByZoneId[zone.id]
         ),
         participants,
-        token: translateZonePoint(
+        token: transformZoneActorPoint(
           settledToken,
           engagement.parentZoneId,
           zoneActorTranslation

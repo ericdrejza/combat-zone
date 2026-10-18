@@ -1,4 +1,7 @@
+import { getEdgeCurvatureMaximum } from "./edgeCurvatureLimits";
 import type { LayoutPoint } from "@core/layout/types";
+import { adjustEdgeCurve } from "./edgeCurveGeometry";
+import type { EdgeRoutePreferences } from "./types";
 import type { EdgeShape } from "./types";
 import { distance } from "./edgeBoundaryGeometry";
 
@@ -29,16 +32,29 @@ function directCurveControl(
   return control;
 }
 
+function sigmoidControls(start: LayoutPoint, end: LayoutPoint): [LayoutPoint, LayoutPoint] {
+  const dx = end.x - start.x, dy = end.y - start.y;
+  if (dx === 0 || dy === 0) {
+    const length = Math.hypot(dx, dy) || 1;
+    const bend = Math.min(48, length * 0.12);
+    const nx = -dy / length * bend, ny = dx / length * bend;
+    return [{ x: start.x + dx / 3 + nx, y: start.y + dy / 3 + ny },
+      { x: start.x + dx * 2 / 3 - nx, y: start.y + dy * 2 / 3 - ny }];
+  }
+  const middleX = (start.x + end.x) / 2;
+  return [{ x: middleX, y: start.y }, { x: middleX, y: end.y }];
+}
+
 /** Converts routed geometry into the selected visual Edge shape. */
-export function routeToSvgPath(path: LayoutPoint[], shape: EdgeShape): string {
+export function getDefaultEdgePath(path: LayoutPoint[], shape: EdgeShape): string {
   if (path.length === 0) return "";
   if (shape === "straight" || shape === "rightAngled" || path.length < 2) {
     return `M ${path.map((point) => `${point.x} ${point.y}`).join(" L ")}`;
   }
   if (shape === "sigmoid" && path.length === 2) {
     const [start, end] = path;
-    const middleX = (start.x + end.x) / 2;
-    return `M ${start.x} ${start.y} C ${middleX} ${start.y}, ${middleX} ${end.y}, ${end.x} ${end.y}`;
+    const [a, b] = sigmoidControls(start, end);
+    return `M ${start.x} ${start.y} C ${a.x} ${a.y}, ${b.x} ${b.y}, ${end.x} ${end.y}`;
   }
   if (shape === "curved" && path.length === 2) {
     const [start, end] = path;
@@ -50,8 +66,8 @@ export function routeToSvgPath(path: LayoutPoint[], shape: EdgeShape): string {
     for (let index = 1; index < path.length; index += 1) {
       const start = path[index - 1];
       const end = path[index];
-      const middleX = (start.x + end.x) / 2;
-      commands.push(`C ${middleX} ${start.y}, ${middleX} ${end.y}, ${end.x} ${end.y}`);
+      const [a, b] = sigmoidControls(start, end);
+      commands.push(`C ${a.x} ${a.y}, ${b.x} ${b.y}, ${end.x} ${end.y}`);
     }
     return commands.join(" ");
   }
@@ -64,4 +80,13 @@ export function routeToSvgPath(path: LayoutPoint[], shape: EdgeShape): string {
   const end = path[path.length - 1];
   commands.push(`T ${end.x} ${end.y}`);
   return commands.join(" ");
+}
+
+/** Persist preferences, never absolute control points or route coordinates. */
+export function routeToSvgPath(path: LayoutPoint[], shape: EdgeShape, preferences?: EdgeRoutePreferences, polygons?: LayoutPoint[][]): string {
+  const baseline = getDefaultEdgePath(path, shape);
+  if (shape !== "curved" && shape !== "sigmoid") return baseline;
+  const requested = preferences ?? { flipped: false, curvature: 1 };
+  const maximum = getEdgeCurvatureMaximum(baseline, requested.flipped, polygons);
+  return maximum === undefined ? baseline : adjustEdgeCurve(baseline, { ...requested, curvature: Math.min(requested.curvature, maximum) });
 }

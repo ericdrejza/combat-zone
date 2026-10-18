@@ -49,7 +49,7 @@ it('rejects a rigid warped-grid translation whose other vertices cannot remain s
   expect(zoneSnappingValid(state, { ...zone, polygon })).toBe(false);
   act(() => store.dispatch(loadEncounterState(state)));
   const clearDrag = vi.fn();
-  act(() => handleZoneMouseUp({ encounter: state, dispatch: store.dispatch,
+  act(() => handleZoneMouseUp({ encounter: state, dispatch: store.dispatch, zoneGestureRevisionRef: { current: 0 },
     zoneDrag: { zoneId: 'z', originalPolygon: zone.polygon, current: { x: 64, y: 0 }, start: { x: 0, y: 0 }, hasMoved: true, phase: 'dragging' },
     getDisplayedPolygon: () => polygon, setZoneDrag: clearDrag
   } as unknown as MouseUpHandlerInput));

@@ -1,3 +1,4 @@
+import { commitZoneReshape } from "./commitZoneReshape";
 import { consumeEncounterPreparation } from "@core/history/encounterOperations";
 import { zoneSnappingValid } from '@core/movement/zoneVertexSnapping';
 import { isPersistenceWritable } from '@store/persistenceWriteGuardMiddleware';
@@ -11,25 +12,31 @@ import {
 } from '@store/encounterLogSlice';
 import { cacheActorRenderPlacementsForZoneMove } from '../actors/actorPlacementTranslation';
 import {
-  canCommitZonePolygon as canCommitZonePolygonForCollection,
-  getZoneResizeAnchor,
-  getZoneResizeHandles
+  canCommitZonePolygon as canCommitZonePolygonForCollection
 } from '../zones/zoneGeometry';
 import { updateZonePolygon } from '@entities/zone/zoneMutations';
 import type { MouseUpHandlerInput } from './mouseUpTypes';
+import { resolveActorPlacements } from '@ui/canvas/actors/resolveActorPlacements';
+import type { ActorRenderPlacement } from '@ui/canvas/actors/actorCanvasLayout';
+import { setOptimisticActorPlacement } from '@ui/canvas/actors/actorPlacementOptimisticState';
 
 const INVALID_POLYGON_MESSAGE =
   'A zone must remain within the canvas and must not overlap another zone.';
 
 function commitZoneMove(input: MouseUpHandlerInput): boolean {
   const { encounter, zoneDrag } = input;
-  if (!zoneDrag) return false;
+  // A committed move is retained only for its visual settling frame. It must
+  // not intercept the release of a subsequent resize or vertex edit.
+  if (!zoneDrag || zoneDrag.phase !== 'dragging') return false;
+  const revision = input.zoneGestureRevisionRef.current;
   if (zoneDrag.hasMoved) {
     const nextPolygon = input.getDisplayedPolygon(
       encounter.zones.byId[zoneDrag.zoneId]
     );
     if (nextPolygon.every((point, i) => Math.hypot(point.x - zoneDrag.originalPolygon[i].x, point.y - zoneDrag.originalPolygon[i].y) < 1e-6)) {
-      input.setZoneDrag({ ...zoneDrag, phase: 'committed' });
+      // Geometry owns its settling animation. A no-op drop must release the
+      // gesture immediately rather than wait for a group-offset animation.
+      input.setZoneDrag(null);
       return true;
     }
     const movedZone = { ...encounter.zones.byId[zoneDrag.zoneId], polygon: nextPolygon };
@@ -65,127 +72,41 @@ function commitZoneMove(input: MouseUpHandlerInput): boolean {
       zoneDrag.zoneId,
       nextPolygon
     );
+    // Let presentation snap immediately; the encounter stays unchanged until
+    // validation accepts this candidate. Rejection restores the original target.
+    input.setZoneDrag({ ...zoneDrag, phase: 'validating', previewPolygon: nextPolygon });
     const prepared = prepareValidatedEncounterChangeForRuntime({ currentEncounter: encounter, nextEncounter,
       action: createEncounterActionRecord('zone.move', { polygon: nextPolygon, zoneId: zoneDrag.zoneId }) });
-    const apply = (resolved: Awaited<typeof prepared>) => input.dispatch((_dispatch, getState) => {
+    const placements = resolveActorPlacements(encounter);
+    const apply = (resolved: Awaited<typeof prepared>, sourcePlacements: ActorRenderPlacement[]) => input.dispatch((_dispatch, getState) => {
+      if (input.zoneGestureRevisionRef.current !== revision) return;
       if (!isPersistenceWritable() || getState().encounter.present !== encounter || logEncounterValidationBlock(input.dispatch, resolved)) {
         input.setZoneDrag(null);
         return;
       }
-      if (encounter.movementRules.zoneLocked && !encounter.movementRules.snapToGrid) cacheActorRenderPlacementsForZoneMove(resolved.nextEncounter, input.actorRenderPlacements, zoneDrag.zoneId,
-        { x: nextPolygon[0].x - zoneDrag.originalPolygon[0].x, y: nextPolygon[0].y - zoneDrag.originalPolygon[0].y });
+      const offset = { x: nextPolygon[0].x - encounter.zones.byId[zoneDrag.zoneId].polygon[0].x,
+        y: nextPolygon[0].y - encounter.zones.byId[zoneDrag.zoneId].polygon[0].y };
+      if (encounter.movementRules.zoneLocked && !encounter.movementRules.snapToGrid) {
+        cacheActorRenderPlacementsForZoneMove(resolved.nextEncounter, sourcePlacements, zoneDrag.zoneId, offset, encounter);
+        for (const { actor, point } of input.actorRenderPlacements) {
+          if (actor.currentZoneId === zoneDrag.zoneId) {
+            setOptimisticActorPlacement(actor.id, { x: point.x + offset.x, y: point.y + offset.y });
+          }
+        }
+      }
       input.dispatch(commitEncounterChange({ action: resolved.action, nextEncounter: resolved.nextEncounter }));
       input.dispatch(selectEntity({ entityType: 'zone', ids: [zoneDrag.zoneId] }));
-      // Keep the drop frame until validation supplies the authoritative target.
-      input.setZoneDrag({ ...zoneDrag, phase: 'committed' });
+      input.setZoneDrag(null);
     });
-    void consumeEncounterPreparation(prepared, apply, () => input.setZoneDrag(null));
+    const ready = placements instanceof Promise
+      ? Promise.all([prepared, placements])
+      : prepared instanceof Promise ? prepared.then(result => [result, placements] as const) : [prepared, placements] as const;
+    void consumeEncounterPreparation(ready, ([result, source]) => { apply(result, source); }, () => {
+      if (input.zoneGestureRevisionRef.current === revision) input.setZoneDrag(null);
+    });
   }
 
   if (!zoneDrag.hasMoved) input.setZoneDrag(null);
-  return true;
-}
-
-function commitZoneReshape(input: MouseUpHandlerInput): boolean {
-  const { encounter, vertexDrag } = input;
-  if (!vertexDrag) return false;
-
-  const resizedZone = encounter.zones.byId[vertexDrag.zoneId];
-  const resizeHandles = resizedZone
-    ? getZoneResizeHandles(resizedZone, vertexDrag.polygon)
-    : [];
-  input.suppressNextCanvasClickRef.current = true;
-  input.suppressNextCanvasClickUnconditionallyRef.current = true;
-  input.suppressNextCanvasClickPointRef.current =
-    resizeHandles[vertexDrag.vertexIndex] ?? null;
-
-  if (!vertexDrag.hasMoved) {
-    input.setVertexDrag(null);
-    return true;
-  }
-  if (
-    !canCommitZonePolygonForCollection(
-      vertexDrag.polygon,
-      encounter.zones,
-      vertexDrag.zoneId,
-      encounter.canvasSize
-    )
-  ) {
-    logEncounterValidationFailure(input.dispatch, encounter, {
-      actionType: 'zone.reshape',
-      code: 'zone.invalidPolygonPlacement',
-      message: INVALID_POLYGON_MESSAGE,
-      payload: { polygon: vertexDrag.polygon, zoneId: vertexDrag.zoneId }
-    });
-    input.setVertexDrag(null);
-    return true;
-  }
-
-  const nextEncounter = updateZonePolygon(
-    encounter,
-    vertexDrag.zoneId,
-    vertexDrag.polygon
-  );
-  const prepared = prepareValidatedEncounterChangeForRuntime({
-    action: createEncounterActionRecord('zone.reshape', {
-      polygon: vertexDrag.polygon,
-      ...(resizedZone
-        ? {
-            resizeAnchor: getZoneResizeAnchor(
-              resizedZone,
-              vertexDrag.polygon,
-              vertexDrag.vertexIndex
-            )
-          }
-        : {}),
-      zoneId: vertexDrag.zoneId
-    }),
-    currentEncounter: encounter,
-    nextEncounter
-  });
-  const commitPrepared = (resolved: Awaited<typeof prepared>) => input.dispatch((_dispatch, getState) => {
-    if (!isPersistenceWritable() || getState().encounter.present !== encounter) { input.setVertexDrag(null); return; }
-    const committedPolygon =
-      resolved.nextEncounter.zones.byId[vertexDrag.zoneId]?.polygon ??
-      vertexDrag.polygon;
-    if (
-      resolved.blocked ||
-      !canCommitZonePolygonForCollection(
-        committedPolygon,
-        encounter.zones,
-        vertexDrag.zoneId,
-        encounter.canvasSize
-      )
-    ) {
-      const pipelineRejected = logEncounterValidationBlock(input.dispatch, resolved);
-      if (!pipelineRejected) {
-        logEncounterValidationFailure(input.dispatch, encounter, {
-          actionType: 'zone.reshape',
-          code: 'zone.invalidPolygonPlacement',
-          message: INVALID_POLYGON_MESSAGE,
-          payload: { polygon: committedPolygon, zoneId: vertexDrag.zoneId }
-        });
-      }
-      input.setVertexDrag(null);
-      return;
-    }
-    input.dispatch(
-      commitEncounterChange({
-        action: {
-          ...resolved.action,
-          payload: {
-            ...resolved.action.payload,
-            polygon: committedPolygon,
-            requestedPolygon: vertexDrag.polygon
-          }
-        },
-        nextEncounter: resolved.nextEncounter
-      })
-    );
-    input.dispatch(selectEntity({ entityType: 'zone', ids: [vertexDrag.zoneId] }));
-    input.setVertexDrag(null);
-  });
-  void consumeEncounterPreparation(prepared, commitPrepared, () => input.setVertexDrag(null));
   return true;
 }
 

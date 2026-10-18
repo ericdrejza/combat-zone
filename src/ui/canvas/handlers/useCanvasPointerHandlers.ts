@@ -1,9 +1,10 @@
+import { useZoneMoveGesture } from "./useZoneMoveGesture";
 import { runEncounterOperation } from "@core/history/encounterOperations";
 import { snapZonePolygon, translateSnappedZone } from '@core/movement/zoneVertexSnapping';
 import { nearestGridVertex } from '@core/movement/gridTopology';
 import { handleSpatialActorMouseUp } from './spatialActorMouseUp';
 import type { MouseEvent, PointerEvent } from 'react';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 import type { LayoutPoint } from '@core/layout/types';
 import type { Zone } from '@entities/zone/types';
@@ -39,6 +40,9 @@ function usesTouchMultiSelect(
 }
 
 export function useCanvasPointerHandlers(input: PointerHandlerInput) {
+  const resizeGestureActive = useRef(false);
+  const resizeStartedAt = useRef(0);
+  const startZoneMove = useZoneMoveGesture(input);
   const {
     activeToolId,
     actorDrag,
@@ -222,14 +226,8 @@ export function useCanvasPointerHandlers(input: PointerHandlerInput) {
         return;
       }
       setZoneDraftPoints([]);
-      setZoneDrag({
-        current: point,
-        hasMoved: false,
-        originalPolygon: encounter.zones.byId[entityId].polygon,
-        phase: 'dragging',
-        start: point,
-        zoneId: entityId
-      });
+      resizeGestureActive.current = false;
+      startZoneMove(entityId, point, entityElement ?? undefined, pointerType);
       return;
     }
 
@@ -329,26 +327,6 @@ export function useCanvasPointerHandlers(input: PointerHandlerInput) {
     } : null);
   }
 
-  function handleZoneDrag(offset: LayoutPoint) {
-    setZoneDrag((drag) =>
-      drag?.phase === 'dragging'
-        ? {
-            ...drag,
-            current: {
-              x: drag.start.x + offset.x,
-              y: drag.start.y + offset.y
-            },
-            hasMoved: drag.hasMoved || distance({ x: 0, y: 0 }, offset) >= 1
-          }
-        : drag
-    );
-  }
-
-  function handleZoneDragEnd(event: { stopPropagation: () => void }) {
-    event.stopPropagation();
-    void finishCanvasInteraction();
-  }
-
   function handleActorDragEnd(event: { stopPropagation: () => void }) {
     event.stopPropagation();
     const pointer = event as { clientX?: number; clientY?: number; target?: EventTarget | null };
@@ -386,7 +364,13 @@ export function useCanvasPointerHandlers(input: PointerHandlerInput) {
       }
       return;
     }
-    if (actorDrag?.hasMoved || zoneDrag?.hasMoved || vertexDrag?.hasMoved) {
+    // A new shape's release must clear its draft even while an earlier Zone
+    // edit is settling or waiting for asynchronous validation.
+    if (shapeDraft) {
+      void finishCanvasInteraction();
+      return;
+    }
+    if (actorDrag?.hasMoved || (zoneDrag?.phase === 'dragging' && zoneDrag.hasMoved) || vertexDrag?.hasMoved) {
       return;
     }
 
@@ -403,18 +387,24 @@ export function useCanvasPointerHandlers(input: PointerHandlerInput) {
     event.preventDefault();
     event.stopPropagation();
     closeZoneShapeMenu();
+    const gestureId = ++input.zoneGestureRevisionRef.current;
+    resizeStartedAt.current = event.timeStamp;
+    setZoneDrag(null);
+    resizeGestureActive.current = true;
     suppressNextCanvasClickRef.current = true;
     setVertexDrag({
+      gestureId, phase: "dragging",
       hasMoved: false,
       handleStart: point,
       polygon,
       vertexIndex,
       zoneId: zone.id
     });
+    return gestureId;
   }
 
-  function handleResizeHandleDrag(offset: LayoutPoint) {
-    if (!vertexDrag) {
+  function handleResizeHandleDrag(offset: LayoutPoint, gestureId?: number, timeStamp?: number) {
+    if ((timeStamp !== undefined && timeStamp < resizeStartedAt.current) || !vertexDrag || vertexDrag.phase === "validating" || !resizeGestureActive.current || (gestureId !== undefined && gestureId !== input.zoneGestureRevisionRef.current)) {
       return;
     }
 
@@ -425,23 +415,30 @@ export function useCanvasPointerHandlers(input: PointerHandlerInput) {
       return;
     }
 
-    setVertexDrag({
-      ...vertexDrag,
-      hasMoved: vertexDrag.hasMoved || distance({ x: 0, y: 0 }, offset) >= 1,
-      polygon: resizeZonePolygon(
+    // Motion can deliver a queued drag callback after release or cancellation.
+    // It must not recreate a draft that the commit callback has already cleared.
+    setVertexDrag(current => {
+      if (!current || current.phase === 'validating' || current.handleStart !== vertexDrag.handleStart) return current;
+      const hasMoved = current.hasMoved || distance({ x: 0, y: 0 }, offset) >= 1;
+      const polygon = resizeZonePolygon(
         zone,
-        vertexDrag.polygon,
-        vertexDrag.vertexIndex,
+        current.polygon,
+        current.vertexIndex,
         {
-          x: vertexDrag.handleStart.x + offset.x,
-          y: vertexDrag.handleStart.y + offset.y
+          x: current.handleStart.x + offset.x,
+          y: current.handleStart.y + offset.y
         }
-      )
+      );
+      if (current.hasMoved === hasMoved && polygon.length === current.polygon.length && polygon.every((point, index) =>
+        point.x === current.polygon[index].x && point.y === current.polygon[index].y)) return current;
+      return { ...current, hasMoved, polygon };
     });
   }
 
-  function handleResizeHandleDragEnd(event: { stopPropagation: () => void }) {
+  function handleResizeHandleDragEnd(event: { stopPropagation: () => void; timeStamp?: number }, gestureId?: number) {
     event.stopPropagation();
+    if ((event.timeStamp !== undefined && event.timeStamp < resizeStartedAt.current) || !resizeGestureActive.current || (gestureId !== undefined && gestureId !== input.zoneGestureRevisionRef.current)) return;
+    resizeGestureActive.current = false;
     void finishCanvasInteraction();
   }
 
@@ -456,7 +453,5 @@ export function useCanvasPointerHandlers(input: PointerHandlerInput) {
     handleCanvasMouseMove,
     handleCanvasMouseUp,
     handleResizeHandleMouseDown,
-    handleZoneDrag,
-    handleZoneDragEnd
   };
 }

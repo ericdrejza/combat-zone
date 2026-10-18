@@ -1,4 +1,9 @@
-import { render } from '@testing-library/react';
+import { render as renderComponent } from '@testing-library/react';
+import type { ReactNode } from 'react';
+import { Provider } from 'react-redux';
+import { store } from '@store/store';
+
+const render = (children: ReactNode) => renderComponent(children, { wrapper: ({ children }) => <Provider store={store}>{children}</Provider> });
 
 import { createEncounterState } from '@core/encounter/createEncounterState';
 import { createOrReplaceEdge, DEFAULT_EDGE_PRESET } from '@entities/edge/edgeMutations';

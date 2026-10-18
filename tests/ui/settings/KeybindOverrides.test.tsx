@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { KeybindProvider, KEYBIND_STORAGE_KEY } from "@ui/keybinds";
 import { KeybindSettings } from "@ui/settings/KeybindSettings";
 import { LOCAL_PREFERENCES_RESET_EVENT } from "@ui/motion_preferences/MotionPreferenceProvider";
@@ -28,7 +28,10 @@ describe("keybind conflicts and presets", () => {
     const stored = JSON.parse(localStorage.getItem(KEYBIND_STORAGE_KEY)!);
     expect(stored).toMatchObject({ "viewport.panUp": "arrowup", "viewport.panDown": "arrowdown", "viewport.panLeft": "arrowleft", "viewport.panRight": "arrowright", "actor.moveUp": "", "actor.moveDown": "", "actor.moveLeft": "", "actor.moveRight": "" });
     view.unmount(); setup(); expect(screen.getByRole("button", { name: "Change Pan up keybind" })).toHaveTextContent("↑");
-    fireEvent.click(screen.getByRole("button", { name: "Reset defaults" }));
+    fireEvent.click(screen.getByRole("button", { name: "Reset Keybinds to defaults" }));
+    const confirmation = screen.getByRole("dialog", { name: "Reset Keybinds settings?" });
+    expect(screen.getByRole("button", { name: "Change Pan up keybind" })).toHaveTextContent("↑");
+    fireEvent.click(within(confirmation).getByRole("button", { name: "Reset to defaults" }));
     expect(screen.getByRole("button", { name: "Change Pan up keybind" })).toHaveTextContent("—");
     expect(screen.getByRole("button", { name: "Change Move actors up keybind" })).toHaveTextContent("↑");
   });

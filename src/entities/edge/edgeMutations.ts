@@ -16,6 +16,8 @@ export type EdgePreset = {
 };
 
 export type EdgeEditableProperties = Omit<EdgePreset, "directionality"> & {
+  routePreferences?: Edge["routePreferences"];
+  color?: string | null;
   interactionTags?: string[];
   notes?: string;
 };

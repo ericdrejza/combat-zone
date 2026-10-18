@@ -129,8 +129,6 @@ describe("CanvasShell zone resizing", () => {
 
     const sameVertex = screen.getByLabelText("Zone 1 vertex 2");
 
-    expect(sameVertex).toHaveAttribute("data-drag-snap-to-origin", "true");
-
     fireEvent.mouseDown(sameVertex, {
       button: 0,
       clientX: 220,

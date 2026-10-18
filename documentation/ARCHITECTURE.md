@@ -135,6 +135,63 @@ entry-point rules remain in the persistence decision record.
 - **Engagements are groups, never pairwise.** No participant should ever be
   linked only to one other participant — membership is transitive within
   the group.
+- **Zone gesture rendering is local.** Memoized Zone visuals receive per-Zone
+  presentation values and stable callbacks to the latest interaction handlers;
+  moving or resizing one Zone must not rerender every Zone's Motion tree.
+  The canvas Motion configuration keeps its coordinate-transform callback stable.
+  Validation-worker replies restore structural sharing with the submitted snapshot
+  so unchanged entities and grid geometry retain their cached identities.
+  Immutable polygon pairs reuse overlap results. A resize contained by a convex
+  original can reuse that original's clearance against each unchanged obstacle;
+  preexisting overlaps and concave outlines retain ordinary collision checks.
+  Containment never bypasses shape validity, canvas bounds, or Actor fit rules.
+  Locked Actor resize previews apply a bounds-based affine transform to existing
+  placement centers, shared with Engagement presentation. Preview transforms do
+  not request packing or mutate the committed encounter; token sizes stay fixed.
+  Selected resize handles form a separate overlay after all Zone bodies. Polygon
+  simplicity checks cache exact coordinate results, so worker cloning does not
+  force unchanged sampled outlines through the quadratic segment-intersection
+  check again. The coordinate cache is bounded
+  and retains invalid results too; changed geometry is checked normally.
+  Zone drops expose their requested snapped polygon as transient presentation
+  while validation runs. Only an accepted result commits history; rejection
+  restores the original target. Edge rendering updates routes against transient
+  geometry in the worker, keeping temporary connectors between results.
+  Locked rigid moves without Actor snapping perform acceptance validation
+  synchronously, excluding non-blocking Edge route searches already owned by
+  the route worker. This preserves a committed baseline before the next drag.
+  Gesture revisions reject stale presentation/cancellation callbacks. Released
+  resizes retain a separate encounter-scoped completion chain: later gestures use
+  their requested snapped geometry and clear the old vertex draft, while resize
+  acceptance/history commits remain ordered. A subsequent move validates against
+  the accepted resize snapshot (or the unchanged snapshot after rejection), not
+  its pre-resize render closure. Completion may update a live gesture's baseline
+  but only its owner can clear that gesture or restore selection. Actor previews
+  compose the pending resize transform with the new drag vector; move-cache
+  seeding requires matching, completed source placement geometry. Released resizes
+  resolve their exact source Actor layout before deriving the next preview;
+  move acceptance awaits that layout asynchronously and translates its geometry
+  and retained preview together. Older worker results may satisfy exact-key
+  dependencies without replacing the latest fallback geometry. Animation cleanup
+  consumes only the retained preview it actually completed. Resize callbacks
+  carry gesture revisions and event timestamps to reject queued older input. Pointer
+  samples that produce unchanged resize geometry retain the existing draft.
+  Resize hit areas keep fixed SVG origins during Motion dragging; only their
+  markers follow the resized polygon, preventing drag/layout feedback loops. Pointer
+  tracking starts from displayed SVG geometry; Motion values stop old settling
+  tracks so they cannot retake control of a newer gesture.
+  Zone bodies settle using one absolute polygon track, avoiding overlapping
+  polygon and group-offset animations. Each active Zone gesture freezes its Actor
+  placement origins; accepted resize geometry rebases those origins without
+  adopting packing updates mid-gesture. Move finalization also rebases placements
+  when Redux has advanced ahead of React's last render. Packing targets resume
+  after the gesture, animating from the retained visible preview.
+- **Color sampling is transient UI state.** A shared context connects Properties
+  pipettes to canvas capture handlers without persisting callbacks or sampling
+  state. Background sampling reads one mapped source pixel over the themed
+  background fill. Zone sampling reuses the paintable appearance contract.
+  Existing property commands and validated batch updates own history and writer
+  guards. Scope changes invalidate pending samples; failures never alter colors.
 - **Edges are graph objects, not geometry.** Do not derive edge validity or
   behavior from canvas coordinates or polygon adjacency — edges are
   explicit directional relationships with their own rules
@@ -142,6 +199,55 @@ entry-point rules remain in the persistence decision record.
   and routing failures are derived render state. A non-persisted route cache
   may reuse a working path across replacement, undo, and Zone movement, but it
   must never become an authoritative EncounterState fact.
+  Schema 26 adds optional Edge route preferences (orientation and curvature)
+  and an optional color override. Schema 25 migrates without changing geometry;
+  missing preferences preserve automatic routing and luminance coloring.
+  Absolute paths, anchors, and control points remain derived. Pointer editing
+  previews are session-only; release commits preferences through validated history.
+  A dedicated route worker calculates committed geometry and creation previews.
+  Canvas preferences select Route estimates (default: local deformation and exact
+  collision validation, with connector fallback) or Live optimization during Zone
+  gestures. Estimates never initiate a full route search during the gesture.
+  Published connector previews carry the endpoint polygons matching their moved
+  anchors, so UI corrections apply only movement since that worker snapshot.
+  Failed repairs leave the worker's original cached route baseline intact.
+  Forward endpoint movement shortens the outgoing preview span and drops consumed
+  leading spans; backward/perpendicular movement retains connector extensions.
+  Reversing numeric segments applies the same rule at the target endpoint.
+  Worker messages send changed polygons and removed IDs; worker-local sessions
+  retain immutable geometry identities, bounded route caches, and stable grid
+  graph keys across structured clones. A replacement worker always receives a
+  full geometry snapshot; delta bases and result revisions are worker-scoped. A moved Zone invalidates connected pairs
+  and routes whose control-hull/endpoint bounds overlap its old or new bounds.
+  Sibling pairs reroute together to preserve grid lane reservations. Live-derived
+  results are optimized after release. Unaffected geometry is reused.
+  Results stream per Edge, prioritizing connected pairs. The worker yields between
+  Edges so the latest queued snapshot can supersede the unfinished batch. Messages
+  are encounter/revision scoped. Per-Edge timings and reuse/repair flags are exposed
+  through the transient combat-zone:edge-route-metrics browser event. Timings are
+  inclusive by phase, not additive. Stable per-route revisions avoid rerendering
+  unchanged streamed results. No routing diagnostics enter persistence.
+  Collision segments use a conservative spatial bucket index before exact polygon
+  checks. Curve separating axes/projections are cached by immutable polygon identity.
+  Arc-length scoring uses flatness-based subdivision independently of collision
+  sampling. Collision validation certifies clear subcurves by their control hulls
+  and recursively subdivides unresolved spans, retaining detailed checks at the
+  original two-unit/depth thresholds. Curvature-bound probes operate directly on
+  numeric segments instead of repeatedly serializing and parsing SVG data. Grid
+  routing tries a bounded endpoint region first, accepting only straight/single-elbow
+  paths at preferred clearance with sibling separation; harder detours fall back to the full graph
+  to preserve turn/distance ordering. All derived caches remain session-only.
+  A MotionValue owns the displayed path and retargets from its current geometry
+  on each route or endpoint update. Exact cubic conversion and subdivision give
+  source and target matching SVG commands even when route topology changes.
+  Both the visible path and hit area share that value; badges measure its updates.
+  No outgoing path or opacity transition is retained. Direct curvature edits and
+  disabled animations jump immediately. Interior side anchors remain stationary
+  when a resize leaves their existing point on the same border side.
+  Free-pointer Edge creation previews use a dedicated worker. The UI coalesces
+  requests to the latest pointer snapshot, ignores stale geometry, and terminates
+  pending work when the drag snaps to a Zone, ends, or unmounts. Preview searches
+  never mutate encounter state; environments without Worker use the pure calculator.
 
 ## Movement rule persistence
 

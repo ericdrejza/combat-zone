@@ -1,3 +1,4 @@
+import { ENCOUNTER_SCHEMA_VERSION } from "@core/encounter/types";
 import { createEncounterState } from '@core/encounter/createEncounterState';
 import { assertEncounterState, migrateEncounterState, parseExportEnvelope } from '@core/persistence/envelope';
 import { EXPORT_SCHEMA_VERSION } from '@core/persistence/types';
@@ -24,7 +25,7 @@ it('migrates legacy schema 21 mode fields into the current independent rules', (
   const old = { ...rest, schemaVersion: 21, movementStrategy: 'free' };
   const migrated = migrateEncounterState(old);
   assertEncounterState(migrated);
-  expect(migrated.schemaVersion).toBe(25);
+  expect(migrated.schemaVersion).toBe(ENCOUNTER_SCHEMA_VERSION);
   expect(migrated.movementRules).toMatchObject({ zoneLocked: false, snapToGrid: false });
   expect(migrated).not.toHaveProperty('movementStrategy');
 });
@@ -51,8 +52,8 @@ it('rejects isometric data claiming an older schema and unsupported newer schema
   state.grid.type = 'isometric';
   expect(() => migrateEncounterState({ ...state, schemaVersion: 22 })).toThrow();
   expect(() => validateEncounter(cloud({ ...state, schemaVersion: 22 }))).toThrow(/spatial/);
-  expect(() => assertEncounterState({ ...state, schemaVersion: 26 })).toThrow(/unsupported/);
-  expect(() => validateEncounter(cloud({ ...state, schemaVersion: 26 }))).toThrow(/unsupported/);
+  expect(() => assertEncounterState({ ...state, schemaVersion: ENCOUNTER_SCHEMA_VERSION + 1 })).toThrow(/unsupported/);
+  expect(() => validateEncounter(cloud({ ...state, schemaVersion: ENCOUNTER_SCHEMA_VERSION + 1 }))).toThrow(/unsupported/);
 });
 
 it('preserves schema 23 default projection and persists explicit angles from schema 24', () => {

@@ -1,6 +1,7 @@
 import { PREFERENCE_CATEGORY_KEYS } from "./preferenceCategories";
 import {
-  DEFAULT_ACTOR_SELECTION_OUTLINE_WIDTH, DEFAULT_ZONE_SELECTION_OUTLINE_WIDTH,
+  DEFAULT_ACTOR_SELECTION_OUTLINE_WIDTH, DEFAULT_ZONE_SELECTION_OUTLINE_WIDTH, DEFAULT_EDGE_THICKNESS,
+  DEFAULT_ZONE_BORDER_THICKNESS, DEFAULT_ACTOR_BORDER_THICKNESS,
   readSelectionOutlineMode, readSelectionOutlineWidth
 } from "./selectionOutlinePreferences";
 import { readLibraryGridCardSize, readLibraryViewDefault, readLibraryPanelViewDefault } from "./libraryPreferences";
@@ -98,6 +99,9 @@ export function InterfacePreferenceProvider({ children }: { children: ReactNode 
         })),
         setPanelOrder: (panelOrder) => updatePreferences({ panelOrder }),
         setActorSelectionOutlineWidth: width => updatePreferences({ actorSelectionOutlineWidth: readSelectionOutlineWidth(width, DEFAULT_ACTOR_SELECTION_OUTLINE_WIDTH) }),
+        setZoneBorderThickness: width => updatePreferences({ zoneBorderThickness: readSelectionOutlineWidth(width, DEFAULT_ZONE_BORDER_THICKNESS) }),
+        setActorBorderThickness: width => updatePreferences({ actorBorderThickness: readSelectionOutlineWidth(width, DEFAULT_ACTOR_BORDER_THICKNESS) }),
+        setEdgeThickness: width => updatePreferences({ edgeThickness: readSelectionOutlineWidth(width, DEFAULT_EDGE_THICKNESS) }),
         setZoneSelectionOutlineWidth: width => updatePreferences({ zoneSelectionOutlineWidth: readSelectionOutlineWidth(width, DEFAULT_ZONE_SELECTION_OUTLINE_WIDTH) }),
         setActorSelectionOutline: mode => updatePreferences({ actorSelectionOutline: readSelectionOutlineMode(mode) }),
         setZoneSelectionOutline: mode => updatePreferences({ zoneSelectionOutline: readSelectionOutlineMode(mode) }),

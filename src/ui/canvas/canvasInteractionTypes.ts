@@ -15,7 +15,16 @@ export type EdgeDragState = {
   targetZoneId?: string;
 };
 
+export type PendingZoneReshape = {
+  encounterId: string;
+  zoneId: string;
+  polygon: LayoutPoint[];
+  completion: Promise<RootState["encounter"]["present"] | null>;
+};
+
 export type VertexDragState = {
+  gestureId?: number;
+  phase?: "dragging" | "validating";
   hasMoved: boolean;
   handleStart: LayoutPoint;
   polygon: LayoutPoint[];
@@ -31,10 +40,14 @@ export type ShapeDraftState = {
 };
 
 export type ZoneDragState = {
+  gestureId?: number;
   current: LayoutPoint;
   hasMoved: boolean;
   originalPolygon: LayoutPoint[];
-  phase: 'dragging' | 'committed';
+  sourcePolygon?: LayoutPoint[];
+  phase: 'dragging' | 'validating' | 'committed';
+  /** Requested snap target is visual only until validation commits it. */
+  previewPolygon?: LayoutPoint[];
   start: LayoutPoint;
   zoneId: string;
 };
@@ -82,6 +95,8 @@ export type MutableRefValue<TValue> = {
 };
 
 export type CanvasInteractionState = {
+  zoneGestureRevisionRef: MutableRefValue<number>;
+  pendingZoneReshapeRef: MutableRefValue<PendingZoneReshape | null>;
   activeToolId: RootState['interaction']['activeToolId'];
   actorDrag: ActorDragState | null;
   actorRenderPlacements: ActorRenderPlacement[];

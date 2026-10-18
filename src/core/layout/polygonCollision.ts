@@ -1,5 +1,30 @@
 import type { LayoutPoint } from './types';
 import { getPolygonBounds } from './polygonGeometry';
+import { isContainedByConvexPolygon } from './containedPolygon';
+
+const polygonBounds = new WeakMap<LayoutPoint[], ReturnType<typeof getPolygonBounds>>();
+const overlaps = new WeakMap<LayoutPoint[], WeakMap<LayoutPoint[], boolean>>();
+
+/** A contained resize cannot acquire a collision with a previously clear Zone.
+ * Checking the original pair also preserves behavior for preexisting overlaps.
+ */
+export function createPolygonOverlapCheck(polygon: LayoutPoint[], previous?: LayoutPoint[]) {
+  const contained = previous && isContainedByConvexPolygon(polygon, previous);
+  return (other: LayoutPoint[]) => {
+    if (contained && !doPolygonsOverlap(previous, other)) return false;
+    return doPolygonsOverlap(polygon, other);
+  };
+}
+
+/** Polygon arrays are immutable; repeated placement checks reuse their bounds. */
+function boundsFor(polygon: LayoutPoint[]) {
+  let bounds = polygonBounds.get(polygon);
+  if (!bounds) {
+    bounds = getPolygonBounds(polygon);
+    polygonBounds.set(polygon, bounds);
+  }
+  return bounds;
+}
 
 function isPointInPolygon(point: LayoutPoint, polygon: LayoutPoint[]): boolean {
   return polygon.reduce((inside, current, index) => {
@@ -101,7 +126,17 @@ export function doPolygonsOverlap(
   first: LayoutPoint[],
   second: LayoutPoint[]
 ): boolean {
-  if (!doBoundsOverlap(getPolygonBounds(first), getPolygonBounds(second))) {
+  const cached = overlaps.get(first)?.get(second) ?? overlaps.get(second)?.get(first);
+  if (cached !== undefined) return cached;
+  const result = calculateOverlap(first, second);
+  let others = overlaps.get(first);
+  if (!others) overlaps.set(first, others = new WeakMap());
+  others.set(second, result);
+  return result;
+}
+
+function calculateOverlap(first: LayoutPoint[], second: LayoutPoint[]): boolean {
+  if (!doBoundsOverlap(boundsFor(first), boundsFor(second))) {
     return false;
   }
 

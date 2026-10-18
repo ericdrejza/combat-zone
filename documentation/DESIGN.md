@@ -171,6 +171,20 @@ selection or repeat field click. A selection remains one reversible color edit.
 The Border tab keeps Show border on one line beside its switch. The Engagements
 tab places Match border color below the color picker; matching keeps the
 Engagement field disabled while showing its color.
+Each color field has a pipette button beside its label, with the tooltip
+Background color matcher. It temporarily hides canvas content above the
+background and uses a pipette cursor. Clicking samples that background pixel
+into the active color property through one validated, undoable edit. Escape,
+a right click without dragging, or picking a pixel exits; right-drag panning
+does not exit. Sampling respects the background frame and theme fill. An
+unreadable background reports an error without changing colors or history.
+Disabled color fields also disable their matcher.
+
+A second pipette sits immediately left of the Zone color paintbrush. Copy
+colors from zone lets the user pick a different Zone as the source and applies
+the paintable appearance fields to every selected Zone in one undoable action.
+It preserves the target selection and uses the same cancellation controls.
+Canvas entities other than Zones are hidden while choosing this source.
 Zone opacity previews continuously while its slider is dragged and commits the
 final value on release as one reversible history action.
 
@@ -186,6 +200,11 @@ Conversions follow validated reshaping, including actor-fit adjustments and hard
 placement constraints, and commit shape and geometry as one reversible action.
 Selecting the existing shape does nothing. Generated shapes must be converted
 manually in Properties before double-click vertex editing becomes available.
+
+Selected Zone resize handles render above all Zone bodies so overlapping Zones
+cannot intercept them. Top/bottom side handles use the vertical resize cursor,
+left/right handles use horizontal, and corner handles use the matching diagonal;
+the cursor remains visible throughout the drag.
 
 Activating the Zone color paintbrush with multiple Zones selected immediately
 copies the first selected Zone's fill, border, Engagement color, color-matching
@@ -395,10 +414,14 @@ Properties:
   - sigmoid
 - interactionTags[] (free-form)
 - notes
+- color (optional hex color; absent or null uses automatic canvas-luminance color)
+- routePreferences (optional flipped orientation and nonnegative curvature factor;
+  defaults to unflipped and factor 1)
 
 Edges are graph-first and geometry-independent. Geometry, boundary anchors,
 lane offsets, and paths are derived render state and are never persisted on an
-Edge. A zone pair supports at most one bilateral Edge and one unilateral Edge
+Edge. User-selected route orientation and curvature are persisted preferences,
+not absolute route coordinates. A zone pair supports at most one bilateral Edge and one unilateral Edge
 in each direction. When all three exist, the bilateral route renders between
 the two unilateral routes.
 
@@ -412,7 +435,7 @@ MoveRight for straight, CornerDownRight for right-angled, Spline for curved,
 and Activity for sigmoid.
 For selected Edges, the Status panel contains Movement, Visibility, Tags, and
 Notes. Movement and Visibility support multiple selected Edges; Tags and Notes
-require one selected Edge. Edge Properties retains Connection, Shape, and Delete.
+require one selected Edge. Edge Properties retains Connection, Shape, Color, and Delete.
 
 Rendered routes attach to the closest available derived boundary anchors and
 prefer the shortest collision-free path. Multiple Edges in a Zone pair use
@@ -430,9 +453,45 @@ chevrons-down. Interaction tags are entered individually with Enter and render
 as removable pills in the Edge Status panel. Edges with tags show a tag icon, while
 Edges with notes show an info icon last in the badge. Hovering these icons
 shows the tag pills or note contents; canvas tag pills use the sampled canvas
-contrast color and are not removable from the canvas. Routes update while Zones move. The free drag preview
+contrast color and are not removable from the canvas. Canvas Settings offers
+“Edge routing during Zone drag”: Route estimates (default) or Live optimization.
+This applies to movement, resizing, and vertex reshaping. Estimates deform and
+validate existing routes in a worker without a full search; where repair is not
+possible, temporary segments connect the previous route to the displayed anchors.
+Moving an anchor forward along its outgoing Edge shortens that endpoint span
+instead of adding a segment back through the moving Zone. Fully consumed leading
+spans are removed; curved endpoint controls adjust with the shortened span.
+The same behavior applies at either end of an Edge.
+Live optimization searches for routes throughout the gesture. Both modes optimize
+affected routes after release and animate route changes using Motion.
+Translation follows the drag vector; resizing and reshaping preserve the anchor’s
+relative position on its border side. Pending geometry updates coalesce to the
+latest position rather than queuing every pointer movement.
+An interior side anchor stays at its existing coordinates when resizing leaves
+that point on the same border side. Whole-Zone translations and moved corners
+still update their anchors; no temporary segment is added at an unchanged anchor.
+After release, a worker recalculates affected routes against the committed Zone
+geometry, including Edges affected by moved obstacles. Unaffected routes are reused.
+Connected Edges are prioritized, and completed routes appear individually.
+Temporary segments remain until the latest routes arrive. During a gesture, intermediate completed routes can be
+shown with endpoint corrections; after release, only the latest geometry is accepted.
+If no completed route exists yet, a lightweight provisional connection is shown
+while the worker calculates it.
+These temporary paths may cross Zones while editing or awaiting a result; final
+routes retain normal collision and grid-routing rules. Temporary geometry stays
+outside encounter history, and the Zone edit remains one undoable action.
+The free drag preview
 tracks the pointer without path interpolation; snapping to a target Zone keeps
-the established transition. Right-angled endpoint arrows follow their local
+the established transition. While the pointer remains inside or on the source
+Zone, the free preview is hidden and no route search runs. Routing rejects an
+endpoint fully enclosed by another Zone without searching for an impossible
+path; this is a renderability diagnostic, not a graph-validity restriction.
+Snapping to a hovered Zone lasts only while the pointer remains over it; moving
+away resumes the free preview without requiring release. Free-pointer route
+searches run off the UI thread, coalescing queued pointer positions. A result
+for an older position cannot replace the current preview. Snapping, release,
+and cancellation discard pending free-preview work.
+Right-angled endpoint arrows follow their local
 path segment, quantized to its dominant axis: a segment moving farther right
 than vertically points right, with equivalent behavior in the other three
 cardinal directions. When facing Zone sides have horizontal or vertical
@@ -440,9 +499,84 @@ overlap, the route uses that shortest orthogonal span. A right-angled route
 stays straight on a clear orthogonal span, but introduces 90-degree turns when
 another Zone blocks it. Right-angle routing minimizes its number of turns
 before comparing route length; without obstacles it has at most one turn.
+When Zone vertex snapping is enabled on a square grid, right-angled Edges
+follow actual cell edges, including their boundary attachment points. Routing
+minimizes turns, then distance, and prefers separate same-pair routes even if
+they are longer; if separation is impossible, routes may share grid segments.
+Lane offsets must not move these routes off grid lines. Hex and isometric
+grids retain ordinary right-angle routing. Free pointer previews remain free
+until they snap to a target Zone.
 Direct curved routes scale their bend by distance and choose concavity from
 the target's relative position so their initial tangent progresses toward the
 target; routed obstacle waypoints guide curves around intervening Zones.
+Badges use traveled distance along the rendered SVG curve, including during
+geometry changes. With the Edge tool, selected right-angled, curved, and sigmoid
+Edges can be dragged toward the opposite equally optimized orientation.
+Selected curved and sigmoid Edges show diamond handles at the peaks of their
+curve lobes. Dragging a diamond changes the curvature of the whole Edge while
+keeping the handle on the curve. Axially aligned sigmoid Edges retain opposing
+lobes where the attachment bounds permit them. Curvature is capped so the
+entire curve stays inside the horizontal and vertical bounds between its two
+attachment corners. Each diamond displays curvature as a percentage of the
+available range, from straight (0%) to the corner-bound maximum (100%).
+When the attachment sides are parallel, the bounds include those sides' full
+spans, so aligned attachment points still allow a visible bend. The percentage
+uses that expanded maximum; Zone collision and canvas limits still apply.
+During a curvature-handle drag, attachment points and the routed baseline stay
+fixed. Control-point displacement supplies the preview without searching routes.
+Pointer updates are coalesced to display frames, collision checks preserve the
+last valid curve, and release commits one undoable preference change. Body drags
+may still search for the opposite route orientation.
+If obstacles force the baseline route outside those bounds, automatic obstacle
+routing is preserved and curvature handles are unavailable. Existing saved
+curvature preferences are retained but do not override that automatic route.
+Automatic curved routing checks the rendered Bézier path after smoothing and
+lane placement. When a moved Zone blocks that curve, routing uses a collision-free,
+tangent-continuous detour. Automatic avoidance may exceed attachment-corner
+bounds when needed; manual curvature edits remain bounded. Automatic detours
+leave saved preferences intact. During Zone gestures and after release, Motion
+animates the displayed path coordinates toward each newly calculated route,
+retargeting from the current visible geometry when another update arrives.
+Live transitions take 120ms and settled transitions take 200ms. Paths retain
+full opacity. Arrowheads follow the animated endpoints, and badges and hit areas
+follow the animated path. Line and quadratic segments are represented as exact
+cubic equivalents; subdivision reconciles differing segment counts without
+changing either endpoint shape. Direct curvature editing remains immediate,
+and reduced-motion preferences disable route movement animation. The routing worker validates
+completed curves against the committed Zone polygons; an unsafe final path is
+hidden. Temporary endpoint connectors are exempt from collision checks until
+that completed result arrives. Renderability diagnostics use the final
+rendered-curve checks.
+Curved and sigmoid routing searches attachment points around both Zone
+perimeters, including corners and positions along sides, rather than requiring
+the nearest boundary pair. It compares usable direct curves by rendered arc
+length, then searches obstacle routes across the available attachment points
+when a direct curve cannot be formed. Source and destination Zone interiors
+are obstacles too: outgoing and incoming paths may touch their attachment
+boundaries but cannot cross their owning Zones. Candidate curves are checked
+after lane placement; unsuitable anchors are replaced by anchors on another
+side. All attachment points and route choices remain derived render state.
+Automatic attachment search prioritizes normal or reduced curvature across the
+available border positions before allowing an increased bend at any anchor.
+Within that preferred group it compares rendered route lengths. Larger bends
+remain a last resort when gentler attachment choices cannot form a route;
+saved manual curvature preferences are preserved.
+Adjustments stop at the last valid
+position when they would enter a Zone or leave the canvas. Escape or pointer
+cancellation discards the drag; release commits one validated undoable edit.
+Finishing a route or curvature drag preserves the existing Edge selection.
+Edge Properties provides Reset curvature to restore the newly created default
+curvature and orientation for each selected Edge's current shape. It commits
+one validated undoable edit, preserves selection, and is disabled when all
+selected Edges already use defaults or the tab is read-only.
+These controls appear only for selected Edges in the Edge tool and are disabled
+in read-only tabs. Curve badges move along the curve while editing to leave the
+midpoint handle accessible.
+Edge Properties includes the same color palette control as Zones. Edges default
+to Automatic, using canvas luminance; choosing a palette color overrides it for
+the path and arrowheads. Use automatic color clears the override. Color changes
+apply to selected Edges through validated history. Invalid-route diagnostics
+remain red.
 When an Edge is selected, the canvas status badge summarizes its source,
 target, movement and visibility selections, tags, and notes, without shape.
 Unrelated Edges may cross, while coincident
@@ -678,8 +812,12 @@ Edges combine restrictions: any blocked rule excludes that destination, any
 skillCheck requires individual adjudication, and difficult remains informational.
 For multiple connected candidates, horizontal movement orders top-to-bottom and
 vertical movement left-to-right. Perpendicular arrows cycle with wrapping;
-Enter or the original arrow confirms; Escape cancels the whole batch. Candidates
+Enter or the original movement key confirms; Escape or the configured movement
+key opposite the proposed direction cancels the whole batch without moving Actors. Candidates
 pulse their borders and perpendicular chevrons using the animation preference.
+The movement-choice border uses the candidate Zone name’s readable text color,
+including its sampled background luminance when applicable. Choice chevrons
+use readable contrast calculated from the candidate Zone’s fill color luminance.
 The top-left HUD shows actor names, origin -> destination, and comma-separated,
 deduplicated movement rules and interaction tags in square brackets.
 
@@ -1164,6 +1302,13 @@ fields display the effective default hex value as their placeholder. Cloned
 Zones retain the source Zone's opacity instead of applying the new-Zone
 default. A Show border setting, enabled by default, controls border visibility
 for newly created Zones; clones retain their source Zone's setting.
+Canvas settings > Edges > Edge thickness uses whole canvas units from 1 to 8,
+defaulting to 1. Selected Edge paths are one unit thicker. Arrowheads scale with
+the configured base thickness and do not grow on selection. Free-drag preview
+paths also use the extra unit, preserving their existing appearance at the default.
+The preference persists locally, synchronizes across tabs, resets with Canvas
+defaults, and stays outside encounter history. Invalid saved values use 1.
+
 Canvas settings > Selection > Select on undo/redo is disabled by default.
 When enabled, undo and redo select existing elements changed by the restored
 snapshot, using the action's primary entity type for cascading changes.
@@ -1180,8 +1325,19 @@ runs two one-second pulses when an entity becomes selected, then leaves its
 outline fully visible. Other entity updates do not restart those pulses.
 Reselecting an entity or changing its outline mode restarts its animation.
 Separate Actor and Zone outline thickness sliders use whole canvas units from
-1 through 8, defaulting to Actor 2 and Zone 3. Zone outlines retain their dashed
+1 through 8 for Actors and the current Zone border thickness through 8 for Zones,
+defaulting to Actor 2 and Zone 3.
+The Zone slider minimum matches the normal Zone border width and displays that
+minimum for older saved values below it. Zone outlines retain their dashed
 stroke.
+Rendered Zone selection outlines are never thinner than the normal Zone border
+(default 2 canvas units), even when the saved selection thickness is lower.
+Canvas settings provide separate normal border thickness controls for Zones and
+Actors alongside Edge thickness, each using whole units from 1 through 8. Defaults
+remain Zone 2, Actor 2, and Edge 1. These browser-local preferences reset with the
+Canvas category and do not enter encounter history. Hidden Zone borders remain
+hidden. Selected Actors retain their existing two-unit increase to the normal
+border, separate from the selection outline thickness setting.
 Zone selection outlines use the readable color calculated from their border
 color's luminance, falling back to the Zone name's color when no border color
 exists. Actor selection outlines use the Zone name's luminance-derived readable
@@ -1520,7 +1676,31 @@ as part of a move. Reshaping and grid geometry edits retain vertex reconciliatio
 After a Zone drop, its geometry and drag offset settle from the drop position to
 the final position with the same Motion spring as Actors. Direct dragging remains
 immediate, and reduced-motion preferences disable the settling animation. Keep
-the drop frame until asynchronous validation supplies the final position.
+the requested snapped position as a transient preview while asynchronous
+validation runs. The actual encounter changes only after acceptance; rejection
+animates back to the original position. Connected Edge routes update against
+the transient geometry during movement and validation, then the accepted position.
+For locked Zones with Actor snapping off, rigid moves preserve Actor packing.
+Their acceptance checks run before release returns, with render-only Edge
+diagnostics left to the route worker. A valid drop becomes the next gesture's
+baseline immediately, independently of settling. A subsequent drag freezes the
+Zone at its visible position and supersedes earlier pending gesture work. An
+invalid drop returns to the last accepted placement, not the start of earlier
+movements. Each accepted drop remains a separate undoable movement.
+A released resize waiting for validation remains a separate undoable edit when
+another gesture starts. The next gesture starts from its displayed resized shape
+and keeps Actors following that shape. Its final move is validated against the
+accepted resize, or the prior valid size if the resize is rejected. Earlier
+completion callbacks cannot clear the newer gesture or restore stale geometry.
+
+With Zone lock enabled, resizing previews Actor centers proportionally within
+the Zone's displayed bounds, using the original-to-preview bounds transform.
+Actor artwork and token sizes remain fixed; Engagement tokens and participant
+connectors follow the same transform. This is transient visual feedback and
+does not pack Actors or change encounter history during the gesture. Release
+retains the normal validated Actor-fit and final placement workflow. Final Actor
+placement animates from the visible resize preview, retaining that preview while
+packing is pending.
 
 While a Zone shape or polygon/Cell Tracer draft is being drawn, or a Zone is
 being moved or resized, fade out the canvas Zoneless panel. Fade it back in when

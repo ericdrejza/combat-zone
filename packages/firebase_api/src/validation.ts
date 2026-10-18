@@ -1,4 +1,5 @@
 import { validateSpatialState } from './spatialState.js';
+import { validateEdgeAppearance } from './edgeAppearance.js';
 import { validateClocks } from "./clocks.js";
 import { validateCounters } from "./counters.js";
 import { validateZoneResources } from "./zoneResources.js";
@@ -86,27 +87,31 @@ function validateEntityCollection(value: unknown, name: string): void {
 
 function validateEncounterStateShape(state: JsonObject): void {
   string(state.id, "encounter.state.id");
-  if (state.schemaVersion !== SUPPORTED_ENCOUNTER_SCHEMA_VERSION && state.schemaVersion !== 22 && state.schemaVersion !== 23 && state.schemaVersion !== 24 && state.schemaVersion !== 21 && state.schemaVersion !== 20 && state.schemaVersion !== 19 && state.schemaVersion !== 18 && state.schemaVersion !== 17 && state.schemaVersion !== 16 && state.schemaVersion !== 15 && state.schemaVersion !== 14 && state.schemaVersion !== 13 && state.schemaVersion !== 7) {
+  const version = state.schemaVersion;
+  if (typeof version !== 'number' || !Number.isInteger(version) ||
+      (version !== 7 && (version < 13 || version > SUPPORTED_ENCOUNTER_SCHEMA_VERSION))) {
     throw new ApiContractValidationError("encounter.state.schemaVersion is unsupported.");
   }
   for (const key of ["zones", "edges", "actors", "engagements", "annotations"]) {
     validateEntityCollection(state[key], `encounter.state.${key}`);
   }
-  if (state.schemaVersion === 13 || state.schemaVersion === 14 || state.schemaVersion === 15 || (state.schemaVersion === 16 || state.schemaVersion === 17 || state.schemaVersion === 18 || state.schemaVersion === 19 || state.schemaVersion === 20 || state.schemaVersion === 21 || state.schemaVersion === 22 || (state.schemaVersion === 23 || state.schemaVersion === 24 || state.schemaVersion === 25))) {
+  const edges = record(record(state.edges, 'encounter.state.edges').byId, 'encounter.state.edges.byId');
+  Object.values(edges).forEach(edge => validateEdgeAppearance(record(edge, 'Edge')));
+  if (version >= 13) {
     const actors = record(state.actors, "encounter.state.actors");
     Object.values(record(actors.byId, "encounter.state.actors.byId")).forEach(validateActorResources);
     for (const key of ["audioCues", "audioCueGroups"]) validateEntityCollection(state[key], `encounter.state.${key}`);
   }
-  if (state.schemaVersion === 14 || state.schemaVersion === 15 || (state.schemaVersion === 16 || state.schemaVersion === 17 || state.schemaVersion === 18 || state.schemaVersion === 19 || state.schemaVersion === 20 || state.schemaVersion === 21 || state.schemaVersion === 22 || (state.schemaVersion === 23 || state.schemaVersion === 24 || state.schemaVersion === 25))) {
+  if (version >= 14) {
     const zones = record(state.zones, "encounter.state.zones");
     Object.values(record(zones.byId, "encounter.state.zones.byId")).forEach(validateZoneResources);
   }
-  if ((state.schemaVersion === 16 || state.schemaVersion === 17 || state.schemaVersion === 18 || state.schemaVersion === 19 || state.schemaVersion === 20 || state.schemaVersion === 21 || state.schemaVersion === 22 || (state.schemaVersion === 23 || state.schemaVersion === 24 || state.schemaVersion === 25))) {
+  if (version >= 16) {
     if (state.counters === undefined || state.clocks === undefined) throw new ApiContractValidationError("Encounter resources are required.");
     validateCounters(state.counters, "Encounter");
     validateClocks(state.clocks, "Encounter");
   }
-  if (state.schemaVersion === 17 || state.schemaVersion === 18 || state.schemaVersion === 19 || state.schemaVersion === 20 || state.schemaVersion === 21 || state.schemaVersion === 22 || (state.schemaVersion === 23 || state.schemaVersion === 24 || state.schemaVersion === 25)) validateSpatialState(state);
+  if (version >= 17) validateSpatialState(state);
   const actors = record(record(state.actors, "encounter.state.actors").byId, "encounter.state.actors.byId");
   for (const actor of Object.values(actors)) {
     const value = record(actor, "Actor");
@@ -116,7 +121,7 @@ function validateEncounterStateShape(state: JsonObject): void {
   }
   record(state.initiativeTracker, "encounter.state.initiativeTracker");
   const panelLayout = record(state.panelLayout, "encounter.state.panelLayout");
-  const panelIds = ["initiative", "library", "log", "properties", "status", ...((state.schemaVersion === 13 || state.schemaVersion === 14 || state.schemaVersion === 15 || (state.schemaVersion === 16 || state.schemaVersion === 17 || state.schemaVersion === 18 || state.schemaVersion === 19 || state.schemaVersion === 20 || state.schemaVersion === 21 || state.schemaVersion === 22 || (state.schemaVersion === 23 || state.schemaVersion === 24 || state.schemaVersion === 25))) ? ["audio"] : [])];
+  const panelIds = ["initiative", "library", "log", "properties", "status", ...(version >= 13 ? ["audio"] : [])];
   const panels = ["left", "right"].flatMap((side) => {
     const dock = panelLayout[side];
     if (!Array.isArray(dock)) {

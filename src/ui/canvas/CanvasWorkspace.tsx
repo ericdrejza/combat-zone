@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useCanvasColorSampler } from './color_sampler/useCanvasColorSampler';
 import { buildCellGraph, traceCellRoute } from '@core/movement/cellTracer';
 import { CLOSE_DISTANCE } from './canvasConstants';
 import { useCanvasPaintCursor } from './useCanvasPaintCursor';
@@ -95,11 +96,9 @@ type CanvasWorkspaceProps = {
     point: LayoutPoint,
     vertexIndex: number,
     event: MouseEvent<SVGCircleElement> | ReactPointerEvent<SVGCircleElement>
-  ) => void;
-  onResizeHandleDrag: (point: LayoutPoint) => void;
-  onResizeHandleDragEnd: (event: ActorDragEndEvent) => void;
-  onZoneDrag: (point: LayoutPoint) => void;
-  onZoneDragEnd: (event: ActorDragEndEvent) => void;
+  ) => number | undefined;
+  onResizeHandleDrag: (point: LayoutPoint, gestureId?: number, timeStamp?: number) => void;
+  onResizeHandleDragEnd: (event: ActorDragEndEvent, gestureId?: number) => void;
   onZoneMotionComplete: () => void;
   polygonDraftColor: string;
   selection: RootState["interaction"]["selection"];
@@ -162,11 +161,10 @@ export function CanvasWorkspace({
   zoneShapeMode,
   zoneActorTranslation,
   zoneDrag,
-  onZoneDrag,
-  onZoneDragEnd,
   onZoneMotionComplete
 }: CanvasWorkspaceProps) {
   const paintCursorClass = useCanvasPaintCursor();
+  const colorSampler = useCanvasColorSampler(encounter);
   const dispatch = useDispatch();
   const tracing = useSelector((state: RootState) => state.interaction.cellTracerActive);
   const [tracerPointer, setTracerPointer] = useState<LayoutPoint | null>(null);
@@ -175,8 +173,11 @@ export function CanvasWorkspace({
   const closingTracer = !!tracerTarget && zoneDraftPoints.length >= 3 && pointDistance(tracerTarget, zoneDraftPoints[0]) <= CLOSE_DISTANCE;
   const tracerPreview = tracing && tracerTarget && zoneDraftPoints.length && tracerGraph ? traceCellRoute(encounter, zoneDraftPoints[zoneDraftPoints.length - 1], closingTracer ? zoneDraftPoints[0] : tracerTarget, zoneDraftPoints, readCanvasPreferences().tracerInvalidRoute, closingTracer, tracerGraph) : null;
   const calibrating = useSelector((state: RootState) => state.interaction.gridCalibrationActive);
+  // Changing this callback invalidates Motion context for every canvas element.
+  // The transform reads the current SVG geometry through the ref when invoked.
+  const transformPagePoint = useMemo(() => createCanvasMotionPointTransform(canvasRef), [canvasRef]);
   return (
-    <MotionConfig transformPagePoint={createCanvasMotionPointTransform(canvasRef)}>
+    <MotionConfig transformPagePoint={transformPagePoint}>
       <motion.svg
         aria-label="SVG encounter workspace"
         className={`h-full min-h-0 w-full bg-canvas-panel${paintCursorClass}`}
@@ -184,10 +185,13 @@ export function CanvasWorkspace({
           canvasRef.current = svg;
         }}
         onClickCapture={event => {
+          if (colorSampler.active) { colorSampler.captureClick(event); return; }
           if (calibrating) { event.stopPropagation(); dispatch(addGridCalibrationPoint(toSvgPoint(event, event.currentTarget))); }
         }}
         onClick={handleCanvasClick}
-        onContextMenu={event => { if (calibrating) { event.preventDefault(); dispatch(removeGridCalibrationPoint()); } else handleCanvasContextMenu(event); }}
+        onContextMenu={event => { if (colorSampler.captureContextMenu(event)) return; if (calibrating) { event.preventDefault(); dispatch(removeGridCalibrationPoint()); } else handleCanvasContextMenu(event); }}
+        onMouseDownCapture={colorSampler.captureDown}
+        onPointerDownCapture={colorSampler.captureDown}
         // SVG zones and Motion-managed children can intercept native drag
         // events. Capture keeps the canvas the authoritative drop surface.
         onDragEnterCapture={handleCanvasDragOver}
@@ -239,8 +243,6 @@ export function CanvasWorkspace({
                 onResizeHandleMouseDown={handleResizeHandleMouseDown}
                 onResizeHandleDrag={onResizeHandleDrag}
                 onResizeHandleDragEnd={onResizeHandleDragEnd}
-                onZoneDrag={onZoneDrag}
-                onZoneDragEnd={onZoneDragEnd}
                 onZoneMotionComplete={onZoneMotionComplete}
                 selection={selection}
                 zoneDrag={zoneDrag}
@@ -249,6 +251,8 @@ export function CanvasWorkspace({
             ) : null}
             {layer.id === "edges" ? (
               <EdgeLayer
+                zoneEditPending={zoneDrag?.phase === "validating"}
+                directManipulationZoneId={directManipulationZoneId}
                 activeToolId={activeToolId}
                 edgeDrag={edgeDrag}
                 edgeTool={edgeTool}

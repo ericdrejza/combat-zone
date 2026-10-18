@@ -23,7 +23,7 @@ function EdgeMetadataTooltip({ edge, point, type, edgeColor }: {
   point: LayoutPoint;
   type: MetadataTooltip;
 }) {
-  const pillTextColor = edgeColor === "#ffffff" ? "#111827" : "#ffffff";
+  const pillTextColor = getReadableTextColor(edgeColor);
   return (
     <foreignObject
       aria-label={`${type === "tags" ? "Tags" : "Notes"} tooltip`}
@@ -76,8 +76,9 @@ export function EdgeBadges({ edge, edgeColor, point }: {
   const iconColor = getReadableTextColor(EDGE_BADGE_FILL_COLOR);
 
   return (
-    <g aria-label={`${edge.visibilityRule} visibility${edge.movementRules.length ? `; ${edge.movementRules.join(", ")}` : ""}`}>
-      <rect className="pointer-events-none" fill={EDGE_BADGE_FILL_COLOR} height="20" opacity="0.9" rx="10" width={width} x={point.x - width / 2} y={point.y - 10} />
+    <g className="cursor-pointer" data-entity-id={edge.id} data-entity-type="edge"
+      aria-label={`${edge.visibilityRule} visibility${edge.movementRules.length ? `; ${edge.movementRules.join(", ")}` : ""}`}>
+      <rect fill={EDGE_BADGE_FILL_COLOR} height="20" opacity="0.9" rx="10" width={width} x={point.x - width / 2} y={point.y - 10} />
       {icons.map(({ Icon, label, tooltip: iconTooltip }, index) => (
         <g
           key={label}

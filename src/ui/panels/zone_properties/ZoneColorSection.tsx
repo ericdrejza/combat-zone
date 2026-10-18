@@ -7,6 +7,7 @@ import { getZoneEngagementColor } from "@entities/zone/zoneColors";
 import type { ZonePaintBrushState } from "@interaction/interactionState";
 import { PreferenceSwitch } from "@ui/settings/PreferenceSwitch";
 import { ColorPalette } from "./ColorPalette";
+import { ZoneColorCopyButton } from './ZoneColorCopyButton';
 import type { CommitZoneProperties } from "./types";
 import { useZoneOpacityControl } from "./useZoneOpacityControl";
 
@@ -76,7 +77,7 @@ export function ZoneColorSection({
           )}
           Color
         </button>
-        <button
+        <div className="flex items-center gap-2"><ZoneColorCopyButton /><button
           aria-pressed={zonePaintBrush?.sourceZoneId === zone.id}
           disabled={readOnly}
           className={`inline-flex h-8 w-8 items-center justify-center rounded-full border transition enabled:hover:ring-2 enabled:hover:ring-canvas-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-canvas-ink disabled:cursor-not-allowed disabled:opacity-50 ${
@@ -90,7 +91,7 @@ export function ZoneColorSection({
         >
           <Paintbrush aria-hidden="true" className="h-4 w-4" />
           <span className="sr-only">Paint zone colors</span>
-        </button>
+        </button></div>
       </div>
       {colorSectionOpen ? (
         <div className="mt-4 space-y-4">

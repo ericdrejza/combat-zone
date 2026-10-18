@@ -139,7 +139,7 @@ function orientation(a: LayoutPoint, b: LayoutPoint, c: LayoutPoint): number {
   return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
 }
 
-function segmentsIntersect(
+export function segmentsIntersect(
   a: LayoutPoint,
   b: LayoutPoint,
   c: LayoutPoint,

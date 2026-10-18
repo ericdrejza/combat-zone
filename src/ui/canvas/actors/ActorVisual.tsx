@@ -57,7 +57,7 @@ export const ActorVisual = memo(function ActorVisual({
       ? actor.metadata.sourceAssetMediaType
       : undefined
   );
-  const { enableAssetAnimation, actorSelectionOutlineWidth } = useInterfacePreferences();
+  const { enableAssetAnimation, actorSelectionOutlineWidth, actorBorderThickness } = useInterfacePreferences();
   const isAnimatedWebp = Boolean(actor.image) && isAnimatedAsset({
     animated: actor.metadata.sourceAssetAnimated === true,
     mediaType: typeof actor.metadata.sourceAssetMediaType === "string"
@@ -89,7 +89,7 @@ export const ActorVisual = memo(function ActorVisual({
             attrX: -radius,
             attrY: -radius,
             height: radius * 2,
-            strokeWidth: selected ? 4 : 2,
+            strokeWidth: actorBorderThickness + (selected ? 2 : 0),
             width: radius * 2
           }}
           rx="6"
@@ -100,7 +100,7 @@ export const ActorVisual = memo(function ActorVisual({
           className="stroke-white"
           fill={fillColor}
           initial={false}
-          animate={{ r: radius, strokeWidth: selected ? 4 : 2 }}
+          animate={{ r: radius, strokeWidth: actorBorderThickness + (selected ? 2 : 0) }}
           transition={transition}
         />
       )}

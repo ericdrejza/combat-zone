@@ -5,6 +5,7 @@ export const CANVAS_PREFERENCES_EVENT = 'combat-zone:canvas-preferences';
 export type MembershipMethod = 'center' | 'cells' | 'overlap';
 export type MembershipDecider = 'cells' | 'nearest' | 'current' | 'ask';
 export type CanvasPreferences = {
+  edgeRoutingDuringDrag: "estimates" | "live";
   selectOnUndoRedo: boolean;
   projectIsometricTokens: boolean;
   defaults: MovementRules;
@@ -14,6 +15,7 @@ export type CanvasPreferences = {
   tracerInvalidRoute: 'reject' | 'detour';
 };
 export const DEFAULT_CANVAS_PREFERENCES: CanvasPreferences = {
+  edgeRoutingDuringDrag: "estimates",
   selectOnUndoRedo: false,
   projectIsometricTokens: false,
   defaults: DEFAULT_MOVEMENT_RULES, membership: 'center', fallback: 'center',
@@ -31,6 +33,7 @@ export function readCanvasPreferences(): CanvasPreferences {
   try {
     const value = JSON.parse(localStorage.getItem(CANVAS_PREFERENCES_KEY) ?? 'null') as Partial<CanvasPreferences> | null;
     return {
+      edgeRoutingDuringDrag: value?.edgeRoutingDuringDrag === "live" ? "live" : "estimates",
       selectOnUndoRedo: value?.selectOnUndoRedo === true,
       projectIsometricTokens: value?.projectIsometricTokens === true,
       defaults: validMovementRules(value?.defaults) ? { ...value.defaults } : { ...DEFAULT_MOVEMENT_RULES },

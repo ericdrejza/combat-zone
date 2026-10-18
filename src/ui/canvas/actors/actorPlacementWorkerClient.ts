@@ -58,10 +58,16 @@ function setProactivePlan(
 }
 
 function handleWorkerResponse(response: ActorPlacementWorkerResponse): void {
-  // A fast state change can queue multiple snapshots. Older snapshots must not
-  // replace the latest geometry or wake the canvas with stale placements.
+  // Older snapshots remain usable by exact key, but cannot replace the latest
+  // fallback geometry or publish proactive plans for an obsolete request.
   if (response.requestId < latestRequestId) {
     pendingRequests.delete(response.cacheKey);
+    // Exact snapshot consumers may still be waiting for this geometry. Retain
+    // it by key without replacing the canvas's latest fallback snapshot.
+    if (response.phase === 'geometry') {
+      cacheActorPlacementGeometry(response.cacheKey, response.geometry, false);
+      notifyListeners();
+    }
     return;
   }
 

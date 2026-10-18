@@ -11,6 +11,14 @@ import {
 } from "@tests/ui/renderApp";
 
 describe("ZonePropertiesPanel", () => {
+  it('toggles the background color matcher from the color field label', async () => {
+    const user = userEvent.setup(); renderApp(); const canvas = getCanvas(); mockCanvasBounds(canvas);
+    await selectZoneTool(user); createRectangleZone(canvas); await screen.findByLabelText('Zone 1');
+    const matcher = screen.getByRole('button', { name: 'Background color matcher' });
+    await user.click(matcher); expect(matcher).toHaveAttribute('aria-pressed', 'true');
+    await user.click(matcher); expect(matcher).toHaveAttribute('aria-pressed', 'false');
+  });
+
   it("edits tabbed zone colors and shows controls only on their relevant tabs", async () => {
     const user = userEvent.setup();
 

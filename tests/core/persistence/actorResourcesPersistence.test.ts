@@ -1,3 +1,4 @@
+import { ENCOUNTER_SCHEMA_VERSION } from "@core/encounter/types";
 import { parseCloudWorkspace } from "@core/persistence/cloud/cloudRecords";
 import { createEncounterState } from "@core/encounter/createEncounterState";
 import { createActor } from "@entities/actor/actorMutations";
@@ -33,7 +34,7 @@ describe("actor resource persistence", () => {
     const before = structuredClone(legacy);
     const migrated = migrateEncounterState(legacy);
     assertEncounterState(migrated);
-    expect(migrated.schemaVersion).toBe(25);
+    expect(migrated.schemaVersion).toBe(ENCOUNTER_SCHEMA_VERSION);
     expect(migrated.actors.byId.a.hitPoints).toBeUndefined();
     expect(migrated.actors.byId.a.counters).toEqual({ allIds: [], byId: {} });
     expect(legacy).toEqual(before);

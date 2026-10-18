@@ -47,6 +47,11 @@ export function ActorMotionTrack({
 }: ActorMotionTrackProps) {
   const processedIncomingPoint = useRef<LayoutPoint>();
   const directRef = useRef(direct);
+  const inputs = useRef({ direct, incomingPoint, target, revision: 0 });
+  if (inputs.current.direct !== direct || !pointsMatch(inputs.current.target, target) || !pointsMatch(inputs.current.incomingPoint, incomingPoint)) {
+    inputs.current = { direct, incomingPoint, target, revision: inputs.current.revision + 1 };
+  }
+  const inputRevision = inputs.current.revision;
   const pendingDirectReturnRef = useRef(false);
   const [track, setTrack] = useState<TrackState>(() => ({
     revision: 0,
@@ -112,6 +117,9 @@ export function ActorMotionTrack({
         : track.target;
 
   function completeTrack(): "direct-return" | "track" | null {
+    // A zero-duration drag update can finish before the effect replaces the
+    // previous packing track. It must not consume that track's incoming point.
+    if (direct || inputs.current.revision !== inputRevision) return null;
     const completedRevision = track.revision;
     const completedMotion = track.pathStart
       ? "track"

@@ -6,6 +6,7 @@ import { SettingsField, SettingsSection, SETTINGS_CONTROL, SETTINGS_SLIDER } fro
 
 export function SelectionOutlineSettings() {
   const {
+    zoneBorderThickness,
     actorSelectionOutline, setActorSelectionOutline,
     edgeSelectionAnimation, setEdgeSelectionAnimation,
     zoneSelectionOutline, setZoneSelectionOutline,
@@ -14,14 +15,14 @@ export function SelectionOutlineSettings() {
   } = useInterfacePreferences();
   const fields = [
     { entity: "Actor", mode: actorSelectionOutline, setMode: setActorSelectionOutline,
-      width: actorSelectionOutlineWidth, setWidth: setActorSelectionOutlineWidth },
+      width: actorSelectionOutlineWidth, setWidth: setActorSelectionOutlineWidth, minWidth: MIN_SELECTION_OUTLINE_WIDTH },
     { entity: "Zone", mode: zoneSelectionOutline, setMode: setZoneSelectionOutline,
-      width: zoneSelectionOutlineWidth, setWidth: setZoneSelectionOutlineWidth }
+      width: Math.max(zoneBorderThickness, zoneSelectionOutlineWidth), setWidth: setZoneSelectionOutlineWidth, minWidth: zoneBorderThickness }
   ];
 
   return (
-    <SettingsSection title="Selection outlines" description="Pulse limited draws attention with two pulses, then stays visible. Pulsing follows animation and reduced-motion preferences. Thickness uses canvas units from 1 to 8.">
-      {fields.map(({ entity, mode, setMode, width, setWidth }) => (
+    <SettingsSection title="Selection outlines" description={`Pulse limited draws attention with two pulses, then stays visible. Pulsing follows animation and reduced-motion preferences. Actor thickness starts at ${MIN_SELECTION_OUTLINE_WIDTH} canvas unit; Zone thickness starts at its border width of ${zoneBorderThickness}. Both allow up to ${MAX_SELECTION_OUTLINE_WIDTH}.`}>
+      {fields.map(({ entity, mode, setMode, width, setWidth, minWidth }) => (
         <div key={entity}>
           <SettingsField label={`Selected ${entity} outline`}>
             <select className={SETTINGS_CONTROL} value={mode}
@@ -32,7 +33,7 @@ export function SelectionOutlineSettings() {
             </select>
           </SettingsField>
           <SettingsField label={`${entity} outline thickness`} valueLabel={width}>
-            <input className={`${SETTINGS_SLIDER} w-full`} type="range" min={MIN_SELECTION_OUTLINE_WIDTH} max={MAX_SELECTION_OUTLINE_WIDTH} step="1"
+            <input className={`${SETTINGS_SLIDER} w-full`} type="range" min={minWidth} max={MAX_SELECTION_OUTLINE_WIDTH} step="1"
               value={width} onChange={event => setWidth(event.currentTarget.valueAsNumber)} />
           </SettingsField>
         </div>

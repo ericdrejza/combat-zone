@@ -2,12 +2,17 @@ import type { EncounterState } from '@core/encounter/types';
 import { adjustedSpatialActorIds } from '@core/movement/spatialAdjustment';
 import { reconcileZoneVertices } from '@core/movement/zoneVertexSnapping';
 import { reconcileMembership } from '@core/movement/reconcileMembership';
+import { MVP_VALIDATORS } from './validators';
 import {
   prepareValidatedEncounterChange,
   prepareValidatedEncounterChangeAsync,
   type PrepareValidatedEncounterChangeInput,
   type PreparedValidatedEncounterChange
 } from './validatedEncounterChange';
+
+// Route availability is a rendering warning, never an acceptance condition.
+// The route worker already reports it after the new geometry is committed.
+const ZONE_MOVE_VALIDATORS = MVP_VALIDATORS.filter(validator => validator.id !== 'EdgeRouteDiagnosticValidator');
 
 /** Resolves browser membership preferences before sending pure state to validation. */
 export function prepareValidatedEncounterChangeForRuntime(
@@ -20,6 +25,12 @@ export function prepareValidatedEncounterChangeForRuntime(
     if (!nextEncounter) return { blocked: true, action: input.action, nextEncounter: input.currentEncounter, requiresConfirmation: false,
       validationResult: { valid: false, blocked: true, mode: input.currentEncounter.validationState.mode, messages: [] } } as PreparedValidatedEncounterChange;
     const resolved = { ...input, nextEncounter };
+    if (input.action.type === 'zone.move' && nextEncounter.movementRules.zoneLocked &&
+      !nextEncounter.movementRules.snapToGrid && !input.validators) {
+      // Rigid translation preserves Actor packing. Accept the valid placement
+      // before another gesture begins; visual settling is independent of history.
+      return prepareValidatedEncounterChange({ ...resolved, validators: ZONE_MOVE_VALIDATORS });
+    }
     return typeof Worker === 'undefined' ? prepareValidatedEncounterChange(resolved) : prepareValidatedEncounterChangeAsync(resolved);
   };
   return next instanceof Promise ? next.then(prepare) : prepare(next);

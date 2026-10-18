@@ -1,23 +1,29 @@
+import { routeBetweenZoneBoundaries } from "./edgeCurveBoundaryRouting";
+import { hasEnclosedEdgeEndpoint } from "./edgeEndpointContainment";
+import { isEdgePathClear } from "./edgePathCollision";
+import { segmentClear, shortestVisibilityPath } from "./edgeVisibilityRouting";
+import { resolveEdgeCurvePath } from "./resolveEdgeCurvePath";
+import { routeEdgeOnGrid } from "./edgeGridRouting";
 import type { LayoutPoint } from "@core/layout/types";
 import type { EdgeShape } from "./types";
 import type { Edge } from "./types";
 import type { EncounterState } from "@core/encounter/types";
 import {
-  center,
   closestBoundaryPair,
   closestBoundaryPoint,
-  distance,
-  segmentDistance
+  distance
 } from "./edgeBoundaryGeometry";
 import { optimizeOrthogonalPath } from "./edgeOrthogonalRouting";
 
 export { getCardinalPathArrowAngle } from "./edgeBoundaryGeometry";
+export { offsetRouteForLane } from "./edgeLaneGeometry";
 export { routeToSvgPath } from "./edgePathGeometry";
 
 export const EDGE_OBSTACLE_CLEARANCE = 12;
 export const EDGE_LANE_GAP = 12;
 
 export type EdgeRoute = {
+  gridAligned?: boolean;
   clearance: number;
   path: LayoutPoint[];
   valid: boolean;
@@ -39,6 +45,10 @@ function edgeLaneSlot(edge: Edge): string {
 }
 
 type RouteInput = {
+  gridState?: Pick<EncounterState, "grid" | "canvasSize" | "movementRules">;
+  reservedGridPaths?: LayoutPoint[][];
+  flipped?: boolean;
+  laneOffset?: number;
   bounds?: { height: number; width: number; x: number; y: number };
   fromPolygon: LayoutPoint[];
   obstaclePolygons: LayoutPoint[][];
@@ -78,33 +88,6 @@ export function getEdgeLanePlacement(
   };
 }
 
-/** Spreads a routed lane while keeping both endpoints attached to Zone boundaries. */
-export function offsetRouteForLane(
-  path: LayoutPoint[],
-  fromPolygon: LayoutPoint[],
-  toPolygon: LayoutPoint[],
-  amount: number
-): LayoutPoint[] {
-  if (path.length < 2 || amount === 0) return path;
-  const start = path[0];
-  const end = path[path.length - 1];
-  const length = distance(start, end) || 1;
-  const normal = {
-    x: -(end.y - start.y) / length,
-    y: (end.x - start.x) / length
-  };
-  const offset = path.map((point) => ({
-    x: point.x + normal.x * amount,
-    y: point.y + normal.y * amount
-  }));
-  offset[0] = closestBoundaryPoint(fromPolygon, offset[0]);
-  offset[offset.length - 1] = closestBoundaryPoint(
-    toPolygon,
-    offset[offset.length - 1]
-  );
-  return offset;
-}
-
 /** Locates badges by traveled distance instead of selecting an endpoint node. */
 export function pointAlongRoute(
   path: LayoutPoint[],
@@ -130,97 +113,20 @@ export function pointAlongRoute(
   return path[path.length - 1];
 }
 
-function pointInPolygon(point: LayoutPoint, polygon: LayoutPoint[]): boolean {
-  return polygon.reduce((inside, current, index) => {
-    const previous = polygon[(index + polygon.length - 1) % polygon.length];
-    const crosses = current.y > point.y !== previous.y > point.y &&
-      point.x < ((previous.x - current.x) * (point.y - current.y)) /
-        (previous.y - current.y || Number.EPSILON) + current.x;
-    return crosses ? !inside : inside;
-  }, false);
-}
-
-function segmentClear(
-  start: LayoutPoint,
-  end: LayoutPoint,
-  obstacles: LayoutPoint[][],
-  clearance: number
-): boolean {
-  const samples = Math.max(2, Math.ceil(distance(start, end) / 4));
-  for (let sample = 1; sample < samples; sample += 1) {
-    const point = {
-      x: start.x + ((end.x - start.x) * sample) / samples,
-      y: start.y + ((end.y - start.y) * sample) / samples
-    };
-    if (obstacles.some((polygon) => pointInPolygon(point, polygon) || polygon.some((vertex, index) =>
-      segmentDistance(point, vertex, polygon[(index + 1) % polygon.length]) <= Math.max(clearance, 0.01)
-    ))) return false;
-  }
-  return true;
-}
-
-function expandedCandidates(polygon: LayoutPoint[], clearance: number): LayoutPoint[] {
-  const polygonCenter = center(polygon);
-  return polygon.map((point) => {
-    const dx = point.x - polygonCenter.x;
-    const dy = point.y - polygonCenter.y;
-    const length = Math.hypot(dx, dy) || 1;
-    const normalX = dx / length;
-    const normalY = dy / length;
-    const scale = clearance === 0
-      ? 0
-      : clearance / Math.max(Math.min(Math.abs(normalX) || 1, Math.abs(normalY) || 1), 0.25);
-    return { x: point.x + normalX * scale, y: point.y + normalY * scale };
-  });
-}
-
-function shortestVisibilityPath(
-  start: LayoutPoint,
-  end: LayoutPoint,
-  obstacles: LayoutPoint[][],
-  clearance: number,
-  bounds: NonNullable<RouteInput["bounds"]>
-): LayoutPoint[] | undefined {
-  const withinBounds = (point: LayoutPoint) => point.x >= bounds.x && point.y >= bounds.y && point.x <= bounds.x + bounds.width && point.y <= bounds.y + bounds.height;
-  const nodes = [start, end, ...obstacles.flatMap((polygon) => expandedCandidates(polygon, clearance)).filter(withinBounds)];
-  const costs = nodes.map(() => Number.POSITIVE_INFINITY);
-  const previous = nodes.map(() => -1);
-  const visited = new Set<number>();
-  costs[0] = 0;
-  while (visited.size < nodes.length) {
-    let current = -1;
-    nodes.forEach((_, index) => {
-      if (!visited.has(index) && (current < 0 || costs[index] < costs[current])) current = index;
-    });
-    if (current < 0 || !Number.isFinite(costs[current])) break;
-    if (current === 1) break;
-    visited.add(current);
-    nodes.forEach((node, index) => {
-      if (visited.has(index) || !withinBounds(node) || !segmentClear(nodes[current], node, obstacles, clearance)) return;
-      const nextCost = costs[current] + distance(nodes[current], node);
-      if (nextCost < costs[index]) {
-        costs[index] = nextCost;
-        previous[index] = current;
-      }
-    });
-  }
-  if (!Number.isFinite(costs[1])) return undefined;
-  const path: LayoutPoint[] = [];
-  for (let index = 1; index >= 0; index = previous[index]) {
-    path.unshift(nodes[index]);
-    if (index === 0) break;
-  }
-  return path;
-}
-
 /** Returns derived route geometry and never mutates the graph Edge. */
 export function routeEdge(input: RouteInput): EdgeRoute {
+  if (hasEnclosedEdgeEndpoint(input.fromPolygon, input.toPolygon, input.obstaclePolygons)) return { path: [], clearance: 0, valid: false };
+  if (input.shape === "rightAngled" && input.gridState?.movementRules.snapZoneVertices && input.gridState.grid.type === "square") {
+    const path = routeEdgeOnGrid(input.gridState, input.fromPolygon, input.toPolygon, input.obstaclePolygons, input.flipped, input.reservedGridPaths);
+    return { gridAligned: true, clearance: 0, path: path ?? [], valid: Boolean(path) };
+  }
+  const bounds = input.bounds ?? { height: 640, width: 960, x: 0, y: 0 };
+  if (input.shape === "curved" || input.shape === "sigmoid") return routeBetweenZoneBoundaries({ ...input, bounds });
   const { end, start } = closestBoundaryPair(
     input.fromPolygon,
     input.toPolygon
   );
   for (let clearance = EDGE_OBSTACLE_CLEARANCE; clearance >= 0; clearance -= 2) {
-    const bounds = input.bounds ?? { height: 640, width: 960, x: 0, y: 0 };
     let path = segmentClear(start, end, input.obstaclePolygons, clearance)
       ? [start, end]
       : shortestVisibilityPath(
@@ -243,10 +149,13 @@ export function routeEdge(input: RouteInput): EdgeRoute {
               routeEnd,
               input.obstaclePolygons,
               clearance
-            )
+            ), input.flipped
           )
         : path;
-      if (!routedPath) continue;
+      if (!routedPath || !isEdgePathClear(`M ${routedPath.map(point => `${point.x} ${point.y}`).join(" L ")}`, {
+        bounds, clearance, obstaclePolygons: input.obstaclePolygons,
+        polygons: [input.fromPolygon, input.toPolygon, ...input.obstaclePolygons]
+      })) continue;
       return {
         clearance,
         path: routedPath,
@@ -254,7 +163,7 @@ export function routeEdge(input: RouteInput): EdgeRoute {
       };
     }
   }
-  return { clearance: 0, path: [], valid: false };
+  return routeBetweenZoneBoundaries({ ...input, bounds });
 }
 
 /** Reports renderability only; callers must not treat this as graph validity. */
@@ -268,11 +177,12 @@ export function getUnroutableEdgeIds(state: EncounterState): string[] {
       .filter((zoneId) => zoneId !== from.id && zoneId !== to.id)
       .map((zoneId) => state.zones.byId[zoneId]?.polygon)
       .filter((polygon): polygon is LayoutPoint[] => Boolean(polygon));
-    return !routeEdge({
-      fromPolygon: from.polygon,
-      obstaclePolygons,
-      shape: edge.shape,
-      toPolygon: to.polygon
-    }).valid;
+    const bounds = { x: 0, y: 0, ...state.canvasSize };
+    const route = routeEdge({ gridState: state, bounds,
+      fromPolygon: from.polygon, obstaclePolygons, shape: edge.shape,
+      flipped: edge.routePreferences?.flipped, toPolygon: to.polygon });
+    return !route.valid || !resolveEdgeCurvePath({ path: route.path, shape: edge.shape,
+      preferences: edge.routePreferences, bounds, clearance: route.clearance,
+      polygons: [from.polygon, to.polygon, ...obstaclePolygons], obstaclePolygons }).data;
   });
 }

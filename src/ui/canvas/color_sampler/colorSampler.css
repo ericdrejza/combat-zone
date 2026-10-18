@@ -1,0 +1,17 @@
+.canvas-color-sampler > :not([aria-label="Canvas viewport"]) {
+  visibility: hidden;
+  pointer-events: none;
+}
+.canvas-color-sampler svg[aria-label="SVG encounter workspace"],
+.canvas-color-sampler svg[aria-label="SVG encounter workspace"] * {
+  cursor: url("@assets/images/pipette_cursor.svg") 3 29, crosshair !important;
+}
+.canvas-color-sampler [data-layer]:not([data-layer="background"]) { visibility: hidden; pointer-events: none; }
+.canvas-color-sampler[data-sampler="zone"] [data-layer="zones"] { visibility: visible; pointer-events: auto; }
+.canvas-color-sampler [data-zone-resize-handles],
+.canvas-color-sampler [data-canvas-boundary],
+.canvas-color-sampler [data-drag-overlay],
+.canvas-color-sampler svg[aria-label="SVG encounter workspace"] > :not([data-layer]) {
+  visibility: hidden;
+  pointer-events: none;
+}

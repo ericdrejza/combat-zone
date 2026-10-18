@@ -1,3 +1,4 @@
+import { ENCOUNTER_SCHEMA_VERSION } from "@core/encounter/types";
 import { createEncounterState } from "@core/encounter/createEncounterState";
 import { createZone } from "@entities/zone/zoneMutations";
 import { saveZoneClock, saveZoneCounter, updateZoneStatus } from "@entities/zone/zoneStatus";
@@ -24,7 +25,7 @@ describe("Zone status persistence", () => {
     const before = structuredClone(legacy);
     const migrated = migrateEncounterState(legacy);
     assertEncounterState(migrated);
-    expect(migrated.schemaVersion).toBe(25);
+    expect(migrated.schemaVersion).toBe(ENCOUNTER_SCHEMA_VERSION);
     expect(migrated.zones.byId.z).toMatchObject({ counters: { allIds: [], byId: {} }, clocks: { allIds: [], byId: {} }, tags: before.zones.byId.z.tags });
     expect(migrated.zones.byId.z.notes).toBeUndefined(); expect(legacy).toEqual(before);
   });
@@ -81,7 +82,7 @@ describe("Zone status persistence", () => {
     await expect(repository.saveEncounter(invalid, { expectedRevision: record.revision })).rejects.toThrow(/zone resources/);
     await expect(repository.saveEncounter(currentState(), { expectedRevision: record.revision + 1 })).rejects.toThrow();
     expect((await repository.getEncounter(record.id))?.state).toEqual(record.state);
-    const newer = { ...record.state, schemaVersion: 26 };
+    const newer = { ...record.state, schemaVersion: ENCOUNTER_SCHEMA_VERSION + 1 };
     expect(() => assertEncounterState(newer)).toThrow(/unsupported/);
     expect(() => validateEncounter(payload(newer as never))).toThrow(/unsupported/);
   });

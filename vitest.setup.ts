@@ -61,6 +61,7 @@ vi.mock("motion/react", async (importOriginal) => {
         const component = React.forwardRef<SVGElement, Record<string, unknown>>(
           function MotionTestElement(props, ref) {
             const latestProps = React.useRef(props);
+            const elementRef = React.useRef<SVGElement | null>(null);
             const firstRender = React.useRef(true);
             const lastMotionPath = React.useRef<string>();
             const lastTarget = React.useRef({ x: 0, y: 0 });
@@ -83,6 +84,7 @@ vi.mock("motion/react", async (importOriginal) => {
               onDragTransitionEnd: _onDragTransitionEnd,
               onAnimationComplete,
               transition: _transition,
+              transitionEnd: _transitionEnd,
               ...elementProps
             } = props;
             const animated =
@@ -151,6 +153,20 @@ vi.mock("motion/react", async (importOriginal) => {
                 return [[key, Array.isArray(value) ? value.at(-1) : value]];
               })
             );
+            // MotionValue SVG attributes are geometry, not ordinary DOM objects.
+            const attributes = { ...elementProps };
+            React.useLayoutEffect(() => {
+              const subscriptions = Object.entries(elementProps).flatMap(([key, value]) => {
+                if (!actual.isMotionValue(value)) return [];
+                const update = (next: unknown) => elementRef.current?.setAttribute(key, String(next));
+                update(value.get());
+                return [value.on('change', update)];
+              });
+              return () => subscriptions.forEach(unsubscribe => unsubscribe());
+            });
+            for (const [key, value] of Object.entries(attributes)) {
+              if (actual.isMotionValue(value)) attributes[key] = value.get();
+            }
 
             function handleMouseDown(event: React.MouseEvent<SVGElement>) {
               (
@@ -212,7 +228,7 @@ vi.mock("motion/react", async (importOriginal) => {
             return React.createElement(
               tag,
               {
-                ...elementProps,
+                ...attributes,
                 ...animatedAttributes,
                 ...(dragSnapToOrigin
                   ? { "data-drag-snap-to-origin": "true" }
@@ -228,7 +244,11 @@ vi.mock("motion/react", async (importOriginal) => {
                     }
                   : {}),
                 onMouseDown: handleMouseDown,
-                ref,
+                ref: (element: SVGElement | null): void => {
+                  elementRef.current = element;
+                  if (typeof ref === 'function') ref(element);
+                  else if (ref) ref.current = element;
+                },
                 style
               },
               children as React.ReactNode
@@ -244,6 +264,10 @@ vi.mock("motion/react", async (importOriginal) => {
 
   return {
     ...actual,
+    animate: ((value: unknown, target: unknown, options: unknown) => {
+      if (actual.isMotionValue(value) && typeof target === 'string') value.jump(target);
+      return actual.animate(value as never, target as never, options as never);
+    }) as typeof actual.animate,
     MotionConfig: ({ children }: { children: React.ReactNode }) => children,
     motion,
     useReducedMotion: () => false

@@ -24,6 +24,8 @@ export default defineConfig({
   },
   test: {
     environment: 'jsdom',
+    // Limit competing jsdom heaps so full-suite interaction tests stay responsive.
+    maxWorkers: 4,
     exclude: [...configDefaults.exclude, 'tests/firebase_emulator/**'],
     globals: true,
     setupFiles: './vitest.setup.ts'

@@ -1,6 +1,6 @@
 import type { LayoutPoint } from '@core/layout/types';
 import type { CanvasSize } from '@core/layout/polygonCanvasBounds';
-import { doPolygonsOverlap as doCorePolygonsOverlap } from '@core/layout/polygonCollision';
+import { createPolygonOverlapCheck, doPolygonsOverlap as doCorePolygonsOverlap } from '@core/layout/polygonCollision';
 import {
   isPointWithinCanvas,
   isPolygonWithinCanvas
@@ -48,13 +48,14 @@ export function doesZoneOverlapExisting(
   zones: RootState['encounter']['present']['zones'],
   ignoredZoneId?: string
 ): boolean {
+  const overlaps = createPolygonOverlapCheck(polygon, ignoredZoneId ? zones.byId[ignoredZoneId]?.polygon : undefined);
   return zones.allIds.some((zoneId) => {
     const zone = zones.byId[zoneId];
 
     return (
       zone &&
       zone.id !== ignoredZoneId &&
-      doPolygonsOverlap(polygon, zone.polygon)
+      overlaps(zone.polygon)
     );
   });
 }

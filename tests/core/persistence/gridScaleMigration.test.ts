@@ -1,3 +1,4 @@
+import { ENCOUNTER_SCHEMA_VERSION } from "@core/encounter/types";
 import { movementRulesFor } from '@tests/core/movement/ruleFixtures';
 import { createEncounterState } from '@core/encounter/createEncounterState';
 import { createActor } from '@entities/actor/actorMutations';
@@ -25,7 +26,7 @@ it.each(['square', 'hex-flat', 'hex-pointy'] as const)('migrates legacy %s maps 
   const old = legacy(type), original = structuredClone(old);
   const before = gridToWorld(old.grid, { x: 64, y: 96 });
   const next = migrateEncounterState(old) as EncounterState;
-  expect(old).toEqual(original); expect(next.schemaVersion).toBe(25);
+  expect(old).toEqual(original); expect(next.schemaVersion).toBe(ENCOUNTER_SCHEMA_VERSION);
   expect(getGridCoverage(next)).toMatchObject({ width: 1920, height: 1280 });
   expect(next.grid.cellSize).toBe(32); expect(next.grid.warp).toEqual(old.grid.warp);
   expect(next.actors.byId.a.spatialPosition).toEqual({ x: 400, y: 440 });
@@ -46,6 +47,6 @@ it.each(['square', 'hex-flat', 'hex-pointy'] as const)('migrates legacy %s maps 
 it('rejects invalid legacy geometry before conversion and unsupported newer records', () => {
   const old = legacy('square');
   expect(() => migrateEncounterState({ ...old, grid: { ...old.grid, cellSize: 0 } })).toThrow();
-  const envelope = { schemaVersion: EXPORT_SCHEMA_VERSION, kind: 'encounter-export', exportedAt: 1, encounter: { ...old, schemaVersion: 26 }, library: createEmptyLibraryState() };
+  const envelope = { schemaVersion: EXPORT_SCHEMA_VERSION, kind: 'encounter-export', exportedAt: 1, encounter: { ...old, schemaVersion: ENCOUNTER_SCHEMA_VERSION + 1 }, library: createEmptyLibraryState() };
   expect(() => parseExportEnvelope(envelope)).toThrow(/unsupported/);
 });

@@ -11,9 +11,10 @@ export const pointOrder = (a: LayoutPoint, b: LayoutPoint) => a.y - b.y || a.x -
 export const pointDistance = (a: LayoutPoint, b: LayoutPoint) => Math.hypot(a.x - b.x, a.y - b.y);
 
 /** Enumerates the finite lattice covering the canvas, without persisted cell addresses. */
-export function canvasCellCenters(state: EncounterState): LayoutPoint[] {
+export function canvasCellCenters(state: Pick<EncounterState, "grid" | "canvasSize">, region?: { minX: number; minY: number; maxX: number; maxY: number }): LayoutPoint[] {
   const grid = resolveGridGeometry(state.grid), { width, height } = state.canvasSize;
-  const corners = [{ x: 0, y: 0 }, { x: width, y: 0 }, { x: width, y: height }, { x: 0, y: height }].map(p => worldToGrid(grid, p));
+  const { minX: regionMinX, minY: regionMinY, maxX: regionMaxX, maxY: regionMaxY } = region ?? { minX: 0, minY: 0, maxX: width, maxY: height };
+  const corners = [{ x: regionMinX, y: regionMinY }, { x: regionMaxX, y: regionMinY }, { x: regionMaxX, y: regionMaxY }, { x: regionMinX, y: regionMaxY }].map(p => worldToGrid(grid, p));
   if (corners.some(p => !Number.isFinite(p.x + p.y))) return [];
   const size = grid.cellSize, spacingX = isSquareTopology(grid.type) ? size : size * Math.sqrt(3) / 2;
   const minQ = Math.floor(Math.min(...corners.map(p => p.x)) / spacingX) - 3;
@@ -45,7 +46,15 @@ export function canvasAnchors(state: EncounterState, size: ActorSize): LayoutPoi
 
 export function nearestGridVertex(state: EncounterState, point: LayoutPoint): LayoutPoint {
   const grid = resolveGridGeometry(state.grid);
-  return nearbyAnchors(grid, point, 'large', 3).sort((a, b) => pointDistance(a, point) - pointDistance(b, point) || pointOrder(a, b))[0] ?? point;
+  let nearest = point, bestDistance = Infinity;
+  for (const candidate of nearbyAnchors(grid, point, 'large', 3)) {
+    const distance = pointDistance(candidate, point);
+    if (distance < bestDistance || (distance === bestDistance && pointOrder(candidate, nearest) < 0)) {
+      nearest = candidate;
+      bestDistance = distance;
+    }
+  }
+  return nearest;
 }
 
 /** Shared actor cell neighborhoods for membership and purely visual Trim. */

@@ -16,7 +16,8 @@ export type LocalBoxSelectionState = {
 type ZoneDragPreviewState = {
   current: LayoutPoint;
   originalPolygon: LayoutPoint[];
-  phase: 'dragging' | 'committed';
+  phase: 'dragging' | 'validating' | 'committed';
+  previewPolygon?: LayoutPoint[];
   start: LayoutPoint;
   zoneId: string;
 };
@@ -61,6 +62,9 @@ export function getDisplayedZonePolygon(
   zoneDrag?: ZoneDragPreviewState | null,
   vertexDrag?: VertexDragPreviewState | null
 ): LayoutPoint[] {
+  if (zoneDrag?.zoneId === zone.id && zoneDrag.phase === 'validating' && zoneDrag.previewPolygon) {
+    return zoneDrag.previewPolygon;
+  }
   if (zoneDrag?.zoneId === zone.id && zoneDrag.phase === 'dragging') {
     const offset = {
       x: zoneDrag.current.x - zoneDrag.start.x,

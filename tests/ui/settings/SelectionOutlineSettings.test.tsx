@@ -9,6 +9,7 @@ import {
 } from "@ui/motion_preferences/MotionPreferenceProvider";
 import { useSelectionOutlineMode } from "@ui/canvas/useSelectionOutlineMode";
 import { SelectionOutlineSettings } from "@ui/settings/SelectionOutlineSettings";
+import { BorderThicknessSettings } from "@ui/settings/BorderThicknessSettings";
 
 function EffectiveModes() {
   const actor = useSelectionOutlineMode("actor");
@@ -23,7 +24,7 @@ function EffectiveModes() {
 
 function setup() {
   return render(<MotionPreferenceProvider><InterfacePreferenceProvider>
-    <SelectionOutlineSettings /><EffectiveModes />
+    <SelectionOutlineSettings /><BorderThicknessSettings /><EffectiveModes />
   </InterfacePreferenceProvider></MotionPreferenceProvider>);
 }
 const mode = (entity: string) => screen.getByRole("combobox", { name: `Selected ${entity} outline` });
@@ -48,15 +49,15 @@ it("preserves defaults and saves Actor and Zone choices independently across rel
   expect(mode("Zone")).toHaveValue("static");
   expect(width("Zone")).toHaveValue("3");
   change(mode("Zone"), "pulse");
-  change(width("Zone"), "1");
+  change(width("Zone"), "2");
   expect(saved()).toMatchObject({ actorSelectionOutline: "pulse_limited", actorSelectionOutlineWidth: 8,
-    zoneSelectionOutline: "pulse", zoneSelectionOutlineWidth: 1 });
+    zoneSelectionOutline: "pulse", zoneSelectionOutlineWidth: 2 });
   view.unmount();
   setup();
   expect(mode("Actor")).toHaveValue("pulse_limited");
   expect(mode("Zone")).toHaveValue("pulse");
   expect(width("Actor")).toHaveValue("8");
-  expect(width("Zone")).toHaveValue("1");
+  expect(width("Zone")).toHaveValue("2");
 });
 
 it("synchronizes another tab's choices and restores all four defaults on reset", () => {
@@ -75,6 +76,25 @@ it("synchronizes another tab's choices and restores all four defaults on reset",
   expect(mode("Zone")).toHaveValue("static");
   expect(width("Actor")).toHaveValue("2");
   expect(width("Zone")).toHaveValue("3");
+});
+
+it("keeps Zone outlines at least as thick as their border without changing Actor or Edge thickness", () => {
+  const view = setup();
+  const border = screen.getByRole("slider", { name: "Zone border thickness" });
+  expect(border).toHaveValue("2");
+  expect(screen.getByRole("slider", { name: "Actor border thickness" })).toHaveValue("2");
+  expect(screen.getByRole("slider", { name: "Edge thickness" })).toHaveValue("1");
+  change(border, "6");
+  expect(width("Zone")).toHaveValue("6");
+  change(width("Zone"), "8");
+  change(width("Zone"), "1");
+  expect(width("Zone")).toHaveValue("6");
+  expect(width("Actor")).toHaveValue("2");
+  expect(saved()).toMatchObject({ zoneBorderThickness: 6, zoneSelectionOutlineWidth: 6 });
+  view.unmount(); setup();
+  expect(width("Zone")).toHaveValue("6");
+  change(screen.getByRole("slider", { name: "Zone border thickness" }), "2");
+  expect(width("Zone")).toHaveValue("6");
 });
 
 it.each([null, {}, { actorSelectionOutline: "unknown", zoneSelectionOutline: "unknown",

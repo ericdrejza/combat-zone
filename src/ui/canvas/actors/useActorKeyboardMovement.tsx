@@ -22,10 +22,11 @@ type Workflow = {
   destinations: Record<string, string>; skillActorIds: string[];
 };
 const directions = ["up", "down", "left", "right"] as const;
+const oppositeDirections = { up: "down", down: "up", left: "right", right: "left" } as const;
 const actionIds = ["actor.moveUp", "actor.moveDown", "actor.moveLeft", "actor.moveRight"] as const;
 
 /** Keeps route choice and adjudication outside Redux until one validated batch is ready. */
-export function useActorKeyboardMovement() {
+export function useActorKeyboardMovement(backgroundLuminanceByZoneId: Record<string, number> = {}) {
   const encounter = useSelector((s: RootState) => s.encounter.present);
   const selection = useSelector((s: RootState) => s.interaction.selection);
   const tool = useSelector((s: RootState) => s.interaction.activeToolId);
@@ -84,7 +85,10 @@ export function useActorKeyboardMovement() {
       const draft = flowRef.current;
       if (draft?.stage === "choose") {
         if (ignoreShortcut(event)) return;
-        if (event.key === "Escape") { event.preventDefault(); cancel(); return; }
+        const oppositeIndex = directions.indexOf(oppositeDirections[draft.direction]);
+        if (event.key === "Escape" || matchesKeybind(event, bindings[actionIds[oppositeIndex]])) {
+          event.preventDefault(); cancel(); return;
+        }
         const horizontal = draft.direction === "left" || draft.direction === "right";
         const step = event.ctrlKey || event.metaKey || event.altKey || event.shiftKey ? 0 : event.key === (horizontal ? "ArrowUp" : "ArrowLeft") ? -1 : event.key === (horizontal ? "ArrowDown" : "ArrowRight") ? 1 : 0;
         const confirm = event.key === "Enter" || matchesKeybind(event, bindings[actionIds[directions.indexOf(draft.direction)]]);
@@ -147,8 +151,8 @@ export function useActorKeyboardMovement() {
   const choosing = flow?.stage === "choose" ? flow.origins[flow.cursor] : undefined;
   const candidateZone = choosing && encounter.zones.byId[choosing.candidates[choosing.index].zoneId];
   return {
-    summary: flow ? `${summaries}${choosing ? " — perpendicular arrows choose; Enter confirms; Escape cancels" : ""}` : undefined,
-    overlay: candidateZone && flow ? <ActorMovementChoiceOverlay zone={candidateZone} direction={flow.direction} /> : null,
+    summary: flow ? `${summaries}${choosing ? " — perpendicular arrows choose; Enter confirms; Escape or opposite movement key cancels" : ""}` : undefined,
+    overlay: candidateZone && flow ? <ActorMovementChoiceOverlay zone={candidateZone} direction={flow.direction} backgroundLuminance={backgroundLuminanceByZoneId[candidateZone.id]} /> : null,
     dialog: flow?.stage === "skill" ? <ActorSkillCheckDialog actors={flow.skillActorIds.map((id) => encounter.actors.byId[id])} routes={Object.fromEntries(flow.skillActorIds.map((id) => [id, `${encounter.zones.byId[encounter.actors.byId[id].currentZoneId]?.name} -> ${encounter.zones.byId[flow.destinations[id]]?.name}`]))} onClose={cancel} onProceed={(decisions) => {
       const destinations = { ...flow.destinations }; for (const [id, move] of Object.entries(decisions)) if (!move) delete destinations[id];
       finish({ ...flow, destinations });

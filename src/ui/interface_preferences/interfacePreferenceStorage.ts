@@ -1,7 +1,8 @@
 import type { PreferenceCategory } from "./preferenceCategories";
 import type { SelectionOutlineMode } from "@core/rendering/SelectionOutline";
 import {
-  DEFAULT_ACTOR_SELECTION_OUTLINE_WIDTH, DEFAULT_ZONE_SELECTION_OUTLINE_WIDTH,
+  DEFAULT_ACTOR_SELECTION_OUTLINE_WIDTH, DEFAULT_ZONE_SELECTION_OUTLINE_WIDTH, DEFAULT_EDGE_THICKNESS,
+  DEFAULT_ZONE_BORDER_THICKNESS, DEFAULT_ACTOR_BORDER_THICKNESS,
   readSelectionOutlineMode, readSelectionOutlineWidth
 } from "./selectionOutlinePreferences";
 import type { LibrarySectionId } from "@library/types";
@@ -47,6 +48,9 @@ export type DurableInterfacePreferences = {
   edgeSelectionAnimation: SelectionOutlineMode;
   actorSelectionOutlineWidth: number;
   zoneSelectionOutlineWidth: number;
+  edgeThickness: number;
+  zoneBorderThickness: number;
+  actorBorderThickness: number;
   encounterCreationTool: EncounterCreationTool;
   libraryCloseOnOutsideClick: boolean;
   libraryModalViewDefault: LibraryViewDefault;
@@ -94,6 +98,9 @@ export type InterfacePreferences = DurableInterfacePreferences & {
   setEdgeSelectionAnimation: (mode: SelectionOutlineMode) => void;
   setActorSelectionOutlineWidth: (width: number) => void;
   setZoneSelectionOutlineWidth: (width: number) => void;
+  setEdgeThickness: (width: number) => void;
+  setZoneBorderThickness: (width: number) => void;
+  setActorBorderThickness: (width: number) => void;
   setAutoSelectActiveActorDefault: (enabled: boolean) => void;
   setPanelVisible: (panelId: DockablePanelId, visible: boolean) => void;
   setPanWithRightClickDrag: (enabled: boolean) => void;
@@ -124,6 +131,9 @@ export const defaultPreferences: DurableInterfacePreferences = {
   edgeSelectionAnimation: "static",
   actorSelectionOutlineWidth: DEFAULT_ACTOR_SELECTION_OUTLINE_WIDTH,
   zoneSelectionOutlineWidth: DEFAULT_ZONE_SELECTION_OUTLINE_WIDTH,
+  edgeThickness: DEFAULT_EDGE_THICKNESS,
+  zoneBorderThickness: DEFAULT_ZONE_BORDER_THICKNESS,
+  actorBorderThickness: DEFAULT_ACTOR_BORDER_THICKNESS,
   encounterCreationTool: "zone",
   libraryCloseOnOutsideClick: false,
   libraryModalViewDefault: "grid",
@@ -172,6 +182,9 @@ export const defaultValue: InterfacePreferences = {
   setEdgeSelectionAnimation: () => undefined,
   setActorSelectionOutlineWidth: () => undefined,
   setZoneSelectionOutlineWidth: () => undefined,
+  setEdgeThickness: () => undefined,
+  setZoneBorderThickness: () => undefined,
+  setActorBorderThickness: () => undefined,
   setAutoSelectActiveActorDefault: () => undefined,
   setPanelVisible: () => undefined,
   setPanWithRightClickDrag: () => undefined,
@@ -220,6 +233,9 @@ export function readPreferences(): DurableInterfacePreferences {
       edgeSelectionAnimation: readSelectionOutlineMode(stored?.edgeSelectionAnimation),
       actorSelectionOutlineWidth: readSelectionOutlineWidth(stored?.actorSelectionOutlineWidth, DEFAULT_ACTOR_SELECTION_OUTLINE_WIDTH),
       zoneSelectionOutlineWidth: readSelectionOutlineWidth(stored?.zoneSelectionOutlineWidth, DEFAULT_ZONE_SELECTION_OUTLINE_WIDTH),
+      edgeThickness: readSelectionOutlineWidth(stored?.edgeThickness, DEFAULT_EDGE_THICKNESS),
+      zoneBorderThickness: readSelectionOutlineWidth(stored?.zoneBorderThickness, DEFAULT_ZONE_BORDER_THICKNESS),
+      actorBorderThickness: readSelectionOutlineWidth(stored?.actorBorderThickness, DEFAULT_ACTOR_BORDER_THICKNESS),
       encounterCreationTool:
         stored?.encounterCreationTool === "background" ||
         stored?.encounterCreationTool === "zone"

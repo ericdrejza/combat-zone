@@ -59,7 +59,16 @@ export function nearbyAnchors(grid: GridGeometry, point: LayoutPoint, size: Acto
 }
 const distanceSquared = (a: LayoutPoint, b: LayoutPoint) => (a.x - b.x) ** 2 + (a.y - b.y) ** 2;
 export function nearestPoint(points: LayoutPoint[], point: LayoutPoint): LayoutPoint {
-  return points.sort((a, b) => distanceSquared(a, point) - distanceSquared(b, point) || a.y - b.y || a.x - b.x)[0] ?? point;
+  let nearest = point, bestDistance = Infinity;
+  for (const candidate of points) {
+    const distance = distanceSquared(candidate, point);
+    if (distance < bestDistance || (distance === bestDistance &&
+      (candidate.y < nearest.y || (candidate.y === nearest.y && candidate.x < nearest.x)))) {
+      nearest = candidate;
+      bestDistance = distance;
+    }
+  }
+  return nearest;
 }
 export function snapToGrid(grid: GridGeometry, point: LayoutPoint, size: ActorSize): LayoutPoint {
   return nearestPoint(nearbyAnchors(grid, point, size), point);

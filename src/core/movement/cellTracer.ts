@@ -22,10 +22,10 @@ export function compressCellRoute(route: LayoutPoint[]): LayoutPoint[] {
 }
 
 export type CellGraph = { points: Map<string, LayoutPoint>; neighbors: Map<string, string[]> };
-export function buildCellGraph(state: EncounterState): CellGraph {
+export function buildCellGraph(state: Pick<EncounterState, "grid" | "canvasSize">, region?: { minX: number; minY: number; maxX: number; maxY: number }): CellGraph {
   const points = new Map<string, LayoutPoint>(), neighbors = new Map<string, Set<string>>();
   const grid = resolveGridGeometry(state.grid);
-  for (const center of canvasCellCenters(state)) {
+  for (const center of canvasCellCenters(state, region)) {
     const vertices = cellVertices(grid, center);
     for (let i = 0; i < vertices.length; i++) {
       const a = vertices[i], b = vertices[(i + 1) % vertices.length];

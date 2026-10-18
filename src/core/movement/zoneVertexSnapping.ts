@@ -10,9 +10,27 @@ import { nearestGridVertex, pointDistance } from './gridTopology';
 
 const usesBoundingResizeControls = (shape: Zone['shape']) => shape === 'circle' || shape === 'hexagon';
 
+// Immutable polygons and grid configurations let unchanged Zones share their
+// snapped geometry across layers, pointer frames, and mutation preparation.
+const snappedPolygons = new WeakMap<EncounterState['grid'], WeakMap<LayoutPoint[], Map<Zone['shape'], LayoutPoint[]>>>();
+
 /** Hexagons/circles snap resize bounds; other outlines retain samples along snapped edges. */
 export function snapZonePolygon(state: EncounterState, zone: Pick<Zone, 'shape' | 'polygon'>): LayoutPoint[] {
   if (!state.movementRules.snapZoneVertices) return zone.polygon;
+  let polygons = snappedPolygons.get(state.grid);
+  if (!polygons) snappedPolygons.set(state.grid, polygons = new WeakMap());
+  let shapes = polygons.get(zone.polygon);
+  if (!shapes) polygons.set(zone.polygon, shapes = new Map());
+  const cached = shapes.get(zone.shape);
+  if (cached) return cached;
+  const snapped = calculateSnappedPolygon(state, zone);
+  const result = snapped.length === zone.polygon.length && snapped.every((point, i) =>
+    point.x === zone.polygon[i].x && point.y === zone.polygon[i].y) ? zone.polygon : snapped;
+  shapes.set(zone.shape, result);
+  return result;
+}
+
+function calculateSnappedPolygon(state: EncounterState, zone: Pick<Zone, 'shape' | 'polygon'>): LayoutPoint[] {
   if (!usesBoundingResizeControls(zone.shape)) {
     const polygon = remapPolygonCorners(zone.polygon, point => nearestGridVertex(state, point));
     return zone.shape === 'polygon' ? mergeConsecutivePolygonPoints(polygon) : polygon;
@@ -28,6 +46,7 @@ export function reconcileZoneVertices(state: EncounterState): EncounterState {
   const byId = { ...state.zones.byId }; let changed = false;
   for (const id of state.zones.allIds) {
     const zone = byId[id], polygon = snapZonePolygon(state, zone);
+    if (polygon === zone.polygon) continue;
     if (polygon.length !== zone.polygon.length || polygon.some((point, i) => pointDistance(point, zone.polygon[i]) > 1e-6)) { byId[id] = { ...zone, polygon }; changed = true; }
   }
   return changed ? { ...state, zones: { ...state.zones, byId } } : state;

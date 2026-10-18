@@ -53,7 +53,7 @@ it.each([false, true])('releases Zone drop movement to the actor transition (red
   );
 });
 
-it('keeps the drop frame until asynchronous validation supplies the final position', async () => {
+it('previews the snap target without committing before asynchronous validation accepts it', async () => {
   renderApp();
   const state = createZone(createEncounterState({ id: 'async-drop', name: 'Async' }), {
     id: 'z', polygon: [{ x: 64, y: 64 }, { x: 192, y: 64 }, { x: 192, y: 192 }, { x: 64, y: 192 }]
@@ -74,15 +74,28 @@ it('keeps the drop frame until asynchronous validation supplies the final positi
     start: { x: 0, y: 0 }, current: { x: 50, y: 0 }, hasMoved: true, phase: 'dragging' as const
   };
   act(() => handleZoneMouseUp({
-    encounter: state, dispatch: store.dispatch, zoneDrag,
+    encounter: state, dispatch: store.dispatch, zoneDrag, zoneGestureRevisionRef: { current: 0 },
     getDisplayedPolygon: () => polygon, setZoneDrag, actorRenderPlacements: []
   } as unknown as MouseUpHandlerInput));
-  expect(setZoneDrag).not.toHaveBeenCalled();
+  expect(setZoneDrag).toHaveBeenCalledWith({ ...zoneDrag, phase: 'validating', previewPolygon: polygon });
   expect(store.getState().encounter.past).toHaveLength(0);
   await act(async () => { release(await result); await pending; });
-  expect(setZoneDrag).toHaveBeenCalledWith({ ...zoneDrag, phase: 'committed' });
+  expect(setZoneDrag).toHaveBeenLastCalledWith(null);
   expect(store.getState().encounter.present.zones.byId.z.polygon).toEqual(polygon);
   expect(store.getState().encounter.past).toHaveLength(1);
+});
+
+it('clears a drop that snaps back to its origin without waiting for animation completion', () => {
+  const state = createZone(createEncounterState({ id: 'no-op-drop', name: 'Test' }), {
+    id: 'z', polygon: [{ x: 64, y: 64 }, { x: 192, y: 64 }, { x: 192, y: 192 }, { x: 64, y: 192 }]
+  });
+  const setZoneDrag = vi.fn();
+  handleZoneMouseUp({ encounter: state, zoneGestureRevisionRef: { current: 1 }, setZoneDrag,
+    zoneDrag: { zoneId: 'z', originalPolygon: state.zones.byId.z.polygon, phase: 'dragging', hasMoved: true,
+      start: { x: 0, y: 0 }, current: { x: 3, y: 0 } },
+    getDisplayedPolygon: () => state.zones.byId.z.polygon
+  } as unknown as MouseUpHandlerInput);
+  expect(setZoneDrag).toHaveBeenCalledWith(null);
 });
 
 afterEach(() => vi.restoreAllMocks());

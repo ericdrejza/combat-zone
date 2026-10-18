@@ -1,3 +1,4 @@
+import { BorderThicknessSettings } from "./BorderThicknessSettings";
 import { ResetSettingsButton } from "./ResetSettingsButton";
 import { useResetSettingsCategory } from "./useResetSettingsCategory";
 import { SelectionOutlineSettings } from "./SelectionOutlineSettings";
@@ -49,7 +50,15 @@ export function CanvasSettings() {
     <SettingsSection title="Selection">
       <PreferenceSwitch label="Select on undo/redo" description="Select affected elements when undoing or redoing an action." checked={preferences.selectOnUndoRedo} onChange={selectOnUndoRedo => save({ ...preferences, selectOnUndoRedo })} />
     </SettingsSection>
+    <SettingsSection title="Edge routing">
+      <SettingsField label="Edge routing during Zone drag" description="Estimates follow the Zone immediately and optimize after release. Live optimization recalculates routes throughout the drag.">
+        <select aria-label="Edge routing during Zone drag" className={SETTINGS_CONTROL} value={preferences.edgeRoutingDuringDrag} onChange={event => save({ ...preferences, edgeRoutingDuringDrag: event.currentTarget.value as "estimates" | "live" })}>
+          <option value="estimates">Route estimates</option><option value="live">Live optimization</option>
+        </select>
+      </SettingsField>
+    </SettingsSection>
     <SelectionOutlineSettings />
+    <BorderThicknessSettings />
     <SettingsSection title="Navigation">
       <PreferenceSwitch checked={panWithRightClickDrag} label="Pan with right-click drag" onChange={setPanWithRightClickDrag} />
     </SettingsSection>

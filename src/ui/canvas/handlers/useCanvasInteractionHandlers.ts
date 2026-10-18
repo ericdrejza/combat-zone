@@ -19,8 +19,6 @@ export function useCanvasInteractionHandlers(input: CanvasInteractionState) {
     handleCanvasMouseMove,
     handleCanvasMouseUp,
     handleResizeHandleMouseDown,
-    handleZoneDrag,
-    handleZoneDragEnd
   } = useCanvasPointerHandlers(input);
 
   return {
@@ -37,7 +35,5 @@ export function useCanvasInteractionHandlers(input: CanvasInteractionState) {
     handleCanvasMouseMove,
     handleCanvasMouseUp,
     handleResizeHandleMouseDown,
-    handleZoneDrag,
-    handleZoneDragEnd
   };
 }

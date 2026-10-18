@@ -25,6 +25,7 @@ import { CanvasTransferPreview } from "./CanvasTransferPreview";
 import { CanvasViewport } from "./CanvasViewport";
 import { getTextColorForLuminance } from "./canvasLuminance";
 import type {
+  PendingZoneReshape,
   ActorDragState,
   EdgeDragState,
   ShapeDraftState,
@@ -45,7 +46,9 @@ import { useDragActionPreview } from './useDragActionPreview';
 import { getCanvasStatus } from "./canvasStatus";
 import { useActorReturnCompletion } from "./useActorReturnCompletion";
 import { useZoneActorTranslation } from "./useZoneActorTranslation";
+import { useColorSampler } from './color_sampler/ColorSamplerProvider';
 import { useActorRenderPlacements } from "./actors/useActorRenderPlacements";
+import { useZoneGestureActorPlacements } from './actors/useZoneGestureActorPlacements';
 import { useCompactCanvasTransfer } from "./useCompactCanvasTransfer";
 import { TOUCH_NAVIGATION_START_EVENT } from "./useCanvasTouchGestures";
 import { TouchSelectionToggle } from "@ui/toolbar/TouchSelectionToggle";
@@ -68,7 +71,7 @@ export function CanvasShell({
   renderCompactPanelHeaderActions
 }: CanvasShellProps) {
   const dispatch = useDispatch<AppDispatch>();
-  const keyboardMovement = useActorKeyboardMovement();
+  const colorSampler = useColorSampler();
   const {
     zoneColorDefaults,
     zoneOpacityDefault,
@@ -115,6 +118,8 @@ export function CanvasShell({
     useState<HTMLElement | null>(null);
   const canvasRef = useRef<SVGSVGElement | null>(null);
   const suppressNextCanvasClickRef = useRef(false);
+  const zoneGestureRevisionRef = useRef(0);
+  const pendingZoneReshapeRef = useRef<PendingZoneReshape | null>(null);
   const suppressNextCanvasClickUnconditionallyRef = useRef(false);
   const suppressNextCanvasClickPointRef = useRef<LayoutPoint | null>(null);
   const suppressNextEntityClickRef = useRef<string | null>(null);
@@ -132,8 +137,9 @@ export function CanvasShell({
   const gridCalibrationActive = useSelector((state: RootState) => state.interaction.gridCalibrationActive);
   const renderEncounter = useGridMapPreview(encounter);
   const backgroundImage = renderEncounter.backgroundImage;
-  const { placements: actorRenderPlacements, refreshPlacements } =
+  const { placements, refreshPlacements } =
     useActorRenderPlacements(renderEncounter);
+  const actorRenderPlacements = useZoneGestureActorPlacements(renderEncounter, placements, zoneDrag, vertexDrag);
   const {
     engagementDrag,
     handleEngagementDrag,
@@ -143,12 +149,13 @@ export function CanvasShell({
     handleEngagementSelect
   } = useEngagementDrag(dispatch, encounter, actorRenderPlacements);
   useDragActionPreview(dispatch, encounter, actorDrag, engagementDrag);
-  const zoneActorTranslation = useZoneActorTranslation(encounter, zoneDrag);
+  const zoneActorTranslation = useZoneActorTranslation(encounter, zoneDrag, vertexDrag);
   const backgroundLuminance = useCanvasBackgroundLuminance(
     backgroundImage,
     encounter.zones,
     encounter.canvasSize
   );
+  const keyboardMovement = useActorKeyboardMovement(backgroundLuminance.byZoneId);
   const polygonDraftBackgroundLuminance = usePolygonDraftBackgroundLuminance(
     backgroundImage,
     zoneDraftPoints,
@@ -212,8 +219,6 @@ export function CanvasShell({
     handleResizeHandleDrag,
     handleResizeHandleDragEnd,
     handleResizeHandleMouseDown,
-    handleZoneDrag,
-    handleZoneDragEnd
   } = useCanvasInteractionHandlers({
     activeToolId,
     actorDrag,
@@ -237,6 +242,8 @@ export function CanvasShell({
     setZoneDrag,
     shapeDraft,
     suppressNextCanvasClickPointRef,
+    zoneGestureRevisionRef,
+    pendingZoneReshapeRef,
     suppressNextCanvasClickRef,
     suppressNextCanvasClickUnconditionallyRef,
     suppressNextEntityClickRef,
@@ -290,7 +297,8 @@ export function CanvasShell({
   return (
     <section
       aria-label="Encounter canvas"
-      className={`relative min-h-0 overflow-hidden rounded-3xl border border-canvas-line bg-canvas-panel shadow-sm ${
+      data-sampler={colorSampler.session?.kind}
+      className={`${colorSampler.session ? 'canvas-color-sampler ' : ''}relative min-h-0 overflow-hidden rounded-3xl border border-canvas-line bg-canvas-panel shadow-sm ${
         isDraggingCanvasEntity ? "select-none" : ""
       }`}
       ref={setCanvasShellElement}
@@ -346,8 +354,6 @@ export function CanvasShell({
         handleResizeHandleMouseDown={handleResizeHandleMouseDown}
         onResizeHandleDrag={handleResizeHandleDrag}
         onResizeHandleDragEnd={handleResizeHandleDragEnd}
-        onZoneDrag={handleZoneDrag}
-        onZoneDragEnd={handleZoneDragEnd}
         onZoneMotionComplete={() => setZoneDrag(null)}
         onActorMouseEnter={setHoveredActorId}
         onActorMouseLeave={(actorId) =>

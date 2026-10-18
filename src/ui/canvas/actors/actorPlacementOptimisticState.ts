@@ -19,7 +19,12 @@ export function getOptimisticActorPlacement(
   return optimisticPlacements.get(actorId);
 }
 
-export function clearOptimisticActorPlacement(actorId: string): void {
+export function clearOptimisticActorPlacement(actorId: string, expectedPoint?: LayoutPoint): void {
+  // An earlier animation must not consume a newer gesture's retained preview.
+  if (expectedPoint) {
+    const current = optimisticPlacements.get(actorId);
+    if (current?.x !== expectedPoint.x || current?.y !== expectedPoint.y) return;
+  }
   optimisticPlacements.delete(actorId);
 }
 

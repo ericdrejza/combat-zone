@@ -56,7 +56,8 @@ function betterPath(
 /** Chooses valid elbow orientations by turn count, then total route length. */
 export function optimizeOrthogonalPath(
   path: LayoutPoint[],
-  isSegmentClear: SegmentClear
+  isSegmentClear: SegmentClear,
+  flipped = false
 ): LayoutPoint[] | undefined {
   let candidates = [path.slice(0, 1)];
   for (let index = 1; index < path.length; index += 1) {
@@ -65,6 +66,7 @@ export function optimizeOrthogonalPath(
     const elbows = start.x === end.x || start.y === end.y
       ? [end]
       : [{ x: end.x, y: start.y }, { x: start.x, y: end.y }];
+    if (flipped) elbows.reverse();
     const next = new Map<string, LayoutPoint[]>();
     candidates.forEach((candidate) => {
       elbows.forEach((elbow) => {

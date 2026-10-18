@@ -11,7 +11,7 @@ import type {
   ActorDragState
 } from "../canvasInteractionTypes";
 import type { ActorRenderPlacement } from "./actorCanvasLayout";
-import type { ActorPlacementTranslation } from "./actorPlacementTranslation";
+import { transformZoneActorPoint, type ActorPlacementTranslation } from "./actorPlacementTranslation";
 import {
   getTextColorForLuminance,
   getZoneNameTextColor
@@ -66,21 +66,6 @@ function getDraggedPoint(
   };
 }
 
-function getZoneMovedPoint(
-  actorZoneId: string,
-  point: LayoutPoint,
-  translation: ActorPlacementTranslation | null
-): LayoutPoint {
-  if (!translation || actorZoneId !== translation.zoneId) {
-    return point;
-  }
-
-  return {
-    x: point.x + translation.offset.x,
-    y: point.y + translation.offset.y
-  };
-}
-
 export function ActorLayer({
   activeToolId = "actor",
   actorDrag,
@@ -106,9 +91,9 @@ export function ActorLayer({
 
   return placements.map(
     ({ actor, incomingPoint: placementIncomingPoint, point, radius }) => {
-      const zoneMovedPoint = getZoneMovedPoint(
-        actor.currentZoneId,
+      const zoneMovedPoint = transformZoneActorPoint(
         point,
+        actor.currentZoneId,
         zoneActorTranslation
       );
       const isMotionDraggedActor =
@@ -120,9 +105,9 @@ export function ActorLayer({
       const placementDropPoint = placementIncomingPoint
         ? getDraggedPoint(
             actor.id,
-            getZoneMovedPoint(
-              actor.currentZoneId,
+            transformZoneActorPoint(
               placementIncomingPoint,
+              actor.currentZoneId,
               zoneActorTranslation
             ),
             actorDrag
@@ -197,7 +182,7 @@ export function ActorLayer({
                   completedMotion === "track" &&
                   placementIncomingPoint
                 ) {
-                  clearOptimisticActorPlacement(actor.id);
+                    clearOptimisticActorPlacement(actor.id, placementIncomingPoint);
                   onIncomingPointCommitted?.(actor.id);
                 }
 

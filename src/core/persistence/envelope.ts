@@ -162,6 +162,17 @@ export function assertEncounterState(value: unknown, name = "encounter", expecte
       throw new PersistenceValidationError(`${name}.actors.${actorId}.image is invalid.`);
     }
   }
+  for (const edge of Object.values((value.edges as { byId: UnknownRecord }).byId)) {
+    if (!isRecord(edge)) continue;
+    if (edge.color !== undefined && edge.color !== null && (typeof edge.color !== "string" || !/^#[0-9a-f]{6}$/i.test(edge.color))) {
+      throw new PersistenceValidationError(`${name}.edge color is invalid.`);
+    }
+    if (edge.routePreferences === undefined) continue;
+    const preferences = edge.routePreferences;
+    if (!isRecord(preferences) || typeof preferences.flipped !== "boolean" || typeof preferences.curvature !== "number" || !Number.isFinite(preferences.curvature) || preferences.curvature < 0) {
+      throw new PersistenceValidationError(`${name}.edge route preferences are invalid.`);
+    }
+  }
   const groups = value.audioCueGroups as { allIds: string[]; byId: UnknownRecord };
   if (!Array.isArray(value.musicGroupIds)) throw new PersistenceValidationError(`${name}.musicGroupIds is invalid.`);
   for (const groupId of groups.allIds) {
@@ -554,7 +565,7 @@ export function migrateEncounterState(value: unknown): unknown {
     return normalized;
   }
 
-  if (migrated.schemaVersion === 21 || migrated.schemaVersion === 22 || migrated.schemaVersion === 23 || migrated.schemaVersion === 24) {
+  if (migrated.schemaVersion === 21 || migrated.schemaVersion === 22 || migrated.schemaVersion === 23 || migrated.schemaVersion === 24 || migrated.schemaVersion === 25) {
     assertEncounterState(migrated, 'encounter', migrated.schemaVersion);
     migrated.schemaVersion = ENCOUNTER_SCHEMA_VERSION;
   }

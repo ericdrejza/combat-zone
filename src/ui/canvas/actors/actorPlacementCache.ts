@@ -145,7 +145,8 @@ export function getCachedActorPlacementGeometry(
 
 export function cacheActorPlacementGeometry(
   key: string,
-  geometry: ActorPlacementGeometry[]
+  geometry: ActorPlacementGeometry[],
+  makeLatest = true
 ): void {
   if (placementCache.has(key)) {
     return;
@@ -160,7 +161,7 @@ export function cacheActorPlacementGeometry(
   }
 
   placementCache.set(key, geometry);
-  latestPlacementGeometry = geometry;
+  if (makeLatest) latestPlacementGeometry = geometry;
 }
 
 export function getLatestActorPlacementGeometry():

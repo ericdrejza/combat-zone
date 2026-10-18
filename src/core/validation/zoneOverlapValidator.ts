@@ -1,5 +1,5 @@
 import type { EncounterState } from '../encounter/types';
-import { doPolygonsOverlap } from '../layout/polygonCollision';
+import { createPolygonOverlapCheck } from '../layout/polygonCollision';
 import type {
   ValidationAction,
   ValidationMessage,
@@ -99,6 +99,7 @@ export const ZoneOverlapValidator: Validator<EncounterState> = {
         continue;
       }
 
+      const overlaps = createPolygonOverlapCheck(zone.polygon, state.zones.byId[zoneId]?.polygon);
       for (const otherZoneId of nextState.zones.allIds) {
         if (zoneId === otherZoneId) {
           continue;
@@ -106,7 +107,7 @@ export const ZoneOverlapValidator: Validator<EncounterState> = {
 
         const otherZone = nextState.zones.byId[otherZoneId];
 
-        if (otherZone && doPolygonsOverlap(zone.polygon, otherZone.polygon)) {
+        if (otherZone && overlaps(otherZone.polygon)) {
           messages.push({
             code: 'zone.overlap',
             message: `Zone ${zone.name} overlaps zone ${otherZone.name}.`,

@@ -1,4 +1,5 @@
 import { nextLibraryPanelView } from "@ui/interface_preferences/libraryPreferences";
+import { ColorSamplerProvider } from '@ui/canvas/color_sampler/ColorSamplerProvider';
 import { useEncounterOperation } from "@ui/history/useEncounterOperation";
 import { runEncounterOperation } from "@core/history/encounterOperations";
 import { EncounterHistoryKeyboard } from "@ui/history/EncounterHistoryKeyboard";
@@ -585,8 +586,10 @@ export function App() {
               <AudioTriggerBridge />
               <KeybindProvider>
                 <CanvasViewportProvider>
+                  <ColorSamplerProvider>
                   <AppContent />
                   <MembershipChoiceDialog />
+                  </ColorSamplerProvider>
                 </CanvasViewportProvider>
               </KeybindProvider>
             </SoundboardProvider>
