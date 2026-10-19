@@ -1,3 +1,6 @@
+import { snapZoneResizePolygon } from '@ui/canvas/zones/snapZoneResizePolygon';
+import { getZoneRotationCenter, normalizeRotation, rotatePoint } from '@entities/zone/zoneRotation';
+import { isPersistenceWritable } from '@store/persistenceWriteGuardMiddleware';
 import { useZoneMoveGesture } from "./useZoneMoveGesture";
 import { runEncounterOperation } from "@core/history/encounterOperations";
 import { snapZonePolygon, translateSnappedZone } from '@core/movement/zoneVertexSnapping';
@@ -96,7 +99,7 @@ export function useCanvasPointerHandlers(input: PointerHandlerInput) {
   useEffect(() => {
     setActorDrag(null); setBoxSelection(null); setEdgeDrag(null); setShapeDraft(null);
     setVertexDrag(null); setZoneDraftPoints([]); setZoneDrag(null);
-  }, [encounter.movementRules.zoneLocked]);
+  }, [encounter.id, encounter.movementRules.zoneLocked]);
 
   useEffect(() => {
     if (!encounter.movementRules.zoneLocked && actorDrag?.phase === 'dragging') setActorDrag(null);
@@ -108,7 +111,13 @@ export function useCanvasPointerHandlers(input: PointerHandlerInput) {
         x: zoneDrag.current.x - zoneDrag.start.x, y: zoneDrag.current.y - zoneDrag.start.y
       });
     }
-    return snapZonePolygon(encounter, { ...zone, polygon: getDisplayedZonePolygon(zone, zoneDrag, vertexDrag) });
+    if (vertexDrag?.zoneId === zone.id && vertexDrag.rotation !== undefined && vertexDrag.phase !== "validating") return vertexDrag.polygon;
+    const displayed = { ...zone,
+      rotation: vertexDrag?.zoneId === zone.id ? vertexDrag.rotation ?? vertexDrag.editingRotation ?? zone.rotation : zoneDrag?.zoneId === zone.id ? zoneDrag.rotation ?? zone.rotation : zone.rotation,
+      polygon: getDisplayedZonePolygon(zone, zoneDrag, vertexDrag) };
+    return vertexDrag?.zoneId === zone.id && vertexDrag.rotation === undefined
+      ? snapZoneResizePolygon(encounter, displayed, vertexDrag.vertexIndex)
+      : snapZonePolygon(encounter, displayed);
   };
   const finishCanvasInteraction = useCanvasMouseUpHandler({
     ...input,
@@ -386,6 +395,7 @@ export function useCanvasPointerHandlers(input: PointerHandlerInput) {
   ) {
     event.preventDefault();
     event.stopPropagation();
+    if (!isPersistenceWritable()) return;
     closeZoneShapeMenu();
     const gestureId = ++input.zoneGestureRevisionRef.current;
     resizeStartedAt.current = event.timeStamp;
@@ -397,7 +407,8 @@ export function useCanvasPointerHandlers(input: PointerHandlerInput) {
       hasMoved: false,
       handleStart: point,
       polygon,
-      vertexIndex,
+      vertexIndex, editingRotation: zone.rotation,
+      ...(vertexIndex === -1 ? { rotation: zone.rotation ?? 0, rotationSource: { polygon, rotation: zone.rotation ?? 0, center: getZoneRotationCenter({ ...zone, polygon }) } } : {}),
       zoneId: zone.id
     });
     return gestureId;
@@ -420,8 +431,16 @@ export function useCanvasPointerHandlers(input: PointerHandlerInput) {
     setVertexDrag(current => {
       if (!current || current.phase === 'validating' || current.handleStart !== vertexDrag.handleStart) return current;
       const hasMoved = current.hasMoved || distance({ x: 0, y: 0 }, offset) >= 1;
+      if (current.rotationSource) {
+        const { center, polygon: original, rotation: initial } = current.rotationSource;
+        const startAngle = Math.atan2(current.handleStart.y - center.y, current.handleStart.x - center.x);
+        const end = { x: current.handleStart.x + offset.x, y: current.handleStart.y + offset.y };
+        if (distance(end, center) < 1e-6) return current;
+        const delta = (Math.atan2(end.y - center.y, end.x - center.x) - startAngle) * 180 / Math.PI;
+        return { ...current, hasMoved, rotation: normalizeRotation(initial + delta), polygon: original.map(point => rotatePoint(point, delta, center)) };
+      }
       const polygon = resizeZonePolygon(
-        zone,
+        { ...zone, rotation: current.editingRotation ?? zone.rotation },
         current.polygon,
         current.vertexIndex,
         {

@@ -45,6 +45,8 @@ import type { EdgePreset } from "@entities/edge/edgeMutations";
 import { createCanvasMotionPointTransform } from "./canvasCoordinates";
 
 type CanvasWorkspaceProps = {
+  rotationPreview?: { zoneId: string; rotation: number; active: boolean };
+  onZoneRotationCancel?: () => void;
   keyboardOverlay?: ReactNode;
   activeToolId: RootState["interaction"]["activeToolId"];
   actorDrag: ActorDragState | null;
@@ -113,6 +115,7 @@ type CanvasWorkspaceProps = {
 };
 
 export function CanvasWorkspace({
+  rotationPreview, onZoneRotationCancel,
   keyboardOverlay,
   activeToolId,
   actorDrag,
@@ -234,6 +237,7 @@ export function CanvasWorkspace({
             {layer.id === "grid" ? <GridLayer encounter={encounter} /> : null}
             {layer.id === "zones" ? (
               <ZoneLayer
+                rotationPreview={rotationPreview} onZoneRotationCancel={onZoneRotationCancel}
                 activeToolId={activeToolId}
                 actorTargetZoneId={actorTargetZoneId}
                 backgroundLuminanceByZoneId={backgroundLuminanceByZoneId}

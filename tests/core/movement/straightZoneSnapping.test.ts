@@ -1,3 +1,4 @@
+import { mergeConsecutivePolygonPoints } from '@core/layout/polygonCorners';
 import { createEncounterState } from '@core/encounter/createEncounterState';
 import { createEncounterActionRecord } from '@core/history/createEncounterActionRecord';
 import { createEncounterHistoryState } from '@core/history/types';
@@ -30,34 +31,34 @@ function expectPointsClose(actual: LayoutPoint[], expected: LayoutPoint[]) {
 }
 
 describe('straight Zone corner snapping', () => {
-  it.each(['square', 'hex-flat', 'hex-pointy'] as const)('reconciles polygon corners and edge samples on rotated, warped %s grids', type => {
+  it.each(['square', 'hex-flat', 'hex-pointy'] as const)('snaps every polygon vertex on rotated, warped %s grids', type => {
     const state = createEncounterState({ id: type, name: type });
     state.grid = { ...state.grid, type, rotation: 17, origin: { x: 30, y: 40 },
       warp: { type: 'bilinear', x: [0, 1, 0, 0.0001], y: [0, 0, 1, 0.0001] } };
     state.movementRules.snapZoneVertices = true;
     const corners = createShapePolygon('hexagon', { x: 100, y: 100 }, { x: 420, y: 420 });
     const polygon = snapZonePolygon(state, { shape: 'polygon', polygon: subdivide(corners) });
-    expectPointsClose(polygon, subdivide(corners.map(point => nearestGridVertex(state, point))));
-    expect(isSimplePolygon(polygon)).toBe(true);
+    expectPointsClose(polygon, mergeConsecutivePolygonPoints(subdivide(corners).map(point => nearestGridVertex(state, point))));
     const next = createZone(state, { id: 'z', shape: 'polygon', polygon });
     expect(zoneSnappingValid(next, next.zones.byId.z)).toBe(true);
   });
 
-  it.each(['rectangle', 'polygon'] as const)('snaps %s corners and interpolates straight-edge samples without collapsing them', shape => {
+  it.each(['rectangle', 'polygon'] as const)('applies the shape-specific vertex rule to subdivided %s outlines', shape => {
     const state = createEncounterState({ id: shape, name: shape });
     state.movementRules.snapZoneVertices = true;
     const corners = createShapePolygon(shape === 'rectangle' ? shape : 'hexagon', { x: 70, y: 70 }, { x: 310, y: 310 });
     const polygon = subdivide(corners);
     const expectedCorners = corners.map(point => nearestGridVertex(state, point));
     const actual = snapZonePolygon(state, { shape, polygon });
-    expect(actual).toHaveLength(polygon.length);
-    expectPointsClose(actual, subdivide(expectedCorners));
+    const expected = shape === 'rectangle' ? subdivide(expectedCorners)
+      : mergeConsecutivePolygonPoints(polygon.map(point => nearestGridVertex(state, point)));
+    expectPointsClose(actual, expected);
     expect(isSimplePolygon(actual)).toBe(true);
     const next = createZone(state, { id: 'z', shape, polygon: actual });
     expect(zoneSnappingValid(next, next.zones.byId.z)).toBe(true);
-    // Samples between corners need not themselves coincide with grid vertices.
+    // Generated edge samples are rendering geometry; every custom Polygon vertex snaps.
     expect(actual.some(point => Math.hypot(point.x - nearestGridVertex(state, point).x,
-      point.y - nearestGridVertex(state, point).y) > 1e-5)).toBe(true);
+      point.y - nearestGridVertex(state, point).y) > 1e-5)).toBe(shape === 'rectangle');
     expectPointsClose(snapZonePolygon(next, next.zones.byId.z), actual);
   });
 

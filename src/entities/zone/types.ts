@@ -23,6 +23,8 @@ export type Zone = {
   name: string;
   opacity: number;
   polygon: LayoutPoint[];
+  /** Editing/layout orientation; polygon remains the authoritative world outline. */
+  rotation?: number;
   showBorder: boolean;
   /** Missing on legacy documents means the default matched behavior. */
   matchEngagementColorToBorder?: boolean;

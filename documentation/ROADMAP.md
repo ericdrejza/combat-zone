@@ -249,3 +249,19 @@ Implementation plan: [Isometric grids](plans/isometric_grid.md).
 - [x] Add separate Canvas Actor/Zone selection outline modes and thickness
       preferences with persistence, cross-tab synchronization, reset, and
       reduced-motion coverage; expose Polygon editing help for keyboard/touch.
+
+## Zone rotation
+
+- [x] Rotate all Zone shapes using a stem/RotateCcw handle, signed degree labels,
+      oriented resize/conversion, locked Actor previews and packing, vertex
+      snapping, validated history, and schema 27 persistence.
+
+- [x] Keep rotation controls attached during Zone dragging and preserve generated
+      shapes when snapping to rotated, warped, hex, or isometric grids.
+- [x] Jointly snap all four generated-shape bounds controls and every Polygon
+      vertex, allowing size adjustment; synchronize rotation-control settling.
+
+- [x] Settle rotated generated shapes onto nearby grid rectangles, allowing angle
+      and independent width/height changes; persist and display the snapped angle.
+
+Implementation plan: [Zone rotation](plans/zone_rotation.md).

@@ -31,6 +31,22 @@ truth.
 
 ## Zones (polygon draw/edit)
 
+- [x] Every selected Zone supports a zoom-independent RotateCcw stem/handle with
+      the Zone tool. Drag previews free rotation with grab/grabbing feedback;
+      signed degree text matches Edge curvature labels, hiding idle zero only.
+      The stem and icon follow continuous Zone dragging with snapping on or off
+      and share the Zone settling transition.
+- [x] Rotation preserves generated shape editing through resize/conversion,
+      jointly snaps all four bounds-control corners without shearing generated shapes,
+      rotates locked contents upright,
+      repacks grid-snapped Actors, and reevaluates unlocked membership.
+- [x] Rotation release snaps to nearby valid rectangular bounds with independent
+      width/height changes, updating the displayed and persisted angle; the one-by-three
+      rectangle rotated near −45° settles to a diagonal rectangle on grid vertices.
+- [x] Angle and geometry persist together through save/recovery/export/import;
+      legacy migration defaults to zero. Undo/redo, cancellation, validation
+      modes, pending edits, and central writer protection preserve correctness.
+
 - [x] GM can draw a new polygonal zone with the Zone Tool via sequential
       point placement, closing the shape on click-near-start or double-click.
 - [x] Existing zone vertices can be dragged individually to reshape the

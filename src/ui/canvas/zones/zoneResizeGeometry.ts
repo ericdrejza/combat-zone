@@ -1,3 +1,4 @@
+import { getZoneLocalPolygon, rotatePoint } from '@entities/zone/zoneRotation';
 import type { LayoutPoint } from '@core/layout/types';
 import type { Zone } from '@entities/zone/types';
 import type { ZoneShape } from '@entities/zone/types';
@@ -106,7 +107,7 @@ export function getZoneResizeHandles(
   polygon: LayoutPoint[]
 ): LayoutPoint[] {
   if (zone.shape === 'circle' || zone.shape === 'hexagon') {
-    const bounds = getPolygonBounds(polygon);
+    const bounds = getPolygonBounds(getZoneLocalPolygon({ ...zone, polygon }));
     const centerX = bounds.x + bounds.width / 2;
     const centerY = bounds.y + bounds.height / 2;
 
@@ -119,7 +120,7 @@ export function getZoneResizeHandles(
       { x: bounds.x, y: bounds.y + bounds.height },
       { x: bounds.x, y: centerY },
       { x: bounds.x, y: bounds.y }
-    ];
+    ].map(point => rotatePoint(point, zone.rotation ?? 0));
   }
 
   return polygon;
@@ -150,6 +151,10 @@ export function resizeZonePolygon(
   vertexIndex: number,
   point: LayoutPoint
 ): LayoutPoint[] {
+  if (zone.rotation && zone.shape !== 'polygon') {
+    return resizeZonePolygon({ ...zone, rotation: 0 }, getZoneLocalPolygon({ ...zone, polygon }), vertexIndex,
+      rotatePoint(point, -zone.rotation)).map(value => rotatePoint(value, zone.rotation!));
+  }
   if (zone.shape === 'rectangle') {
     return resizeRectanglePolygon(polygon, vertexIndex, point);
   }

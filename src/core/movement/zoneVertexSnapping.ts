@@ -1,3 +1,6 @@
+import { snappedZoneBounds, zoneBoundsCorners } from './snappedZoneBounds';
+import { remapZoneBounds } from '@entities/zone/remapZoneBounds';
+import { getZoneLocalPolygon, rotatePoint } from '@entities/zone/zoneRotation';
 import { isSquareTopology } from './gridProjection';
 import { resolveGridGeometry } from './gridScale';
 import { gridToWorld, snapToGrid } from './gridGeometry';
@@ -5,41 +8,44 @@ import type { EncounterState } from '@core/encounter/types';
 import type { Zone } from '@entities/zone/types';
 import type { LayoutPoint } from '@core/layout/types';
 import { getPolygonBounds } from '@core/layout/polygonGeometry';
-import { getPolygonCornerIndices, mergeConsecutivePolygonPoints, remapPolygonCorners } from '@core/layout/polygonCorners';
-import { nearestGridVertex, pointDistance } from './gridTopology';
+import { mergeConsecutivePolygonPoints, remapPolygonCorners } from '@core/layout/polygonCorners';
+import { anchorKey as anchorKeyForCache, nearestGridVertex, pointDistance } from './gridTopology';
 
-const usesBoundingResizeControls = (shape: Zone['shape']) => shape === 'circle' || shape === 'hexagon';
+const usesBoundingResizeControls = (shape: Zone['shape']) => shape !== 'polygon';
 
 // Immutable polygons and grid configurations let unchanged Zones share their
 // snapped geometry across layers, pointer frames, and mutation preparation.
-const snappedPolygons = new WeakMap<EncounterState['grid'], WeakMap<LayoutPoint[], Map<Zone['shape'], LayoutPoint[]>>>();
+const snappedPolygons = new WeakMap<EncounterState['grid'], WeakMap<LayoutPoint[], Map<string, LayoutPoint[]>>>();
 
-/** Hexagons/circles snap resize bounds; other outlines retain samples along snapped edges. */
-export function snapZonePolygon(state: EncounterState, zone: Pick<Zone, 'shape' | 'polygon'>): LayoutPoint[] {
+/** Generated bounds snap jointly; custom polygons snap every stored vertex. */
+export function snapZonePolygon(state: EncounterState, zone: Pick<Zone, 'shape' | 'polygon' | 'rotation'>, anchor?: LayoutPoint): LayoutPoint[] {
   if (!state.movementRules.snapZoneVertices) return zone.polygon;
   let polygons = snappedPolygons.get(state.grid);
   if (!polygons) snappedPolygons.set(state.grid, polygons = new WeakMap());
   let shapes = polygons.get(zone.polygon);
   if (!shapes) polygons.set(zone.polygon, shapes = new Map());
-  const cached = shapes.get(zone.shape);
+  const key = `${zone.shape}:${zone.rotation ?? 0}:${anchor ? anchorKeyForCache(anchor) : ""}`;
+  const cached = shapes.get(key);
   if (cached) return cached;
-  const snapped = calculateSnappedPolygon(state, zone);
+  const snapped = calculateSnappedPolygon(state, zone, anchor);
   const result = snapped.length === zone.polygon.length && snapped.every((point, i) =>
     point.x === zone.polygon[i].x && point.y === zone.polygon[i].y) ? zone.polygon : snapped;
-  shapes.set(zone.shape, result);
+  shapes.set(key, result);
   return result;
 }
 
-function calculateSnappedPolygon(state: EncounterState, zone: Pick<Zone, 'shape' | 'polygon'>): LayoutPoint[] {
+function calculateSnappedPolygon(state: EncounterState, zone: Pick<Zone, 'shape' | 'polygon' | 'rotation'>, anchor?: LayoutPoint): LayoutPoint[] {
   if (!usesBoundingResizeControls(zone.shape)) {
-    const polygon = remapPolygonCorners(zone.polygon, point => nearestGridVertex(state, point));
-    return zone.shape === 'polygon' ? mergeConsecutivePolygonPoints(polygon) : polygon;
+    return mergeConsecutivePolygonPoints(zone.polygon.map(point => nearestGridVertex(state, point)));
   }
-  const bounds = getPolygonBounds(zone.polygon);
-  const first = nearestGridVertex(state, { x: bounds.minX, y: bounds.minY });
-  const last = nearestGridVertex(state, { x: bounds.maxX, y: bounds.maxY });
-  if ((bounds.maxX - bounds.minX) < 1e-8 || (bounds.maxY - bounds.minY) < 1e-8 || last.x <= first.x || last.y <= first.y) return zone.polygon;
-  return zone.polygon.map(point => ({ x: first.x + (point.x - bounds.minX) / (bounds.maxX - bounds.minX) * (last.x - first.x), y: first.y + (point.y - bounds.minY) / (bounds.maxY - bounds.minY) * (last.y - first.y) }));
+  const snapped = snappedZoneBounds(state, zone, anchor);
+  if (!snapped) return zone.polygon;
+  const { first, last } = snapped;
+  const polygon = remapZoneBounds(zone, first, last);
+  // Use the actual grid coordinates: inverse/forward rotation can otherwise put
+  // a boundary corner a few floating-point units outside the canvas.
+  return zone.shape === 'rectangle'
+    ? remapPolygonCorners(polygon, point => nearestGridVertex(state, point)) : polygon;
 }
 export function reconcileZoneVertices(state: EncounterState): EncounterState {
   if (!state.movementRules.snapZoneVertices) return state;
@@ -51,15 +57,13 @@ export function reconcileZoneVertices(state: EncounterState): EncounterState {
   }
   return changed ? { ...state, zones: { ...state.zones, byId } } : state;
 }
-export function zoneSnappingValid(state: EncounterState, zone: Zone) {
-  const bounds = getPolygonBounds(zone.polygon);
-  const points = !usesBoundingResizeControls(zone.shape) ? getPolygonCornerIndices(zone.polygon).map(index => zone.polygon[index])
-    : [{ x: bounds.minX, y: bounds.minY }, { x: bounds.maxX, y: bounds.maxY }];
+export function zoneSnappingValid(state: EncounterState, zone: Pick<Zone, 'shape' | 'polygon' | 'rotation'>) {
+  const points = zone.shape === 'polygon' ? zone.polygon : zoneBoundsCorners(zone);
   return points.every(point => pointDistance(point, nearestGridVertex(state, point)) < 1e-5);
 }
 
 /** Lattice translations preserve both vertex classes of a hex grid and every edge vector. */
-export function translateSnappedZone(state: EncounterState, zone: Pick<Zone, 'shape' | 'polygon'>, offset: LayoutPoint): LayoutPoint[] {
+export function translateSnappedZone(state: EncounterState, zone: Pick<Zone, 'shape' | 'polygon' | 'rotation'>, offset: LayoutPoint): LayoutPoint[] {
   const polygon = zone.polygon;
   let translation = offset;
   if (state.movementRules.snapZoneVertices && !state.grid.warp) {
@@ -68,8 +72,8 @@ export function translateSnappedZone(state: EncounterState, zone: Pick<Zone, 'sh
     const target = snapToGrid(grid, { x: reference.x + offset.x, y: reference.y + offset.y }, 'medium');
     translation = { x: target.x - reference.x, y: target.y - reference.y };
   } else if (state.movementRules.snapZoneVertices && polygon.length) {
-    const bounds = getPolygonBounds(polygon);
-    const reference = !usesBoundingResizeControls(zone.shape) ? polygon[getPolygonCornerIndices(polygon)[0] ?? 0] : { x: bounds.minX, y: bounds.minY };
+    const bounds = getPolygonBounds(getZoneLocalPolygon(zone));
+    const reference = !usesBoundingResizeControls(zone.shape) ? polygon[0] : rotatePoint({ x: bounds.minX, y: bounds.minY }, zone.rotation ?? 0);
     const target = nearestGridVertex(state, { x: reference.x + offset.x, y: reference.y + offset.y });
     translation = { x: target.x - reference.x, y: target.y - reference.y };
   }

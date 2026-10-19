@@ -102,6 +102,15 @@ function validateEncounterStateShape(state: JsonObject): void {
     Object.values(record(actors.byId, "encounter.state.actors.byId")).forEach(validateActorResources);
     for (const key of ["audioCues", "audioCueGroups"]) validateEntityCollection(state[key], `encounter.state.${key}`);
   }
+  if (version >= 27) {
+    const zones = record(record(state.zones, 'encounter.state.zones').byId, 'Zone collection');
+    for (const value of Object.values(zones)) {
+      const zone = record(value, 'Zone');
+      if (typeof zone.rotation !== 'number' || !Number.isFinite(zone.rotation) || zone.rotation < -180 || zone.rotation >= 180) {
+        throw new ApiContractValidationError('Zone rotation must be finite signed degrees.');
+      }
+    }
+  }
   if (version >= 14) {
     const zones = record(state.zones, "encounter.state.zones");
     Object.values(record(zones.byId, "encounter.state.zones.byId")).forEach(validateZoneResources);

@@ -1,3 +1,5 @@
+import { displayedZoneDragPolygon } from './displayedZoneDragPolygon';
+import { getZoneLocalPolygon, rotatePoint } from '@entities/zone/zoneRotation';
 import { ZoneSelectionOutline } from "./ZoneSelectionOutline";
 import { useZoneMotionPoints } from './useZoneMotionPoints';
 import { useInterfacePreferences } from "@ui/interface_preferences/InterfacePreferenceProvider";
@@ -44,10 +46,7 @@ export const ZoneVisual = memo(function ZoneVisual({ zone, polygon, selected, ac
     zoneDrag?.phase === "dragging";
   const gesture = useRef(0);
   if (activelyDragged && zoneDrag.gestureId !== undefined) gesture.current = zoneDrag.gestureId;
-  const displayedPolygon = activelyDragged ? polygon.map(point => ({
-    x: point.x + zoneDrag.current.x - zoneDrag.start.x,
-    y: point.y + zoneDrag.current.y - zoneDrag.start.y
-  })) : polygon;
+  const displayedPolygon = displayedZoneDragPolygon(polygon, zoneDrag);
   // Settle absolute geometry in one track; separately animating a group offset
   // would temporarily apply the movement twice when validation completes.
   const zoneGeometryTransition = getCanvasTransition(
@@ -74,9 +73,9 @@ export const ZoneVisual = memo(function ZoneVisual({ zone, polygon, selected, ac
           actors: splitInput?.actors ?? [],
           layoutOrientation: zone.layoutOrientation,
           layoutStrategy: zone.layoutStrategy,
-          polygon: displayedPolygon,
+          polygon: getZoneLocalPolygon({ ...zone, polygon: displayedPolygon }),
           splitSectionOrder: splitInput?.splitSectionOrder
-        })
+        }).map(divider => ({ ...divider, start: rotatePoint(divider.start, zone.rotation ?? 0), end: rotatePoint(divider.end, zone.rotation ?? 0) }))
       : [];
   const sectionClipId = `zone-section-clip-${zone.id}`;
   const invalidResizePreview =

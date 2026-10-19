@@ -1,3 +1,5 @@
+import { getZoneLocalPolygon, rotatePoint } from '@entities/zone/zoneRotation';
+import { packOrientedZoneActors } from '@entities/zone/packOrientedZoneActors';
 import { packGridZone } from '@core/movement/gridZonePacking';
 import { snapZonePolygon } from '@core/movement/zoneVertexSnapping';
 import type { EncounterState } from '../encounter/types';
@@ -13,7 +15,6 @@ import {
   type PolygonFlexZoneFit
 } from '../layout/polygonFlexZoneFit';
 import type { NestingActor } from '../layout/nesting_ts';
-import { packPolygonActors } from '../layout/nesting_ts';
 import type { LayoutPoint } from '../layout/types';
 import type { Zone } from '@entities/zone/types';
 import type { ValidationAction } from './types';
@@ -101,12 +102,12 @@ function engagementLayoutFitsPolygon(
     return true;
   }
 
-  const actorPacking = packPolygonActors({
+  const actorPacking = packOrientedZoneActors({
     actors,
     layoutOrientation: zone.layoutOrientation,
     layoutStrategy: zone.layoutStrategy,
     polygon
-  });
+  }, zone.rotation);
 
   if (!actorPacking.fits) {
     return false;
@@ -151,30 +152,40 @@ export function findPolygonFlexZoneFit(
     encounter.movementRules.snapToGrid
       ? packGridZone({ ...encounter, zones: { ...encounter.zones, byId: { ...encounter.zones.byId, [zoneId]: { ...encounter.zones.byId[zoneId], polygon: snapZonePolygon(encounter, { ...encounter.zones.byId[zoneId], polygon: candidate }) } } } }, zoneId).fits
       : engagementLayoutFitsPolygon(encounter, zoneId, actors, candidate);
+  const orientedZone = encounter.zones.byId[zoneId];
+  if (orientedZone?.rotation && !encounter.movementRules.snapToGrid &&
+    packOrientedZoneActors({ polygon, actors, layoutStrategy: orientedZone.layoutStrategy,
+      layoutOrientation: orientedZone.layoutOrientation }, orientedZone.rotation).fits && isPolygonAllowed(polygon) && isAdditionalLayoutFit(polygon)) {
+    return { polygon, resized: false };
+  }
+  const rotation = orientedZone?.rotation ?? 0;
+  const localPolygon = getZoneLocalPolygon({ polygon, rotation });
+  const toWorld = (candidate: LayoutPoint[]) => rotation ? candidate.map(point => rotatePoint(point, rotation)) : candidate;
+  const restoreFrame = (fit: PolygonFlexZoneFit | null) => fit ? { ...fit, polygon: toWorld(fit.polygon) } : null;
   const requestedAnchor =
     action.type === 'zone.reshape' ? getResizeAnchor(action) : undefined;
 
   if (requestedAnchor) {
-    return findSmallestPolygonFlexZoneFit(polygon, actors, undefined, {
-      anchor: requestedAnchor,
-      isAdditionalLayoutFit,
-      isPolygonAllowed,
+    return restoreFrame(findSmallestPolygonFlexZoneFit(localPolygon, actors, undefined, {
+      anchor: rotatePoint(requestedAnchor, -rotation),
+      isAdditionalLayoutFit: candidate => isAdditionalLayoutFit(toWorld(candidate)),
+      isPolygonAllowed: candidate => isPolygonAllowed(toWorld(candidate)),
       layoutOrientation: encounter.zones.byId[zoneId]?.layoutOrientation,
       layoutStrategy: getPolygonNestingStrategy(
         encounter.zones.byId[zoneId]?.layoutStrategy ?? 'FLEX'
       )
-    });
+    }));
   }
 
   const zone = encounter.zones.byId[zoneId];
 
-  return findSmallestPolygonFlexZoneExpansion(polygon, actors, {
-    isAdditionalLayoutFit,
-    isPolygonAllowed,
+  return restoreFrame(findSmallestPolygonFlexZoneExpansion(localPolygon, actors, {
+    isAdditionalLayoutFit: candidate => isAdditionalLayoutFit(toWorld(candidate)),
+    isPolygonAllowed: candidate => isPolygonAllowed(toWorld(candidate)),
     layoutOrientation: zone?.layoutOrientation,
     layoutStrategy: getPolygonNestingStrategy(zone?.layoutStrategy ?? 'FLEX'),
     preserveRectangle: zone?.shape === 'rectangle'
-  });
+  }));
 }
 
 export function getNestingActorsInZone(

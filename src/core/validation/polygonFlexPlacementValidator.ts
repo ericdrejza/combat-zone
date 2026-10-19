@@ -1,3 +1,4 @@
+import { packOrientedZoneActors } from '@entities/zone/packOrientedZoneActors';
 import { packGridZone } from '@core/movement/gridZonePacking';
 import type { EncounterState } from "../encounter/types";
 import { getActorRadius, toNestingActor } from "../layout/actorFootprints";
@@ -7,7 +8,6 @@ import {
 } from "../layout/engagementConnectorRouting";
 import { orderActorsForEngagementPacking } from "../layout/engagementPackingOrder";
 import { getEngagementAwareSplitInput } from '../layout/engagementSplitLayout';
-import { packPolygonActors } from "../layout/nesting_ts";
 import {
   getPolygonFlexAffectedZoneIds,
   polygonsEqual
@@ -120,13 +120,13 @@ export const PolygonPlacementValidator: Validator<EncounterState> = {
       const splitInput = zone.layoutStrategy.startsWith('SPLIT')
         ? getEngagementAwareSplitInput(nextState, zoneId)
         : undefined;
-      const packing = packPolygonActors({
+      const packing = packOrientedZoneActors({
         actors: splitInput?.actors ?? actors,
         layoutOrientation: zone.layoutOrientation,
         layoutStrategy: zone.layoutStrategy,
         polygon: zone.polygon,
         splitSectionOrder: splitInput?.splitSectionOrder
-      });
+      }, zone.rotation);
 
       if (!packing.fits) {
         messages.push({

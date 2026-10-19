@@ -1,3 +1,4 @@
+import { displayedZoneDragPolygon } from './displayedZoneDragPolygon';
 import { memo, useEffect, useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import { getCanvasTransition } from '@ui/canvas/canvasMotion';
@@ -44,15 +45,12 @@ export const ZoneResizeHandles = memo(function ZoneResizeHandles({ zone, polygon
   const dragging = zoneDrag?.phase === 'dragging';
   const gesture = useRef(0);
   if (dragging && zoneDrag.gestureId !== undefined) gesture.current = zoneDrag.gestureId;
-  const displayedPolygon = dragging ? polygon.map(point => ({
-    x: point.x + zoneDrag.current.x - zoneDrag.start.x,
-    y: point.y + zoneDrag.current.y - zoneDrag.start.y
-  })) : polygon;
+  const displayedPolygon = displayedZoneDragPolygon(polygon, zoneDrag);
   const transition = getCanvasTransition(direct, animationsDisabled);
   return <motion.g data-zone-resize-handles={zone.id} initial={false}
     transition={transition}>
     {getZoneResizeHandles(zone, displayedPolygon).map((point, index) => {
-      const cursor = zoneResizeCursor(displayedPolygon, point);
+      const cursor = zoneResizeCursor(displayedPolygon, point, zone.rotation);
       return <ZoneResizeHandle key={`${gesture.current}:${index}`} zone={zone}
         polygon={displayedPolygon} point={point} index={index} cursor={cursor}
         transition={transition} direct={direct}

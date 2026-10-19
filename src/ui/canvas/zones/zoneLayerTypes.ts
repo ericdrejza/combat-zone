@@ -5,6 +5,8 @@ import type { RootState } from "@store/store";
 import type { ActorDragEndEvent, ZoneDragState } from "../canvasInteractionTypes";
 
 export type ZoneLayerProps = {
+  rotationPreview?: { zoneId: string; rotation: number; active: boolean };
+  onZoneRotationCancel?: () => void;
   activeToolId: string;
   actorTargetZoneId: string | null;
   backgroundLuminanceByZoneId: Record<string, number>;

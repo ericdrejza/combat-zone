@@ -25,6 +25,7 @@ function getZoneCacheValue(encounter: EncounterState, zoneId: string) {
     ? [
         zoneId,
         zone.shape,
+        zone.rotation ?? 0,
         zone.layoutStrategy,
         zone.layoutOrientation,
         zone.polygon.map(({ x, y }) => [x, y])

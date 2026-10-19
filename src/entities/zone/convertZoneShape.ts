@@ -1,3 +1,4 @@
+import { getZoneLocalPolygon, rotatePoint } from "./zoneRotation";
 import type { EncounterState } from "@core/encounter/types";
 import type { ZoneShape } from "./types";
 import { createShapePolygon, getPolygonBounds } from "./zoneShapeGeometry";
@@ -11,14 +12,14 @@ export function convertZoneShape(
   const zone = state.zones.byId[zoneId];
   if (!zone || zone.shape === shape) return state;
 
-  const bounds = getPolygonBounds(zone.polygon);
+  const bounds = getPolygonBounds(getZoneLocalPolygon(zone));
   const polygon = shape === "polygon"
     ? zone.polygon
     : createShapePolygon(
         shape,
         { x: bounds.x, y: bounds.y },
         { x: bounds.x + bounds.width, y: bounds.y + bounds.height }
-      );
+      ).map(point => rotatePoint(point, zone.rotation ?? 0));
 
   return {
     ...state,

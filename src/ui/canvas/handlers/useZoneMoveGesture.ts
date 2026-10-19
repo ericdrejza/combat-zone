@@ -36,7 +36,7 @@ export function useZoneMoveGesture(input: CanvasInteractionState) {
       visible = { x: mapped.x, y: mapped.y };
     }
     const offset = { x: visible.x - originalPolygon[0].x, y: visible.y - originalPolygon[0].y };
-    let draft: ZoneDragState = { gestureId: revision, zoneId, originalPolygon, sourcePolygon: zone.polygon,
+    let draft: ZoneDragState = { rotation: pendingResize?.zoneId === zoneId ? pendingResize.rotation : zone.rotation, gestureId: revision, zoneId, originalPolygon, sourcePolygon: zone.polygon,
       start: point, current: { x: point.x + offset.x, y: point.y + offset.y }, hasMoved: false, phase: 'dragging' };
     latest.current.setZoneDrag(draft);
     let active = true;
@@ -44,7 +44,7 @@ export function useZoneMoveGesture(input: CanvasInteractionState) {
     if (pendingResize) void pendingResize.completion.then(base => {
       if (!active || zoneGestureRevisionRef.current !== revision || !base?.zones.byId[zoneId]) return;
       const polygon = base.zones.byId[zoneId].polygon;
-      draft = { ...draft, originalPolygon: polygon, sourcePolygon: polygon };
+      draft = { ...draft, rotation: base.zones.byId[zoneId].rotation, originalPolygon: polygon, sourcePolygon: polygon };
       latest.current.setZoneDrag(draft);
     });
     const move = (event: globalThis.MouseEvent | globalThis.PointerEvent) => {
@@ -82,7 +82,7 @@ export function useZoneMoveGesture(input: CanvasInteractionState) {
         // Redux can accept a resize before React publishes the matching render.
         // Rebase that render's frozen Actor points before finalizing this move.
         const actorRenderPlacements = renderedZone && encounter.movementRules.zoneLocked
-          ? rebaseZoneActorPlacements(rendered.actorRenderPlacements, zoneId, renderedZone.polygon, zone.polygon)
+          ? rebaseZoneActorPlacements(rendered.actorRenderPlacements, zoneId, renderedZone.polygon, zone.polygon, renderedZone.rotation ?? 0, zone.rotation ?? 0)
           : rendered.actorRenderPlacements;
         handleZoneMouseUp({ ...rendered, encounter, actorRenderPlacements, zoneDrag: draft,
           getDisplayedPolygon: candidate => translateSnappedZone(encounter,

@@ -146,6 +146,7 @@ Properties:
 - id
 - name
 - polygon
+- rotation (signed clockwise degrees; existing zones default to zero)
 - shape (rectangle, circle, hexagon, or polygon)
 - colorFill
 - colorBorder
@@ -193,13 +194,53 @@ Polygon is selected, the Shape section shows a top-right information tooltip
 explaining double-click edge insertion and vertex removal with the Zone tool.
 Zone Properties provides icon buttons to convert the first selected Zone to
 Rectangle (including square), Circle, Hexagon, or Polygon. Generated shapes use
-the current polygon's bounding-box minimum and maximum corners as their resize
+the current polygon's local bounding-box minimum and maximum corners as their resize
 controls. Any Polygon can convert without matching the target outline. Converting
 to Polygon retains the outline, subject to existing snapping reconciliation.
 Conversions follow validated reshaping, including actor-fit adjustments and hard
 placement constraints, and commit shape and geometry as one reversible action.
 Selecting the existing shape does nothing. Generated shapes must be converted
 manually in Properties before double-click vertex editing becomes available.
+
+All Zone shapes support rotation. With the Zone tool active, each selected
+Zone shows a thin stem from its local top-center to a RotateCcw handle above
+Zone bodies. The handle uses a grab cursor, changing to grabbing during input,
+with hover/focus feedback and desktop/touch-hold help. Handle size and stem
+length remain constant on screen at different zoom levels. Dragging rotates the
+outline freely around its local bounding-box center, frozen at gesture start.
+The adjacent label uses the Edge curvature text style and displays rounded signed
+clockwise degrees from −180° to 180°. Hide rounded zero while idle; show it during
+active rotation. Other tools and unselected Zones show no rotation control or label.
+
+Rotation preserves generated shape identity and editing orientation through
+resize and shape conversion. Polygon vertex edits retain that orientation.
+`polygon` remains the world outline; `rotation` records the editing/layout frame,
+normalized to [−180, 180). Preview is transient; release commits the angle,
+outline, and cascades as one validated, undoable action. Escape, cancelled/lost
+pointer capture, loss of window focus, and tool/encounter changes cancel an active
+gesture. Read-only tabs cannot rotate Zones. Released edits retain existing
+pending-reshape ordering and stale-result protection.
+
+With Zone vertex snapping enabled, preview rotation freely and reconcile on
+release. Generated shapes retain their shape: rectangles remain rectangular, and
+circles/hexagons retain their generated outline. All four oriented bounds-control
+corners must coincide with grid vertices. Search nearby grid rectangles, choosing
+the bounds closest to the freely rotated controls. Width and height may change
+independently, including aspect ratio, and the angle settles to the resulting
+bounds orientation. Store and display that snapped angle together with the outline;
+reject edits when no valid bounds can be found. Existing hard geometry
+and validation-mode constraints still apply. Locked Actor and Engagement centers,
+sections, and connectors rotate during preview; artwork remains upright and fixed
+in size. Unsnapped locked packing retains the editing frame after release and
+reload when upright footprints fit; otherwise use validated packing/fit fallback.
+Grid-snapped locked Actors repack to valid anchors on release. Unlocked Actors
+remain stationary and Zone membership is reevaluated. Rotation hides the Zoneless
+panel under the same rules as reshaping.
+
+The rotation stem, icon, and label follow the same continuous drag geometry as
+the Zone body and resize handles, including while vertex snapping is enabled.
+On release or cancellation, the stem, icon, and hit target settle with the same
+Motion spring as the Zone geometry; direct input and reduced motion remain immediate.
 
 Selected Zone resize handles render above all Zone bodies so overlapping Zones
 cannot intercept them. Top/bottom side handles use the vertical resize cursor,
@@ -1741,17 +1782,19 @@ still cannot fit to the list. Every change and cascade is one history action.
 
 Zone vertex snapping is independent of actor snapping and Zone lock. Enabling it
 snaps existing Zones and repacks actors atomically, rejecting invalid results.
-Polygon and rectangle Zones snap their interactable corner vertices to the
-nearest cell vertices. Intermediate samples on straight edges
-retain their fractional position between the snapped neighboring corners and
-remain collinear; they are not snapped independently. When consecutive Polygon
-vertices snap to the same cell vertex, merge them into one, including the closing
-first/last pair and samples on a collapsed edge. Reject results with fewer than
-three distinct corners or invalid geometry. Nonconsecutive coincident vertices
-remain subject to self-intersection validation. Hexagons and circles snap
-their drawing start/end controls and manipulated bounding-box resize corners,
-then regenerate normally. Their actual outline vertices and samples are not
-snapped independently. Maintain these constraints
+Polygon Zones snap every stored vertex to the nearest cell vertex, including
+collinear vertices. Merge consecutive vertices that snap to the same point,
+including the closing first/last pair; reject fewer than three distinct vertices,
+self-intersection, or other invalid geometry. Rectangles, hexagons, and circles
+snap all four corners of their oriented bounds controls. These corners are solved
+jointly so the generated shape is preserved; width and height may adjust
+independently to achieve a valid fit. Rotation release also permits a nearby valid
+angle, updating the stored angle and label. Resizing retains the current rotation
+and keeps the opposite control fixed. Circle
+and hexagon outline samples, intermediate generated edge samples, and side-handle
+midpoints need not coincide with grid vertices. Reject edits when no valid bounds
+can be found rather than accepting off-grid controls or shearing the shape.
+Maintain these constraints
 through Zone movement, grid changes, map resizing, and automatic enlargement,
 including rotated and warped grids; reject operations that cannot remain valid.
 

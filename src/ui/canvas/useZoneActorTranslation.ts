@@ -1,3 +1,5 @@
+import { snapZoneResizePolygon } from './zones/snapZoneResizePolygon';
+import { getZoneLocalPolygon, rotatePoint } from '@entities/zone/zoneRotation';
 import { useMemo } from "react";
 
 import type { RootState } from "@store/store";
@@ -20,11 +22,16 @@ export function useZoneActorTranslation(
     if (vertexDrag?.hasMoved) {
       const zone = encounter.zones.byId[vertexDrag.zoneId];
       if (!zone) return null;
-      const original = getPolygonBounds(zone.polygon);
-      const resized = getPolygonBounds(snapZonePolygon(encounter, { ...zone, polygon: vertexDrag.polygon }));
+      const fromRotation = zone.rotation ?? 0, toRotation = vertexDrag.rotation ?? vertexDrag.editingRotation ?? fromRotation;
+      const original = getPolygonBounds(getZoneLocalPolygon(zone));
+      const resizedZone = { ...zone, polygon: vertexDrag.polygon, rotation: toRotation };
+      const displayedPolygon = vertexDrag.rotation === undefined
+        ? snapZoneResizePolygon(encounter, resizedZone, vertexDrag.vertexIndex)
+        : vertexDrag.phase !== 'validating' ? vertexDrag.polygon : snapZonePolygon(encounter, resizedZone);
+      const resized = getPolygonBounds(getZoneLocalPolygon({ ...resizedZone, polygon: displayedPolygon }));
       const width = original.maxX - original.minX, height = original.maxY - original.minY;
       return {
-        zoneId: zone.id,
+        zoneId: zone.id, fromRotation, toRotation,
         origin: { x: original.minX, y: original.minY },
         offset: { x: resized.minX - original.minX, y: resized.minY - original.minY },
         scale: { x: width > 1e-8 ? (resized.maxX - resized.minX) / width : 1,
@@ -42,14 +49,15 @@ export function useZoneActorTranslation(
     }
 
     const target = zoneDrag.phase === 'validating' && zoneDrag.previewPolygon ? zoneDrag.previewPolygon : zoneDrag.originalPolygon;
-    const original = getPolygonBounds(zone.polygon), next = getPolygonBounds(target);
+    const fromRotation = zone.rotation ?? 0, toRotation = zoneDrag.rotation ?? fromRotation;
+    const original = getPolygonBounds(getZoneLocalPolygon(zone)), next = getPolygonBounds(getZoneLocalPolygon({ polygon: target, rotation: toRotation }));
     const dragging = zoneDrag.phase === 'dragging';
-    const offset = { x: next.minX - original.minX + (dragging ? zoneDrag.current.x - zoneDrag.start.x : 0),
-      y: next.minY - original.minY + (dragging ? zoneDrag.current.y - zoneDrag.start.y : 0) };
+    const delta = rotatePoint({ x: dragging ? zoneDrag.current.x - zoneDrag.start.x : 0, y: dragging ? zoneDrag.current.y - zoneDrag.start.y : 0 }, -toRotation);
+    const offset = { x: next.minX - original.minX + delta.x, y: next.minY - original.minY + delta.y };
     const width = original.maxX - original.minX, height = original.maxY - original.minY;
     const scale = { x: width > 1e-8 ? (next.maxX - next.minX) / width : 1,
       y: height > 1e-8 ? (next.maxY - next.minY) / height : 1 };
-    return { zoneId: zone.id, offset, ...(Math.abs(scale.x - 1) > 1e-8 || Math.abs(scale.y - 1) > 1e-8
+    return { zoneId: zone.id, offset, fromRotation, toRotation, ...(Math.abs(scale.x - 1) > 1e-8 || Math.abs(scale.y - 1) > 1e-8
       ? { scale, origin: { x: original.minX, y: original.minY } } : {}) };
 
   }, [encounter, zoneDrag, vertexDrag]);

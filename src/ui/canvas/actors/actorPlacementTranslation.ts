@@ -1,3 +1,4 @@
+import { rotatePoint } from '@entities/zone/zoneRotation';
 import type { LayoutPoint } from '@core/layout/types';
 import { POLYGON_LAYOUT_SETTINGS } from '@core/layout/polygonFlexLayout';
 import {
@@ -13,16 +14,19 @@ export type ActorPlacementTranslation = {
   zoneId: string;
   origin?: LayoutPoint;
   scale?: LayoutPoint;
+  fromRotation?: number;
+  toRotation?: number;
 };
 
 /** Resize preview moves token centers without scaling artwork or repacking. */
 export function transformZoneActorPoint(point: LayoutPoint, zoneId: string, preview?: ActorPlacementTranslation | null): LayoutPoint {
   if (!preview || preview.zoneId !== zoneId) return point;
   const origin = preview.origin ?? { x: 0, y: 0 };
-  return {
+  if (preview.fromRotation) point = rotatePoint(point, -preview.fromRotation);
+  return rotatePoint({
     x: origin.x + (point.x - origin.x) * (preview.scale?.x ?? 1) + preview.offset.x,
     y: origin.y + (point.y - origin.y) * (preview.scale?.y ?? 1) + preview.offset.y
-  };
+  }, preview.toRotation ?? 0);
 }
 
 /**

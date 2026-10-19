@@ -56,6 +56,7 @@ describe("InMemoryWorkspaceRepository", () => {
           namePosition: "top-left",
           opacity: 1,
           polygon: [{ x: 0, y: 0 }, { x: 100, y: 0 }, { x: 100, y: 100 }],
+          rotation: 0,
           shape: "polygon",
           showBorder: true,
           showName: true,

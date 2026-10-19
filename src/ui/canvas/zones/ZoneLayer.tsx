@@ -1,3 +1,5 @@
+import { displayedZoneDragPolygon } from './displayedZoneDragPolygon';
+import { ZoneRotationHandle } from './ZoneRotationHandle';
 import { useLayoutEffect, useMemo, useRef } from "react";
 import { ZoneVisual } from "./ZoneVisual";
 import { ZoneResizeHandles } from "./ZoneResizeHandles";
@@ -23,7 +25,7 @@ export function ZoneLayer(props: ZoneLayerProps) {
     const zoneDrag = props.zoneDrag?.zoneId === zoneId ? props.zoneDrag : null;
     const previewingOpacity = props.zoneOpacityPreview?.zoneId === zoneId;
     return <ZoneVisual key={zoneId} {...handlers}
-      zone={zone}
+      zone={props.rotationPreview?.zoneId === zoneId ? { ...zone, rotation: props.rotationPreview.rotation } : zone}
       encounter={zone.showSectionDividers && zone.layoutStrategy.startsWith("SPLIT") ? props.encounter : undefined}
       polygon={zoneDrag?.phase === "dragging" ? zoneDrag.originalPolygon : props.getDisplayedPolygon(zone)}
       zoneDrag={zoneDrag}
@@ -40,8 +42,13 @@ export function ZoneLayer(props: ZoneLayerProps) {
       const zone = props.encounter.zones.byId[zoneId];
       if (!zone) return null;
       const zoneDrag = props.zoneDrag?.zoneId === zoneId ? props.zoneDrag : null;
-      return <ZoneResizeHandles key={zoneId} {...handlers} zone={zone} zoneDrag={zoneDrag}
+      const preview = props.rotationPreview?.zoneId === zoneId ? props.rotationPreview : undefined;
+      const displayedZone = preview ? { ...zone, rotation: preview.rotation } : zone;
+      const polygon = zoneDrag?.phase === 'dragging' ? zoneDrag.originalPolygon : props.getDisplayedPolygon(zone);
+      return <g key={zoneId}><ZoneResizeHandles {...handlers} zone={displayedZone} zoneDrag={zoneDrag}
         polygon={zoneDrag?.phase === 'dragging' ? zoneDrag.originalPolygon : props.getDisplayedPolygon(zone)}
-        direct={props.directManipulationZoneId === zoneId} />;
+        direct={props.directManipulationZoneId === zoneId} />
+        <ZoneRotationHandle {...handlers} zone={displayedZone} polygon={displayedZoneDragPolygon(polygon, zoneDrag)} direct={props.directManipulationZoneId === zoneId} active={preview?.active ?? false}
+          onZoneRotationCancel={props.onZoneRotationCancel} /></g>;
     }) : null}</>;
 }

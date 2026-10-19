@@ -1,14 +1,15 @@
+import { getZoneLocalPolygon } from '@entities/zone/zoneRotation';
 import { getPolygonBounds } from '@core/layout/polygonGeometry';
 import type { LayoutPoint } from '@core/layout/types';
 import type { ActorRenderPlacement } from './actorCanvasLayout';
 import { transformZoneActorPoint } from './actorPlacementTranslation';
 
 /** Re-express a preview in the accepted Zone coordinate frame without repacking. */
-export function rebaseZoneActorPlacements(placements: ActorRenderPlacement[], zoneId: string, sourcePolygon: LayoutPoint[], polygon: LayoutPoint[]): ActorRenderPlacement[] {
-  if (sourcePolygon === polygon) return placements;
-  const from = getPolygonBounds(sourcePolygon), to = getPolygonBounds(polygon);
+export function rebaseZoneActorPlacements(placements: ActorRenderPlacement[], zoneId: string, sourcePolygon: LayoutPoint[], polygon: LayoutPoint[], fromRotation = 0, toRotation = fromRotation): ActorRenderPlacement[] {
+  if (sourcePolygon === polygon && fromRotation === toRotation) return placements;
+  const from = getPolygonBounds(getZoneLocalPolygon({ polygon: sourcePolygon, rotation: fromRotation })), to = getPolygonBounds(getZoneLocalPolygon({ polygon, rotation: toRotation }));
   const transform = {
-    zoneId,
+    zoneId, fromRotation, toRotation,
     origin: { x: from.minX, y: from.minY },
     offset: { x: to.minX - from.minX, y: to.minY - from.minY },
     scale: {

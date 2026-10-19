@@ -369,3 +369,31 @@ Optional Actor `imageFlippedHorizontal` is a compatible schema 25 field, with
 absence resolving to false. Local and Firebase boundaries require a boolean
 when present. Header and body use one Actor Properties mutation hook; rendering
 reflects the image inside the token projection without changing layout facts.
+
+## Zone rotation
+
+Encounter schema 27 adds signed clockwise Zone `rotation`; schema 26 and earlier
+migrate to zero without changing polygon coordinates. Local and cloud boundaries
+validate finite normalized angles. World `polygon` remains authoritative for
+collision, routing, and hit testing. Local bounds are derived by inverse rotation;
+no duplicated geometry or persistent Actor placement cache is introduced.
+
+Rotation is a Zone reshape gesture with a frozen source polygon, angle, and pivot.
+Its transient polygon feeds Zone visuals and Edge routing. Existing pending reshape
+ordering commits polygon and angle together and protects newer gesture ownership.
+Actor previews rotate centers through the shared placement transform while artwork
+stays upright. Unsnapped derived layouts compute in the local orientation and
+transform results to world coordinates; invalid upright footprints fall back to
+world packing. Layout cache keys include orientation. Generated-shape resize,
+conversion, and snapped controls use the same local frame. Every generated shape,
+including rectangles, jointly solves all four bounds-control corners on grid
+vertices while preserving its generated outline. Rotation release searches nearby
+grid rectangles by control displacement, allowing independent width/height changes
+and a nearby valid angle; the accepted polygon and angle propagate together through
+validation previews, pending gestures, Actor transforms, and history. Actual grid
+coordinates avoid floating-point boundary rejection. Resizing retains orientation
+and keeps the opposite control fixed; unsupported fits are rejected centrally.
+Custom Polygons snap every stored vertex independently, merging consecutive
+coincident results. Zone bodies, resize controls,
+and rotation controls share one continuous drag-polygon transform and settling
+transition, including reduced-motion behavior.

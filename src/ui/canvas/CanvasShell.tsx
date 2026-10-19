@@ -4,7 +4,7 @@ import { useGridMapPreview } from './grid/useGridMapPreview';
 import { GridCalibrationOverlay } from './grid/GridCalibrationOverlay';
 import { useActorKeyboardMovement } from "./actors/useActorKeyboardMovement";
 import { ActorHealthKeyboard } from "./actors/ActorHealthKeyboard";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 import type { LayoutPoint } from "@core/layout/types";
@@ -123,6 +123,7 @@ export function CanvasShell({
   const suppressNextCanvasClickUnconditionallyRef = useRef(false);
   const suppressNextCanvasClickPointRef = useRef<LayoutPoint | null>(null);
   const suppressNextEntityClickRef = useRef<string | null>(null);
+  const cancelZoneRotation = useCallback(() => { ++zoneGestureRevisionRef.current; setVertexDrag(null); }, []);
   const showFactionOutlinesKeyDown = useHeldKeybind(
     bindings["actor.showFactionOutlines"]
   );
@@ -306,6 +307,10 @@ export function CanvasShell({
     >
       <CanvasViewport canvasSize={renderEncounter.canvasSize}>
         <CanvasWorkspace
+          rotationPreview={vertexDrag && (vertexDrag.rotation ?? vertexDrag.editingRotation) !== undefined
+            ? { zoneId: vertexDrag.zoneId, rotation: (vertexDrag.rotation ?? vertexDrag.editingRotation)!, active: vertexDrag.rotation !== undefined && vertexDrag.phase !== "validating" }
+            : zoneDrag?.rotation === undefined ? undefined : { zoneId: zoneDrag.zoneId, rotation: zoneDrag.rotation, active: false }}
+          onZoneRotationCancel={cancelZoneRotation}
           keyboardOverlay={keyboardMovement.overlay}
         activeToolId={activeToolId}
         actorDrag={actorDrag}
@@ -320,7 +325,7 @@ export function CanvasShell({
         canvasBackgroundLuminance={backgroundLuminance.canvas}
         canvasRef={canvasRef}
         directManipulationZoneId={
-          vertexDrag?.zoneId ??
+          (vertexDrag?.phase === "dragging" ? vertexDrag.zoneId : null) ??
           (zoneDrag?.phase === "dragging" ? zoneDrag.zoneId : null)
         }
         encounter={renderEncounter}

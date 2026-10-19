@@ -11,6 +11,7 @@ type Snapshot = {
   key: string;
   zoneId: string;
   polygon: LayoutPoint[];
+  rotation: number;
   placements: ActorRenderPlacement[];
 };
 
@@ -27,10 +28,10 @@ export function useZoneGestureActorPlacements(encounter: EncounterState, placeme
   if (!snapshot.current?.active || snapshot.current.key !== key || snapshot.current.encounterId !== encounter.id) {
     const previous = snapshot.current;
     const origins = previous?.active && previous.encounterId === encounter.id && previous.zoneId === zone.id
-      ? rebaseZoneActorPlacements(previous.placements, zone.id, previous.polygon, zone.polygon) : placements.filter(({ actor }) => actor.currentZoneId === zone.id);
-    snapshot.current = { active: true, encounterId: encounter.id, key, zoneId: zone.id, polygon: zone.polygon, placements: origins };
+      ? rebaseZoneActorPlacements(previous.placements, zone.id, previous.polygon, zone.polygon, previous.rotation, zone.rotation ?? 0) : placements.filter(({ actor }) => actor.currentZoneId === zone.id);
+    snapshot.current = { active: true, encounterId: encounter.id, key, zoneId: zone.id, polygon: zone.polygon, rotation: zone.rotation ?? 0, placements: origins };
   }
-  const frozen = new Map(rebaseZoneActorPlacements(snapshot.current.placements, zone.id, snapshot.current.polygon, zone.polygon).map(placement => [placement.actor.id, placement]));
+  const frozen = new Map(rebaseZoneActorPlacements(snapshot.current.placements, zone.id, snapshot.current.polygon, zone.polygon, snapshot.current.rotation, zone.rotation ?? 0).map(placement => [placement.actor.id, placement]));
   return placements.map(placement => {
     const origin = frozen.get(placement.actor.id);
     return origin && placement.actor.currentZoneId === zone.id

@@ -1,3 +1,4 @@
+import { calculateOrientedActorPlacements } from './orientedActorPlacements';
 import { packGridZone } from '@core/movement/gridZonePacking';
 import { calculateZoneLayoutFromEntities } from '@core/layout/encounterLayout';
 import type { EncounterState } from '@core/encounter/types';
@@ -90,6 +91,8 @@ export function calculateActorPlacementGeometry(
   zoneIds?: readonly string[]
 ): ActorPlacementGeometry[] {
   if (encounter.movementRules.zoneLocked && encounter.movementRules.snapToGrid) return (zoneIds ?? encounter.zones.allIds).flatMap(id => packGridZone(encounter, id).placements);
+  const oriented = calculateOrientedActorPlacements(encounter, zoneIds, calculateActorPlacementGeometry);
+  if (oriented) return oriented;
   const placements: ActorPlacementGeometry[] = [];
   const splitSectionPolygons: Record<string, LayoutPoint[]> = {};
   const requestedZoneIds = zoneIds ? new Set(zoneIds) : undefined;

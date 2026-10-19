@@ -16,6 +16,7 @@ export type EdgeDragState = {
 };
 
 export type PendingZoneReshape = {
+  rotation?: number;
   encounterId: string;
   zoneId: string;
   polygon: LayoutPoint[];
@@ -23,6 +24,9 @@ export type PendingZoneReshape = {
 };
 
 export type VertexDragState = {
+  editingRotation?: number;
+  rotation?: number;
+  rotationSource?: { polygon: LayoutPoint[]; rotation: number; center: LayoutPoint };
   gestureId?: number;
   phase?: "dragging" | "validating";
   hasMoved: boolean;
@@ -40,6 +44,7 @@ export type ShapeDraftState = {
 };
 
 export type ZoneDragState = {
+  rotation?: number;
   gestureId?: number;
   current: LayoutPoint;
   hasMoved: boolean;

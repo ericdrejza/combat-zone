@@ -128,6 +128,7 @@ export function buildZone({
     opacity,
     matchEngagementColorToBorder,
     polygon,
+    rotation: 0,
     showBorder,
     showName,
     showSectionDividers,

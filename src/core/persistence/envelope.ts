@@ -145,6 +145,9 @@ export function assertEncounterState(value: unknown, name = "encounter", expecte
   }
   assertSpatialState(value, name);
   for (const zone of Object.values((value.zones as { byId: UnknownRecord }).byId)) {
+    if (expectedVersion >= 27 && (!isRecord(zone) || typeof zone.rotation !== 'number' || !Number.isFinite(zone.rotation) || zone.rotation < -180 || zone.rotation >= 180)) {
+      throw new PersistenceValidationError(`${name}.zone rotation must be finite signed degrees.`);
+    }
     if (!validZoneResources(zone)) throw new PersistenceValidationError(`${name}.zone resources are invalid.`);
   }
   for (const actorId of (value.actors as { allIds: string[] }).allIds) {
@@ -561,13 +564,17 @@ export function migrateEncounterState(value: unknown): unknown {
     // Validate old physical geometry before reinterpreting its cell-size value.
     assertEncounterState(migrated, 'encounter', 20);
     const normalized = migrateGridScale(migrated as unknown as EncounterState);
+    for (const zone of Object.values(normalized.zones.byId)) zone.rotation = 0;
     assertEncounterState(normalized);
     return normalized;
   }
 
-  if (migrated.schemaVersion === 21 || migrated.schemaVersion === 22 || migrated.schemaVersion === 23 || migrated.schemaVersion === 24 || migrated.schemaVersion === 25) {
+  if (migrated.schemaVersion === 21 || migrated.schemaVersion === 22 || migrated.schemaVersion === 23 || migrated.schemaVersion === 24 || migrated.schemaVersion === 25 || migrated.schemaVersion === 26) {
     assertEncounterState(migrated, 'encounter', migrated.schemaVersion);
     migrated.schemaVersion = ENCOUNTER_SCHEMA_VERSION;
+    if (isRecord(migrated.zones) && isRecord(migrated.zones.byId)) {
+      for (const zone of Object.values(migrated.zones.byId)) if (isRecord(zone)) zone.rotation = 0;
+    }
   }
   return migrated;
 }

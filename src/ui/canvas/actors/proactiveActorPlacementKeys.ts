@@ -13,6 +13,7 @@ export function getZonePlanKey(
   return JSON.stringify([
     zone.id,
     zone.shape,
+    zone.rotation ?? 0,
     zone.layoutStrategy,
     zone.layoutOrientation,
     zone.polygon,
