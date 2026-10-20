@@ -1,3 +1,4 @@
+import { RulerToolButton } from './ruler/RulerToolButton';
 import { GridToolButton } from './grid/GridToolButton';
 import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -116,7 +117,7 @@ export function Toolbar({
       return (
       <span
           key={item.id}
-          aria-label={item.id === 'grid-zone' ? 'Grid and Zone tools' : undefined}
+          aria-label={item.id === 'grid-zone' ? 'Grid and Zone tools' : item.id === 'ruler-select' ? 'Ruler and Select tools' : undefined}
           aria-orientation="vertical"
           className={`mx-1 h-8 w-px shrink-0 self-center bg-canvas-line ${item.id === 'grid-zone' ? '' : 'hidden lg:block'}`}
           role="separator"
@@ -152,6 +153,8 @@ export function Toolbar({
         />
       );
     }
+
+    if (tool.id === 'ruler') return <RulerToolButton key={tool.id} activeToolId={visibleActiveToolId} compactLayout={compactLayout} compactSubtoolHost={compactZoomOpen || compactEncounterOpen ? null : compactSubtoolHost} />;
 
     if (tool.id === 'grid') return <GridToolButton key={tool.id} activeToolId={visibleActiveToolId} compactLayout={compactLayout} compactSubtoolHost={compactZoomOpen || compactEncounterOpen ? null : compactSubtoolHost} />;
 

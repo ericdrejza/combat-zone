@@ -1,3 +1,4 @@
+import { useActorMovementWaypoints } from '@ui/canvas/actors/useActorMovementWaypoints';
 import { snapZoneResizePolygon } from '@ui/canvas/zones/snapZoneResizePolygon';
 import { getZoneRotationCenter, normalizeRotation, rotatePoint } from '@entities/zone/zoneRotation';
 import { isPersistenceWritable } from '@store/persistenceWriteGuardMiddleware';
@@ -14,8 +15,8 @@ import type { Zone } from '@entities/zone/types';
 import { clearSelection, selectEntity } from '@interaction/interactionState';
 import type { SelectableEntityType } from '@interaction/selection/types';
 import { closeZoneShapeMenu } from '../../toolbar/events';
-import type { CanvasInteractionState } from '../canvasInteractionTypes';
-import type { ActorDragStartEvent } from '../canvasInteractionTypes';
+import type { CanvasInteractionState } from '@ui/canvas/canvasInteractionTypes';
+import type { ActorDragStartEvent } from '@ui/canvas/canvasInteractionTypes';
 import { useCanvasMouseUpHandler } from './useCanvasMouseUpHandler';
 import { useEngagementHoverIntent } from '../engagements/useEngagementHoverIntent';
 import { getPointerTargetZoneId } from '../edges/edgePointerTarget';
@@ -24,7 +25,7 @@ import {
   getDisplayedZonePolygon,
   resizeZonePolygon,
   toSvgPoint
-} from '../zones/zoneGeometry';
+} from '@ui/canvas/zones/zoneGeometry';
 
 type PointerHandlerInput = CanvasInteractionState;
 
@@ -74,6 +75,8 @@ export function useCanvasPointerHandlers(input: PointerHandlerInput) {
     zoneShapeMode,
     touchMultiSelect = false
   } = input;
+  const isActorDragCurrent = useActorMovementWaypoints(input);
+  input = { ...input, isActorDragCurrent };
   const { updateIntent } = useEngagementHoverIntent(
     encounter,
     input.actorRenderPlacements,

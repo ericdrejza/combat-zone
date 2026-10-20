@@ -1,3 +1,5 @@
+import { migrateRulerArtifacts, assertRulerState } from './rulerSchema';
+import { migrateMeasurementSettings, assertMeasurementState } from './measurementSchema';
 import { migrateGridScale } from './migrateGridScale';
 import { validBackgroundFrame } from '@core/encounter/backgroundFrame';
 import { assertSpatialState } from '@core/movement/assertSpatialState';
@@ -150,6 +152,8 @@ export function assertEncounterState(value: unknown, name = "encounter", expecte
     }
     if (!validZoneResources(zone)) throw new PersistenceValidationError(`${name}.zone resources are invalid.`);
   }
+  if (expectedVersion >= 29) assertRulerState(value.rulers, name);
+  if (expectedVersion >= 28) assertMeasurementState(value as unknown as EncounterState, name);
   for (const actorId of (value.actors as { allIds: string[] }).allIds) {
     const actor = (value.actors as { byId: UnknownRecord }).byId[actorId];
     if (isRecord(actor) && !validActorResources(actor)) {
@@ -565,16 +569,25 @@ export function migrateEncounterState(value: unknown): unknown {
     assertEncounterState(migrated, 'encounter', 20);
     const normalized = migrateGridScale(migrated as unknown as EncounterState);
     for (const zone of Object.values(normalized.zones.byId)) zone.rotation = 0;
-    assertEncounterState(normalized);
-    return normalized;
+    const upgraded = migrateRulerArtifacts(migrateMeasurementSettings(normalized));
+    assertEncounterState(upgraded);
+    return upgraded;
   }
 
   if (migrated.schemaVersion === 21 || migrated.schemaVersion === 22 || migrated.schemaVersion === 23 || migrated.schemaVersion === 24 || migrated.schemaVersion === 25 || migrated.schemaVersion === 26) {
     assertEncounterState(migrated, 'encounter', migrated.schemaVersion);
-    migrated.schemaVersion = ENCOUNTER_SCHEMA_VERSION;
+    (migrated as UnknownRecord).schemaVersion = 27;
     if (isRecord(migrated.zones) && isRecord(migrated.zones.byId)) {
       for (const zone of Object.values(migrated.zones.byId)) if (isRecord(zone)) zone.rotation = 0;
     }
+  }
+  if (migrated.schemaVersion === 27) {
+    assertEncounterState(migrated, 'encounter', 27);
+    Object.assign(migrated, migrateMeasurementSettings(migrated as unknown as EncounterState));
+  }
+  if (migrated.schemaVersion === 28) {
+    assertEncounterState(migrated, 'encounter', 28);
+    return migrateRulerArtifacts(migrated as unknown as EncounterState);
   }
   return migrated;
 }

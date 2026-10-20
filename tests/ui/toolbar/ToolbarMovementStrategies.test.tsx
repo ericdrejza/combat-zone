@@ -15,7 +15,7 @@ describe('independent Zone/Grid toolbar rules', () => {
     expect(screen.getByRole('button', { name: 'Grid' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Movement strategy/ })).not.toBeInTheDocument();
     const snapping = within(screen.getByRole('group', { name: 'Grid visibility and snapping' }));
-    expect(snapping.getByRole('button', { name: 'Snap Actors to Grid' })).toHaveAttribute('title', 'Snap Actors to Grid');
+    expect(snapping.getByRole('button', { name: 'Snap Actors and Rulers to Grid' })).toHaveAttribute('title', 'Snap Actors and Rulers to Grid');
     expect(snapping.getByRole('button', { name: 'Snap Zone Vertices to Grid' })).toHaveAttribute('title', 'Snap Zone Vertices to Grid');
     expect(screen.getByRole('button', { name: 'Overlap' })).toBeDisabled();
     fireEvent.click(screen.getByRole('button', { name: 'Background' }));
@@ -25,7 +25,7 @@ describe('independent Zone/Grid toolbar rules', () => {
   it('changes rules independently of the selected tool and restores them through history', async () => {
     setup();
     const initial = store.getState().encounter.present;
-    fireEvent.click(screen.getByRole('button', { name: 'Snap Actors to Grid' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Snap Actors and Rulers to Grid' }));
     await waitFor(() => expect(store.getState().encounter.present.movementRules.snapToGrid).toBe(true));
     expect(store.getState().encounter.present.movementRules.zoneLocked).toBe(true);
     expect(store.getState().interaction.activeToolId).toBe('grid');

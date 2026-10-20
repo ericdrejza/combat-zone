@@ -1,5 +1,6 @@
 import {
   Grid3X3,
+  Ruler,
   ArrowRightFromLine,
   AudioLines,
   Bookmark,
@@ -30,6 +31,7 @@ export const TOOL_ICONS: Record<ToolId, LucideIcon> = {
   edge: ArrowRightFromLine,
   select: Pointer,
   grid: Grid3X3,
+  ruler: Ruler,
   zone: Shapes
 };
 
@@ -65,6 +67,8 @@ export const TOOLBAR_ITEMS: ToolbarItem[] = [
   { id: 'actor-audio', type: 'separator' },
   { type: 'tool', tool: TOOL_DEFINITIONS_BY_ID.audio },
   { id: 'audio-select', type: 'separator' },
+  { type: 'tool', tool: TOOL_DEFINITIONS_BY_ID.ruler },
+  { id: 'ruler-select', type: 'separator' },
   { type: 'tool', tool: TOOL_DEFINITIONS_BY_ID.select }
 ];
 

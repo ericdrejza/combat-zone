@@ -61,7 +61,8 @@ export function ActorMotionTrack({
     Boolean(incomingPoint) &&
     !pointsMatch(incomingPoint, processedIncomingPoint.current);
 
-  if (directRef.current && !direct) {
+  const leavingDirectManipulation = directRef.current && !direct;
+  if (leavingDirectManipulation) {
     pendingDirectReturnRef.current = true;
   }
   directRef.current = direct;
@@ -87,6 +88,14 @@ export function ActorMotionTrack({
       return;
     }
 
+    // Motion is already at the drag endpoint. Do not create a keyframe replay
+    // when handing control back, even if its completion callback runs first.
+    if (leavingDirectManipulation) {
+      setTrack(current => pointsMatch(current.target, target) && !current.pathStart
+        ? current : { revision: current.revision + 1, target });
+      return;
+    }
+
     setTrack((current) =>
       pointsMatch(current.target, target)
         ? current
@@ -100,6 +109,7 @@ export function ActorMotionTrack({
     direct,
     hasNewIncomingPoint,
     incomingPoint,
+    leavingDirectManipulation,
     target
   ]);
 

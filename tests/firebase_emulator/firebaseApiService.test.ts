@@ -67,6 +67,61 @@ afterAll(async () => {
 });
 
 describe("Firebase API service", () => {
+  it('round trips schema 28 measurement settings and accounting, rejecting malformed replacements', async () => {
+    const command = encounterCommand('measurements');
+    command.payload.state.schemaVersion = 28;
+    command.payload.state.panelLayout.right.push({ id: 'audio', collapsed: false });
+    Object.assign(command.payload.state, {
+      movementRules: { zoneLocked: false, snapToGrid: false, snapZoneVertices: false, allowOverlap: true, trimTokens: false },
+      grid: { type: 'square', cellSize: 64, origin: { x: 0, y: 0 }, rotation: 0, visible: true, color: '#808080', opacity: 0.5,
+        lineStyle: 'crosshair', distancePerCell: 5, distanceUnit: 'feet' },
+      counters: { byId: {}, allIds: [] }, clocks: { byId: {}, allIds: [] },
+      audioCues: { byId: {}, allIds: [] }, audioCueGroups: { byId: {}, allIds: [] }, musicGroupIds: [],
+      actors: { allIds: ['a'], byId: { a: { id: 'a', name: 'Actor', actorType: 'creature', layoutGroup: 'neutral', size: 'medium', shape: 'circle',
+        currentZoneId: 'zoneless', metadata: {}, statusEffects: [], counters: { byId: {}, allIds: [] }, movementLimit: 30 } } },
+      initiativeTracker: { entries: [{ actorId: 'a' }], currentActorId: 'a', currentRound: 1, movement: { a: { distance: 15, diagonals: 2 } } }
+    });
+    await service.commitEncounter('alice', command);
+    const ref = getFirestore().doc('users/alice/encounters/encounter-1');
+    expect((await ref.get()).data()?.state).toEqual(command.payload.state);
+    for (const patch of [{ distancePerCell: 1.5 }, { distanceUnit: '' }, { lineStyle: 'invalid' }]) {
+      const invalid = structuredClone(command); invalid.expectedRevision = 1; invalid.mutationId = 'invalid-measurements';
+      const state = invalid.payload.state as unknown as { grid: object };
+      state.grid = { ...state.grid, ...patch };
+      expect(() => service.commitEncounter('alice', invalid)).toThrow(/spatial/);
+      expect((await ref.get()).data()?.state).toEqual(command.payload.state);
+    }
+  });
+
+  it('persists schema 29 rulers and preserves the last valid snapshot after malformed edits', async () => {
+    const command = encounterCommand('saved-ruler');
+    command.payload.state.schemaVersion = 29;
+    command.payload.state.panelLayout.right.push({ id: 'audio', collapsed: false });
+    const ruler = { id: 'r1', name: 'Blast', options: { shape: 'cone', angle: 60 },
+      points: [{ x: 128, y: 128 }, { x: 256, y: 192 }], color: '#aabbcc', opacity: 0.7 };
+    Object.assign(command.payload.state, {
+      movementRules: { zoneLocked: false, snapToGrid: false, snapZoneVertices: false, allowOverlap: true, trimTokens: false },
+      grid: { type: 'square', cellSize: 64, origin: { x: 0, y: 0 }, rotation: 0, visible: true, color: '#808080', opacity: 0.5,
+        lineStyle: 'solid', distancePerCell: 5, distanceUnit: 'feet' },
+      counters: { byId: {}, allIds: [] }, clocks: { byId: {}, allIds: [] },
+      audioCues: { byId: {}, allIds: [] }, audioCueGroups: { byId: {}, allIds: [] }, musicGroupIds: [],
+      rulers: { byId: { r1: ruler }, allIds: ['r1'] }
+    });
+    await service.commitEncounter('alice', command);
+    const ref = getFirestore().doc('users/alice/encounters/encounter-1');
+    expect((await ref.get()).data()?.state).toEqual(command.payload.state);
+    for (const patch of [{ points: [{ x: 128, y: 128 }] }, { opacity: 2 }, { options: { shape: 'invalid' } }]) {
+      const invalid = structuredClone(command); invalid.expectedRevision = 1; invalid.mutationId = 'invalid-ruler';
+      Object.assign(invalid.payload.state, { rulers: { byId: { r1: { ...ruler, ...patch } }, allIds: ['r1'] } });
+      expect(() => service.commitEncounter('alice', invalid)).toThrow(/ruler/i);
+      expect((await ref.get()).data()?.state).toEqual(command.payload.state);
+    }
+    const deleted = structuredClone(command); deleted.expectedRevision = 1; deleted.mutationId = 'delete-ruler';
+    Object.assign(deleted.payload.state, { rulers: { byId: {}, allIds: [] } });
+    await service.commitEncounter('alice', deleted);
+    expect((await ref.get()).data()?.state).toEqual(deleted.payload.state);
+  });
+
   it.each([17, 18, 19, 20, 21, 22])('round trips schema %s grid and actor positions and preserves data after invalid writes', async version => {
     const command = encounterCommand();
     const grid = { type: 'square', cellSize: 64, origin: { x: 0, y: 0 }, rotation: 0, visible: true, color: '#808080', opacity: 0.5 };

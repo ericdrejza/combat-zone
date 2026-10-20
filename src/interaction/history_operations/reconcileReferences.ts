@@ -9,6 +9,7 @@ export function reconcileReferences(state: InteractionState, encounter: Encounte
     engagement: encounter.engagements, annotation: encounter.annotations
   };
   const exists = (type: SelectableEntityType, id: string) => Boolean(collections[type].byId[id]);
+  if (state.editingRuler && !encounter.rulers.byId[state.editingRuler.id]) state.editingRuler = null;
   const selection = state.selection;
   selection.selectedIds = selection.selectedEntityType
     ? selection.selectedIds.filter((id) => exists(selection.selectedEntityType!, id)) : [];

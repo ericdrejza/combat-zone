@@ -99,9 +99,9 @@ export function ActorLayer({
       const isMotionDraggedActor =
         actorDrag?.phase === "dragging" &&
         actorDrag.actorId === actor.id;
-      const renderedPoint = isMotionDraggedActor
-        ? zoneMovedPoint
-        : getDraggedPoint(actor.id, zoneMovedPoint, actorDrag);
+      // Motion owns the lead token's live transform, but the track must retain
+      // its visible endpoint for validation and drop settling, not its origin.
+      const renderedPoint = getDraggedPoint(actor.id, zoneMovedPoint, actorDrag);
       const placementDropPoint = placementIncomingPoint
         ? getDraggedPoint(
             actor.id,

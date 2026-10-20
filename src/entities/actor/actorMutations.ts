@@ -35,6 +35,7 @@ export type CreateActorInput = {
 };
 
 export type UpdateActorPropertiesInput = {
+  movementLimit?: number | null;
   actorType?: ActorType;
   image?: ImageAssetSource;
   imageFlippedHorizontal?: boolean;
@@ -213,12 +214,17 @@ export function updateActorProperties(
   }
 
   const {
+    movementLimit,
     imageAssetAnimated,
     imageAssetMediaType,
     imageAssetName,
     imageLibraryNodeId,
     ...actorProperties
   } = properties;
+  if (movementLimit !== undefined && movementLimit !== null && (!Number.isFinite(movementLimit) || movementLimit < 0)) return state;
+  const updatedActor = { ...actor, ...actorProperties };
+  if (movementLimit === null) delete updatedActor.movementLimit;
+  else if (movementLimit !== undefined) updatedActor.movementLimit = movementLimit;
   const metadata = { ...actor.metadata };
   if (imageAssetAnimated === null) {
     delete metadata.sourceAssetAnimated;
@@ -244,8 +250,7 @@ export function updateActorProperties(
   return {
     ...state,
     actors: upsertEntity(state.actors, {
-      ...actor,
-      ...actorProperties,
+      ...updatedActor,
       metadata
     })
   };

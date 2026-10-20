@@ -1,3 +1,4 @@
+import { GridLineStyleField } from '@ui/toolbar/grid/GridLineStyleField';
 import { useGridAppearanceDraft } from './useGridAppearanceDraft';
 import { useEffect, useRef, useState } from 'react';
 import { useSelector, useStore } from 'react-redux';
@@ -42,6 +43,7 @@ export function GridPropertiesPanel() {
       <label className="block space-y-1 text-sm">Grid type<select aria-label="Grid type" className={control} value={encounter.grid.type} onChange={event => update({ type: event.currentTarget.value as GridConfiguration['type'] })}>
         <option value="square">Square</option><option value="isometric">Isometric</option><option value="hex-flat">Hex — flat top</option><option value="hex-pointy">Hex — pointy top</option>
       </select></label>
+      <GridLineStyleField className={control} value={encounter.grid.lineStyle} onChange={lineStyle => update({ lineStyle })} />
       <label className="block space-y-1 text-sm">Line color<input aria-label="Grid line color" className={control} type="color" value={appearance.color}
         onChange={event => appearance.preview({ color: event.currentTarget.value })}
         onClick={event => {

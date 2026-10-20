@@ -1,3 +1,4 @@
+import { validRulerCollection } from './rulerArtifacts.js';
 import { validateSpatialState } from './spatialState.js';
 import { validateEdgeAppearance } from './edgeAppearance.js';
 import { validateClocks } from "./clocks.js";
@@ -92,6 +93,7 @@ function validateEncounterStateShape(state: JsonObject): void {
       (version !== 7 && (version < 13 || version > SUPPORTED_ENCOUNTER_SCHEMA_VERSION))) {
     throw new ApiContractValidationError("encounter.state.schemaVersion is unsupported.");
   }
+  if (version >= 29 && !validRulerCollection(state.rulers)) throw new ApiContractValidationError("Encounter ruler artifacts are invalid.");
   for (const key of ["zones", "edges", "actors", "engagements", "annotations"]) {
     validateEntityCollection(state[key], `encounter.state.${key}`);
   }

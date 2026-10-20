@@ -1,3 +1,4 @@
+import { actorMovementWaypoints } from '@ui/canvas/actors/actorMovementPaths';
 import { consumeEncounterPreparation } from "@core/history/encounterOperations";
 import { placeSpatialActors } from '@core/movement/movementStrategies';
 import { adjustedSpatialActorIds } from '@core/movement/spatialAdjustment';
@@ -28,11 +29,13 @@ export function handleSpatialActorMouseUp(input: MouseUpHandlerInput, remove = f
     } else logEncounterValidationFailure(dispatch, encounter, { actionType: 'actor.moveSpatial', code: 'movement.noOpenAnchor', message: 'No fitting open grid anchor is available.', payload: { actorIds: actorDrag.actorIds } });
     input.setActorDrag(createSnapBackDrag(actorDrag)); return true;
   }
+  // End the preview before Redux publishes the new position, including synchronous commits.
+  input.setActorDrag({ ...actorDrag, phase: 'validating' });
   const prepared = prepareValidatedEncounterChangeForRuntime({ currentEncounter: encounter, nextEncounter: next,
-    action: createEncounterActionRecord('actor.moveSpatial', { actorIds: actorDrag.actorIds, removedFromCanvas: remove, requestedPositions: points }) });
+    action: createEncounterActionRecord('actor.moveSpatial', { actorIds: actorDrag.actorIds, removedFromCanvas: remove, requestedPositions: points, movementWaypoints: actorMovementWaypoints(encounter, actorDrag) }) });
   const apply = (resolved: Awaited<typeof prepared>) => {
     dispatch((_dispatch, getState) => {
-    if (getState().encounter.present !== encounter) { input.setActorDrag(null); return; }
+    if (getState().encounter.present !== encounter || getState().interaction.activeToolId !== input.activeToolId || (input.isActorDragCurrent && !input.isActorDragCurrent(actorDrag))) { input.setActorDrag(null); return; }
     if (logEncounterValidationBlock(dispatch, resolved) || !isPersistenceWritable()) input.setActorDrag(createSnapBackDrag(actorDrag));
     else {
       dispatch(commitEncounterChange({ action: resolved.action, nextEncounter: resolved.nextEncounter }));

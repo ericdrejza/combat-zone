@@ -12,7 +12,7 @@ import type { ImageAssetSource } from "@core/assets/imageAssetSource";
 import type { EncounterPanelLayout } from "./panelLayout";
 import type { AudioCue, AudioCueGroup } from "@entities/audio/types";
 
-export const ENCOUNTER_SCHEMA_VERSION = 27;
+export const ENCOUNTER_SCHEMA_VERSION = 29;
 export const ZONELESS_ACTOR_ZONE_ID = "zoneless";
 
 export type EncounterSchemaVersion = typeof ENCOUNTER_SCHEMA_VERSION;
@@ -25,6 +25,7 @@ export type InitiativeEntry = {
 };
 
 export type InitiativeTrackerState = {
+  movement?: import("@core/measurement/types").MovementAccounting;
   entries: InitiativeEntry[];
   currentActorId: EntityId | null;
   currentRound: number | null;
@@ -46,6 +47,7 @@ export type EncounterBackgroundImage = {
 };
 
 export type EncounterState = {
+  rulers: EntityCollection<import('@core/measurement/types').LockedRuler>;
   gridCoverage?: import('./backgroundFrame').BackgroundFrame;
   movementRules: import('@core/movement/types').MovementRules;
   grid: import('@core/movement/types').GridConfiguration;

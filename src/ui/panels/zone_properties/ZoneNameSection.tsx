@@ -40,9 +40,11 @@ export function ZoneNameSection({
           </div>
       </div>
       <label className="block space-y-1">
+        {/* Refresh the blur-committed field when rename or history changes the saved name. */}
         <input
           aria-label="Zone name"
           className="w-full rounded-xl border border-canvas-line bg-canvas-surface px-3 py-2"
+          key={zone.name}
           defaultValue={zone.name}
           onBlur={(event) => {
             const name = event.currentTarget.value.trim();

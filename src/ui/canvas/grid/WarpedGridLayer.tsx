@@ -1,3 +1,4 @@
+import { gridEdgeSegments, gridStrokeStyle } from '@core/measurement/gridLineStyle';
 import { isSquareTopology } from '@core/movement/gridProjection';
 import type { GridGeometry } from '@core/movement/gridScale';
 import { useId, useMemo } from 'react';
@@ -19,9 +20,12 @@ function warpedPaths(grid: GridGeometry, canvas: EncounterState['canvasSize']) {
   const minX = Math.floor(Math.min(...corners.map(p => p.x)) / cell) - 3, maxX = Math.ceil(Math.max(...corners.map(p => p.x)) / cell) + 3;
   const minY = Math.floor(Math.min(...corners.map(p => p.y)) / cell) - 3, maxY = Math.ceil(Math.max(...corners.map(p => p.y)) / cell) + 3;
   const paths: string[] = [];
+  const edge = (a: LayoutPoint, b: LayoutPoint) => gridEdgeSegments(a, b, grid.lineStyle).forEach(([p, q]) => paths.push(segment(grid, p, q)));
   if (isSquareTopology(grid.type)) {
-    for (let x = minX; x <= maxX; x++) paths.push(segment(grid, { x: x * cell, y: minY * cell }, { x: x * cell, y: maxY * cell }));
-    for (let y = minY; y <= maxY; y++) paths.push(segment(grid, { x: minX * cell, y: y * cell }, { x: maxX * cell, y: y * cell }));
+    for (let x = minX; x <= maxX; x++) for (let y = minY; y <= maxY; y++) {
+      edge({ x: x * cell, y: y * cell }, { x: x * cell, y: (y + 1) * cell });
+      edge({ x: x * cell, y: y * cell }, { x: (x + 1) * cell, y: y * cell });
+    }
   } else {
     const radius = cell / Math.sqrt(3);
     const qMin = Math.floor(minX * cell / (1.5 * radius)), qMax = Math.ceil(maxX * cell / (1.5 * radius));
@@ -30,7 +34,7 @@ function warpedPaths(grid: GridGeometry, canvas: EncounterState['canvasSize']) {
         const x = q * 1.5 * radius, y = (r + q / 2) * cell;
         const vertices = Array.from({ length: 6 }, (_, k) => ({ x: x + radius * Math.cos(k * Math.PI / 3), y: y + radius * Math.sin(k * Math.PI / 3) }));
         // One half of each cell boundary avoids drawing shared edges twice.
-        for (let k = 0; k < 3; k++) paths.push(segment(grid, vertices[k], vertices[k + 1]));
+        for (let k = 0; k < 3; k++) edge(vertices[k], vertices[k + 1]);
       }
     }
   }
@@ -41,6 +45,6 @@ export function WarpedGridLayer({ grid, canvas }: { grid: GridGeometry; canvas: 
   const path = useMemo(() => warpedPaths(grid, canvas), [grid, canvas]);
   return <g aria-label="Warped grid overlay" pointerEvents="none">
     <defs><clipPath id={id}><rect width={canvas.width} height={canvas.height} /></clipPath></defs>
-    <path d={path} clipPath={`url(#${id})`} fill="none" stroke={grid.color} strokeWidth={1} opacity={grid.opacity} />
+    <path d={path} clipPath={`url(#${id})`} fill="none" stroke={grid.color} strokeWidth={1} opacity={grid.opacity} {...gridStrokeStyle(grid.lineStyle)} />
   </g>;
 }

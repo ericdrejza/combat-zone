@@ -265,3 +265,26 @@ Implementation plan: [Isometric grids](plans/isometric_grid.md).
       and independent width/height changes; persist and display the snapped angle.
 
 Implementation plan: [Zone rotation](plans/zone_rotation.md).
+
+## Ruler and grid styles (#26)
+
+- [x] Solid, dashed, dotted and crosshair grid styles.
+- [x] Ruler shapes, cell highlighting and independent map measurement scale.
+- [x] Actor movement previews, advisory limits and optional turn/round accounting.
+- [x] Schema 28 local/cloud persistence, history and acceptance verification.
+
+Implementation plan: [Ruler, movement and grid styles](plans/ruler_movement_and_grid_styles.md).
+
+- [x] Ruler interaction refinements: icon subtools, automatic three-corner highlighting, editable locked artifacts, Shift pivots, movement range glow and ruler color preferences.
+
+- [x] Ruler polish: no drop-boundary flash, automatic outward cone origins, corner-or-center AoE inclusion, optional area values, bounded labels, angle editing and D/number shortcuts; R supports Zone rename.
+
+- [x] Persist locked ruler artifacts in schema 29 with standard undo/redo, one-step edit locking, cancel/restore and fresh-history reload recovery.
+- [x] State-aware ruler hints, endpoint pickup, Path defaults and clicked-waypoint-only locking; Canvas Ruler feel preference and white cursor preview.
+- [x] Place through existing ruler artifacts, preserving idle context actions and suppressing artifact menus during creation/editing.
+
+- [x] Canvas measurement cell-coverage preferences: corners-or-center, center only, strict majority area, and one/all forward cone-origin neighbor exceptions; square/isometric use 3 corners and hex uses 4.
+
+- [x] Artifact color dialog uses a collapsible custom picker, Cancel/Save with deferred one-step history, and exact alpha support; ruler right-click backtracks one placed point during creation/editing.
+
+- [x] Prevent original-position flashes on actor drop: retain the true pointer endpoint through validation and snap settling, including Strict Mode and existing return/cross-zone motion behavior.

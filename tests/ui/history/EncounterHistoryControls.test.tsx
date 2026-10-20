@@ -1,3 +1,6 @@
+import { selectLockedRulers } from '@interaction/rulerState';
+import { setRulerDraft, lockRulerDraft } from '@interaction/interactionState';
+import { setPersistenceWritable } from '@store/persistenceWriteGuardMiddleware';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { useContext, type ReactNode } from 'react';
 import { Provider } from 'react-redux';
@@ -13,7 +16,7 @@ import { KeybindProvider, KEYBIND_STORAGE_KEY } from '@ui/keybinds/KeybindProvid
 import { PersistenceContext } from '@ui/persistence/PersistenceContext';
 
 beforeEach(() => { resetAppStore(); localStorage.removeItem(KEYBIND_STORAGE_KEY); });
-afterEach(() => localStorage.removeItem(KEYBIND_STORAGE_KEY));
+afterEach(() => { localStorage.removeItem(KEYBIND_STORAGE_KEY); setPersistenceWritable(true); });
 function ReadOnly({ children }: { children: ReactNode }) {
   const current = useContext(PersistenceContext);
   return <PersistenceContext.Provider value={{ ...current, readOnly: true }}>{children}</PersistenceContext.Provider>;
@@ -98,4 +101,18 @@ it('blocks native transfers until drop or cancellation', () => {
   expect(screen.getByRole('button', { name: 'Undo' })).toBeEnabled();
   fireEvent.dragStart(window); fireEvent.dragEnd(window);
   expect(screen.getByRole('button', { name: 'Undo' })).toBeEnabled();
+});
+
+it('blocks persisted ruler replay in read-only mode', () => {
+  mount(true);
+  act(() => {
+    store.dispatch(setRulerDraft({ points: [{ x: 100, y: 100 }, { x: 200, y: 200 }], complete: true }));
+    store.dispatch(lockRulerDraft());
+    setPersistenceWritable(false);
+  });
+  const present = store.getState().encounter.present, artifact = selectLockedRulers(store.getState())[0];
+  expect(screen.getByRole('button', { name: 'Undo' })).toBeDisabled();
+  fireEvent.keyDown(window, { key: 'z', ctrlKey: true });
+  expect(selectLockedRulers(store.getState())).toEqual([artifact]);
+  expect(store.getState().encounter.present).toBe(present);
 });

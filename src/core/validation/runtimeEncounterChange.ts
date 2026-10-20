@@ -1,3 +1,5 @@
+import { reconcileMovementAccounting } from '@core/measurement/movementAccounting';
+import { readMovementPreferences } from '@ui/combat_preferences/movementPreferenceStorage';
 import type { EncounterState } from '@core/encounter/types';
 import { adjustedSpatialActorIds } from '@core/movement/spatialAdjustment';
 import { reconcileZoneVertices } from '@core/movement/zoneVertexSnapping';
@@ -24,6 +26,7 @@ export function prepareValidatedEncounterChangeForRuntime(
   const prepare = (nextEncounter: EncounterState | null) => {
     if (!nextEncounter) return { blocked: true, action: input.action, nextEncounter: input.currentEncounter, requiresConfirmation: false,
       validationResult: { valid: false, blocked: true, mode: input.currentEncounter.validationState.mode, messages: [] } } as PreparedValidatedEncounterChange;
+    nextEncounter = reconcileMovementAccounting(input.currentEncounter, nextEncounter, input.action, readMovementPreferences());
     const resolved = { ...input, nextEncounter };
     if (input.action.type === 'zone.move' && nextEncounter.movementRules.zoneLocked &&
       !nextEncounter.movementRules.snapToGrid && !input.validators) {

@@ -155,11 +155,12 @@ function removeFromTracker(
   const entries = tracker.entries.filter((entry) => entry.actorId !== actorId);
   if (tracker.currentActorId !== actorId) return { ...tracker, entries };
   if (entries.length === 0) {
-    return { entries, currentActorId: null, currentRound: tracker.currentRound };
+    return { ...tracker, entries, currentActorId: null, currentRound: tracker.currentRound };
   }
 
   const wrapped = removedIndex >= entries.length;
   return {
+    ...tracker,
     entries,
     currentActorId: entries[wrapped ? 0 : removedIndex]?.actorId ?? null,
     currentRound:
@@ -214,6 +215,7 @@ export function clearInitiative(state: EncounterState): EncounterState {
   return {
     ...state,
     initiativeTracker: {
+      ...state.initiativeTracker,
       entries: [],
       currentActorId: null,
       currentRound: state.initiativeTracker.currentRound

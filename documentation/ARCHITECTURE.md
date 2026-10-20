@@ -397,3 +397,35 @@ Custom Polygons snap every stored vertex independently, merging consecutive
 coincident results. Zone bodies, resize controls,
 and rotation controls share one continuous drag-polygon transform and settling
 transition, including reduced-motion behavior.
+
+## Measurement and grid appearance (schemas 28–29)
+
+`core/measurement` owns unprojected distance, topology routes, AoE geometry,
+configurable cell inclusion, and pure movement accounting. Rendering samples those
+map-space shapes through existing grid transforms. Crosshair edges retain the
+first and last quarter of each logical edge, including under warping.
+
+Grid appearance and measurement scale live only in `EncounterState.grid`. Actor
+limits live on Actors. Optional `initiativeTracker.movement` stores accepted
+distance and diagonal counts keyed by Actor ID; absence means empty accounting.
+Actor movement paths and highlighted cells are transient or derived; locked ruler shapes are durable. Runtime
+validation composes movement accounting into the same candidate as its move.
+Initiative changes retain totals until the configured turn/round reset applies.
+
+Combat movement preferences use the application-owned
+`combat-zone.movement-preferences` key with cross-tab notification and local reset
+cleanup. Editing accounting settings clears totals through validated history
+before updating preferences. Repository and Firebase contracts validate schema
+28 together; old schemas migrate without inventing movement totals.
+
+Schema 29 adds normalized `EncounterState.rulers` (points, options, name, color/opacity override). Schema 28 migrates to an empty collection; local envelopes and Firebase validate the same artifact contract. Standard encounter commits handle locks, deletions and metadata changes, so autosave, recovery, export/import and undo/redo retain saved artifacts. Initial drafts and pending edit candidates live only in interaction state. Space commits an edited candidate as one history step; Escape discards it. Dedicated hooks own click/point editing, endpoint pickup and Shift/Space movement pivots. Canvas preferences own shared ruler color/opacity and movement-caption visibility outside encounter history. Reachable-area outlines are derived once per drag origin/budget and follow movement distance rules.
+
+Snapped cones store their source cell center as the first interaction point; their outward side/corner origins are derived from the target trajectory. Calculated area is optional and controlled by a Canvas preference, while shape labels are measured and constrained to map bounds. Spatial actor drops enter a validating interaction phase before publishing an accepted position, preventing movement ranges from rerendering at the destination.
+
+Ruler feel is a local Canvas preference. Motion springs animate draft outlines and the white live cursor marker only; saved artifact geometry, measurements, and hit targets remain exact. Reduced-motion preferences disable the spring effects. Path is the initial subtool and lock commands use only placed control points, excluding hover preview points.
+
+Canvas preferences select the ruler cell-coverage rule: corners-or-center, center, majority, corners plus one forward cone-origin neighbor, or corners plus all forward origin neighbors. `cellCoverage` counts three true square/isometric vertices or four true hex vertices. `coverageGeometry` clips convex cells against linear boundaries and computes circular intersections from triangles and circular sectors, making the strictly-greater-than-half test independent of render tessellation. Tests cover boundary equality, circle tangencies, cone clipping and hex origin neighbors. Grid projections/warps are inverted before measuring coverage. These are display preferences: saved artifact geometry and encounter history remain unchanged.
+
+Artifact color dialogs keep color/opacity candidates local until Save dispatches one appearance mutation. Cancel/Escape discard the candidate; unchanged Save preserves inherited overrides. A controlled collapsible palette with custom RGB sliders avoids browser-native popup lifetime issues. Hex-alpha validation permits opacity values between slider steps.
+
+Actor drop handoff retains the lead token’s actual pointer endpoint in `ActorMotionTrack` while Motion owns its live transform. Leaving direct manipulation resets the track target without inventing a replay from the old packed position; subsequent accepted snapping starts at the retained endpoint. Movement overlays still end before validation publishes the accepted position.

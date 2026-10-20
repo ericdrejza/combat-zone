@@ -729,3 +729,31 @@ these back into `AGENT.md` or `DESIGN.md`.
   Zone 3 defaults. Preferences survive reload, synchronize across tabs, reset
   cleanly, and remain usable after storage write failures. Animation overrides
   keep saved choices while rendering static outlines.
+
+## Ruler, movement measurement, and grid styles (#26)
+
+- [x] Four grid styles preserve appearance through settings, alignment and sizing.
+- [x] Independent whole-number cell measurement scale and units persist locally/cloud.
+- [x] Transient ruler supports all approved shapes, snapping, highlighting, touch, cancellation and read-only use.
+- [x] Unlocked actor movement previews and waypoints use shared geometry and advisory limits.
+- [x] Combat diagonal costs and optional turn/round accounting preserve exact undo/redo.
+- [x] Schema 28 migration, writer guards and invalid-data preservation pass.
+
+- [x] Ruler icon subtools, shared snapping/configurable cell highlighting, multiple saved artifacts and editable points support mouse and touch locking.
+- [x] Shift movement pivots, abbreviated captions, fixed-origin reachable-area glow and local ruler appearance preferences pass regression/browser verification.
+
+- [x] Drop previews stop before position publication; automatic outward source-cell cone origins, corner-or-center AoE inclusion, optional area labels, bounded captions, grouped controls and D/number shortcuts pass browser and regression verification. R renames selected Zones with exact undo/redo.
+
+- [x] Hotkey Zone rename and undo/redo immediately update the selected Zone’s Properties name field without reselection or a stale blur overwrite.
+
+- [x] Locked ruler geometry, names and appearance survive autosave/reload, draft recovery, export/import and Firebase validation; schema 28 migration and invalid-write preservation pass. Writer guards block durable ruler mutations and replay in read-only tabs.
+- [x] Ruler create/delete/clear/name/color and completed geometry edits use shared undo/redo. Initial drafts stay outside history; edits commit once on re-lock, and Escape restores the saved artifact.
+- [x] Ruler hints match lockable/idle states; second-point clicks restore the live preview. Path is the default; locking excludes unplaced cursor points. Rigid/Flexible feel preferences persist/synchronize/reset without changing saved geometry.
+- [x] Saved ruler hit targets allow primary placement and preview through occupied cells; touch taps place and holds offer options. During creation/editing, right-click over another artifact picks up the last placed point without opening its menu.
+
+- [x] Five Canvas cell-coverage choices update saved and draft ruler highlights and optional area labels without encounter/history mutations. Corner thresholds are 3 square/isometric vertices and 4 hex vertices; center-only and exact geometric strict-majority decisions are covered, including half-area equality and tangencies. Cone-origin variants include either the first forward cell or all forward cells touching the origin, excluding the source. Settings persist, synchronize and reset; compact browser verification passes.
+
+- [x] Ruler color picker toggles closed without dismissing the dialog. Cancel at lower left and Save at lower right discard or commit local color/opacity drafts; Save creates one appearance history step, unchanged Save preserves inherited overrides, and hex-alpha values survive exact undo/redo. Escape collapses the picker before cancelling the dialog.
+- [x] Right-click during ruler creation/editing picks up the last placed point while retaining earlier waypoints and a cursor preview, including over other artifacts and editable points. Re-locking saves only placed points as one history step; exhausting an existing edit restores the saved artifact without deletion history. Escape cancels/restores the full draft.
+
+- [x] The lead actor remains at its pointer endpoint during drop validation and settles from there to the accepted position, without replaying motion from the original placement. Regression coverage passes normally and under Strict Mode; delayed-validation browser sampling preserves the drop-to-snap corridor and existing range-overlay suppression.

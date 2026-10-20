@@ -62,6 +62,7 @@ describe("encounter Redux history", () => {
         actors: { byId: {}, allIds: [] },
         engagements: { byId: {}, allIds: [] },
         annotations: { byId: {}, allIds: [] },
+        rulers: { byId: {}, allIds: [] },
         audioCues: { byId: {}, allIds: [] },
         audioCueGroups: { byId: {}, allIds: [] },
         musicGroupIds: [],

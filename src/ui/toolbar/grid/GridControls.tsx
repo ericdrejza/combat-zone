@@ -28,7 +28,7 @@ export function GridControls() {
         onClick={() => void update({ ...encounter.grid, visible: !encounter.grid.visible })} type="button">
         {encounter.grid.visible ? <Eye size={16} /> : <EyeOff size={16} />}
       </ToolbarOptionButton>
-      <ToolbarOptionButton aria-label="Snap Actors to Grid" active={rules.snapToGrid} aria-pressed={rules.snapToGrid} disabled={disabled || busy} onClick={() => void toggle('snapToGrid')} type="button"><Magnet size={16} /></ToolbarOptionButton>
+      <ToolbarOptionButton aria-label="Snap Actors and Rulers to Grid" title="Snap Actors and Rulers to Grid" active={rules.snapToGrid} aria-pressed={rules.snapToGrid} disabled={disabled || busy} onClick={() => void toggle('snapToGrid')} type="button"><Magnet size={16} /></ToolbarOptionButton>
       <ToolbarOptionButton aria-label="Snap Zone Vertices to Grid" active={rules.snapZoneVertices} aria-pressed={rules.snapZoneVertices} disabled={disabled || busy} onClick={() => void toggle('snapZoneVertices')} type="button"><VectorSquare size={16} /></ToolbarOptionButton>
     </ToolbarOptionGroup>
     <ToolbarOptionGroup aria-label="Grid token rules" role="group">

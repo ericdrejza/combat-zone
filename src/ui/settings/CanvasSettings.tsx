@@ -1,3 +1,4 @@
+import { RulerSettings } from './RulerSettings';
 import { BorderThicknessSettings } from "./BorderThicknessSettings";
 import { ResetSettingsButton } from "./ResetSettingsButton";
 import { useResetSettingsCategory } from "./useResetSettingsCategory";
@@ -41,7 +42,7 @@ export function CanvasSettings() {
       <SettingsSubsection title="Placement">
         <SettingsRow label="New encounter placement defaults" fullWidth>
           <ToolbarOptionGroup aria-label="New encounter placement defaults">
-            {([{ key: 'zoneLocked', label: 'Default Zone lock', Icon: Lock }, { key: 'snapToGrid', label: 'Default actor snapping', Icon: Magnet }, { key: 'snapZoneVertices', label: 'Default Zone vertex snapping', Icon: VectorSquare }, { key: 'allowOverlap', label: 'Default Overlap', Icon: Blend }] as const).map(({ key, label, Icon }) => <ToolbarOptionButton key={key} aria-label={label} active={preferences.defaults[key]} aria-pressed={preferences.defaults[key]} disabled={key === 'allowOverlap' && preferences.defaults.zoneLocked} onClick={() => toggle(key)} type="button"><Icon size={16} /></ToolbarOptionButton>)}
+            {([{ key: 'zoneLocked', label: 'Default Zone lock', Icon: Lock }, { key: 'snapToGrid', label: 'Default actor and ruler snapping', Icon: Magnet }, { key: 'snapZoneVertices', label: 'Default Zone vertex snapping', Icon: VectorSquare }, { key: 'allowOverlap', label: 'Default Overlap', Icon: Blend }] as const).map(({ key, label, Icon }) => <ToolbarOptionButton key={key} aria-label={label} active={preferences.defaults[key]} aria-pressed={preferences.defaults[key]} disabled={key === 'allowOverlap' && preferences.defaults.zoneLocked} onClick={() => toggle(key)} type="button"><Icon size={16} /></ToolbarOptionButton>)}
           </ToolbarOptionGroup>
         </SettingsRow>
       </SettingsSubsection>
@@ -57,6 +58,7 @@ export function CanvasSettings() {
         </select>
       </SettingsField>
     </SettingsSection>
+    <RulerSettings />
     <SelectionOutlineSettings />
     <BorderThicknessSettings />
     <SettingsSection title="Navigation">

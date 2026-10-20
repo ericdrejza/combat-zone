@@ -1,3 +1,6 @@
+import { useMovementPreferences } from '@ui/combat_preferences/useMovementPreferences';
+import { DEFAULT_MOVEMENT_PREFERENCES } from '@core/measurement/types';
+import { MovementMeasurementSettings } from './MovementMeasurementSettings';
 import { ResetSettingsButton } from "./ResetSettingsButton";
 import { useResetSettingsCategory } from "./useResetSettingsCategory";
 import { useEffect, useId, useRef, useState } from "react";
@@ -12,6 +15,7 @@ import { MovementRepeatSettings } from "./MovementRepeatSettings";
 import { PreferenceSwitch } from "./PreferenceSwitch";
 
 export function CombatSettings() {
+  const movement = useMovementPreferences();
   const resetCategory = useResetSettingsCategory("combat");
   const { rules, saveRules } = useCombatPreferences();
   const {
@@ -38,10 +42,11 @@ export function CombatSettings() {
       void commit("actor.recalculateHealth", { rules: saved }, (state) => recalculateHealthStatuses(state, saved), () => generation.current === revision);
     }
   }
-  return <SettingsCategory actions={<ResetSettingsButton category="Combat" onReset={() => { generation.current += 1; resetCategory(); }} />} title="Combat" description="Movement decisions, health behavior, and automatic health status.">
+  return <SettingsCategory actions={<ResetSettingsButton category="Combat" onReset={() => { generation.current += 1; resetCategory(); void movement.save({ ...DEFAULT_MOVEMENT_PREFERENCES }); }} />} title="Combat" description="Movement decisions, health behavior, and automatic health status.">
     <SettingsSection title="Movement">
     <PreferenceSwitch checked={warnActorDestinationsDiffer} label="Warn when actor destinations differ" onChange={setWarnActorDestinationsDiffer} />
     <MovementRepeatSettings />
+    <MovementMeasurementSettings />
     </SettingsSection>
     <SettingsSection title="Health">
     <SettingsField label="Health counter name" description="Saves when you leave the field. A blank name restores Hit points.">

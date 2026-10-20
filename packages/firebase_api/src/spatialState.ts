@@ -16,6 +16,21 @@ export function validateSpatialState(state: Record<string, unknown>): void {
     typeof grid.color !== 'string' || !/^#[0-9a-f]{6}$/i.test(grid.color) ||
     typeof grid.opacity !== 'number' || !Number.isFinite(grid.opacity) || grid.opacity < 0 || grid.opacity > 1) fail();
   if (grid?.isometricAngle !== undefined && (version < 24 || typeof grid.isometricAngle !== 'number' || !Number.isFinite(grid.isometricAngle) || grid.isometricAngle < 1 || grid.isometricAngle > 45)) fail();
+  if (version >= 28) {
+    const totals = (state.initiativeTracker as Record<string, unknown> | null)?.movement;
+    const actorIds = Object.keys((state.actors as { byId: object }).byId);
+    if (!grid || !['solid', 'dashed', 'dotted', 'crosshair'].includes(String(grid.lineStyle)) ||
+      !Number.isSafeInteger(grid.distancePerCell) || (grid.distancePerCell as number) <= 0 ||
+      typeof grid.distanceUnit !== 'string' || !grid.distanceUnit.trim() || (totals !== undefined && (!totals || typeof totals !== 'object' || Array.isArray(totals)))) fail();
+    for (const [id, value] of Object.entries((totals ?? {}) as object)) {
+      const total = value as { distance: number; diagonals: number };
+      if (!actorIds.includes(id) || !total || typeof total.distance !== 'number' || !Number.isFinite(total.distance) || total.distance < 0 ||
+        !Number.isSafeInteger(total.diagonals) || total.diagonals < 0) fail();
+    }
+    for (const actor of Object.values((state.actors as { byId: Record<string, Record<string, unknown>> }).byId)) {
+      if (actor.movementLimit !== undefined && (typeof actor.movementLimit !== 'number' || !Number.isFinite(actor.movementLimit) || actor.movementLimit < 0)) fail();
+    }
+  }
   const actors = state.actors as { byId: Record<string, Record<string, unknown>> };
   if (grid?.warp !== undefined) {
     const warp = grid.warp as Record<string, unknown> | null;

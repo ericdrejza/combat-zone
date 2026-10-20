@@ -1,3 +1,4 @@
+import { useRulerToolHint } from './ruler/useRulerToolHint';
 type CanvasToolStatusBadgeProps = {
   belowHistoryControls?: boolean;
   movementSummary?: string;
@@ -17,6 +18,7 @@ export function CanvasToolStatusBadge({
   zoneStatuses,
   zoneShapeMode
 }: CanvasToolStatusBadgeProps) {
+  const rulerHint = useRulerToolHint(activeToolId);
   const actorStatus =
     (["actor", "select", "grid"].includes(activeToolId)) && actorNames.length > 0
       ? actorNames.join(", ")
@@ -32,7 +34,7 @@ export function CanvasToolStatusBadge({
       ? edgeStatuses.join("; ")
       : null;
 
-  const info = movementSummary ??
+  const info = activeToolId === 'ruler' ? rulerHint : movementSummary ??
     actorStatus ??
     zoneStatus ??
     edgeStatus ??

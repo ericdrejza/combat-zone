@@ -25,9 +25,10 @@ export const KEYBIND_DEFINITIONS = [
   { id: "initiative.toggle", label: "Toggle Initiative popout", defaultBinding: "i", editable: true },
   { id: "actor.copy", label: "Copy selected actor", defaultBinding: "mod+c", editable: false },
   { id: "actor.paste", label: "Paste copied actor", defaultBinding: "mod+v", editable: false },
-  { id: "actor.rename", label: "Rename selected actor", defaultBinding: "r", editable: true },
+  { id: "actor.rename", label: "Rename selected actors or zones", defaultBinding: "r", editable: true },
   { id: "actor.showFactionOutlines", label: "Show actor faction outlines and names", defaultBinding: "o", editable: true },
   { id: "selection.selectAll", label: "Select all", defaultBinding: "mod+a", editable: false },
+  { id: "tool.ruler", label: "Activate Ruler tool", defaultBinding: "d", editable: true },
   { id: "tool.actor", label: "Activate Actor tool", defaultBinding: TOOL_DEFINITIONS_BY_ID.actor.contract.keyboardShortcut, editable: true },
   { id: "tool.audio", label: "Activate Audio tool", defaultBinding: TOOL_DEFINITIONS_BY_ID.audio.contract.keyboardShortcut, editable: true },
   { id: "tool.annotation", label: "Activate Annotation tool", defaultBinding: TOOL_DEFINITIONS_BY_ID.annotation.contract.keyboardShortcut, editable: true },
@@ -55,7 +56,10 @@ export const FIXED_SHORTCUT_REFERENCES = [
   { binding: "Shift + Left-click", label: "Toggle canvas selection or select an initiative range" },
   { binding: "Shift + Left-drag", label: "Box select or drag selected actors together" },
   { binding: "Shift + Tab", label: "Select previous zone" },
-  { binding: "Shift + Wheel", label: "Scroll canvas horizontally" },
+  { binding: "Shift + Wheel", label: "Adjust cone angle in Ruler cone mode; otherwise scroll canvas horizontally" },
+  { binding: "1–5", label: "Choose ruler shape while Ruler is active" },
+  { binding: "9 / 0", label: "Toggle actor movement distance / clear rulers while Ruler is active" },
+  { binding: "Space", label: "Lock ruler measurement; add a pivot during actor movement" },
   { binding: "Tab", label: "Select next zone" }
 ] as const;
 

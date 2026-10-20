@@ -21,6 +21,7 @@ type StateWithEncounter = {
 export const encounterLogMiddleware: Middleware<unknown, StateWithEncounter> =
   (storeApi) => (next) => (action) => {
     const isCommit = commitEncounterChange.match(action);
+    const isRulerCommit = isCommit && action.payload.action.type.startsWith('ruler.');
     const isUndo = undoEncounterChange.match(action);
     const isRedo = redoEncounterChange.match(action);
     if (!isCommit && !isUndo && !isRedo) {
@@ -35,9 +36,11 @@ export const encounterLogMiddleware: Middleware<unknown, StateWithEncounter> =
         ? historyBefore.future[0]?.action
         : undefined;
     const result = next(action);
-    const after = storeApi.getState().encounter.present;
+    const historyAfter = storeApi.getState().encounter;
+    const after = historyAfter.present;
 
-    if (after === before) return result;
+    if (historyAfter === historyBefore) return result;
+    if (isRulerCommit && action.payload.action.payload.groupId && historyAfter.past.length <= historyBefore.past.length) return result;
 
     if ((isUndo || isRedo) && !historicalAction) {
       return result;

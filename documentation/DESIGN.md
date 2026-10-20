@@ -78,9 +78,11 @@ Root runtime container.
 - actors[]
 - engagements[]
 - annotations[]
+- rulers (normalized locked measurement artifacts; see §18)
 - counters (normalized encounter-scoped collection)
 - clocks (normalized encounter-scoped collection)
-- initiativeTracker
+- initiativeTracker (optional movement totals keyed by actor ID; distance and diagonal count for the active accounting period)
+- grid (geometry plus lineStyle, distancePerCell, and distanceUnit; see §18)
 - validationState
 - canvasSize
 - backgroundImage (optional, including intrinsic image dimensions)
@@ -334,6 +336,7 @@ Properties:
 - size
 - shape (circle / rectangle / transparent)
 - imageFlippedHorizontal (optional boolean, defaults to false)
+- movementLimit (optional nonnegative distance in encounter measurement units; advisory)
 - stats (optional system-specific blob)
 - currentZoneId | zoneless
 - statusEffects[] (stable condition IDs and namespaced weapon/armor markers)
@@ -1691,7 +1694,7 @@ Zone and Grid are separate toolbar tools, with Grid immediately to the left of
 Zone and a vertical separator between them. Selecting either does not change the
 rules. Zone begins with a separate Lock/Unlock group, followed by its shape
 subtools with VectorPolygon for Polygon and Waypoints Cell Tracer last in that
-group. Grid contains Eye, Magnet (Snap Actors to Grid), and VectorSquare
+group. Grid contains Eye, Magnet (Snap Actors and Rulers to Grid), and VectorSquare
 (Snap Zone Vertices to Grid) together; Blend (Overlap); LayoutGrid alignment
 followed by Grid Settings together; and Scissors (Trim). Background has no grid subtools. Zone, Edge, and Engagement
 features remain available regardless of Zone lock. The old cycling button and
@@ -1839,10 +1842,10 @@ they retain square adjacency and full-cell reservations. Defaults are 64-unit sq
 #808080 color, and 0.5 opacity. Grid visibility is independent of snapping; hiding lines does not disable snapping. A separate SVG Grid Layer renders above Background
 and below Zones, clipped to the canvas. It works without a background image.
 
-Grid Properties appears when the Grid tool is selected and contains only type,
-line color, and line opacity. Type changes commit immediately without Apply.
+Grid Properties appears when the Grid tool is selected and contains type,
+line style, line color, and line opacity. Type changes commit immediately without Apply.
 Color and opacity preview in transient interaction state and commit once when
-focus leaves their control. Line color retains its native color input; clicking
+focus leaves their control. Line style commits immediately. Line color retains its native color input; clicking
 it again blurs the field, closes its picker, and commits its draft.
 Grid Settings retains all existing fields in an Apply/Cancel form with transient
 preview. Isometric also offers a projection-angle field from 1–45°. Detection
@@ -1961,7 +1964,7 @@ immediate; the OS supplies initial hold delay. The interval saves on blur or
 Enter, survives reload/cross-tab changes, and resets with local preferences.
 Each accepted step is independently validated
 and undoable; repeat events received during pending validation are ignored
-rather than queued after key release. No movement budgets, terrain, distance accounting, or actor pathfinding are introduced. Cell Tracer pathfinding applies only to Zone drawing.
+rather than queued after key release. Movement measurement and optional advisory budgets follow §18; terrain and actor pathfinding are not introduced. Cell Tracer pathfinding applies only to Zone drawing.
 
 Background sizing, fitting, adding, and replacing change image coverage and
 scale Zone polygons while retaining grid geometry and saved spatial coordinates.
@@ -2002,3 +2005,22 @@ angle, and rotation;
 logical footprints, hit areas, reservations, and EncounterState stay unchanged.
 Library, Zoneless, and external transfer previews stay upright. Motion honors
 reduced-motion preferences. Isometric Trim uses Square behavior.
+
+## 18. Ruler, movement measurement, and grid styles
+
+Locked ruler artifacts have an ID, optional display name (empty when unnamed), shape options (shape and optional cone angle), map-space control points, and nullable color/opacity overrides. `EncounterState.rulers` owns these artifacts as a normalized collection. Drafts and pending geometry edits remain session-only. Shared appearance preferences are local; nullable artifact overrides inherit those preferences.
+
+
+- Grid Settings owns a positive whole-number distance per cell (default 5 feet), feet/meters/custom units (only feet and meters are concrete choices; standard distance names use abbreviations from mm through km and in/ft/yd/mi), independent of map sizing.
+- Grid styles: Solid (default), Dashed, Dotted, Crosshair. Crosshair retains the outer quarter of each edge at both vertices, leaving its middle half empty. Preserve settings through alignment, detection, grid changes and resizing.
+- Ruler immediately left of Select: Line, Circle, Rectangle, Cone, Path. Unfinished measurements are session-only and available read-only; locking and modifying saved artifacts require writer access. Ruler snapping always follows the Actors and Rulers grid snapping setting. Highlighting is derived from actor/ruler snapping, with no separate toggle. Canvas Settings chooses cell coverage: corners or center (default), center only, strictly more than half the cell area, corners plus the first forward cone cell, or corners plus all forward cells touching the cone origin. Corner thresholds are three on square/isometric grids and four on hex grids. Corner-or-center tests corners first. The cone-origin variants use the corner threshold without the center fallback; their extra cells exclude the source cell and must have actual cone overlap. The first-cell variant follows the centerline, resolving boundary ties with normal grid snapping. Other area shapes use the corner threshold in these two variants. Snapped Line rulers already form whole-cell routes, so their cell coverage is unchanged. Coverage and overlap fractions are evaluated in unprojected map geometry, independently of display warping and the rendered arc samples. Exactly half coverage is excluded from the majority mode. The local setting updates draft and saved-artifact highlights and optional cell-based area values without editing artifacts or adding encounter history.
+- Shape subtools use icon buttons: Path (Waypoints), Circle (Radius), Cone, Rectangle, and Line (RectangleEllipsis rotated 90°), together in one button group. Remove the toolbar range field. The cone angle field uses an Angle icon, selects its text on click, and commits/blurs on Enter. Path is the default ruler subtool. Click to set shape endpoints or Path waypoints; only editable control points use dragging. Space locks an artifact, including edited artifacts, using only placed points; it never adds the cursor preview as a waypoint. The live cursor point is white and placed points are solid. A contextual Lock icon supports touch. Multiple locked artifacts remain through tool switches until deleted or cleared. Right-click a locked artifact for an Edit/Delete/Name/Color wheel (touch-hold on touch screens); editing Paths supports appending waypoints, and other shapes expose adjustable points. Left-clicks and short touch taps through saved artifacts place points for the active ruler, including snapped cell centers; saved artifacts do not block the live preview. While creating/editing, right-click anywhere on the ruler canvas—including editable points or another saved artifact—to pick up the last placed point, retaining earlier waypoints and the live cursor preview. Repeat to backtrack one point at a time. Removing the final draft point ends creation or restores the last saved version when editing. Escape cancels/restores the entire draft. Artifact context menus open only when no ruler draft/edit is active. Support explicit dimensions and angles. Locked artifacts persist in the encounter, including names and individual color/opacity overrides. Creating, deleting, clearing, renaming and changing appearance use encounter undo/redo. The artifact color dialog keeps edits local until Save commits one appearance action; Cancel discards them. Its palette toggle expands/collapses without closing the dialog, and Escape closes an open palette before cancelling the dialog. Cancel is at the lower left and Save at the lower right. Geometry edits remain temporary until Space locks them again as one history step; Escape restores the last locked version. Initial unfinished shapes never enter history. Clicking the second point of a two-point draft picks it up and returns to the live endpoint preview; dragging still adjusts a point.
+- Measurements use unprojected grid space, rendered through rotation/projection/warp. Square circles start at vertices; snapped cones choose a source cell on the first click, then switch between its nearest side midpoint or corner according to the target trajectory. Side cones face outward from the source cell. There are no manual corner/side origin controls. Square cones default to 90°, hex cones to 60°. Unsnapped cones use the clicked origin. Shift+wheel in cone mode adjusts the angle; other wheel behavior is retained.
+- Line is one cell wide. Choose the consistent repeating grid-step pattern that best reaches the target automatically; do not expose concrete orthogonal/diagonal pattern choices.
+- Line/Path distance follows ruler snapping. Calculated area is disabled by default and can be enabled in Canvas Settings (geometric when unsnapped, summed highlighted-cell area when snapped). Circle labels show radius, cone labels show length and degrees, rectangles show width × height, and line/path labels show distance. Keep the complete artifact label within canvas bounds, fitting long names as needed.
+- Canvas Settings provides a ruler color picker, manual #RRGGBB/#RRGGBBAA entry and opacity. Default appearance follows the theme; preferences persist locally and synchronize between tabs. “Ruler feel” offers “Rigid and Snappy” (default) and “Flowy and Flexible”; the latter adds spring flow and bounce to draft manipulation using Motion, respecting reduced-motion preferences. Locked shapes have identical geometry and appearance in both modes.
+- Separate Ruler and Select with a vertical divider. D activates Ruler; R retains entity rename and opens a rename dialog for selected actors or zones. In Ruler, 1–5 select Path/Circle/Cone/Rectangle/Line, 9 toggles actor movement distance, and 0 clears rulers. Canvas hints follow the current state: click to begin or continue a measurement, Spacebar to lock only when a draft can be locked, and right-click/touch-hold saved artifacts for options while idle.
+- Combat diagonal policy: 1 (default), alternating 1–2, 2, or disabled. Hex retains six neighbors.
+- Actor movement limits are optional and advisory in every validation mode. Unlocked movement previews routes; pressing Shift (or Space) during a drag fixes a pivot, preserving earlier segments and optimizing subsequent movement from the new pivot. No Add waypoint button is shown during a drag. The movement caption shows only distance and abbreviated units at the actor’s bottom right. A footwear icon in ruler subtools toggles that caption. Movement distance/range overlays end on pointer release, before a new actor position commits, so no new range boundary flashes on drop. The token itself retains its last pointer position during validation and settles from there to the accepted position, without replaying movement from its original position. Movement limits use a glow anchored at the drag origin with the available distance at drag start: whole reachable grid cells when snapped, a true radius when unsnapped. This is an advisory distance envelope, not obstacle pathfinding. Zone-locked movement has ruler only.
+- Turn accounting defaults off and applies only to the active initiative actor. Reset per turn (default) or per round; the reset selector is enabled only while tracking is enabled. Count accepted drags/keyboard moves; exclude placement, removal, automatic packing and map changes. Carry alternating parity within accounting periods; otherwise restart per gesture.
+- Movement and accounting commit atomically. Initiative changes, deletion and accounting changes preserve exact undo/redo. Changes to tracking/reset policy/costs/measurement units clear totals; limit edits retain totals.

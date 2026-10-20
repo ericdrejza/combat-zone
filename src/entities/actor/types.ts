@@ -14,6 +14,7 @@ export type ActorShape = "circle" | "rectangle" | "transparent";
 export type ActorStatus = 0 | 1 | 2 | 3;
 
 export type Actor = {
+  movementLimit?: number;
   /** Authoritative position while Zone lock is off; locked placement remains derived. */
   spatialPosition?: import('@core/layout/types').LayoutPoint;
   hitPoints?: import("./actorResources").HitPoints;

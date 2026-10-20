@@ -1,3 +1,5 @@
+import { GridLineStyleField } from './GridLineStyleField';
+import { GridMeasurementFields } from './GridMeasurementFields';
 import { isometricAngle } from '@core/movement/gridProjection';
 import type { GridConfiguration } from '@core/movement/types';
 import { normalizeGridRotation } from '@core/movement/gridRotation';
@@ -28,6 +30,8 @@ export function GridSettingsFields({ draft, setDraft, compact = false }: {
           <input aria-label="Line opacity" className="w-full accent-canvas-ink" type="range" min="0" max="1" step="0.05" value={draft.opacity} onChange={event => setDraft({ ...draft, opacity: Number(event.currentTarget.value) })} />
         </label>
       </div>
+      <GridLineStyleField className={control} value={draft.lineStyle} onChange={lineStyle => setDraft({ ...draft, lineStyle })} />
+      <GridMeasurementFields className={control} grid={draft} onChange={setDraft} />
       <PreferenceSwitch ariaLabel="Grid visible" label="Show grid lines" checked={draft.visible} onChange={visible => setDraft({ ...draft, visible })} />
       <p className="text-xs text-canvas-muted">Smaller cell-size values enlarge the map; actors and rendered grid spacing stay fixed. Grid movement snaps even when lines are hidden.</p>
   </div>;

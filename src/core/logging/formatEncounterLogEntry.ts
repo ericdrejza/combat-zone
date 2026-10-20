@@ -131,6 +131,12 @@ export function formatCommittedEncounterAction(
   const zoneNames = () => listNames(namesForZoneIds(zoneIdsFrom(action), snapshots));
 
   switch (action.type) {
+    case "ruler.create": return "Ruler measurement locked.";
+    case "ruler.edit": return "Ruler measurement updated.";
+    case "ruler.delete": return "Ruler measurement deleted.";
+    case "ruler.clear": return "Ruler measurements cleared.";
+    case "ruler.rename": return "Ruler measurement renamed.";
+    case "ruler.appearance": return "Ruler appearance updated.";
     case "actor.create":
       return `${actorNames()} added to ${destinationName(action, snapshots)}.`;
     case "actor.move":

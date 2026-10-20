@@ -38,6 +38,7 @@ export function createEncounterState({
     actors: createEmptyEntityCollection(),
     engagements: createEmptyEntityCollection(),
     annotations: createEmptyEntityCollection(),
+    rulers: createEmptyEntityCollection(),
     audioCues: createEmptyEntityCollection(),
     audioCueGroups: createEmptyEntityCollection(),
     musicGroupIds: [],

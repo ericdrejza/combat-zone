@@ -81,3 +81,29 @@ describe("CanvasSettings", () => {
       .toMatchObject({ zoneColorDefaults: { border: null } });
   });
 });
+
+describe('ruler appearance', () => {
+  it('offers both ruler feels and persists the selected manipulation preference', () => {
+    render(<Provider store={store}><CanvasSettings /></Provider>);
+    const feel = screen.getByRole('combobox', { name: 'Ruler feel' });
+    expect(feel).toHaveValue('rigid');
+    fireEvent.change(feel, { target: { value: 'flexible' } });
+    expect(feel).toHaveValue('flexible');
+    expect(JSON.parse(localStorage.getItem(CANVAS_PREFERENCES_KEY)!)).toMatchObject({ rulerFeel: 'flexible' });
+    fireEvent.change(feel, { target: { value: 'rigid' } });
+    expect(JSON.parse(localStorage.getItem(CANVAS_PREFERENCES_KEY)!)).toMatchObject({ rulerFeel: 'rigid' });
+  });
+  afterEach(() => localStorage.removeItem(CANVAS_PREFERENCES_KEY));
+  it('accepts hex alpha, retains valid settings after invalid input, and persists picker/opacity changes', () => {
+    render(<Provider store={store}><CanvasSettings /></Provider>);
+    const hex = screen.getByRole('textbox', { name: 'Ruler hex color' });
+    fireEvent.change(hex, { target: { value: '#12345680' } }); fireEvent.blur(hex);
+    expect(JSON.parse(localStorage.getItem(CANVAS_PREFERENCES_KEY)!)).toMatchObject({ rulerColor: '#123456', rulerOpacity: 128 / 255 });
+    fireEvent.change(hex, { target: { value: '#nope' } }); fireEvent.blur(hex);
+    expect(hex).toHaveAttribute('aria-invalid', 'true');
+    expect(JSON.parse(localStorage.getItem(CANVAS_PREFERENCES_KEY)!)).toMatchObject({ rulerColor: '#123456' });
+    fireEvent.change(screen.getByLabelText('Ruler color'), { target: { value: '#abcdef' } });
+    fireEvent.change(screen.getByRole('slider', { name: 'Ruler opacity' }), { target: { value: '0.4' } });
+    expect(JSON.parse(localStorage.getItem(CANVAS_PREFERENCES_KEY)!)).toMatchObject({ rulerColor: '#abcdef', rulerOpacity: 0.4 });
+  });
+});

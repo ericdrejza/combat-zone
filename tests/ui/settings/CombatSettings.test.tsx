@@ -240,3 +240,16 @@ describe("Combat and resource label preferences", () => {
     expect(screen.getByLabelText("Health counter name")).toHaveValue("Hit points");
   });
 });
+
+it('enables movement reset policy only while initiative movement tracking is enabled', async () => {
+  setup();
+  const reset = screen.getByRole('combobox', { name: 'Reset movement totals' });
+  expect(reset).toBeDisabled();
+  fireEvent.click(screen.getByRole('switch', { name: 'Track movement during initiative' }));
+  await waitFor(() => expect(reset).toBeEnabled());
+  fireEvent.change(reset, { target: { value: 'round' } });
+  await waitFor(() => expect(reset).toHaveValue('round'));
+  fireEvent.click(screen.getByRole('switch', { name: 'Track movement during initiative' }));
+  await waitFor(() => expect(reset).toBeDisabled());
+  expect(reset).toHaveValue('round');
+});

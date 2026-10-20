@@ -1,3 +1,5 @@
+import { ActorMovementOverlay } from './actors/ActorMovementOverlay';
+import { RulerOverlay } from './ruler/RulerOverlay';
 import { useMemo, useState } from 'react';
 import { useCanvasColorSampler } from './color_sampler/useCanvasColorSampler';
 import { buildCellGraph, traceCellRoute } from '@core/movement/cellTracer';
@@ -308,7 +310,9 @@ export function CanvasWorkspace({
         ))}
         {calibrating ? <GridCalibrationMarkers /> : null}
         {tracerPreview ? <polyline data-cell-tracer-preview points={tracerPreview.map(p => `${p.x},${p.y}`).join(" ")} fill="none" stroke={polygonDraftColor} strokeWidth={2} strokeDasharray="6 4" pointerEvents="none" /> : null}
+        <ActorMovementOverlay encounter={encounter} drag={actorDrag} />
         {keyboardOverlay}
+        <RulerOverlay encounter={encounter} />
       </motion.svg>
     </MotionConfig>
   );

@@ -1,3 +1,4 @@
+import { rulersEqual } from '@core/measurement/rulerEquality';
 import type { PayloadAction } from "@reduxjs/toolkit";
 import { createSlice, original } from "@reduxjs/toolkit";
 
@@ -37,11 +38,14 @@ const encounterSlice = createSlice({
           }
         : payload.nextEncounter;
 
-      state.past.push({
-        action: payload.action,
-        snapshot: state.present
-      });
+      const last = state.past.at(-1), groupId = payload.action.payload.groupId;
+      const groupedAppearance = payload.action.type === 'ruler.appearance' && typeof groupId === 'string'
+        && !state.future.length && last?.action.type === payload.action.type && last.action.payload.groupId === groupId;
+      if (!groupedAppearance) state.past.push({ action: payload.action, snapshot: state.present });
       state.present = nextEncounter;
+      if (groupedAppearance && last && rulersEqual(last.snapshot.rulers.allIds.map(id => last.snapshot.rulers.byId[id]), nextEncounter.rulers.allIds.map(id => nextEncounter.rulers.byId[id]))) {
+        state.past.pop(); state.present = last.snapshot;
+      }
       state.future = [];
     },
     undoEncounterChange(state) {

@@ -55,6 +55,7 @@ export function advanceInitiative(state: EncounterState): EncounterState {
     return {
       ...state,
       initiativeTracker: {
+        ...state.initiativeTracker,
         entries,
         currentActorId: null,
         currentRound: currentRound + 1
@@ -71,6 +72,7 @@ export function retreatInitiative(state: EncounterState): EncounterState {
     return {
       ...state,
       initiativeTracker: {
+        ...state.initiativeTracker,
         entries,
         currentActorId: null,
         currentRound: currentRound - 1
@@ -95,7 +97,7 @@ function stepInitiative(state: EncounterState, direction: -1 | 1): EncounterStat
     if (!actor || getActorStatus(actor) === 0) continue;
     return {
       ...state,
-      initiativeTracker: { entries, currentActorId: actorId, currentRound: round }
+      initiativeTracker: { ...state.initiativeTracker, entries, currentActorId: actorId, currentRound: round }
     };
   }
   return state;

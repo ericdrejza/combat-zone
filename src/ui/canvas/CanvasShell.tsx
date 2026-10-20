@@ -1,3 +1,4 @@
+import { RulerLockButton } from './ruler/RulerLockButton';
 import { EncounterHistoryControls } from "@ui/history/EncounterHistoryControls";
 import { useEncounterOperation } from "@ui/history/useEncounterOperation";
 import { useGridMapPreview } from './grid/useGridMapPreview';
@@ -277,7 +278,7 @@ export function CanvasShell({
     library
   });
 
-  useEncounterOperation(Boolean(actorDrag?.phase === "dragging" || edgeDrag || zoneDrag?.phase === "dragging" || vertexDrag || shapeDraft || boxSelection || zoneDraftPoints.length || engagementDrag?.phase === "dragging" || compactTransferPreview || gridCalibrationActive || pendingAudioDrop));
+  useEncounterOperation(Boolean(actorDrag?.phase === "dragging" || actorDrag?.phase === "validating" || edgeDrag || zoneDrag?.phase === "dragging" || vertexDrag || shapeDraft || boxSelection || zoneDraftPoints.length || engagementDrag?.phase === "dragging" || compactTransferPreview || gridCalibrationActive || pendingAudioDrop));
 
   const polygonDraftColor = getTextColorForLuminance(
     polygonDraftBackgroundLuminance
@@ -399,6 +400,7 @@ export function CanvasShell({
       {showMobileControls ? (
         <div className="absolute bottom-3 left-2 right-2 flex items-end gap-2">
           <div className="relative z-30 flex shrink-0 items-center gap-2">
+            <RulerLockButton />
             <TouchSelectionToggle toolId={activeToolId} />
             <CompactSelectionDeleteButton
               activeToolId={activeToolId}
@@ -440,6 +442,7 @@ export function CanvasShell({
           ) : null}
         </div>
       ) : null}
+      {!showMobileControls ? <div className="absolute bottom-3 left-3 z-30"><RulerLockButton /></div> : null}
       {!compactLayout && !showMobileControls ? (
         <ZonelessActorPanel
           isZoneEditing={activeToolId === "zone" && Boolean(shapeDraft || zoneDraftPoints.length || vertexDrag || zoneDrag)}

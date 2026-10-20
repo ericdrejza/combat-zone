@@ -1,7 +1,7 @@
 import type { Middleware } from '@reduxjs/toolkit';
 import type { EncounterHistoryState } from '@core/history/types';
 import { isEncounterOperationActive } from '@core/history/encounterOperations';
-import { reconcileInteractionReferences, selectEntity, setActiveTool, type InteractionState } from '@interaction/interactionState';
+import { reconcileInteractionReferences, setEditingRuler, selectEntity, setActiveTool, type InteractionState } from '@interaction/interactionState';
 import { getAffectedHistoryEntities } from '@interaction/selection/historyAffectedEntities';
 import { canToolSelectEntityType } from '@interaction/tools/toolRegistry';
 import { readCanvasPreferences } from '@ui/canvas_preferences/canvasPreferenceStorage';
@@ -16,6 +16,7 @@ export const historyInteractionMiddleware: Middleware<unknown, { encounter: Enco
     const entry = undoEncounterChange.match(action) ? history.past.at(-1) : history.future[0];
     const before = history.present;
     const result = next(action);
+    if (entry?.action.type.startsWith('ruler.')) api.dispatch(setEditingRuler(null));
     const after = api.getState().encounter.present;
     if (after !== before) {
       api.dispatch(reconcileInteractionReferences(after));

@@ -4,6 +4,7 @@ export type ToolId =
   | "select"
   | "zone"
   | "grid"
+  | "ruler"
   | "edge"
   | "actor"
   | "annotation"
@@ -105,7 +106,8 @@ export const MVP_TOOLS: ToolDefinition[] = [
 ];
 
 export const TOOL_DEFINITIONS_BY_ID: Record<ToolId, ToolDefinition> =
-  { ...Object.fromEntries(MVP_TOOLS.map((tool) => [tool.id, tool])),
+  { ...(Object.fromEntries(MVP_TOOLS.map((tool) => [tool.id, tool])) as Record<ToolId, ToolDefinition>),
+    ruler: { id: 'ruler', label: 'Ruler', tooltip: 'Measure distances and areas.', contract: { selectableEntityTypes: [], dragBehavior: 'Adjust ruler control points.', clickBehavior: 'Set measurement points.', keyboardShortcut: 'd' } },
     grid: { id: 'grid', label: 'Grid', tooltip: 'Configure square, hex, or isometric grids and move actors on the grid.',
       contract: { selectableEntityTypes: ['actor'], dragBehavior: 'Move actors between grid anchors.', clickBehavior: 'Select actors.', keyboardShortcut: '' } },
   } as Record<ToolId, ToolDefinition>;

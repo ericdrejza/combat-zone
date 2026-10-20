@@ -1,3 +1,4 @@
+import { rulerCommitMiddleware } from './rulerCommitMiddleware';
 import { historyInteractionMiddleware } from "./historyInteractionMiddleware";
 import { movementRulesMiddleware } from './movementRulesMiddleware';
 import { configureStore } from "@reduxjs/toolkit";
@@ -21,6 +22,7 @@ export const store = configureStore({
     getDefaultMiddleware().concat(
       persistenceWriteGuardMiddleware,
       historyInteractionMiddleware,
+      rulerCommitMiddleware,
       movementRulesMiddleware,
       audioTriggerMiddleware,
       encounterLogMiddleware

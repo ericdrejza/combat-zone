@@ -58,6 +58,7 @@ export type ZoneDragState = {
 };
 
 export type ActorDragState = {
+  waypoints?: LayoutPoint[];
   actorId: string;
   actorIds: string[];
   /** Frozen render points keep worker revisions from moving a drag's origin. */
@@ -68,7 +69,7 @@ export type ActorDragState = {
   engagementIntentEngagementId?: string;
   current: LayoutPoint;
   hasMoved: boolean;
-  phase: 'dragging' | 'returning';
+  phase: 'dragging' | 'validating' | 'returning';
   /** Explicit snap-back targets used when a drop does not mutate the encounter. */
   returnPointsByActorId?: Record<string, LayoutPoint>;
   start: LayoutPoint;
@@ -100,6 +101,7 @@ export type MutableRefValue<TValue> = {
 };
 
 export type CanvasInteractionState = {
+  isActorDragCurrent?: (drag: ActorDragState) => boolean;
   zoneGestureRevisionRef: MutableRefValue<number>;
   pendingZoneReshapeRef: MutableRefValue<PendingZoneReshape | null>;
   activeToolId: RootState['interaction']['activeToolId'];

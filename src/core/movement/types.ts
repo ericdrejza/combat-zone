@@ -21,7 +21,11 @@ export const DEFAULT_ISOMETRIC_ANGLE = Math.atan(0.5) * 180 / Math.PI;
 export type GridType = 'square' | 'isometric' | 'hex-pointy' | 'hex-flat';
 /** A bilinear alignment maps normalized lattice coordinates into distorted local coordinates. */
 export type GridWarp = { type: 'bilinear'; x: [number, number, number, number]; y: [number, number, number, number] };
+export type GridLineStyle = 'solid' | 'dashed' | 'dotted' | 'crosshair';
 export type GridConfiguration = {
+  lineStyle?: GridLineStyle;
+  distancePerCell?: number;
+  distanceUnit?: string;
   type: GridType;
   /** User-facing map scale: halving this value doubles map coverage. */
   cellSize: number;
@@ -36,14 +40,17 @@ export type GridConfiguration = {
 };
 
 export function createDefaultGrid(): GridConfiguration {
-  return { type: 'square', cellSize: 64, origin: { x: 0, y: 0 }, rotation: 0,
+  return { lineStyle: 'solid', distancePerCell: 5, distanceUnit: 'feet', type: 'square', cellSize: 64, origin: { x: 0, y: 0 }, rotation: 0,
     visible: false, color: '#808080', opacity: 0.5 };
 }
 
 export function validGrid(value: unknown): value is GridConfiguration {
   if (!value || typeof value !== 'object') return false;
   const grid = value as GridConfiguration;
-  return ['square', 'isometric', 'hex-pointy', 'hex-flat'].includes(grid.type) &&
+  return (grid.lineStyle === undefined || ['solid', 'dashed', 'dotted', 'crosshair'].includes(grid.lineStyle)) &&
+    (grid.distancePerCell === undefined || (Number.isSafeInteger(grid.distancePerCell) && grid.distancePerCell > 0)) &&
+    (grid.distanceUnit === undefined || (typeof grid.distanceUnit === 'string' && grid.distanceUnit.trim().length > 0)) &&
+    ['square', 'isometric', 'hex-pointy', 'hex-flat'].includes(grid.type) &&
     Number.isFinite(grid.cellSize) && grid.cellSize > 0 &&
     !!grid.origin && Number.isFinite(grid.origin.x) && Number.isFinite(grid.origin.y) &&
     Number.isFinite(grid.rotation) && typeof grid.visible === 'boolean' &&

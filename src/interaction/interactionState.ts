@@ -1,3 +1,5 @@
+import { rulerReducers } from './rulerState';
+import { DEFAULT_RULER_OPTIONS, type RulerOptions, type RulerDraft, type LockedRuler } from '@core/measurement/types';
 import type { EncounterState } from "@core/encounter/types";
 import { reconcileReferences } from "./history_operations/reconcileReferences";
 import { calibrationVertexCount } from '@core/movement/gridProjection';
@@ -70,6 +72,9 @@ export type ActorToolState = {
 };
 
 export type InteractionState = {
+  editingRuler: LockedRuler | null;
+  rulerOptions: RulerOptions;
+  rulerDraft: RulerDraft | null;
   gridPreview: GridConfiguration | null;
   gridAppearancePreview: Pick<GridConfiguration, 'color' | 'opacity'> | null;
   gridCalibrationActive: boolean;
@@ -117,6 +122,7 @@ const initialDraft: InteractionDraftState = {
 };
 
 const initialState: InteractionState = {
+  editingRuler: null, rulerOptions: DEFAULT_RULER_OPTIONS, rulerDraft: null,
   gridAppearancePreview: null, gridPreview: null, gridCalibrationActive: false, gridCalibrationPoints: [], gridCalibrationMode: 'simple', gridCalibrationType: 'square',
   actorPaintBrush: false,
   actorTool: {
@@ -190,6 +196,7 @@ export const interactionSlice = createSlice({
   name: 'interaction',
   initialState,
   reducers: {
+    ...rulerReducers,
     setGridAppearancePreview(state, { payload }: PayloadAction<Pick<GridConfiguration, 'color' | 'opacity'> | null>) { state.gridAppearancePreview = payload; },
     setGridPreview(state, { payload }: PayloadAction<GridConfiguration | null>) { state.gridPreview = payload; },
     startGridCalibration: {
@@ -205,6 +212,7 @@ export const interactionSlice = createSlice({
     cancelGridEditing(state) { state.gridPreview = null; state.gridCalibrationActive = false; state.gridCalibrationPoints = []; },
     setActiveTool(state, { payload }: PayloadAction<ToolId>) {
       state.activeToolId = payload;
+      state.rulerDraft = null; state.editingRuler = null;
       state.gridAppearancePreview = null;
       state.gridPreview = null; state.gridCalibrationActive = false; state.gridCalibrationPoints = [];
       state.dragActionPreview = null;
@@ -250,6 +258,7 @@ export const interactionSlice = createSlice({
       state.touchMultiSelect = !state.touchMultiSelect;
     },
     clearInteractionDraft(state) {
+      state.rulerDraft = null; state.editingRuler = null;
       state.draft = initialDraft;
       state.dragActionPreview = null;
       state.contextualActionRequest = null;
@@ -420,6 +429,7 @@ export const interactionSlice = createSlice({
 });
 
 export const {
+  setRulerOptions, setRulerDraft, startRulerDraft, setEditingRuler, updateRulerPoint, removeRulerPoint,
   reconcileInteractionReferences,
   setGridAppearancePreview, setGridPreview, startGridCalibration, setGridCalibrationMode, setGridCalibrationType, addGridCalibrationPoint, removeGridCalibrationPoint, cancelGridEditing,
   clearActorPaintBrush,
@@ -459,3 +469,5 @@ export const {
 } = interactionSlice.actions;
 
 export default interactionSlice.reducer;
+
+export { lockRulerDraft, editLockedRuler, updateLockedRuler, deleteLockedRuler, clearRulers } from "./rulerCommands";

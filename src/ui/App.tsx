@@ -14,7 +14,7 @@ import { useDispatch } from "react-redux";
 import { useSelector } from "react-redux";
 
 import { setActiveTool } from "@interaction/interactionState";
-import { MVP_TOOLS } from "@interaction/tools/toolRegistry";
+import { MVP_TOOLS, TOOL_DEFINITIONS_BY_ID } from "@interaction/tools/toolRegistry";
 import { CanvasShell } from "./canvas/CanvasShell";
 import { CanvasViewportProvider } from "./canvas/CanvasViewportContext";
 import type { DockPanelDefinition, DockSide, DropTarget } from "./panels/PanelsShell";
@@ -41,7 +41,7 @@ import { createEncounterActionRecord } from "@core/history/createEncounterAction
 import { resolveLibraryAsset } from "@library/librarySlice";
 import type { LibraryNode } from "@library/types";
 import type { ActorImageInput } from "@entities/actor/actorMutations";
-import { ActorRenameModal } from "./toolbar/actor/ActorRenameModal";
+import { SelectionRenameModal } from "./selection/SelectionRenameModal";
 import { ZoneResizeApprovalProvider } from "./zoneResizeApproval";
 import { MotionPreferenceProvider } from "./motion_preferences/MotionPreferenceProvider";
 import { readImageAssetDimensions } from "./toolbar/background/readImageFile";
@@ -85,7 +85,7 @@ import { OPEN_AUDIO_LIBRARY_EVENT, RELINK_AUDIO_LIBRARY_EVENT } from "./audio/au
 type SidebarCollapsedState = Record<DockSide, boolean>;
 
 const toolKeybindActions = Object.fromEntries(
-  MVP_TOOLS.map((tool) => [tool.id, `tool.${tool.id}`])
+  [...MVP_TOOLS, TOOL_DEFINITIONS_BY_ID.ruler].map((tool) => [tool.id, `tool.${tool.id}`])
 ) as Record<(typeof MVP_TOOLS)[number]["id"], KeybindActionId>;
 
 function shouldIgnoreKeyboardShortcut(target: EventTarget | null): boolean {
@@ -183,7 +183,7 @@ function AppContent() {
 
       if (
         matchesKeybind(event, bindings["actor.rename"]) &&
-        selection.selectedEntityType === "actor" &&
+        ["actor", "zone"].includes(selection.selectedEntityType ?? "") &&
         selection.selectedIds.length > 0
       ) {
         event.preventDefault();
@@ -191,7 +191,7 @@ function AppContent() {
         return;
       }
 
-      const nextTool = MVP_TOOLS.find((tool) =>
+      const nextTool = [...MVP_TOOLS, TOOL_DEFINITIONS_BY_ID.ruler].find((tool) =>
         matchesKeybind(event, bindings[toolKeybindActions[tool.id]])
       );
 
@@ -563,7 +563,7 @@ function AppContent() {
       {persistenceUi.dialogs}
       {audioAssignment.dialog}
       {renameModalOpen ? (
-        <ActorRenameModal onClose={() => setRenameModalOpen(false)} />
+        <SelectionRenameModal onClose={() => setRenameModalOpen(false)} />
       ) : null}
       {encounterRenameOpen ? (
         <EncounterRenameDialog onClose={() => setEncounterRenameOpen(false)} />
