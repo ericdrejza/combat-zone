@@ -133,6 +133,7 @@ export function ZoneColorSection({
             role="tabpanel"
           >
             <ColorPalette
+              key={`${zone.id}:${palette.property}`} zoneId={zone.id}
               disabled={readOnly || (activeTab === "engagements" && matchesBorder)}
               label={palette.label}
               onCommitZoneProperties={onCommitZoneProperties}

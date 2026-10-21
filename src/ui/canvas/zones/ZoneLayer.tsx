@@ -1,3 +1,5 @@
+import { useSelector } from "react-redux";
+import type { RootState } from "@store/store";
 import { displayedZoneDragPolygon } from './displayedZoneDragPolygon';
 import { ZoneRotationHandle } from './ZoneRotationHandle';
 import { useLayoutEffect, useMemo, useRef } from "react";
@@ -9,6 +11,7 @@ type Handlers = Pick<ZoneLayerProps, "onResizeHandleDrag" | "onResizeHandleDragE
   "onResizeHandleMouseDown" | "onZoneMotionComplete">;
 
 export function ZoneLayer(props: ZoneLayerProps) {
+  const colorPreviewZoneId = useSelector((state: RootState) => state.interaction.zoneColorPreview?.zoneId);
   // Memoized visuals need stable callbacks that still see the current gesture.
   const latest = useRef(props);
   useLayoutEffect(() => { latest.current = props; });
@@ -32,6 +35,7 @@ export function ZoneLayer(props: ZoneLayerProps) {
       selected={props.selection.selectedEntityType === "zone" && props.selection.selectedIds.includes(zoneId)}
       actorTargeted={props.actorTargetZoneId === zoneId}
       directManipulation={props.directManipulationZoneId === zoneId}
+      previewingColor={colorPreviewZoneId === zoneId}
       previewingOpacity={previewingOpacity}
       renderedOpacity={previewingOpacity ? props.zoneOpacityPreview!.opacity : zone.opacity}
       backgroundLuminance={props.backgroundLuminanceByZoneId[zoneId]}

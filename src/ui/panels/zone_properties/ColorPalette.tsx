@@ -1,23 +1,13 @@
-import { ColorPalettePicker } from "@ui/controls/ColorPalettePicker";
+import { ColorPicker } from "@ui/controls/ColorPicker";
 import type { CommitZoneProperties } from "./types";
-import { useEffect, useId } from 'react';
-import { useColorSampler } from '@ui/canvas/color_sampler/ColorSamplerProvider';
-import { SamplerButton } from '@ui/canvas/color_sampler/SamplerButton';
+import { useZoneColorControl } from "./useZoneColorControl";
 
 type ZoneColorProperty = "colorFill" | "colorBorder" | "colorEngagement";
-export function ColorPalette({ disabled, label, onCommitZoneProperties, property, value }: {
+export function ColorPalette({ disabled, label, onCommitZoneProperties, property, value, zoneId }: {
   disabled?: boolean; label: string; onCommitZoneProperties: CommitZoneProperties;
-  property: ZoneColorProperty; value: string;
+  property: ZoneColorProperty; value: string; zoneId: string;
 }) {
-  const sampler = useColorSampler(), id = useId();
-  const key = `${id}:${property}`;
-  useEffect(() => () => sampler.cancel(key), [key, sampler.cancel]);
-  useEffect(() => { if (disabled) sampler.cancel(key); }, [disabled, key, sampler.cancel]);
-  return <ColorPalettePicker disabled={disabled} label={label} value={value}
-    labelAction={<><SamplerButton label="Background color matcher" active={sampler.session?.key === key} disabled={disabled}
-      onClick={() => sampler.toggle({ key, kind: 'background', pick: color => {
-        if (color.toLowerCase() !== value.toLowerCase()) onCommitZoneProperties({ [property]: color });
-      } })} />
-      {sampler.error ? <span role="alert" className="text-xs text-canvas-muted">{sampler.error}</span> : null}</>}
-    onChange={color => onCommitZoneProperties({ [property]: color })} />;
+  const control = useZoneColorControl({ zoneId, property, value, disabled, onCommit: onCommitZoneProperties });
+  return <ColorPicker disabled={disabled} label={label} value={control.draft} fallbackColor={value}
+    onChange={control.preview} onCommit={control.commit} onCancel={control.cancel} />;
 }

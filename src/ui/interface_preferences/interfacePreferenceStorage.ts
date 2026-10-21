@@ -1,3 +1,5 @@
+import { defaultResourceBarGradient, readResourceBarGradient, type ResourceBarGradient } from "./resourceBarColors";
+import { readRecentCustomColors } from "./recentCustomColors";
 import type { PreferenceCategory } from "./preferenceCategories";
 import type { SelectionOutlineMode } from "@core/rendering/SelectionOutline";
 import {
@@ -64,8 +66,11 @@ export type DurableInterfacePreferences = {
   warnActorDestinationsDiffer: boolean;
   keepHealDamageDialogOpen: boolean;
   healthCounterName: string;
+  recentCustomColors: string[];
   resourceBar1Color: string;
   resourceBar2Color: string;
+  resourceBar1Gradient: ResourceBarGradient;
+  resourceBar2Gradient: ResourceBarGradient;
   clockStyleDefault: ClockStyle;
   showActorStatusesOnCanvas: boolean;
   reverseHealthStatusOrder: boolean;
@@ -110,8 +115,11 @@ export type InterfacePreferences = DurableInterfacePreferences & {
   setPanWithRightClickDrag: (enabled: boolean) => void;
   setWarnActorDestinationsDiffer: (enabled: boolean) => void;
   setKeepHealDamageDialogOpen: (enabled: boolean) => void;
+  rememberCustomColor: (color: string) => void;
   setResourceBar1Color: (color: string) => void;
   setResourceBar2Color: (color: string) => void;
+  setResourceBar1Gradient: (gradient: ResourceBarGradient) => void;
+  setResourceBar2Gradient: (gradient: ResourceBarGradient) => void;
   setHealthCounterName: (name: string) => void;
   setClockStyleDefault: (style: ClockStyle) => void;
   setShowActorStatusesOnCanvas: (visible: boolean) => void;
@@ -155,8 +163,11 @@ export const defaultPreferences: DurableInterfacePreferences = {
   warnActorDestinationsDiffer: true,
   keepHealDamageDialogOpen: false,
   healthCounterName: "Hit points",
+  recentCustomColors: [],
   resourceBar1Color: "#ef4444",
   resourceBar2Color: "#3b82f6",
+  resourceBar1Gradient: defaultResourceBarGradient("#ef4444"),
+  resourceBar2Gradient: defaultResourceBarGradient("#3b82f6"),
   clockStyleDefault: DEFAULT_CLOCK_STYLE,
   showActorStatusesOnCanvas: true,
   reverseHealthStatusOrder: false,
@@ -202,8 +213,11 @@ export const defaultValue: InterfacePreferences = {
   setPanWithRightClickDrag: () => undefined,
   setWarnActorDestinationsDiffer: () => undefined,
   setKeepHealDamageDialogOpen: () => undefined,
+  rememberCustomColor: () => undefined,
   setResourceBar1Color: () => undefined,
   setResourceBar2Color: () => undefined,
+  setResourceBar1Gradient: () => undefined,
+  setResourceBar2Gradient: () => undefined,
   setHealthCounterName: () => undefined,
   setClockStyleDefault: () => undefined,
   setShowActorStatusesOnCanvas: () => undefined,
@@ -274,6 +288,9 @@ export function readPreferences(): DurableInterfacePreferences {
           ? stored.panWithRightClickDrag
           : true,
       clockStyleDefault: isClockStyle(stored?.clockStyleDefault) ? stored.clockStyleDefault : DEFAULT_CLOCK_STYLE,
+      resourceBar1Gradient: readResourceBarGradient(stored?.resourceBar1Gradient, defaultPreferences.resourceBar1Color),
+      resourceBar2Gradient: readResourceBarGradient(stored?.resourceBar2Gradient, defaultPreferences.resourceBar2Color),
+      recentCustomColors: readRecentCustomColors(stored?.recentCustomColors),
       resourceBar1Color: isHexColor(stored?.resourceBar1Color) ? stored.resourceBar1Color.toLowerCase() : defaultPreferences.resourceBar1Color,
       resourceBar2Color: isHexColor(stored?.resourceBar2Color) ? stored.resourceBar2Color.toLowerCase() : defaultPreferences.resourceBar2Color,
       healthCounterName: typeof stored?.healthCounterName === "string" && stored.healthCounterName.trim() ? stored.healthCounterName.trim() : "Hit points",

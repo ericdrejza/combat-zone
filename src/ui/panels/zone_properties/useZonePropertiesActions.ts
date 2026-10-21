@@ -13,6 +13,7 @@ import {
 } from "@entities/zone/zoneMutations";
 import {
   clearZoneOpacityPreview,
+  clearZoneColorPreview,
   clearSelection,
   setZoneOpacityPreview,
   toggleZonePaintBrush
@@ -84,6 +85,10 @@ export function useZonePropertiesActions() {
       return;
     }
 
+    const color = properties.colorFill ?? properties.colorBorder ?? properties.colorEngagement;
+    const clearColorPreview = () => {
+      if (typeof color === "string") dispatch(clearZoneColorPreview({ zoneId: selectedZone.id, color }));
+    };
     const zonePatch = toZonePropertiesInput(properties);
     const nextEncounter = updateZoneProperties(
       encounter,
@@ -92,6 +97,7 @@ export function useZonePropertiesActions() {
     );
 
     if (nextEncounter === encounter) {
+      clearColorPreview();
       return;
     }
 
@@ -124,7 +130,9 @@ export function useZonePropertiesActions() {
       }
     };
 
-    void consumeEncounterChange(prepared, encounter, dispatch, commitPrepared);
+    const completion = consumeEncounterChange(prepared, encounter, dispatch, commitPrepared);
+    if (completion instanceof Promise) void completion.finally(clearColorPreview);
+    else clearColorPreview();
   }
 
   function commitZoneDelete() {

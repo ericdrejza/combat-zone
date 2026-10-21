@@ -169,24 +169,29 @@ Properties:
 
 Zone names trim surrounding whitespace and may be empty.
 Fill, Border, and Engagement color fields show a swatch and the current hex
-color. Their palettes start collapsed, open on a field click, and close on a
-selection or repeat field click. A selection remains one reversible color edit.
+color. Their shared spectrum pickers start collapsed, open on a field click,
+and remain open after selection until the field is clicked again or Escape is
+pressed. They include saturation/brightness, hue, screen eyedropper, ordered
+presets, recent custom colors, and hex entry. A completed pointer/keyboard
+adjustment, swatch selection, screen pick, or committed hex value remains one
+validated, reversible color edit. During dragging, transient color previews update
+the Zone on the canvas in real time, including matching Engagement colors and
+readable labels. Preview changes do not enter encounter history or persistence.
+Release commits one validated edit. Cancelling the gesture, changing the selected
+Zone/tab, or closing the editor removes the preview; validation blocks also
+restore the saved color.
 The Border tab keeps Show border on one line beside its switch. The Engagements
 tab places Match border color below the color picker; matching keeps the
 Engagement field disabled while showing its color.
-Each color field has a pipette button beside its label, with the tooltip
-Background color matcher. It temporarily hides canvas content above the
-background and uses a pipette cursor. Clicking samples that background pixel
-into the active color property through one validated, undoable edit. Escape,
-a right click without dragging, or picking a pixel exits; right-drag panning
-does not exit. Sampling respects the background frame and theme fill. An
-unreadable background reports an error without changing colors or history.
-Disabled color fields also disable their matcher.
+Zone color fields use the screen eyedropper inside the shared color picker.
+There is no separate background color matcher above the picker. Disabled color
+fields also disable their picker and eyedropper.
 
-A second pipette sits immediately left of the Zone color paintbrush. Copy
+A pipette sits immediately left of the Zone color paintbrush. Copy
 colors from zone lets the user pick a different Zone as the source and applies
 the paintable appearance fields to every selected Zone in one undoable action.
-It preserves the target selection and uses the same cancellation controls.
+It preserves the target selection. Escape, a right click without dragging, or
+picking a source exits; right-drag panning does not exit.
 Canvas entities other than Zones are hidden while choosing this source.
 Zone opacity previews continuously while its slider is dragged and commits the
 final value on release as one reversible history action.
@@ -360,7 +365,10 @@ Transparent uses the SquareDashed icon in Actor toolbar and Properties, with
 “Transparent” tooltips. Its artwork preserves aspect ratio within the existing
 square token-size box, without fill, border, or clipping. Placement and hit
 testing use that square box; selection adds only a temporary outline. Actors
-without an image retain their name fallback. Preview artwork follows the same
+without an image retain their centered name fallback. Names wrap within the
+token interior when they exceed one line, including breaking long single words.
+Fallback names shrink from 10px only when needed to fit, with a 7px minimum.
+Preview artwork follows the same
 presentation. Schema 25 adds this shape while preserving older geometry.
 
 Engagement membership is owned by Engagement `participants[]`; Actors do not
@@ -836,7 +844,10 @@ The canvas viewport scrolls on both axes with scrollbar chrome hidden. The mouse
 Shift + mouse wheel scrolls horizontally. Keyboard panning uses configurable,
 initially unbound directional shortcuts. Right-button drag panning is enabled
 by default and can be toggled from the toolbar. A right-click without a pan gesture retains the
-active tool's existing context action.
+active tool's existing context action. While the Ruler tool is active, right-drag
+pans without changing placed points; a stationary right-click removes the last
+placed draft/edit point. On browsers that emit a context menu on button press,
+the context action waits until release so a pan cannot remove a point.
 
 Touch input uses one pointer for the active tool's normal editing gesture and
 two pointers for midpoint-preserving pan and pinch zoom. Touch holds anywhere
@@ -1266,9 +1277,23 @@ Actor, persist in schema 30, and commit with editor Save through validated,
 writer-guarded history. Counter drafts retain mappings while switching counters;
 Cancel discards them. Clones retain mappings to their own copied counters.
 Combat settings > Token resource bars sets global custom six-digit hex fill
-colors for each bar, defaulting to red (#ef4444) and blue (#3b82f6). Colors save on
-blur/Enter, synchronize across tabs, reset with Combat preferences, and stay
+colors for each bar, defaulting to red (#ef4444) and blue (#3b82f6). Picker edits
+save immediately; hex edits save on blur/Enter. Colors synchronize across tabs,
+reset with Combat preferences, and stay
 outside encounter history. Token footprints and hit testing remain unchanged.
+Each resource bar can independently enable amount-based gradient colors instead
+of its static fill. Low (0%) and high (100%) endpoints use the same Settings
+color picker, hex entry, recent custom colors, and individual default reset.
+The visible fill is always one solid color: interpolate the sRGB channels
+between the endpoints using the same clamped current/maximum fraction as the
+bar length. Values below zero use the low endpoint; values above maximum use
+the high endpoint. No spatial gradient is drawn inside the bar.
+Static and gradient settings are retained when switching modes. Gradients are
+disabled by default, and both endpoints initially use their bar's established
+red/blue default until customized. A five-sample preview shows colors from empty
+to full. Gradient preferences persist locally, synchronize across tabs, reset
+with Combat settings, and remain outside encounter history.
+
 
 Custom counters have stable IDs, names, integer current values and optional
 integer bounds. Create, edit, remove and ±1 controls are available for one Actor.
@@ -1445,6 +1470,34 @@ using the same names and icons as the health controls. These health triggers fir
 when the Actor changes to the selected status. Undo/redo does not play triggers.
 
 ## 8. Themes
+
+Settings color controls for resource bar fills, default Zone fill/border/Engagement
+colors, and ruler appearance use an expandable saturation/brightness area, hue
+slider, screen eyedropper, swatches, and manual hex entry. The eyedropper is
+disabled when unavailable in the browser; cancelling it leaves the color unchanged.
+The hue bar has no border and uses a white circular knob with a subtle edge
+and raised shadow to show the selected hue. Shared pickers place the hue bar
+on its own row directly above the hex input
+and screen eyedropper row, followed by preset and recent swatches. Hex entry
+stays available when the spectrum is collapsed. Settings pickers omit a repeated
+heading above their trigger; reset buttons sit to the right of the hex input
+and eyedropper. Picker changes save immediately and keep the
+picker expanded. Each color has an
+individual reset to its existing default: red/blue for resource bars, inherited
+Zone defaults, or theme-based ruler color. Resetting ruler color preserves opacity.
+Blank Zone default hex values retain their existing fallback behavior.
+
+Shared color pickers use small rounded-square swatches with tight spacing:
+three rows of seven fixed presets, ordered with light-to-dark neutrals first
+and then chromatic colors around the hue spectrum. The 21 presets use the
+original Zone palette without #fde68a and #fecaca, adding black, red, and blue.
+A fourth row of seven slots shows the most recent custom colors, newest first, with
+empty slots reserved until colors have been chosen. History is shared across
+Settings color pickers, deduplicated, excludes preset colors, persists locally,
+and synchronizes across tabs. Only completed pointer/keyboard selections,
+screen picks, and committed hex edits enter history, not intermediate drag
+values. Selecting a recent color moves it to the front. Individual color resets
+do not clear history; Interface category reset and full preference reset clear it.
 
 - Light
 - Dark
@@ -2138,7 +2191,7 @@ Locked ruler artifacts have an ID, optional display name (empty when unnamed), s
 - Grid Settings owns a positive whole-number distance per cell (default 5 feet), feet/meters/custom units (only feet and meters are concrete choices; standard distance names use abbreviations from mm through km and in/ft/yd/mi), independent of map sizing.
 - Grid styles: Solid (default), Dashed, Dotted, Crosshair. Crosshair retains the outer quarter of each edge at both vertices, leaving its middle half empty. Preserve settings through alignment, detection, grid changes and resizing.
 - Ruler immediately left of Select: Line, Circle, Rectangle, Cone, Path. Unfinished measurements are session-only and available read-only; locking and modifying saved artifacts require writer access. Ruler snapping always follows the Actors and Rulers grid snapping setting. Highlighting is derived from actor/ruler snapping, with no separate toggle. Canvas Settings chooses cell coverage: corners or center (default), center only, strictly more than half the cell area, corners plus the first forward cone cell, or corners plus all forward cells touching the cone origin. Corner thresholds are three on square/isometric grids and four on hex grids. Corner-or-center tests corners first. The cone-origin variants use the corner threshold without the center fallback; their extra cells exclude the source cell and must have actual cone overlap. The first-cell variant follows the centerline, resolving boundary ties with normal grid snapping. Other area shapes use the corner threshold in these two variants. Snapped Line rulers already form whole-cell routes, so their cell coverage is unchanged. Coverage and overlap fractions are evaluated in unprojected map geometry, independently of display warping and the rendered arc samples. Exactly half coverage is excluded from the majority mode. The local setting updates draft and saved-artifact highlights and optional cell-based area values without editing artifacts or adding encounter history.
-- Shape subtools use icon buttons: Path (Waypoints), Circle (Radius), Cone, Rectangle, and Line (RectangleEllipsis rotated 90°), together in one button group. Remove the toolbar range field. The cone angle field uses an Angle icon, selects its text on click, and commits/blurs on Enter. Path is the default ruler subtool. Click to set shape endpoints or Path waypoints; only editable control points use dragging. Space locks an artifact, including edited artifacts, using only placed points; it never adds the cursor preview as a waypoint. The live cursor point is white and placed points are solid. A contextual Lock icon supports touch. Multiple locked artifacts remain through tool switches until deleted or cleared. Right-click a locked artifact for an Edit/Delete/Name/Color wheel (touch-hold on touch screens); editing Paths supports appending waypoints, and other shapes expose adjustable points. Left-clicks and short touch taps through saved artifacts place points for the active ruler, including snapped cell centers; saved artifacts do not block the live preview. While creating/editing, right-click anywhere on the ruler canvas—including editable points or another saved artifact—to pick up the last placed point, retaining earlier waypoints and the live cursor preview. Repeat to backtrack one point at a time. Removing the final draft point ends creation or restores the last saved version when editing. Escape cancels/restores the entire draft. Artifact context menus open only when no ruler draft/edit is active. Support explicit dimensions and angles. Locked artifacts persist in the encounter, including names and individual color/opacity overrides. Creating, deleting, clearing, renaming and changing appearance use encounter undo/redo. The artifact color dialog previews valid color and opacity edits on that ruler without changing EncounterState. Save commits one appearance action; Cancel, outside click, or Escape discards the preview. Its backdrop is transparent. Right-click dragging over the open dialog or its backdrop still pans the canvas when right-drag panning is enabled, without closing the dialog or discarding its preview. Only a left-click outside cancels. A drag handle centered in the header moves the dialog within the viewport, with arrow-key movement available on the handle. Selecting a palette color keeps the ruler palette expanded for further adjustments. Its palette toggle expands/collapses without closing the dialog, and Escape closes an open palette before cancelling the dialog. Cancel is at the lower left and Save at the lower right. Geometry edits remain temporary until Space locks them again as one history step; Escape restores the last locked version. Initial unfinished shapes never enter history. Clicking the second point of a two-point draft picks it up and returns to the live endpoint preview; dragging still adjusts a point.
+- Shape subtools use icon buttons: Path (Waypoints), Circle (Radius), Cone, Rectangle, and Line (RectangleEllipsis rotated 90°), together in one button group. Remove the toolbar range field. The cone angle field uses an Angle icon, selects its text on click, and commits/blurs on Enter. Path is the default ruler subtool. Click to set shape endpoints or Path waypoints; only editable control points use dragging. Space locks an artifact, including edited artifacts, using only placed points; it never adds the cursor preview as a waypoint. The live cursor point is white and placed points are solid. A contextual Lock icon supports touch. Multiple locked artifacts remain through tool switches until deleted or cleared. Right-click a locked artifact for an Edit/Delete/Name/Color wheel (touch-hold on touch screens); editing Paths supports appending waypoints, and other shapes expose adjustable points. Left-clicks and short touch taps through saved artifacts place points for the active ruler, including snapped cell centers; saved artifacts do not block the live preview. While creating/editing, right-click anywhere on the ruler canvas—including editable points or another saved artifact—to pick up the last placed point, retaining earlier waypoints and the live cursor preview. Repeat to backtrack one point at a time. Removing the final draft point ends creation or restores the last saved version when editing. Escape cancels/restores the entire draft. Artifact context menus open only when no ruler draft/edit is active. Support explicit dimensions and angles. Locked artifacts persist in the encounter, including names and individual color/opacity overrides. Creating, deleting, clearing, renaming and changing appearance use encounter undo/redo. The artifact color dialog uses the same reusable spectrum/hex picker as Settings and Zone Properties, including screen eyedropper, ordered presets, and recent custom colors. It previews valid color and opacity edits on that ruler without changing EncounterState. Save commits one appearance action; Cancel, outside click, or Escape discards the preview. Its backdrop is transparent. Right-click dragging over the open dialog or its backdrop still pans the canvas when right-drag panning is enabled, without closing the dialog or discarding its preview. Only a left-click outside cancels. A drag handle centered in the header moves the dialog within the viewport, with arrow-key movement available on the handle. Selecting a palette color keeps the ruler palette expanded for further adjustments. Its palette toggle expands/collapses without closing the dialog, and Escape closes an open palette before cancelling the dialog. Cancel is at the lower left and Save at the lower right. Geometry edits remain temporary until Space locks them again as one history step; Escape restores the last locked version. Initial unfinished shapes never enter history. Clicking the second point of a two-point draft picks it up and returns to the live endpoint preview; dragging still adjusts a point.
 - Measurements use unprojected grid space, rendered through rotation/projection/warp. Square circles start at vertices; snapped cones choose a source cell on the first click, then switch between its nearest side midpoint or corner according to the target trajectory. Side cones face outward from the source cell. There are no manual corner/side origin controls. Square cones default to 90°, hex cones to 60°. Unsnapped cones use the clicked origin. Shift+wheel in cone mode adjusts the angle; other wheel behavior is retained.
 - Line is one cell wide. Choose the consistent repeating grid-step pattern that best reaches the target automatically; do not expose concrete orthogonal/diagonal pattern choices.
 - Saved ruler context hit targets sit beneath Actors, while ruler graphics remain

@@ -4,6 +4,7 @@ import {
   type PropsWithChildren,
   type WheelEvent,
   useCallback,
+  useEffect,
   useRef
 } from "react";
 
@@ -28,6 +29,9 @@ export function CanvasViewport({ canvasSize, children }: CanvasViewportProps) {
   const elementRef = useRef<HTMLDivElement | null>(null);
   const panStartRef = useRef<PanStart | null>(null);
   const pannedRef = useRef(false);
+  const pendingContextMenu = useRef<globalThis.MouseEvent | null>(null);
+  const cleanupPan = useRef<(() => void) | null>(null);
+  useEffect(() => () => { cleanupPan.current?.(); }, []);
   const registerViewport = viewport.registerViewport;
   const setViewportRef = useCallback(
     (element: HTMLDivElement | null) => {
@@ -68,6 +72,7 @@ export function CanvasViewport({ canvasSize, children }: CanvasViewportProps) {
       scrollTop: element.scrollTop
     };
     pannedRef.current = false;
+    pendingContextMenu.current = null;
 
     const handleMove = (moveEvent: Pick<globalThis.MouseEvent, "clientX" | "clientY">) => {
       const start = panStartRef.current;
@@ -79,20 +84,40 @@ export function CanvasViewport({ canvasSize, children }: CanvasViewportProps) {
       element.scrollLeft = start.scrollLeft - deltaX;
       element.scrollTop = start.scrollTop - deltaY;
     };
-    const handleUp = () => {
-      panStartRef.current = null;
-      window.removeEventListener("mousemove", handleMove);
-      window.removeEventListener("mouseup", handleUp);
-      window.removeEventListener("pointermove", handleMove);
-      window.removeEventListener("pointerup", handleUp);
-      window.removeEventListener("pointercancel", handleUp);
+    const removeListeners = () => {
+      window.removeEventListener("mousemove", handleMove, true);
+      window.removeEventListener("mouseup", handleUp, true);
+      window.removeEventListener("pointermove", handleMove, true);
+      window.removeEventListener("pointerup", handleUp, true);
+      window.removeEventListener("pointercancel", handleUp, true);
     };
-    window.addEventListener("mousemove", handleMove);
-    window.addEventListener("mouseup", handleUp);
+    const handleUp = (event: globalThis.MouseEvent) => {
+      const pending = pendingContextMenu.current;
+      pendingContextMenu.current = null;
+      panStartRef.current = null;
+      removeListeners();
+      cleanupPan.current = null;
+      // Browsers can emit contextmenu on press or release. Defer press-time
+      // actions until we know this was a click rather than a pan.
+      if (pending && !pannedRef.current && event.type !== "pointercancel") {
+        const ContextMenuEvent = element.ownerDocument.defaultView?.MouseEvent ?? globalThis.MouseEvent;
+        pending.target?.dispatchEvent(new ContextMenuEvent("contextmenu", {
+          bubbles: true, cancelable: true, composed: true, button: 2,
+          clientX: pending.clientX, clientY: pending.clientY,
+          screenX: pending.screenX, screenY: pending.screenY,
+          ctrlKey: pending.ctrlKey, shiftKey: pending.shiftKey,
+          altKey: pending.altKey, metaKey: pending.metaKey
+        }));
+      }
+    };
+    cleanupPan.current = removeListeners;
+    // Tool handlers can stop bubbling; navigation must still see moves and release.
+    window.addEventListener("mousemove", handleMove, true);
+    window.addEventListener("mouseup", handleUp, true);
     if (pointerId !== undefined) {
-      window.addEventListener("pointermove", handleMove);
-      window.addEventListener("pointerup", handleUp);
-      window.addEventListener("pointercancel", handleUp);
+      window.addEventListener("pointermove", handleMove, true);
+      window.addEventListener("pointerup", handleUp, true);
+      window.addEventListener("pointercancel", handleUp, true);
     }
   }
 
@@ -110,6 +135,11 @@ export function CanvasViewport({ canvasSize, children }: CanvasViewportProps) {
   }
 
   function handleContextMenu(event: MouseEvent<HTMLDivElement>) {
+    if (panStartRef.current) {
+      event.preventDefault(); event.stopPropagation();
+      pendingContextMenu.current = pannedRef.current ? null : event.nativeEvent;
+      return;
+    }
     if (!pannedRef.current) return;
     event.preventDefault();
     event.stopPropagation();

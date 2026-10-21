@@ -58,6 +58,12 @@ export type ZonePaintBrushState = {
   sourceZoneId: string;
 };
 
+export type ZoneColorPreview = {
+  zoneId: string;
+  property: "colorFill" | "colorBorder" | "colorEngagement";
+  color: string;
+};
+
 export type ZoneOpacityPreview = {
   opacity: number;
   zoneId: string;
@@ -96,6 +102,7 @@ export type InteractionState = {
   draft: InteractionDraftState;
   contextualActionRequest: ContextualActionRequest | null;
   zoneOpacityPreview: ZoneOpacityPreview | null;
+  zoneColorPreview: ZoneColorPreview | null;
   zonePaintBrush: ZonePaintBrushState | null;
   cellTracerActive: boolean;
   zoneShapeMode: ZoneShape;
@@ -148,6 +155,7 @@ const initialState: InteractionState = {
   draft: initialDraft,
   contextualActionRequest: null,
   zoneOpacityPreview: null,
+  zoneColorPreview: null,
   zonePaintBrush: null,
   cellTracerActive: false,
   zoneShapeMode: 'rectangle'
@@ -221,6 +229,7 @@ export const interactionSlice = createSlice({
       state.actorPaintBrush = false;
       state.zonePaintBrush = null;
       state.zoneOpacityPreview = null;
+      state.zoneColorPreview = null;
       state.actorTool.targetZoneId = null;
 
       if (
@@ -304,6 +313,13 @@ export const interactionSlice = createSlice({
     resetEdgePreset(state) {
       state.edgeTool = DEFAULT_EDGE_PRESET;
     },
+    setZoneColorPreview(state, { payload }: PayloadAction<ZoneColorPreview>) {
+      state.zoneColorPreview = payload;
+    },
+    clearZoneColorPreview(state, { payload }: PayloadAction<{ zoneId: string; color?: string }>) {
+      if (state.zoneColorPreview?.zoneId === payload.zoneId &&
+        (payload.color === undefined || state.zoneColorPreview.color === payload.color)) state.zoneColorPreview = null;
+    },
     setZoneOpacityPreview(
       state,
       { payload }: PayloadAction<ZoneOpacityPreview>
@@ -333,6 +349,7 @@ export const interactionSlice = createSlice({
         return;
       }
       state.zoneOpacityPreview = null;
+      state.zoneColorPreview = null;
 
       if (!payload.toggle) {
         selectIds(state, payload.entityType, payload.ids, false);
@@ -363,6 +380,7 @@ export const interactionSlice = createSlice({
       state.selection = initialSelection;
       state.contextualActionRequest = null;
       state.zoneOpacityPreview = null;
+      state.zoneColorPreview = null;
     },
     setDragActionPreview(
       state,
@@ -443,6 +461,8 @@ export const {
   setActorToolTargetZone,
   clearZonePaintBrush,
   clearZoneOpacityPreview,
+  clearZoneColorPreview,
+  setZoneColorPreview,
   clearInteractionDraft,
   clearSelection,
   finishBoxSelection,

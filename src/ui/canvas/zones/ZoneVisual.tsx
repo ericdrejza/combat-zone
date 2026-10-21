@@ -31,6 +31,7 @@ type Props = Pick<ZoneLayerProps, "onZoneMotionComplete"> & {
   actorTargeted: boolean;
   directManipulation: boolean;
   previewingOpacity: boolean;
+  previewingColor?: boolean;
   renderedOpacity: number;
   backgroundLuminance: number | undefined;
   zoneDrag: ZoneLayerProps["zoneDrag"];
@@ -38,7 +39,7 @@ type Props = Pick<ZoneLayerProps, "onZoneMotionComplete"> & {
 
 /** Only the Zone whose presentation changes needs to update its Motion tree. */
 export const ZoneVisual = memo(function ZoneVisual({ zone, polygon, selected, actorTargeted,
-  directManipulation, previewingOpacity, renderedOpacity, backgroundLuminance, zoneDrag,
+  directManipulation, previewingOpacity, previewingColor = false, renderedOpacity, backgroundLuminance, zoneDrag,
   encounter, onZoneMotionComplete }: Props) {
   const { zoneBorderThickness } = useInterfacePreferences();
   const { animationsDisabled } = useMotionPreference();
@@ -111,7 +112,7 @@ export const ZoneVisual = memo(function ZoneVisual({ zone, polygon, selected, ac
         data-entity-type="zone"
         initial={false}
         stroke={zone.showBorder ? zone.colorBorder : "transparent"}
-        transition={zoneGeometryTransition}
+        transition={previewingColor ? { ...zoneGeometryTransition, fill: { duration: 0 } } : zoneGeometryTransition}
       />
       {sectionDividers.length > 0 ? (
         <>

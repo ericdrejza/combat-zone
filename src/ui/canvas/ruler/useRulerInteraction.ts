@@ -67,7 +67,7 @@ export function useRulerInteraction(input: Input) {
       else dispatch(startRulerDraft({ points: [snapRulerOrigin(input.encounter, point, input.options)], complete: false }));
       preview(null);
     },
-    onPointerMove(event: PointerEvent<SVGElement>) { event.stopPropagation(); preview(normalize(pointer(event), input.draft?.points.length ?? 0)); },
+    onPointerMove(event: PointerEvent<SVGElement>) { if (event.buttons & 2) return; event.stopPropagation(); preview(normalize(pointer(event), input.draft?.points.length ?? 0)); },
     onPointerLeave() { preview(null); },
     onContextMenu,
     onPointerCancel() { edit.current = null; preview(null); dispatch(setRulerDraft(null)); }
@@ -79,12 +79,14 @@ export function useRulerInteraction(input: Input) {
         event.stopPropagation(); event.preventDefault(); edit.current = { id, index, start: { x: event.clientX, y: event.clientY }, moved: false }; preview(null); event.currentTarget.setPointerCapture?.(event.pointerId);
       },
       onPointerMove(event: PointerEvent<SVGCircleElement>) {
+        if (event.buttons & 2) return;
         event.stopPropagation(); if (edit.current?.index === index && edit.current.id === id) {
           if (Math.hypot(event.clientX - edit.current.start.x, event.clientY - edit.current.start.y) >= 3) edit.current.moved = true;
           if (edit.current.moved) dispatch(updateRulerPoint({ id, index, point: normalize(pointer(event), index) }));
         }
       },
       onPointerUp(event: PointerEvent<SVGCircleElement>) {
+        if (event.button !== 0) return;
         event.stopPropagation(); const clicked = edit.current && !edit.current.moved; edit.current = null; event.currentTarget.releasePointerCapture?.(event.pointerId);
         const draft = current.current.draft;
         if (clicked && index === 1 && draft?.points.length === 2) {

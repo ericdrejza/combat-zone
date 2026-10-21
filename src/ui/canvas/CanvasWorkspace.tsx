@@ -1,3 +1,4 @@
+import { useZoneColorPreview } from "./zones/useZoneColorPreview";
 import { ActorMovementOverlay } from './actors/ActorMovementOverlay';
 import { RulerOverlay } from './ruler/RulerOverlay';
 import { useMemo, useState } from 'react';
@@ -168,6 +169,7 @@ export function CanvasWorkspace({
   zoneDrag,
   onZoneMotionComplete
 }: CanvasWorkspaceProps) {
+  const appearanceEncounter = useZoneColorPreview(encounter);
   const paintCursorClass = useCanvasPaintCursor();
   const colorSampler = useCanvasColorSampler(encounter);
   const dispatch = useDispatch();
@@ -245,7 +247,7 @@ export function CanvasWorkspace({
                 actorTargetZoneId={actorTargetZoneId}
                 backgroundLuminanceByZoneId={backgroundLuminanceByZoneId}
                 directManipulationZoneId={directManipulationZoneId}
-                encounter={encounter}
+                encounter={appearanceEncounter}
                 getDisplayedPolygon={getDisplayedPolygon}
                 onResizeHandleMouseDown={handleResizeHandleMouseDown}
                 onResizeHandleDrag={onResizeHandleDrag}
@@ -270,7 +272,7 @@ export function CanvasWorkspace({
               />
             ) : null}
             {layer.id === 'engagements' ? (
-              <EngagementLayer activeToolId={activeToolId} actorDrag={actorDrag} backgroundLuminanceByZoneId={backgroundLuminanceByZoneId} encounter={encounter} engagementDrag={engagementDrag} onEngagementDrag={onEngagementDrag} onEngagementDragEnd={onEngagementDragEnd} onEngagementDragReturnComplete={onEngagementDragReturnComplete} onEngagementDragStart={onEngagementDragStart} onEngagementSelect={onEngagementSelect} placements={actorRenderPlacements} selection={selection} zoneActorTranslation={zoneActorTranslation} />
+              <EngagementLayer activeToolId={activeToolId} actorDrag={actorDrag} backgroundLuminanceByZoneId={backgroundLuminanceByZoneId} encounter={appearanceEncounter} engagementDrag={engagementDrag} onEngagementDrag={onEngagementDrag} onEngagementDragEnd={onEngagementDragEnd} onEngagementDragReturnComplete={onEngagementDragReturnComplete} onEngagementDragStart={onEngagementDragStart} onEngagementSelect={onEngagementSelect} placements={actorRenderPlacements} selection={selection} zoneActorTranslation={zoneActorTranslation} />
             ) : null}
             {layer.id === "actors" ? (
               <g
@@ -286,7 +288,7 @@ export function CanvasWorkspace({
                   zoneActorTranslation={zoneActorTranslation}
                   backgroundLuminanceByZoneId={backgroundLuminanceByZoneId}
                   canvasBackgroundLuminance={canvasBackgroundLuminance}
-                  encounter={encounter}
+                  encounter={appearanceEncounter}
                   onActorDrag={onActorDrag}
                   onActorDragEnd={onActorDragEnd}
                   onActorDragStart={onActorDragStart}

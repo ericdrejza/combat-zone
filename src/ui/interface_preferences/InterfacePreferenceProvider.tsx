@@ -1,3 +1,5 @@
+import { readResourceBarGradient } from "./resourceBarColors";
+import { readRecentCustomColors } from "./recentCustomColors";
 import { PREFERENCE_CATEGORY_KEYS } from "./preferenceCategories";
 import {
   DEFAULT_ACTOR_SELECTION_OUTLINE_WIDTH, DEFAULT_ZONE_SELECTION_OUTLINE_WIDTH, DEFAULT_EDGE_THICKNESS,
@@ -120,8 +122,14 @@ export function InterfacePreferenceProvider({ children }: { children: ReactNode 
         setPanWithRightClickDrag: (enabled) =>
           updatePreferences({ panWithRightClickDrag: enabled }),
         setClockStyleDefault: (style) => { if (isClockStyle(style)) updatePreferences({ clockStyleDefault: style }); },
+        rememberCustomColor: color => {
+          if (!readRecentCustomColors([color]).length) return;
+          updatePreferences(current => ({ recentCustomColors: readRecentCustomColors([color, ...current.recentCustomColors]) }));
+        },
         setResourceBar1Color: (color) => { if (/^#[0-9a-f]{6}$/i.test(color)) updatePreferences({ resourceBar1Color: color.toLowerCase() }); },
         setResourceBar2Color: (color) => { if (/^#[0-9a-f]{6}$/i.test(color)) updatePreferences({ resourceBar2Color: color.toLowerCase() }); },
+        setResourceBar1Gradient: gradient => updatePreferences({ resourceBar1Gradient: readResourceBarGradient(gradient, defaultPreferences.resourceBar1Color) }),
+        setResourceBar2Gradient: gradient => updatePreferences({ resourceBar2Gradient: readResourceBarGradient(gradient, defaultPreferences.resourceBar2Color) }),
         setHealthCounterName: (name) => updatePreferences({ healthCounterName: name.trim() || "Hit points" }),
         setShowActorStatusesOnCanvas: (showActorStatusesOnCanvas) => updatePreferences({ showActorStatusesOnCanvas }),
         setReverseHealthStatusOrder: (reverseHealthStatusOrder) => updatePreferences({ reverseHealthStatusOrder }),

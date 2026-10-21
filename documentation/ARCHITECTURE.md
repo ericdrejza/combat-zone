@@ -442,3 +442,25 @@ state. ActorMotionGroup shares its live Motion x/y values with the portaled
 overlays so dragging and placement animations stay synchronized; React portal
 bubbling preserves Actor interaction handlers. Standalone previews retain local
 overlays when no layer hosts are present.
+
+`ui/controls/ColorPicker` is the shared controlled spectrum/hex editor used by
+Settings, Zone Properties, and ruler appearance. It supports nullable defaults,
+optional alpha/reset, disabled controls, field labels/actions, validity reporting,
+and separate live-change/completed-selection callbacks. Consumers own persistence
+and encounter mutations; Zone color drags commit only at completion through the
+existing validated history action. `ColorOpacityFields` composes this editor
+with opacity and merges partial updates against its latest value.
+
+Zone color drags use `interaction.zoneColorPreview` as session-only state, coalesced
+per animation frame by `useZoneColorControl`. `useZoneColorPreview` derives an
+appearance encounter exclusively for Zone, Actor, and Engagement visual layers;
+commands, layout inputs, and persistence continue to use the canonical snapshot.
+Gesture completion commits through the existing validated Zone mutation and
+clears its preview after validation completes. Selection/tool changes, history
+reconciliation, cancellation, and editor cleanup discard transient previews.
+
+CanvasViewport observes right-pan movement and release during native capture so
+Ruler pointer handlers cannot block navigation. Press-time contextmenu events
+are deferred until release and replayed only for stationary clicks; pans discard
+them. Ruler hover/point handlers ignore right-button movement, preserving placed
+points while the viewport scrolls.

@@ -45,7 +45,7 @@ export function RulerColorDialogFrame({ children, onClose, onSubmit }: {
         event.stopPropagation();
         if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); onClose(); }
         if (event.key !== 'Tab') return;
-        const controls = Array.from(panel.current?.querySelectorAll<HTMLElement>('input:not(:disabled), select:not(:disabled), button:not(:disabled)') ?? []);
+        const controls = Array.from(panel.current?.querySelectorAll<HTMLElement>('input:not(:disabled), select:not(:disabled), button:not(:disabled), [tabindex]:not([tabindex="-1"])') ?? []);
         const current = panel.current?.ownerDocument.activeElement;
         if (event.shiftKey && current === controls[0]) { event.preventDefault(); controls.at(-1)?.focus(); }
         else if (!event.shiftKey && current === controls.at(-1)) { event.preventDefault(); controls[0]?.focus(); }

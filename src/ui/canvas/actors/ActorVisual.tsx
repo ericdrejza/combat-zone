@@ -1,3 +1,4 @@
+import { ActorTokenName } from "./ActorTokenName";
 import { ActorOverlay } from "./ActorOverlayLayers";
 import { ActorConditionIcons } from "./ActorConditionIcons";
 import { ActorResourceBars } from "./ActorResourceBars";
@@ -85,14 +86,9 @@ export const ActorVisual = memo(function ActorVisual({
 
   // A token without artwork keeps its identifying text visible inside its own shape.
   const tokenName = !imageUrl ? (
-    <text
-      className="pointer-events-none text-[10px] font-bold"
-      dominantBaseline="middle"
-      fill={actor.shape === "transparent" ? selectedTextColor : getReadableTextColor(fillColor)}
-      textAnchor="middle"
-    >
-      {actor.name.toUpperCase()}
-    </text>
+    <ActorTokenName name={actor.name} shape={actor.shape} radius={radius}
+      color={actor.shape === "transparent" ? selectedTextColor : getReadableTextColor(fillColor)}
+      transition={transition} />
   ) : null;
 
   return (

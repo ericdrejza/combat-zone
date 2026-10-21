@@ -18,7 +18,7 @@ export function RulerColorDialog({ ruler, inherited, readOnly, onSave, onClose, 
         onSave({ color: draft.color === initial.color ? ruler.color : draft.color, opacity: draft.opacity === initial.opacity ? ruler.opacity : draft.opacity });
         onClose();
       }}>
-      <ColorOpacityFields label="Artifact" value={draft} onChange={value => { setDraft(value); onPreview?.(value); }} onValidityChange={setValid} collapsiblePicker keepPickerOpen />
+      <ColorOpacityFields label="Artifact" value={draft} onChange={value => { setDraft(value); onPreview?.(value); }} onValidityChange={setValid} keepPickerOpen />
       <div className="flex justify-between gap-3">
         <button className={SETTINGS_BUTTON} onClick={onClose} type="button">Cancel</button>
         <button className={SETTINGS_BUTTON} disabled={!valid || readOnly} type="submit">Save</button>

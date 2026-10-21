@@ -23,7 +23,7 @@ export function RulerSettings() {
       </select>
     </SettingsField>
     <PreferenceSwitch label="Show calculated ruler area" checked={preferences.showRulerArea} onChange={showRulerArea => save({ ...preferences, showRulerArea })} />
-    <ColorOpacityFields label="Ruler" value={{ color: preferences.rulerColor, opacity: preferences.rulerOpacity }}
+    <ColorOpacityFields keepPickerOpen allowColorReset label="Ruler" value={{ color: preferences.rulerColor, opacity: preferences.rulerOpacity }}
       onChange={value => save({ ...preferences, rulerColor: value.color, rulerOpacity: value.opacity })} />
   </SettingsSection>;
 }
