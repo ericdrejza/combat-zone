@@ -1,3 +1,4 @@
+import { ActorStatusNavigationProvider } from "./status_panel/ActorStatusNavigationProvider";
 import { EdgeStatusPanel } from "./status_panel/EdgeStatusPanel";
 import { EncounterStatusPanel } from "./status_panel/EncounterStatusPanel";
 import { useSelector } from "react-redux";
@@ -10,7 +11,7 @@ export function StatusPanel() {
   const { selectedEntityType: type, selectedIds } = useSelector((state: RootState) => state.interaction.selection);
   if (!selectedIds.length) return <EncounterStatusPanel />;
   if (type === "zone") return <ZoneStatusPanel />;
-  if (type === "actor") return <ActorStatusPanel />;
+  if (type === "actor") return <ActorStatusNavigationProvider><ActorStatusPanel /></ActorStatusNavigationProvider>;
   if (type === "edge") return <EdgeStatusPanel />;
   return <p className="p-4 text-sm text-canvas-muted">Select an actor or one zone to view status.</p>;
 }

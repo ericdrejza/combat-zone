@@ -1,3 +1,4 @@
+import type { ColorOpacity } from "@ui/controls/ColorOpacityFields";
 import { usePersistence } from '@ui/persistence/PersistenceProvider';
 import { createPortal } from 'react-dom';
 import { useEffect, useRef, useState } from 'react';
@@ -10,7 +11,7 @@ import { RenameModal } from '@ui/RenameModal';
 import { RulerColorDialog } from './RulerColorDialog';
 import { ToolbarOptionButton } from '@ui/toolbar/ToolbarOption';
 
-export function RulerContextWheel({ ruler, x, y, onClose }: { ruler: LockedRuler; x: number; y: number; onClose: () => void }) {
+export function RulerContextWheel({ ruler, x, y, onClose, onAppearancePreview }: { ruler: LockedRuler; x: number; y: number; onClose: () => void; onAppearancePreview?: (value: ColorOpacity) => void }) {
   const { readOnly } = usePersistence();
   const dispatch = useDispatch(), ref = useRef<HTMLDivElement>(null);
   const [mode, setMode] = useState<'wheel' | 'name' | 'color'>('wheel');
@@ -32,7 +33,7 @@ export function RulerContextWheel({ ruler, x, y, onClose }: { ruler: LockedRuler
   }, [mode, onClose]);
   if (mode === 'name') return createPortal(<RenameModal ariaLabel="Name ruler" title="Name ruler" inputLabel="Ruler name" initialName={ruler.name} onClose={onClose}
     onRename={name => dispatch(updateLockedRuler({ id: ruler.id, name }))} />, document.body);
-  if (mode === 'color') return createPortal(<RulerColorDialog ruler={ruler} inherited={{ color: preferences.rulerColor, opacity: preferences.rulerOpacity }} readOnly={readOnly}
+  if (mode === 'color') return createPortal(<RulerColorDialog ruler={ruler} inherited={{ color: preferences.rulerColor, opacity: preferences.rulerOpacity }} readOnly={readOnly} onPreview={onAppearancePreview}
     onSave={patch => dispatch(updateLockedRuler({ id: ruler.id, ...patch }))} onClose={onClose} />, document.body);
   const actions = [
     { label: 'Edit ruler', Icon: Pencil, row: 1, column: 2, run: () => { dispatch(setActiveTool('ruler')); dispatch(editLockedRuler(ruler.id)); onClose(); } },

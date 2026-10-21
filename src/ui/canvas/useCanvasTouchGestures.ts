@@ -75,7 +75,8 @@ export function useCanvasTouchGestures({
   }
 
   function handlePointerDown(event: PointerEvent<HTMLDivElement>) {
-    if (event.pointerType !== "touch") return;
+    // React portals bubble through the viewport even when their dialog controls are outside its DOM.
+    if (event.pointerType !== "touch" || !elementRef.current?.contains(event.target as Node)) return;
     touchPointsRef.current.set(event.pointerId, {
       x: event.clientX,
       y: event.clientY

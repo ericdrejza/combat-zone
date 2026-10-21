@@ -1,3 +1,4 @@
+import { unmapCounterBars, type ResourceBars } from "@entities/actor/resourceBars";
 import { getAvailableCounterName } from "@core/entity_resources/counters";
 import { useState } from "react";
 import type { ClockCounter as Counter } from "@core/entity_resources/statusResources";
@@ -6,14 +7,17 @@ import { CounterEditor, createCounterDraft, isCounterDraftValid, resolveCounterD
 import { StatusDialog } from "./StatusDialog";
 
 /** All counter edits stay local until one save commits the complete draft. */
-export function CounterBatchEditor({ counters, kind = "counter", defaultClockStyle = DEFAULT_CLOCK_STYLE, initialSelectedId, onClose, onSave }: {
+export function CounterBatchEditor({ counters, kind = "counter", defaultClockStyle = DEFAULT_CLOCK_STYLE, initialSelectedId, onClose, onSave, resourceBars }: {
   counters: Counter[];
+  resourceBars?: ResourceBars;
   initialSelectedId?: string;
   kind?: "counter" | "clock";
   defaultClockStyle?: ClockStyle;
   onClose: () => void;
-  onSave: (counters: Counter[], removedIds: string[]) => void;
+  onSave: (counters: Counter[], removedIds: string[], resourceBars?: ResourceBars) => void;
 }) {
+  const [barMapping, setBarMapping] = useState(resourceBars);
+  const mappingChanged = JSON.stringify(barMapping) !== JSON.stringify(resourceBars);
   const plural = kind === "clock" ? "clocks" : "counters";
   const prefix = kind === "clock" ? "Clock" : "Counter";
   const [originals] = useState(() => counters);
@@ -23,10 +27,12 @@ export function CounterBatchEditor({ counters, kind = "counter", defaultClockSty
   const [confirmClose, setConfirmClose] = useState(false);
   const remaining = entries.filter((counter) => drafts[counter.id]);
   const isNew = (id: string) => !originals.some((counter) => counter.id === id);
-  const changed = entries.filter((counter) => isNew(counter.id) ? !!drafts[counter.id] : JSON.stringify(drafts[counter.id]) !== JSON.stringify(createCounterDraft(counter)));
+  const mappedSlots = (mapping: ResourceBars | undefined, id: string) => [mapping?.first, mapping?.second]
+    .map((source) => source?.kind === "counter" && source.counterId === id);
+  const changed = entries.filter((counter) => JSON.stringify(mappedSlots(barMapping, counter.id)) !== JSON.stringify(mappedSlots(resourceBars, counter.id)) || (isNew(counter.id) ? !!drafts[counter.id] : JSON.stringify(drafts[counter.id]) !== JSON.stringify(createCounterDraft(counter))));
   const valid = remaining.every((counter) => isCounterDraftValid(drafts[counter.id], isNew(counter.id) ? counter.name : "", kind));
   const selected = entries.find((counter) => counter.id === selectedId);
-  function requestClose() { if (changed.length) setConfirmClose(true); else onClose(); }
+  function requestClose() { if (changed.length || mappingChanged) setConfirmClose(true); else onClose(); }
   function createCounter() {
     const name = getAvailableCounterName({ allIds: remaining.map(({ id }) => id), byId: Object.fromEntries(remaining.map((counter) => [counter.id, { ...counter, name: drafts[counter.id].name.trim() || counter.name }])) }, prefix);
     const counter = { id: crypto.randomUUID(), name, value: 0, ...(kind === "clock" ? { minimum: 0, maximum: 4, style: defaultClockStyle } : {}) };
@@ -46,16 +52,20 @@ export function CounterBatchEditor({ counters, kind = "counter", defaultClockSty
         named.byId[counter.id] = counter;
       }
     }
-    onSave(resolved.filter((counter) => changed.some((entry) => entry.id === counter.id)), originals.filter((counter) => !drafts[counter.id]).map((counter) => counter.id));
+    const saved = resolved.filter((counter) => changed.some((entry) => entry.id === counter.id));
+    const removed = originals.filter((counter) => !drafts[counter.id]).map((counter) => counter.id);
+    if (barMapping) onSave(saved, removed, barMapping);
+    else onSave(saved, removed);
   }
   function removeSelected() {
     const next = { ...drafts };
     delete next[selectedId];
     setDrafts(next);
+    if (barMapping) setBarMapping(unmapCounterBars(barMapping, selectedId));
     setSelectedId(remaining.find((counter) => counter.id !== selectedId)?.id ?? "");
   }
   return <>
-    {selected && drafts[selectedId] ? <CounterEditor kind={kind} defaultClockStyle={defaultClockStyle} title={`Edit ${plural}`} counter={isNew(selectedId) ? undefined : selected} defaultName={selected.name} draft={drafts[selectedId]}
+    {selected && drafts[selectedId] ? <CounterEditor resourceCounterId={selectedId} barMapping={barMapping ? { value: barMapping, counterNames: Object.fromEntries(remaining.map((counter) => [counter.id, drafts[counter.id].name.trim() || counter.name])), onChange: setBarMapping } : undefined} kind={kind} defaultClockStyle={defaultClockStyle} title={`Edit ${plural}`} counter={isNew(selectedId) ? undefined : selected} defaultName={selected.name} draft={drafts[selectedId]}
       onDraftChange={(draft) => setDrafts({ ...drafts, [selectedId]: draft })} onClose={requestClose} onSave={save} saveDisabled={!valid}
       onRemove={removeSelected} selector={<label className="block text-sm">{prefix}
         <div className="mt-1 flex items-center gap-2">

@@ -1,3 +1,4 @@
+import { validResourceBars } from "./resourceBars.js";
 import { validateCounters } from "./counters.js";
 import { ApiContractValidationError } from "./errors.js";
 
@@ -11,4 +12,5 @@ export function validateActorResources(value: unknown): void {
     throw new ApiContractValidationError("Actor hit points are invalid.");
   }
   validateCounters(value.counters);
+  if (!validResourceBars(value.resourceBars, value.counters)) throw new ApiContractValidationError("Actor resource bar mappings are invalid.");
 }

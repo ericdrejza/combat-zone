@@ -120,7 +120,11 @@ export function InterfacePreferenceProvider({ children }: { children: ReactNode 
         setPanWithRightClickDrag: (enabled) =>
           updatePreferences({ panWithRightClickDrag: enabled }),
         setClockStyleDefault: (style) => { if (isClockStyle(style)) updatePreferences({ clockStyleDefault: style }); },
+        setResourceBar1Color: (color) => { if (/^#[0-9a-f]{6}$/i.test(color)) updatePreferences({ resourceBar1Color: color.toLowerCase() }); },
+        setResourceBar2Color: (color) => { if (/^#[0-9a-f]{6}$/i.test(color)) updatePreferences({ resourceBar2Color: color.toLowerCase() }); },
         setHealthCounterName: (name) => updatePreferences({ healthCounterName: name.trim() || "Hit points" }),
+        setShowActorStatusesOnCanvas: (showActorStatusesOnCanvas) => updatePreferences({ showActorStatusesOnCanvas }),
+        setReverseHealthStatusOrder: (reverseHealthStatusOrder) => updatePreferences({ reverseHealthStatusOrder }),
         setStrikethroughDeadInitiativeNames: (enabled) =>
           updatePreferences({ strikethroughDeadInitiativeNames: enabled }),
         setZoneColorDefaults: (zoneColorDefaults) =>

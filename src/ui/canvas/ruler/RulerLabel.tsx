@@ -1,9 +1,10 @@
+import { createPortal } from "react-dom";
 import { useLayoutEffect, useRef, useState } from 'react';
 import type { LayoutPoint } from '@core/layout/types';
 import type { CanvasSize } from '@core/layout/polygonCanvasBounds';
 
 /** Measure the complete caption before paint; long names shrink to the available map width. */
-export function RulerLabel({ text, point, bounds, interactive }: { text: string; point: LayoutPoint; bounds: CanvasSize; interactive: boolean }) {
+export function RulerLabel({ text, point, bounds, interactive, hitTarget }: { text: string; point: LayoutPoint; bounds: CanvasSize; interactive: boolean; hitTarget?: SVGGElement | null }) {
   const ref = useRef<SVGTextElement>(null), [width, setWidth] = useState(text.length * 10);
   useLayoutEffect(() => {
     const element = ref.current, previous = element?.getAttribute('textLength');
@@ -13,8 +14,11 @@ export function RulerLabel({ text, point, bounds, interactive }: { text: string;
     setWidth(intrinsic);
   }, [text]);
   const { x, y, available } = rulerLabelPosition(point, bounds, width);
-  return <text ref={ref} x={x} y={y} textLength={width > available ? available : undefined} lengthAdjust="spacingAndGlyphs"
-    stroke="none" fill="currentColor" fontSize={16} pointerEvents={interactive ? 'all' : 'none'} aria-label="Measurement result">{text}</text>;
+  return <>
+    {interactive && hitTarget ? createPortal(<rect aria-hidden="true" x={x} y={y - 16} width={Math.min(width, available)} height={20} fill="transparent" stroke="none" pointerEvents="all" />, hitTarget) : null}
+    <text ref={ref} className="select-none" style={{ userSelect: "none", WebkitUserSelect: "none" }} x={x} y={y} textLength={width > available ? available : undefined} lengthAdjust="spacingAndGlyphs"
+    stroke="none" fill="currentColor" fontSize={16} pointerEvents={interactive && !hitTarget ? 'all' : 'none'} aria-label="Measurement result">{text}</text>
+  </>;
 }
 
 export function rulerLabelPosition(point: LayoutPoint, bounds: CanvasSize, width: number) {

@@ -1,3 +1,5 @@
+import { unmapCounterBars } from "@entities/actor/resourceBars";
+import { CounterBarSwitches, type CounterBarMapping } from "./CounterBarSwitches";
 import { ClockStyleSelect } from "@ui/controls/ClockStyleSelect";
 import { isClockStyle } from "@core/entity_resources/clockStyle";
 import { useState, type ReactNode } from "react";
@@ -27,10 +29,12 @@ export function resolveCounterDraft(id: string, draft: CounterDraft): Counter {
     ...(draft.style === undefined ? {} : { style: draft.style }) };
 }
 
-export function CounterEditor({ kind = "counter", defaultClockStyle = DEFAULT_CLOCK_STYLE, counter, defaultName, selector, onClose, onSave, onRemove, draft: controlledDraft, onDraftChange, saveDisabled = false, title }: {
+export function CounterEditor({ kind = "counter", defaultClockStyle = DEFAULT_CLOCK_STYLE, counter, defaultName, selector, onClose, onSave, onRemove, draft: controlledDraft, onDraftChange, saveDisabled = false, title, barMapping, resourceCounterId }: {
   kind?: "counter" | "clock";
   defaultClockStyle?: ClockStyle;
   title?: string;
+  barMapping?: CounterBarMapping;
+  resourceCounterId?: string;
   counter?: Counter;
   defaultName: string;
   selector?: ReactNode;
@@ -51,18 +55,23 @@ export function CounterEditor({ kind = "counter", defaultClockStyle = DEFAULT_CL
   const plural = kind === "clock" ? "clocks" : "counters";
   function update(field: keyof CounterDraft, next: string) {
     const updated = { ...draft, [field]: next };
+    if (field === "maximum" && barMapping && resourceCounterId &&
+      (!next.trim() || !Number.isSafeInteger(Number(next)) || Number(next) <= 0)) {
+      barMapping.onChange(unmapCounterBars(barMapping.value, resourceCounterId));
+    }
     if (kind === "clock" && field === "maximum" && Number.isSafeInteger(Number(next)) && Number(next) >= 1 && Number(next) <= 12) updated.value = String(Math.min(Number(updated.value), Number(next)));
     if (onDraftChange) onDraftChange(updated);
     else setLocalDraft(updated);
   }
   return <StatusDialog title={title ?? (counter ? `Edit ${plural}` : `Add ${kind}`)} onClose={onClose}>
-    <form className="space-y-3" onSubmit={(event) => { event.preventDefault(); if (valid && !saveDisabled) onSave({ id: counter?.id ?? crypto.randomUUID(), name: resolvedName, value: Number(value), ...(min === undefined ? {} : { minimum: min }), ...(max === undefined ? {} : { maximum: max }), ...(kind === "clock" ? { style: draft.style ?? DEFAULT_CLOCK_STYLE } : {}) }, !counter && !name.trim()); }}>
+    <form className="space-y-3" onSubmit={(event) => { event.preventDefault(); if (valid && !saveDisabled) onSave({ id: counter?.id ?? resourceCounterId ?? crypto.randomUUID(), name: resolvedName, value: Number(value), ...(min === undefined ? {} : { minimum: min }), ...(max === undefined ? {} : { maximum: max }), ...(kind === "clock" ? { style: draft.style ?? DEFAULT_CLOCK_STYLE } : {}) }, !counter && !name.trim()); }}>
       {selector}
       <label className="block text-sm">Name<input aria-label={kind === "clock" ? "Clock name" : "Counter name"} className="mt-1 w-full rounded border border-canvas-line bg-canvas p-2 enabled:hover:border-canvas-ink focus-visible:ring-2 focus-visible:ring-canvas-ink" placeholder={counter ? undefined : defaultName} value={name} onChange={(event) => update("name", event.currentTarget.value)} /></label>
       {kind === "clock" ? <ClockStyleSelect label="Clock style" value={draft.style ?? DEFAULT_CLOCK_STYLE} onChange={(style) => update("style", style)} /> : null}
       <CounterValueField value={value} minimum={min} maximum={max} onChange={(next) => update("value", next)} />
       {kind === "counter" ? <CounterNumberField label="Minimum (optional)" name="minimum" value={minimum} optional onChange={(next) => update("minimum", next)} /> : null}
       <CounterNumberField label={kind === "clock" ? "Segments (1–12)" : "Maximum (optional)"} name={kind === "clock" ? "segments" : "maximum"} value={maximum} minimum={kind === "clock" ? 1 : undefined} maximum={kind === "clock" ? 12 : undefined} emptyIncrementValue={1} optional={kind === "counter"} onChange={(next) => update("maximum", next)} />
+      {kind === "counter" && barMapping && resourceCounterId ? <CounterBarSwitches counterId={resourceCounterId} maximum={maximum} mapping={barMapping} /> : null}
       {!valid ? <p className="text-xs text-canvas-muted">{kind === "clock" ? "Enter whole-number progress and 1–12 segments." : counter ? "Enter a name, whole numbers, and a minimum no greater than maximum." : "Enter whole numbers and a minimum no greater than maximum."}</p> : null}
       <div className="flex flex-wrap justify-end gap-2">
         {onRemove ? <button className="mr-auto rounded border border-canvas-line p-2 text-red-700 dark:text-red-500 enabled:hover:bg-canvas-surface" onClick={onRemove} type="button">Remove {kind}</button> : null}

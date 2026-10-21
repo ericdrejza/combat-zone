@@ -57,7 +57,7 @@ export function CanvasTransferPreview({ preview }: Props) {
           viewBox={`${-radius} ${-radius} ${diameter} ${diameter}`}
           width={diameter}
         >
-          <ActorVisual
+          <ActorVisual showResourceBars showConditions
             actor={actor}
             clipId="actor-transfer-preview-clip"
             fillColor={colors.fill}

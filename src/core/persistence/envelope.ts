@@ -1,3 +1,4 @@
+import { migrateResourceBars } from "./resourceBarSchema";
 import { migrateRulerArtifacts, assertRulerState } from './rulerSchema';
 import { migrateMeasurementSettings, assertMeasurementState } from './measurementSchema';
 import { migrateGridScale } from './migrateGridScale';
@@ -569,7 +570,7 @@ export function migrateEncounterState(value: unknown): unknown {
     assertEncounterState(migrated, 'encounter', 20);
     const normalized = migrateGridScale(migrated as unknown as EncounterState);
     for (const zone of Object.values(normalized.zones.byId)) zone.rotation = 0;
-    const upgraded = migrateRulerArtifacts(migrateMeasurementSettings(normalized));
+    const upgraded = migrateResourceBars(migrateRulerArtifacts(migrateMeasurementSettings(normalized)));
     assertEncounterState(upgraded);
     return upgraded;
   }
@@ -587,7 +588,11 @@ export function migrateEncounterState(value: unknown): unknown {
   }
   if (migrated.schemaVersion === 28) {
     assertEncounterState(migrated, 'encounter', 28);
-    return migrateRulerArtifacts(migrated as unknown as EncounterState);
+    Object.assign(migrated, migrateRulerArtifacts(migrated as unknown as EncounterState));
+  }
+  if (migrated.schemaVersion === 29) {
+    assertEncounterState(migrated, "encounter", 29);
+    return migrateResourceBars(migrated as unknown as EncounterState);
   }
   return migrated;
 }

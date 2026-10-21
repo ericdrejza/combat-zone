@@ -1,3 +1,4 @@
+import { ResourceBarSettings } from "./ResourceBarSettings";
 import { useMovementPreferences } from '@ui/combat_preferences/useMovementPreferences';
 import { DEFAULT_MOVEMENT_PREFERENCES } from '@core/measurement/types';
 import { MovementMeasurementSettings } from './MovementMeasurementSettings';
@@ -48,6 +49,7 @@ export function CombatSettings() {
     <MovementRepeatSettings />
     <MovementMeasurementSettings />
     </SettingsSection>
+    <ResourceBarSettings />
     <SettingsSection title="Health">
     <SettingsField label="Health counter name" description="Saves when you leave the field. A blank name restores Hit points.">
       <input aria-label="Health counter name" className={SETTINGS_CONTROL} defaultValue={healthCounterName} key={healthCounterName} onBlur={(event) => setHealthCounterName(event.currentTarget.value)} />

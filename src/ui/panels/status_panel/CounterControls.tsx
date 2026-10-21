@@ -1,3 +1,4 @@
+import { type ResourceBars } from "@entities/actor/resourceBars";
 import { SwipeCounterRow } from "./SwipeCounterRow";
 import { ClockCardActions } from "./ClockCardActions";
 import { ResourceMaximum } from "./ResourceMaximum";
@@ -15,11 +16,13 @@ import { CounterEditor } from "./CounterEditor";
 import { ConfirmStatusDialog } from "./StatusDialog";
 import { useStatusDashboard } from "./StatusDashboardContext";
 
-type Props = { counters?: EntityCollection<Counter>; defaultClockStyle?: ClockStyle; kind?: "counter" | "clock"; disabled: boolean; onSave: (counter: Counter, useDefaultName?: boolean) => void; onAdjust: (id: string, amount: number) => void; onSaveBatch: (counters: Counter[], removedIds: string[]) => void };
-export function CounterControls({ counters, kind = "counter", defaultClockStyle = DEFAULT_CLOCK_STYLE, disabled, onSave, onAdjust, onSaveBatch }: Props) {
+type Props = { resourceBars?: ResourceBars; counters?: EntityCollection<Counter>; defaultClockStyle?: ClockStyle; kind?: "counter" | "clock"; disabled: boolean; onSave: (counter: Counter, useDefaultName?: boolean, resourceBars?: ResourceBars) => void; onAdjust: (id: string, amount: number) => void; onSaveBatch: (counters: Counter[], removedIds: string[], resourceBars?: ResourceBars) => void };
+export function CounterControls({ counters, kind = "counter", defaultClockStyle = DEFAULT_CLOCK_STYLE, disabled, onSave, onAdjust, onSaveBatch, resourceBars }: Props) {
   const dashboard = useStatusDashboard();
   const plural = kind === "clock" ? "clocks" : "counters";
   const singular = kind;
+  const [addCounterId, setAddCounterId] = useState(() => crypto.randomUUID());
+  const [barMapping, setBarMapping] = useState(resourceBars);
   const [editing, setEditing] = useState<{ mode: "add" | "edit"; selectedId?: string } | null>(null);
   const [resetId, setResetId] = useState<string | null>(null);
   const [resetToZero, setResetToZero] = useState(false);
@@ -35,7 +38,7 @@ export function CounterControls({ counters, kind = "counter", defaultClockStyle 
     <div className={`flex items-center ${dashboard ? "flex-wrap gap-2" : "justify-between"}`}><h3 className="text-base font-semibold">{kind === "clock" ? "Clocks" : "Counters"}</h3>
       <div className="flex items-center gap-1">
       <button aria-label={`Edit ${plural}`} title={`Edit ${plural}`} disabled={disabled} className="rounded p-2 enabled:hover:bg-canvas-surface enabled:hover:text-canvas-ink focus-visible:ring-2 focus-visible:ring-canvas-ink disabled:cursor-not-allowed disabled:border-canvas-line disabled:bg-canvas-surface disabled:text-canvas-muted disabled:opacity-40" onClick={() => setEditing({ mode: "edit" })} type="button"><Pencil aria-hidden="true" className="h-4 w-4" /></button>
-      <button aria-label={`Add ${singular}`} title={`Add ${singular}`} disabled={disabled} className="rounded p-2 enabled:hover:bg-canvas-surface enabled:hover:text-canvas-ink focus-visible:ring-2 focus-visible:ring-canvas-ink disabled:cursor-not-allowed disabled:border-canvas-line disabled:bg-canvas-surface disabled:text-canvas-muted disabled:opacity-40" onClick={() => setEditing({ mode: "add" })} type="button"><Plus aria-hidden="true" className="h-4 w-4" /></button>
+      <button aria-label={`Add ${singular}`} title={`Add ${singular}`} disabled={disabled} className="rounded p-2 enabled:hover:bg-canvas-surface enabled:hover:text-canvas-ink focus-visible:ring-2 focus-visible:ring-canvas-ink disabled:cursor-not-allowed disabled:border-canvas-line disabled:bg-canvas-surface disabled:text-canvas-muted disabled:opacity-40" onClick={() => { setAddCounterId(crypto.randomUUID()); setBarMapping(resourceBars); setEditing({ mode: "add" }); }} type="button"><Plus aria-hidden="true" className="h-4 w-4" /></button>
       </div>
     </div>
     {kind !== "clock" || counterIds.length > 0 ? <div className={dashboard ? "flex flex-wrap items-stretch gap-x-6 gap-y-2" : kind === "clock" ? "grid auto-rows-fr grid-cols-2 gap-2" : "space-y-2"}>
@@ -62,8 +65,8 @@ export function CounterControls({ counters, kind = "counter", defaultClockStyle 
       return kind === "clock" ? row : <SwipeCounterRow key={id} disabled={disabled} onDelete={() => onSaveBatch([], [id])} onEdit={() => setEditing({ mode: "edit", selectedId: id })}>{row}</SwipeCounterRow>;
     })}
     </div> : null}
-    {editing?.mode === "add" ? <CounterEditor kind={kind} defaultClockStyle={defaultClockStyle} defaultName={getAvailableCounterName(counters, kind === "clock" ? "Clock" : "Counter")} onClose={() => setEditing(null)} onSave={(counter, useDefaultName) => { onSave(counter, useDefaultName); setEditing(null); }} /> : null}
-    {editing?.mode === "edit" ? <CounterBatchEditor initialSelectedId={editing.selectedId} kind={kind} defaultClockStyle={defaultClockStyle} counters={counterIds.map((id) => counters!.byId[id])} onClose={() => setEditing(null)} onSave={(counters, removedIds) => { onSaveBatch(counters, removedIds); setEditing(null); }} /> : null}
+    {editing?.mode === "add" ? <CounterEditor resourceCounterId={addCounterId} barMapping={barMapping ? { value: barMapping, counterNames: Object.fromEntries(counterIds.map((id) => [id, counters!.byId[id].name])), onChange: setBarMapping } : undefined} kind={kind} defaultClockStyle={defaultClockStyle} defaultName={getAvailableCounterName(counters, kind === "clock" ? "Clock" : "Counter")} onClose={() => setEditing(null)} onSave={(counter, useDefaultName) => { if (barMapping) onSave(counter, useDefaultName, barMapping); else onSave(counter, useDefaultName); setEditing(null); }} /> : null}
+    {editing?.mode === "edit" ? <CounterBatchEditor resourceBars={resourceBars} initialSelectedId={editing.selectedId} kind={kind} defaultClockStyle={defaultClockStyle} counters={counterIds.map((id) => counters!.byId[id])} onClose={() => setEditing(null)} onSave={(counters, removedIds, mapping) => { if (mapping) onSaveBatch(counters, removedIds, mapping); else onSaveBatch(counters, removedIds); setEditing(null); }} /> : null}
     {resetCounter?.maximum !== undefined ? <ConfirmStatusDialog focusConfirm title={`Reset ${resetCounter.name}?`} onClose={() => setResetId(null)} onConfirm={() => { onSave({ ...resetCounter, value: resetToZero ? 0 : resetCounter.maximum! }); setResetId(null); }}><p>Reset {resetCounter.name} to {resetToZero ? "zero" : "its maximum"}?</p></ConfirmStatusDialog> : null}
   </section>;
 }

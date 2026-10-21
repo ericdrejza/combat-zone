@@ -1,3 +1,7 @@
+import { ActorOverlay } from "./ActorOverlayLayers";
+import { ActorConditionIcons } from "./ActorConditionIcons";
+import { ActorResourceBars } from "./ActorResourceBars";
+import { resolvedResourceBars } from "@entities/actor/resourceBars";
 import { SelectionOutline } from "@core/rendering/SelectionOutline";
 import { useSelectionOutlineMode } from "@ui/canvas/useSelectionOutlineMode";
 import { actorLabelOffset } from './actorLabelGeometry';
@@ -16,6 +20,8 @@ import { ActorProjection } from './ActorProjection';
 
 type ActorVisualProps = {
   actor: Actor;
+  showResourceBars?: boolean;
+  showConditions?: boolean;
   artworkClipId?: string;
   fillColor: string;
   outlineColor: string;
@@ -36,6 +42,8 @@ type ActorVisualProps = {
  */
 export const ActorVisual = memo(function ActorVisual({
   actor,
+  showResourceBars = false,
+  showConditions = false,
   artworkClipId,
   fillColor,
   outlineColor,
@@ -57,7 +65,7 @@ export const ActorVisual = memo(function ActorVisual({
       ? actor.metadata.sourceAssetMediaType
       : undefined
   );
-  const { enableAssetAnimation, actorSelectionOutlineWidth, actorBorderThickness } = useInterfacePreferences();
+  const { enableAssetAnimation, actorSelectionOutlineWidth, actorBorderThickness, showActorStatusesOnCanvas } = useInterfacePreferences();
   const isAnimatedWebp = Boolean(actor.image) && isAnimatedAsset({
     animated: actor.metadata.sourceAssetAnimated === true,
     mediaType: typeof actor.metadata.sourceAssetMediaType === "string"
@@ -71,7 +79,21 @@ export const ActorVisual = memo(function ActorVisual({
     !enableAssetAnimation && (isAnimatedWebp || isVideo),
     isVideo ? "video" : "image"
   );
+  const barTop = actorLabelOffset(actor.shape, radius, projectionRotation, projectionAngle) - 5;
+  const barCount = showResourceBars && showActorStatusesOnCanvas ? resolvedResourceBars(actor).length : 0;
   const showExternalActorName = Boolean(imageUrl) && (showFactionOutline || selected);
+
+  // A token without artwork keeps its identifying text visible inside its own shape.
+  const tokenName = !imageUrl ? (
+    <text
+      className="pointer-events-none text-[10px] font-bold"
+      dominantBaseline="middle"
+      fill={actor.shape === "transparent" ? selectedTextColor : getReadableTextColor(fillColor)}
+      textAnchor="middle"
+    >
+      {actor.name.toUpperCase()}
+    </text>
+  ) : null;
 
   return (
     <>
@@ -166,16 +188,7 @@ export const ActorVisual = memo(function ActorVisual({
       ) : null}
       </ActorProjection>
       </g>
-      {!imageUrl ? (
-        <text
-          className="pointer-events-none text-[10px] font-bold"
-          dominantBaseline="middle"
-          fill={actor.shape === "transparent" ? selectedTextColor : getReadableTextColor(fillColor)}
-          textAnchor="middle"
-        >
-          {actor.name.toUpperCase()}
-        </text>
-      ) : null}
+      {!selected ? tokenName : null}
       <ActorProjection rotation={projectionRotation} angle={projectionAngle} transition={transition}>
       {selected ? (
         <SelectionOutline mode={selectionOutlineMode}>
@@ -237,19 +250,24 @@ export const ActorVisual = memo(function ActorVisual({
         )
       ) : null}
       </ActorProjection>
+      <ActorOverlay selected={selected}>
+      {selected ? tokenName : null}
+      {showConditions && showActorStatusesOnCanvas ? <ActorConditionIcons selected={selected} actor={actor} radius={radius} top={-barTop} transition={transition} /> : null}
+      {showResourceBars && showActorStatusesOnCanvas ? <ActorResourceBars selected={selected} textColor={selectedTextColor} actor={actor} radius={radius} top={barTop} transition={transition} /> : null}
       {showExternalActorName ? (
         <motion.text
           className="pointer-events-none text-[10px] font-bold z-10"
           dominantBaseline="middle"
           fill={selectedTextColor}
           initial={false}
-          animate={{ dy: actorLabelOffset(actor.shape, radius, projectionRotation, projectionAngle) }}
+          animate={{ dy: actorLabelOffset(actor.shape, radius, projectionRotation, projectionAngle) + (barCount ? barCount * 7 + 3 : 0) }}
           textAnchor="middle"
           transition={transition}
         >
           {actor.name.toUpperCase()}
         </motion.text>
       ) : null}
+      </ActorOverlay>
     </>
   );
 });

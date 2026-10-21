@@ -105,6 +105,13 @@ After completing a numbered section (## X.), move the completed section to the e
 - [x] Make Actor Conditions collapsible, showing only active conditions and
       nonempty Buffs/Debuffs groups when collapsed; preserve bulk toggles and history.
 
+- [ ] Display active Buffs above the upper-left token corner and Debuffs above
+      the upper-right corner, with compact wrapping icons and upright isometric display.
+
+- [ ] Add two Actor token resource bars with exclusive counter switches, automatic
+      health mapping, Combat fill colors, schema 30 persistence, and reversible
+      health status ordering; verify history, validation, persistence and UI behavior.
+
 - [x] Implement the Actor Status panel, optional hit points, custom counters,
       approved condition/weapon/armor controls, Combat preferences and automatic
       health; verify atomic history, schema 13 persistence and cloud round trips.
@@ -327,3 +334,21 @@ Implementation plan: [Ruler, movement and grid styles](plans/ruler_movement_and_
 - [x] Artifact color dialog uses a collapsible custom picker, Cancel/Save with deferred one-step history, and exact alpha support; ruler right-click backtracks one placed point during creation/editing.
 
 - [x] Prevent original-position flashes on actor drop: retain the true pointer endpoint through validation and snap settling, including Strict Mode and existing return/cross-zone motion behavior.
+
+- [ ] Keep Actors hoverable and draggable beneath saved ruler AoEs while preserving
+      ruler context actions, and prevent selection of ruler captions.
+
+- [ ] Preserve a shared occupied-cell pivot across snapped Actor size changes and
+      show two-column condition groups on Small and Medium tokens.
+
+- [ ] Add a Status-header Eye toggle before its popout launcher to show/hide all
+      canvas Actor resource bars and conditions without changing Actor data.
+
+- [ ] Navigate to an Actor by clicking its Status image in sidebar/popout, centering
+      at current zoom with canvas-bound clamping and disabled unplaced navigation.
+
+- [ ] Animate Status-image viewport centering with Motion, preserving zoom and
+      clamping, respecting reduced motion, and cancelling on manual input.
+
+- [ ] Preview ruler appearance drafts without history in a movable, undimmed color
+      dialog; Save commits once and Cancel/outside click discard the preview.

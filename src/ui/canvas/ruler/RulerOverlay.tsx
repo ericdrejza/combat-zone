@@ -1,3 +1,4 @@
+import type { ColorOpacity } from "@ui/controls/ColorOpacityFields";
 import { motion } from 'motion/react';
 import { useMotionPreference } from '@ui/motion_preferences/MotionPreferenceProvider';
 import { useRulerArtifactInput } from './useRulerArtifactInput';
@@ -16,7 +17,7 @@ import { useRulerInteraction } from './useRulerInteraction';
 import { RulerContextWheel } from './RulerContextWheel';
 
 /** Locked artifacts stay in the overlay layer across tools; only editable points accept drags. */
-export function RulerOverlay({ encounter }: { encounter: EncounterState }) {
+export function RulerOverlay({ encounter, hitTarget }: { encounter: EncounterState; hitTarget?: SVGGElement | null }) {
   const { animationsDisabled } = useMotionPreference();
   const options = useSelector(selectRulerOptions), draft = useSelector(selectRulerDraft);
   const { activeToolId, editingRuler } = useSelector((state: RootState) => state.interaction);
@@ -27,7 +28,8 @@ export function RulerOverlay({ encounter }: { encounter: EncounterState }) {
   useRulerShortcuts(active, options, isSquareTopology(encounter.grid.type));
   const interaction = useRulerInteraction({ encounter, active, options, draft, editingId: editingRulerId });
   const [menu, setMenu] = useState<{ id: string; x: number; y: number } | null>(null);
-  const close = useCallback(() => setMenu(null), []);
+  const [appearancePreview, setAppearancePreview] = useState<(ColorOpacity & { id: string; encounterId: string }) | null>(null);
+  const close = useCallback(() => { setMenu(null); setAppearancePreview(null); }, []);
   const openMenu = (position: { id: string; x: number; y: number }) => {
     if (active && draft) { interaction.pickUpLastPoint(); close(); }
     else setMenu(position);
@@ -44,9 +46,10 @@ export function RulerOverlay({ encounter }: { encounter: EncounterState }) {
     <g aria-label="Ruler measurement" className="text-canvas-ink">
       {active ? <rect aria-label="Ruler drawing surface" width={encounter.canvasSize.width} height={encounter.canvasSize.height} fill="transparent" style={{ touchAction: 'none' }} className="cursor-crosshair"
         {...interaction.canvas} onClick={event => event.stopPropagation()} onDoubleClick={event => event.stopPropagation()} /> : null}
-      {lockedRulers.filter(ruler => ruler.id !== editingRulerId).map(ruler => <g key={ruler.id} data-ruler-id={ruler.id} style={appearance(ruler.color, ruler.opacity)}
+      {lockedRulers.filter(ruler => ruler.id !== editingRulerId).map(ruler => <g key={ruler.id} data-ruler-id={ruler.id} style={appearancePreview?.encounterId === encounter.id && appearancePreview.id === ruler.id && menu?.id === ruler.id
+        ? appearance(appearancePreview.color, appearancePreview.opacity) : appearance(ruler.color, ruler.opacity)}
         {...artifactInput(ruler.id)}>
-        <RulerGraphic encounter={encounter} points={ruler.points} options={ruler.options} policy={preferences.diagonalCost} name={ruler.name}
+        <RulerGraphic encounter={encounter} points={ruler.points} options={ruler.options} policy={preferences.diagonalCost} name={ruler.name} hitTarget={active ? undefined : hitTarget}
           onContextMenu={event => {
             if (active && draft) { interaction.canvas.onContextMenu(event); close(); }
             else { event.preventDefault(); event.stopPropagation(); openMenu({ id: ruler.id, x: event.clientX, y: event.clientY }); }
@@ -62,6 +65,6 @@ export function RulerOverlay({ encounter }: { encounter: EncounterState }) {
         </RulerGraphic>
       </g> : null}
     </g>
-    {menu && menuRuler ? <RulerContextWheel key={menu.id} ruler={menuRuler} x={menu.x} y={menu.y} onClose={close} /> : null}
+    {menu && menuRuler ? <RulerContextWheel key={menu.id} ruler={menuRuler} x={menu.x} y={menu.y} onClose={close} onAppearancePreview={value => setAppearancePreview({ ...value, id: menu.id, encounterId: encounter.id })} /> : null}
   </>;
 }

@@ -17,6 +17,7 @@ export type Actor = {
   movementLimit?: number;
   /** Authoritative position while Zone lock is off; locked placement remains derived. */
   spatialPosition?: import('@core/layout/types').LayoutPoint;
+  resourceBars?: import("@combat-zone/firebase-api").ResourceBars;
   hitPoints?: import("./actorResources").HitPoints;
   counters?: import("./actorResources").ActorCounters;
   audioGroupIds?: string[];

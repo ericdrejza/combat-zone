@@ -51,6 +51,7 @@ export function CanvasViewport({ canvasSize, children }: CanvasViewportProps) {
       panStartRef.current
     ) return;
 
+    event.preventDefault();
     startMousePan(event.clientX, event.clientY);
   }
 
@@ -58,6 +59,7 @@ export function CanvasViewport({ canvasSize, children }: CanvasViewportProps) {
     const element = elementRef.current;
     if (!element || !viewport.panEnabled) return;
 
+    viewport.stopPanAnimation();
     panStartRef.current = {
       clientX,
       clientY,
@@ -100,8 +102,9 @@ export function CanvasViewport({ canvasSize, children }: CanvasViewportProps) {
     if (
       event.pointerType === "mouse" &&
       event.button === 2 &&
-      !panStartRef.current
+      !panStartRef.current && viewport.panEnabled
     ) {
+      event.preventDefault();
       startMousePan(event.clientX, event.clientY, event.pointerId);
     }
   }

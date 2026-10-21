@@ -341,6 +341,9 @@ Properties:
 - currentZoneId | zoneless
 - statusEffects[] (stable condition IDs and namespaced weapon/armor markers)
 - hitPoints (optional integer current and positive integer maximum)
+- resourceBars (optional actor-owned mappings: first = health, counter ID, or none;
+  second = counter ID or none; optional healthDisabled remembers a manual
+  health-switch opt-out; absent defaults to health in first, none in second)
 - counters (actor-owned normalized collection of named integer counters with
   optional minimum/maximum bounds)
 - status (ordinal overall health: 0 dead, 1 unconscious / severely injured,
@@ -370,7 +373,12 @@ discards its value; adding that Actor again creates a blank entry.
 
 The initiative row's status control opens a row-width choice strip ordered:
 remove from initiative, dead, unconscious / severely injured, injured, healthy.
-Each icon has a descriptive tooltip. Removing an entry preserves Actor status.
+Each icon has a descriptive tooltip. Interface settings > Panels > Status offers
+“Reverse health status icon order”, off by default. It reverses the four health
+choices in both Status and Initiative quick select, including their popouts;
+Initiative removal stays first. Status keyboard navigation follows the displayed
+order. This durable interface preference does not enter encounter history.
+Removing an entry preserves Actor status.
 Dead participants have muted row text and are skipped when starting combat or
 stepping forward/backward. Their names also have a strikethrough by default;
 the standard switch in Interface settings > Panels > Initiative toggles this
@@ -1081,6 +1089,13 @@ have maximum widths, and counter rows size to their contents and wrap into
 additional rows as the window narrows. Zone and Encounter counters and clocks
 use the same compact wrapping resource layout. Resizing changes presentation only.
 
+The Status header includes an Eye toggle immediately left of its popout launcher.
+It shows/hides all Actor canvas status indicators: resource bars and Buff/Debuff
+badges, including their hover labels/tooltips. Status controls and saved Actor
+values remain available. The icon changes to EyeOff while hidden. This global
+Canvas presentation preference defaults to shown, persists locally, synchronizes
+between tabs, and resets with Canvas preferences outside encounter history.
+
 Status edits short-term actor details, in this order: read-only names, health,
 hit points, counters, Conditions, Weapons, Armor, and movement limit. A single selected
 Actor exposes all sections. Multiple selected Actors expose names, bulk HP,
@@ -1092,6 +1107,15 @@ reset, validation, writer-boundary, history, and responsive layout rules as Zone
 resources. Encounter resources remain independent of Zone resources and persist
 with the encounter through saves, recovery, duplication, import/export, and cloud
 synchronization.
+
+Clicking an Actor image in the Status sidebar or popout pans the main canvas
+toward that Actor at the current zoom with a short Motion easing animation.
+Reduced-motion preferences make this pan immediate. A new navigation starts from
+the current scroll position; manual pan, wheel/touch input, zoom, or canvas-size
+changes interrupt the animation. It centers the Actor when possible and
+clamps to the nearest available scroll position at canvas edges. The image is a
+keyboard-accessible button with action help; an Actor without a canvas placement
+has a disabled navigation action. Navigation does not mutate encounter history.
 
 Each selected Actor's name shows its token image to the right when available,
 in Status. For a single Actor in docked Status, a 64px image occupies
@@ -1219,6 +1243,33 @@ New custom counters may be saved without entering a name: the placeholder
 gaps without conflicting with an existing name on that Actor. Explicitly
 entered names take precedence.
 
+Actor tokens show up to two thin progress bars directly below the token, before
+its external name. Resource 1 defaults to current HP / maximum HP; without
+configured HP it is hidden. The hit point editor includes a “Health → Resource 1”
+switch. Turning health off explicitly records an opt-out that persists while a
+counter occupies Resource 1. Switching a counter off Resource 1, including moving
+it to Resource 2, restores health unless that opt-out is set. Counter assignments
+do not change the remembered health preference. Assigning a counter to Resource 1 replaces health; enabling health replaces
+that counter. Resource 2 has no default mapping. Each Actor counter editor has
+Resource 1 and Resource 2 switches. A counter can occupy only one bar: selecting
+one switch deselects the other, replacing any prior resource in the chosen slot.
+Each mapping switch names the resource it would replace in a “Replaces <name>”
+hint, using draft counter names and the configured health name. No replacement
+hint is shown for an empty slot or the counter already occupying that slot.
+The switches are disabled without a positive maximum. Bars display current /
+maximum, visually clamped to 0–100% without altering the resource value.
+Unmapped bars are hidden. Hovering a bar on a selected Actor shows that resource’s
+name immediately to its left, using the configured health name for HP. The label
+hides on pointer leave or deselection and does not capture pointer events. Deleting a mapped counter or removing its positive
+maximum clears its mapping without restoring health. Mappings belong to each
+Actor, persist in schema 30, and commit with editor Save through validated,
+writer-guarded history. Counter drafts retain mappings while switching counters;
+Cancel discards them. Clones retain mappings to their own copied counters.
+Combat settings > Token resource bars sets global custom six-digit hex fill
+colors for each bar, defaulting to red (#ef4444) and blue (#3b82f6). Colors save on
+blur/Enter, synchronize across tabs, reset with Combat preferences, and stay
+outside encounter history. Token footprints and hit testing remain unchanged.
+
 Custom counters have stable IDs, names, integer current values and optional
 integer bounds. Create, edit, remove and ±1 controls are available for one Actor.
 The header always shows an “Edit counters” pencil immediately before Add counter,
@@ -1257,7 +1308,16 @@ grouped into Buffs and Debuffs in the Actor Status panel, each sorted alphabetic
 by display label with a muted subsection heading. Buffs are Aiming, Assisted /
 Helped, Blessed, Bolstered, Cover, Disguised, Enchanted, Energized, Flying,
 Guarded / Shielded, Hasted / Quickened, Hidden / Concealed, Inspired, Invisible,
-and Resistant. All remaining approved conditions are Debuffs, including
+and Resistant. Canvas tokens show active Buff icons at the upper left and active
+Debuff icons at the upper right, using the same catalog and alphabetical order.
+Small and Medium tokens use two columns per condition group, extending outward
+as needed to keep Buffs and Debuffs separate. Compact badges wrap upward above
+their respective corners and stay upright in
+isometric views. On selected Actors, hovering a condition badge immediately
+shows its name using the Status panel tooltip presentation; leaving the badge
+or deselecting the Actor dismisses it. Touch hold retains condition-name help.
+These indicators do not change the token footprint or placement.
+All remaining approved conditions are Debuffs, including
 Concentrating and Stunned (Galaxy). Empty subsections are hidden. Actor Status
 heal/damage buttons use wider horizontal padding with the standard height and
 icon size.
@@ -1586,6 +1646,11 @@ Render order:
 6. Actors (free-floating and engagement participants)
 7. Annotations
 8. UI overlays
+
+Within the Actor layer, unselected Actors’ external names, resource bars, and condition
+icons render below all Actor tokens. Selected Actors’ names, resource bars, and
+condition icons render above all Actor tokens. These overlays follow their
+Actor during dragging and animated placement changes.
 
 The Engagement layer is after Edges and before Actors. Its connectors and
 tokens therefore render behind actor tokens. Direct connectors may share only
@@ -2002,8 +2067,12 @@ Grid changes can reduce prior margins; existing fit/snapping validation applies.
 Background resizing changes coverage dimensions, retaining its top-left anchor
 before any shared coordinate rebase. Deleting a
 background retains its coverage; adding/replacing one establishes new coverage.
-Grid geometry edits and actor size changes re-snap actors
-to nearby fitting anchors; appearance edits do not change positions. A group
+Grid geometry edits re-snap actors to nearby fitting anchors. Snapped Actor size
+changes keep the top-left occupied cell in grid coordinates as their resize
+pivot, including square, hex, projected, and warped grids. Growing and shrinking
+reuse that cell instead of repeatedly rounding the current center; existing
+occupancy and canvas-bound validation still apply. Only resized Actors are
+repositioned; appearance edits do not change positions. A group
 drag translates every selected actor by the same offset, then individually
 snaps each actor when actor snapping is enabled. Each complete operation is one history action.
 
@@ -2069,9 +2138,13 @@ Locked ruler artifacts have an ID, optional display name (empty when unnamed), s
 - Grid Settings owns a positive whole-number distance per cell (default 5 feet), feet/meters/custom units (only feet and meters are concrete choices; standard distance names use abbreviations from mm through km and in/ft/yd/mi), independent of map sizing.
 - Grid styles: Solid (default), Dashed, Dotted, Crosshair. Crosshair retains the outer quarter of each edge at both vertices, leaving its middle half empty. Preserve settings through alignment, detection, grid changes and resizing.
 - Ruler immediately left of Select: Line, Circle, Rectangle, Cone, Path. Unfinished measurements are session-only and available read-only; locking and modifying saved artifacts require writer access. Ruler snapping always follows the Actors and Rulers grid snapping setting. Highlighting is derived from actor/ruler snapping, with no separate toggle. Canvas Settings chooses cell coverage: corners or center (default), center only, strictly more than half the cell area, corners plus the first forward cone cell, or corners plus all forward cells touching the cone origin. Corner thresholds are three on square/isometric grids and four on hex grids. Corner-or-center tests corners first. The cone-origin variants use the corner threshold without the center fallback; their extra cells exclude the source cell and must have actual cone overlap. The first-cell variant follows the centerline, resolving boundary ties with normal grid snapping. Other area shapes use the corner threshold in these two variants. Snapped Line rulers already form whole-cell routes, so their cell coverage is unchanged. Coverage and overlap fractions are evaluated in unprojected map geometry, independently of display warping and the rendered arc samples. Exactly half coverage is excluded from the majority mode. The local setting updates draft and saved-artifact highlights and optional cell-based area values without editing artifacts or adding encounter history.
-- Shape subtools use icon buttons: Path (Waypoints), Circle (Radius), Cone, Rectangle, and Line (RectangleEllipsis rotated 90°), together in one button group. Remove the toolbar range field. The cone angle field uses an Angle icon, selects its text on click, and commits/blurs on Enter. Path is the default ruler subtool. Click to set shape endpoints or Path waypoints; only editable control points use dragging. Space locks an artifact, including edited artifacts, using only placed points; it never adds the cursor preview as a waypoint. The live cursor point is white and placed points are solid. A contextual Lock icon supports touch. Multiple locked artifacts remain through tool switches until deleted or cleared. Right-click a locked artifact for an Edit/Delete/Name/Color wheel (touch-hold on touch screens); editing Paths supports appending waypoints, and other shapes expose adjustable points. Left-clicks and short touch taps through saved artifacts place points for the active ruler, including snapped cell centers; saved artifacts do not block the live preview. While creating/editing, right-click anywhere on the ruler canvas—including editable points or another saved artifact—to pick up the last placed point, retaining earlier waypoints and the live cursor preview. Repeat to backtrack one point at a time. Removing the final draft point ends creation or restores the last saved version when editing. Escape cancels/restores the entire draft. Artifact context menus open only when no ruler draft/edit is active. Support explicit dimensions and angles. Locked artifacts persist in the encounter, including names and individual color/opacity overrides. Creating, deleting, clearing, renaming and changing appearance use encounter undo/redo. The artifact color dialog keeps edits local until Save commits one appearance action; Cancel discards them. Its palette toggle expands/collapses without closing the dialog, and Escape closes an open palette before cancelling the dialog. Cancel is at the lower left and Save at the lower right. Geometry edits remain temporary until Space locks them again as one history step; Escape restores the last locked version. Initial unfinished shapes never enter history. Clicking the second point of a two-point draft picks it up and returns to the live endpoint preview; dragging still adjusts a point.
+- Shape subtools use icon buttons: Path (Waypoints), Circle (Radius), Cone, Rectangle, and Line (RectangleEllipsis rotated 90°), together in one button group. Remove the toolbar range field. The cone angle field uses an Angle icon, selects its text on click, and commits/blurs on Enter. Path is the default ruler subtool. Click to set shape endpoints or Path waypoints; only editable control points use dragging. Space locks an artifact, including edited artifacts, using only placed points; it never adds the cursor preview as a waypoint. The live cursor point is white and placed points are solid. A contextual Lock icon supports touch. Multiple locked artifacts remain through tool switches until deleted or cleared. Right-click a locked artifact for an Edit/Delete/Name/Color wheel (touch-hold on touch screens); editing Paths supports appending waypoints, and other shapes expose adjustable points. Left-clicks and short touch taps through saved artifacts place points for the active ruler, including snapped cell centers; saved artifacts do not block the live preview. While creating/editing, right-click anywhere on the ruler canvas—including editable points or another saved artifact—to pick up the last placed point, retaining earlier waypoints and the live cursor preview. Repeat to backtrack one point at a time. Removing the final draft point ends creation or restores the last saved version when editing. Escape cancels/restores the entire draft. Artifact context menus open only when no ruler draft/edit is active. Support explicit dimensions and angles. Locked artifacts persist in the encounter, including names and individual color/opacity overrides. Creating, deleting, clearing, renaming and changing appearance use encounter undo/redo. The artifact color dialog previews valid color and opacity edits on that ruler without changing EncounterState. Save commits one appearance action; Cancel, outside click, or Escape discards the preview. Its backdrop is transparent. Right-click dragging over the open dialog or its backdrop still pans the canvas when right-drag panning is enabled, without closing the dialog or discarding its preview. Only a left-click outside cancels. A drag handle centered in the header moves the dialog within the viewport, with arrow-key movement available on the handle. Selecting a palette color keeps the ruler palette expanded for further adjustments. Its palette toggle expands/collapses without closing the dialog, and Escape closes an open palette before cancelling the dialog. Cancel is at the lower left and Save at the lower right. Geometry edits remain temporary until Space locks them again as one history step; Escape restores the last locked version. Initial unfinished shapes never enter history. Clicking the second point of a two-point draft picks it up and returns to the live endpoint preview; dragging still adjusts a point.
 - Measurements use unprojected grid space, rendered through rotation/projection/warp. Square circles start at vertices; snapped cones choose a source cell on the first click, then switch between its nearest side midpoint or corner according to the target trajectory. Side cones face outward from the source cell. There are no manual corner/side origin controls. Square cones default to 90°, hex cones to 60°. Unsnapped cones use the clicked origin. Shift+wheel in cone mode adjusts the angle; other wheel behavior is retained.
 - Line is one cell wide. Choose the consistent repeating grid-step pattern that best reaches the target automatically; do not expose concrete orthogonal/diagonal pattern choices.
+- Saved ruler context hit targets sit beneath Actors, while ruler graphics remain
+  in the overlay. Actors under an AoE retain hover and dragging, including where
+  ruler outlines, points, or captions overlap them. Context actions remain available
+  on unobstructed ruler areas. Ruler captions cannot be text-selected.
 - Line/Path distance follows ruler snapping. Calculated area is disabled by default and can be enabled in Canvas Settings (geometric when unsnapped, summed highlighted-cell area when snapped). Circle labels show radius, cone labels show length and degrees, rectangles show width × height, and line/path labels show distance. Keep the complete artifact label within canvas bounds, fitting long names as needed.
 - Canvas Settings provides a ruler color picker, manual #RRGGBB/#RRGGBBAA entry and opacity. Default appearance follows the theme; preferences persist locally and synchronize between tabs. “Ruler feel” offers “Rigid and Snappy” (default) and “Flowy and Flexible”; the latter adds spring flow and bounce to draft manipulation using Motion, respecting reduced-motion preferences. Locked shapes have identical geometry and appearance in both modes.
 - Separate Ruler and Select with a vertical divider. D activates Ruler; R retains entity rename and opens a rename dialog for selected actors or zones. In Ruler, 1–5 select Path/Circle/Cone/Rectangle/Line, 9 toggles actor movement distance, and 0 clears rulers. Canvas hints follow the current state: click to begin or continue a measurement, Spacebar to lock only when a draft can be locked, and right-click/touch-hold saved artifacts for options while idle.

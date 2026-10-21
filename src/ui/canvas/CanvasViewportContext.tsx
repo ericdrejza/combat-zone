@@ -1,3 +1,4 @@
+import { useCanvasPan } from "./useCanvasPan";
 import {
   createContext,
   type PropsWithChildren,
@@ -18,8 +19,7 @@ import { useInterfacePreferences } from "@ui/interface_preferences/InterfacePref
 import {
   CANVAS_ZOOM_STEP,
   getCenteredCanvasResizeScroll,
-  getZoomToFit,
-  getZoomScrollAtPoint
+  getZoomToFit
 } from "./canvasViewportMath";
 
 import { useCanvasZoom } from "./useCanvasZoom";
@@ -27,9 +27,10 @@ import { useCanvasZoom } from "./useCanvasZoom";
 type CanvasViewportValue = {
   getViewportSize: () => CanvasSize;
   panEnabled: boolean;
+  stopPanAnimation: () => void;
   pan: (direction: "up" | "down" | "left" | "right") => void;
   /** Navigate without changing zoom or relinquishing temporary zoom restoration. */
-  panToPoint: (point: LayoutPoint) => void;
+  panToPoint: (point: LayoutPoint, options?: { animate?: boolean }) => void;
   registerViewport: (element: HTMLDivElement | null) => void;
   viewportSize: CanvasSize;
   zoom: number;
@@ -99,6 +100,8 @@ export function CanvasViewportProvider({ children }: PropsWithChildren) {
 
   const { zoom, zoomRef, setCenteredZoom, setZoomAtPoint, beginTemporaryMaxZoom } =
     useCanvasZoom({ canvasSize, viewportElement, getViewportSize });
+
+  const { panToPoint, stopPan } = useCanvasPan({ viewportElement, canvasSize, getViewportSize, zoom, zoomRef });
 
   const previousDocument = previousDocumentRef.current;
   const encounterChanged = previousDocument.encounterId !== encounterId;
@@ -220,17 +223,10 @@ export function CanvasViewportProvider({ children }: PropsWithChildren) {
       getViewportSize,
       beginTemporaryMaxZoom,
       panEnabled: panWithRightClickDrag,
-      panToPoint: (canvasPoint) => {
-        if (!viewportElement) return;
-        const size = getViewportSize();
-        const scroll = getZoomScrollAtPoint({ canvasPoint, canvasSize,
-          currentZoom: zoomRef.current, nextZoom: zoomRef.current,
-          scrollLeft: viewportElement.scrollLeft, scrollTop: viewportElement.scrollTop,
-          viewportPoint: { x: size.width / 2, y: size.height / 2 }, viewportSize: size });
-        viewportElement.scrollLeft = Math.min(scroll.left, Math.max(0, canvasSize.width * zoomRef.current - size.width));
-        viewportElement.scrollTop = Math.min(scroll.top, Math.max(0, canvasSize.height * zoomRef.current - size.height));
-      },
+      stopPanAnimation: stopPan,
+      panToPoint,
       pan: (direction) => {
+        stopPan();
         if (!viewportElement) return;
         viewportElement.scrollLeft += direction === "left" ? -40 : direction === "right" ? 40 : 0;
         viewportElement.scrollTop += direction === "up" ? -40 : direction === "down" ? 40 : 0;
@@ -252,6 +248,8 @@ export function CanvasViewportProvider({ children }: PropsWithChildren) {
       getViewportSize,
       viewportElement,
       panWithRightClickDrag,
+      panToPoint,
+      stopPan,
       setCenteredZoom,
       setZoomAtPoint,
       viewportSize,
@@ -268,8 +266,12 @@ export function CanvasViewportProvider({ children }: PropsWithChildren) {
   );
 }
 
+export function useOptionalCanvasViewport(): CanvasViewportValue | null {
+  return useContext(CanvasViewportContext);
+}
+
 export function useCanvasViewport(): CanvasViewportValue {
-  const value = useContext(CanvasViewportContext);
+  const value = useOptionalCanvasViewport();
   if (!value) {
     throw new Error("useCanvasViewport must be used within CanvasViewportProvider.");
   }

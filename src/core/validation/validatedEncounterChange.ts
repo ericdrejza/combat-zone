@@ -1,5 +1,6 @@
 import { reconcileZoneVertices } from '@core/movement/zoneVertexSnapping';
-import { isSpatial, resnapSpatialActors } from '@core/movement/movementStrategies';
+import { isSpatial } from '@core/movement/movementStrategies';
+import { resizeSpatialActors } from '@core/movement/actorResizePivot';
 import type { EncounterState } from "../encounter/types";
 import type { EncounterActionRecord } from "../history/types";
 import {
@@ -51,7 +52,7 @@ export function prepareValidatedEncounterChange({
     type: action.type,
     payload: action.payload
   };
-  if (isActorFootprintChange(action)) nextEncounter = resnapSpatialActors(nextEncounter);
+  if (isActorFootprintChange(action)) nextEncounter = resizeSpatialActors(nextEncounter, currentEncounter);
   const adjustment = isSpatial(nextEncounter) ? { nextEncounter, resizedZoneIds: [] } : adjustPolygonFlexZonesToFit(
     validationAction,
     currentEncounter,
@@ -130,7 +131,7 @@ export async function prepareValidatedEncounterChangeAsync({
     type: action.type,
     payload: action.payload
   };
-  if (isActorFootprintChange(action)) nextEncounter = resnapSpatialActors(nextEncounter);
+  if (isActorFootprintChange(action)) nextEncounter = resizeSpatialActors(nextEncounter, currentEncounter);
   const adjustment = isSpatial(nextEncounter) ? { nextEncounter, resizedZoneIds: [] } : adjustPolygonFlexZonesToFit(
     validationAction,
     currentEncounter,

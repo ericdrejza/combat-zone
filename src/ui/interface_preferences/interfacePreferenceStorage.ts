@@ -64,7 +64,11 @@ export type DurableInterfacePreferences = {
   warnActorDestinationsDiffer: boolean;
   keepHealDamageDialogOpen: boolean;
   healthCounterName: string;
+  resourceBar1Color: string;
+  resourceBar2Color: string;
   clockStyleDefault: ClockStyle;
+  showActorStatusesOnCanvas: boolean;
+  reverseHealthStatusOrder: boolean;
   strikethroughDeadInitiativeNames: boolean;
   zoneColorDefaults: ZoneColorDefaults;
   zoneOpacityDefault: number;
@@ -106,8 +110,12 @@ export type InterfacePreferences = DurableInterfacePreferences & {
   setPanWithRightClickDrag: (enabled: boolean) => void;
   setWarnActorDestinationsDiffer: (enabled: boolean) => void;
   setKeepHealDamageDialogOpen: (enabled: boolean) => void;
+  setResourceBar1Color: (color: string) => void;
+  setResourceBar2Color: (color: string) => void;
   setHealthCounterName: (name: string) => void;
   setClockStyleDefault: (style: ClockStyle) => void;
+  setShowActorStatusesOnCanvas: (visible: boolean) => void;
+  setReverseHealthStatusOrder: (enabled: boolean) => void;
   setStrikethroughDeadInitiativeNames: (enabled: boolean) => void;
   setZoneColorDefaults: (defaults: ZoneColorDefaults) => void;
   setZoneOpacityDefault: (opacity: number) => void;
@@ -147,7 +155,11 @@ export const defaultPreferences: DurableInterfacePreferences = {
   warnActorDestinationsDiffer: true,
   keepHealDamageDialogOpen: false,
   healthCounterName: "Hit points",
+  resourceBar1Color: "#ef4444",
+  resourceBar2Color: "#3b82f6",
   clockStyleDefault: DEFAULT_CLOCK_STYLE,
+  showActorStatusesOnCanvas: true,
+  reverseHealthStatusOrder: false,
   strikethroughDeadInitiativeNames: true,
   zoneColorDefaults: DEFAULT_ZONE_COLOR_DEFAULTS,
   zoneOpacityDefault: 0.7,
@@ -190,8 +202,12 @@ export const defaultValue: InterfacePreferences = {
   setPanWithRightClickDrag: () => undefined,
   setWarnActorDestinationsDiffer: () => undefined,
   setKeepHealDamageDialogOpen: () => undefined,
+  setResourceBar1Color: () => undefined,
+  setResourceBar2Color: () => undefined,
   setHealthCounterName: () => undefined,
   setClockStyleDefault: () => undefined,
+  setShowActorStatusesOnCanvas: () => undefined,
+  setReverseHealthStatusOrder: () => undefined,
   setStrikethroughDeadInitiativeNames: () => undefined,
   setZoneColorDefaults: () => undefined,
   setZoneOpacityDefault: () => undefined,
@@ -258,7 +274,11 @@ export function readPreferences(): DurableInterfacePreferences {
           ? stored.panWithRightClickDrag
           : true,
       clockStyleDefault: isClockStyle(stored?.clockStyleDefault) ? stored.clockStyleDefault : DEFAULT_CLOCK_STYLE,
+      resourceBar1Color: isHexColor(stored?.resourceBar1Color) ? stored.resourceBar1Color.toLowerCase() : defaultPreferences.resourceBar1Color,
+      resourceBar2Color: isHexColor(stored?.resourceBar2Color) ? stored.resourceBar2Color.toLowerCase() : defaultPreferences.resourceBar2Color,
       healthCounterName: typeof stored?.healthCounterName === "string" && stored.healthCounterName.trim() ? stored.healthCounterName.trim() : "Hit points",
+      showActorStatusesOnCanvas: typeof stored?.showActorStatusesOnCanvas === "boolean" ? stored.showActorStatusesOnCanvas : true,
+      reverseHealthStatusOrder: stored?.reverseHealthStatusOrder === true,
       strikethroughDeadInitiativeNames:
         typeof stored?.strikethroughDeadInitiativeNames === "boolean"
           ? stored.strikethroughDeadInitiativeNames

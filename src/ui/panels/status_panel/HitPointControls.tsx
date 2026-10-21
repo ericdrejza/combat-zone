@@ -1,3 +1,5 @@
+import { actorResourceBars, mapHealthBar, type ResourceBars } from "@entities/actor/resourceBars";
+import { PreferenceSwitch } from "@ui/settings/PreferenceSwitch";
 import { getHitPointAdjustment } from "@entities/actor/hitPointAdjustment";
 import { HeartMinus, HeartPlus, Pencil, Plus, RotateCcw } from "lucide-react";
 import { useState } from "react";
@@ -13,7 +15,7 @@ import { useStatusDashboard } from "./StatusDashboardContext";
 
 export function HitPointControls({ actors, label, disabled, onAdjust, onSet }: {
   actors: Actor[]; label: string; disabled: boolean; onAdjust: (ids: string[], amount: number) => void;
-  onSet: (id: string, hp: HitPoints) => void;
+  onSet: (id: string, hp: HitPoints, mapping?: ResourceBars) => void;
 }) {
   const dashboard = useStatusDashboard();
   const { rules } = useCombatPreferences();
@@ -52,7 +54,7 @@ export function HitPointControls({ actors, label, disabled, onAdjust, onSet }: {
         </TouchTooltip>;
       })}
     </div>
-    {editing && actor ? <HitPointEditor actor={actor} label={label} onClose={() => setEditing(false)} onSave={(hp) => { onSet(actor.id, hp); setEditing(false); }} /> : null}
+    {editing && actor ? <HitPointEditor actor={actor} label={label} onClose={() => setEditing(false)} onSave={(hp, mapping) => { onSet(actor.id, hp, mapping); setEditing(false); }} /> : null}
     {reset && actor?.hitPoints ? <ConfirmStatusDialog focusConfirm title={`Reset ${label}?`} onClose={() => setReset(false)} onConfirm={() => { onSet(actor.id, { ...actor.hitPoints!, current: actor.hitPoints!.maximum }); setReset(false); }}>
       <p>Reset {actor.name} to their maximum {label.toLowerCase()}?</p>
     </ConfirmStatusDialog> : null}
@@ -62,18 +64,20 @@ export function HitPointControls({ actors, label, disabled, onAdjust, onSet }: {
   </section>;
 }
 
-function HitPointEditor({ actor, label, onClose, onSave }: { actor: Actor; label: string; onClose: () => void; onSave: (hp: HitPoints) => void }) {
+function HitPointEditor({ actor, label, onClose, onSave }: { actor: Actor; label: string; onClose: () => void; onSave: (hp: HitPoints, mapping: ResourceBars) => void }) {
   const { rules } = useCombatPreferences();
+  const [barMapping, setBarMapping] = useState(() => actorResourceBars(actor));
   const [maximum, setMaximum] = useState(actor.hitPoints ? String(actor.hitPoints.maximum) : "");
   const [current, setCurrent] = useState(actor.hitPoints ? String(actor.hitPoints.current) : "");
   const validMaximum = maximum.trim() !== "" && Number.isSafeInteger(Number(maximum)) && Number(maximum) > 0;
   const valid = validMaximum && current.trim() !== "" && Number.isSafeInteger(Number(current));
   return <StatusDialog title={`Edit ${label === "Hit points" ? "hit points" : label}`} onClose={onClose}>
-    <form className="space-y-3" onSubmit={(event) => { event.preventDefault(); if (valid) onSave({ maximum: Number(maximum), current: Number(current) }); }}>
+    <form className="space-y-3" onSubmit={(event) => { event.preventDefault(); if (valid) onSave({ maximum: Number(maximum), current: Number(current) }, barMapping); }}>
       <CounterNumberField label="Maximum hit points" name="maximum hit points" value={maximum} minimum={1} emptyIncrementValue={1} onChange={(value) => { setMaximum(value); if (!actor.hitPoints && (current === "" || current === maximum)) setCurrent(value); }} />
       <CounterNumberField label="Current hit points" name="current hit points" value={current} minimum={rules.limits === "bounded" ? 0 : undefined} maximum={rules.limits !== "unbounded" && validMaximum ? Number(maximum) : undefined} onChange={setCurrent} beforeDecrement={
         <button aria-label="Reset current hit points to maximum" title={validMaximum ? "Reset current hit points to maximum" : "Enter a positive whole-number maximum first"} disabled={!validMaximum} className="rounded p-2 enabled:hover:bg-canvas-surface enabled:hover:text-canvas-ink focus-visible:ring-2 focus-visible:ring-canvas-ink disabled:cursor-not-allowed disabled:border-canvas-line disabled:bg-canvas-surface disabled:text-canvas-muted disabled:opacity-40" onClick={() => setCurrent(String(Number(maximum)))} type="button"><RotateCcw aria-hidden="true" className="h-4 w-4" /></button>
       } />
+      <PreferenceSwitch compact description={barMapping.first?.kind === "counter" ? `Replaces ${actor.counters?.byId[barMapping.first.counterId]?.name ?? "counter"}` : undefined} label="Health → Resource 1" checked={barMapping.first?.kind === "health"} onChange={(enabled) => setBarMapping(mapHealthBar(barMapping, enabled))} />
       {!valid ? <p className="text-xs text-canvas-muted">Enter whole numbers and a positive maximum.</p> : null}
       <div className="flex justify-end gap-2"><button type="button" onClick={onClose} className="rounded border border-canvas-line p-2 enabled:hover:bg-canvas-surface">Cancel</button><button type="submit" disabled={!valid} className="rounded bg-canvas-ink p-2 text-canvas-on-ink enabled:hover:bg-canvas-ink/80 disabled:cursor-not-allowed disabled:border-canvas-line disabled:bg-canvas-surface disabled:text-canvas-muted disabled:opacity-40">Save</button></div>
     </form>

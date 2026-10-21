@@ -1,6 +1,6 @@
 import { ActorTrim } from './ActorTrim';
 import { useCanvasPreferences } from '@ui/canvas_preferences/useCanvasPreferences';
-import { motion } from "motion/react";
+import { ActorMotionGroup, ActorOverlayLayers } from "./ActorOverlayLayers";
 
 import type { LayoutPoint } from "@core/layout/types";
 import { ACTOR_LAYOUT_GROUP_COLORS } from "@entities/actor/actorVisuals";
@@ -89,7 +89,7 @@ export function ActorLayer({
   const projectionRotation = encounter.grid.type === 'isometric' && preferences.projectIsometricTokens
     ? encounter.grid.rotation : undefined;
 
-  return placements.map(
+  return <ActorOverlayLayers>{placements.map(
     ({ actor, incomingPoint: placementIncomingPoint, point, radius }) => {
       const zoneMovedPoint = transformZoneActorPoint(
         point,
@@ -144,7 +144,7 @@ export function ActorLayer({
           target={renderedPoint}
         >
           {(animatePoint, completeTrack) => (
-            <motion.g
+            <ActorMotionGroup
               aria-label={actor.name}
               className="cursor-grab select-none active:cursor-grabbing"
               data-entity-id={actor.id}
@@ -197,7 +197,7 @@ export function ActorLayer({
                 }
               }}
             >
-              <ActorTrim encounter={encounter} actor={actor} point={renderedPoint}>{artworkClipId => <ActorVisual
+              <ActorTrim encounter={encounter} actor={actor} point={renderedPoint}>{artworkClipId => <ActorVisual showResourceBars showConditions
                 artworkClipId={artworkClipId}
                 actor={actor}
                 projectionRotation={projectionRotation} projectionAngle={encounter.grid.isometricAngle}
@@ -211,10 +211,10 @@ export function ActorLayer({
                 transition={actorTransition}
               />}
               </ActorTrim>
-            </motion.g>
+            </ActorMotionGroup>
           )}
         </ActorMotionTrack>
       );
     }
-  );
+  )}</ActorOverlayLayers>;
 }

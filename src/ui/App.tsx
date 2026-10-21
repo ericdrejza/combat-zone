@@ -1,3 +1,4 @@
+import { CanvasStatusVisibilityButton } from "@ui/panels/status_panel/CanvasStatusVisibilityButton";
 import { nextLibraryPanelView } from "@ui/interface_preferences/libraryPreferences";
 import { ColorSamplerProvider } from '@ui/canvas/color_sampler/ColorSamplerProvider';
 import { useEncounterOperation } from "@ui/history/useEncounterOperation";
@@ -419,7 +420,7 @@ function AppContent() {
     panel: DockPanelDefinition | CompactPanelDefinition
   ) {
     if (panel.id === "initiative") return <InitiativeLauncherButton />;
-    if (panel.id === "status") return <StatusLauncherButton />;
+    if (panel.id === "status") return <div className="flex items-center gap-1"><CanvasStatusVisibilityButton /><StatusLauncherButton /></div>;
     if (panel.id === "library") {
       return (
         <LibraryPanelHeaderActions

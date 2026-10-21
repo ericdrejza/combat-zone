@@ -1,3 +1,4 @@
+import { validResourceBars } from "@combat-zone/firebase-api";
 import { validCounters, type Counter, type Counters } from "@core/entity_resources/counters";
 export { normalizeCounter } from "@core/entity_resources/counters";
 import type { ActorStatus } from "./types";
@@ -35,9 +36,9 @@ export function automaticStatus(hp: HitPoints, rules: CombatRules): ActorStatus 
 }
 
 /** Structural checks apply on load independently of combat preferences. */
-export function validActorResources(actor: { hitPoints?: unknown; counters?: unknown }): boolean {
+export function validActorResources(actor: { hitPoints?: unknown; counters?: unknown; resourceBars?: unknown }): boolean {
   if (!actor || typeof actor !== "object" || Array.isArray(actor)) return false;
   const hp = actor.hitPoints as HitPoints | undefined;
   if (hp !== undefined && (!hp || !Number.isSafeInteger(hp.current) || !Number.isSafeInteger(hp.maximum) || hp.maximum <= 0)) return false;
-  return validCounters(actor.counters);
+  return validCounters(actor.counters) && validResourceBars(actor.resourceBars, actor.counters);
 }

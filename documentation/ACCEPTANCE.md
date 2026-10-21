@@ -481,6 +481,26 @@ these back into `AGENT.md` or `DESIGN.md`.
       Sizes are independent of Actor size; direct and stored images resolve through
       the shared image resolver. Multiple selected Actors retain inline thumbnails.
 
+- [ ] Canvas tokens show only active catalog Buff icons at the upper left and
+      Debuff icons at the upper right; badges wrap without changing placement or
+      hit testing and stay upright in isometric views. Selected-token condition
+      badges show immediate name tooltips on hover, dismiss on leave/deselection,
+      and retain touch-hold help.
+
+- [ ] Actor tokens show up to two bars beneath the token: health maps to Resource 1
+      by default; its editor can disable/restore mapping. Counter editor switches
+      map a counter to one slot at a time, require a positive maximum, replace prior
+      mappings, and save atomically with draft edits. Switching a counter off slot 1
+      restores health unless manually disabled in the health editor. Moving that
+      counter to slot 2 uses the same fallback. Removal clears the mapping.
+      Bars use current/maximum, clamp only their visual fill, and hide when unmapped.
+      Hovering a selected Actor’s bar shows its resource name to the left; the label
+      hides on pointer leave/deselection and follows custom health naming.
+      Combat colors default to red/blue and persist, synchronize, and reset.
+      Schema 30 preserves mappings across history, local/cloud saves and import/export.
+- [ ] Interface can reverse the health choices in Status and Initiative quick
+      select; keyboard navigation follows the displayed order and removal stays first.
+
 - [x] Status opens from a SquareActivity header launcher, focuses its existing
       window on reopening, and closes independently or with the parent. Docked
       and popout views share selection, validated edits, writer enforcement,
@@ -778,3 +798,39 @@ these back into `AGENT.md` or `DESIGN.md`.
 - [x] Right-click during ruler creation/editing picks up the last placed point while retaining earlier waypoints and a cursor preview, including over other artifacts and editable points. Re-locking saves only placed points as one history step; exhausting an existing edit restores the saved artifact without deletion history. Escape cancels/restores the full draft.
 
 - [x] The lead actor remains at its pointer endpoint during drop validation and settles from there to the accepted position, without replaying motion from the original placement. Regression coverage passes normally and under Strict Mode; delayed-validation browser sampling preserves the drop-to-snap corridor and existing range-overlay suppression.
+
+- [ ] Saved ruler AoE interiors, outlines, points, and captions do not block Actor
+      hover or dragging; unobstructed rulers retain context menus and touch holds.
+      Ruler captions cannot be highlighted as text.
+
+- [ ] Snapped Actor size changes reuse the top-left occupied grid cell as a pivot,
+      avoiding drift during repeated growth/shrink cycles while preserving collision,
+      bounds validation and atomic undo/redo. Appearance edits do not relocate actors.
+- [ ] Small and Medium token conditions use two columns per Buff/Debuff group,
+      extending outward to avoid overlap between groups.
+
+- [ ] The Status header Eye/EyeOff toggle sits left of popout, hides all Actor
+      canvas resource bars/condition icons and hover help, preserves panel controls
+      and Actor values, and persists/synchronizes/resets as a Canvas preference.
+
+- [ ] Status Actor images pan the main viewport toward their actual canvas placement
+      without changing zoom, centering when possible and clamping at canvas bounds.
+      Sidebar, popout, keyboard and touch use the same action; unplaced Actors cannot
+      navigate, and no encounter/history mutation occurs.
+
+- [ ] Status-image navigation animates from the current viewport position to its
+      clamped destination using Motion, preserves zoom, respects reduced motion,
+      and yields to manual viewport input or a newer navigation request.
+
+- [ ] Ruler appearance edits preview live with no history, Save commits once, and
+      Cancel/outside click/Escape restore saved appearance. The undimmed dialog
+      moves by its centered drag handle or arrow keys and stays within viewport bounds.
+
+- [ ] Right-button dragging while the ruler color dialog is open pans the canvas
+      using the existing pan preference, preserves the dialog and appearance preview,
+      suppresses the context menu, and cancels any ongoing animated centering.
+
+- [ ] Ruler color sliders retain their pointer-position values through dragging
+      and release with mouse or touch, including after moving the dialog. Selecting
+      a palette color keeps it expanded. Right-dragging over saved rulers with any
+      non-ruler tool never creates a shared focus rectangle or a history entry.

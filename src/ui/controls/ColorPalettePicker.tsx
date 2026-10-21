@@ -8,6 +8,7 @@ type ColorPalettePickerProps = {
   children?: ReactNode;
   displayValue?: string;
   disabled?: boolean;
+  closeOnSelect?: boolean;
   label: string;
   labelAction?: ReactNode;
   onChange: (color: string) => void;
@@ -15,7 +16,7 @@ type ColorPalettePickerProps = {
 };
 
 /** Each field shows its saved color; palette visibility is transient and selections commit once. */
-export function ColorPalettePicker({ disabled = false, label, labelAction, onChange, value, displayValue, children }: ColorPalettePickerProps) {
+export function ColorPalettePicker({ disabled = false, closeOnSelect = true, label, labelAction, onChange, value, displayValue, children }: ColorPalettePickerProps) {
   const [open, setOpen] = useState(false);
   const id = useId(), opener = useRef<HTMLButtonElement>(null);
   useEffect(() => setOpen(false), [label, disabled]);
@@ -36,7 +37,7 @@ export function ColorPalettePicker({ disabled = false, label, labelAction, onCha
       {ZONE_COLOR_PALETTE.map(color => <TouchTooltip key={color} label={`${label} ${color}`}>
         <button aria-label={`${label} ${color}`} aria-pressed={value.toLowerCase() === color.toLowerCase()} title={`${label} ${color}`}
           className={`h-8 w-full rounded-full border enabled:hover:ring-2 enabled:hover:ring-canvas-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-canvas-ink ${value.toLowerCase() === color.toLowerCase() ? 'border-canvas-ink ring-2 ring-canvas-ink/25' : 'border-canvas-line'}`}
-          onClick={() => { onChange(color); setOpen(false); opener.current?.focus(); }}
+          onClick={() => { onChange(color); if (closeOnSelect) { setOpen(false); opener.current?.focus(); } }}
           style={{ backgroundColor: color }} type="button" />
       </TouchTooltip>)}
       </div>

@@ -1,3 +1,4 @@
+import { actorResourceBars, setResourceBars } from "./resourceBars";
 import { saveCollectionCounter, removeCollectionCounter } from "@core/entity_resources/counters";
 import type { EncounterState } from "@core/encounter/types";
 import type { Actor } from "./types";
@@ -64,10 +65,10 @@ export function removeMarker(state: EncounterState, actorId: string, marker: str
 
 export function saveCounter(actor: Actor, input: ActorCounter): Actor {
   const counters = saveCollectionCounter(actor.counters, input);
-  return counters === actor.counters ? actor : { ...actor, counters };
+  return counters === actor.counters ? actor : setResourceBars({ ...actor, counters }, actorResourceBars(actor));
 }
 
 export function removeCounter(actor: Actor, id: string): Actor {
   const counters = removeCollectionCounter(actor.counters, id);
-  return counters === actor.counters ? actor : { ...actor, counters };
+  return counters === actor.counters ? actor : setResourceBars({ ...actor, counters }, actorResourceBars(actor));
 }

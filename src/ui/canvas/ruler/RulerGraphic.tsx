@@ -1,3 +1,4 @@
+import { createPortal } from "react-dom";
 import { RulerPreviewPolyline } from './RulerPreviewPolyline';
 import { RulerLabel } from './RulerLabel';
 import { coneGeometry } from '@core/measurement/coneGeometry';
@@ -14,8 +15,9 @@ import { worldToGrid, snapToGrid } from '@core/movement/gridGeometry';
 import { resolveGridGeometry } from '@core/movement/gridScale';
 
 const pointList = (points: LayoutPoint[]) => points.map(p => `${p.x},${p.y}`).join(' ');
-export function RulerGraphic({ encounter, points, options, policy, name, children, onContextMenu, flexible = false }: {
+export function RulerGraphic({ encounter, points, options, policy, name, children, onContextMenu, flexible = false, hitTarget }: {
   encounter: EncounterState; points: LayoutPoint[]; options: RulerOptions; policy: DiagonalCost; name?: string;
+  hitTarget?: SVGGElement | null;
   flexible?: boolean; children?: ReactNode; onContextMenu?: (event: React.MouseEvent<SVGElement>) => void;
 }) {
   const { preferences } = useCanvasPreferences();
@@ -33,14 +35,22 @@ export function RulerGraphic({ encounter, points, options, policy, name, childre
   }
   const label = route ? formatDistance(route.distance, unit) : detail + (area && preferences.showRulerArea ? ` · ${Number(area.area.toFixed(2))} ${abbreviateDistanceUnit(unit)}²` : '');
   const outlines = area?.outlines ?? (route ? [projectPolyline(encounter.grid, route.points.map(p => worldToGrid(grid, p)))] : []);
+  // Context targets sit below actors; visual geometry remains in the overlay above them.
+  const targets = onContextMenu ? <g stroke="transparent" strokeWidth={16} fill={area ? 'transparent' : 'none'} pointerEvents={area ? 'all' : 'stroke'}>
+    {outlines.map((outline, i) => <polyline key={i} points={pointList(outline)} />)}
+    {!children ? points.map((raw, i) => {
+      const point = rulerMarker(encounter, raw, i, options, points.at(-1));
+      return <circle key={i} cx={point.x} cy={point.y} r={4} fill="transparent" stroke="none" pointerEvents="all" />;
+    }) : null}
+  </g> : null;
   return <g stroke="currentColor" strokeWidth={2} fill="none" onContextMenu={onContextMenu}>
     <g pointerEvents="none">
       {outlines.map((outline, i) => <RulerPreviewPolyline key={i} points={pointList(outline)} area={!!area} flexible={flexible} />)}
       {area?.cells.map((cell, i) => <polygon key={i} points={pointList(projectPolyline(encounter.grid, cell.map(p => worldToGrid(grid, p)), true))} fill="currentColor" fillOpacity={0.25} />)}
-      {labelPoint ? <RulerLabel text={name ? `${name} · ${label}` : label} point={labelPoint} bounds={encounter.canvasSize} interactive={!!onContextMenu} /> : null}
+      {labelPoint ? <RulerLabel text={name ? `${name} · ${label}` : label} point={labelPoint} bounds={encounter.canvasSize} interactive={!!onContextMenu} hitTarget={hitTarget} /> : null}
     </g>
-    {onContextMenu ? <g stroke="transparent" strokeWidth={16} fill={area ? 'transparent' : 'none'} pointerEvents={area ? 'all' : 'stroke'}>{outlines.map((outline, i) => <polyline key={i} points={pointList(outline)} />)}</g> : null}
-    {!children ? points.map((raw, i) => { const point = rulerMarker(encounter, raw, i, options, points.at(-1)); return <circle key={i} cx={point.x} cy={point.y} r={4} fill="currentColor" pointerEvents={onContextMenu ? 'all' : 'none'} />; }) : children}
+    {targets && hitTarget ? createPortal(targets, hitTarget) : targets}
+    {!children ? points.map((raw, i) => { const point = rulerMarker(encounter, raw, i, options, points.at(-1)); return <circle key={i} cx={point.x} cy={point.y} r={4} fill="currentColor" pointerEvents="none" />; }) : children}
   </g>;
 }
 

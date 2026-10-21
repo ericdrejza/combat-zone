@@ -28,6 +28,7 @@ export function PanelInterfaceSettings() {
       <PreferenceSwitch checked={preferences.strikethroughDeadInitiativeNames} label="Strikethrough dead actor names in initiative" onChange={preferences.setStrikethroughDeadInitiativeNames} />
     </SettingsSubsection>
     <SettingsSubsection title="Status">
+      <PreferenceSwitch checked={preferences.reverseHealthStatusOrder} label="Reverse health status icon order" onChange={preferences.setReverseHealthStatusOrder} />
       <StatusVisibilitySettings value={visibility} onChange={(next) => saveRules(rules, next)} />
       <SettingsField label="Default clock style" description="Applied to new clocks created through the Status panel.">
         <select aria-label="Default clock style" className={SETTINGS_CONTROL} value={preferences.clockStyleDefault} onChange={(event) => { if (isClockStyle(event.currentTarget.value)) preferences.setClockStyleDefault(event.currentTarget.value); }}>
