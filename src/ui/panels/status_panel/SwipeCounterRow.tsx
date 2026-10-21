@@ -1,6 +1,7 @@
 import { animate, motion, useDragControls, useMotionValue, useTransform } from "motion/react";
 import { Pencil, Trash2 } from "lucide-react";
 import { useRef, type ReactNode } from "react";
+import { useStatusDashboard } from "./StatusDashboardContext";
 
 /** Require intentional movement even for fast flicks; adapt distance to narrow panels. */
 export function counterSwipeAction(offset: number, velocity: number, width: number): "delete" | "edit" | null {
@@ -17,13 +18,14 @@ export function SwipeCounterRow({ children, disabled, onDelete, onEdit }: {
   onDelete: () => void;
   onEdit: () => void;
 }) {
+  const dashboard = useStatusDashboard();
   const container = useRef<HTMLDivElement>(null);
   const controls = useDragControls();
   const x = useMotionValue(0);
   const deleteWidth = useTransform(x, (value) => Math.max(0, value));
   const editWidth = useTransform(x, (value) => Math.max(0, -value));
   const dragged = useRef(false);
-  return <div ref={container} className="relative min-w-0 overflow-hidden rounded">
+  return <div ref={container} className={`relative min-w-0 overflow-hidden rounded ${dashboard ? "w-fit max-w-full" : ""}`}>
     <motion.div aria-hidden="true" style={{ width: deleteWidth }} className="pointer-events-none absolute inset-y-0 left-0 flex items-center justify-start overflow-hidden bg-red-500 text-black">
       <Trash2 className="mx-3 h-5 w-5 shrink-0" />
     </motion.div>

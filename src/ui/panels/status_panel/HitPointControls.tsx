@@ -9,11 +9,13 @@ import { CounterNumberField } from "./CounterNumberField";
 import { InlineResourceValue } from "./InlineResourceValue";
 import { DamageHealingAmountField } from "./DamageHealingAmountField";
 import { ConfirmStatusDialog, StatusDialog } from "./StatusDialog";
+import { useStatusDashboard } from "./StatusDashboardContext";
 
 export function HitPointControls({ actors, label, disabled, onAdjust, onSet }: {
   actors: Actor[]; label: string; disabled: boolean; onAdjust: (ids: string[], amount: number) => void;
   onSet: (id: string, hp: HitPoints) => void;
 }) {
+  const dashboard = useStatusDashboard();
   const { rules } = useCombatPreferences();
   const [amount, setAmount] = useState("1");
   const [editing, setEditing] = useState(false);
@@ -28,10 +30,10 @@ export function HitPointControls({ actors, label, disabled, onAdjust, onSet }: {
     if (skipped.length) setPending({ ids, skipped, amount: value });
     else onAdjust(ids, value);
   }
-  return <section aria-label={label} className="space-y-3 border-t border-canvas-line pt-3">
-    <div className="flex items-center justify-between gap-2">
+  return <section aria-label={label} className={dashboard ? "w-fit min-w-0 max-w-sm space-y-3" : "space-y-3 border-t border-canvas-line pt-3"}>
+    <div className={`flex flex-wrap items-center gap-2 ${dashboard ? "" : "justify-between"}`}>
       <h3 className="text-base font-semibold">{label}</h3>
-      {actor ? actor.hitPoints ? <span className="ml-auto whitespace-nowrap text-base"><InlineResourceValue value={actor.hitPoints.current} label={`Edit current ${label.toLowerCase()}`} disabled={disabled} onSave={(current) => onSet(actor.id, { ...actor.hitPoints!, current })} /> / <button aria-label={`Reset ${label} to maximum`} title="Reset current to maximum" disabled={disabled} className="rounded underline decoration-dotted enabled:hover:bg-canvas-surface enabled:hover:decoration-solid disabled:cursor-not-allowed disabled:border-canvas-line disabled:bg-canvas-surface disabled:text-canvas-muted disabled:opacity-40" onClick={() => setReset(true)} type="button">{actor.hitPoints.maximum}</button></span> : <span className="ml-auto text-base text-canvas-muted">Not configured</span> : null}
+      {actor ? actor.hitPoints ? <span className={`${dashboard ? "" : "ml-auto"} whitespace-nowrap text-base`}><InlineResourceValue value={actor.hitPoints.current} label={`Edit current ${label.toLowerCase()}`} disabled={disabled} onSave={(current) => onSet(actor.id, { ...actor.hitPoints!, current })} /> / <button aria-label={`Reset ${label} to maximum`} title="Reset current to maximum" disabled={disabled} className="rounded underline decoration-dotted enabled:hover:bg-canvas-surface enabled:hover:decoration-solid disabled:cursor-not-allowed disabled:border-canvas-line disabled:bg-canvas-surface disabled:text-canvas-muted disabled:opacity-40" onClick={() => setReset(true)} type="button">{actor.hitPoints.maximum}</button></span> : <span className={`${dashboard ? "" : "ml-auto"} text-base text-canvas-muted`}>Not configured</span> : null}
       {actor ? <button aria-label={`Edit ${label}`} title={actor.hitPoints ? `Edit ${label}` : `Configure ${label}`} disabled={disabled} className="rounded p-2 enabled:hover:bg-canvas-surface enabled:hover:text-canvas-ink disabled:cursor-not-allowed disabled:border-canvas-line disabled:bg-canvas-surface disabled:text-canvas-muted disabled:opacity-40" onClick={() => setEditing(true)} type="button">
         {actor.hitPoints ? <Pencil aria-hidden="true" className="h-4 w-4" /> : <Plus aria-hidden="true" className="h-4 w-4" />}
       </button> : null}

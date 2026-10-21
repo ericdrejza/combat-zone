@@ -1,4 +1,5 @@
 import { AnimatePresence, motion } from "motion/react";
+import { createPortal } from "react-dom";
 import type {
   PointerEvent as ReactPointerEvent,
   ReactNode
@@ -22,6 +23,7 @@ type PendingTouch = {
 };
 
 type VisibleTooltip = {
+  ownerDocument: Document;
   above: boolean;
   label: string;
   left: number;
@@ -41,22 +43,24 @@ function findTooltipTarget(target: EventTarget): {
   element: HTMLElement;
   label: string;
 } | null {
-  if (!(target instanceof Element)) return null;
+  // Portal events can originate in another browser window with its own Element constructor.
+  if ((target as Element).nodeType !== 1) return null;
+  const targetElement = target as Element;
   // An explicit wrapper label must win over a child button's browser title.
   // This lets controls keep a descriptive desktop title while exposing a
   // context-specific label during a touch hold.
-  const labeledWrapper = target.closest<HTMLElement>("[data-touch-tooltip-label]");
+  const labeledWrapper = targetElement.closest<HTMLElement>("[data-touch-tooltip-label]");
   const wrapperLabel = labeledWrapper?.dataset.touchTooltipLabel?.trim();
   if (labeledWrapper && wrapperLabel) {
     return { element: labeledWrapper, label: wrapperLabel };
   }
 
-  const titledElement = target.closest<HTMLElement>("[title]");
+  const titledElement = targetElement.closest<HTMLElement>("[title]");
   if (titledElement?.title.trim()) {
     return { element: titledElement, label: titledElement.title.trim() };
   }
 
-  const element = target.closest<HTMLElement>(
+  const element = targetElement.closest<HTMLElement>(
     'button, a[href], input, select, textarea, summary, [role="button"], [role="radio"], [role="switch"]'
   );
   if (!element) return null;
@@ -108,7 +112,7 @@ export function TouchTooltipProvider({ children }: { children: ReactNode }) {
     if (event.pointerType !== "touch") return;
     activeTouchPointersRef.current.add(event.pointerId);
     if (event.button !== 0) return;
-    if (event.target instanceof Element && event.target.closest("[data-press-repeat]:not(:disabled)")) {
+    if ((event.target as Element).nodeType === 1 && (event.target as Element).closest("[data-press-repeat]:not(:disabled)")) {
       clearHold();
       clearHide();
       setTooltip(null);
@@ -133,11 +137,12 @@ export function TouchTooltipProvider({ children }: { children: ReactNode }) {
       const rect = pending.target.getBoundingClientRect();
       const above = rect.top >= 56;
       setTooltip({
+        ownerDocument: pending.target.ownerDocument,
         above,
         label: resolved.label,
         left: Math.min(
           Math.max(rect.left + rect.width / 2, 80),
-          Math.max(80, window.innerWidth - 80)
+          Math.max(80, (pending.target.ownerDocument.defaultView?.innerWidth ?? window.innerWidth) - 80)
         ),
         top: above ? rect.top - 8 : rect.bottom + 8
       });
@@ -201,7 +206,7 @@ export function TouchTooltipProvider({ children }: { children: ReactNode }) {
       onPointerUpCapture={handlePointerEnd}
     >
       {children}
-      <AnimatePresence>
+      {createPortal(<AnimatePresence>
         {tooltip ? (
           <motion.div
             animate={{ opacity: 1 }}
@@ -221,7 +226,7 @@ export function TouchTooltipProvider({ children }: { children: ReactNode }) {
             {tooltip.label}
           </motion.div>
         ) : null}
-      </AnimatePresence>
+      </AnimatePresence>, tooltip?.ownerDocument.body ?? document.body)}
     </div>
   );
 }

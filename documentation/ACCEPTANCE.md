@@ -471,6 +471,25 @@ these back into `AGENT.md` or `DESIGN.md`.
 
 ## Actor Status panel and Combat settings
 
+- [x] Docked Status shows the optional token to the right of the Actor name.
+      The popout groups name and health controls together, with the token centered
+      vertically to the right and capped at that group's height. It grows into
+      available width and hides below its 96px minimum when it cannot fit beside
+      the group, responding to window and control resizing without adding height.
+      When hit points wraps below, the image can return beside the name and
+      Health status, centered and height-capped against that upper group.
+      Sizes are independent of Actor size; direct and stored images resolve through
+      the shared image resolver. Multiple selected Actors retain inline thumbnails.
+
+- [x] Status opens from a SquareActivity header launcher, focuses its existing
+      window on reopening, and closes independently or with the parent. Docked
+      and popout views share selection, validated edits, writer enforcement,
+      and exact undo/redo. Dialog focus and touch tooltips use the owning window.
+
+- [x] The Status popout caps section widths and wraps health/hit points,
+      Weapons/Armor, counters, and clocks as its window narrows. Buffs and Debuffs
+      share a row with wrapping icons, and counter controls stay near their names.
+
 - [x] Condition, weapon, and armor icon help appears immediately on hover and
       keyboard focus, supports dismissal, and preserves touch-hold help.
 
@@ -482,6 +501,8 @@ these back into `AGENT.md` or `DESIGN.md`.
       Empty subsections are hidden, and visibility and bulk history behavior remain intact.
 - [x] Mixed bulk markers apply to all; fully applied markers clear from all.
       Armor replaces known tiers and unknown markers are preserved.
+- [x] Weapons includes an independent Magic Focus toggle with a Wand icon and
+      tooltip, supporting mixed bulk selection, writer guards, and undo/redo.
 - [x] HP setup, damage/healing, partial-selection confirmation, disabled reasons,
       direct edits, and confirmed maximum resets follow the approved rules.
       Capped damage/healing disables at the applicable limit, including when

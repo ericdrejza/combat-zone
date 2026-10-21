@@ -12,11 +12,12 @@ import { CombatPreferenceProvider, COMBAT_PREFERENCES_STORAGE_KEY } from "@ui/co
 import { InterfacePreferenceProvider } from "@ui/interface_preferences/InterfacePreferenceProvider";
 import { CONDITIONS } from "@ui/status/markerCatalog";
 
-function setup(ids = ["a"], configured = true) {
+function setup(ids = ["a"], configured = true, mode: "ADVISORY" | "STRICT" = "ADVISORY") {
   resetAppStore();
   let state = createEncounterState({ id: "status-ui", name: "Status" });
   state = createActor(createActor(state, { id: "a", name: "Alpha", currentZoneId: "zoneless" }), { id: "b", name: "Bravo", currentZoneId: "zoneless" });
   if (configured) state.actors.byId.a.hitPoints = { current: 10, maximum: 20 };
+  state.validationState.mode = mode;
   store.dispatch(loadEncounterState(state));
   store.dispatch(setActiveTool("select"));
   store.dispatch(selectEntity({ entityType: "actor", ids }));
@@ -28,6 +29,136 @@ async function value(id = "a", current = 9) {
 afterEach(() => { localStorage.removeItem(COMBAT_PREFERENCES_STORAGE_KEY); setPersistenceWritable(true); });
 
 describe("StatusPanel", () => {
+  it("selects movement for typing and removes input focus when stepping", async () => {
+    setup();
+    const input = screen.getByRole("spinbutton", { name: "Movement limit" }) as HTMLInputElement;
+    const select = vi.spyOn(input, "select");
+    fireEvent.click(input);
+    expect(select).toHaveBeenCalled();
+    fireEvent.change(input, { target: { value: "12.5" } });
+    act(() => input.focus());
+    fireEvent.click(screen.getByRole("button", { name: "Increase movement limit" }));
+    await waitFor(() => expect(store.getState().encounter.present.actors.byId.a.movementLimit).toBe(15));
+    expect(screen.getByRole("spinbutton", { name: "Movement limit" })).not.toHaveFocus();
+    fireEvent.click(screen.getByRole("button", { name: "Decrease movement limit" }));
+    await waitFor(() => expect(store.getState().encounter.present.actors.byId.a.movementLimit).toBe(10));
+    expect(screen.getByRole("spinbutton", { name: "Movement limit" })).not.toHaveFocus();
+  });
+
+  it.each([5, 10])("steps movement limits to multiples of the %s-unit grid distance", async (distancePerCell) => {
+    setup();
+    act(() => {
+      const state = store.getState().encounter.present;
+      store.dispatch(loadEncounterState({ ...state, grid: { ...state.grid, distancePerCell } }));
+    });
+    const input = () => screen.getByRole("spinbutton", { name: "Movement limit" }) as HTMLInputElement;
+    fireEvent.change(input(), { target: { value: "12.5" } });
+    fireEvent.blur(input());
+    await waitFor(() => expect(store.getState().encounter.present.actors.byId.a.movementLimit).toBe(12.5));
+    input().stepUp();
+    fireEvent.blur(input());
+    const roundedUp = Math.ceil(12.5 / distancePerCell) * distancePerCell;
+    await waitFor(() => expect(store.getState().encounter.present.actors.byId.a.movementLimit).toBe(roundedUp));
+    act(() => store.dispatch(undoEncounterChange()));
+    expect(input()).toHaveValue(12.5);
+    act(() => store.dispatch(redoEncounterChange()));
+    expect(input()).toHaveValue(roundedUp);
+    fireEvent.change(input(), { target: { value: "12.5" } });
+    input().stepDown();
+    fireEvent.blur(input());
+    await waitFor(() => expect(store.getState().encounter.present.actors.byId.a.movementLimit).toBe(10));
+    fireEvent.change(input(), { target: { value: "0" } });
+    input().stepDown();
+    fireEvent.blur(input());
+    await waitFor(() => expect(store.getState().encounter.present.actors.byId.a.movementLimit).toBe(0));
+  });
+
+  it.each(["ADVISORY", "STRICT"] as const)("toggles Shield independently of armor with bulk history in %s mode", async (mode) => {
+    setup(["a", "b"], true, mode);
+    fireEvent.click(screen.getByRole("button", { name: "Heavy armor" }));
+    await waitFor(() => expect(store.getState().encounter.present.actors.byId.b.statusEffects).toContain("armor:heavy"));
+    const beforeShield = store.getState().encounter.present;
+    fireEvent.click(screen.getByRole("button", { name: "Shield" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Shield" })).toHaveAttribute("aria-pressed", "true"));
+    const withShield = store.getState().encounter.present;
+    for (const id of ["a", "b"]) expect(withShield.actors.byId[id].statusEffects).toEqual(["armor:heavy", "armor:shield"]);
+    act(() => store.dispatch(undoEncounterChange()));
+    expect(store.getState().encounter.present).toEqual(beforeShield);
+    act(() => store.dispatch(redoEncounterChange()));
+    expect(store.getState().encounter.present).toEqual(withShield);
+    fireEvent.click(screen.getByRole("button", { name: "Light armor" }));
+    await waitFor(() => expect(store.getState().encounter.present.actors.byId.b.statusEffects).toEqual(["armor:shield", "armor:light"]));
+    fireEvent.click(screen.getByRole("button", { name: "Shield" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Shield" })).toHaveAttribute("aria-pressed", "false"));
+    for (const id of ["a", "b"]) expect(store.getState().encounter.present.actors.byId[id].statusEffects).toEqual(["armor:light"]);
+    setPersistenceWritable(false);
+    fireEvent.click(screen.getByRole("button", { name: "Shield" }));
+    await act(async () => {});
+    expect(store.getState().encounter.present.actors.byId.a.statusEffects).toEqual(["armor:light"]);
+  });
+
+  it("collapses conditions to active groups and restores all choices on expansion", async () => {
+    setup();
+    fireEvent.click(screen.getByRole("button", { name: "Blessed" }));
+    await waitFor(() => expect(store.getState().encounter.present.actors.byId.a.statusEffects).toContain("blessed"));
+    const historyLength = store.getState().encounter.past.length;
+    const disclosure = screen.getByRole("button", { name: "Conditions" });
+    fireEvent.click(disclosure);
+    expect(disclosure).toHaveAttribute("aria-expanded", "false");
+    expect(store.getState().encounter.past).toHaveLength(historyLength);
+    expect(within(screen.getByRole("group", { name: "Buffs" })).getAllByRole("button")).toHaveLength(1);
+    expect(screen.queryByRole("group", { name: "Debuffs" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Aiming" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Blessed" }));
+    await waitFor(() => expect(screen.queryByRole("group", { name: "Buffs" })).not.toBeInTheDocument());
+    act(() => store.dispatch(undoEncounterChange()));
+    expect(screen.getByRole("button", { name: "Blessed" })).toHaveAttribute("aria-pressed", "true");
+    act(() => store.dispatch(redoEncounterChange()));
+    expect(screen.queryByRole("group", { name: "Buffs" })).not.toBeInTheDocument();
+    fireEvent.click(disclosure);
+    expect(disclosure).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByRole("button", { name: "Aiming" })).toBeInTheDocument();
+    expect(screen.getByRole("group", { name: "Debuffs" })).toBeInTheDocument();
+  });
+
+  it("keeps conditions active on any selected actor visible while collapsed", async () => {
+    setup();
+    fireEvent.click(screen.getByRole("button", { name: "Stunned" }));
+    await waitFor(() => expect(store.getState().encounter.present.actors.byId.a.statusEffects).toContain("stunned"));
+    fireEvent.click(screen.getByRole("button", { name: "Conditions" }));
+    act(() => store.dispatch(selectEntity({ entityType: "actor", ids: ["a", "b"] })));
+    expect(screen.getByRole("button", { name: "Stunned" })).toHaveAttribute("aria-pressed", "mixed");
+    expect(screen.queryByRole("group", { name: "Buffs" })).not.toBeInTheDocument();
+    expect(within(screen.getByRole("group", { name: "Debuffs" })).getAllByRole("button")).toHaveLength(1);
+    fireEvent.click(screen.getByRole("button", { name: "Stunned" }));
+    await waitFor(() => expect(store.getState().encounter.present.actors.byId.b.statusEffects).toContain("stunned"));
+    expect(screen.getByRole("button", { name: "Stunned" })).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("edits and clears the selected actor movement limit with undo and redo", async () => {
+    setup();
+    const before = store.getState().encounter.present;
+    fireEvent.change(screen.getByRole("spinbutton", { name: "Movement limit" }), { target: { value: "30" } });
+    fireEvent.blur(screen.getByRole("spinbutton", { name: "Movement limit" }));
+    await waitFor(() => expect(store.getState().encounter.present.actors.byId.a.movementLimit).toBe(30));
+    const after = store.getState().encounter.present;
+    act(() => store.dispatch(undoEncounterChange()));
+    expect(store.getState().encounter.present).toEqual(before);
+    expect(screen.getByRole("spinbutton", { name: "Movement limit" })).toHaveValue(null);
+    act(() => store.dispatch(redoEncounterChange()));
+    expect(store.getState().encounter.present).toEqual(after);
+    expect(screen.getByRole("spinbutton", { name: "Movement limit" })).toHaveValue(30);
+    fireEvent.change(screen.getByRole("spinbutton", { name: "Movement limit" }), { target: { value: "-1" } });
+    fireEvent.blur(screen.getByRole("spinbutton", { name: "Movement limit" }));
+    expect(screen.getByRole("spinbutton", { name: "Movement limit" })).toHaveValue(30);
+    expect(store.getState().encounter.present).toEqual(after);
+    fireEvent.change(screen.getByRole("spinbutton", { name: "Movement limit" }), { target: { value: "" } });
+    fireEvent.blur(screen.getByRole("spinbutton", { name: "Movement limit" }));
+    await waitFor(() => expect(store.getState().encounter.present.actors.byId.a.movementLimit).toBeUndefined());
+    act(() => store.dispatch(selectEntity({ entityType: "actor", ids: ["a", "b"] })));
+    expect(screen.queryByRole("spinbutton", { name: "Movement limit" })).not.toBeInTheDocument();
+  });
+
   it("allows manual status changes without blocking subsequent healing and damage automation", async () => {
     localStorage.setItem(COMBAT_PREFERENCES_STORAGE_KEY, JSON.stringify({ limits: "bounded", automaticHealth: true, unit: "fixed", thresholds: [null, null, 12] }));
     setup();
@@ -52,7 +183,7 @@ describe("StatusPanel", () => {
     setup();
     expect(within(screen.getByLabelText("Selected actor names")).getByText("Alpha")).toBeInTheDocument();
     expect(screen.queryByRole("textbox", { name: /name/i })).not.toBeInTheDocument();
-    const buttons = within(screen.getByRole("group", { name: "Conditions" })).getAllByRole("button");
+    const buttons = within(screen.getByRole("group", { name: "Conditions" })).getAllByRole("button").filter((button) => button.hasAttribute("aria-pressed"));
     const buffLabels = ["Aiming", "Assisted / Helped", "Blessed", "Bolstered", "Cover", "Disguised", "Enchanted", "Energized", "Flying", "Guarded / Shielded", "Hasted / Quickened", "Hidden / Concealed", "Inspired", "Invisible", "Resistant"];
     expect(within(screen.getByRole("group", { name: "Buffs" })).getAllByRole("button").map((button) => button.getAttribute("aria-label"))).toEqual(buffLabels);
     expect(within(screen.getByRole("group", { name: "Debuffs" })).getAllByRole("button").map((button) => button.getAttribute("aria-label"))).toEqual(CONDITIONS.filter(({ label }) => !buffLabels.includes(label)).map(({ label }) => label));

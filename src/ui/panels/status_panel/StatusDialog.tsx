@@ -5,8 +5,8 @@ import { useEffect, useRef, type ReactNode } from "react";
 export function StatusDialog({ title, onClose, children, cancelOnBackdrop = false, showClose = false, titleContent, compact = false, closeAboveTitle = false }: { title: string; onClose: () => void; children: ReactNode; cancelOnBackdrop?: boolean; showClose?: boolean; titleContent?: ReactNode; compact?: boolean; closeAboveTitle?: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    const previous = document.activeElement as HTMLElement | null;
     const dialog = ref.current;
+    const previous = dialog?.ownerDocument.activeElement as HTMLElement | null;
     (dialog?.querySelector<HTMLElement>('[data-dialog-initial-focus="true"]') ?? dialog?.querySelector<HTMLElement>("input:not(:disabled), button:not(:disabled), select:not(:disabled)"))?.focus();
     return () => { if (previous?.isConnected) previous.focus(); };
   }, []);
@@ -20,8 +20,8 @@ export function StatusDialog({ title, onClose, children, cancelOnBackdrop = fals
       if (event.key !== "Tab") return;
       const controls = Array.from(ref.current?.querySelectorAll<HTMLElement>('input:not(:disabled), select:not(:disabled), button:not(:disabled), [tabindex="0"]') ?? []);
       const first = controls[0]; const last = controls[controls.length - 1];
-      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
-      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+      if (event.shiftKey && event.currentTarget.ownerDocument.activeElement === first) { event.preventDefault(); last?.focus(); }
+      else if (!event.shiftKey && event.currentTarget.ownerDocument.activeElement === last) { event.preventDefault(); first?.focus(); }
     }}>
       <div className={`mb-3 flex ${closeAboveTitle ? "flex-col" : "items-start"} gap-2`}>
       <h3 className={`min-w-0 font-display text-lg font-semibold ${closeAboveTitle ? "w-full" : "flex-1"}`}>{titleContent ?? title}</h3>

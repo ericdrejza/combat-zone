@@ -1066,10 +1066,25 @@ Context-sensitive editor:
 
 ### 7.4 Status Panel and Combat Settings
 
+Status can open in its own browser window through a SquareActivity launcher in
+its panel header before the drag control. Like Initiative, reopening focuses
+the existing window; its close control or browser close ends the popout. The
+docked Status panel remains available. Both views share encounter selection,
+validated mutations, the writer boundary, and undo/redo. The window is session-only,
+copies application styles, follows the current theme, closes with the parent
+application, and scrolls horizontally below its content's minimum width.
+
+The Status popout uses a responsive dashboard layout capped at 48rem. Health
+status and hit points share a wrapping row; Weapons, Armor, and Movement share another.
+Buffs and Debuffs sit side by side with wrapping icons. Individual sections
+have maximum widths, and counter rows size to their contents and wrap into
+additional rows as the window narrows. Zone and Encounter counters and clocks
+use the same compact wrapping resource layout. Resizing changes presentation only.
+
 Status edits short-term actor details, in this order: read-only names, health,
-hit points, counters, Conditions, Weapons, and Armor. A single selected
+hit points, counters, Conditions, Weapons, Armor, and movement limit. A single selected
 Actor exposes all sections. Multiple selected Actors expose names, bulk HP,
-and markers; health editing and custom counters are hidden. Other selections
+and markers; movement limit, health editing and custom counters are hidden. Other selections
 show an Actor-or-Zone selection prompt when entities are selected. With no entity
 selected, Status shows the Encounter name styled like Actor and Zone status titles, followed by
 encounter-scoped Counters and Clocks. These use the same creation, editing, naming, bounds, style,
@@ -1078,7 +1093,41 @@ resources. Encounter resources remain independent of Zone resources and persist
 with the encounter through saves, recovery, duplication, import/export, and cloud
 synchronization.
 
+Each selected Actor's name shows its token image to the right when available,
+in Status. For a single Actor in docked Status, a 64px image occupies
+the right-hand space beside the name and Health status label without adding
+height or moving Health status down. It sits vertically centered between the
+panel header's bottom border and the Health status icons. In the popout, the
+name and health items form one container with the image centered in its own
+container filling the remaining space to the right. The image grows into available width up to the name-and-health container's
+height, so it never adds height or leaves space beneath the health controls.
+It shrinks to a 96px minimum, then hides when it cannot fit beside the container.
+When hit points wraps below Health status, the image can reappear in the space
+to the right of just the name and Health status. It is centered and height-capped
+against that upper group, leaving hit points below without changing its position.
+Sizing and visibility follow the actual container dimensions and window
+resizing. Multiple selected Actors use inline 20px thumbnails.
+All sizes are independent of Actor size and follow the Actor's image shape
+and horizontal mirroring. Actors without an image show only their name.
+
 The Actor, Zone, and Encounter counter section is labeled “Counters”.
+
+Actor Conditions starts expanded and can be collapsed from its header. When
+collapsed, Buffs and Debuffs show only conditions active on at least one selected
+Actor; groups without active conditions hide their label and controls. The
+Conditions header remains available to expand the section. Active conditions
+retain their existing toggle and mixed-selection behavior.
+Collapsed Buffs and Debuffs share a wrapping flex row. Each group takes at least
+half the parent width. Collapsed groups arrange condition icons in three columns,
+with compact gaps and a thin left divider on Debuffs.
+
+Movement limit increment/decrement controls step to the next higher/lower
+multiple of the grid's distance per cell, bounded at zero. Manually entered
+limits may still use any nonnegative distance.
+Clicking the Movement input selects its value for replacement. Separate
+increment/decrement buttons commit without leaving a typing cursor in the input.
+These buttons use the shared hold-to-repeat behavior, preserving grid-distance
+steps and stopping on release, cancellation, or leaving the control.
 
 A single selected Zone exposes its read-only name, counters, clocks, tags,
 and notes in that order. Multiple selected Zones show a single-Zone selection
@@ -1212,11 +1261,17 @@ and Resistant. All remaining approved conditions are Debuffs, including
 Concentrating and Stunned (Galaxy). Empty subsections are hidden. Actor Status
 heal/damage buttons use wider horizontal padding with the standard height and
 icon size.
-Weapons are independent Fist, Sword, Swords, Axe and Bow markers. Armor tiers
+Weapons are independent Fist, Single-handed melee weapon (Sword), Dual wielding
+melee weapons (Swords), Two-handed melee weapon (Axe), Ranged projectile weapon
+(BowArrow), and Magic Focus markers. Existing weapon marker IDs remain stable.
+Magic Focus uses the Wand icon and the `weapon:magic-focus` marker. Armor tiers
 are No armor, Light armor, Medium armor and Heavy armor, with at most one known
 tier per Actor. Bulk toggles clear a marker if all selected Actors have it;
 otherwise they apply it to all. Selecting armor replaces other known tiers;
-clearing armor does not select No armor. Unknown marker strings are preserved.
+clearing armor does not select No armor. An independent Shield toggle follows
+the armor tiers, using ShieldEllipsis with a “Shield” tooltip and the
+`armor:shield` marker. Toggling Shield preserves armor tiers, and changing armor
+preserves Shield. Unknown marker strings are preserved.
 Markers have active/inactive/mixed accessible states and descriptive tooltips.
 Condition, weapon, and armor icon tooltips appear immediately on pointer hover
 or keyboard focus, remain within the viewport, and retain touch-hold help.

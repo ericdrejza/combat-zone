@@ -102,9 +102,48 @@ After completing a numbered section (## X.), move the completed section to the e
 - [x] Group Actor Status conditions into alphabetical Buffs/Debuffs subsections
       with muted headings, preserving visibility, bulk toggles and history.
 
+- [x] Make Actor Conditions collapsible, showing only active conditions and
+      nonempty Buffs/Debuffs groups when collapsed; preserve bulk toggles and history.
+
 - [x] Implement the Actor Status panel, optional hit points, custom counters,
       approved condition/weapon/armor controls, Combat preferences and automatic
       health; verify atomic history, schema 13 persistence and cloud round trips.
+
+- [x] Add a session-only Status browser popout with a SquareActivity launcher,
+      shared selection/history, writer enforcement, window focus/closure, and
+      dialogs and touch tooltips in the owning window.
+
+- [x] Show each selected Actor's optional token beside its Status name with
+      shared asset resolution and a fixed thumbnail size independent of Actor size.
+
+- [x] Group the popout name and health controls beside the token, capping its
+      size to that group's height and available width, centering it vertically,
+      and hiding it below its minimum on resize; verify in real browser windows.
+
+- [x] Restore the popout token beside just the name and Health status when hit
+      points wraps, preserving control positions and checking narrow browser widths.
+
+- [x] Make the Status popout a responsive dashboard with capped section widths,
+      wrapping health/equipment groups, paired conditions, and compact wrapping
+      counters and clocks.
+
+- [x] Move the single-Actor movement limit from Properties to Status with an
+      inline label/input, preserving validation, clearing, and undo/redo.
+
+- [x] Step movement limits to grid-distance multiples while preserving manual
+      nonnegative values, the zero bound, and undo/redo.
+
+- [x] Select Movement values on click and provide separate tooltip-equipped
+      step controls that commit without leaving the input focused.
+
+- [x] Support mouse/touch hold repetition on Movement step controls, preserving
+      grid multiples, the zero bound, and release/leave cancellation.
+
+- [x] Add an independent Shield toggle beside armor tiers with ShieldEllipsis,
+      shared tooltips, bulk history, validation, and writer enforcement.
+
+- [x] Add Magic Focus to Weapons with a Wand icon, shared tooltips, independent
+      bulk toggles, exact undo/redo, validation, and writer enforcement.
 
 - [x] Add the Initiative browser popout and customizable I shortcut; persist
       ordinal Actor health with row status controls, dead-participant skipping,

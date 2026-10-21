@@ -1,6 +1,4 @@
-import { abbreviateDistanceUnit } from '@core/measurement/distanceUnits';
 import { ActorMovementTotal } from './actor_properties/ActorMovementTotal';
-import { ActorMovementLimit } from './actor_properties/ActorMovementLimit';
 import { BookOpen, Link2 } from "lucide-react";
 import { useRef } from "react";
 import { useSelector } from "react-redux";
@@ -32,7 +30,6 @@ export function ActorPropertiesPanel({
 }: ActorPropertiesPanelProps) {
   const tokenInputRef = useRef<HTMLInputElement>(null);
   const { actor, commitActorProperties } = useActorPropertiesActions();
-  const distanceUnit = useSelector((state: RootState) => state.encounter.present.grid.distanceUnit ?? 'feet');
   const tokens = useSelector((state: RootState) => state.library.sections.tokens);
 
   if (!actor) {
@@ -121,7 +118,6 @@ export function ActorPropertiesPanel({
           defaultValue={actor.name}
         />
       </label>
-      <ActorMovementLimit actor={actor} unit={abbreviateDistanceUnit(distanceUnit)} onChange={movementLimit => commitActorProperties({ movementLimit })} />
       <ActorMovementTotal actorId={actor.id} />
       <label className="flex items-center justify-between gap-2">
         <span className="font-semibold text-canvas-ink">Type</span>

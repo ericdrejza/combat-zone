@@ -8,6 +8,8 @@ import { WorkspaceKeyboardShortcuts } from "./keybinds/WorkspaceKeyboardShortcut
 import { ignoreShortcut } from "./keybinds/keyboardGuards";
 import { CombatPreferenceProvider } from "@ui/combat_preferences/CombatPreferenceProvider";
 import { StatusPanel } from "@ui/panels/StatusPanel";
+import { StatusPopoutProvider } from "@ui/panels/status_panel/StatusPopoutProvider";
+import { StatusLauncherButton } from "@ui/panels/status_panel/StatusLauncherButton";
 import type { CSSProperties } from "react";
 import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
@@ -417,6 +419,7 @@ function AppContent() {
     panel: DockPanelDefinition | CompactPanelDefinition
   ) {
     if (panel.id === "initiative") return <InitiativeLauncherButton />;
+    if (panel.id === "status") return <StatusLauncherButton />;
     if (panel.id === "library") {
       return (
         <LibraryPanelHeaderActions
@@ -464,6 +467,7 @@ function AppContent() {
       <EncounterHistoryKeyboard />
       <WorkspaceKeyboardShortcuts onOpenLibrary={openLibraryForActiveTool} />
       <InitiativePopoutProvider>
+      <StatusPopoutProvider>
       <Toolbar
         actorCreationImage={actorCreationImage}
         encounterToolSelectionRequest={
@@ -568,6 +572,7 @@ function AppContent() {
       {encounterRenameOpen ? (
         <EncounterRenameDialog onClose={() => setEncounterRenameOpen(false)} />
       ) : null}
+      </StatusPopoutProvider>
       </InitiativePopoutProvider>
       </ZoneResizeApprovalProvider>
         </div>
