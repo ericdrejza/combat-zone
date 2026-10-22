@@ -1,5 +1,5 @@
 import { SettingsRow } from "./SettingsLayout";
-import { useId } from "react";
+import { type ReactNode, useId } from "react";
 import { motion } from "motion/react";
 
 export function PreferenceSwitch({
@@ -10,7 +10,8 @@ export function PreferenceSwitch({
   label,
   onChange,
   compact = false,
-  description
+  description,
+  secondaryControl
 }: {
   ariaLabel?: string;
   disabled?: boolean;
@@ -20,12 +21,14 @@ export function PreferenceSwitch({
   onChange: (checked: boolean) => void;
   compact?: boolean;
   description?: string;
+  secondaryControl?: ReactNode;
 }) {
   const controlId = useId();
   const helpId = `${controlId}-help`;
   return (
     <SettingsRow controlId={controlId} label={label} descriptionId={helpId} description={description} compact={compact}>
-      <div className="flex justify-end">
+      <div className={`flex items-center gap-3 ${secondaryControl ? "w-full justify-between" : "justify-end"}`}>
+      {secondaryControl}
       <button
         id={controlId}
         disabled={disabled}

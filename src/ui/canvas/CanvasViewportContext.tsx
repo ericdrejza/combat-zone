@@ -45,6 +45,7 @@ type CanvasViewportValue = {
     viewportPoint: LayoutPoint,
     canvasPoint?: LayoutPoint
   ) => void;
+  zoomByWheelAtPoint: (deltaY: number, viewportPoint: LayoutPoint) => void;
   zoomToFit: () => void;
   zoomToFitHeight: () => void;
   zoomToFitWidth: () => void;
@@ -98,7 +99,7 @@ export function CanvasViewportProvider({ children }: PropsWithChildren) {
     [viewportElement, viewportSize]
   );
 
-  const { zoom, zoomRef, setCenteredZoom, setZoomAtPoint, beginTemporaryMaxZoom } =
+  const { zoom, zoomRef, setCenteredZoom, setZoomAtPoint, zoomByWheelAtPoint, beginTemporaryMaxZoom } =
     useCanvasZoom({ canvasSize, viewportElement, getViewportSize });
 
   const { panToPoint, stopPan } = useCanvasPan({ viewportElement, canvasSize, getViewportSize, zoom, zoomRef });
@@ -234,6 +235,7 @@ export function CanvasViewportProvider({ children }: PropsWithChildren) {
       registerViewport: setViewportElement,
       resetZoom: () => setCenteredZoom(1),
       setZoomAtPoint,
+      zoomByWheelAtPoint,
       viewportSize,
       zoom,
       zoomIn: () => setCenteredZoom(zoomRef.current + CANVAS_ZOOM_STEP),
@@ -252,6 +254,7 @@ export function CanvasViewportProvider({ children }: PropsWithChildren) {
       stopPan,
       setCenteredZoom,
       setZoomAtPoint,
+      zoomByWheelAtPoint,
       viewportSize,
       zoom,
       zoomToFit,

@@ -11,6 +11,7 @@ import {
 import type { CanvasSize } from "@core/layout/polygonCanvasBounds";
 import { useCanvasViewport } from "./CanvasViewportContext";
 import { useCanvasTouchGestures } from "./useCanvasTouchGestures";
+import { useKeybinds } from "@ui/keybinds";
 
 type PanStart = {
   clientX: number;
@@ -26,6 +27,7 @@ type CanvasViewportProps = PropsWithChildren<{
 
 export function CanvasViewport({ canvasSize, children }: CanvasViewportProps) {
   const viewport = useCanvasViewport();
+  const { ctrlWheelZoomEnabled } = useKeybinds();
   const elementRef = useRef<HTMLDivElement | null>(null);
   const panStartRef = useRef<PanStart | null>(null);
   const pannedRef = useRef(false);
@@ -147,6 +149,14 @@ export function CanvasViewport({ canvasSize, children }: CanvasViewportProps) {
   }
 
   function handleWheel(event: WheelEvent<HTMLDivElement>) {
+    if (event.ctrlKey && ctrlWheelZoomEnabled && event.deltaY !== 0 && elementRef.current) {
+      event.preventDefault();
+      const element = elementRef.current;
+      const bounds = element.getBoundingClientRect();
+      const viewportPoint = { x: event.clientX - bounds.left, y: event.clientY - bounds.top };
+      viewport.zoomByWheelAtPoint(event.deltaY, viewportPoint);
+      return;
+    }
     if (!event.shiftKey || !elementRef.current) return;
     event.preventDefault();
     elementRef.current.scrollLeft += event.deltaY || event.deltaX;

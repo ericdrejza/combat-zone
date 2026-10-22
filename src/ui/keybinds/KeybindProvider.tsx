@@ -20,6 +20,8 @@ export const KEYBIND_STORAGE_KEY = "combat-zone.keybinds";
 
 type KeybindContextValue = {
   bindings: KeybindMap;
+  ctrlWheelZoomEnabled: boolean;
+  setCtrlWheelZoomEnabled: (enabled: boolean) => void;
   resetBindings: () => void;
   applyBindings: (updates: Partial<KeybindMap>, override?: boolean) => KeybindActionId[];
   setBinding: (actionId: KeybindActionId, binding: string) => KeybindActionId | null;
@@ -27,6 +29,8 @@ type KeybindContextValue = {
 
 const defaultValue: KeybindContextValue = {
   bindings: DEFAULT_KEYBINDS,
+  ctrlWheelZoomEnabled: true,
+  setCtrlWheelZoomEnabled: () => undefined,
   resetBindings: () => undefined,
   applyBindings: () => [],
   setBinding: () => null
@@ -34,16 +38,16 @@ const defaultValue: KeybindContextValue = {
 
 const KeybindContext = createContext<KeybindContextValue>(defaultValue);
 
-function readBindings(): KeybindMap {
+function readPreferences(): { bindings: KeybindMap; ctrlWheelZoomEnabled: boolean } {
   try {
     const stored = JSON.parse(localStorage.getItem(KEYBIND_STORAGE_KEY) ?? "null");
-    if (!stored || typeof stored !== "object") return DEFAULT_KEYBINDS;
+    if (!stored || typeof stored !== "object") return { bindings: DEFAULT_KEYBINDS, ctrlWheelZoomEnabled: true };
     const next = { ...DEFAULT_KEYBINDS };
     for (const { editable, id } of KEYBIND_DEFINITIONS) {
       if (!editable) continue;
       const candidate = stored[id];
       if (candidate !== undefined && (!isKeybind(candidate))) {
-        return DEFAULT_KEYBINDS;
+        return { bindings: DEFAULT_KEYBINDS, ctrlWheelZoomEnabled: true };
       }
       if (typeof candidate === "string") next[id] = candidate;
     }
@@ -55,34 +59,50 @@ function readBindings(): KeybindMap {
       if (assigned.some((binding) => bindingsConflict(binding, next[id]))) next[id] = "";
       if (next[id]) assigned.push(next[id]);
     }
-    return next;
+    return {
+      bindings: next,
+      ctrlWheelZoomEnabled: typeof stored.ctrlWheelZoomEnabled === "boolean" ? stored.ctrlWheelZoomEnabled : true
+    };
   } catch {
-    return DEFAULT_KEYBINDS;
+    return { bindings: DEFAULT_KEYBINDS, ctrlWheelZoomEnabled: true };
   }
 }
 
 /** Owns application keybind preferences independently from encounter state. */
 export function KeybindProvider({ children }: { children: ReactNode }) {
-  const [bindings, setBindings] = useState(readBindings);
+  const [preferences, setPreferences] = useState(readPreferences);
+  const { bindings, ctrlWheelZoomEnabled } = preferences;
 
   useEffect(() => {
-    const reset = () => setBindings(DEFAULT_KEYBINDS);
-    const sync = (event: StorageEvent) => { if (event.key === KEYBIND_STORAGE_KEY) setBindings(readBindings()); };
+    const reset = () => setPreferences({ bindings: DEFAULT_KEYBINDS, ctrlWheelZoomEnabled: true });
+    const sync = (event: StorageEvent) => { if (event.key === KEYBIND_STORAGE_KEY) setPreferences(readPreferences()); };
     globalThis.addEventListener("storage", sync);
     globalThis.addEventListener(LOCAL_PREFERENCES_RESET_EVENT, reset);
     return () => { globalThis.removeEventListener(LOCAL_PREFERENCES_RESET_EVENT, reset); globalThis.removeEventListener("storage", sync); };
   }, []);
 
-  function persist(next: KeybindMap) {
-    setBindings(next);
+  useEffect(() => {
+    if (!ctrlWheelZoomEnabled) return;
+    const preventBrowserZoom = (event: WheelEvent) => {
+      if (event.ctrlKey) event.preventDefault();
+    };
+    globalThis.addEventListener("wheel", preventBrowserZoom, { capture: true, passive: false });
+    return () => globalThis.removeEventListener("wheel", preventBrowserZoom, true);
+  }, [ctrlWheelZoomEnabled]);
+
+  function persist(next: KeybindMap, nextCtrlWheelZoomEnabled = ctrlWheelZoomEnabled) {
+    setPreferences({ bindings: next, ctrlWheelZoomEnabled: nextCtrlWheelZoomEnabled });
     try {
       localStorage.setItem(
         KEYBIND_STORAGE_KEY,
-        JSON.stringify(Object.fromEntries(
-          KEYBIND_DEFINITIONS
-            .filter(({ editable }) => editable)
-            .map(({ id }) => [id, next[id]])
-        ))
+        JSON.stringify({
+          ...Object.fromEntries(
+            KEYBIND_DEFINITIONS
+              .filter(({ editable }) => editable)
+              .map(({ id }) => [id, next[id]])
+          ),
+          ctrlWheelZoomEnabled: nextCtrlWheelZoomEnabled
+        })
       );
     } catch {
       // The in-memory preference remains usable when storage is unavailable.
@@ -106,11 +126,15 @@ export function KeybindProvider({ children }: { children: ReactNode }) {
   }
 
   function resetBindings() {
-    persist(DEFAULT_KEYBINDS);
+    persist(DEFAULT_KEYBINDS, true);
+  }
+
+  function setCtrlWheelZoomEnabled(enabled: boolean) {
+    persist(bindings, enabled);
   }
 
   return (
-    <KeybindContext.Provider value={{ bindings, resetBindings, setBinding, applyBindings }}>
+    <KeybindContext.Provider value={{ bindings, ctrlWheelZoomEnabled, setCtrlWheelZoomEnabled, resetBindings, setBinding, applyBindings }}>
       {children}
     </KeybindContext.Provider>
   );

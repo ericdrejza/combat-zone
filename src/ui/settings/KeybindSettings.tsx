@@ -5,13 +5,14 @@ import { X } from "lucide-react";
 import { type KeyboardEvent, useState } from "react";
 import { formatKeybind, FIXED_SHORTCUT_REFERENCES, KEYBIND_DEFINITIONS, keybindFromEvent, useKeybinds, type KeybindActionId, type KeybindMap } from "@ui/keybinds";
 import { ConfirmStatusDialog } from "@ui/panels/status_panel/StatusDialog";
+import { PreferenceSwitch } from "./PreferenceSwitch";
 
 const buttonClass = SETTINGS_BUTTON;
 const directions = ["Up", "Down", "Left", "Right"] as const;
 
 /** Assignments and presets share an atomic, explicit conflict override. */
 export function KeybindSettings() {
-  const { bindings, resetBindings, applyBindings } = useKeybinds();
+  const { bindings, resetBindings, applyBindings, ctrlWheelZoomEnabled, setCtrlWheelZoomEnabled } = useKeybinds();
   const [recording, setRecording] = useState<KeybindActionId | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState<{ updates: Partial<KeybindMap>; conflicts: KeybindActionId[] } | null>(null);
@@ -55,7 +56,7 @@ export function KeybindSettings() {
     <SettingsSection title="Customizable shortcuts">
     <div className="divide-y divide-canvas-line">{KEYBIND_DEFINITIONS.filter(({ editable, id }) => editable && !id.startsWith("viewport.pan")).map(({ id, label }) => <SettingsRow label={label} key={id}>{control(id, label)}</SettingsRow>)}</div></SettingsSection>
     <SettingsSection title="Fixed shortcuts">
-    <div className="divide-y divide-canvas-line">{FIXED_SHORTCUT_REFERENCES.map(({ binding, label }) => <SettingsRow label={label} key={`${binding}-${label}`}><span aria-label={`${label} keybind`} className="font-mono text-sm">{binding}</span></SettingsRow>)}</div></SettingsSection>
+    <div className="divide-y divide-canvas-line">{FIXED_SHORTCUT_REFERENCES.map(({ binding, label }) => binding === "Ctrl + Wheel up/down" ? <PreferenceSwitch checked={ctrlWheelZoomEnabled} key={`${binding}-${label}`} label={label} onChange={setCtrlWheelZoomEnabled} secondaryControl={<span aria-label={`${label} keybind`} className="font-mono text-sm">{binding}</span>} /> : <SettingsRow label={label} key={`${binding}-${label}`}><span aria-label={`${label} keybind`} className="font-mono text-sm">{binding}</span></SettingsRow>)}</div></SettingsSection>
     {pending ? <ConfirmStatusDialog title="Override conflicting keybinds?" confirmLabel="Continue" onClose={() => setPending(null)} onConfirm={() => { const conflicts = applyBindings(pending.updates, true); if (conflicts.length) setError("The assignment could not be applied."); else { setRecording(null); setError(null); } setPending(null); }}><p>These actions will become unassigned:</p><ul className="mt-2 list-disc pl-5">{pending.conflicts.map((id) => <li key={id}>{KEYBIND_DEFINITIONS.find((d) => d.id === id)?.label}</li>)}</ul></ConfirmStatusDialog> : null}
   </SettingsCategory>;
 }

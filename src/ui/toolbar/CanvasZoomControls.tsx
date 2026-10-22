@@ -185,10 +185,10 @@ export function CanvasZoomControls({
         <ToolbarOptionButton aria-label="Zoom to fit" onClick={viewport.zoomToFit} title="Zoom to fit" type="button">
           <Scan aria-hidden="true" className="h-4 w-4" />
         </ToolbarOptionButton>
-        <ToolbarOptionButton aria-label="Zoom out" disabled={viewport.zoom <= 0.2} onClick={viewport.zoomOut} title="Zoom out" type="button">
+        <ToolbarOptionButton repeat aria-label="Zoom out" disabled={viewport.zoom <= 0.2} onClick={viewport.zoomOut} title="Zoom out" type="button">
           <ZoomOut aria-hidden="true" className="h-4 w-4" />
         </ToolbarOptionButton>
-        <ToolbarOptionButton aria-label="Zoom in" disabled={viewport.zoom >= 4} onClick={viewport.zoomIn} title="Zoom in" type="button">
+        <ToolbarOptionButton repeat aria-label="Zoom in" disabled={viewport.zoom >= 4} onClick={viewport.zoomIn} title="Zoom in" type="button">
           <ZoomIn aria-hidden="true" className="h-4 w-4" />
         </ToolbarOptionButton>
         <ZoomOptionsControl

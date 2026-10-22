@@ -52,6 +52,7 @@ export const FIXED_SHORTCUT_REFERENCES = [
   { binding: "Ctrl/Cmd + A", label: "Select all" },
   { binding: "Ctrl/Cmd + C", label: "Copy selected actor" },
   { binding: "Ctrl/Cmd + S", label: "Save encounter" },
+  { binding: "Ctrl + Wheel up/down", label: "Zoom in/out" },
   { binding: "Ctrl/Cmd + V", label: "Paste copied actor" },
   { binding: "Shift + Left-click", label: "Toggle canvas selection or select an initiative range" },
   { binding: "Shift + Left-drag", label: "Box select or drag selected actors together" },

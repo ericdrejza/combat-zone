@@ -836,6 +836,15 @@ the current percentage and provides an explicit reset to 100%. At 100%, equal
 logical actor sizes have equal perceived sizes regardless of canvas bounds.
 Loading a different encounter initially zooms it to fit.
 
+The toolbar zoom-in and zoom-out buttons support the shared hold-to-repeat
+behavior: one immediate step, followed by repeated steps after 400ms at 80ms
+intervals, stopping at the zoom bounds. Fit and reset buttons remain single
+actions. Ctrl + wheel up/down provides additional 10-point zoom steps around
+the pointer, independently of the customizable zoom shortcuts. Its switch is
+on the Fixed shortcuts row in Keybind settings and defaults on. While enabled,
+Ctrl + wheel cannot trigger browser page zoom, including outside the canvas.
+Canvas scale and its compensating scroll update together before paint.
+
 A canvas-size mutation preserves zoom and keeps the same proportional canvas
 point centered by mapping it through the top-left resize transform. When the
 rendered canvas no longer overflows an axis, it centers on that axis.

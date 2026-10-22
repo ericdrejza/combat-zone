@@ -4,6 +4,7 @@ import type {
   PropsWithChildren
 } from "react";
 import { TouchTooltip } from "./TouchTooltip";
+import { RepeatButton } from "@ui/controls/RepeatButton";
 
 const TOOLBAR_OPTION_ROW_CLASS_NAME = "flex shrink-0 items-center gap-2";
 const TOOLBAR_OPTION_GROUP_CLASS_NAME =
@@ -45,14 +46,18 @@ export function ToolbarOptionGroup({
 
 type ToolbarOptionButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   active?: boolean;
+  repeat?: boolean;
 };
 
 export function ToolbarOptionButton({
   active = false,
+  repeat = false,
   children,
   className,
   ...props
 }: ToolbarOptionButtonProps) {
+  const Button = repeat ? RepeatButton : "button";
+  const label = props.title ?? props["aria-label"] ?? "";
   const stateClassName = props.disabled
     ? "border-canvas-line bg-canvas-surface text-canvas-muted"
     : active
@@ -61,15 +66,9 @@ export function ToolbarOptionButton({
 
   return (
     <TouchTooltip
-      label={
-        typeof props.title === "string"
-          ? props.title
-          : typeof props["aria-label"] === "string"
-            ? props["aria-label"]
-            : ""
-      }
+      label={repeat && !props.disabled ? `${label} (hold to repeat)` : label}
     >
-      <button
+      <Button
         {...props}
         title={props.title ?? props['aria-label']}
         className={joinClassNames(
@@ -79,7 +78,7 @@ export function ToolbarOptionButton({
         )}
       >
         {children}
-      </button>
+      </Button>
     </TouchTooltip>
   );
 }
