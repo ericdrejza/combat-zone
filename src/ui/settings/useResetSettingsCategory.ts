@@ -17,7 +17,7 @@ export function useResetSettingsCategory(category: PreferenceCategory) {
     if (category === "canvas") canvas.save(structuredClone(DEFAULT_CANVAS_PREFERENCES));
     if (category === "combat") combat.resetCombatPreferences();
     if (category === "interface") {
-      setTheme("light");
+      setTheme("system");
       combat.saveRules(combat.rules, structuredClone(DEFAULT_STATUS_VISIBILITY));
     }
   };

@@ -6,7 +6,7 @@ const expected: KeybindMap = {
   'history.undo': 'mod+z', 'history.redo': 'mod+shift+z',
   'actor.moveUp': 'arrowup', 'actor.moveDown': 'arrowdown', 'actor.moveLeft': 'arrowleft', 'actor.moveRight': 'arrowright',
   'actor.sizeDecrease': 'shift+minus', 'actor.sizeIncrease': 'shift+plus', 'actor.healDamage': 'h',
-  'library.open': 'l', 'audio.toggle': 'p',
+  'library.open': 'l', 'audio.toggle': 'p', 'panels.toggle': 'q',
   'viewport.panUp': '', 'viewport.panDown': '', 'viewport.panLeft': '', 'viewport.panRight': '',
   'viewport.zoomOut': 'minus', 'viewport.zoomIn': 'plus',
   'viewport.fitWidth': 'ctrl+arrowleft', 'viewport.fitHeight': 'ctrl+arrowright', 'viewport.fit': 'ctrl+arrowup', 'viewport.reset': 'ctrl+arrowdown',

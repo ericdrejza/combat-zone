@@ -1,3 +1,4 @@
+import { createZonelessActorDropHandlers } from "@ui/panels/zoneless_actors/zonelessActorDropHandlers";
 import { isSpatial } from '@core/movement/movementStrategies';
 import { useState, type DragEvent } from 'react';
 
@@ -77,49 +78,8 @@ export function useCanvasDropHandlers({
     setPendingAudioDrop(null);
   }
 
-  function handleActorCreationDropToZoneless(event: DragEvent<HTMLElement>) {
-    if (hasZonelessActorDrag(event)) { event.preventDefault(); event.stopPropagation(); return; }
-    if (activeToolId !== 'actor') {
-      return;
-    }
-
-    const actorCreationData = event.dataTransfer.getData(
-      ACTOR_CREATION_DRAG_TYPE
-    );
-
-    if (!actorCreationData) {
-      return;
-    }
-
-    event.preventDefault();
-
-    try {
-      commitActorFromCreation(
-        mutationContext,
-        JSON.parse(actorCreationData) as NewActorDragData,
-        ZONELESS_ACTOR_ZONE_ID
-      );
-    } catch {
-      // Ignore malformed external drag payloads.
-    }
-  }
-
-  function handleActorCreationDragOverZoneless(event: DragEvent<HTMLElement>) {
-    if (hasZonelessActorDrag(event)) {
-      event.preventDefault();
-      event.dataTransfer.dropEffect = 'move';
-      return;
-    }
-    if (
-      activeToolId !== 'actor' ||
-      !Array.from(event.dataTransfer.types).includes(ACTOR_CREATION_DRAG_TYPE)
-    ) {
-      return;
-    }
-
-    event.preventDefault();
-    event.dataTransfer.dropEffect = 'copy';
-  }
+  const { handleActorCreationDropToZoneless, handleActorCreationDragOverZoneless } =
+    createZonelessActorDropHandlers(mutationContext, activeToolId);
 
   function handleCanvasDragOver(event: DragEvent<SVGSVGElement>) {
     const externalFiles = hasExternalFiles(event);

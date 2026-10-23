@@ -4,7 +4,8 @@ export const ENCOUNTER_PANEL_IDS = [
   "log",
   "properties",
   "status",
-  "audio"
+  "audio",
+  "zoneless"
 ] as const;
 
 export type EncounterPanelId = (typeof ENCOUNTER_PANEL_IDS)[number];
@@ -23,7 +24,7 @@ export type EncounterPanelLayout = Record<
 export type EncounterPanelOrder = Record<EncounterDockSide, EncounterPanelId[]>;
 
 export const DEFAULT_ENCOUNTER_PANEL_ORDER: EncounterPanelOrder = {
-  left: ["library", "properties", "log"],
+  left: ["library", "properties", "log", "zoneless"],
   right: ["initiative", "status", "audio"]
 };
 
@@ -43,8 +44,22 @@ export function isEncounterPanelOrder(value: unknown): value is EncounterPanelOr
 }
 
 export function createPanelLayoutFromOrder(order: EncounterPanelOrder): EncounterPanelLayout {
+  const normalized = readEncounterPanelOrder(order);
   return {
-    left: order.left.map((id) => ({ id, collapsed: false })),
-    right: order.right.map((id) => ({ id, collapsed: false }))
+    left: normalized.left.map((id) => ({ id, collapsed: false })),
+    right: normalized.right.map((id) => ({ id, collapsed: false }))
   };
+}
+
+/** Adds the newly dockable panel without losing older user-defined sides or order. */
+export function readEncounterPanelOrder(value: unknown): EncounterPanelOrder {
+  if (isEncounterPanelOrder(value)) return value;
+  if (value && typeof value === "object") {
+    const order = value as Partial<Record<EncounterDockSide, unknown>>;
+    if (Array.isArray(order.left) && Array.isArray(order.right)) {
+      const upgraded = { left: [...order.left, "zoneless"], right: [...order.right] };
+      if (isEncounterPanelOrder(upgraded)) return upgraded;
+    }
+  }
+  return DEFAULT_ENCOUNTER_PANEL_ORDER;
 }

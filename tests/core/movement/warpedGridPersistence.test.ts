@@ -1,3 +1,4 @@
+import { withLegacyPanelLayout } from "@tests/core/persistence/legacyPanelLayout";
 import { movementRulesFor } from '@tests/core/movement/ruleFixtures';
 import { resolveGridGeometry } from '@core/movement/gridScale';
 import { completeGridEdges } from '@core/movement/gridEdgeCompletion';
@@ -24,7 +25,7 @@ function fixture() {
 const warp = { type: 'bilinear' as const, x: [0, 1, 0, 0.006] as [number, number, number, number], y: [0, 0, 1, 0.004] as [number, number, number, number] };
 describe('warped grid persistence and history', () => {
   it('migrates schema 17 while preserving spatial data', () => {
-    const current = fixture(), old = { ...current, schemaVersion: 17 };
+    const current = fixture(), old = { ...withLegacyPanelLayout(current), schemaVersion: 17 };
     expect(migrateEncounterState(old)).toEqual(completeGridEdges(current)); expect(old.schemaVersion).toBe(17);
   });
   it('round trips warped geometry through export, repository, and cloud contracts', async () => {

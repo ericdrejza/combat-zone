@@ -1,3 +1,4 @@
+import { withLegacyPanelLayout } from "@tests/core/persistence/legacyPanelLayout";
 import { createEncounterState } from '@core/encounter/createEncounterState';
 import { createZone } from '@entities/zone/zoneMutations';
 import { rotatePoint, updateZoneGeometry } from '@entities/zone/zoneRotation';
@@ -13,7 +14,7 @@ function stateFor() {
 }
 
 it('migrates schema 26 zones to zero without changing their outline or mutating the input', () => {
-  const legacy = { ...stateFor(), schemaVersion: 26 };
+  const legacy = { ...withLegacyPanelLayout(stateFor()), schemaVersion: 26 };
   delete legacy.zones.byId.z.rotation;
   const before = structuredClone(legacy);
   const migrated = migrateEncounterState(legacy);

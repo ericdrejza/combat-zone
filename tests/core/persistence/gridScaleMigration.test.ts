@@ -1,3 +1,4 @@
+import { withLegacyPanelLayout } from "@tests/core/persistence/legacyPanelLayout";
 import { ENCOUNTER_SCHEMA_VERSION } from "@core/encounter/types";
 import { movementRulesFor } from '@tests/core/movement/ruleFixtures';
 import { createEncounterState } from '@core/encounter/createEncounterState';
@@ -19,7 +20,7 @@ function legacy(type: EncounterState['grid']['type']) {
     warp: { type: 'bilinear', x: [0, 1, 0, 0.0001], y: [0, 0, 1, 0.0002] } };
   state.actors.byId.a.spatialPosition = { x: 200, y: 220 };
   state.backgroundImage = { name: 'Map', mediaType: 'image/png', width: 1920, height: 1280, source: { kind: 'url', url: 'https://example.com/map.png' } };
-  return { ...state, schemaVersion: 20 };
+  return { ...withLegacyPanelLayout(state), schemaVersion: 20 };
 }
 
 it.each(['square', 'hex-flat', 'hex-pointy'] as const)('migrates legacy %s maps without mutating source or losing alignment', async type => {

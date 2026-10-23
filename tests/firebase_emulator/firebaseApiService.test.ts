@@ -67,6 +67,35 @@ afterAll(async () => {
 });
 
 describe("Firebase API service", () => {
+  it("persists schema 31 Zoneless docking and preserves the last snapshot after invalid layouts", async () => {
+    const command = encounterCommand("zoneless-layout");
+    command.payload.state.schemaVersion = 31;
+    command.payload.state.panelLayout.left.push({ id: "zoneless", collapsed: false });
+    command.payload.state.panelLayout.right.push({ id: "audio", collapsed: false });
+    Object.assign(command.payload.state, {
+      movementRules: { zoneLocked: false, snapToGrid: false, snapZoneVertices: false, allowOverlap: true, trimTokens: false },
+      grid: { type: "square", cellSize: 64, origin: { x: 0, y: 0 }, rotation: 0, visible: false,
+        color: "#808080", opacity: 0.5, lineStyle: "solid", distancePerCell: 5, distanceUnit: "feet" },
+      counters: { byId: {}, allIds: [] }, clocks: { byId: {}, allIds: [] },
+      audioCues: { byId: {}, allIds: [] }, audioCueGroups: { byId: {}, allIds: [] },
+      musicGroupIds: [], rulers: { byId: {}, allIds: [] }
+    });
+    await service.commitEncounter("alice", command);
+    const ref = getFirestore().doc("users/alice/encounters/encounter-1");
+    expect((await ref.get()).data()?.state).toEqual(command.payload.state);
+    const reordered = structuredClone(command);
+    reordered.expectedRevision = 1; reordered.mutationId = "move-zoneless";
+    reordered.payload.state.panelLayout.left.pop();
+    reordered.payload.state.panelLayout.right.splice(1, 0, { id: "zoneless", collapsed: true });
+    await service.commitEncounter("alice", reordered);
+    expect((await ref.get()).data()?.state).toEqual(reordered.payload.state);
+    const invalid = structuredClone(reordered);
+    invalid.expectedRevision = 2; invalid.mutationId = "missing-zoneless";
+    invalid.payload.state.panelLayout.right = invalid.payload.state.panelLayout.right.filter(panel => panel.id !== "zoneless");
+    expect(() => service.commitEncounter("alice", invalid)).toThrow(/every panel/);
+    expect((await ref.get()).data()?.state).toEqual(reordered.payload.state);
+  });
+
   it('round trips schema 28 measurement settings and accounting, rejecting malformed replacements', async () => {
     const command = encounterCommand('measurements');
     command.payload.state.schemaVersion = 28;

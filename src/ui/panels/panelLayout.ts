@@ -24,6 +24,8 @@ export function movePanel(
     return layout;
   }
 
+  if (target.side === sourceSide && (target.index === sourceIndex || target.index === sourceIndex + 1)) return layout;
+
   const nextLayout: PanelLayout = {
     left: layout.left.filter((panel) => panel.id !== panelId),
     right: layout.right.filter((panel) => panel.id !== panelId)

@@ -77,7 +77,7 @@ describe("ZonelessActorPanel display", () => {
     const panel = screen.getByRole("complementary", {
       name: "Zoneless actors"
     });
-    expect(screen.getByRole("checkbox", { name: "Group by faction" })).toBeChecked();
+    expect(screen.getByRole("button", { name: "Group by faction" })).toHaveAttribute("aria-pressed", "true");
     expect(
       within(panel).getAllByRole("heading").map((heading) => heading.textContent)
     ).toEqual(["Hero", "Neutral", "Enemy"]);

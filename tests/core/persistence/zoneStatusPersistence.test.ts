@@ -1,3 +1,4 @@
+import { withLegacyPanelLayout } from "@tests/core/persistence/legacyPanelLayout";
 import { ENCOUNTER_SCHEMA_VERSION } from "@core/encounter/types";
 import { createEncounterState } from "@core/encounter/createEncounterState";
 import { createZone } from "@entities/zone/zoneMutations";
@@ -20,7 +21,7 @@ function payload(state = currentState()) {
 
 describe("Zone status persistence", () => {
   it.each([12, 13])("migrates schema %s without altering old tags or mutating input", (schemaVersion) => {
-    const legacy = { ...currentState(), schemaVersion };
+    const legacy = { ...withLegacyPanelLayout(currentState()), schemaVersion };
     delete legacy.zones.byId.z.counters; delete legacy.zones.byId.z.clocks; delete legacy.zones.byId.z.notes;
     const before = structuredClone(legacy);
     const migrated = migrateEncounterState(legacy);
@@ -30,7 +31,7 @@ describe("Zone status persistence", () => {
     expect(migrated.zones.byId.z.notes).toBeUndefined(); expect(legacy).toEqual(before);
   });
   it("migrates schema 14 clocks to Traditional independently of new-clock preferences", () => {
-    const legacy = { ...currentState(), schemaVersion: 14 };
+    const legacy = { ...withLegacyPanelLayout(currentState()), schemaVersion: 14 };
     delete legacy.zones.byId.z.clocks!.byId.k.style;
     const before = structuredClone(legacy);
     const migrated = migrateEncounterState(legacy);
@@ -105,7 +106,7 @@ describe("Zone status persistence", () => {
     const wire = payload(serialized.state as never);
     expect(validateEncounter(wire)).toEqual(wire);
     expect(serialized.state.zones).toEqual(state.zones); expect(ensureUploaded).not.toHaveBeenCalled();
-    const old = payload(); old.state.schemaVersion = 13; expect(validateEncounter(old)).toEqual(old);
+    const old = payload(); old.state = withLegacyPanelLayout(old.state); old.state.schemaVersion = 13; expect(validateEncounter(old)).toEqual(old);
     old.state.schemaVersion = 7; old.state.panelLayout.right = old.state.panelLayout.right.filter((panel: { id: string }) => panel.id !== "audio");
     expect(validateEncounter(old)).toEqual(old);
   });

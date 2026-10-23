@@ -1,3 +1,4 @@
+import { withLegacyPanelLayout } from "@tests/core/persistence/legacyPanelLayout";
 import { ENCOUNTER_SCHEMA_VERSION } from "@core/encounter/types";
 import { createEncounterState } from '@core/encounter/createEncounterState';
 import { assertEncounterState, migrateEncounterState, parseExportEnvelope } from '@core/persistence/envelope';
@@ -13,7 +14,7 @@ const cloud = (state: unknown) => ({ schemaVersion: CLOUD_RECORD_SCHEMA_VERSION,
 it.each(['square', 'hex-flat', 'hex-pointy'] as const)('migrates schema 22 %s documents without changing geometry', type => {
   const current = createEncounterState({ id: 'iso', name: 'Iso' });
   current.grid = { ...current.grid, type, rotation: 17, origin: { x: 33, y: 51 } };
-  const old = { ...current, schemaVersion: 22 }, original = structuredClone(old);
+  const old = { ...withLegacyPanelLayout(current), schemaVersion: 22 }, original = structuredClone(old);
   expect(migrateEncounterState(old)).toEqual(current);
   expect(old).toEqual(original);
   expect(() => validateEncounter(cloud(old))).not.toThrow();
@@ -22,7 +23,7 @@ it.each(['square', 'hex-flat', 'hex-pointy'] as const)('migrates schema 22 %s do
 it('migrates legacy schema 21 mode fields into the current independent rules', () => {
   const current = createEncounterState({ id: 'iso', name: 'Iso' });
   const { movementRules: _rules, ...rest } = current;
-  const old = { ...rest, schemaVersion: 21, movementStrategy: 'free' };
+  const old = { ...withLegacyPanelLayout(rest), schemaVersion: 21, movementStrategy: 'free' };
   const migrated = migrateEncounterState(old);
   assertEncounterState(migrated);
   expect(migrated.schemaVersion).toBe(ENCOUNTER_SCHEMA_VERSION);
@@ -50,21 +51,21 @@ it('round trips isometric encounters through exports, hydration, repository writ
 it('rejects isometric data claiming an older schema and unsupported newer schemas', () => {
   const state = createEncounterState({ id: 'iso', name: 'Iso' });
   state.grid.type = 'isometric';
-  expect(() => migrateEncounterState({ ...state, schemaVersion: 22 })).toThrow();
-  expect(() => validateEncounter(cloud({ ...state, schemaVersion: 22 }))).toThrow(/spatial/);
+  expect(() => migrateEncounterState({ ...withLegacyPanelLayout(state), schemaVersion: 22 })).toThrow();
+  expect(() => validateEncounter(cloud({ ...withLegacyPanelLayout(state), schemaVersion: 22 }))).toThrow(/spatial/);
   expect(() => assertEncounterState({ ...state, schemaVersion: ENCOUNTER_SCHEMA_VERSION + 1 })).toThrow(/unsupported/);
   expect(() => validateEncounter(cloud({ ...state, schemaVersion: ENCOUNTER_SCHEMA_VERSION + 1 }))).toThrow(/unsupported/);
 });
 
 it('preserves schema 23 default projection and persists explicit angles from schema 24', () => {
   const current = createEncounterState({ id: 'iso', name: 'Iso' }); current.grid.type = 'isometric';
-  const old = { ...current, schemaVersion: 23 };
+  const old = { ...withLegacyPanelLayout(current), schemaVersion: 23 };
   expect(migrateEncounterState(old)).toEqual(current);
   expect(() => validateEncounter(cloud(old))).not.toThrow();
   const angled = { ...current, grid: { ...current.grid, isometricAngle: 30 } };
   expect(() => assertEncounterState(angled)).not.toThrow();
   expect(() => validateEncounter(cloud(angled))).not.toThrow();
-  expect(() => migrateEncounterState({ ...angled, schemaVersion: 23 })).toThrow();
+  expect(() => migrateEncounterState({ ...withLegacyPanelLayout(angled), schemaVersion: 23 })).toThrow();
   for (const isometricAngle of [0, 46, NaN, Infinity]) {
     const invalid = { ...current, grid: { ...current.grid, isometricAngle } };
     expect(() => assertEncounterState(invalid)).toThrow();

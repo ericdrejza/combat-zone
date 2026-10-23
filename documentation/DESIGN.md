@@ -990,8 +990,9 @@ Panels:
   stops scrolling without changing encounter history
 - the insertion target before the first docked panel previews in the gap
   below the sidebar header without reserving blank space above the panel
-- an empty dock retains a narrow drop target so panels can be moved back to it,
-  while its sidebar expand/collapse control remains hidden
+- an empty dock is treated as collapsed, including its header action layout,
+  and retains a narrow drop target so panels can be moved back to it, while its
+  sidebar expand/collapse control remains hidden
 
 Below 1024px, the canvas owns the workspace and docked panels are replaced by
 a bottom-right launcher and one right-side overlay drawer. The launcher uses
@@ -1016,6 +1017,53 @@ side panels are hidden.
 - Log (committed actions and blocked validation attempts, categorized for
   filtering)
 - Status
+- Audio
+- Zoneless (when located in a sidebar)
+
+Interface Settings includes Panel Tabs, off by default and synchronized between
+browser tabs. At desktop widths, enabling it shows one active panel per sidebar.
+Each footer contains icon tabs using the compact launcher's panel icons. In the
+left footer, Settings sits left, tabs occupy their own centered container, and
+the canvas Zoneless visibility button sits right, with space between these
+groups while expanded. When collapsed, the left tabs stack above a bottom
+control group, separated by a horizontal rule. That group places the canvas
+Zoneless visibility button, when present, above Settings.
+The right footer also centers its tabs. Zoneless
+uses plain Users Round. Tabs remain available while a sidebar is collapsed.
+Clicking one opens that sidebar and shows its panel. The active tab is highlighted
+only while its panel is visible; clicking the active visible tab collapses its
+sidebar. Clicking any tab in a collapsed sidebar opens it. Arrow keys,
+Home, and End switch available tabs. Library cannot be activated with an
+unsupported tool, but its tab can still be dragged.
+
+Tab selection is session-only and resets for a different encounter. Each sidebar
+starts with its first available expanded panel, falling back to its first available
+panel. Reordering within a sidebar preserves its active tab. Moving a tab to
+the other sidebar preserves that sidebar's active tab; when its active tab leaves,
+the source activates the next tab in its prior sequence, or the previous tab if
+there is no next tab. The first tab arriving in an empty sidebar becomes active.
+Tab activation and sidebar expansion do not alter saved per-panel collapse flags
+or enter encounter history. Inactive panel content stays mounted to retain local
+drafts. Disabling Panel Tabs restores the existing stacked-panel layout.
+
+Footer tabs can be dragged to reorder within a footer or move to the other footer,
+including collapsed sidebars and an empty dock. Overflowing expanded tab rows
+scroll horizontally; collapsed tab columns scroll vertically, including edge
+scrolling during a drag. Their order and side are the same
+Encounter panel layout used by stacked panels, with one undoable move per accepted
+reorder. Invalid, cancelled, and unchanged drops do not mutate the encounter.
+Hover previews are separators following insertion positions in the tab
+orientation, including the beginning and end of the list; leaving the
+footer returns the preview to the original slot. Compact screens keep their
+existing launcher and drawer.
+
+Zoneless is a dockable panel, initially placed last in the left dock. Interface
+Settings separately chooses On canvas (default) or In sidebar, independently of
+Panel Tabs. On canvas retains the visibility button and omits the Zoneless tab;
+In sidebar shows its tab when Panel Tabs is on and omits the visibility button.
+The sidebar presentation retains actor selection, faction grouping, and transfers.
+Both presentations use a Users Round icon toggle with a pressed state and tooltip
+for Group by faction.
 
 Panels update based on selection context. The Library panel can expand only
 with the Actor, Background, or Audio tool active. Its expand button is disabled
@@ -1086,14 +1134,21 @@ keeping controls accessible when the browser window becomes narrow.
 
 The Zoneless actors presentation remains the collapsible, resizable
 bottom-center overlay on larger screens and becomes a panel in the compact
-drawer. Its show/hide button sits beside Settings in the left sidebar footer,
-with space between the two controls. It uses Users Round, with a top-left to
+drawer. When its desktop location is On canvas, its show/hide button sits beside Settings in the left sidebar footer,
+with space between the two controls while expanded. When the left sidebar is
+collapsed or has no visible panels, the Zoneless visibility button stacks above
+Settings, with Panel Tabs enabled or disabled. It uses Users Round, with a top-left to
 bottom-right slash while the panel is visible to indicate the hide action.
 Horizontal resize edges follow the cursor
 one-to-one while the panel stays centered. It starts visible and collapsed each
 session. Hiding preserves its mounted expansion, grouping, and size; hovering does not reveal it.
 Hovering a visible panel makes its background fully opaque, using the current
-theme's readable text and border colors. Leaving restores its normal appearance.
+theme's readable text and border colors. Keyboard-visible focus does the same;
+mouse-click focus alone does not keep it opaque. Entering and leaving fade the
+background smoothly with Motion, respecting reduced-motion preferences. Leaving
+restores its normal appearance. The canvas panel’s clickable title uses a pointer
+cursor and the panel background fade for hover feedback, without a separate light
+header highlight.
 Interface Settings includes a locally persisted, cross-tab synchronized
 header-click expansion preference, enabled by default and restored on preference
 reset. The chevron always toggles expansion; nested controls act independently.
@@ -1571,7 +1626,10 @@ do not clear history; Interface category reset and full preference reset clear i
 
 - Light
 - Dark
-- System default
+- System (default): follows the device light/dark preference, including live changes.
+  Explicit Light or Dark choices override the device preference. Theme selection
+  persists locally, synchronizes across tabs, and resets to System with Interface
+  preferences. Existing explicit Light/Dark selections are preserved.
 - Extensible theme system (future)
 
 Canvas settings > New encounter defaults > Zone appearance optionally persists default Zone fill and border colors as
@@ -1649,10 +1707,20 @@ encounter data and history. Interface reset restores presentation defaults
 without applying the default panel layout to the current encounter; Combat
 reset disables automatic health without recalculating existing Actor status.
 Account and Data do not provide category preference resets.
+Keybind settings group customizable and fixed shortcuts into concept subsections,
+with subsection titles and shortcut titles alphabetized and fixed shortcut keys
+centered in their control columns. Ruler lists movement-distance toggle (9), clear
+rulers (0), and cone-angle adjustment (Shift+Wheel) separately; Viewport also lists
+horizontal scrolling as Shift+Wheel. Viewport panning retains
+its four-direction row and presets.
 Keybind preferences persist only custom overrides, including intentionally unassigned shortcuts. Inherited defaults follow application updates. Legacy snapshots migrate the previous Rename R, Ruler D, and Annotation N default assignments to the current defaults, preserving different custom bindings. A defaults revision distinguishes those legacy snapshots from intentional overrides saved afterward.
-Interface > Panels > Default layout edits the default left/right panel arrangement by dragging panel
-names, with a line preview at the drop position and no arrow controls. Its last
-control, Apply to current encounter, applies those sides and order to the active
+Interface > Panels > Default layout and visibility combines each panel’s visibility eye
+button with its draggable name, except Zoneless has no visibility control in Settings.
+When Zoneless is On canvas, its layout row is muted and cannot be dragged; setting
+its location to In sidebar enables reordering. Dragging names edits the default left/right panel
+arrangement, with a line preview at the drop position and no arrow controls. Layout sets the global default for new encounters; visibility
+changes apply globally and immediately affect the current encounter. Its last
+control, Apply layout to current encounter, applies those sides and order to the active
 Encounter through undo/redo while preserving each panel's expanded/collapsed
 state.
 On layouts narrower than the shared 1024px compact breakpoint, the Settings
@@ -1680,8 +1748,13 @@ Redux-managed history architecture:
 
 ### 10.1 Controls and interaction safety
 
-- Undo and Redo are icon-only controls, in that order, immediately to the right
-  of the expanded left sidebar collapse button. With the sidebar collapsed,
+- The configurable `Q` shortcut toggles both desktop sidebars together. If either
+  sidebar with visible panels is expanded, it collapses both; otherwise it expands
+  both. Empty sidebars stay visually collapsed. This changes only session UI state,
+  respects text-entry and modal guards, and ignores repeated keydown events.
+
+- Undo and Redo are icon-only controls, in that order, grouped on the right
+  of the expanded left sidebar header, with space between them and its collapse button. With the sidebar collapsed,
   they stack vertically beneath its expand button. An empty left dock retains
   the vertical history controls while its sidebar toggle remains hidden.
 - Below 1024px, Undo and Redo appear horizontally at the canvas top-left; the

@@ -193,6 +193,7 @@ the design as future or nice-to-have work.
 - [ ] Advanced validation behavior beyond MVP plumbing.
 - [ ] Additional layout strategies.
   - Manual
+- [x] Default to System theme, following live device appearance with explicit Light/Dark overrides and synchronized preferences.
 - [ ] Theme expansion beyond light, dark, and system default.
 - [ ] Command palette.
 - [ ] Plugins.
@@ -208,6 +209,7 @@ the design as future or nice-to-have work.
 - [x] Directional actor movement, candidate chooser, skill-check adjudication, and destination warning.
 - [x] Bulk actor size shortcuts and source-zone-first paste.
 - [x] Configurable chords, conflict overrides, pan presets, zoom/Library/audio shortcuts.
+- [x] Group customizable and fixed keybind settings into concept subsections with alphabetized titles.
 - [x] Keybind preferences store only custom overrides; legacy default snapshots migrate on load. Every declared shortcut has default matching and persistence coverage, with upgraded Ruler/Rename tool-dispatch regressions.
 - [x] Heal/damage shortcut dialog and responsive settings.
 
@@ -379,3 +381,14 @@ Implementation plan: [Ruler, movement and grid styles](plans/ruler_movement_and_
 - [x] Move desktop Engage and Disengage actions into the right sidebar header, retaining compact canvas actions.
 
 - [x] Auto-scroll docked panels during edge dragging and refresh insertion previews as hidden positions appear.
+
+## Panel Tabs and configurable Zoneless placement
+
+- [x] Add persisted Panel Tabs and independent Zoneless canvas/sidebar preferences.
+- [x] Add accessible, draggable footer tabs with active-panel retention, collapsed
+      access, overflow/edge scrolling, and accurate insertion separators.
+- [x] Refine expanded/collapsed footer controls and use icon-only faction grouping.
+- [x] Add configurable Q shortcut to collapse both sidebars when either is open,
+      otherwise expand both, preserving encounter history and shortcut guards.
+- [x] Migrate Zoneless docking through schema 31 with history, local persistence,
+      cloud contract, and Firebase emulator coverage.

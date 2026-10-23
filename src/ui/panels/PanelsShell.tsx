@@ -199,6 +199,7 @@ function DockPanel({
       data-panel-drop-index={index}
       data-panel-drop-kind="panel"
       data-panel-drop-side={side}
+      data-drop-target={panel.id === "zoneless" ? "zoneless-actors" : undefined}
       data-panel-stretch={stretch || undefined}
       onDragOver={(event) => {
         if (!draggedPanelId) return;

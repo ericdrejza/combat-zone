@@ -42,12 +42,12 @@ export function SidebarDock({
   return (
     <aside
       aria-label={`${side} sidebar`}
-      className="flex min-h-0 w-max min-w-10 flex-col gap-2 overflow-hidden"
+      className={`flex min-h-0 ${collapsed || hideToggle ? "w-max" : "w-72"} min-w-10 flex-col gap-2 overflow-auto`}
     >
       <div
         role="group"
         aria-label={`${side} sidebar controls`}
-        className={`flex gap-2 ${stackedHeader ? "flex-col" : "items-center"} ${side === "right" ? (headerActions ? "w-full justify-between" : "self-end") : "self-start"}`}
+        className={`flex gap-2 ${stackedHeader ? "flex-col" : "items-center"} ${side === "right" ? (headerActions ? "w-full justify-between" : "self-end") : stackedHeader ? "self-start" : "w-full justify-between"}`}
       >
       {stackedHeader ? null : headerActions}
       {hideToggle ? null : <TouchTooltip label={collapsed ? expandLabel : collapseLabel}><button
@@ -65,9 +65,9 @@ export function SidebarDock({
       {stackedHeader ? headerActions : null}
       {side === "left" ? <EncounterHistoryControls vertical={collapsed || hideToggle} /> : null}
       </div>
-      {collapsed ? null : children}
+      {collapsed && !hideToggle ? null : children}
       {footer ? (
-        <div className={collapsed ? "mt-auto" : "mt-auto pt-1"}>{footer}</div>
+        <div className={`mt-auto flex min-h-0 flex-col ${collapsed ? "shrink-0" : "pt-1"}`}>{footer}</div>
       ) : null}
     </aside>
   );

@@ -33,9 +33,8 @@ import type {
 } from "./panels/LibraryPanel";
 import { movePanel } from "./panels/panelLayout";
 import type { PanelLayout } from "./panels/panelLayout";
-import { PanelsShell } from "./panels/PanelsShell";
 import { PropertiesPanel } from "./panels/PropertiesPanel";
-import { SidebarDock } from "./panels/SidebarDock";
+import { WorkspaceSidebar } from "./panels/WorkspaceSidebar";
 import { usePanelNativeDragPreview } from "./panels/usePanelNativeDragPreview";
 import { getLibraryPanelSectionId } from "./panels/libraryPanelSection";
 import { EngageActionButton } from "./toolbar/EngageActionButton";
@@ -114,7 +113,9 @@ function AppContent() {
   const dispatch = useDispatch();
   const { bindings } = useKeybinds();
   const { getViewportSize, zoom: viewportZoom } = useCanvasViewport();
-  const { panelVisibility, libraryPanelViewDefault } = useInterfacePreferences();
+  const { panelVisibility, libraryPanelViewDefault, panelTabMode, zonelessPanelPlacement } = useInterfacePreferences();
+  const zonelessInSidebar = zonelessPanelPlacement === "sidebar";
+  const dockVisibility = { ...panelVisibility, zoneless: zonelessInSidebar && panelVisibility.zoneless };
   const activeToolId = useSelector(
     (state: RootState) => state.interaction.activeToolId
   );
@@ -170,7 +171,7 @@ function AppContent() {
     : panelLayout;
   const visiblePanelLayout = getVisiblePanelLayout(
     effectivePanelLayout,
-    panelVisibility
+    dockVisibility
   );
   const compactPanels = getVisibleCompactPanels(panelVisibility);
   usePanelNativeDragPreview(draggedPanelId, visiblePanelLayout, handlePanelDropPreview);
@@ -316,11 +317,10 @@ function AppContent() {
       return;
     }
 
-    const nextLayout = movePanel(
-      panelLayout,
-      panelId,
-      resolveVisibleDropTarget(panelLayout, panelVisibility, target)
-    );
+    // Hidden panels must not turn a visibly unchanged drop into a history entry.
+    const nextLayout = movePanel(visiblePanelLayout, panelId, target) === visiblePanelLayout
+      ? panelLayout
+      : movePanel(panelLayout, panelId, resolveVisibleDropTarget(panelLayout, dockVisibility, target));
     if (nextLayout !== panelLayout) {
       dispatch(
         commitEncounterChange({
@@ -471,7 +471,13 @@ function AppContent() {
         >
       <ZoneResizeApprovalProvider>
       <EncounterHistoryKeyboard />
-      <WorkspaceKeyboardShortcuts onOpenLibrary={openLibraryForActiveTool} />
+      <WorkspaceKeyboardShortcuts onOpenLibrary={openLibraryForActiveTool} onTogglePanels={() => {
+        setSidebarCollapsed(current => {
+          const anyOpen = (visiblePanelLayout.left.length > 0 && !current.left)
+            || (visiblePanelLayout.right.length > 0 && !current.right);
+          return { left: anyOpen, right: anyOpen };
+        });
+      }} />
       <InitiativePopoutProvider>
       <StatusPopoutProvider>
       <Toolbar
@@ -495,20 +501,18 @@ function AppContent() {
         className="relative isolate grid min-h-0 flex-1 grid-cols-1 gap-2 overflow-hidden p-2 lg:grid-cols-[max-content_minmax(0,1fr)_max-content] lg:gap-4 lg:p-4"
       >
         {!compactLayout ? (
-        <SidebarDock
+        <WorkspaceSidebar
+          encounterId={encounter.id}
+          tabMode={panelTabMode}
+          libraryAvailable={getLibraryPanelSectionId(activeToolId) !== null}
           collapsed={
-            visiblePanelLayout.left.length > 0 && sidebarCollapsed.left
+            visiblePanelLayout.left.length === 0 || sidebarCollapsed.left
           }
-          footer={
-            <div className="flex items-center justify-between gap-2">
-              <SettingsButton onClick={persistenceUi.openSettings} />
-              <ZonelessVisibilityButton
-                visible={zonelessVisible}
-                onToggle={() => setZonelessVisible(value => !value)}
-              />
-            </div>
-          }
-          hideToggle={visiblePanelLayout.left.length === 0}
+          footerActions={<SettingsButton onClick={persistenceUi.openSettings} />}
+          footerEnd={!zonelessInSidebar && panelVisibility.zoneless ? <ZonelessVisibilityButton
+            visible={zonelessVisible}
+            onToggle={() => setZonelessVisible(value => !value)}
+          /> : undefined}
           onToggle={() =>
             setSidebarCollapsed((current) => ({
               ...current,
@@ -516,40 +520,39 @@ function AppContent() {
             }))
           }
           side="left"
-        >
-          <PanelsShell
-            disabledExpansionPanelIds={getLibraryPanelSectionId(activeToolId) ? [] : ["library"]}
-            draggedPanelId={draggedPanelId}
-            dropTarget={dropTarget}
-            onDragEnd={() => {
-              setDraggedPanelId(null);
-              setDropTarget(null);
-            }}
-            onDragStart={setDraggedPanelId}
-            onPanelCollapsedChange={handlePanelCollapsedChange}
-            onDropPanel={handlePanelDrop}
-            onPreviewDrop={handlePanelDropPreview}
-            panels={visiblePanelLayout.left}
-            renderPanelHeaderActions={renderPanelHeaderActions}
-            renderPanelContent={renderPanelContent}
-            side="left"
-          />
-        </SidebarDock>
+          disabledExpansionPanelIds={getLibraryPanelSectionId(activeToolId) ? [] : ["library"]}
+          draggedPanelId={draggedPanelId}
+          dropTarget={dropTarget}
+          onDragEnd={() => {
+            setDraggedPanelId(null);
+            setDropTarget(null);
+          }}
+          onDragStart={setDraggedPanelId}
+          onPanelCollapsedChange={handlePanelCollapsedChange}
+          onDropPanel={handlePanelDrop}
+          onPreviewDrop={handlePanelDropPreview}
+          panels={visiblePanelLayout.left}
+          renderPanelHeaderActions={renderPanelHeaderActions}
+          renderPanelContent={renderPanelContent}
+        />
         ) : null}
         <CanvasShell
-          zonelessVisible={zonelessVisible}
+          zonelessVisible={zonelessVisible && !zonelessInSidebar && panelVisibility.zoneless}
           compactPanels={compactPanels}
           renderCompactPanelContent={renderPanelContent}
           renderCompactPanelHeaderActions={renderPanelHeaderActions}
         />
         {!compactLayout ? (
-        <SidebarDock
+        <WorkspaceSidebar
+          encounterId={encounter.id}
+          tabMode={panelTabMode}
+          libraryAvailable={getLibraryPanelSectionId(activeToolId) !== null}
           collapsed={
-            visiblePanelLayout.right.length > 0 && sidebarCollapsed.right
+            visiblePanelLayout.right.length === 0 || sidebarCollapsed.right
           }
           headerActions={
             <div className={`flex gap-2 ${
-              visiblePanelLayout.right.length > 0 && sidebarCollapsed.right
+              visiblePanelLayout.right.length === 0 || sidebarCollapsed.right
                 ? "flex-col items-start"
                 : "items-center justify-start"
             }`}>
@@ -557,7 +560,6 @@ function AppContent() {
               <DisengageActionButton />
             </div>
           }
-          hideToggle={visiblePanelLayout.right.length === 0}
           onToggle={() =>
             setSidebarCollapsed((current) => ({
               ...current,
@@ -565,25 +567,21 @@ function AppContent() {
             }))
           }
           side="right"
-        >
-          <PanelsShell
-            disabledExpansionPanelIds={getLibraryPanelSectionId(activeToolId) ? [] : ["library"]}
-            draggedPanelId={draggedPanelId}
-            dropTarget={dropTarget}
-            onDragEnd={() => {
-              setDraggedPanelId(null);
-              setDropTarget(null);
-            }}
-            onDragStart={setDraggedPanelId}
-            onPanelCollapsedChange={handlePanelCollapsedChange}
-            onDropPanel={handlePanelDrop}
-            onPreviewDrop={handlePanelDropPreview}
-            panels={visiblePanelLayout.right}
-            renderPanelHeaderActions={renderPanelHeaderActions}
-            renderPanelContent={renderPanelContent}
-            side="right"
-          />
-        </SidebarDock>
+          disabledExpansionPanelIds={getLibraryPanelSectionId(activeToolId) ? [] : ["library"]}
+          draggedPanelId={draggedPanelId}
+          dropTarget={dropTarget}
+          onDragEnd={() => {
+            setDraggedPanelId(null);
+            setDropTarget(null);
+          }}
+          onDragStart={setDraggedPanelId}
+          onPanelCollapsedChange={handlePanelCollapsedChange}
+          onDropPanel={handlePanelDrop}
+          onPreviewDrop={handlePanelDropPreview}
+          panels={visiblePanelLayout.right}
+          renderPanelHeaderActions={renderPanelHeaderActions}
+          renderPanelContent={renderPanelContent}
+        />
         ) : null}
       </main>
       {persistenceUi.dialogs}

@@ -1,3 +1,5 @@
+import { motion } from "motion/react";
+import { useMotionPreference } from "@ui/motion_preferences/MotionPreferenceProvider";
 import type { DragEvent } from "react";
 import { useState } from "react";
 import { getTextColorForLuminance } from "@ui/canvas/canvasLuminance";
@@ -31,29 +33,30 @@ export function ZonelessActorPanel({
   const { zonelessActors, groups: groupedActors, selectedIds, canSelect, selectActors,
     handleSelect, handleDragStart, handleDragEnd, startPointerTransfer } = useZonelessPanelActors();
   const { zonelessHeaderClickExpansion } = useInterfacePreferences();
+  const { animationsDisabled } = useMotionPreference();
   const [hovered, setHovered] = useState(false);
-  const [focused, setFocused] = useState(false);
+  const [keyboardFocused, setKeyboardFocused] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [groupByFaction, setGroupByFaction] = useState(true);
   const { isResized, isResizing, resetSize, size, startResize } = useResizablePanel();
-  const contrastColor = hovered || focused ? "rgb(var(--color-canvas-ink))" : getTextColorForLuminance(canvasBackgroundLuminance);
+  const contrastColor = hovered || keyboardFocused ? "rgb(var(--color-canvas-ink))" : getTextColorForLuminance(canvasBackgroundLuminance);
 
   return (
     <ZonelessPanelVisibility
       visible={visible && !isZoneEditing}
       aria-label="Zoneless actors"
-      className={`${isInBottomRow ? "relative min-w-0 translate-x-0" : "absolute bottom-3 left-1/2 min-w-0 -translate-x-1/2"} z-40 flex max-w-full flex-col overflow-hidden border p-2 hover:bg-canvas-panel focus-within:bg-canvas-panel ${
+      className={`${isInBottomRow ? "relative min-w-0 translate-x-0" : "absolute bottom-3 left-1/2 min-w-0 -translate-x-1/2"} z-40 flex max-w-full flex-col overflow-hidden border bg-transparent p-2 ${
         expanded
-          ? "rounded-2xl border-canvas-line bg-canvas-panel/10 shadow-lg backdrop-blur"
-          : "rounded-lg bg-transparent"
+          ? "rounded-2xl border-canvas-line shadow-lg backdrop-blur"
+          : "rounded-lg"
       } ${
         isActorDragActive ? "border-canvas-ink ring-2 ring-canvas-ink/20" : ""
       } ${isResizing ? "select-none" : ""}`}
       data-drop-target="zoneless-actors"
       onPointerEnter={event => { if (event.pointerType !== "touch") setHovered(true); }}
       onPointerLeave={() => setHovered(false)}
-      onFocusCapture={() => setFocused(true)}
-      onBlurCapture={event => { if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false); }}
+      onFocusCapture={event => setKeyboardFocused(event.target.matches(":focus-visible"))}
+      onBlurCapture={event => { if (!event.currentTarget.contains(event.relatedTarget)) setKeyboardFocused(false); }}
       onDragOver={onActorCreationDragOver}
       onDrop={onActorCreationDrop}
       style={{
@@ -64,6 +67,9 @@ export function ZonelessActorPanel({
         width: `${size.width}px`
       }}
     >
+      <motion.div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 bg-canvas-panel"
+        initial={false} animate={{ opacity: hovered || keyboardFocused ? 1 : expanded ? 0.1 : 0 }}
+        transition={{ duration: animationsDisabled ? 0 : 0.2, ease: "easeInOut" }} />
       <ZonelessPanelHeader
         expanded={expanded} onToggle={() => setExpanded(current => !current)}
         headerClickExpansion={zonelessHeaderClickExpansion}

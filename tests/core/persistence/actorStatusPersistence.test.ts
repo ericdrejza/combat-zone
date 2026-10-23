@@ -1,3 +1,4 @@
+import { withLegacyPanelLayout } from "@tests/core/persistence/legacyPanelLayout";
 import { createEncounterState } from "@core/encounter/createEncounterState";
 import { ENCOUNTER_SCHEMA_VERSION } from "@core/encounter/types";
 import { assertEncounterState, migrateEncounterState } from "@core/persistence/envelope";
@@ -16,7 +17,7 @@ describe("persisted actor statuses", () => {
     expect(parseExportEnvelope(JSON.parse(JSON.stringify(envelope)))).toEqual(envelope);
   });
   it("migrates legacy actors as healthy without changing source records", () => {
-    const legacy = { ...state(), schemaVersion: 11 };
+    const legacy = { ...withLegacyPanelLayout(state()), schemaVersion: 11 };
     delete legacy.actors.byId.a.status;
     const before = structuredClone(legacy);
     const migrated = hydrateEncounterRecord({ id: "status", state: legacy, revision: 0, createdAt: 1, updatedAt: 1, folderId: null } as never);

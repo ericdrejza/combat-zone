@@ -10,7 +10,7 @@ import { ApplyPanelOrderButton } from "@ui/settings/ApplyPanelOrderButton";
 import { PersistenceContext } from "@ui/persistence/PersistenceContext";
 
 const order: EncounterPanelOrder = {
-  left: ["audio", "status"],
+  left: ["audio", "status", "zoneless"],
   right: ["log", "properties", "library", "initiative"]
 };
 
@@ -40,7 +40,7 @@ describe("ApplyPanelOrderButton", () => {
   it.each(["ADVISORY", "STRICT"] as const)("applies order with undo/redo in %s and preserves collapsed panels", (mode) => {
     const store = setup(false, mode);
     const before = store.getState().encounter.present;
-    fireEvent.click(screen.getByRole("button", { name: "Apply to current encounter" }));
+    fireEvent.click(screen.getByRole("button", { name: "Apply layout to current encounter" }));
     const after = store.getState().encounter.present;
     expect(after.panelLayout.left.map((panel) => panel.id)).toEqual(order.left);
     expect(after.panelLayout.right.map((panel) => panel.id)).toEqual(order.right);
@@ -52,14 +52,14 @@ describe("ApplyPanelOrderButton", () => {
     expect(store.getState().encounter.present).toEqual(before);
     act(() => { store.dispatch(redoEncounterChange()); });
     expect(store.getState().encounter.present).toEqual(after);
-    fireEvent.click(screen.getByRole("button", { name: "Apply to current encounter" }));
+    fireEvent.click(screen.getByRole("button", { name: "Apply layout to current encounter" }));
     expect(store.getState().encounter.past).toHaveLength(1);
   });
 
   it("disables applying order in a read-only tab", () => {
     const store = setup(true);
     const before = store.getState();
-    const button = screen.getByRole("button", { name: "Apply to current encounter" });
+    const button = screen.getByRole("button", { name: "Apply layout to current encounter" });
     expect(button).toBeDisabled();
     fireEvent.click(button);
     expect(store.getState()).toEqual(before);
@@ -69,7 +69,7 @@ describe("ApplyPanelOrderButton", () => {
     const store = setup();
     const before = store.getState();
     setPersistenceWritable(false);
-    fireEvent.click(screen.getByRole("button", { name: "Apply to current encounter" }));
+    fireEvent.click(screen.getByRole("button", { name: "Apply layout to current encounter" }));
     expect(store.getState()).toEqual(before);
   });
 });

@@ -2,7 +2,7 @@ import {
   Activity,
   AudioLines,
   BookOpen,
-  CircleOff,
+  UsersRound,
   Library,
   ListOrdered,
   ScrollText,
@@ -32,7 +32,7 @@ export type CompactPanelDefinition = {
 export const COMPACT_PANEL_DEFINITIONS: readonly CompactPanelDefinition[] = [
   { id: 'log', title: 'Log', Icon: ScrollText },
   { id: 'library', title: 'Library', Icon: BookOpen },
-  { id: 'zoneless', title: 'Zoneless', Icon: CircleOff },
+  { id: 'zoneless', title: 'Zoneless', Icon: UsersRound },
   { id: 'properties', title: 'Properties', Icon: SlidersHorizontal },
   { id: 'status', title: 'Status', Icon: Activity },
   { id: 'audio', title: 'Audio', Icon: AudioLines },

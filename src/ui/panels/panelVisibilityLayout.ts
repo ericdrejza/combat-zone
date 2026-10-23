@@ -22,7 +22,7 @@ export function getVisibleCompactPanels(
   visibility: DockablePanelVisibility
 ): readonly CompactPanelDefinition[] {
   return COMPACT_PANEL_DEFINITIONS.filter(
-    (panel) => panel.id === "zoneless" || visibility[panel.id]
+    (panel) => visibility[panel.id]
   );
 }
 

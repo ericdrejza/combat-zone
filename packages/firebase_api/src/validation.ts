@@ -132,7 +132,7 @@ function validateEncounterStateShape(state: JsonObject): void {
   }
   record(state.initiativeTracker, "encounter.state.initiativeTracker");
   const panelLayout = record(state.panelLayout, "encounter.state.panelLayout");
-  const panelIds = ["initiative", "library", "log", "properties", "status", ...(version >= 13 ? ["audio"] : [])];
+  const panelIds = ["initiative", "library", "log", "properties", "status", ...(version >= 13 ? ["audio"] : []), ...(version >= 31 ? ["zoneless"] : [])];
   const panels = ["left", "right"].flatMap((side) => {
     const dock = panelLayout[side];
     if (!Array.isArray(dock)) {

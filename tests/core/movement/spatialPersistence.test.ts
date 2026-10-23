@@ -1,3 +1,4 @@
+import { withLegacyPanelLayout } from "@tests/core/persistence/legacyPanelLayout";
 import { movementRulesFor } from '@tests/core/movement/ruleFixtures';
 import { createEncounterState } from '@core/encounter/createEncounterState';
 import { createActor } from '@entities/actor/actorMutations';
@@ -23,7 +24,7 @@ const exportState = (state = spatial()) => ({ kind: 'encounter-export', schemaVe
 describe('spatial persistence', () => {
   afterEach(() => setPersistenceWritable(true));
   it('migrates schema 16 without mutating input or inventing positions', () => {
-    const old = { ...spatial(), schemaVersion: 16 } as Record<string, unknown>;
+    const old = { ...withLegacyPanelLayout(spatial()), schemaVersion: 16 } as Record<string, unknown>;
     delete old.grid; delete old.movementRules;
     const before = structuredClone(old);
     const migrated = migrateEncounterState(old); assertEncounterState(migrated);

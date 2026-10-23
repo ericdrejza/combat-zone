@@ -143,7 +143,8 @@ describe("PersistenceProvider", () => {
       left: [
         { collapsed: false, id: "audio" },
         { collapsed: false, id: "library" },
-        { collapsed: false, id: "log" }
+        { collapsed: false, id: "log" },
+        { collapsed: false, id: "zoneless" }
       ],
       right: [
         { collapsed: false, id: "properties" },

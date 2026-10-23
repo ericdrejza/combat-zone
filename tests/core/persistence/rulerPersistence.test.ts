@@ -1,3 +1,4 @@
+import { withLegacyPanelLayout } from "@tests/core/persistence/legacyPanelLayout";
 import { ENCOUNTER_SCHEMA_VERSION } from '@core/encounter/types';
 import { createEncounterState } from '@core/encounter/createEncounterState';
 import { saveRuler } from '@core/measurement/rulerMutations';
@@ -12,10 +13,10 @@ function fixture() {
 }
 const cloud = (state: unknown) => validateEncounter({ schemaVersion: CLOUD_RECORD_SCHEMA_VERSION, encounterId: 'rulers', folderId: null, assetIds: [], state } as never);
 it('migrates schema 28 to an empty normalized ruler collection without changing its source or other facts', () => {
-  const legacy = { ...fixture(), schemaVersion: 28 } as Record<string, unknown>; delete legacy.rulers;
+  const legacy = { ...withLegacyPanelLayout(fixture()), schemaVersion: 28 } as Record<string, unknown>; delete legacy.rulers;
   const before = structuredClone(legacy), migrated = migrateEncounterState(legacy);
   assertEncounterState(migrated); expect(migrated.schemaVersion).toBe(ENCOUNTER_SCHEMA_VERSION); expect(migrated.rulers).toEqual({ allIds: [], byId: {} });
-  expect({ ...migrated, schemaVersion: 28, rulers: undefined }).toEqual({ ...legacy, rulers: undefined }); expect(legacy).toEqual(before);
+  expect({ ...withLegacyPanelLayout(migrated), schemaVersion: 28, rulers: undefined }).toEqual({ ...legacy, rulers: undefined }); expect(legacy).toEqual(before);
 });
 it('round trips all ruler shapes, names, appearance, and stable IDs through repository, recovery, export and cloud', async () => {
   const state = fixture(), repository = new InMemoryWorkspaceRepository();

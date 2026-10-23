@@ -1,3 +1,4 @@
+import { withLegacyPanelLayout } from "@tests/core/persistence/legacyPanelLayout";
 import { ENCOUNTER_SCHEMA_VERSION } from "@core/encounter/types";
 import { parseCloudWorkspace } from "@core/persistence/cloud/cloudRecords";
 import { createEncounterState } from "@core/encounter/createEncounterState";
@@ -28,7 +29,7 @@ describe("actor resource persistence", () => {
     expect(() => assertEncounterState(current)).not.toThrow();
   });
   it("migrates version 12 without inventing HP or changing source records", () => {
-    const legacy = { ...state(), schemaVersion: 12 };
+    const legacy = { ...withLegacyPanelLayout(state()), schemaVersion: 12 };
     delete legacy.actors.byId.a.hitPoints;
     delete legacy.actors.byId.a.counters;
     const before = structuredClone(legacy);

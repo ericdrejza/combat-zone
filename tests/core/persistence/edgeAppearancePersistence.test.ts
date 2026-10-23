@@ -1,3 +1,4 @@
+import { withLegacyPanelLayout } from "@tests/core/persistence/legacyPanelLayout";
 import { CLOUD_RECORD_SCHEMA_VERSION, SUPPORTED_ENCOUNTER_SCHEMA_VERSION, validateEncounter } from '@combat-zone/firebase-api';
 import { createEncounterState } from '@core/encounter/createEncounterState';
 import { ENCOUNTER_SCHEMA_VERSION } from '@core/encounter/types';
@@ -25,8 +26,8 @@ const cloud = (value: unknown) => ({ schemaVersion: CLOUD_RECORD_SCHEMA_VERSION,
 
 it('keeps local and cloud schema versions aligned and migrates schema 25 without inventing preferences', () => {
   expect(SUPPORTED_ENCOUNTER_SCHEMA_VERSION).toBe(ENCOUNTER_SCHEMA_VERSION);
-  const legacy = { ...state(), schemaVersion: 25 }, before = structuredClone(legacy);
-  expect(migrateEncounterState(legacy)).toEqual({ ...legacy, schemaVersion: ENCOUNTER_SCHEMA_VERSION });
+  const legacy = { ...withLegacyPanelLayout(state()), schemaVersion: 25 }, before = structuredClone(legacy);
+  expect(migrateEncounterState(legacy)).toEqual({ ...legacy, schemaVersion: ENCOUNTER_SCHEMA_VERSION, panelLayout: state().panelLayout });
   expect(legacy).toEqual(before);
   expect(() => validateEncounter(cloud(legacy))).not.toThrow();
 });

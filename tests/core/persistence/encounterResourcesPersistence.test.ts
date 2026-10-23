@@ -1,3 +1,4 @@
+import { withLegacyPanelLayout } from "@tests/core/persistence/legacyPanelLayout";
 import { createEncounterState } from "@core/encounter/createEncounterState";
 import { ENCOUNTER_SCHEMA_VERSION } from "@core/encounter/types";
 import { saveResourceClock, saveResourceCounter } from "@core/entity_resources/statusResources";
@@ -12,7 +13,7 @@ const state = () => saveResourceClock(saveResourceCounter(createEncounterState({
 const payload = (encounter: unknown) => JSON.parse(JSON.stringify({ schemaVersion: CLOUD_RECORD_SCHEMA_VERSION, encounterId: "e", folderId: null, assetIds: [], state: encounter }));
 
 it.each([13, 14, 15])("migrates schema %s to empty encounter resources without changing input", (schemaVersion) => {
-  const legacy = { ...state(), schemaVersion } as Record<string, unknown>;
+  const legacy = { ...withLegacyPanelLayout(state()), schemaVersion } as Record<string, unknown>;
   delete legacy.counters; delete legacy.clocks;
   const before = structuredClone(legacy);
   const migrated = migrateEncounterState(legacy);
@@ -68,7 +69,7 @@ it.each(["traditional", "box", "stack", "row"] as const)("serializes %s clocks f
   const encounter = state(); encounter.clocks.byId.k.style = style;
   const wire = await serializeEncounterForCloud({ state: encounter, updatedAt: 1 }, { ensureUploaded: vi.fn() } as unknown as CloudAssetRepository);
   expect(validateEncounter(payload(wire.state)).state).toMatchObject({ counters: encounter.counters, clocks: encounter.clocks });
-  const legacy = payload({ ...encounter, schemaVersion: 15 }); delete legacy.state.counters; delete legacy.state.clocks;
+  const legacy = payload({ ...withLegacyPanelLayout(encounter), schemaVersion: 15 }); delete legacy.state.counters; delete legacy.state.clocks;
   expect(validateEncounter(legacy)).toEqual(legacy);
 });
 

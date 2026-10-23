@@ -8,7 +8,7 @@ import { matchesKeybind, type KeybindActionId } from "./keybindDefinitions";
 import { ignoreShortcut } from "./keyboardGuards";
 
 /** Uses the same transport and viewport operations as visible application controls. */
-export function WorkspaceKeyboardShortcuts({ onOpenLibrary }: { onOpenLibrary: () => void }) {
+export function WorkspaceKeyboardShortcuts({ onOpenLibrary, onTogglePanels }: { onOpenLibrary: () => void; onTogglePanels: () => void }) {
   const { bindings } = useKeybinds();
   const viewport = useCanvasViewport();
   const audio = useAudioPlayback();
@@ -31,6 +31,7 @@ export function WorkspaceKeyboardShortcuts({ onOpenLibrary }: { onOpenLibrary: (
         "viewport.panUp": () => viewport.pan("up"), "viewport.panDown": () => viewport.pan("down"),
         "viewport.panLeft": () => viewport.pan("left"), "viewport.panRight": () => viewport.pan("right"),
         "library.open": onOpenLibrary,
+        "panels.toggle": onTogglePanels,
         "audio.toggle": () => { if (audio.hasRunningPlayback) audio.pauseAll(); else if (audio.hasPausedPlayback) audio.resumeAll(); }
       };
       const id = (Object.keys(commands) as KeybindActionId[]).find((id) => matchesKeybind(event, bindings[id]));
@@ -40,11 +41,11 @@ export function WorkspaceKeyboardShortcuts({ onOpenLibrary }: { onOpenLibrary: (
         return;
       }
       event.preventDefault();
-      if (event.repeat && (id === "audio.toggle" || id === "library.open")) return;
+      if (event.repeat && (id === "audio.toggle" || id === "library.open" || id === "panels.toggle")) return;
       commands[id]?.();
     };
     window.addEventListener("keydown", handle);
     return () => window.removeEventListener("keydown", handle);
-  }, [audio, bindings, onOpenLibrary, selection, tool, viewport]);
+  }, [audio, bindings, onOpenLibrary, onTogglePanels, selection, tool, viewport]);
   return null;
 }

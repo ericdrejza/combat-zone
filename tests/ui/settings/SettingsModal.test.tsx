@@ -129,12 +129,13 @@ describe("SettingsModal local reset", () => {
     expect(screen.getByRole("heading", { name: "Interface" })).toBeInTheDocument();
   });
 
-  it("shows the Light and Dark theme choices in Interface settings", async () => {
+  it("shows System, Light, and Dark theme choices in Interface settings", async () => {
     const user = userEvent.setup();
     renderSettings();
     await user.click(screen.getByRole("tab", { name: "Interface" }));
 
-    expect(screen.getByRole("radio", { name: "Light" })).toBeChecked();
+    expect(screen.getByRole("radio", { name: "System" })).toBeChecked();
+    expect(screen.getByRole("radio", { name: "Light" })).not.toBeChecked();
     expect(screen.getByRole("radio", { name: "Dark" })).not.toBeChecked();
   });
 

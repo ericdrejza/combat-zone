@@ -24,7 +24,20 @@ export function resolvePanelPointerDropTarget(
   fallbackElement?: Element | null
 ): DropTarget | null {
   const hit = document.elementFromPoint?.(clientX, clientY) ?? fallbackElement;
-  const targetElement = hit?.closest<HTMLElement>("[data-panel-drop-side]");
+  let targetElement = hit?.closest<HTMLElement>("[data-panel-drop-side]");
+  if (targetElement?.dataset.panelDropKind === "tabs" && Number.isFinite(clientX) && Number.isFinite(clientY)) {
+    // Gaps and list edges resolve to the nearest tab, including wrapped rows.
+    let nearest: HTMLElement | undefined;
+    let nearestDistance = Infinity;
+    for (const tab of targetElement.querySelectorAll<HTMLElement>('[data-panel-drop-kind="tab"]')) {
+      const bounds = tab.getBoundingClientRect();
+      const dx = Math.max(bounds.left - clientX, 0, clientX - bounds.right);
+      const dy = Math.max(bounds.top - clientY, 0, clientY - bounds.bottom);
+      const distance = dx * dx + dy * dy;
+      if (distance < nearestDistance) { nearestDistance = distance; nearest = tab; }
+    }
+    targetElement = nearest ?? targetElement;
+  }
   const side = targetElement?.dataset.panelDropSide;
   const rawIndex = targetElement?.dataset.panelDropIndex;
 
@@ -37,14 +50,16 @@ export function resolvePanelPointerDropTarget(
     return null;
   }
 
-  if (targetElement.dataset.panelDropKind !== "panel") {
+  if (targetElement.dataset.panelDropKind !== "panel" && targetElement.dataset.panelDropKind !== "tab") {
     return { side, index };
   }
 
   const bounds = targetElement.getBoundingClientRect();
   return {
     side,
-    index: clientY > bounds.top + bounds.height / 2 ? index + 1 : index
+    index: (targetElement.dataset.panelDropAxis === "horizontal"
+      ? clientX > bounds.left + bounds.width / 2
+      : clientY > bounds.top + bounds.height / 2) ? index + 1 : index
   };
 }
 
@@ -66,7 +81,7 @@ export function startPanelPointerDrag({
   const pointerId = event.pointerId;
   const start = { x: event.clientX, y: event.clientY };
   // A non-drop surface preserves placement, so preview the source rather than a stale target.
-  const source = handle.closest<HTMLElement>('[data-panel-drop-kind="panel"]');
+  const source = handle.closest<HTMLElement>('[data-panel-drop-kind="panel"], [data-panel-drop-kind="tab"]');
   const sourceSide = source?.dataset.panelDropSide;
   const sourceIndex = Number(source?.dataset.panelDropIndex);
   const originalTarget: DropTarget | null = isDockSide(sourceSide) && Number.isInteger(sourceIndex)

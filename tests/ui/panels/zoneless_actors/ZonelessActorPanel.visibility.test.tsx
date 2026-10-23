@@ -13,7 +13,7 @@ it("hides explicitly, preserves expansion and grouping, and does not reveal on h
   act(() => { seedEncounter([actor("a", "Aria")]); store.dispatch(setActiveTool("actor")); });
   const before = store.getState().encounter;
   await user.click(screen.getByRole("button", { name: "Toggle Zoneless panel from header" }));
-  await user.click(screen.getByRole("checkbox", { name: "Group by faction" }));
+  await user.click(screen.getByRole("button", { name: "Group by faction" }));
   const sidebar = screen.getByRole("complementary", { name: "left sidebar" });
   expect(within(sidebar).getByRole("button", { name: "Open settings" })).toBeInTheDocument();
   await user.click(within(sidebar).getByRole("button", { name: "Hide Zoneless panel" }));
@@ -24,7 +24,7 @@ it("hides explicitly, preserves expansion and grouping, and does not reveal on h
   expect(screen.queryByRole("complementary", { name: "Zoneless actors" })).not.toBeInTheDocument();
   await user.click(show);
   expect(screen.getByRole("button", { name: "Collapse zoneless actors" })).toHaveAttribute("aria-expanded", "true");
-  expect(screen.getByRole("checkbox", { name: "Group by faction" })).not.toBeChecked();
+  expect(screen.getByRole("button", { name: "Group by faction" })).toHaveAttribute("aria-pressed", "false");
   expect(screen.getByRole("button", { name: "Aria" })).toBeInTheDocument();
   expect(store.getState().encounter).toBe(before);
 });

@@ -6,7 +6,8 @@ export const DOCKABLE_PANEL_DEFINITIONS = [
   { id: "library", title: "Library" },
   { id: "log", title: "Log" },
   { id: "properties", title: "Properties" },
-  { id: "status", title: "Status", description: "Actor health, resources, and conditions." }
+  { id: "status", title: "Status", description: "Actor health, resources, and conditions." },
+  { id: "zoneless", title: "Zoneless" }
 ] as const;
 
 export type DockablePanelId = EncounterPanelId;
@@ -19,7 +20,8 @@ export const DEFAULT_DOCKABLE_PANEL_VISIBILITY: DockablePanelVisibility = {
   log: true,
   properties: true,
   status: true,
-  audio: true
+  audio: true,
+  zoneless: true
 };
 
 export function isDockablePanelId(value: string): value is DockablePanelId {

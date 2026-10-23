@@ -15,7 +15,7 @@ import { readAudioCueVolumeDefault, readAudioRepeatDelayDefaults, readAmbienceCu
 import { readPanelVisibility } from "./panelPreferences";
 import { DEFAULT_DOCKABLE_PANEL_VISIBILITY, type DockablePanelId, type DockablePanelVisibility } from "@ui/panels/dockablePanelMetadata";
 import { DEFAULT_AUDIO_REPEAT_DELAY_SETTINGS, type AudioRepeatDelaySettings } from "@entities/audio/types";
-import { DEFAULT_ENCOUNTER_PANEL_ORDER, isEncounterPanelOrder, type EncounterPanelOrder } from "@core/encounter/panelLayout";
+import { DEFAULT_ENCOUNTER_PANEL_ORDER, readEncounterPanelOrder, type EncounterPanelOrder } from "@core/encounter/panelLayout";
 export const INTERFACE_PREFERENCES_STORAGE_KEY =
   "combat-zone.interface-preferences";
 
@@ -54,6 +54,8 @@ export type DurableInterfacePreferences = {
   zoneBorderThickness: number;
   actorBorderThickness: number;
   encounterCreationTool: EncounterCreationTool;
+  zonelessPanelPlacement: "canvas" | "sidebar";
+  panelTabMode: boolean;
   zonelessHeaderClickExpansion: boolean;
   libraryCloseOnOutsideClick: boolean;
   libraryModalViewDefault: LibraryViewDefault;
@@ -95,6 +97,8 @@ export type InterfacePreferences = DurableInterfacePreferences & {
   autoSelectActiveActorDefault: boolean;
   setAutoSelectActiveActor: (enabled: boolean) => void;
   setEncounterCreationTool: (tool: EncounterCreationTool) => void;
+  setZonelessPanelPlacement: (placement: "canvas" | "sidebar") => void;
+  setPanelTabMode: (enabled: boolean) => void;
   setZonelessHeaderClickExpansion: (enabled: boolean) => void;
   setLibraryCloseOnOutsideClick: (enabled: boolean) => void;
   setLibraryModalViewDefault: (view: LibraryViewDefault) => void;
@@ -153,6 +157,8 @@ export const defaultPreferences: DurableInterfacePreferences = {
   zoneBorderThickness: DEFAULT_ZONE_BORDER_THICKNESS,
   actorBorderThickness: DEFAULT_ACTOR_BORDER_THICKNESS,
   encounterCreationTool: "zone",
+  zonelessPanelPlacement: "canvas",
+  panelTabMode: false,
   zonelessHeaderClickExpansion: true,
   libraryCloseOnOutsideClick: false,
   libraryModalViewDefault: "grid",
@@ -195,6 +201,8 @@ export const defaultValue: InterfacePreferences = {
   setAudioRepeatDelayDefaults: () => undefined,
   setAutoSelectActiveActor: () => undefined,
   setEncounterCreationTool: () => undefined,
+  setZonelessPanelPlacement: () => undefined,
+  setPanelTabMode: () => undefined,
   setZonelessHeaderClickExpansion: () => undefined,
   setLibraryCloseOnOutsideClick: () => undefined,
   setLibraryModalViewDefault: () => undefined,
@@ -275,6 +283,8 @@ export function readPreferences(): DurableInterfacePreferences {
         stored?.encounterCreationTool === "zone"
           ? stored.encounterCreationTool
           : defaultPreferences.encounterCreationTool,
+      zonelessPanelPlacement: stored?.zonelessPanelPlacement === "sidebar" ? "sidebar" : "canvas",
+      panelTabMode: stored?.panelTabMode === true,
       zonelessHeaderClickExpansion: typeof stored?.zonelessHeaderClickExpansion === "boolean" ? stored.zonelessHeaderClickExpansion : true,
       libraryCloseOnOutsideClick: stored?.libraryCloseOnOutsideClick === true,
       libraryModalViewDefault: readLibraryViewDefault(stored?.libraryModalViewDefault),
@@ -282,9 +292,7 @@ export function readPreferences(): DurableInterfacePreferences {
       libraryGridCardSize: readLibraryGridCardSize(stored?.libraryGridCardSize),
       libraryIndependentGridCardSizes: stored?.libraryIndependentGridCardSizes === true,
       libraryGridCardSizes: readLibraryGridCardSizes(stored?.libraryGridCardSizes),
-      panelOrder: isEncounterPanelOrder(stored?.panelOrder)
-        ? stored.panelOrder
-        : DEFAULT_ENCOUNTER_PANEL_ORDER,
+      panelOrder: readEncounterPanelOrder(stored?.panelOrder),
       panelVisibility: readPanelVisibility(stored?.panelVisibility),
       warnActorDestinationsDiffer: stored?.warnActorDestinationsDiffer !== false,
       keepHealDamageDialogOpen: stored?.keepHealDamageDialogOpen === true,

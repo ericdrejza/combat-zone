@@ -1,3 +1,4 @@
+import { withLegacyPanelLayout } from "@tests/core/persistence/legacyPanelLayout";
 import { createEncounterState } from '@core/encounter/createEncounterState';
 import { createActor, updateActorProperties } from '@entities/actor/actorMutations';
 import { assertEncounterState, migrateEncounterState, parseExportEnvelope } from '@core/persistence/envelope';
@@ -19,14 +20,14 @@ it('round trips Transparent through exports, repository, and cloud while rejecti
   const repo = new InMemoryWorkspaceRepository(); await repo.createEncounter(state);
   expect((await repo.getEncounter(state.id))!.state.actors.byId.a.shape).toBe('transparent');
   expect(() => validateEncounter(cloud(state))).not.toThrow();
-  expect(() => migrateEncounterState({ ...state, schemaVersion: 24 })).toThrow(/Transparent/);
-  expect(() => validateEncounter(cloud({ ...state, schemaVersion: 24 }))).toThrow(/spatial/);
+  expect(() => migrateEncounterState({ ...withLegacyPanelLayout(state), schemaVersion: 24 })).toThrow(/Transparent/);
+  expect(() => validateEncounter(cloud({ ...withLegacyPanelLayout(state), schemaVersion: 24 }))).toThrow(/spatial/);
 });
 
 it('migrates schema 24 without changing actor shapes or grid geometry', () => {
   const current = createActor(createEncounterState({ id: 'transparent', name: 'Transparent' }), { currentZoneId: 'zoneless', id: 'a', shape: 'rectangle' });
   current.grid = { ...current.grid, type: 'isometric', isometricAngle: 30 };
-  expect(migrateEncounterState({ ...current, schemaVersion: 24 })).toEqual(current);
+  expect(migrateEncounterState({ ...withLegacyPanelLayout(current), schemaVersion: 24 })).toEqual(current);
 });
 
 it.each(['ADVISORY', 'STRICT'] as const)('validates and restores a Transparent shape edit in %s', mode => {

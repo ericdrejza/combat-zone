@@ -1,10 +1,11 @@
 import { ResetSettingsButton } from "./ResetSettingsButton";
 import { TouchTooltip } from "@ui/toolbar/TouchTooltip";
-import { SettingsCategory, SettingsSection, SettingsRow, SETTINGS_BUTTON } from "./SettingsLayout";
+import { SettingsCategory, SettingsSection, SettingsSubsection, SettingsRow, SETTINGS_BUTTON } from "./SettingsLayout";
 import { X } from "lucide-react";
 import { type KeyboardEvent, useState } from "react";
-import { formatKeybind, FIXED_SHORTCUT_REFERENCES, KEYBIND_DEFINITIONS, keybindFromEvent, useKeybinds, type KeybindActionId, type KeybindMap } from "@ui/keybinds";
+import { formatKeybind, KEYBIND_DEFINITIONS, keybindFromEvent, useKeybinds, type KeybindActionId, type KeybindMap } from "@ui/keybinds";
 import { ConfirmStatusDialog } from "@ui/panels/status_panel/StatusDialog";
+import { CUSTOMIZABLE_SHORTCUT_GROUPS, FIXED_SHORTCUT_GROUPS } from "./keybindSettingsGroups";
 import { PreferenceSwitch } from "./PreferenceSwitch";
 
 const buttonClass = SETTINGS_BUTTON;
@@ -54,9 +55,15 @@ export function KeybindSettings() {
       <div className="mt-3 flex flex-wrap items-center gap-2"><span className="text-xs text-canvas-muted">Quick select</span><button className={buttonClass} onClick={() => preset(["w", "s", "a", "d"])} type="button">WASD</button><button className={buttonClass} onClick={() => preset(["arrowup", "arrowdown", "arrowleft", "arrowright"])} type="button">Arrow keys</button><button className={buttonClass} onClick={() => preset(["", "", "", ""])} type="button">Clear pan</button></div>
     </SettingsSection>
     <SettingsSection title="Customizable shortcuts">
-    <div className="divide-y divide-canvas-line">{KEYBIND_DEFINITIONS.filter(({ editable, id }) => editable && !id.startsWith("viewport.pan")).map(({ id, label }) => <SettingsRow label={label} key={id}>{control(id, label)}</SettingsRow>)}</div></SettingsSection>
+      {CUSTOMIZABLE_SHORTCUT_GROUPS.map(({ title, entries }) => <SettingsSubsection key={title} title={title}>
+        <div className="divide-y divide-canvas-line">{entries.map(({ id, label }) => <SettingsRow label={label} key={id}>{control(id, label)}</SettingsRow>)}</div>
+      </SettingsSubsection>)}
+    </SettingsSection>
     <SettingsSection title="Fixed shortcuts">
-    <div className="divide-y divide-canvas-line">{FIXED_SHORTCUT_REFERENCES.map(({ binding, label }) => binding === "Ctrl + Wheel up/down" ? <PreferenceSwitch checked={ctrlWheelZoomEnabled} key={`${binding}-${label}`} label={label} onChange={setCtrlWheelZoomEnabled} secondaryControl={<span aria-label={`${label} keybind`} className="font-mono text-sm">{binding}</span>} /> : <SettingsRow label={label} key={`${binding}-${label}`}><span aria-label={`${label} keybind`} className="font-mono text-sm">{binding}</span></SettingsRow>)}</div></SettingsSection>
+      {FIXED_SHORTCUT_GROUPS.map(({ title, entries }) => <SettingsSubsection key={title} title={title}>
+        <div className="divide-y divide-canvas-line">{entries.map(({ binding, label }) => binding === "Ctrl + Wheel up/down" ? <PreferenceSwitch checked={ctrlWheelZoomEnabled} key={`${binding}-${label}`} label={label} onChange={setCtrlWheelZoomEnabled} secondaryControl={<span aria-label={`${label} keybind`} className="min-w-0 flex-1 text-center font-mono text-sm">{binding}</span>} /> : <SettingsRow label={label} key={`${binding}-${label}`}><span aria-label={`${label} keybind`} className="block text-center font-mono text-sm">{binding}</span></SettingsRow>)}</div>
+      </SettingsSubsection>)}
+    </SettingsSection>
     {pending ? <ConfirmStatusDialog title="Override conflicting keybinds?" confirmLabel="Continue" onClose={() => setPending(null)} onConfirm={() => { const conflicts = applyBindings(pending.updates, true); if (conflicts.length) setError("The assignment could not be applied."); else { setRecording(null); setError(null); } setPending(null); }}><p>These actions will become unassigned:</p><ul className="mt-2 list-disc pl-5">{pending.conflicts.map((id) => <li key={id}>{KEYBIND_DEFINITIONS.find((d) => d.id === id)?.label}</li>)}</ul></ConfirmStatusDialog> : null}
   </SettingsCategory>;
 }

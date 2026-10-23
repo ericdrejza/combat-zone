@@ -1,3 +1,5 @@
+import { useZonelessActorDropHandlers } from "./zonelessActorDropHandlers";
+import { GroupByFactionButton } from "./GroupByFactionButton";
 import { useState } from "react";
 import { ZonelessActorPanelToken } from "./ZonelessActorPanelToken";
 import { SelectAllZonelessButton, ZonelessFactionButton } from "./ZonelessPanelHeader";
@@ -5,6 +7,7 @@ import { useZonelessPanelActors } from "./useZonelessPanelActors";
 
 /** Drawer presentation of the authoritative zoneless actor collection. */
 export function CompactZonelessActorPanel() {
+  const { handleActorCreationDragOverZoneless, handleActorCreationDropToZoneless } = useZonelessActorDropHandlers();
   const [groupByFaction, setGroupByFaction] = useState(true);
   const { zonelessActors, groups, selectedIds, canSelect, selectActors,
     handleSelect, handleDragStart, handleDragEnd, startPointerTransfer } = useZonelessPanelActors();
@@ -24,18 +27,12 @@ export function CompactZonelessActorPanel() {
   }
 
   return (
-    <div className="space-y-3" data-drop-target="zoneless-actors">
-      <SelectAllZonelessButton disabled={!canSelect || !zonelessActors.length} onSelect={() => selectActors(zonelessActors)} />
-      <label className="flex min-h-11 items-center gap-2 text-sm">
-        <input
-          aria-label="Group by faction"
-          checked={groupByFaction}
-          className="h-5 w-5 accent-canvas-ink"
-          onChange={(event) => setGroupByFaction(event.target.checked)}
-          type="checkbox"
-        />
-        Group by faction
-      </label>
+    <div className="min-h-full space-y-3" data-drop-target="zoneless-actors"
+      onDragOver={handleActorCreationDragOverZoneless} onDrop={handleActorCreationDropToZoneless}>
+      <div className="flex items-center gap-2">
+        <SelectAllZonelessButton disabled={!canSelect || !zonelessActors.length} onSelect={() => selectActors(zonelessActors)} />
+        <GroupByFactionButton grouped={groupByFaction} onChange={setGroupByFaction} />
+      </div>
       {zonelessActors.length === 0 ? (
         <p className="rounded-xl border border-dashed border-canvas-line px-3 py-5 text-center text-sm text-canvas-muted">
           Drop actors here to remove them from the canvas.

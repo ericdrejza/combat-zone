@@ -6,13 +6,15 @@ vi.mock("motion/react", () => ({
   useAnimationFrame: (callback: typeof animation.tick) => { animation.tick = callback; }
 }));
 
-function setup() {
+function setup(axis: "vertical" | "horizontal" = "vertical") {
   const preview = vi.fn();
-  const hook = renderHook(({ active }) => usePanelReorderAutoScroll(active, preview), {
+  const hook = renderHook(({ active }) => usePanelReorderAutoScroll(active, preview, axis), {
     initialProps: { active: true }
   });
   const list = document.createElement("div");
   Object.defineProperties(list, {
+    clientWidth: { value: 200 },
+    scrollWidth: { value: 600 },
     clientHeight: { value: 200 },
     scrollHeight: { value: 600 }
   });
@@ -98,4 +100,23 @@ it("refreshes the insertion target revealed by scrolling under a stationary poin
   } finally {
     document.elementFromPoint = original;
   }
+});
+
+it("scrolls an overflowing horizontal tab row at its left and right edges", () => {
+  const { list } = setup("horizontal");
+  list.scrollLeft = 200;
+  fireEvent.pointerMove(window, { clientX: 287, clientY: 200 });
+  tick();
+  expect(list.scrollLeft).toBeGreaterThan(200);
+  expect(list.scrollTop).toBe(200);
+  list.scrollLeft = 399;
+  tick();
+  expect(list.scrollLeft).toBe(400);
+  fireEvent.pointerMove(window, { clientX: 1, clientY: 200 });
+  tick();
+  expect(list.scrollLeft).toBeLessThan(400);
+  const stopped = list.scrollLeft;
+  fireEvent.pointerUp(window);
+  tick();
+  expect(list.scrollLeft).toBe(stopped);
 });

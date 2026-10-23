@@ -1,3 +1,4 @@
+import { migrateZonelessPanel } from "./zonelessPanelSchema";
 import { migrateResourceBars } from "./resourceBarSchema";
 import { migrateRulerArtifacts, assertRulerState } from './rulerSchema';
 import { migrateMeasurementSettings, assertMeasurementState } from './measurementSchema';
@@ -77,7 +78,8 @@ function validateEntityCollection(value: unknown, name: string): void {
   }
 }
 
-function validatePanelLayout(value: unknown, name: string): void {
+function validatePanelLayout(value: unknown, name: string, version: number): void {
+  const panelIds = version >= 31 ? ENCOUNTER_PANEL_IDS : ENCOUNTER_PANEL_IDS.filter(id => id !== "zoneless");
   if (!isRecord(value) || !Array.isArray(value.left) || !Array.isArray(value.right)) {
     throw new PersistenceValidationError(`${name} must contain left and right panel arrays.`);
   }
@@ -86,7 +88,7 @@ function validatePanelLayout(value: unknown, name: string): void {
     panels.some(
       (panel) =>
         !isRecord(panel) ||
-        !ENCOUNTER_PANEL_IDS.some((id) => id === panel.id) ||
+        !panelIds.some((id) => id === panel.id) ||
         typeof panel.collapsed !== "boolean"
     )
   ) {
@@ -94,9 +96,9 @@ function validatePanelLayout(value: unknown, name: string): void {
   }
   const ids = panels.map((panel) => (panel as UnknownRecord).id);
   if (
-    ids.length !== ENCOUNTER_PANEL_IDS.length ||
+    ids.length !== panelIds.length ||
     new Set(ids).size !== ids.length ||
-    ENCOUNTER_PANEL_IDS.some((id) => !ids.includes(id))
+    panelIds.some((id) => !ids.includes(id))
   ) {
     throw new PersistenceValidationError(`${name} must contain every panel exactly once.`);
   }
@@ -126,7 +128,7 @@ export function assertEncounterState(value: unknown, name = "encounter", expecte
   if (!isRecord(value.validationState) || typeof value.validationState.mode !== "string" || !Array.isArray(value.validationState.messages)) {
     throw new PersistenceValidationError(`${name}.validationState is invalid.`);
   }
-  validatePanelLayout(value.panelLayout, `${name}.panelLayout`);
+  validatePanelLayout(value.panelLayout, `${name}.panelLayout`, expectedVersion);
   if (!isRecord(value.canvasSize) || typeof value.canvasSize.width !== "number" || typeof value.canvasSize.height !== "number") {
     throw new PersistenceValidationError(`${name}.canvasSize is invalid.`);
   }
@@ -485,6 +487,7 @@ export function migrateEncounterState(value: unknown): unknown {
   if (migrated.schemaVersion === LEGACY_PANEL_LAYOUT_ENCOUNTER_SCHEMA_VERSION) {
     migrated.schemaVersion = LEGACY_AUDIO_ENCOUNTER_SCHEMA_VERSION;
     const panelLayout = structuredClone(DEFAULT_ENCOUNTER_PANEL_LAYOUT);
+    panelLayout.left = panelLayout.left.filter(panel => panel.id !== "zoneless");
     panelLayout.right = panelLayout.right.filter(
       (panel) => !isRecord(panel) || panel.id !== "audio"
     );
@@ -570,7 +573,7 @@ export function migrateEncounterState(value: unknown): unknown {
     assertEncounterState(migrated, 'encounter', 20);
     const normalized = migrateGridScale(migrated as unknown as EncounterState);
     for (const zone of Object.values(normalized.zones.byId)) zone.rotation = 0;
-    const upgraded = migrateResourceBars(migrateRulerArtifacts(migrateMeasurementSettings(normalized)));
+    const upgraded = migrateZonelessPanel(migrateResourceBars(migrateRulerArtifacts(migrateMeasurementSettings(normalized))));
     assertEncounterState(upgraded);
     return upgraded;
   }
@@ -592,7 +595,11 @@ export function migrateEncounterState(value: unknown): unknown {
   }
   if (migrated.schemaVersion === 29) {
     assertEncounterState(migrated, "encounter", 29);
-    return migrateResourceBars(migrated as unknown as EncounterState);
+    Object.assign(migrated, migrateResourceBars(migrated as unknown as EncounterState));
+  }
+  if (migrated.schemaVersion === 30) {
+    assertEncounterState(migrated, "encounter", 30);
+    return migrateZonelessPanel(migrated as unknown as EncounterState);
   }
   return migrated;
 }

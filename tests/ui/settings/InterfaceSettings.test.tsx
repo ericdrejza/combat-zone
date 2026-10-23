@@ -59,11 +59,11 @@ describe("InterfaceSettings", () => {
     localStorage.setItem(INTERFACE_PREFERENCES_STORAGE_KEY, JSON.stringify({ clockStyleDefault: "unknown" }));
     renderSettings(); expect(screen.getByLabelText("Default clock style")).toHaveValue("traditional");
   });
-  it("defaults to light mode and persists a dark-mode selection", async () => {
+  it("defaults to system mode and persists a dark-mode selection", async () => {
     const user = userEvent.setup();
     renderSettings();
 
-    expect(screen.getByRole("radio", { name: "Light" })).toBeChecked();
+    expect(screen.getByRole("radio", { name: "System" })).toBeChecked();
     await user.click(screen.getByRole("radio", { name: "Dark" }));
 
     expect(screen.getByRole("radio", { name: "Dark" })).toBeChecked();
@@ -134,21 +134,25 @@ describe("InterfaceSettings", () => {
       .toMatchObject({ encounterCreationTool: "background" });
   });
 
-  it("groups panel visibility under Panels and lists controls alphabetically", async () => {
+  it("pairs panel visibility controls with their draggable default layout names", async () => {
     const user = userEvent.setup();
     renderSettings();
     const panels = screen.getByRole("region", { name: "Panels" });
-    const visibility = within(panels).getByRole("group", { name: "Visibility" });
+    const visibility = within(panels).getByRole("group", { name: "Default layout and visibility" });
     const switches = within(visibility).getAllByRole("switch");
 
     expect(switches.map((control) => control.getAttribute("aria-label"))).toEqual([
-      "Audio panel visibility",
-      "Initiative panel visibility",
       "Library panel visibility",
-      "Log panel visibility",
       "Properties panel visibility",
-      "Status panel visibility"
+      "Log panel visibility",
+      "Initiative panel visibility",
+      "Status panel visibility",
+      "Audio panel visibility"
     ]);
+    for (const control of switches) {
+      const title = control.getAttribute("aria-label")!.replace(" panel visibility", "");
+      expect(within(control.closest("li")!).getByRole("button", { name: `Reorder ${title} panel` })).toBeInTheDocument();
+    }
     expect(switches.every((control) => control.getAttribute("aria-checked") === "true")).toBe(true);
     expect(switches.every((control) => control.querySelector(".lucide-eye"))).toBe(true);
 
@@ -162,16 +166,38 @@ describe("InterfaceSettings", () => {
     expect(libraryVisibility.querySelector(".lucide-eye-off")).not.toBeNull();
   });
 
+  it("only allows Zoneless layout dragging when it is in a sidebar and never offers a visibility setting", async () => {
+    const user = userEvent.setup();
+    renderSettings();
+    const layout = screen.getByRole("group", { name: "Default layout and visibility" });
+    const zoneless = within(layout).getByRole("button", { name: "Reorder Zoneless panel" });
+    expect(zoneless).toBeDisabled();
+    expect(within(layout).queryByRole("switch", { name: "Zoneless panel visibility" })).not.toBeInTheDocument();
+    const before = localStorage.getItem(INTERFACE_PREFERENCES_STORAGE_KEY);
+    const target = screen.getByLabelText("Drop panel 0 in default right panel order");
+    const dataTransfer = { effectAllowed: "", dropEffect: "", setData: vi.fn() };
+    fireEvent.dragStart(zoneless, { dataTransfer });
+    fireEvent.drop(target, { dataTransfer });
+    expect(localStorage.getItem(INTERFACE_PREFERENCES_STORAGE_KEY)).toBe(before);
+    await user.selectOptions(screen.getByRole("combobox", { name: "Zoneless panel location" }), "sidebar");
+    expect(zoneless).toBeEnabled();
+    expect(within(layout).queryByRole("switch", { name: "Zoneless panel visibility" })).not.toBeInTheDocument();
+    fireEvent.dragStart(zoneless, { dataTransfer });
+    fireEvent.drop(target, { dataTransfer });
+    expect(JSON.parse(localStorage.getItem(INTERFACE_PREFERENCES_STORAGE_KEY)!).panelOrder.right[0]).toBe("zoneless");
+  });
+
   it("persists panel order separately from encounter layouts", () => {
     renderSettings();
-    const order = screen.getByRole("group", { name: "Default layout" });
+    const order = screen.getByRole("group", { name: "Default layout and visibility" });
     const left = within(order).getByRole("list", { name: "Default left panel order" });
     const right = within(order).getByRole("list", { name: "Default right panel order" });
 
     expect(within(left).getAllByRole("listitem").map((item) => item.textContent)).toEqual([
       expect.stringContaining("Library"),
       expect.stringContaining("Properties"),
-      expect.stringContaining("Log")
+      expect.stringContaining("Log"),
+      expect.stringContaining("Zoneless")
     ]);
     expect(within(right).getAllByRole("listitem").map((item) => item.textContent)).toEqual([
       expect.stringContaining("Initiative"),
@@ -192,13 +218,13 @@ describe("InterfaceSettings", () => {
     expect(JSON.parse(localStorage.getItem(INTERFACE_PREFERENCES_STORAGE_KEY)!))
       .toMatchObject({
         panelOrder: {
-          left: ["library", "properties", "audio", "log"],
+          left: ["library", "properties", "audio", "log", "zoneless"],
           right: ["initiative", "status"]
         }
       });
   });
 
-  it("loads the saved theme and returns to light when preferences reset", () => {
+  it("loads the saved theme and returns to system when preferences reset", () => {
     localStorage.setItem(THEME_STORAGE_KEY, "dark");
     localStorage.setItem(
       INTERFACE_PREFERENCES_STORAGE_KEY,
@@ -219,7 +245,7 @@ describe("InterfaceSettings", () => {
       globalThis.dispatchEvent(new Event(LOCAL_PREFERENCES_RESET_EVENT));
     });
 
-    expect(screen.getByRole("radio", { name: "Light" })).toBeChecked();
+    expect(screen.getByRole("radio", { name: "System" })).toBeChecked();
     expect(
       screen.getByRole("switch", { name: "Library panel visibility" })
     ).toBeChecked();

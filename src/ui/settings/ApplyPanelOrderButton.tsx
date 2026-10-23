@@ -2,7 +2,7 @@ import { SETTINGS_BUTTON } from "./SettingsLayout";
 import { useContext } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
-import type { EncounterPanelOrder } from "@core/encounter/panelLayout";
+import { readEncounterPanelOrder, type EncounterPanelOrder } from "@core/encounter/panelLayout";
 import { createEncounterActionRecord } from "@core/history/createEncounterActionRecord";
 import { commitEncounterChange } from "@store/encounterSlice";
 import type { AppDispatch, RootState } from "@store/store";
@@ -15,12 +15,13 @@ export function ApplyPanelOrderButton({ order }: { order: EncounterPanelOrder })
   const { readOnly } = useContext(PersistenceContext);
 
   function applyOrder() {
+    const normalizedOrder = readEncounterPanelOrder(order);
     if (readOnly) return;
     const panels = [...encounter.panelLayout.left, ...encounter.panelLayout.right];
     const panelById = new Map(panels.map((panel) => [panel.id, panel]));
     const panelLayout = {
-      left: order.left.map((id) => panelById.get(id)!),
-      right: order.right.map((id) => panelById.get(id)!)
+      left: normalizedOrder.left.map((id) => panelById.get(id)!),
+      right: normalizedOrder.right.map((id) => panelById.get(id)!)
     };
     if ((["left", "right"] as const).every((side) =>
       panelLayout[side].every((panel, index) => panel.id === encounter.panelLayout[side][index]?.id) &&
@@ -30,8 +31,8 @@ export function ApplyPanelOrderButton({ order }: { order: EncounterPanelOrder })
     dispatch(commitEncounterChange({
       action: {
         ...createEncounterActionRecord("interface.applyPanelOrder", {
-          left: order.left,
-          right: order.right
+          left: normalizedOrder.left,
+          right: normalizedOrder.right
         }),
         validationResult: undefined
       },
@@ -44,5 +45,5 @@ export function ApplyPanelOrderButton({ order }: { order: EncounterPanelOrder })
     disabled={readOnly}
     onClick={applyOrder}
     type="button"
-  >Apply to current encounter</button>;
+  >Apply layout to current encounter</button>;
 }

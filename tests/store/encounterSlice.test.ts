@@ -75,7 +75,8 @@ describe("encounter Redux history", () => {
           left: [
             { id: "library", collapsed: false },
             { id: "properties", collapsed: false },
-            { id: "log", collapsed: false }
+            { id: "log", collapsed: false },
+            { id: "zoneless", collapsed: false }
           ],
           right: [
             { id: "initiative", collapsed: false },

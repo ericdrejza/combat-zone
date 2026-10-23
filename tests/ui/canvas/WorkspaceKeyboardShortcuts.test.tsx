@@ -15,7 +15,7 @@ vi.mock("@ui/audio/AudioPlaybackProvider", () => ({ useAudioPlayback: () => audi
 beforeEach(() => { localStorage.clear(); audio.hasRunningPlayback = false; audio.hasPausedPlayback = false; vi.clearAllMocks(); store.dispatch(loadEncounterState(createEncounterState({ id: "shortcuts", name: "Shortcuts" }))); store.dispatch(resetInteractionState()); });
 function setup() {
   const open = vi.fn();
-  const view = render(<Provider store={store}><KeybindProvider><CanvasViewportProvider><WorkspaceKeyboardShortcuts onOpenLibrary={open} /><CanvasViewport canvasSize={{ width: 960, height: 640 }}><input aria-label="Editor" /></CanvasViewport></CanvasViewportProvider></KeybindProvider></Provider>);
+  const view = render(<Provider store={store}><KeybindProvider><CanvasViewportProvider><WorkspaceKeyboardShortcuts onOpenLibrary={open} onTogglePanels={vi.fn()} /><CanvasViewport canvasSize={{ width: 960, height: 640 }}><input aria-label="Editor" /></CanvasViewport></CanvasViewportProvider></KeybindProvider></Provider>);
   return { ...view, open };
 }
 const key = (value: string, ctrlKey = false) => fireEvent.keyDown(window, { key: value, ctrlKey });

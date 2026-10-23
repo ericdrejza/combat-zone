@@ -464,3 +464,11 @@ Ruler pointer handlers cannot block navigation. Press-time contextmenu events
 are deferred until release and replayed only for stationary clicks; pans discard
 them. Ruler hover/point handlers ignore right-button movement, preserving placed
 points while the viewport scrolls.
+
+Encounter schema 31 adds Zoneless to the existing normalized panel layout, last
+in the left dock. Version-aware validators retain the six-panel contract for
+older encounters; migration adds the new panel while preserving all prior sides,
+order, and collapse flags. Cloud contracts accept schema 31. Interface preferences
+upgrade older six-panel default orders without losing their arrangement.
+Panel Tabs and the stacked-mode Zoneless location are locally persisted Interface
+preferences; active tabs and whole-sidebar expansion remain session-only.

@@ -463,6 +463,36 @@ truth.
 - [x] The workspace, Asset Library, panels, dialogs, and canvas remain usable
       in portrait and landscape from 320px through wide desktop widths.
 
+## Panel Tabs and Zoneless placement
+
+- [x] Interface settings enable Panel Tabs and independently choose Zoneless on
+      the canvas or in a sidebar; both preferences persist, synchronize between
+      browser tabs, tolerate older data, and reset with Interface settings.
+- [x] Each sidebar shows one active tab's panel. Tabs reuse compact-panel icons,
+      remain available when collapsed, and support keyboard selection. Clicking
+      the active visible tab collapses its sidebar; clicking a collapsed tab opens
+      it without changing encounter history or saved per-panel collapse flags.
+- [x] The expanded left footer places Settings left, centered tabs in their own
+      container, and canvas Zoneless visibility right. Collapsed tabs sit above a
+      horizontal separator, Zoneless visibility when present, and Settings. The
+      right footer centers its tabs. Empty docks use collapsed header controls.
+- [x] Expanded tab rows scroll horizontally and collapsed columns scroll
+      vertically, including drag-edge scrolling. Insertion separators track the
+      actual beginning, middle, and end drop positions without container rings.
+- [x] Tab moves preserve selection within a sidebar and in the destination.
+      When the active source tab leaves, the next tab becomes active, falling
+      back to the previous tab at the end. Empty destinations activate their
+      first arriving tab. Valid moves undo/redo once; unchanged, invalid, cancelled,
+      and writer-blocked moves preserve layout and history.
+- [x] Zoneless is initially docked last on the left. Canvas placement retains its
+      visibility button and omits its tab; sidebar placement shows the panel or
+      tab and hides the visibility button. Both presentations use a tooltip-backed
+      Users Round grouping toggle and retain actor selection and transfers.
+- [x] Schema 31 migrates older encounter panel layouts without mutating source
+      records or losing order/collapse flags. Exports, imports, recovery, and cloud
+      contracts round trip Zoneless placement; emulator tests reject invalid
+      replacements while preserving the last valid snapshot.
+
 ## Undo/redo
 
 - [x] Every state-changing action type listed above (zone create/delete/reshape,

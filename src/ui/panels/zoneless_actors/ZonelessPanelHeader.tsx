@@ -1,4 +1,5 @@
 import { ChevronDown, ChevronUp, ListChecks, RotateCcw, UsersRound } from "lucide-react";
+import { GroupByFactionButton } from "./GroupByFactionButton";
 import type { ActorGroup } from "./zonelessActorGroups";
 import { TouchTooltip } from "@ui/toolbar/TouchTooltip";
 
@@ -36,13 +37,10 @@ export function ZonelessPanelHeader(props: Props) {
     if (headerClickExpansion && event.target === event.currentTarget) onToggle();
   }}>
     {headerClickExpansion ? <button type="button" aria-expanded={expanded} aria-label="Toggle Zoneless panel from header"
-      onClick={onToggle} className="flex min-w-0 flex-1 items-center gap-2 rounded px-1 py-1 hover:bg-canvas hover:text-canvas-ink focus-visible:outline focus-visible:outline-2">{title}</button>
+      onClick={onToggle} className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 rounded px-1 py-1 text-inherit focus-visible:outline focus-visible:outline-2">{title}</button>
       : <div className="flex min-w-0 flex-1 items-center gap-2">{title}</div>}
     {expanded ? <>
-      <label className="flex items-center gap-2 rounded px-1 py-1 text-xs hover:bg-canvas hover:text-canvas-ink">
-        <input aria-label="Group by faction" checked={groupByFaction} className="h-4 w-4 accent-canvas-ink"
-          onChange={event => onGroupChange(event.target.checked)} type="checkbox" />Group by faction
-      </label>
+      <GroupByFactionButton grouped={groupByFaction} onChange={onGroupChange} />
       <SelectAllZonelessButton disabled={!props.canSelect || !count} onSelect={props.onSelectAll} />
     </> : null}
     {props.isResized ? <TouchTooltip label="Reset panel size"><button aria-label="Reset zoneless actors panel size"

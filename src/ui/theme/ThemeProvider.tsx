@@ -12,24 +12,28 @@ import { LOCAL_PREFERENCES_RESET_EVENT } from "@ui/motion_preferences/MotionPref
 export const THEME_STORAGE_KEY = "combat-zone.theme";
 
 export type Theme = "light" | "dark";
+export type ThemePreference = Theme | "system";
 
 type ThemeContextValue = {
-  setTheme: (theme: Theme) => void;
+  setTheme: (theme: ThemePreference) => void;
+  themePreference: ThemePreference;
   theme: Theme;
 };
 
 const defaultValue: ThemeContextValue = {
   setTheme: () => undefined,
+  themePreference: "system",
   theme: "light"
 };
 
 const ThemeContext = createContext<ThemeContextValue>(defaultValue);
 
-function readTheme(): Theme {
+function readTheme(): ThemePreference {
   try {
-    return localStorage.getItem(THEME_STORAGE_KEY) === "dark" ? "dark" : "light";
+    const saved = localStorage.getItem(THEME_STORAGE_KEY);
+    return saved === "light" || saved === "dark" ? saved : "system";
   } catch {
-    return "light";
+    return "system";
   }
 }
 
@@ -40,12 +44,24 @@ function applyTheme(theme: Theme): void {
 
 /** Owns the durable interface theme without adding it to encounter history. */
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>(readTheme);
+  const [themePreference, setThemeState] = useState<ThemePreference>(readTheme);
+  const [systemDark, setSystemDark] = useState(() =>
+    globalThis.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false);
+  const theme: Theme = themePreference === "system" ? systemDark ? "dark" : "light" : themePreference;
+
+  useLayoutEffect(() => {
+    const media = globalThis.matchMedia?.("(prefers-color-scheme: dark)");
+    if (!media) return;
+    const sync = () => setSystemDark(media.matches);
+    sync();
+    media.addEventListener("change", sync);
+    return () => media.removeEventListener("change", sync);
+  }, []);
 
   useLayoutEffect(() => applyTheme(theme), [theme]);
 
   useEffect(() => {
-    const reset = () => setThemeState("light");
+    const reset = () => setThemeState("system");
     const syncFromStorage = (event: StorageEvent) => {
       if (event.key === THEME_STORAGE_KEY) setThemeState(readTheme());
     };
@@ -57,7 +73,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  function setTheme(nextTheme: Theme) {
+  function setTheme(nextTheme: ThemePreference) {
     setThemeState(nextTheme);
     try {
       localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
@@ -67,7 +83,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <ThemeContext.Provider value={{ setTheme, theme }}>
+    <ThemeContext.Provider value={{ setTheme, theme, themePreference }}>
       {children}
     </ThemeContext.Provider>
   );

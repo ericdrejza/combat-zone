@@ -43,14 +43,14 @@ describe("PanelOrderSettings dragging", () => {
     expect(before.firstElementChild).toHaveAttribute("aria-hidden", "false");
     expect(onChange).not.toHaveBeenCalled();
     dragAt("drop", row, 110);
-    expect(titles("left")).toEqual(["Properties", "Library", "Log"]);
+    expect(titles("left")).toEqual(["Properties", "Library", "Log", "Zoneless"]);
 
     fireEvent.dragStart(library, { dataTransfer });
     dragAt("dragOver", row, 135);
     expect(screen.getByLabelText("Drop panel 3 in default left panel order").firstElementChild)
       .toHaveAttribute("aria-hidden", "false");
     dragAt("drop", row, 135);
-    expect(titles("left")).toEqual(["Properties", "Log", "Library"]);
+    expect(titles("left")).toEqual(["Properties", "Log", "Library", "Zoneless"]);
   });
 
   it("allows a panel to be dragged into an empty side", () => {
@@ -89,7 +89,7 @@ describe("PanelOrderSettings dragging", () => {
       fireEvent.pointerDown(audio, { ...pointer, clientX: 200, clientY: 200 });
       fireEvent.pointerMove(window, { ...pointer, clientX: 100, clientY: 100 });
       fireEvent.pointerUp(window, { ...pointer, clientX: 100, clientY: 100 });
-      expect(titles("left")).toEqual(["Audio", "Library", "Properties", "Log"]);
+      expect(titles("left")).toEqual(["Audio", "Library", "Properties", "Log", "Zoneless"]);
       expect(titles("right")).toEqual(["Initiative", "Status"]);
       expect(target.firstElementChild).toHaveAttribute("aria-hidden", "true");
     } finally {

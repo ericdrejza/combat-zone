@@ -91,6 +91,8 @@ export function InterfacePreferenceProvider({ children }: { children: ReactNode 
           updatePreferences({ autoSelectActiveActor: enabled }),
         setEncounterCreationTool: (encounterCreationTool) =>
           updatePreferences({ encounterCreationTool }),
+        setZonelessPanelPlacement: (zonelessPanelPlacement) => updatePreferences({ zonelessPanelPlacement }),
+        setPanelTabMode: (panelTabMode) => updatePreferences({ panelTabMode }),
         setZonelessHeaderClickExpansion: (zonelessHeaderClickExpansion) => updatePreferences({ zonelessHeaderClickExpansion }),
         setLibraryCloseOnOutsideClick: (libraryCloseOnOutsideClick) => updatePreferences({ libraryCloseOnOutsideClick }),
         setLibraryModalViewDefault: (view) => updatePreferences({ libraryModalViewDefault: readLibraryViewDefault(view) }),

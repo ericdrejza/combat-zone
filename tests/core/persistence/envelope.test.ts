@@ -129,7 +129,8 @@ describe("persistence export envelopes", () => {
     const legacyEncounter = value.encounter as Record<string, unknown>;
     legacyEncounter.schemaVersion = 7;
     delete legacyEncounter.audioCues;
-    const panelLayout = legacyEncounter.panelLayout as { right: unknown[] };
+    const panelLayout = legacyEncounter.panelLayout as { left: { id: string }[]; right: unknown[] };
+    panelLayout.left = panelLayout.left.filter(panel => panel.id !== "zoneless");
     panelLayout.right = panelLayout.right.slice(0, -1);
     const library = value.library as { sections: Record<string, unknown> };
     delete library.sections.audio;

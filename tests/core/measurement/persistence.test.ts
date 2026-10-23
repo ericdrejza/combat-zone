@@ -1,3 +1,4 @@
+import { withLegacyPanelLayout } from "@tests/core/persistence/legacyPanelLayout";
 import { ENCOUNTER_SCHEMA_VERSION } from '@core/encounter/types';
 import { createEncounterState } from '@core/encounter/createEncounterState';
 import { createActor } from '@entities/actor/actorMutations';
@@ -19,7 +20,7 @@ const cloud = (state: unknown) => validateEncounter({ schemaVersion: CLOUD_RECOR
 
 describe('measurement persistence', () => {
   it('migrates schema 27 without mutating its geometry or source', () => {
-    const legacy = { ...fixture(), schemaVersion: 27 };
+    const legacy = { ...withLegacyPanelLayout(fixture()), schemaVersion: 27 };
     delete legacy.grid.lineStyle; delete legacy.grid.distancePerCell; delete legacy.grid.distanceUnit; delete legacy.initiativeTracker.movement;
     const copy = structuredClone(legacy), migrated = migrateEncounterState(legacy);
     assertEncounterState(migrated);

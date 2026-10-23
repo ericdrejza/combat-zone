@@ -1,3 +1,4 @@
+import { withLegacyPanelLayout } from "@tests/core/persistence/legacyPanelLayout";
 import { createEncounterState } from "@core/encounter/createEncounterState";
 import { ENCOUNTER_SCHEMA_VERSION } from "@core/encounter/types";
 import {
@@ -16,7 +17,7 @@ describe("persisted record hydration", () => {
       id: "effect", libraryNodeId: "sound", placement: { type: "group", groupId: "zone" }, type: "effect", repeat,
       triggers: ["zone_enter"], repeatDelay: { minimumDelaySeconds: 5, maximumDelaySeconds: 10 }
     });
-    const state = { ...encounter, schemaVersion: 9 } as unknown as Record<string, unknown>;
+    const state = { ...withLegacyPanelLayout(encounter), schemaVersion: 9 } as unknown as Record<string, unknown>;
     delete (state.audioCues as { byId: Record<string, Record<string, unknown>> }).byId.effect.triggersEnabled;
     const before = structuredClone(state);
     const record = { createdAt: 1, folderId: null, id: "audio", revision: 0, state, updatedAt: 1 };
@@ -37,7 +38,7 @@ describe("persisted record hydration", () => {
   });
 
   it("rejects development-only schema-8 records without mutating their saved data", () => {
-    const state = { ...createEncounterState({ id: "old", name: "Old" }), schemaVersion: 8 };
+    const state = { ...withLegacyPanelLayout(createEncounterState({ id: "old", name: "Old" })), schemaVersion: 8 };
     const before = structuredClone(state);
     const record = { createdAt: 1, folderId: null, id: state.id, revision: 0, state, updatedAt: 1 };
     expect(() => hydrateEncounterRecord(record as never)).toThrow(/schemaVersion 8 is unsupported/);
@@ -45,7 +46,7 @@ describe("persisted record hydration", () => {
   });
 
   it("migrates legacy encounter records and recovery drafts before use", () => {
-    const legacyState = createEncounterState({ id: "legacy", name: "Legacy" }) as unknown as Record<string, unknown>;
+    const legacyState = withLegacyPanelLayout(createEncounterState({ id: "legacy", name: "Legacy" })) as unknown as Record<string, unknown>;
     legacyState.schemaVersion = 7;
     delete legacyState.audioCues;
     const panelLayout = legacyState.panelLayout as { right: unknown[] };

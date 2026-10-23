@@ -1,10 +1,11 @@
 import { TouchTooltip } from "@ui/toolbar/TouchTooltip";
 import { GripVertical } from "lucide-react";
 import { motion } from "motion/react";
-import { useState, type DragEvent } from "react";
+import { useState, type DragEvent, type ReactNode } from "react";
 
 import {
   createPanelLayoutFromOrder,
+  type EncounterPanelId,
   type EncounterPanelOrder
 } from "@core/encounter/panelLayout";
 import { getDockablePanelDefinition } from "@ui/panels/dockablePanelMetadata";
@@ -16,10 +17,12 @@ import type { DropTarget } from "@ui/panels/PanelsShell";
 type PanelOrderSettingsProps = {
   onChange: (order: EncounterPanelOrder) => void;
   order: EncounterPanelOrder;
+  getReorderDisabledReason?: (panelId: string) => string | undefined;
+  renderPanelControl?: (panelId: EncounterPanelId) => ReactNode;
 };
 
 /** Edits the panel layout copied into newly created encounters. */
-export function PanelOrderSettings({ onChange, order }: PanelOrderSettingsProps) {
+export function PanelOrderSettings({ onChange, order, renderPanelControl, getReorderDisabledReason }: PanelOrderSettingsProps) {
   const [draggedPanelId, setDraggedPanelId] = useState<string | null>(null);
   const [dropTarget, setDropTarget] = useState<DropTarget | null>(null);
 
@@ -29,7 +32,7 @@ export function PanelOrderSettings({ onChange, order }: PanelOrderSettingsProps)
   }
 
   function dropPanel(target: DropTarget, panelId = draggedPanelId ?? undefined) {
-    if (panelId) {
+    if (panelId && !getReorderDisabledReason?.(panelId)) {
       const next = movePanel(createPanelLayoutFromOrder(order), panelId, target);
       onChange({
         left: next.left.map((panel) => panel.id),
@@ -59,7 +62,7 @@ export function PanelOrderSettings({ onChange, order }: PanelOrderSettingsProps)
     />;
   }
 
-  return <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 [&_span[data-touch-tooltip-label]]:w-full" data-panel-order-preview>
+  return <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2" data-panel-order-preview>
     {(["left", "right"] as const).map((side) => {
       const endTarget = { side, index: order[side].length };
       return <section className="min-w-0 rounded-2xl border border-canvas-line bg-canvas p-2" key={side}>
@@ -80,6 +83,8 @@ export function PanelOrderSettings({ onChange, order }: PanelOrderSettingsProps)
         >
           {order[side].map((panelId, index) => {
             const panel = getDockablePanelDefinition(panelId);
+            const disabledReason = getReorderDisabledReason?.(panelId);
+            const tooltip = disabledReason ?? `Reorder ${panel.title} panel`;
             function rowTarget(event: DragEvent): DropTarget {
               const bounds = event.currentTarget.getBoundingClientRect();
               return { side, index: event.clientY > bounds.top + bounds.height / 2 ? index + 1 : index };
@@ -87,6 +92,7 @@ export function PanelOrderSettings({ onChange, order }: PanelOrderSettingsProps)
             return <motion.li key={panelId} layout="position" transition={{ duration: 0.16, ease: "easeOut" }}>
               {renderMarker({ side, index })}
               <div
+                className="flex items-center gap-2"
                 data-panel-drop-index={index}
                 data-panel-drop-kind="panel"
                 data-panel-drop-side={side}
@@ -97,18 +103,20 @@ export function PanelOrderSettings({ onChange, order }: PanelOrderSettingsProps)
                   if (acceptDrag(event)) dropPanel(rowTarget(event));
                 }}
               >
-                <TouchTooltip label={`Reorder ${panel.title} panel`}><button
-                  title={`Reorder ${panel.title} panel`}
+                <div className="min-w-0 flex-1 [&>span[data-touch-tooltip-label]]:w-full"><TouchTooltip label={tooltip}><button
+                  title={tooltip}
                   aria-label={`Reorder ${panel.title} panel`}
-                  className="flex w-full min-w-0 touch-none cursor-grab items-center gap-1 rounded-xl border border-canvas-line bg-canvas-surface px-2 py-2 text-left shadow-sm transition hover:border-canvas-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-canvas-ink active:cursor-grabbing"
+                  className="flex w-full min-w-0 touch-none enabled:cursor-grab items-center gap-1 rounded-xl border border-canvas-line bg-canvas-surface px-2 py-2 text-left shadow-sm transition enabled:hover:border-canvas-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-canvas-ink enabled:active:cursor-grabbing disabled:cursor-not-allowed disabled:bg-canvas disabled:text-canvas-muted disabled:opacity-50"
+                  disabled={Boolean(disabledReason)}
                   draggable={false}
                   onDragEnd={endDrag}
                   onDragStart={(event) => {
+                    if (disabledReason) { event.preventDefault(); return; }
                     setDraggedPanelId(panelId);
                     event.dataTransfer.effectAllowed = "move";
                     event.dataTransfer.setData("text/plain", panelId);
                   }}
-                  onPointerDown={(event) => startPanelPointerDrag({
+                  onPointerDown={(event) => !disabledReason && startPanelPointerDrag({
                     event,
                     onDragEnd: endDrag,
                     onDragStart: setDraggedPanelId,
@@ -120,7 +128,8 @@ export function PanelOrderSettings({ onChange, order }: PanelOrderSettingsProps)
                 >
                   <GripVertical aria-hidden="true" className="h-4 w-4 shrink-0 text-canvas-muted" />
                   <span className="min-w-0 flex-1 truncate text-xs font-medium">{panel.title}</span>
-                </button></TouchTooltip>
+                </button></TouchTooltip></div>
+                {renderPanelControl?.(panelId)}
               </div>
             </motion.li>;
           })}

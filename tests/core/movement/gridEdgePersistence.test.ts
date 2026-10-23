@@ -1,3 +1,4 @@
+import { withLegacyPanelLayout } from "@tests/core/persistence/legacyPanelLayout";
 import { ENCOUNTER_SCHEMA_VERSION } from "@core/encounter/types";
 import { createEncounterState } from '@core/encounter/createEncounterState';
 import { completeGridEdges } from '@core/movement/gridEdgeCompletion';
@@ -48,7 +49,7 @@ describe('completed edge persistence and cloud contract', () => {
   });
   it('migrates schema 18 without changing its full-canvas background and rejects newer documents', () => {
     const initial = createEncounterState({ id: 'old-grid', name: 'Old' });
-    const envelope = { kind: 'encounter-export', schemaVersion: EXPORT_SCHEMA_VERSION, exportedAt: 1, encounter: { ...initial, schemaVersion: 18 }, library: createEmptyLibraryState() };
+    const envelope = { kind: 'encounter-export', schemaVersion: EXPORT_SCHEMA_VERSION, exportedAt: 1, encounter: { ...withLegacyPanelLayout(initial), schemaVersion: 18 }, library: createEmptyLibraryState() };
     const parsed = parseExportEnvelope(envelope);
     expect(parsed.kind).toBe('encounter-export');
     if (parsed.kind === 'encounter-export') {

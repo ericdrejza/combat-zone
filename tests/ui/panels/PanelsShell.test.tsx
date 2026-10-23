@@ -124,7 +124,7 @@ describe("PanelsShell", () => {
 
     await user.click(screen.getByRole("button", { name: "Open settings" }));
     await user.click(screen.getByRole("tab", { name: "Interface" }));
-    const panels = screen.getByRole("group", { name: "Visibility" });
+    const panels = screen.getByRole("group", { name: "Default layout and visibility" });
 
     await user.click(within(panels).getByRole("switch", {
       name: "Properties panel visibility"
@@ -197,7 +197,7 @@ describe("PanelsShell", () => {
       store.getState().encounter.present.panelLayout.left.map(
         (panel) => panel.id
       )
-    ).toEqual(["status", "library", "properties", "log"]);
+    ).toEqual(["status", "library", "properties", "log", "zoneless"]);
   });
 
   it("keeps an empty dock available so a panel can be moved back", async () => {
@@ -206,7 +206,7 @@ describe("PanelsShell", () => {
 
     await user.click(screen.getByRole("button", { name: "Open settings" }));
     await user.click(screen.getByRole("tab", { name: "Interface" }));
-    const visibility = screen.getByRole("group", { name: "Visibility" });
+    const visibility = screen.getByRole("group", { name: "Default layout and visibility" });
     await user.click(within(visibility).getByRole("switch", {
       name: "Initiative panel visibility"
     }));
