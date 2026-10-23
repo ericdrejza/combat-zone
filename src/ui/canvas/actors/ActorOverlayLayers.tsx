@@ -26,13 +26,13 @@ export function ActorMotionGroup({ children, ...props }: ComponentProps<typeof m
   </PositionContext.Provider>;
 }
 
-export function ActorOverlay({ selected, children }: { selected: boolean; children: ReactNode }) {
+export function ActorOverlay({ selected, children, hidden }: { selected: boolean; children: ReactNode; hidden?: boolean }) {
   const targets = useContext(LayerContext);
   const position = useContext(PositionContext);
   if (!targets || !position) return <>{children}</>;
   const target = selected ? targets.above : targets.below;
   // Wait for the layer refs rather than briefly painting at the token's stacking level.
   return target ? createPortal(
-    <motion.g initial={false} inherit={false} style={position}>{children}</motion.g>, target
+    <motion.g initial={false} inherit={false} style={position} visibility={hidden ? "hidden" : undefined}>{children}</motion.g>, target
   ) : null;
 }

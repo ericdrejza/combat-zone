@@ -83,6 +83,22 @@ truth.
 
 ## Actors (drag/drop)
 
+- [x] Zoneless Select All replaces selection with listed Actors, and accessible
+      faction headers select only that faction's listed Actors on desktop and
+      compact layouts; repeated activation preserves selection.
+- [x] Zoneless pointer transfers support mouse, touch, and pen; internal and
+      leave-and-return drops preserve state without history. Drag visuals render
+      above the panel. Accepted groups undo/redo as one action; rejected,
+      cancelled, stale, and read-only drops add no history.
+- [x] Group transfers with Overlap off use distinct snapped anchors, or pack
+      unsnapped footprints near release with a 10px gap, avoiding existing Actors
+      and canvas overflow. Failed packing rejects the complete group.
+- [x] A desktop bottom-left toggle explicitly hides/shows Zoneless while retaining
+      expansion, grouping, and size. Hover makes a visible panel opaque without
+      revealing a hidden one. Header expansion defaults on and its Interface
+      preference persists, synchronizes, and resets; nested controls and the
+      chevron work independently. Compact screens retain the drawer launcher.
+
 - [x] Zoneless actors are represented in a collapsible bottom-center panel on
       larger screens and in the compact panel drawer below 1024px, sorted
       alphabetically, with optional Hero/Neutral/Enemy grouping.

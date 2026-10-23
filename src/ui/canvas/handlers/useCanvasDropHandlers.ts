@@ -78,6 +78,7 @@ export function useCanvasDropHandlers({
   }
 
   function handleActorCreationDropToZoneless(event: DragEvent<HTMLElement>) {
+    if (hasZonelessActorDrag(event)) { event.preventDefault(); event.stopPropagation(); return; }
     if (activeToolId !== 'actor') {
       return;
     }
@@ -104,6 +105,11 @@ export function useCanvasDropHandlers({
   }
 
   function handleActorCreationDragOverZoneless(event: DragEvent<HTMLElement>) {
+    if (hasZonelessActorDrag(event)) {
+      event.preventDefault();
+      event.dataTransfer.dropEffect = 'move';
+      return;
+    }
     if (
       activeToolId !== 'actor' ||
       !Array.from(event.dataTransfer.types).includes(ACTOR_CREATION_DRAG_TYPE)
@@ -241,7 +247,8 @@ export function useCanvasDropHandlers({
           actorIds,
           destinationZoneId,
           false,
-          point
+          point,
+          true
         );
       }
       return;

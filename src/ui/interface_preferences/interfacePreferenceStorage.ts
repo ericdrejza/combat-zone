@@ -54,6 +54,7 @@ export type DurableInterfacePreferences = {
   zoneBorderThickness: number;
   actorBorderThickness: number;
   encounterCreationTool: EncounterCreationTool;
+  zonelessHeaderClickExpansion: boolean;
   libraryCloseOnOutsideClick: boolean;
   libraryModalViewDefault: LibraryViewDefault;
   libraryPanelViewDefault: LibraryPanelViewMode;
@@ -94,6 +95,7 @@ export type InterfacePreferences = DurableInterfacePreferences & {
   autoSelectActiveActorDefault: boolean;
   setAutoSelectActiveActor: (enabled: boolean) => void;
   setEncounterCreationTool: (tool: EncounterCreationTool) => void;
+  setZonelessHeaderClickExpansion: (enabled: boolean) => void;
   setLibraryCloseOnOutsideClick: (enabled: boolean) => void;
   setLibraryModalViewDefault: (view: LibraryViewDefault) => void;
   setLibraryPanelViewDefault: (view: LibraryPanelViewMode) => void;
@@ -151,6 +153,7 @@ export const defaultPreferences: DurableInterfacePreferences = {
   zoneBorderThickness: DEFAULT_ZONE_BORDER_THICKNESS,
   actorBorderThickness: DEFAULT_ACTOR_BORDER_THICKNESS,
   encounterCreationTool: "zone",
+  zonelessHeaderClickExpansion: true,
   libraryCloseOnOutsideClick: false,
   libraryModalViewDefault: "grid",
   libraryPanelViewDefault: "two-column",
@@ -192,6 +195,7 @@ export const defaultValue: InterfacePreferences = {
   setAudioRepeatDelayDefaults: () => undefined,
   setAutoSelectActiveActor: () => undefined,
   setEncounterCreationTool: () => undefined,
+  setZonelessHeaderClickExpansion: () => undefined,
   setLibraryCloseOnOutsideClick: () => undefined,
   setLibraryModalViewDefault: () => undefined,
   setLibraryPanelViewDefault: () => undefined,
@@ -271,6 +275,7 @@ export function readPreferences(): DurableInterfacePreferences {
         stored?.encounterCreationTool === "zone"
           ? stored.encounterCreationTool
           : defaultPreferences.encounterCreationTool,
+      zonelessHeaderClickExpansion: typeof stored?.zonelessHeaderClickExpansion === "boolean" ? stored.zonelessHeaderClickExpansion : true,
       libraryCloseOnOutsideClick: stored?.libraryCloseOnOutsideClick === true,
       libraryModalViewDefault: readLibraryViewDefault(stored?.libraryModalViewDefault),
       libraryPanelViewDefault: readLibraryPanelViewDefault(stored?.libraryPanelViewDefault),

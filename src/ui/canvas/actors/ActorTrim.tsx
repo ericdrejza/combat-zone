@@ -8,10 +8,10 @@ import { actorAnchorCells } from '@core/movement/gridTopology';
 import { resolveGridGeometry } from '@core/movement/gridScale';
 import { cellBoundarySegments } from '@core/movement/gridEdgeCompletion';
 
-export function ActorTrim({ encounter, actor, point, children }: { encounter: EncounterState; actor: Actor; point: LayoutPoint; children: (clipId?: string) => ReactNode }) {
+export function ActorTrim({ encounter, actor, point, children, idPrefix = "actor-trim" }: { idPrefix?: string; encounter: EncounterState; actor: Actor; point: LayoutPoint; children: (clipId?: string) => ReactNode }) {
   if (!encounter.movementRules.trimTokens || !encounter.movementRules.snapToGrid || isSquareTopology(encounter.grid.type) || (actor.size !== 'large' && actor.size !== 'xLarge')) return <>{children()}</>;
   const radius = getActorRadius(actor);
-  const id = `actor-trim-${actor.id}`, grid = resolveGridGeometry(encounter.grid);
+  const id = `${idPrefix}-${actor.id}`, grid = resolveGridGeometry(encounter.grid);
   const local = (p: LayoutPoint) => `${p.x - point.x},${p.y - point.y}`;
   const path = actorAnchorCells(encounter, point, actor.size).map(cell => {
     const segments = cellBoundarySegments(grid, cell.polygon);

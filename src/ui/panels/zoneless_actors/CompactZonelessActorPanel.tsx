@@ -1,112 +1,31 @@
-import type { DragEvent, MouseEvent } from "react";
-import { useMemo, useRef, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-
-import { setActorDragImage } from "@core/rendering/actorDragPreview";
-import { selectEntity } from "@interaction/interactionState";
-import type { RootState } from "@store/store";
+import { useState } from "react";
 import { ZonelessActorPanelToken } from "./ZonelessActorPanelToken";
-import {
-  getGroupedActors,
-  getZonelessActors
-} from "./ZonelessActorPanel";
-import {
-  getZonelessActorTextPayload,
-  ZONELESS_ACTOR_DRAG_TYPE
-} from "./zonelessActorDrag";
-import { armCompactCanvasTransfer } from "@ui/canvas/compactCanvasTransfer";
+import { SelectAllZonelessButton, ZonelessFactionButton } from "./ZonelessPanelHeader";
+import { useZonelessPanelActors } from "./useZonelessPanelActors";
 
 /** Drawer presentation of the authoritative zoneless actor collection. */
 export function CompactZonelessActorPanel() {
-  const dispatch = useDispatch();
-  const zoneLocked = useSelector((state: RootState) => state.encounter.present.movementRules.zoneLocked);
-  const actors = useSelector((state: RootState) => state.encounter.present.actors);
-  const activeToolId = useSelector(
-    (state: RootState) => state.interaction.activeToolId
-  );
-  const selection = useSelector((state: RootState) => state.interaction.selection);
-  const touchMultiSelect = useSelector(
-    (state: RootState) => state.interaction.touchMultiSelect
-  );
   const [groupByFaction, setGroupByFaction] = useState(true);
-  const dragPreviewCleanupRef = useRef<(() => void) | null>(null);
-  const zonelessActors = useMemo(() => getZonelessActors(actors, zoneLocked), [actors, zoneLocked]);
-  const groups = useMemo(() => getGroupedActors(zonelessActors), [zonelessActors]);
-  const selectedIds =
-    selection.selectedEntityType === "actor" ? selection.selectedIds : [];
-
-  function selectActor(actorId: string, event: MouseEvent<HTMLButtonElement>) {
-    if (!(["actor", "select", "grid"].includes(activeToolId))) {
-      return;
-    }
-
-    dispatch(
-      selectEntity({
-        entityType: "actor",
-        ids: [actorId],
-        toggle:
-          touchMultiSelect || event.shiftKey || event.ctrlKey || event.metaKey,
-        userInitiated: true
-      })
-    );
-  }
-
-  function startDrag(actorId: string, event: DragEvent<HTMLButtonElement>) {
-    if (!(["actor", "select", "grid"].includes(activeToolId))) {
-      event.preventDefault();
-      return;
-    }
-
-    const actorIds = selectedIds.includes(actorId) ? selectedIds : [actorId];
-    const actor = zonelessActors.find((candidate) => candidate.id === actorId);
-
-    if (actor) {
-      dragPreviewCleanupRef.current?.();
-      dragPreviewCleanupRef.current = setActorDragImage(event.dataTransfer, {
-        image: actor.image,
-        imageFlippedHorizontal: actor.imageFlippedHorizontal,
-        layoutGroup: actor.layoutGroup,
-        name: actor.name,
-        shape: actor.shape,
-        size: actor.size
-      });
-    }
-
-    event.dataTransfer.effectAllowed = "move";
-    event.dataTransfer.setData(ZONELESS_ACTOR_DRAG_TYPE, actorIds.join(","));
-    event.dataTransfer.setData("text/plain", getZonelessActorTextPayload(actorIds));
-  }
-
-  function finishDrag() {
-    dragPreviewCleanupRef.current?.();
-    dragPreviewCleanupRef.current = null;
-  }
+  const { zonelessActors, groups, selectedIds, canSelect, selectActors,
+    handleSelect, handleDragStart, handleDragEnd, startPointerTransfer } = useZonelessPanelActors();
 
   function renderActors(actorIds: typeof zonelessActors) {
     return actorIds.map((actor) => (
       <ZonelessActorPanelToken
         actor={actor}
         key={actor.id}
-        onDragEnd={finishDrag}
-        onDragStart={startDrag}
-        onPointerDown={(actorId, event) => {
-          const actorIds = selectedIds.includes(actorId)
-            ? selectedIds
-            : [actorId];
-          armCompactCanvasTransfer(event.nativeEvent, {
-            actor,
-            actorIds,
-            kind: "zoneless-actors"
-          }, undefined, "all");
-        }}
-        onSelect={selectActor}
+        onDragEnd={handleDragEnd}
+        onDragStart={handleDragStart}
+        onPointerDown={startPointerTransfer}
+        onSelect={handleSelect}
         selectedIds={selectedIds}
       />
     ));
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3" data-drop-target="zoneless-actors">
+      <SelectAllZonelessButton disabled={!canSelect || !zonelessActors.length} onSelect={() => selectActors(zonelessActors)} />
       <label className="flex min-h-11 items-center gap-2 text-sm">
         <input
           aria-label="Group by faction"
@@ -126,7 +45,7 @@ export function CompactZonelessActorPanel() {
           {groups.map((group) => (
             <section aria-label={`${group.label} zoneless actors`} key={group.id}>
               <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-canvas-muted">
-                {group.label}
+                <ZonelessFactionButton group={group} disabled={!canSelect} onSelect={() => selectActors(group.actors)} />
               </h3>
               <div className="flex flex-wrap gap-1">{renderActors(group.actors)}</div>
             </section>

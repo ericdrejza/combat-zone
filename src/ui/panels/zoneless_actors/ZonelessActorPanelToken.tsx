@@ -3,7 +3,7 @@ import type { DragEvent, MouseEvent, PointerEvent } from "react";
 
 import { ACTOR_LAYOUT_GROUP_COLORS, ACTOR_SIZE_MULTIPLIERS } from "@entities/actor/actorVisuals";
 import type { Actor } from "@entities/actor/types";
-import { getReadableTextColor } from "../../canvas/canvasLuminance";
+import { getReadableTextColor } from "@ui/canvas/canvasLuminance";
 import { useResolvedImageSource } from "@core/assets/ImageAssetResolver";
 
 function actorSizeClass(actor: Actor): string {
@@ -49,7 +49,8 @@ export function ZonelessActorPanelToken({
   return (
     <button
       aria-label={actor.name}
-      className={`group flex min-w-16 touch-none cursor-grab select-none flex-col items-center gap-1 rounded-xl px-2 py-1.5 text-xs transition hover:bg-canvas active:cursor-grabbing ${
+      aria-pressed={selected}
+      className={`group flex min-w-16 touch-none cursor-grab select-none flex-col items-center gap-1 rounded-xl px-2 py-1.5 text-xs focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 hover:bg-canvas active:cursor-grabbing ${
         selected ? "bg-canvas ring-2 ring-canvas-ink/30" : ""
       }`}
       draggable={false}

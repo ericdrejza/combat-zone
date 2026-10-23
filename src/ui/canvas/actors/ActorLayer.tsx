@@ -182,6 +182,7 @@ export function ActorLayer({
               }}
             >
               <ActorTrim encounter={encounter} actor={actor} point={renderedPoint}>{artworkClipId => <ActorVisual showResourceBars showConditions
+                hidden={!!actorDrag?.hasMoved && actorDrag.phase !== "returning" && actorDrag.actorIds.includes(actor.id)}
                 artworkClipId={artworkClipId}
                 actor={actor} displayName={name}
                 projectionRotation={projectionRotation} projectionAngle={encounter.grid.isometricAngle}

@@ -20,6 +20,7 @@ import { isAnimatedAsset } from "@library/mediaAsset";
 import { ActorProjection } from './ActorProjection';
 
 type ActorVisualProps = {
+  hidden?: boolean;
   actor: Actor;
   displayName?: string;
   showResourceBars?: boolean;
@@ -44,6 +45,7 @@ type ActorVisualProps = {
  */
 export const ActorVisual = memo(function ActorVisual({
   actor,
+  hidden = false,
   displayName = actor.name,
   showResourceBars = false,
   showConditions = false,
@@ -94,7 +96,7 @@ export const ActorVisual = memo(function ActorVisual({
   ) : null;
 
   return (
-    <>
+    <g visibility={hidden ? "hidden" : undefined}>
       {projectionRotation !== undefined || actor.shape === 'transparent' ? actor.shape !== 'circle'
         ? <rect x={-radius} y={-radius} width={radius * 2} height={radius * 2} fill="transparent" pointerEvents="all" data-actor-logical-hit-area />
         : <circle r={radius} fill="transparent" pointerEvents="all" data-actor-logical-hit-area /> : null}
@@ -248,7 +250,7 @@ export const ActorVisual = memo(function ActorVisual({
         )
       ) : null}
       </ActorProjection>
-      <ActorOverlay selected={selected}>
+      <ActorOverlay selected={selected} hidden={hidden}>
       {selected ? tokenName : null}
       {showConditions && showActorStatusesOnCanvas ? <ActorConditionIcons selected={selected} actor={actor} radius={radius} top={-barTop} transition={transition} /> : null}
       {showResourceBars && showActorStatusesOnCanvas ? <ActorResourceBars selected={selected} textColor={selectedTextColor} actor={actor} radius={radius} top={barTop} transition={transition} /> : null}
@@ -266,6 +268,6 @@ export const ActorVisual = memo(function ActorVisual({
         </motion.text>
       ) : null}
       </ActorOverlay>
-    </>
+    </g>
   );
 });

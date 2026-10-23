@@ -1,3 +1,4 @@
+import { transferDropSurface } from "./transferDropSurface";
 import { isSpatial } from '@core/movement/movementStrategies';
 import { useMotionValue, type MotionValue } from "motion/react";
 import { useEffect, useState } from "react";
@@ -110,6 +111,7 @@ export function useCompactCanvasTransfer({
         window.removeEventListener("pointermove", handleMove);
         window.removeEventListener("pointerup", handleUp);
         window.removeEventListener("pointercancel", handleCancel);
+        window.removeEventListener("keydown", handleKeyDown);
         setPreview(null);
         detail.onTransferEnd?.();
         cancelTransfer = undefined;
@@ -137,7 +139,12 @@ export function useCompactCanvasTransfer({
             upEvent.clientY >= bounds.top &&
             upEvent.clientY <= bounds.bottom;
 
-          if (insideCanvas) {
+          const surface = transferDropSurface(upEvent, svg);
+          if (surface === "zoneless" && payload.kind === "new-actor") {
+            commitActorFromCreation(mutationContext, payload.actor, ZONELESS_ACTOR_ZONE_ID);
+          } else if (surface === "zoneless" && payload.kind === "library-node") {
+            commitActorFromLibraryNode(mutationContext, payload.nodeId, ZONELESS_ACTOR_ZONE_ID);
+          } else if (insideCanvas && surface === "canvas") {
             const point = toSvgPoint(upEvent, svg);
             const destinationZoneId = isSpatial(encounter) ? ZONELESS_ACTOR_ZONE_ID : findZoneIdAtPoint(encounter, point);
 
@@ -166,7 +173,8 @@ export function useCompactCanvasTransfer({
                   actorIds,
                   destinationZoneId,
                   false,
-                  point
+                  point,
+                  true
                 );
               }
             }
@@ -180,6 +188,8 @@ export function useCompactCanvasTransfer({
         }
       };
 
+      const handleKeyDown = (keyEvent: KeyboardEvent) => { if (keyEvent.key === "Escape") cleanup(); };
+      window.addEventListener("keydown", handleKeyDown);
       window.addEventListener("pointermove", handleMove);
       window.addEventListener("pointerup", handleUp);
       window.addEventListener("pointercancel", handleCancel);

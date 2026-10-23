@@ -1,206 +1,48 @@
-import type { DragEvent, MouseEvent, PointerEvent } from "react";
-import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  ChevronDown,
-  ChevronUp,
-  RotateCcw,
-  UsersRound
-} from "lucide-react";
-
-import { setActorDragImage } from "@core/rendering/actorDragPreview";
-import { ZONELESS_ACTOR_ZONE_ID } from "@core/encounter/types";
-import type { Actor, ActorLayoutGroup } from "@entities/actor/types";
-import { selectEntity } from "@interaction/interactionState";
-import { useDispatch, useSelector } from "react-redux";
-import type { RootState } from "@store/store";
-import { getTextColorForLuminance } from "../../canvas/canvasLuminance";
-import {
-  getZonelessActorTextPayload,
-  ZONELESS_ACTOR_DRAG_TYPE
-} from "./zonelessActorDrag";
-import { useResizablePanel } from "../../canvas/useResizablePanel";
+import type { DragEvent } from "react";
+import { useState } from "react";
+import { getTextColorForLuminance } from "@ui/canvas/canvasLuminance";
+import { useResizablePanel } from "@ui/canvas/useResizablePanel";
+import { useInterfacePreferences } from "@ui/interface_preferences/InterfacePreferenceProvider";
 import { ZonelessActorPanelToken } from "./ZonelessActorPanelToken";
-import { armCompactCanvasTransfer } from "@ui/canvas/compactCanvasTransfer";
-import { ZonelessPanelVisibility } from './ZonelessPanelVisibility';
+import { ZonelessPanelVisibility } from "./ZonelessPanelVisibility";
+import { ZonelessPanelHeader, ZonelessFactionButton } from "./ZonelessPanelHeader";
+import { useZonelessPanelActors } from "./useZonelessPanelActors";
+export { getZonelessActors, getGroupedActors } from "./zonelessActorGroups";
 
 type ZonelessActorPanelProps = {
-  activeToolId: RootState["interaction"]["activeToolId"];
-  actors: RootState["encounter"]["present"]["actors"];
   canvasBackgroundLuminance: number;
   isInBottomRow?: boolean;
   isActorDragActive: boolean;
   isZoneEditing?: boolean;
   onActorCreationDragOver: (event: DragEvent<HTMLElement>) => void;
   onActorCreationDrop: (event: DragEvent<HTMLElement>) => void;
-  selection: RootState["interaction"]["selection"];
+  visible?: boolean;
 };
-
-export type ActorGroup = {
-  id: ActorLayoutGroup;
-  label: string;
-  actors: Actor[];
-};
-
-const GROUPS: Array<{ id: ActorLayoutGroup; label: string }> = [
-  { id: "hero", label: "Hero" },
-  { id: "ally", label: "Ally" },
-  { id: "neutral", label: "Neutral" },
-  { id: "enemy", label: "Enemy" }
-];
-
-function sortActors(actors: Actor[]): Actor[] {
-  return [...actors].sort((left, right) => {
-    const nameOrder = left.name.localeCompare(right.name);
-
-    return nameOrder || left.id.localeCompare(right.id);
-  });
-}
-
-export function getZonelessActors(
-  actors: ZonelessActorPanelProps["actors"], zoneLocked = true
-): Actor[] {
-  return sortActors(
-    actors.allIds
-      .map((actorId) => actors.byId[actorId])
-      .filter(
-        (actor): actor is Actor =>
-          !!actor && (zoneLocked ? actor.currentZoneId === ZONELESS_ACTOR_ZONE_ID : !actor.spatialPosition)
-      )
-  );
-}
-
-export function getGroupedActors(actors: Actor[]): ActorGroup[] {
-  return GROUPS.map((group) => ({
-    ...group,
-    actors: actors.filter((actor) => actor.layoutGroup === group.id)
-  })).filter((group) => group.actors.length > 0);
-}
 
 export function ZonelessActorPanel({
-  activeToolId,
-  actors,
   canvasBackgroundLuminance,
   isInBottomRow = false,
   isActorDragActive,
   isZoneEditing = false,
   onActorCreationDragOver,
   onActorCreationDrop,
-  selection
+  visible = true
 }: ZonelessActorPanelProps) {
-  const dispatch = useDispatch();
-  const zoneLocked = useSelector((state: RootState) => state.encounter.present.movementRules.zoneLocked);
+  const { zonelessActors, groups: groupedActors, selectedIds, canSelect, selectActors,
+    handleSelect, handleDragStart, handleDragEnd, startPointerTransfer } = useZonelessPanelActors();
+  const { zonelessHeaderClickExpansion } = useInterfacePreferences();
+  const [hovered, setHovered] = useState(false);
+  const [focused, setFocused] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [groupByFaction, setGroupByFaction] = useState(true);
-  const dragPreviewCleanupRef = useRef<(() => void) | null>(null);
-  const {
-    isResized,
-    isResizing,
-    resetSize,
-    size,
-    startResize
-  } = useResizablePanel();
-  const zonelessActors = useMemo(() => getZonelessActors(actors, zoneLocked), [actors, zoneLocked]);
-  const groupedActors = useMemo(
-    () => getGroupedActors(zonelessActors),
-    [zonelessActors]
-  );
-  const selectedIds =
-    selection.selectedEntityType === "actor" ? selection.selectedIds : [];
-  const selectedZonelessIds = selectedIds.filter((actorId) =>
-    zonelessActors.some((actor) => actor.id === actorId)
-  );
-  const contrastColor = getTextColorForLuminance(canvasBackgroundLuminance);
-
-  useEffect(() => {
-    return () => dragPreviewCleanupRef.current?.();
-  }, []);
-
-  function handleSelect(
-    actorId: string,
-    event: MouseEvent<HTMLButtonElement>
-  ) {
-    if (!(["actor", "select", "grid"].includes(activeToolId))) {
-      return;
-    }
-
-    dispatch(
-      selectEntity({
-        entityType: "actor",
-        ids: [actorId],
-        toggle: event.shiftKey || event.ctrlKey || event.metaKey,
-        userInitiated: true
-      })
-    );
-  }
-
-  function handleDragStart(
-    actorId: string,
-    event: DragEvent<HTMLButtonElement>
-  ) {
-    if (!(["actor", "select", "grid"].includes(activeToolId))) {
-      event.preventDefault();
-      return;
-    }
-
-    const actorIds = selectedZonelessIds.includes(actorId)
-      ? selectedZonelessIds
-      : [actorId];
-
-    const actor = zonelessActors.find((candidate) => candidate.id === actorId);
-
-    if (actor) {
-      dragPreviewCleanupRef.current?.();
-      dragPreviewCleanupRef.current = setActorDragImage(event.dataTransfer, {
-        image: actor.image,
-        imageFlippedHorizontal: actor.imageFlippedHorizontal,
-        layoutGroup: actor.layoutGroup,
-        name: actor.name,
-        shape: actor.shape,
-        size: actor.size
-      });
-    }
-
-    event.dataTransfer.effectAllowed = "move";
-    event.dataTransfer.setData(ZONELESS_ACTOR_DRAG_TYPE, actorIds.join(","));
-    // Keep a standard fallback for browsers that omit custom MIME types while
-    // exposing the drag over the canvas.
-    event.dataTransfer.setData(
-      "text/plain",
-      getZonelessActorTextPayload(actorIds)
-    );
-  }
-
-  function handleDragEnd() {
-    dragPreviewCleanupRef.current?.();
-    dragPreviewCleanupRef.current = null;
-  }
-
-  function startPointerTransfer(
-    actorId: string,
-    event: PointerEvent<HTMLButtonElement>
-  ) {
-    const actorIds = selectedZonelessIds.includes(actorId)
-      ? selectedZonelessIds
-      : [actorId];
-    const actor = zonelessActors.find((candidate) => candidate.id === actorId);
-
-    if (!actor) {
-      return;
-    }
-
-    armCompactCanvasTransfer(
-      event.nativeEvent,
-      { actor, actorIds, kind: "zoneless-actors" },
-      undefined,
-      "all"
-    );
-  }
+  const { isResized, isResizing, resetSize, size, startResize } = useResizablePanel();
+  const contrastColor = hovered || focused ? "rgb(var(--color-canvas-ink))" : getTextColorForLuminance(canvasBackgroundLuminance);
 
   return (
     <ZonelessPanelVisibility
-      visible={!isZoneEditing}
+      visible={visible && !isZoneEditing}
       aria-label="Zoneless actors"
-      className={`${isInBottomRow ? "relative min-w-0 translate-x-0" : "absolute bottom-3 left-1/2 min-w-min -translate-x-1/2"} z-40 flex max-w-full flex-col overflow-hidden border p-2 ${
+      className={`${isInBottomRow ? "relative min-w-0 translate-x-0" : "absolute bottom-3 left-1/2 min-w-0 -translate-x-1/2"} z-40 flex max-w-full flex-col overflow-hidden border p-2 hover:bg-canvas-panel focus-within:bg-canvas-panel ${
         expanded
           ? "rounded-2xl border-canvas-line bg-canvas-panel/10 shadow-lg backdrop-blur"
           : "rounded-lg bg-transparent"
@@ -208,75 +50,28 @@ export function ZonelessActorPanel({
         isActorDragActive ? "border-canvas-ink ring-2 ring-canvas-ink/20" : ""
       } ${isResizing ? "select-none" : ""}`}
       data-drop-target="zoneless-actors"
+      onPointerEnter={event => { if (event.pointerType !== "touch") setHovered(true); }}
+      onPointerLeave={() => setHovered(false)}
+      onFocusCapture={() => setFocused(true)}
+      onBlurCapture={event => { if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false); }}
       onDragOver={onActorCreationDragOver}
       onDrop={onActorCreationDrop}
       style={{
         height: expanded ? `${size.height}px` : undefined,
-        maxWidth: isInBottomRow ? "100%" : "calc(100% - 1.5rem)",
+        maxWidth: isInBottomRow ? "100%" : "calc(100% - 12rem)",
         borderColor: contrastColor,
         color: contrastColor,
         width: `${size.width}px`
       }}
     >
-      <div className="flex items-center gap-2">
-        <div className="flex min-w-0 flex-1 items-center gap-4">
-          <div className="flex items-center gap-2">
-            <UsersRound aria-hidden="true" size={16} />
-            <span className="truncate text-sm font-semibold">Zoneless</span>
-            <span
-              className={`rounded-full px-2 py-0.5 text-xs ${
-                expanded ? "bg-canvas text-canvas-muted" : ""
-              }`}
-              style={expanded 
-                ? {} 
-                : {
-                  color: contrastColor,
-                  outline: `1px solid ${contrastColor}`
-                }
-              }
-              >
-              {zonelessActors.length}
-            </span>
-          </div>
-          {expanded ? (
-          <label className="flex items-center gap-2 text-xs">
-            <input
-              aria-label="Group by faction"
-              checked={groupByFaction}
-              className="h-4 w-4 accent-canvas-ink"
-              onChange={(event) => setGroupByFaction(event.target.checked)}
-              type="checkbox"
-            />
-            Group by faction
-          </label>
-        ) : null}
-        </div>
-        {isResized ? (
-          <button
-            aria-label="Reset zoneless actors panel size"
-            className="flex h-8 w-8 flex-none items-center justify-center rounded-full border border-canvas-line bg-canvas-surface text-canvas-ink transition hover:bg-canvas"
-            onClick={resetSize}
-            title="Reset panel size"
-            type="button"
-          >
-            <RotateCcw aria-hidden="true" size={15} />
-          </button>
-        ) : null}
-        <button
-          aria-expanded={expanded}
-          aria-label={expanded ? "Collapse zoneless actors" : "Expand zoneless actors"}
-          className={`flex h-8 w-8 flex-none items-center justify-center rounded-full border transition hover:bg-canvas ${
-            expanded
-              ? "border-canvas-line bg-canvas-surface text-canvas-ink"
-              : "border-current bg-transparent text-inherit"
-          }`}
-          onClick={() => setExpanded((current) => !current)}
-          style={expanded ? undefined : { borderColor: contrastColor }}
-          type="button"
-        >
-          {expanded ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
-        </button>
-      </div>
+      <ZonelessPanelHeader
+        expanded={expanded} onToggle={() => setExpanded(current => !current)}
+        headerClickExpansion={zonelessHeaderClickExpansion}
+        groupByFaction={groupByFaction} onGroupChange={setGroupByFaction}
+        count={zonelessActors.length} contrastColor={contrastColor}
+        isResized={isResized} onResetSize={resetSize}
+        canSelect={canSelect} onSelectAll={() => selectActors(zonelessActors)}
+      />
       {expanded ? (
         <div className="mt-2 min-h-0 flex-1 overflow-y-auto border-t border-canvas-line pt-2" style={{borderColor: contrastColor}}>
           {zonelessActors.length === 0 ? (
@@ -284,13 +79,13 @@ export function ZonelessActorPanel({
               Drop actors here to remove them from the canvas.
             </p>
           ) : groupByFaction ? (
-            <div className="flex gap-4">
+            <div className="flex flex-wrap gap-4">
               {groupedActors.map((group) => (
                 <section className="border-x" aria-label={`${group.label} zoneless actors`} key={group.id}
                   style={{borderColor: contrastColor}}
                 >
                   <h3 className="px-2 text-[10px] font-semibold uppercase tracking-wide">
-                    {group.label}
+                    <ZonelessFactionButton group={group} disabled={!canSelect} onSelect={() => selectActors(group.actors)} />
                   </h3>
                   <div className="flex flex-row flex-wrap p-2 gap-1">
                     {group.actors.map((actor) => (
@@ -329,20 +124,23 @@ export function ZonelessActorPanel({
         <>
           <button
             aria-label="Resize zoneless actors panel left edge"
-            className="absolute bottom-2 left-0 top-2 w-2 cursor-ew-resize"
+            className="absolute bottom-2 left-0 top-2 w-2 cursor-ew-resize hover:bg-canvas-ink/10 focus-visible:ring-2 focus-visible:ring-canvas-ink"
             onMouseDown={(event) => startResize(event, "left")}
+            title="Resize Zoneless panel"
             type="button"
           />
           <button
             aria-label="Resize zoneless actors panel right edge"
-            className="absolute bottom-2 right-0 top-2 w-2 cursor-ew-resize"
+            className="absolute bottom-2 right-0 top-2 w-2 cursor-ew-resize hover:bg-canvas-ink/10 focus-visible:ring-2 focus-visible:ring-canvas-ink"
             onMouseDown={(event) => startResize(event, "right")}
+            title="Resize Zoneless panel"
             type="button"
           />
           <button
             aria-label="Resize zoneless actors panel top edge"
-            className="absolute left-2 right-2 top-0 h-2 cursor-ns-resize"
+            className="absolute left-2 right-2 top-0 h-2 cursor-ns-resize hover:bg-canvas-ink/10 focus-visible:ring-2 focus-visible:ring-canvas-ink"
             onMouseDown={(event) => startResize(event, "top")}
+            title="Resize Zoneless panel"
             type="button"
           />
         </>

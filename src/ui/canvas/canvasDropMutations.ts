@@ -1,3 +1,4 @@
+import { packZonelessActors } from "@core/movement/packZonelessActors";
 import { consumeEncounterPreparation, runEncounterOperation } from "@core/history/encounterOperations";
 import { isPersistenceWritable } from '@store/persistenceWriteGuardMiddleware';
 import { isSpatial, placeSpatialActors } from '@core/movement/movementStrategies';
@@ -180,10 +181,16 @@ export function moveActorsToZone(
   actorIds: string[],
   destinationZoneId: string,
   selectActors = false,
-  dropPoint?: LayoutPoint
+  dropPoint?: LayoutPoint,
+  fromZoneless = false
 ): void {
+  const positions = fromZoneless && dropPoint && actorIds.length > 1 &&
+    isSpatial(context.encounter) && !context.encounter.movementRules.snapToGrid && !context.encounter.movementRules.allowOverlap
+    ? packZonelessActors(context.encounter, actorIds, dropPoint)
+    : Object.fromEntries(actorIds.map(id => [id, dropPoint ?? null]));
+  if (!positions) return;
   const nextEncounter = isSpatial(context.encounter)
-    ? placeSpatialActors(context.encounter, Object.fromEntries(actorIds.map(id => [id, dropPoint ?? null])))
+    ? placeSpatialActors(context.encounter, positions)
     : actorIds.reduce(
     (currentEncounter, actorId) =>
       moveActor(currentEncounter, actorId, destinationZoneId),
@@ -193,7 +200,7 @@ export function moveActorsToZone(
     isSpatial(context.encounter) ? 'actor.moveSpatial' : actorIds.length > 1 ? 'actor.moveMany' : 'actor.move',
     {
       actorIds,
-      ...(dropPoint ? { requestedPositions: Object.fromEntries(actorIds.map(id => [id, dropPoint])) } : {}),
+      ...(dropPoint ? { requestedPositions: positions } : {}),
       destinationZoneId
     }
   );
@@ -213,7 +220,7 @@ export function moveActorsToZone(
 
       if (dropPoint && destinationZoneId !== ZONELESS_ACTOR_ZONE_ID) {
         actorIds.forEach((actorId) =>
-          setOptimisticActorPlacement(actorId, dropPoint)
+          setOptimisticActorPlacement(actorId, resolved.nextEncounter.actors.byId[actorId]?.spatialPosition ?? dropPoint)
         );
       }
 

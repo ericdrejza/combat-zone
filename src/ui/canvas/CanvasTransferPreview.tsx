@@ -1,3 +1,4 @@
+import { createPortal } from "react-dom";
 import { motion } from "motion/react";
 
 import { ACTOR_TOKEN_BASE_RADIUS } from "@core/layout/actorFootprints";
@@ -18,6 +19,10 @@ const DIRECT_POINTER_TRANSITION = { duration: 0 } as const;
 
 /** Follows a canvas transfer without interpolation so the visual stays under the pointer. */
 export function CanvasTransferPreview({ preview }: Props) {
+  return createPortal(<TransferVisual preview={preview} />, document.body);
+}
+
+function TransferVisual({ preview }: Props) {
   if (preview.actor) {
     const radius =
       ACTOR_TOKEN_BASE_RADIUS * ACTOR_SIZE_MULTIPLIERS[preview.actor.size];
@@ -42,7 +47,7 @@ export function CanvasTransferPreview({ preview }: Props) {
     return (
       <motion.div
         aria-label={`Dragging ${preview.label}`}
-        className="pointer-events-none fixed left-0 top-0 z-[90] drop-shadow-lg"
+        className="pointer-events-none [&_*]:pointer-events-none fixed left-0 top-0 z-[90] drop-shadow-lg"
         role="status"
         style={{
           marginLeft: -radius,
@@ -75,7 +80,7 @@ export function CanvasTransferPreview({ preview }: Props) {
 
   return (
     <motion.div
-      className="pointer-events-none fixed left-0 top-0 z-[90] max-w-40 truncate rounded-full border border-canvas-line bg-canvas-panel px-3 py-2 text-sm font-medium shadow-lg"
+      className="pointer-events-none [&_*]:pointer-events-none fixed left-0 top-0 z-[90] max-w-40 truncate rounded-full border border-canvas-line bg-canvas-panel px-3 py-2 text-sm font-medium shadow-lg"
       role="status"
       style={{
         marginLeft: 12,

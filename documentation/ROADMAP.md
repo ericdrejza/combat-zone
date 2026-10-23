@@ -369,3 +369,9 @@ Implementation plan: [Ruler, movement and grid styles](plans/ruler_movement_and_
 
 - [ ] Preview ruler appearance drafts without history in a movable, undimmed color
       dialog; Save commits once and Cancel/outside click discard the preview.
+
+## Zoneless workflow improvements (#40, #87, #88)
+
+- [x] Add panel-only Select All and faction-header selection on desktop and compact layouts.
+- [x] Preserve internal transfers, elevate drag visuals, and place groups atomically with non-overlapping placement when Overlap is off.
+- [x] Add desktop show/hide controls, opaque hover feedback, and configurable header expansion.

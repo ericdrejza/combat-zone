@@ -23,6 +23,9 @@ export function PanelInterfaceSettings() {
       <PanelOrderSettings onChange={preferences.setPanelOrder} order={preferences.panelOrder} />
       <ApplyPanelOrderButton order={preferences.panelOrder} />
     </SettingsSubsection>
+    <SettingsSubsection title="Zoneless">
+      <PreferenceSwitch checked={preferences.zonelessHeaderClickExpansion} label="Click Zoneless header to expand or collapse" onChange={preferences.setZonelessHeaderClickExpansion} />
+    </SettingsSubsection>
     <SettingsSubsection title="Initiative">
       <PreferenceSwitch checked={preferences.autoSelectActiveActorDefault} label="Auto-select active actor in initiative" onChange={preferences.setAutoSelectActiveActorDefault} />
       <PreferenceSwitch checked={preferences.strikethroughDeadInitiativeNames} label="Strikethrough dead actor names in initiative" onChange={preferences.setStrikethroughDeadInitiativeNames} />

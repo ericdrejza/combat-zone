@@ -1072,7 +1072,31 @@ keeping controls accessible when the browser window becomes narrow.
 
 The Zoneless actors presentation remains the collapsible, resizable
 bottom-center overlay on larger screens and becomes a panel in the compact
-drawer. Starting a touch drag from a Library actor token or Zoneless closes
+drawer. The desktop overlay has a bottom-left show/hide button alongside the
+existing canvas controls. It starts visible and collapsed each session. Hiding
+preserves its mounted expansion, grouping, and size; hovering does not reveal it.
+Hovering a visible panel makes its background fully opaque, using the current
+theme's readable text and border colors. Leaving restores its normal appearance.
+Interface Settings includes a locally persisted, cross-tab synchronized
+header-click expansion preference, enabled by default and restored on preference
+reset. The chevron always toggles expansion; nested controls act independently.
+Compact screens retain their existing drawer launcher.
+
+Both Zoneless presentations provide Select All, replacing the current selection
+with every listed Actor. With faction grouping enabled, activating a faction
+header selects all listed Actors in that faction, replacing selection and
+excluding Actors already on the canvas. Repeated activation keeps the faction
+selected. These controls support keyboard and touch input and are disabled for
+tools that do not support Actor selection. Selection and panel visibility do not
+enter encounter history.
+
+A Zoneless transfer includes only selected Actors currently listed in the panel.
+Releasing over the panel keeps those Actors unplaced, including after leaving
+and reentering it. Dragged Actor visuals render above the panel. Cancelled,
+invalid, unchanged, and failed drops create no history. Accepted group transfers
+commit atomically with undo/redo.
+
+Starting a touch drag from a Library actor token or Zoneless closes
 the drawer after the movement threshold while the same drag continues over
 the revealed canvas. Library and Zoneless actor transfers use the same
 pointer-based gesture for mouse, touch, and pen input on every layout. Library
@@ -1982,8 +2006,19 @@ group failure alone does not unplace actors.
 With actor snapping on and Overlap off, identical anchors are occupied. Move to
 the nearest fitting open anchor, breaking distance ties top-to-bottom then
 left-to-right, and log the adjustment. Reject an ordinary move atomically if no
-anchor fits. Overlap has no effect on unsnapped movement. Rule changes attempt
-valid placement and existing permitted auto-resizing before sending actors that
+anchor fits.
+
+For unsnapped movement, Overlap affects only multi-Actor transfers from the
+Zoneless panel: when disabled, pack those Actors near the release point in
+stable panel order, using their existing footprints with a 10px gap, avoiding
+placed Actors and keeping every footprint inside the canvas. Use deterministic
+nearest-first candidate search, breaking distance ties top-to-bottom then
+left-to-right; reject the entire transfer if any Actor cannot be placed.
+Single-Actor transfers and subsequent unsnapped movement retain their existing
+behavior. With Overlap enabled, unsnapped transfers retain their requested
+positions.
+
+Rule changes attempt valid placement and existing permitted auto-resizing before sending actors that
 still cannot fit to the list. Every change and cascade is one history action.
 
 Zone vertex snapping is independent of actor snapping and Zone lock. Enabling it
