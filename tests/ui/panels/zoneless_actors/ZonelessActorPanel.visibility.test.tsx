@@ -1,4 +1,4 @@
-import { act, fireEvent, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { setActiveTool } from "@interaction/interactionState";
 import { store } from "@store/store";
@@ -14,9 +14,12 @@ it("hides explicitly, preserves expansion and grouping, and does not reveal on h
   const before = store.getState().encounter;
   await user.click(screen.getByRole("button", { name: "Toggle Zoneless panel from header" }));
   await user.click(screen.getByRole("checkbox", { name: "Group by faction" }));
-  await user.click(screen.getByRole("button", { name: "Hide Zoneless panel" }));
+  const sidebar = screen.getByRole("complementary", { name: "left sidebar" });
+  expect(within(sidebar).getByRole("button", { name: "Open settings" })).toBeInTheDocument();
+  await user.click(within(sidebar).getByRole("button", { name: "Hide Zoneless panel" }));
   expect(screen.queryByRole("complementary", { name: "Zoneless actors" })).not.toBeInTheDocument();
-  const show = screen.getByRole("button", { name: "Show Zoneless panel" });
+  await user.click(within(sidebar).getByRole("button", { name: "Collapse left sidebar" }));
+  const show = within(sidebar).getByRole("button", { name: "Show Zoneless panel" });
   await user.hover(show);
   expect(screen.queryByRole("complementary", { name: "Zoneless actors" })).not.toBeInTheDocument();
   await user.click(show);

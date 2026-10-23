@@ -47,10 +47,10 @@ export function EngageActionButton({ compact = false }: EngageActionButtonProps)
     <button
       aria-label="Engage selected actors"
       aria-pressed={previewActive}
-      className={`${compact ? 'flex h-11 min-w-11 items-center justify-center' : ''} shrink-0 rounded-full border p-2 shadow-sm transition ${
+      className={`flex ${compact ? 'h-11 min-w-11' : 'h-10 w-10'} shrink-0 items-center justify-center rounded-full border p-2 shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-canvas-ink ${
         previewActive
-          ? 'border-canvas-ink bg-canvas-ink text-canvas-on-ink'
-          : 'border-canvas-line bg-canvas-surface text-canvas-ink hover:bg-canvas disabled:opacity-40'
+          ? 'border-canvas-ink bg-canvas-ink text-canvas-on-ink enabled:hover:bg-canvas-ink/80'
+          : 'border-canvas-line bg-canvas-surface text-canvas-ink enabled:hover:bg-canvas disabled:opacity-40'
       } disabled:cursor-not-allowed`}
       disabled={actorIds.length < 2}
       onClick={engage}

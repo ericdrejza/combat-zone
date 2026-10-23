@@ -14,7 +14,6 @@ import { createActor } from "@entities/actor/actorMutations";
 import { clearSelection } from "@interaction/interactionState";
 import { resolveLibraryAsset } from "@library/librarySlice";
 import type { LibraryNode, LibrarySectionId } from "@library/types";
-import type { ToolId } from "@interaction/tools/toolRegistry";
 import { commitEncounterChange } from "@store/encounterSlice";
 import { logEncounterValidationBlock } from "@store/encounterLogSlice";
 import type { RootState } from "@store/store";
@@ -27,19 +26,7 @@ import { armCompactCanvasTransfer } from "@ui/canvas/compactCanvasTransfer";
 import { useOptionalCloudSync } from "@ui/cloud_sync";
 import { useAudioCueAssignment } from "@ui/audio/useAudioCueAssignment";
 
-function getPanelSectionId(activeToolId: ToolId): LibrarySectionId | null {
-  if (activeToolId === "actor") {
-    return "tokens";
-  }
-
-  if (activeToolId === "background") {
-    return "backgrounds";
-  }
-
-  if (activeToolId === "audio") return "audio";
-
-  return null;
-}
+import { getLibraryPanelSectionId } from "./libraryPanelSection";
 
 export type LibraryViewMode = LibraryPanelViewMode;
 
@@ -73,7 +60,7 @@ export function LibraryPanel({
   );
   const actorTool = useSelector((state: RootState) => state.interaction.actorTool);
   const dragPreviewCleanupRef = useRef<(() => void) | null>(null);
-  const sectionId = getPanelSectionId(activeToolId);
+  const sectionId = getLibraryPanelSectionId(activeToolId);
   const [currentFolderBySection, setCurrentFolderBySection] = useState<
     Partial<Record<LibrarySectionId, string>>
   >({});

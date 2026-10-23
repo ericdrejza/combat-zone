@@ -93,11 +93,23 @@ truth.
 - [x] Group transfers with Overlap off use distinct snapped anchors, or pack
       unsnapped footprints near release with a 10px gap, avoiding existing Actors
       and canvas overflow. Failed packing rejects the complete group.
-- [x] A desktop bottom-left toggle explicitly hides/shows Zoneless while retaining
-      expansion, grouping, and size. Hover makes a visible panel opaque without
-      revealing a hidden one. Header expansion defaults on and its Interface
+- [x] A left sidebar footer toggle beside Settings explicitly hides/shows
+      Zoneless while retaining expansion, grouping, and size. Hover makes a
+      visible panel opaque without revealing a hidden one. Header expansion defaults on and its Interface
       preference persists, synchronizes, and resets; nested controls and the
       chevron work independently. Compact screens retain the drawer launcher.
+
+- [x] Panel drag previews follow valid drop targets and return to the original
+      slot over the canvas or other non-drop surfaces. Revisiting a target
+      restores its preview; dropping outside leaves layout and history unchanged.
+
+- [x] Panel dragging scrolls the hovered dock at its top/bottom edge while
+      content remains, updates insertion previews without further pointer
+      movement, and stops on leaving the edge, dropping, or cancelling.
+
+- [x] Desktop sidebars fit their panels when expanded and their header/footer
+      icons when collapsed. Zoneless horizontal resize edges track the cursor
+      one-to-one, including when the viewport constrains the initial panel width.
 
 - [x] Zoneless actors are represented in a collapsible bottom-center panel on
       larger screens and in the compact panel drawer below 1024px, sorted
@@ -289,15 +301,18 @@ truth.
       endpoint, and a non-merge same-zone drop slides home without a history
       entry.
 - [x] Actor/Engagement drag targets preview the impending action in the
-      toolbar: matured 500ms actor engagement intent or a token merge target
-      activates Engage, moving an engaged actor beyond its tether activates
+      sidebar header on desktop: matured 500ms actor engagement intent or a
+      token merge target activates Engage, moving an engaged actor beyond its tether activates
       Disengage, and a token targeted for merge receives a Zone-name-color
       outline. The matured actor intent badge contains the crossed-swords icon.
+- [x] Desktop Engage and Disengage actions align left in the expanded right
+      sidebar header, with space before the collapse button. When collapsed,
+      they stack below the expand button, Engage first and then Disengage.
 - [x] Clicking an Engagement token selects all participant actors. The
       icon-only Lucide `Unlink2` Disengage action beside Engage enables when
       any selected actor is engaged and removes only selected participants,
       including auto-dissolution and exact undo/redo coverage.
-- [x] On mobile, Engage and Disengage are contextual bottom-left canvas
+- [x] On compact screens, Engage and Disengage are contextual bottom-left canvas
       actions for Actor and Select tools: Engage requires at least two selected
       actors in one Zone, Disengage requires at least one selected engaged
       actor, and Disengage is to the right of Engage when both are visible.

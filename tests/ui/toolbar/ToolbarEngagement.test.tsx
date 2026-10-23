@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Provider } from "react-redux";
 
@@ -11,7 +11,7 @@ import { renderApp } from "@tests/ui/renderApp";
 import { EngageActionButton } from "@ui/toolbar/EngageActionButton";
 import { TouchTooltipProvider } from "@ui/toolbar/TouchTooltip";
 
-describe("Toolbar engagement actions", () => {
+describe("Engagement actions", () => {
   it("disengages only selected engaged actors and preserves undo", async () => {
     const user = userEvent.setup();
     renderApp();
@@ -82,7 +82,9 @@ describe("Toolbar engagement actions", () => {
       store.dispatch(selectEntity({ entityType: "actor", ids: ["a"] }));
     });
 
-    const button = screen.getByRole("button", {
+    await user.click(screen.getByRole("button", { name: "Collapse right sidebar" }));
+    const sidebar = screen.getByRole("group", { name: "right sidebar controls" });
+    const button = within(sidebar).getByRole("button", {
       name: "Disengage selected actors"
     });
     await waitFor(() => expect(button).toBeEnabled());

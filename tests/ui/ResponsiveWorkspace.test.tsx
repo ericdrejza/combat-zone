@@ -88,6 +88,9 @@ describe("responsive workspace", () => {
       renderApp();
 
       expect(screen.getByLabelText("left docked panels")).toBeInTheDocument();
+      const rightSidebar = screen.getByRole("complementary", { name: "right sidebar" });
+      expect(within(rightSidebar).getByRole("button", { name: "Engage selected actors" })).toBeInTheDocument();
+      expect(within(rightSidebar).getByRole("button", { name: "Disengage selected actors" })).toBeInTheDocument();
       expect(
         screen.queryByRole("button", { name: "Library panel" })
       ).not.toBeInTheDocument();

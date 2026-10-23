@@ -50,6 +50,14 @@ export function PropertiesPanel({
 
   if (activeToolId === "audio") return <AudioPropertiesPanel />;
 
+  if (activeToolId === "select" && selection.selectedIds.length === 0) {
+    return (
+      <p className="text-sm text-canvas-muted">
+        Select an actor, zone, or edge to edit its properties.
+      </p>
+    );
+  }
+
   if (selection.selectedEntityType === "actor") {
     return (
       <ActorPropertiesPanel

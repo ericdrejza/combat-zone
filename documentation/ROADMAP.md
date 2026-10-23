@@ -374,4 +374,8 @@ Implementation plan: [Ruler, movement and grid styles](plans/ruler_movement_and_
 
 - [x] Add panel-only Select All and faction-header selection on desktop and compact layouts.
 - [x] Preserve internal transfers, elevate drag visuals, and place groups atomically with non-overlapping placement when Overlap is off.
-- [x] Add desktop show/hide controls, opaque hover feedback, and configurable header expansion.
+- [x] Add sidebar-footer show/hide controls, opaque hover feedback, and configurable header expansion.
+- [x] Fit sidebars to their panels or collapsed icon controls and match Zoneless horizontal resizing to cursor movement.
+- [x] Move desktop Engage and Disengage actions into the right sidebar header, retaining compact canvas actions.
+
+- [x] Auto-scroll docked panels during edge dragging and refresh insertion previews as hidden positions appear.

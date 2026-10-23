@@ -3,6 +3,7 @@ import type { DockSide, DropTarget } from "./PanelsShell";
 type PanelDropMarkerProps = {
   active: boolean;
   enabled: boolean;
+  overlay?: boolean;
   index: number;
   onDropPanel: (target: DropTarget, panelId?: string) => void;
   onPreviewDrop: (target: DropTarget) => void;
@@ -17,12 +18,15 @@ export function PanelDropMarker({
   label,
   onDropPanel,
   onPreviewDrop,
+  overlay = false,
   side
 }: PanelDropMarkerProps) {
   return (
     <PanelDropTarget
       active={active}
-      className="py-1"
+      className={overlay
+        ? `absolute inset-x-0 -top-2 z-10 flex h-2 items-center ${enabled ? "" : "pointer-events-none"}`
+        : "py-1"}
       enabled={enabled}
       index={index}
       label={label ?? `Drop panel ${index} in ${side} docked panels`}
@@ -77,8 +81,8 @@ function PanelDropTarget({
         aria-hidden={!active}
         className={
           active
-            ? "h-1 rounded-full bg-canvas-ink"
-            : "h-1 rounded-full bg-transparent"
+            ? "h-1 w-full rounded-full bg-canvas-ink"
+            : "h-1 w-full rounded-full bg-transparent"
         }
       />
     </div>

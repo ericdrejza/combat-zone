@@ -669,11 +669,12 @@ Tools define interaction behavior:
 - Annotation Tool
 - Actor Tool
 - Select
-- Engage action
-- Disengage action
 
-On desktop, the non-toggle Engage action appears immediately to the right of
-Select. It groups the currently selected actors independently per zone: a zone
+On desktop, the non-toggle icon-only Engage and Disengage actions sit in the
+right sidebar header. When expanded, the actions align left with space between
+that group and the collapse button on the right. When collapsed, the actions
+stack beneath the expand button, Engage first and then Disengage from top to
+bottom. Engage groups the currently selected actors independently per zone: a zone
 with fewer than two selected actors is a no-op; otherwise those actors are
 removed from their old Engagements, unselected old members remain, and the
 selected actors become one Engagement. Any resulting group with fewer than
@@ -684,7 +685,7 @@ and uses the Lucide `Unlink2` icon. It is enabled when any selected actor
 belongs to an Engagement and removes only the selected engaged actors; any
 undersized group auto-dissolves in the same history-tracked action.
 
-On mobile, Engage and Disengage are removed from the primary toolbar. When the
+On compact screens, Engage and Disengage use the canvas action row. When the
 Actor or Select tool is active, the bottom-left canvas action row shows Engage
 only when at least two selected actors share a Zone, and shows Disengage when
 at least one selected actor belongs to an Engagement. If both are shown,
@@ -776,7 +777,7 @@ unengaged actors remain unengaged.
 
 Once an actor's 500ms engagement intent over an actor or Engagement target has
 matured, or while an Engagement token is over another Engagement token, the
-Engage toolbar action uses its active color. The matured actor intent marker is
+Engage action uses its active color. The matured actor intent marker is
 a circular badge containing the crossed-swords Engagement icon. An Engagement
 token targeted by a token merge drag is outlined with the same readable color
 as its Zone name. When an engaged actor moves beyond its 30px tether without a
@@ -978,6 +979,17 @@ Panels:
 - each Encounter persists every panel's dock side, order within that dock, and
   individual expanded/collapsed state; whole-sidebar collapse remains
   session-only
+- sidebar widths fit their contents: expanded docks use the panels' width,
+  while collapsed docks fit only their header and footer icon controls
+- panel insertion previews track the current valid drop destination; hovering
+  over the canvas or another non-drop surface previews the panel's original
+  position, matching its unchanged placement if released there
+- dragging a panel near the top or bottom of a scrollable dock continuously
+  scrolls in that direction while more content is available, refreshing the
+  insertion preview beneath the pointer; leaving the edge or ending the drag
+  stops scrolling without changing encounter history
+- the insertion target before the first docked panel previews in the gap
+  below the sidebar header without reserving blank space above the panel
 - an empty dock retains a narrow drop target so panels can be moved back to it,
   while its sidebar expand/collapse control remains hidden
 
@@ -1005,7 +1017,9 @@ side panels are hidden.
   filtering)
 - Status
 
-Panels update based on selection context.
+Panels update based on selection context. The Library panel can expand only
+with the Actor, Background, or Audio tool active. Its expand button is disabled
+for other tools; an already expanded panel can still be collapsed.
 
 The Library panel header has an icon-only BookOpen Library launcher immediately
 left of the view cycle control on desktop and compact layouts. It opens the same
@@ -1072,9 +1086,12 @@ keeping controls accessible when the browser window becomes narrow.
 
 The Zoneless actors presentation remains the collapsible, resizable
 bottom-center overlay on larger screens and becomes a panel in the compact
-drawer. The desktop overlay has a bottom-left show/hide button alongside the
-existing canvas controls. It starts visible and collapsed each session. Hiding
-preserves its mounted expansion, grouping, and size; hovering does not reveal it.
+drawer. Its show/hide button sits beside Settings in the left sidebar footer,
+with space between the two controls. It uses Users Round, with a top-left to
+bottom-right slash while the panel is visible to indicate the hide action.
+Horizontal resize edges follow the cursor
+one-to-one while the panel stays centered. It starts visible and collapsed each
+session. Hiding preserves its mounted expansion, grouping, and size; hovering does not reveal it.
 Hovering a visible panel makes its background fully opaque, using the current
 theme's readable text and border colors. Leaving restores its normal appearance.
 Interface Settings includes a locally persisted, cross-tab synchronized

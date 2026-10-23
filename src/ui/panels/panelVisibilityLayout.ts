@@ -26,20 +26,6 @@ export function getVisibleCompactPanels(
   );
 }
 
-export function getWorkspaceColumns(
-  visibleLayout: PanelLayout,
-  sidebarCollapsed: Record<DockSide, boolean>
-): string {
-  const leftWidth = visibleLayout.left.length === 0 || sidebarCollapsed.left
-    ? "3.25rem"
-    : "18rem";
-  const rightWidth =
-    visibleLayout.right.length === 0 || sidebarCollapsed.right
-      ? "3.25rem"
-      : "18rem";
-  return `${leftWidth} minmax(0,1fr) ${rightWidth}`;
-}
-
 /** Converts a visible-dock insertion index without relocating hidden panels. */
 export function resolveVisibleDropTarget(
   layout: PanelLayout,

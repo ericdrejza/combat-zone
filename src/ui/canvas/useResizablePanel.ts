@@ -38,13 +38,14 @@ export function useResizablePanel() {
           start.height +
             (start.edge === "top" ? start.y - event.clientY : 0)
         ),
+        // Both horizontal edges move as this bottom-centered panel changes width.
         width: Math.max(
           MIN_PANEL_WIDTH,
           start.width +
             (start.edge === "left"
-              ? start.x - event.clientX
+              ? 2 * (start.x - event.clientX)
               : start.edge === "right"
-                ? event.clientX - start.x
+                ? 2 * (event.clientX - start.x)
                 : 0)
         )
       });
@@ -69,10 +70,12 @@ export function useResizablePanel() {
     edge: ResizeEdge
   ) {
     event.preventDefault();
+    const bounds = event.currentTarget.parentElement?.getBoundingClientRect();
     resizeStart.current = {
       edge,
-      height: size.height,
-      width: size.width,
+      height: bounds?.height || size.height,
+      // CSS may have constrained the requested size to the available screen width.
+      width: bounds?.width || size.width,
       x: event.clientX,
       y: event.clientY
     };

@@ -74,14 +74,15 @@ describe("Toolbar motion and navigation", () => {
       "Actor",
       "Audio",
       "Ruler",
-      "Select",
-      "",
-      ""
+      "Select"
     ]);
     expect(screen.getAllByRole("button", { name: "Library" })).toHaveLength(1);
     expect(screen.getAllByRole("button", { name: "Background" })).toHaveLength(1);
-    expect(screen.getByRole("button", { name: "Engage selected actors" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: "Disengage selected actors" })).toBeDisabled();
+    expect(within(tools).queryByRole("button", { name: "Engage selected actors" })).not.toBeInTheDocument();
+    expect(within(tools).queryByRole("button", { name: "Disengage selected actors" })).not.toBeInTheDocument();
+    const sidebar = screen.getByRole("group", { name: "right sidebar controls" });
+    expect(within(sidebar).getByRole("button", { name: "Engage selected actors" })).toBeDisabled();
+    expect(within(sidebar).getByRole("button", { name: "Disengage selected actors" })).toBeDisabled();
     expect(screen.queryByRole("button", { name: "Delete" })).not.toBeInTheDocument();
     expect(within(tools).getAllByRole("separator")).toHaveLength(9);
     const separator = within(tools).getByRole('separator', { name: 'Grid and Zone tools' });
@@ -89,7 +90,7 @@ describe("Toolbar motion and navigation", () => {
     expect(separator.compareDocumentPosition(screen.getByRole('button', { name: 'Zone' })) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
-  it("shows drag action previews with the activated toolbar color", () => {
+  it("shows drag action previews on the sidebar actions", () => {
     renderApp();
     const engage = screen.getByRole("button", {
       name: "Engage selected actors"

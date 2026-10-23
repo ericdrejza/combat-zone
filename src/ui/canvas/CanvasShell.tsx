@@ -1,5 +1,4 @@
 import { CanvasActorDragVisual } from "./CanvasActorDragVisual";
-import { ZonelessVisibilityButton } from "@ui/panels/zoneless_actors/ZonelessVisibilityButton";
 import { RulerLockButton } from './ruler/RulerLockButton';
 import { EncounterHistoryControls } from "@ui/history/EncounterHistoryControls";
 import { useEncounterOperation } from "@ui/history/useEncounterOperation";
@@ -63,17 +62,18 @@ import {
 import type { CompactPanelDefinition } from "@ui/panels/compactPanelMetadata";
 
 type CanvasShellProps = {
+  zonelessVisible?: boolean;
   compactPanels?: readonly CompactPanelDefinition[];
   renderCompactPanelContent?: CompactPanelLauncherProps["renderPanelContent"];
   renderCompactPanelHeaderActions?: CompactPanelLauncherProps["renderPanelHeaderActions"];
 };
 
 export function CanvasShell({
+  zonelessVisible = true,
   compactPanels,
   renderCompactPanelContent,
   renderCompactPanelHeaderActions
 }: CanvasShellProps) {
-  const [zonelessVisible, setZonelessVisible] = useState(true);
   const dispatch = useDispatch<AppDispatch>();
   const colorSampler = useColorSampler();
   const {
@@ -404,7 +404,6 @@ export function CanvasShell({
         <div className="absolute bottom-3 left-2 right-2 flex items-end gap-2">
           <div className="relative z-30 flex shrink-0 items-center gap-2">
             <RulerLockButton />
-            {!compactLayout ? <ZonelessVisibilityButton visible={zonelessVisible} onToggle={() => setZonelessVisible(value => !value)} /> : null}
             <TouchSelectionToggle toolId={activeToolId} />
             <CompactSelectionDeleteButton
               activeToolId={activeToolId}
@@ -412,7 +411,7 @@ export function CanvasShell({
               onDelete={() => deleteSelectedEntities(dispatch, encounter, selection)}
               selection={selection}
             />
-            {true ? <CompactEngagementActionButtons
+            {compactLayout ? <CompactEngagementActionButtons
               activeToolId={activeToolId}
               encounter={encounter}
               selection={selection}
@@ -421,7 +420,7 @@ export function CanvasShell({
           {!compactLayout ? (
             <div className="relative z-30 flex min-w-0 flex-1 justify-center">
               <ZonelessActorPanel
-          visible={zonelessVisible}
+                visible={zonelessVisible}
                 isZoneEditing={activeToolId === "zone" && Boolean(shapeDraft || zoneDraftPoints.length || vertexDrag || zoneDrag)}
                 canvasBackgroundLuminance={backgroundLuminance.canvas}
                 isActorDragActive={Boolean(actorDrag?.hasMoved)}
@@ -444,7 +443,9 @@ export function CanvasShell({
           ) : null}
         </div>
       ) : null}
-      {!showMobileControls ? <div className="absolute bottom-3 left-3 z-30 flex items-center gap-2"><RulerLockButton /><ZonelessVisibilityButton visible={zonelessVisible} onToggle={() => setZonelessVisible(value => !value)} /></div> : null}
+      {!showMobileControls ? (
+        <div className="absolute bottom-3 left-3 z-30"><RulerLockButton /></div>
+      ) : null}
       {!compactLayout && !showMobileControls ? (
         <ZonelessActorPanel
           visible={zonelessVisible}

@@ -20,9 +20,10 @@ function isDockSide(value: string | undefined): value is DockSide {
 /** Resolves a pointer location through the same panel, marker, and dock targets as mouse DnD. */
 export function resolvePanelPointerDropTarget(
   clientX: number,
-  clientY: number
+  clientY: number,
+  fallbackElement?: Element | null
 ): DropTarget | null {
-  const hit = document.elementFromPoint?.(clientX, clientY);
+  const hit = document.elementFromPoint?.(clientX, clientY) ?? fallbackElement;
   const targetElement = hit?.closest<HTMLElement>("[data-panel-drop-side]");
   const side = targetElement?.dataset.panelDropSide;
   const rawIndex = targetElement?.dataset.panelDropIndex;
@@ -64,6 +65,13 @@ export function startPanelPointerDrag({
   const handle = event.currentTarget;
   const pointerId = event.pointerId;
   const start = { x: event.clientX, y: event.clientY };
+  // A non-drop surface preserves placement, so preview the source rather than a stale target.
+  const source = handle.closest<HTMLElement>('[data-panel-drop-kind="panel"]');
+  const sourceSide = source?.dataset.panelDropSide;
+  const sourceIndex = Number(source?.dataset.panelDropIndex);
+  const originalTarget: DropTarget | null = isDockSide(sourceSide) && Number.isInteger(sourceIndex)
+    ? { side: sourceSide, index: sourceIndex }
+    : null;
   let dragging = false;
   let lastTarget: DropTarget | null = null;
 
@@ -93,7 +101,7 @@ export function startPanelPointerDrag({
     const target = resolvePanelPointerDropTarget(
       pointerEvent.clientX,
       pointerEvent.clientY
-    );
+    ) ?? originalTarget;
     if (
       target &&
       (target.side !== lastTarget?.side || target.index !== lastTarget.index)

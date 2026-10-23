@@ -5,7 +5,6 @@ import { useDispatch, useSelector } from "react-redux";
 
 import { getEncounterLoadTool } from "@core/encounter";
 import { useCompactLayout } from "@hooks/useCompactLayout";
-import { useMobileControls } from "@hooks/useMobileControls";
 import { setActiveTool } from "@interaction/interactionState";
 import type { RootState } from "@store/store";
 import type { ActorImageInput } from "@entities/actor/actorMutations";
@@ -18,8 +17,6 @@ import { ToolButton } from "./ToolButton";
 import { TOOLBAR_ITEMS } from "./toolbarItems";
 import { ZoneToolButton } from "./zone/ZoneToolButton";
 import { MotionPreferenceWarning } from "./MotionPreferenceWarning";
-import { EngageActionButton } from './EngageActionButton';
-import { DisengageActionButton } from './DisengageActionButton';
 import { EdgeToolButton } from './edge/EdgeToolButton';
 import { CanvasZoomControls } from "./CanvasZoomControls";
 import {
@@ -62,7 +59,6 @@ export function Toolbar({
   saveStatus = "idle"
 }: ToolbarProps) {
   const compactLayout = useCompactLayout();
-  const showMobileControls = useMobileControls(compactLayout);
   const { encounterCreationTool } = useInterfacePreferences();
   const dispatch = useDispatch();
   const [compactSubtoolHost, setCompactSubtoolHost] =
@@ -253,8 +249,6 @@ export function Toolbar({
             role="separator"
           />
           {TOOLBAR_ITEMS.map(renderTool)}
-          {!showMobileControls ? <EngageActionButton /> : null}
-          {!showMobileControls ? <DisengageActionButton /> : null}
           {compactLayout ? (
           <CanvasZoomControls
             compactOpen={compactZoomOpen}

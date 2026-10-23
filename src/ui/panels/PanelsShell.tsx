@@ -8,6 +8,7 @@ import type {
 import { getDockablePanelDefinition } from "./dockablePanelMetadata";
 import { PanelDropMarker } from "./PanelDropMarker";
 import { startPanelPointerDrag } from "./panelPointerDrag";
+import { usePanelReorderAutoScroll } from "./usePanelReorderAutoScroll";
 
 export type DockSide = EncounterDockSide;
 
@@ -22,6 +23,7 @@ export type DropTarget = {
 };
 
 type PanelsShellProps = {
+  disabledExpansionPanelIds?: readonly string[];
   draggedPanelId: string | null;
   dropTarget: DropTarget | null;
   onDragEnd: () => void;
@@ -36,6 +38,7 @@ type PanelsShellProps = {
 };
 
 export function PanelsShell({
+  disabledExpansionPanelIds = [],
   draggedPanelId,
   dropTarget,
   onDragEnd,
@@ -49,11 +52,12 @@ export function PanelsShell({
   side
 }: PanelsShellProps) {
   const dockEndTarget = { side, index: panels.length };
+  const scrollRef = usePanelReorderAutoScroll(draggedPanelId !== null, onPreviewDrop);
 
   return (
     <aside
       aria-label={`${side} docked panels`}
-      className="flex min-h-0 flex-1 flex-col overflow-y-auto pr-1"
+      className={`relative flex min-h-0 flex-1 flex-col ${panels.length ? "w-72" : "w-10"}`}
       data-panel-drop-index={panels.length}
       data-panel-drop-kind="dock"
       data-panel-drop-side={side}
@@ -77,6 +81,19 @@ export function PanelsShell({
         onDropPanel(dockEndTarget);
       }}
     >
+      {/* Keep the first preview in the header gap, outside the scrolling clip. */}
+      {panels.length > 0 ? (
+        <PanelDropMarker
+          active={dropTarget?.side === side && dropTarget.index === 0 && draggedPanelId !== null}
+          enabled={draggedPanelId !== null}
+          overlay
+          index={0}
+          onDropPanel={onDropPanel}
+          onPreviewDrop={onPreviewDrop}
+          side={side}
+        />
+      ) : null}
+      <div ref={scrollRef} className="flex min-h-0 flex-1 flex-col overflow-y-auto pr-1">
       {panels.map((panel, index) => {
         const stretch = panels.length === 1 && !panel.collapsed;
         const definition = getDockablePanelDefinition(panel.id);
@@ -85,7 +102,7 @@ export function PanelsShell({
           className={stretch ? "flex min-h-0 flex-1 flex-col" : undefined}
           key={panel.id}
         >
-          <PanelDropMarker
+          {index > 0 ? <PanelDropMarker
             active={
               dropTarget?.side === side &&
               dropTarget.index === index &&
@@ -96,8 +113,9 @@ export function PanelsShell({
             onDropPanel={onDropPanel}
             onPreviewDrop={onPreviewDrop}
             side={side}
-          />
+          /> : null}
           <DockPanel
+            expansionDisabled={disabledExpansionPanelIds.includes(panel.id)}
             draggedPanelId={draggedPanelId}
             index={index}
             onDragEnd={onDragEnd}
@@ -126,11 +144,13 @@ export function PanelsShell({
         onPreviewDrop={onPreviewDrop}
         side={side}
       />
+      </div>
     </aside>
   );
 }
 
 type DockPanelProps = {
+  expansionDisabled: boolean;
   draggedPanelId: string | null;
   index: number;
   onDragEnd: () => void;
@@ -146,6 +166,7 @@ type DockPanelProps = {
 };
 
 function DockPanel({
+  expansionDisabled,
   draggedPanelId,
   index,
   onDragEnd,
@@ -230,7 +251,9 @@ function DockPanel({
                 ? `Expand ${panel.title} panel`
                 : `Collapse ${panel.title} panel`
             }
-            className="flex h-8 w-8 items-center justify-center rounded-full border border-canvas-line bg-canvas-surface text-canvas-muted transition hover:bg-canvas"
+            className="flex h-8 w-8 items-center justify-center rounded-full border border-canvas-line bg-canvas-surface text-canvas-muted transition enabled:hover:bg-canvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-canvas-ink disabled:cursor-not-allowed disabled:opacity-40"
+            disabled={panel.collapsed && expansionDisabled}
+            title={panel.collapsed ? `Expand ${panel.title} panel` : `Collapse ${panel.title} panel`}
             onClick={() =>
               onPanelCollapsedChange(panel.id, !panel.collapsed)
             }

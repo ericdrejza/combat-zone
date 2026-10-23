@@ -9,6 +9,7 @@ export type SidebarDockProps = {
   children: ReactNode;
   collapsed: boolean;
   footer?: ReactNode;
+  headerActions?: ReactNode;
   hideToggle?: boolean;
   onToggle: () => void;
   side: DockSide;
@@ -18,6 +19,7 @@ export function SidebarDock({
   children,
   collapsed,
   footer,
+  headerActions,
   hideToggle = false,
   onToggle,
   side
@@ -35,12 +37,19 @@ export function SidebarDock({
         ? ChevronRight
         : ChevronLeft;
 
+  const stackedHeader = collapsed || (side === "left" && hideToggle);
+
   return (
     <aside
       aria-label={`${side} sidebar`}
-      className="flex min-h-0 flex-col gap-2 overflow-hidden"
+      className="flex min-h-0 w-max min-w-10 flex-col gap-2 overflow-hidden"
     >
-      <div className={`flex gap-2 ${collapsed || hideToggle ? "flex-col" : "items-center"} ${side === "right" ? "self-end" : "self-start"}`}>
+      <div
+        role="group"
+        aria-label={`${side} sidebar controls`}
+        className={`flex gap-2 ${stackedHeader ? "flex-col" : "items-center"} ${side === "right" ? (headerActions ? "w-full justify-between" : "self-end") : "self-start"}`}
+      >
+      {stackedHeader ? null : headerActions}
       {hideToggle ? null : <TouchTooltip label={collapsed ? expandLabel : collapseLabel}><button
         title={collapsed ? expandLabel : collapseLabel}
         aria-expanded={!collapsed}
@@ -53,6 +62,7 @@ export function SidebarDock({
       >
         <ToggleIcon aria-hidden="true" className="h-5 w-5" />
       </button></TouchTooltip>}
+      {stackedHeader ? headerActions : null}
       {side === "left" ? <EncounterHistoryControls vertical={collapsed || hideToggle} /> : null}
       </div>
       {collapsed ? null : children}
