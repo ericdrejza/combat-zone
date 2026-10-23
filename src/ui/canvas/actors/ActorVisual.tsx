@@ -21,6 +21,7 @@ import { ActorProjection } from './ActorProjection';
 
 type ActorVisualProps = {
   actor: Actor;
+  displayName?: string;
   showResourceBars?: boolean;
   showConditions?: boolean;
   artworkClipId?: string;
@@ -43,6 +44,7 @@ type ActorVisualProps = {
  */
 export const ActorVisual = memo(function ActorVisual({
   actor,
+  displayName = actor.name,
   showResourceBars = false,
   showConditions = false,
   artworkClipId,
@@ -86,7 +88,7 @@ export const ActorVisual = memo(function ActorVisual({
 
   // A token without artwork keeps its identifying text visible inside its own shape.
   const tokenName = !imageUrl ? (
-    <ActorTokenName name={actor.name} shape={actor.shape} radius={radius}
+    <ActorTokenName name={displayName} shape={actor.shape} radius={radius}
       color={actor.shape === "transparent" ? selectedTextColor : getReadableTextColor(fillColor)}
       transition={transition} />
   ) : null;
@@ -260,7 +262,7 @@ export const ActorVisual = memo(function ActorVisual({
           textAnchor="middle"
           transition={transition}
         >
-          {actor.name.toUpperCase()}
+          {displayName.toUpperCase()}
         </motion.text>
       ) : null}
       </ActorOverlay>

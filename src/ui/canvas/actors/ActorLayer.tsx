@@ -1,3 +1,5 @@
+import { previewedName, type NamePreview } from '@interaction/namePreviewState';
+import { getDraggedPoint } from './actorDragPoint';
 import { ActorTrim } from './ActorTrim';
 import { useCanvasPreferences } from '@ui/canvas_preferences/useCanvasPreferences';
 import { ActorMotionGroup, ActorOverlayLayers } from "./ActorOverlayLayers";
@@ -23,6 +25,7 @@ import { useMotionPreference } from "../../motion_preferences/MotionPreferencePr
 import { clearOptimisticActorPlacement } from "./actorPlacementOptimisticState";
 
 type ActorLayerProps = {
+  namePreview?: NamePreview | null;
   activeToolId?: RootState["interaction"]["activeToolId"];
   actorDrag: ActorDragState | null;
   backgroundLuminanceByZoneId: Record<string, number>;
@@ -45,28 +48,8 @@ type ActorLayerProps = {
   selection: RootState["interaction"]["selection"];
 };
 
-function getDraggedPoint(
-  actorId: string,
-  point: LayoutPoint,
-  actorDrag: ActorDragState | null
-): LayoutPoint {
-  if (!actorDrag?.actorIds.includes(actorId)) {
-    return point;
-  }
-
-  if (actorDrag.phase === "returning") {
-    return actorDrag.returnPointsByActorId?.[actorId] ?? point;
-  }
-
-  const origin = actorDrag.originPointsByActorId?.[actorId] ?? point;
-
-  return {
-    x: origin.x + actorDrag.current.x - actorDrag.start.x,
-    y: origin.y + actorDrag.current.y - actorDrag.start.y
-  };
-}
-
 export function ActorLayer({
+  namePreview = null,
   activeToolId = "actor",
   actorDrag,
   backgroundLuminanceByZoneId,
@@ -91,6 +74,7 @@ export function ActorLayer({
 
   return <ActorOverlayLayers>{placements.map(
     ({ actor, incomingPoint: placementIncomingPoint, point, radius }) => {
+      const name = previewedName(namePreview, encounter.id, 'actor', actor.id, actor.name);
       const zoneMovedPoint = transformZoneActorPoint(
         point,
         actor.currentZoneId,
@@ -145,7 +129,7 @@ export function ActorLayer({
         >
           {(animatePoint, completeTrack) => (
             <ActorMotionGroup
-              aria-label={actor.name}
+              aria-label={name}
               className="cursor-grab select-none active:cursor-grabbing"
               data-entity-id={actor.id}
               data-entity-type="actor"
@@ -199,7 +183,7 @@ export function ActorLayer({
             >
               <ActorTrim encounter={encounter} actor={actor} point={renderedPoint}>{artworkClipId => <ActorVisual showResourceBars showConditions
                 artworkClipId={artworkClipId}
-                actor={actor}
+                actor={actor} displayName={name}
                 projectionRotation={projectionRotation} projectionAngle={encounter.grid.isometricAngle}
                 clipId={clipId}
                 fillColor={colors.fill}

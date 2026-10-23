@@ -1,3 +1,4 @@
+import { previewedName } from '@interaction/namePreviewState';
 import { applyTagChanges } from "@core/entity_resources/tags";
 import { useSelector } from "react-redux";
 import type { Zone } from "@entities/zone/types";
@@ -14,6 +15,7 @@ export function ZoneStatusPanel() {
   const zones = useSelector((state: RootState) => state.encounter.present.zones);
   const ids = [...new Set(selection.selectedIds)];
   const zone = ids.length === 1 ? zones.byId[ids[0]] : undefined;
+  const name = useSelector((state: RootState) => zone ? previewedName(state.interaction.namePreview, state.encounter.present.id, 'zone', zone.id, zone.name) : '');
   const { readOnly } = usePersistence();
   const commit = useStatusActions();
   if (!zone) return <p className="p-4 text-sm text-canvas-muted">Select one zone to view status.</p>;
@@ -21,7 +23,7 @@ export function ZoneStatusPanel() {
     void commit(`zone.${type}`, { zoneId: zone!.id, ...payload }, (state) => updateZoneStatus(state, zone!.id, mutate));
   }
   return <div aria-label="Zone status" className="space-y-4 py-2">
-    <p aria-label="Selected zone name" className="break-words font-semibold">{zone.name}</p>
+    <p aria-label="Selected zone name" className="break-words font-semibold">{name}</p>
     <StatusResourceControls key={zone.id} owner={zone} disabled={readOnly} onChange={change} />
     <div className="border-t border-canvas-line pt-3">
       <TagEditor key={`tags:${zone.id}`} tags={zone.tags} disabled={readOnly} inputLabel="Add zone tag" tagsLabel="Zone tags" onChange={(tags) => change("setTags", { tags }, (current) => { const next = applyTagChanges(current.tags, zone.tags, tags); return next === current.tags ? current : { ...current, tags: next }; })} />

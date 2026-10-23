@@ -5,6 +5,7 @@ export function rulersEqual(a: readonly LockedRuler[], b: readonly LockedRuler[]
   return a.length === b.length && a.every((ruler, index) => {
     const other = b[index];
     return ruler.id === other.id && ruler.name === other.name && ruler.color === other.color && ruler.opacity === other.opacity
+      && ruler.options.showDistance === other.options.showDistance && ruler.options.highlightActors === other.options.highlightActors
       && ruler.options.shape === other.options.shape && ruler.options.angle === other.options.angle
       && ruler.points.length === other.points.length && ruler.points.every((point, i) => point.x === other.points[i].x && point.y === other.points[i].y);
   });

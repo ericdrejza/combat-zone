@@ -32,6 +32,7 @@ const activeIndicatorClasses: Record<Actor["layoutGroup"], string> = {
 
 type InitiativeRowProps = {
   actor: Actor;
+  displayName?: string;
   active: boolean;
   initiativeValue: number | undefined;
   selected: boolean;
@@ -48,6 +49,7 @@ type InitiativeRowProps = {
 /** Renders one selectable, reorderable initiative participant. */
 export function InitiativeRow({
   actor,
+  displayName = actor.name,
   active,
   initiativeValue,
   selected,
@@ -150,7 +152,7 @@ export function InitiativeRow({
       value={actor.id}
     >
       <button
-        aria-label={`Reorder ${actor.name}`}
+        aria-label={`Reorder ${displayName}`}
         className="cursor-grab touch-none text-canvas-muted active:cursor-grabbing"
         onClick={(event) => event.stopPropagation()}
         onDoubleClick={(event) => event.stopPropagation()}
@@ -159,7 +161,7 @@ export function InitiativeRow({
       >
         <GripVertical aria-hidden="true" className="h-4 w-4" />
       </button>
-      <InitiativeActorLabel actor={actor} selected={selected} strikethrough={getActorStatus(actor) === 0 && strikethroughDeadInitiativeNames} />
+      <InitiativeActorLabel actor={actor} displayName={displayName} selected={selected} strikethrough={getActorStatus(actor) === 0 && strikethroughDeadInitiativeNames} />
       {active ? (
         <motion.span
           aria-label="Current actor"
@@ -172,7 +174,7 @@ export function InitiativeRow({
         onBlur={handleEditorBlur}
       >
         <RepeatButton
-          aria-label={`Decrease ${actor.name} initiative`}
+          aria-label={`Decrease ${displayName} initiative`}
           className={`pointer-events-none opacity-0 text-canvas-muted hover:text-canvas-ink disabled:cursor-not-allowed disabled:opacity-40 ${chevronVisibilityClasses}`}
           disabled={parsedDraft !== null && parsedDraft !== undefined && parsedDraft <= INITIATIVE_MIN}
           onClick={(event) => {
@@ -185,7 +187,7 @@ export function InitiativeRow({
           <ChevronLeft aria-hidden="true" className="h-4 w-4" />
         </RepeatButton>
         <input
-          aria-label={`${actor.name} initiative`}
+          aria-label={`${displayName} initiative`}
           className="w-9 border-0 bg-transparent px-0 py-1 text-center outline-none focus:ring-1 focus:ring-canvas-line"
           onChange={(event) => {
             editSourceRef.current = "manual";
@@ -208,7 +210,7 @@ export function InitiativeRow({
           value={draftValue}
         />
         <RepeatButton
-          aria-label={`Increase ${actor.name} initiative`}
+          aria-label={`Increase ${displayName} initiative`}
           className={`pointer-events-none opacity-0 text-canvas-muted hover:text-canvas-ink disabled:cursor-not-allowed disabled:opacity-40 ${chevronVisibilityClasses}`}
           disabled={parsedDraft !== null && parsedDraft !== undefined && parsedDraft >= INITIATIVE_MAX}
           onClick={(event) => {
@@ -221,7 +223,7 @@ export function InitiativeRow({
           <ChevronRight aria-hidden="true" className="h-4 w-4" />
         </RepeatButton>
       </span>
-      <InitiativeStatusControl actor={actor} onRemove={onRemove} onStatusChange={onStatusChange} />
+      <InitiativeStatusControl actor={actor} displayName={displayName} onRemove={onRemove} onStatusChange={onStatusChange} />
     </Reorder.Item>
   );
 }

@@ -1,3 +1,4 @@
+import { previewedName } from '@interaction/namePreviewState';
 import {
   ChevronLeft,
   ChevronRight,
@@ -70,6 +71,7 @@ export function InitiativePanel({
     useInitiativeActions();
   const { onParticipantClick, onParticipantDoubleClick } =
     useParticipantInteractions(participantInteractionStrategy);
+  const namePreview = useSelector((state: RootState) => state.interaction.namePreview);
   const selection = useSelector((state: RootState) => state.interaction.selection);
   const activeToolId = useSelector(
     (state: RootState) => state.interaction.activeToolId
@@ -197,7 +199,7 @@ export function InitiativePanel({
             return actor ? (
               <InitiativeRow
                 active={actor.id === currentActorId}
-                actor={actor}
+                actor={actor} displayName={previewedName(namePreview, encounter.id, 'actor', actor.id, actor.name)}
                 initiativeValue={getInitiativeEntry(encounter, actor.id)?.value}
                 key={actor.id}
                 onClick={(clickedActorId, event) =>

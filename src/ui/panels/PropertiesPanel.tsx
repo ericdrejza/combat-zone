@@ -1,3 +1,5 @@
+import { RulerPropertiesPanel } from './RulerPropertiesPanel';
+import { selectRulerPropertiesArtifact } from '@interaction/rulerState';
 import { useSelector } from "react-redux";
 
 import type { LibrarySectionId } from "@library/types";
@@ -28,10 +30,13 @@ export function PropertiesPanel({
   onOpenLibraryLocation,
   onOpenTokenLibraryForActor
 }: PropertiesPanelProps) {
+  const ruler = useSelector(selectRulerPropertiesArtifact);
   const selection = useSelector((state: RootState) => state.interaction.selection);
   const activeToolId = useSelector(
     (state: RootState) => state.interaction.activeToolId
   );
+
+  if (activeToolId === "ruler" || ruler) return <RulerPropertiesPanel />;
 
   if (activeToolId === "background") {
     return (

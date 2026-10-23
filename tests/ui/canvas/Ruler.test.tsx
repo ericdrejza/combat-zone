@@ -1,6 +1,6 @@
 import { selectLockedRulers } from '@interaction/rulerState';
 import { TOUCH_NAVIGATION_START_EVENT } from '@ui/canvas/useCanvasTouchGestures';
-import { act, fireEvent, screen } from '@testing-library/react';
+import { act, fireEvent, screen, within } from '@testing-library/react';
 import { renderApp, getCanvas, mockCanvasBounds } from '@tests/ui/renderApp';
 import { createEncounterState } from '@core/encounter/createEncounterState';
 import { loadEncounterState } from '@store/encounterSlice';
@@ -44,7 +44,8 @@ describe('session ruler interactions', () => {
     expect(selectLockedRulers(store.getState())).toHaveLength(2);
     act(() => store.dispatch(setActiveTool('select')));
     expect(screen.getByLabelText('Ruler measurement')).toBeInTheDocument();
-    const artifact = document.querySelector('[data-ruler-id] circle')!;
+    act(() => store.dispatch(setActiveTool('ruler')));
+    const artifact = document.querySelector('[data-ruler-id] > g')!;
     fireEvent.contextMenu(artifact, { clientX: 140, clientY: 140 });
     fireEvent.click(screen.getByRole('menuitem', { name: 'Edit ruler' }));
     click(320, 256); lock();
@@ -73,12 +74,12 @@ describe('session ruler interactions', () => {
   });
   it('allows area point adjustment and locking again', () => {
     setup(); fireEvent.click(screen.getByRole('button', { name: 'Rectangle ruler' })); draw(); lock();
-    fireEvent.contextMenu(document.querySelector('[data-ruler-id] circle')!, { clientX: 140, clientY: 140 });
+    fireEvent.contextMenu(document.querySelector('[data-ruler-id] > g')!, { clientX: 140, clientY: 140 });
     fireEvent.click(screen.getByRole('menuitem', { name: 'Edit ruler' }));
     const point = screen.getByRole('button', { name: 'Ruler point 2' });
-    fireEvent.pointerDown(point, { button: 0, pointerId: 2 });
+    fireEvent.pointerDown(point, { button: 0, pointerId: 2, clientX: Number(point.getAttribute('cx')), clientY: Number(point.getAttribute('cy')) });
     fireEvent.pointerMove(point, { clientX: 320, clientY: 320, pointerId: 2 });
-    fireEvent.pointerUp(point, { pointerId: 2 }); lock();
+    fireEvent.pointerUp(point, { pointerId: 2, clientX: 320, clientY: 320 }); lock();
     expect(selectLockedRulers(store.getState())[0].points[1]).toEqual({ x: 320, y: 320 });
   });
 });
@@ -86,14 +87,14 @@ describe('session ruler interactions', () => {
 it('supports contextual locking and per-artifact names, colors and deletion', () => {
   const before = setup(); draw();
   fireEvent.click(screen.getByRole('button', { name: 'Lock ruler' }));
-  const open = () => fireEvent.contextMenu(document.querySelector('[data-ruler-id] circle')!, { clientX: 200, clientY: 200 });
+  const open = () => fireEvent.contextMenu(document.querySelector('[data-ruler-id] > g')!, { clientX: 200, clientY: 200 });
   open(); fireEvent.click(screen.getByRole('menuitem', { name: 'Name ruler' }));
-  fireEvent.change(screen.getByRole('textbox', { name: 'Ruler name' }), { target: { value: 'Blast' } });
+  fireEvent.change(within(screen.getByRole('dialog', { name: 'Name ruler' })).getByRole('textbox', { name: 'Ruler name' }), { target: { value: 'Blast' } });
   fireEvent.click(screen.getByRole('button', { name: 'Rename' }));
   expect(selectLockedRulers(store.getState())[0].name).toBe('Blast');
   open(); fireEvent.click(screen.getByRole('menuitem', { name: 'Choose ruler color' }));
-  fireEvent.change(screen.getByRole('textbox', { name: 'Artifact hex color' }), { target: { value: '#ff000080' } });
-  fireEvent.blur(screen.getByRole('textbox', { name: 'Artifact hex color' }));
+  fireEvent.change(screen.getByRole('textbox', { name: 'Artifact color hex color' }), { target: { value: '#ff000080' } });
+  fireEvent.blur(screen.getByRole('textbox', { name: 'Artifact color hex color' }));
   fireEvent.click(screen.getByRole('button', { name: 'Save' }));
   expect(selectLockedRulers(store.getState())[0]).toMatchObject({ color: '#ff0000', opacity: 128 / 255 });
   open(); fireEvent.click(screen.getByRole('menuitem', { name: 'Delete ruler' }));

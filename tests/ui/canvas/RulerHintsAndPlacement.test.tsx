@@ -13,19 +13,18 @@ const point = (x: number, y: number) => fireEvent.pointerDown(screen.getByLabelT
 const space = () => fireEvent.keyDown(window, { key: ' ', code: 'Space' });
 function pickUp() {
   const end = screen.getByRole('button', { name: 'Ruler point 2' });
-  fireEvent.pointerDown(end, { button: 0, pointerId: 2, clientX: 256, clientY: 128 });
-  fireEvent.pointerUp(end, { pointerId: 2, clientX: 256, clientY: 128 });
+  fireEvent.contextMenu(end, { clientX: 256, clientY: 128 });
 }
 it('only advertises locking while the measurement can be locked, and artifact options while idle', () => {
   setup(); expect(screen.queryByText(/Spacebar/i)).not.toBeInTheDocument();
   point(128, 128); expect(screen.queryByText(/Spacebar/i)).not.toBeInTheDocument();
   point(256, 128); expect(screen.getByText(/Spacebar/i)).toBeInTheDocument();
   space(); expect(screen.queryByText(/Spacebar/i)).not.toBeInTheDocument();
-  expect(screen.getByText(/Right-click or touch-hold/i)).toBeInTheDocument();
+  expect(screen.getByText(/Right-click.*artifact for options/i)).toBeInTheDocument();
   act(() => store.dispatch(setActiveTool('select')));
-  expect(screen.queryByText(/Right-click or touch-hold/i)).not.toBeInTheDocument();
+  expect(screen.queryByText(/Right-click.*artifact for options/i)).not.toBeInTheDocument();
 });
-it('picks up the second point on click and lets the preview follow the pointer until replaced', () => {
+it('picks up the second point on right-click and lets the preview follow the pointer until replaced', () => {
   setup(); point(128, 128); point(256, 128); pickUp();
   expect(selectRulerDraft(store.getState())?.points).toHaveLength(1);
   expect(selectRulerDraft(store.getState())?.complete).toBe(false);
@@ -51,7 +50,7 @@ it('distinguishes dragging the endpoint from picking it up', () => {
 it('keeps endpoint pickup edits temporary until an existing artifact is locked again', () => {
   setup(); point(128, 128); point(256, 128); space();
   const original = selectLockedRulers(store.getState())[0];
-  fireEvent.contextMenu(document.querySelector('[data-ruler-id] circle')!, { clientX: 160, clientY: 128 });
+  fireEvent.contextMenu(document.querySelector('[data-ruler-id] > g')!, { clientX: 160, clientY: 128 });
   fireEvent.click(screen.getByRole('menuitem', { name: 'Edit ruler' })); pickUp();
   expect(selectLockedRulers(store.getState())).toEqual([original]); expect(store.getState().encounter.past).toHaveLength(1);
   point(384, 128); space(); expect(store.getState().encounter.past).toHaveLength(2);
@@ -80,7 +79,7 @@ it('places snapped points through saved ruler hit targets without modifying the 
     movementRules: { ...store.getState().encounter.present.movementRules, snapToGrid: true } })));
   point(128, 128); point(256, 128); space(); const original = selectLockedRulers(store.getState())[0];
   fireEvent.click(screen.getByRole('button', { name: 'Path ruler' }));
-  const hit = document.querySelector('[data-ruler-id] circle')!;
+  const hit = document.querySelector('[data-ruler-id] > g')!;
   fireEvent.pointerDown(hit, { button: 0, pointerId: 1, clientX: 160, clientY: 160 });
   expect(selectRulerDraft(store.getState())?.points).toEqual([{ x: 160, y: 160 }]);
   fireEvent.pointerMove(hit, { pointerId: 1, clientX: 224, clientY: 160 });
@@ -94,7 +93,7 @@ it('places snapped points through saved ruler hit targets without modifying the 
 });
 it('distinguishes touch taps through artifacts from holding for their options', () => {
   setup(); point(128, 128); point(256, 128); space();
-  const hit = document.querySelector('[data-ruler-id] circle')!;
+  const hit = document.querySelector('[data-ruler-id] > g')!;
   fireEvent.pointerDown(hit, { button: 0, pointerType: 'touch', pointerId: 8, clientX: 160, clientY: 160 });
   fireEvent.pointerUp(hit, { button: 0, pointerType: 'touch', pointerId: 8, clientX: 160, clientY: 160 });
   expect(selectRulerDraft(store.getState())?.points).toHaveLength(1);
@@ -112,7 +111,7 @@ it('distinguishes touch taps through artifacts from holding for their options', 
 
 it('cancels an unfinished measurement over another artifact without opening its menu', () => {
   setup(); point(128, 128); point(256, 128); space();
-  const original = selectLockedRulers(store.getState())[0], hit = document.querySelector('[data-ruler-id] circle')!;
+  const original = selectLockedRulers(store.getState())[0], hit = document.querySelector('[data-ruler-id] > g')!;
   point(320, 320);
   fireEvent.contextMenu(hit, { clientX: 160, clientY: 160 });
   expect(screen.queryByRole('menu', { name: 'Ruler options' })).not.toBeInTheDocument();
@@ -121,11 +120,43 @@ it('cancels an unfinished measurement over another artifact without opening its 
 });
 it('restores an edited artifact when right-clicking another artifact, without opening options', () => {
   setup(); point(128, 128); point(256, 128); space(); point(384, 384); point(448, 384); space();
-  const originals = selectLockedRulers(store.getState()), hits = document.querySelectorAll('[data-ruler-id] circle');
+  const originals = selectLockedRulers(store.getState()), hits = document.querySelectorAll('[data-ruler-id] > g');
   fireEvent.contextMenu(hits[0], { clientX: 128, clientY: 128 });
   fireEvent.click(screen.getByRole('menuitem', { name: 'Edit ruler' })); pickUp();
-  fireEvent.contextMenu(document.querySelector('[data-ruler-id] circle')!, { clientX: 384, clientY: 384 });
+  fireEvent.contextMenu(document.querySelector('[data-ruler-id] > g')!, { clientX: 384, clientY: 384 });
   expect(screen.queryByRole('menu', { name: 'Ruler options' })).not.toBeInTheDocument();
   expect(selectRulerDraft(store.getState())).toBeNull(); expect(selectLockedRulers(store.getState())).toEqual(originals);
   expect(store.getState().encounter.past).toHaveLength(2);
+});
+
+it.each(['select', 'grid', 'actor', 'zone'] as const)('ignores ruler context and touch-hold gestures with the %s tool active', tool => {
+  setup(); point(128, 128); point(256, 128); space();
+  const original = selectLockedRulers(store.getState());
+  act(() => store.dispatch(setActiveTool(tool)));
+  const hit = document.querySelector('[data-ruler-id] > g')!;
+  fireEvent.contextMenu(hit, { clientX: 160, clientY: 160 });
+  vi.useFakeTimers();
+  try {
+    fireEvent.pointerDown(hit, { button: 0, pointerType: 'touch', pointerId: 9, clientX: 160, clientY: 160 });
+    act(() => vi.advanceTimersByTime(510));
+    fireEvent.pointerUp(hit, { button: 0, pointerType: 'touch', pointerId: 9, clientX: 160, clientY: 160 });
+    expect(screen.queryByRole('menu', { name: 'Ruler options' })).not.toBeInTheDocument();
+    expect(store.getState().interaction.rulerPropertiesId).toBeNull();
+    expect(store.getState().interaction.editingRuler).toBeNull();
+    expect(selectLockedRulers(store.getState())).toEqual(original);
+  } finally { vi.useRealTimers(); }
+});
+it('cancels a pending ruler touch hold when switching tools', () => {
+  setup(); point(128, 128); point(256, 128); space();
+  const hit = document.querySelector('[data-ruler-id] > g')!;
+  vi.useFakeTimers();
+  try {
+    fireEvent.pointerDown(hit, { button: 0, pointerType: 'touch', pointerId: 9, clientX: 160, clientY: 160 });
+    act(() => store.dispatch(setActiveTool('select')));
+    act(() => vi.advanceTimersByTime(510));
+    expect(screen.queryByRole('menu', { name: 'Ruler options' })).not.toBeInTheDocument();
+    expect(store.getState().interaction.rulerPropertiesId).toBeNull();
+    act(() => store.dispatch(setActiveTool('ruler')));
+    expect(screen.queryByRole('menu', { name: 'Ruler options' })).not.toBeInTheDocument();
+  } finally { vi.useRealTimers(); }
 });

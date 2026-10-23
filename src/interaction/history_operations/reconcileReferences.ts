@@ -5,6 +5,7 @@ import type { SelectableEntityType } from '@interaction/selection/types';
 /** Never restore session selection from history, or leave references to removed entities. */
 export function reconcileReferences(state: InteractionState, encounter: EncounterState): void {
   state.zoneColorPreview = null;
+  state.namePreview = null;
   const collections = {
     actor: encounter.actors, zone: encounter.zones, edge: encounter.edges,
     engagement: encounter.engagements, annotation: encounter.annotations

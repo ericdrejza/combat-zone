@@ -27,6 +27,20 @@ describe("CanvasSettings", () => {
     );
   }
 
+  it('persists continuous zone and ruler opacity values without rounding to slider increments', () => {
+    const view = renderSettings();
+    fireEvent.change(screen.getByRole('slider', { name: 'Default zone opacity' }), { target: { value: '0.3574' } });
+    expect(JSON.parse(localStorage.getItem(INTERFACE_PREFERENCES_STORAGE_KEY)!)).toMatchObject({ zoneOpacityDefault: 0.3574 });
+    const ruler = screen.getByRole('slider', { name: 'Ruler opacity' });
+    ruler.getBoundingClientRect = () => ({ left: 0, width: 116 } as DOMRect);
+    fireEvent.pointerDown(ruler, { button: 0, pointerId: 2, clientX: 45.74 });
+    fireEvent.pointerUp(ruler, { button: 0, pointerId: 2, clientX: 45.74 });
+    expect(JSON.parse(localStorage.getItem(CANVAS_PREFERENCES_KEY)!)).toMatchObject({ rulerOpacity: 0.3774 });
+    view.unmount(); renderSettings();
+    expect(screen.getByRole('slider', { name: 'Default zone opacity' })).toHaveValue('0.3574');
+    expect(screen.getByRole('slider', { name: 'Ruler opacity' })).toHaveValue('0.3774');
+  });
+
   it("persists valid default zone colors and opacity", async () => {
     const user = userEvent.setup();
     renderSettings();
@@ -96,13 +110,13 @@ describe('ruler appearance', () => {
   afterEach(() => localStorage.removeItem(CANVAS_PREFERENCES_KEY));
   it('accepts hex alpha, retains valid settings after invalid input, and persists picker/opacity changes', () => {
     render(<Provider store={store}><CanvasSettings /></Provider>);
-    const hex = screen.getByRole('textbox', { name: 'Ruler hex color' });
+    const hex = screen.getByRole('textbox', { name: 'Ruler color hex color' });
     fireEvent.change(hex, { target: { value: '#12345680' } }); fireEvent.blur(hex);
     expect(JSON.parse(localStorage.getItem(CANVAS_PREFERENCES_KEY)!)).toMatchObject({ rulerColor: '#123456', rulerOpacity: 128 / 255 });
     fireEvent.change(hex, { target: { value: '#nope' } }); fireEvent.blur(hex);
     expect(hex).toHaveAttribute('aria-invalid', 'true');
     expect(JSON.parse(localStorage.getItem(CANVAS_PREFERENCES_KEY)!)).toMatchObject({ rulerColor: '#123456' });
-    fireEvent.change(screen.getByLabelText('Ruler color'), { target: { value: '#abcdef' } });
+    fireEvent.change(hex, { target: { value: '#abcdef' } }); fireEvent.blur(hex);
     fireEvent.change(screen.getByRole('slider', { name: 'Ruler opacity' }), { target: { value: '0.4' } });
     expect(JSON.parse(localStorage.getItem(CANVAS_PREFERENCES_KEY)!)).toMatchObject({ rulerColor: '#abcdef', rulerOpacity: 0.4 });
   });

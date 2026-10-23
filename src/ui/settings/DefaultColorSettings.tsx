@@ -37,7 +37,7 @@ export function DefaultColorSettings() {
             onChange={(event) =>
               setZoneOpacityDefault(Number(event.currentTarget.value))
             }
-            step="0.05"
+            step="any"
             type="range"
             value={zoneOpacityDefault}
           />

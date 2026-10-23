@@ -1,3 +1,4 @@
+import { useExpandedPickerReveal } from "./useExpandedPickerReveal";
 import { RecentColorSwatches } from "./RecentColorSwatches";
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
@@ -25,10 +26,11 @@ type ColorPalettePickerProps = {
 /** Each field shows its saved color; palette visibility is transient and selections commit once. */
 export function ColorPalettePicker({ disabled = false, closeOnSelect = true, label, showLabel = true, labelAction, onChange, value, displayValue, children, controls, beforeSwatches, presets = ZONE_COLOR_PALETTE, recentColors, onRecentColor }: ColorPalettePickerProps) {
   const [open, setOpen] = useState(false);
+  const root = useExpandedPickerReveal(open);
   const id = useId(), opener = useRef<HTMLButtonElement>(null);
   useEffect(() => setOpen(false), [label, disabled]);
   const tooltip = `${open ? 'Close' : 'Choose'} ${label.toLowerCase()}`;
-  return <div className="space-y-2" onKeyDown={event => {
+  return <div ref={root} className="space-y-2" onKeyDown={event => {
     if (open && event.key === 'Escape') { event.stopPropagation(); setOpen(false); opener.current?.focus(); }
   }}>
     {showLabel || labelAction ? <div className="flex items-center justify-between gap-2">{showLabel ? <span className="font-semibold text-canvas-ink">{label}</span> : null}{labelAction}</div> : null}

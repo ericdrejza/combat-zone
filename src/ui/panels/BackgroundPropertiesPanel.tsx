@@ -1,3 +1,4 @@
+import { PropertiesNameInput } from '@ui/controls/PropertiesNameInput';
 import { useDispatch, useSelector } from "react-redux";
 
 import { createEncounterActionRecord } from "@core/history/createEncounterActionRecord";
@@ -44,20 +45,8 @@ function EditableBackgroundNameField({
   return (
     <label className="block space-y-1">
       <span className="font-semibold text-canvas-ink">Name</span>
-      <input
-        key={value}
-        aria-label="Name"
-        className="w-full rounded-xl border border-canvas-line bg-canvas-surface px-3 py-2 text-canvas-ink"
-        defaultValue={value}
-        onBlur={(event) => {
-          const name = event.currentTarget.value.trim();
-          onRename(name);
-        }}
-        onKeyDown={(event) => {
-          if (event.key === "Enter") event.currentTarget.blur();
-        }}
-        type="text"
-      />
+      <PropertiesNameInput aria-label="Name" committedValue={value} onCommit={onRename}
+        className="w-full rounded-xl border border-canvas-line bg-canvas-surface px-3 py-2 text-canvas-ink enabled:hover:border-canvas-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-canvas-ink" />
     </label>
   );
 }

@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { createPortal } from "react-dom";
 import { RulerPreviewPolyline } from './RulerPreviewPolyline';
 import { RulerLabel } from './RulerLabel';
@@ -8,22 +9,22 @@ import type { ReactNode } from 'react';
 import type { EncounterState } from '@core/encounter/types';
 import type { LayoutPoint } from '@core/layout/types';
 import type { RulerOptions, DiagonalCost } from '@core/measurement/types';
-import { measureArea, rulerSnapEnabled, snapRulerOrigin } from '@core/measurement/areaGeometry';
+import { measureArea, rulerSnapEnabled, snapRulerOrigin, type AreaMeasurement } from '@core/measurement/areaGeometry';
 import { measureRoute, projectPolyline } from '@core/measurement/distance';
 import { formatDistance, abbreviateDistanceUnit } from '@core/measurement/distanceUnits';
 import { worldToGrid, snapToGrid } from '@core/movement/gridGeometry';
 import { resolveGridGeometry } from '@core/movement/gridScale';
 
 const pointList = (points: LayoutPoint[]) => points.map(p => `${p.x},${p.y}`).join(' ');
-export function RulerGraphic({ encounter, points, options, policy, name, children, onContextMenu, flexible = false, hitTarget }: {
+export function RulerGraphic({ encounter, points, options, policy, name, children, onContextMenu, flexible = false, hitTarget, renderUnderlay }: {
   encounter: EncounterState; points: LayoutPoint[]; options: RulerOptions; policy: DiagonalCost; name?: string;
-  hitTarget?: SVGGElement | null;
+  hitTarget?: SVGGElement | null; renderUnderlay?: (area: AreaMeasurement | null) => ReactNode;
   flexible?: boolean; children?: ReactNode; onContextMenu?: (event: React.MouseEvent<SVGElement>) => void;
 }) {
   const { preferences } = useCanvasPreferences();
   const grid = resolveGridGeometry(encounter.grid), unit = encounter.grid.distanceUnit ?? 'feet';
-  const route = options.shape === 'path' ? measureRoute(encounter.grid, points, rulerSnapEnabled(encounter, options), policy) : null;
-  const area = options.shape !== 'path' && points.length > 1 ? measureArea(encounter, points[0], points[points.length - 1], options, policy, preferences.showRulerArea, preferences.rulerCellCoverage) : null;
+  const route = useMemo(() => options.shape === 'path' ? measureRoute(encounter.grid, points, rulerSnapEnabled(encounter, options), policy) : null, [encounter, points, options, policy]);
+  const area = useMemo(() => options.shape !== 'path' && points.length > 1 ? measureArea(encounter, points[0], points[points.length - 1], options, policy, preferences.showRulerArea, preferences.rulerCellCoverage) : null, [encounter, points, options, policy, preferences.showRulerArea, preferences.rulerCellCoverage]);
   const labelPoint = route?.points[route.points.length - 1] ?? points[points.length - 1];
   let detail = area ? formatDistance(area.distance, unit) : '';
   if (area && options.shape === 'cone') detail += ` · ${options.angle ?? (encounter.grid.type === 'square' || encounter.grid.type === 'isometric' ? 90 : 60)}°`;
@@ -44,13 +45,14 @@ export function RulerGraphic({ encounter, points, options, policy, name, childre
     }) : null}
   </g> : null;
   return <g stroke="currentColor" strokeWidth={2} fill="none" onContextMenu={onContextMenu}>
+    {renderUnderlay?.(area)}
     <g pointerEvents="none">
       {outlines.map((outline, i) => <RulerPreviewPolyline key={i} points={pointList(outline)} area={!!area} flexible={flexible} />)}
       {area?.cells.map((cell, i) => <polygon key={i} points={pointList(projectPolyline(encounter.grid, cell.map(p => worldToGrid(grid, p)), true))} fill="currentColor" fillOpacity={0.25} />)}
-      {labelPoint ? <RulerLabel text={name ? `${name} · ${label}` : label} point={labelPoint} bounds={encounter.canvasSize} interactive={!!onContextMenu} hitTarget={hitTarget} /> : null}
+      {labelPoint && (options.showDistance !== false || name) ? <RulerLabel text={options.showDistance === false ? name! : name ? `${name} · ${label}` : label} point={labelPoint} bounds={encounter.canvasSize} interactive={!!onContextMenu} hitTarget={hitTarget} /> : null}
     </g>
     {targets && hitTarget ? createPortal(targets, hitTarget) : targets}
-    {!children ? points.map((raw, i) => { const point = rulerMarker(encounter, raw, i, options, points.at(-1)); return <circle key={i} cx={point.x} cy={point.y} r={4} fill="currentColor" pointerEvents="none" />; }) : children}
+    {children}
   </g>;
 }
 

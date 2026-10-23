@@ -1,7 +1,7 @@
 import { useRef, type InputHTMLAttributes, type PointerEvent } from 'react';
 
 type Props = Omit<InputHTMLAttributes<HTMLInputElement>, 'type' | 'value' | 'min' | 'max' | 'step' | 'onChange'> & {
-  value: number; min: number; max: number; step: number; onValueChange: (value: number) => void; onValueCommit?: (value: number) => void; onValueCancel?: () => void;
+  value: number; min: number; max: number; step: number | 'any'; onValueChange: (value: number) => void; onValueCommit?: (value: number) => void; onValueCancel?: () => void;
 };
 
 /** Keep pointer values tied to screen coordinates, independently of modal/canvas drag transforms. */
@@ -13,7 +13,8 @@ export function ColorRangeInput({ value, min, max, step, onValueChange, onValueC
     // Native thumbs are 16px wide; account for their center at either endpoint.
     const track = Math.max(1, bounds.width - 16);
     const fraction = Math.max(0, Math.min(1, (event.clientX - bounds.left - 8) / track));
-    const next = min + Math.round(fraction * (max - min) / step) * step;
+    const offset = fraction * (max - min);
+    const next = min + (step === 'any' ? offset : Math.round(offset / step) * step);
     const result = Math.max(min, Math.min(max, Number(next.toPrecision(12))));
     onValueChange(result);
     return result;

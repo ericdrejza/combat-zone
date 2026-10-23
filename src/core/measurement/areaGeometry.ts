@@ -1,4 +1,4 @@
-import { cellIsCovered, touchesConeOrigin, type RulerCellCoverage } from './cellCoverage';
+import { cellIsCovered, touchesConeOrigin, type RulerCellCoverage, type AreaCoverageShape } from './cellCoverage';
 import { polygonArea } from './coverageGeometry';
 import { coneGeometry } from './coneGeometry';
 import { gridLineCenters } from './gridLine';
@@ -12,7 +12,7 @@ import { canvasCellCenters, cellVertices, nearestGridVertex } from '@core/moveme
 import { measureRoute, projectPolyline } from './distance';
 import type { DiagonalCost, RulerOptions } from './types';
 
-export type AreaMeasurement = { outlines: LayoutPoint[][]; cells: LayoutPoint[][]; area: number; distance: number; origin?: LayoutPoint };
+export type AreaMeasurement = { outlines: LayoutPoint[][]; cells: LayoutPoint[][]; area: number; distance: number; origin?: LayoutPoint; coverageShape?: AreaCoverageShape };
 const epsilon = 1e-6;
 const distance = (a: LayoutPoint, b: LayoutPoint) => Math.hypot(a.x - b.x, a.y - b.y);
 
@@ -77,7 +77,7 @@ export function measureArea(state: EncounterState, rawStart: LayoutPoint, end: L
   };
   const outline = projectPolyline(state.grid, polygon, true);
   const region = { minX: Math.max(0, Math.min(...outline.map(p => p.x))), minY: Math.max(0, Math.min(...outline.map(p => p.y))), maxX: Math.min(state.canvasSize.width, Math.max(...outline.map(p => p.x))), maxY: Math.min(state.canvasSize.height, Math.max(...outline.map(p => p.y))) };
-  const coverageShape = { shape: options.shape, origin: a, radius, direction, halfAngle: half, polygon };
+  const coverageShape: AreaCoverageShape = { shape: options.shape, origin: a, radius, direction, halfAngle: half, polygon };
   const needsOrigin = options.shape === 'cone' && (coverage === 'corners-and-origin' || coverage === 'corners-and-adjacent');
   const source = needsOrigin ? worldToGrid(grid, snapToGrid(grid, rawStart, 'medium')) : null;
   const forward = needsOrigin && coverage === 'corners-and-origin' ? worldToGrid(grid, snapToGrid(grid, gridToWorld(grid, {
@@ -95,6 +95,6 @@ export function measureArea(state: EncounterState, rawStart: LayoutPoint, end: L
     return cellIsCovered(localVertices, localCenter, inside, coverage, coverageShape, includeOriginCell(localCenter, localVertices)) ? [vertices] : [];
   }) : [];
   const geometricArea = !calculateArea ? 0 : options.shape === 'circle' ? Math.PI * radius ** 2 : options.shape === 'cone' ? radius ** 2 * half : polygonArea(polygon);
-  return { ...empty, outlines: [outline], cells,
+  return { ...empty, outlines: [outline], cells, coverageShape,
     area: !calculateArea ? 0 : snapped ? cells.length * (isSquareTopology(grid.type) ? 1 : Math.sqrt(3) / 2) * unit ** 2 : geometricArea / s ** 2 * unit ** 2 };
 }

@@ -11,6 +11,7 @@ export type CanvasPreferences = {
   showRulerArea: boolean;
   rulerColor: string | null;
   rulerOpacity: number;
+  rulerActorHighlightIntensity: number;
   showActorMovementDistance: boolean;
   edgeRoutingDuringDrag: "estimates" | "live";
   selectOnUndoRedo: boolean;
@@ -22,7 +23,7 @@ export type CanvasPreferences = {
   tracerInvalidRoute: 'reject' | 'detour';
 };
 export const DEFAULT_CANVAS_PREFERENCES: CanvasPreferences = {
-  rulerCellCoverage: 'corners-or-center', rulerFeel: 'rigid', showRulerArea: false, rulerColor: null, rulerOpacity: 1, showActorMovementDistance: true,
+  rulerCellCoverage: 'corners-or-center', rulerFeel: 'rigid', showRulerArea: false, rulerColor: null, rulerOpacity: 1, rulerActorHighlightIntensity: 0.5, showActorMovementDistance: true,
   edgeRoutingDuringDrag: "estimates",
   selectOnUndoRedo: false,
   projectIsometricTokens: false,
@@ -46,6 +47,7 @@ export function readCanvasPreferences(): CanvasPreferences {
       showRulerArea: value?.showRulerArea === true,
       rulerColor: typeof value?.rulerColor === 'string' && /^#[0-9a-f]{6}$/i.test(value.rulerColor) ? value.rulerColor : null,
       rulerOpacity: typeof value?.rulerOpacity === 'number' && Number.isFinite(value.rulerOpacity) && value.rulerOpacity >= 0 && value.rulerOpacity <= 1 ? value.rulerOpacity : 1,
+      rulerActorHighlightIntensity: typeof value?.rulerActorHighlightIntensity === 'number' && Number.isFinite(value.rulerActorHighlightIntensity) && value.rulerActorHighlightIntensity >= 0 && value.rulerActorHighlightIntensity <= 1 ? value.rulerActorHighlightIntensity : 0.5,
       showActorMovementDistance: value?.showActorMovementDistance !== false,
       edgeRoutingDuringDrag: value?.edgeRoutingDuringDrag === "live" ? "live" : "estimates",
       selectOnUndoRedo: value?.selectOnUndoRedo === true,

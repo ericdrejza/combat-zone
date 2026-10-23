@@ -4,7 +4,7 @@ import { CONDITIONS } from "@ui/status/markerCatalog";
 import { InitiativeConditionIcons } from "./InitiativeConditionIcons";
 
 /** Measures the name and complete icon strip in the row's owning window. */
-export function InitiativeActorLabel({ actor, selected, strikethrough }: { actor: Actor; selected: boolean; strikethrough: boolean }) {
+export function InitiativeActorLabel({ actor, displayName = actor.name, selected, strikethrough }: { actor: Actor; displayName?: string; selected: boolean; strikethrough: boolean }) {
   const conditions = CONDITIONS.filter(({ id }) => actor.statusEffects.includes(id));
   const root = useRef<HTMLSpanElement>(null);
   const name = useRef<HTMLSpanElement>(null);
@@ -31,14 +31,14 @@ export function InitiativeActorLabel({ actor, selected, strikethrough }: { actor
     ownerWindow?.addEventListener("resize", measure);
     void element.ownerDocument.fonts?.ready.then(measure);
     return () => { canceled = true; observer?.disconnect(); ownerWindow?.removeEventListener("resize", measure); };
-  }, [actor.name, conditionIds, selected, strikethrough]);
+  }, [displayName, conditionIds, selected, strikethrough]);
   return <span className="relative flex min-w-0 flex-1 items-center gap-2" ref={root}>
     <span className={`min-w-0 truncate ${selected ? "font-bold" : "font-medium"}`} ref={name}>
-      {strikethrough ? <s>{actor.name}</s> : actor.name}
+      {strikethrough ? <s>{displayName}</s> : displayName}
     </span>
     <span aria-hidden="true" className="pointer-events-none invisible absolute flex w-max gap-1" ref={measureIcons}>
       {conditions.map(({ id, Icon }) => <Icon aria-hidden="true" className="h-4 w-4 shrink-0" key={id} />)}
     </span>
-    <InitiativeConditionIcons actorId={actor.id} actorName={actor.name} conditions={conditions} collapsed={collapsed} />
+    <InitiativeConditionIcons actorId={actor.id} actorName={displayName} conditions={conditions} collapsed={collapsed} />
   </span>;
 }

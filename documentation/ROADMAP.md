@@ -208,6 +208,7 @@ the design as future or nice-to-have work.
 - [x] Directional actor movement, candidate chooser, skill-check adjudication, and destination warning.
 - [x] Bulk actor size shortcuts and source-zone-first paste.
 - [x] Configurable chords, conflict overrides, pan presets, zoom/Library/audio shortcuts.
+- [x] Keybind preferences store only custom overrides; legacy default snapshots migrate on load. Every declared shortcut has default matching and persistence coverage, with upgraded Ruler/Rename tool-dispatch regressions.
 - [x] Heal/damage shortcut dialog and responsive settings.
 
 ## Encounter movement strategies and grid
@@ -314,6 +315,22 @@ Implementation plan: [Zone rotation](plans/zone_rotation.md).
 
 ## Ruler and grid styles (#26)
 
+- [x] Live name previews for Actor, Zone, and Ruler Properties and rename dialogs on canvas, selected Zone/Actor Status names, and Actor Initiative names (including popouts), with cancellation/cleanup, multi-selection support, and existing draft/history commit behavior.
+
+- [x] Expanding shared panel color pickers reveals the complete picker when it fits, otherwise its top, with clipping-aware scrolling, reduced-motion support, and user-scroll cancellation.
+
+- [x] Continuous opacity sliders in Zone Properties and Canvas Settings (default Zone and Ruler), preserving precise values, preview/commit history, and preference reload.
+
+- [x] Extend smooth Circle dragging to all ruler point handles: frame-coalesced updates, preserved grab offsets, direct rendering, final-release flushing, and cancellation/history regression coverage.
+
+- [x] Ruler Properties with Ruler-tool-only context targeting, active-edit precedence, shared radial properties/actions, Highlight above distance, a Color section with direct gesture commits and no Save/Cancel buttons, Shape last with equal-width icons fitting one row without overflow, adjacent Delete/Lock actions, guarded shape conversion, and draft/history integration; Escape cancels uncommitted Name typing across properties panels.
+
+- [x] Cone left-corner angle drag handle with fixed origin/range, projected/snapped geometry, temporary edits, and exact re-lock undo/redo; hide visible point markers on locked rulers.
+
+- [x] Smooth Circle center dragging: frame-coalesced updates, unchanged-snap suppression, shared AoE derivation, synchronized visuals, and exact release/lock/cancellation behavior.
+
+- [x] Click locking, Circle center translation, mobile point removal, per-ruler distance/glow radial toggles with undo/redo, and Canvas overlap-highlight intensity.
+
 - [x] Solid, dashed, dotted and crosshair grid styles.
 - [x] Ruler shapes, cell highlighting and independent map measurement scale.
 - [x] Actor movement previews, advisory limits and optional turn/round accounting.
@@ -323,10 +340,10 @@ Implementation plan: [Ruler, movement and grid styles](plans/ruler_movement_and_
 
 - [x] Ruler interaction refinements: icon subtools, automatic three-corner highlighting, editable locked artifacts, Shift pivots, movement range glow and ruler color preferences.
 
-- [x] Ruler polish: no drop-boundary flash, automatic outward cone origins, corner-or-center AoE inclusion, optional area values, bounded labels, angle editing and D/number shortcuts; R supports Zone rename.
+- [x] Ruler polish: no drop-boundary flash, automatic outward cone origins, corner-or-center AoE inclusion, optional area values, bounded labels, angle editing and R/number shortcuts; N supports Actor, Zone, and targeted Ruler rename; T activates Annotation and B remains Background.
 
 - [x] Persist locked ruler artifacts in schema 29 with standard undo/redo, one-step edit locking, cancel/restore and fresh-history reload recovery.
-- [x] State-aware ruler hints, endpoint pickup, Path defaults and clicked-waypoint-only locking; Canvas Ruler feel preference and white cursor preview.
+- [x] State-aware ruler hints including point-click/Spacebar locking, endpoint pickup, Path defaults and clicked-waypoint-only locking; Canvas Ruler feel preference and white cursor preview.
 - [x] Place through existing ruler artifacts, preserving idle context actions and suppressing artifact menus during creation/editing.
 
 - [x] Canvas measurement cell-coverage preferences: corners-or-center, center only, strict majority area, and one/all forward cone-origin neighbor exceptions; square/isometric use 3 corners and hex uses 4.

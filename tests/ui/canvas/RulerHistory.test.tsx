@@ -11,7 +11,7 @@ function setup() {
   renderApp(); mockCanvasBounds(getCanvas()); act(() => store.dispatch(setActiveTool('ruler')));
   fireEvent.click(screen.getByRole('button', { name: 'Path ruler' }));
 }
-function open() { fireEvent.contextMenu(document.querySelector('[data-ruler-id] circle')!, { clientX: 150, clientY: 150 }); }
+function open() { fireEvent.contextMenu(document.querySelector('[data-ruler-id] > g')!, { clientX: 150, clientY: 150 }); }
 it('keeps drawing out of history, then replays locking with the shared controls and keyboard', () => {
   setup(); point(100, 100); point(200, 100);
   expect(store.getState().encounter.past).toHaveLength(0);

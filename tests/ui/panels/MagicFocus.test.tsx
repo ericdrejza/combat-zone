@@ -26,10 +26,10 @@ afterEach(() => setPersistenceWritable(true));
 
 it.each(['ADVISORY', 'STRICT'] as const)('toggles mixed Magic Focus independently with exact bulk history in %s mode', async (mode) => {
   setup(mode);
-  const button = within(screen.getByRole('group', { name: 'Weapons' })).getByRole('button', { name: 'Magic Focus' });
+  const button = within(screen.getByRole('group', { name: 'Weapons' })).getByRole('button', { name: /^Magic focus$/i });
   expect(button).toHaveAttribute('aria-pressed', 'mixed');
   fireEvent.pointerEnter(button, { pointerType: 'mouse' });
-  expect(screen.getByRole('tooltip')).toHaveTextContent('Magic Focus');
+  expect(screen.getByRole('tooltip')).toHaveTextContent(/Magic focus/i);
   fireEvent.pointerLeave(button, { pointerType: 'mouse' });
   const before = store.getState().encounter.present;
   fireEvent.click(button);

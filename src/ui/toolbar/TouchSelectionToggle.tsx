@@ -22,7 +22,7 @@ export function TouchSelectionToggle({ toolId }: TouchSelectionToggleProps) {
       : false
   );
 
-  if (!selectable) {
+  if (!selectable || toolId === "ruler") {
     return null;
   }
 

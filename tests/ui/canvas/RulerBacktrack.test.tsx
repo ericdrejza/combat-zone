@@ -35,14 +35,14 @@ it('also picks up the last point when the cursor is over an earlier control poin
 });
 it('backtracks over another saved artifact without opening its menu or altering it', () => {
   setup(); points.slice(0, 2).forEach(place); space(); const original = selectLockedRulers(store.getState())[0];
-  points.forEach(place); back(document.querySelector('[data-ruler-id] circle')!);
+  points.forEach(place); back(document.querySelector('[data-ruler-id] > g')!);
   expect(selectRulerDraft(store.getState())?.points).toEqual(points.slice(0, 3));
   expect(screen.queryByRole('menu', { name: 'Ruler options' })).not.toBeInTheDocument();
   expect(selectLockedRulers(store.getState())).toEqual([original]); expect(store.getState().encounter.past).toHaveLength(1);
 });
 it('keeps backtracked edits temporary until relocking, with one exact undo step', () => {
   setup(); points.forEach(place); space(); const original = selectLockedRulers(store.getState())[0];
-  back(document.querySelector('[data-ruler-id] circle')!);
+  back(document.querySelector('[data-ruler-id] > g')!);
   fireEvent.click(screen.getByRole('menuitem', { name: 'Edit ruler' })); back();
   expect(selectRulerDraft(store.getState())?.points).toEqual(points.slice(0, 3));
   expect(selectLockedRulers(store.getState())).toEqual([original]); expect(store.getState().encounter.past).toHaveLength(1);
@@ -58,7 +58,7 @@ it.each(['Circle', 'Cone', 'Rectangle', 'Line'])('picks up the endpoint of a %s,
 });
 it('restores a saved ruler if backtracking removes every pending edit point, without deletion history', () => {
   setup(); points.slice(0, 2).forEach(place); space(); const original = selectLockedRulers(store.getState())[0];
-  back(document.querySelector('[data-ruler-id] circle')!);
+  back(document.querySelector('[data-ruler-id] > g')!);
   fireEvent.click(screen.getByRole('menuitem', { name: 'Edit ruler' })); back(); back();
   expect(selectRulerDraft(store.getState())).toBeNull(); expect(selectLockedRulers(store.getState())).toEqual([original]);
   expect(store.getState().encounter.past).toHaveLength(1);

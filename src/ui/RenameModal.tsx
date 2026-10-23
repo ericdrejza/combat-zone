@@ -6,6 +6,7 @@ type RenameModalProps = {
   inputLabel: string;
   onClose: () => void;
   onRename: (name: string) => void;
+  onPreview?: (name: string | null) => void;
   submitLabel?: string;
   title: string;
 };
@@ -17,6 +18,7 @@ export function RenameModal({
   inputLabel,
   onClose,
   onRename,
+  onPreview,
   submitLabel = "Rename",
   title
 }: RenameModalProps) {
@@ -31,7 +33,7 @@ export function RenameModal({
   function submitRename() {
     const nextName = name.trim();
     if (nextName) onRename(nextName);
-    onClose();
+    onPreview?.(null); onClose();
   }
 
   return (
@@ -42,7 +44,7 @@ export function RenameModal({
       onKeyDown={(event) => {
         if (event.key === "Escape") {
           event.preventDefault();
-          onClose();
+          onPreview?.(null); onClose();
         } else if (event.key === "Enter") {
           event.preventDefault();
           submitRename();
@@ -64,7 +66,7 @@ export function RenameModal({
             ref={inputRef}
             aria-label={inputLabel}
             className="w-full rounded-xl border border-canvas-line bg-canvas-surface px-3 py-2 font-normal outline-none focus:border-canvas-ink"
-            onChange={(event) => setName(event.target.value)}
+            onChange={(event) => { setName(event.target.value); onPreview?.(event.target.value); }}
             placeholder="Name"
             value={name}
           />
@@ -72,7 +74,7 @@ export function RenameModal({
         <div className="flex justify-end gap-2">
           <button
             className="rounded-xl border border-canvas-line bg-canvas-surface px-4 py-2 text-sm font-medium transition hover:bg-canvas"
-            onClick={onClose}
+            onClick={() => { onPreview?.(null); onClose(); }}
             type="button"
           >
             Cancel

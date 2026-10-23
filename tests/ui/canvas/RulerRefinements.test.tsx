@@ -16,8 +16,8 @@ function setup() {
 }
 const point = (x: number, y: number) => fireEvent.pointerDown(screen.getByLabelText('Ruler drawing surface'), { button: 0, clientX: x, clientY: y, pointerId: 1 });
 afterEach(() => localStorage.removeItem(CANVAS_PREFERENCES_KEY));
-it('uses D and scoped number shortcuts, yielding to text fields', () => {
-  setup(); fireEvent.keyDown(window, { key: 'd' });
+it('uses R and scoped number shortcuts, yielding to text fields', () => {
+  setup(); fireEvent.keyDown(window, { key: 'r' });
   expect(store.getState().interaction.activeToolId).toBe('ruler');
   for (const [key, shape] of [['1', 'path'], ['2', 'circle'], ['3', 'cone'], ['4', 'rectangle'], ['5', 'line']]) {
     fireEvent.keyDown(window, { key }); expect(store.getState().interaction.rulerOptions.shape).toBe(shape);
@@ -32,7 +32,7 @@ it('uses D and scoped number shortcuts, yielding to text fields', () => {
   fireEvent.keyDown(angle, { key: '1' }); expect(store.getState().interaction.rulerOptions.shape).toBe('cone');
 });
 it('commits angle drafts on Enter, blurs the field and adjusts the angle with Shift+wheel', () => {
-  setup(); fireEvent.keyDown(window, { key: 'd' }); fireEvent.keyDown(window, { key: '3' });
+  setup(); fireEvent.keyDown(window, { key: 'r' }); fireEvent.keyDown(window, { key: '3' });
   const angle = screen.getByRole('spinbutton', { name: 'Cone angle' });
   act(() => angle.focus()); fireEvent.change(angle, { target: { value: '45' } });
   expect(store.getState().interaction.rulerOptions.angle).toBeUndefined();
@@ -45,20 +45,20 @@ it('commits angle drafts on Enter, blurs the field and adjusts the angle with Sh
   expect(screen.getByLabelText('Measurement result')).toHaveTextContent('46°');
 });
 it('hides calculated area by default and responds to the Canvas preference', () => {
-  setup(); fireEvent.keyDown(window, { key: 'd' }); fireEvent.keyDown(window, { key: '2' });
+  setup(); fireEvent.keyDown(window, { key: 'r' }); fireEvent.keyDown(window, { key: '2' });
   point(128, 128); point(192, 128);
   expect(screen.getByLabelText('Measurement result')).not.toHaveTextContent('ft²');
   act(() => saveCanvasPreferences({ ...readCanvasPreferences(), showRulerArea: true }));
   expect(screen.getByLabelText('Measurement result')).toHaveTextContent('ft²');
   expect(screen.queryByRole('spinbutton', { name: 'Ruler range' })).not.toBeInTheDocument();
 });
-it.each(['STRICT', 'ADVISORY'] as const)('renames a selected zone with R and preserves exact history in %s', async mode => {
+it.each(['STRICT', 'ADVISORY'] as const)('renames a selected zone with N and preserves exact history in %s', async mode => {
   setup();
   const state = createZone(createEncounterState({ id: 'zone', name: 'Zone rename' }), { id: 'z', name: 'Before', polygon: [{ x: 64, y: 64 }, { x: 320, y: 64 }, { x: 320, y: 320 }, { x: 64, y: 320 }] });
   state.validationState.mode = mode;
   act(() => { store.dispatch(loadEncounterState(state)); store.dispatch(setActiveTool('zone')); store.dispatch(selectEntity({ entityType: 'zone', ids: ['z'] })); });
   expect(screen.getByRole('textbox', { name: 'Zone name' })).toHaveValue('Before');
-  fireEvent.keyDown(window, { key: 'r' });
+  fireEvent.keyDown(window, { key: 'n' });
   fireEvent.change(screen.getByRole('textbox', { name: 'New zone name' }), { target: { value: 'After' } });
   fireEvent.click(screen.getByRole('button', { name: 'Rename' }));
   await waitFor(() => expect(store.getState().encounter.present.zones.byId.z.name).toBe('After'));

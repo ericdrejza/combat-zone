@@ -1,3 +1,4 @@
+import { ENCOUNTER_SCHEMA_VERSION } from '@core/encounter/types';
 import { createEncounterState } from '@core/encounter/createEncounterState';
 import { createActor } from '@entities/actor/actorMutations';
 import { assertEncounterState, migrateEncounterState, parseExportEnvelope } from '@core/persistence/envelope';
@@ -22,7 +23,7 @@ describe('measurement persistence', () => {
     delete legacy.grid.lineStyle; delete legacy.grid.distancePerCell; delete legacy.grid.distanceUnit; delete legacy.initiativeTracker.movement;
     const copy = structuredClone(legacy), migrated = migrateEncounterState(legacy);
     assertEncounterState(migrated);
-    expect(migrated.schemaVersion).toBe(29);
+    expect(migrated.schemaVersion).toBe(ENCOUNTER_SCHEMA_VERSION);
     expect(migrated.grid).toMatchObject({ lineStyle: 'solid', distancePerCell: 5, distanceUnit: 'feet' });
     expect(migrated.initiativeTracker.movement ?? {}).toEqual({}); expect(legacy).toEqual(copy);
   });

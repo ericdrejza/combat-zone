@@ -8,7 +8,7 @@ import { healthRowImageSize } from './healthRowImageSize';
 type ImagePlacement = { size: number; wrapped: boolean; left: number; height: number };
 
 /** Measure existing controls independently so an image never changes their wrapping. */
-export function ActorStatusHealthRow({ actor, names, children }: { actor?: Actor; names: ReactNode; children: ReactNode }) {
+export function ActorStatusHealthRow({ actor, displayName, names, children }: { actor?: Actor; displayName?: string; names: ReactNode; children: ReactNode }) {
   const dashboard = useStatusDashboard();
   const imageUrl = useResolvedImageSource(dashboard ? actor?.image : undefined);
   const row = useRef<HTMLDivElement>(null);
@@ -45,7 +45,7 @@ export function ActorStatusHealthRow({ actor, names, children }: { actor?: Actor
     ownerWindow?.addEventListener('resize', measure);
     void element.ownerDocument.fonts?.ready.then(measure);
     return () => { canceled = true; observer?.disconnect(); ownerWindow?.removeEventListener('resize', measure); };
-  }, [dashboard, hasImage, actor?.id]);
+  }, [dashboard, hasImage, actor?.id, displayName]);
   return <div ref={row} className={dashboard ? 'relative flex items-center gap-6' : undefined}>
     <div ref={content} className={`space-y-4 ${dashboard ? 'w-fit min-w-0 max-w-full shrink-0' : ''}`}>
       <div ref={name} className={dashboard ? 'w-fit max-w-full' : undefined}>{names}</div>
@@ -54,7 +54,7 @@ export function ActorStatusHealthRow({ actor, names, children }: { actor?: Actor
     {dashboard && actor && imageUrl && placement ? <div
       className={placement.wrapped ? 'absolute right-0 top-0 flex items-center justify-center' : 'flex min-w-0 flex-1 self-stretch items-center justify-center'}
       style={placement.wrapped ? { left: placement.left, height: placement.height } : undefined}>
-      <ActorStatusImage actor={actor} src={imageUrl} size={placement.size} className="shrink-0" />
+      <ActorStatusImage actor={actor} displayName={displayName} src={imageUrl} size={placement.size} className="shrink-0" />
     </div> : null}
   </div>;
 }

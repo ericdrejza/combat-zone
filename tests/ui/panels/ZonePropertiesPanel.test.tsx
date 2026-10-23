@@ -1,6 +1,7 @@
 import { act, fireEvent, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
+import { undoEncounterChange, redoEncounterChange } from "@store/encounterSlice";
 import { store } from "@store/store";
 import {
   createRectangleZone,
@@ -11,12 +12,20 @@ import {
 } from "@tests/ui/renderApp";
 
 describe("ZonePropertiesPanel", () => {
-  it('toggles the background color matcher from the color field label', async () => {
-    const user = userEvent.setup(); renderApp(); const canvas = getCanvas(); mockCanvasBounds(canvas);
-    await selectZoneTool(user); createRectangleZone(canvas); await screen.findByLabelText('Zone 1');
-    const matcher = screen.getByRole('button', { name: 'Background color matcher' });
-    await user.click(matcher); expect(matcher).toHaveAttribute('aria-pressed', 'true');
-    await user.click(matcher); expect(matcher).toHaveAttribute('aria-pressed', 'false');
+  it('uses the current screen eyedropper and preserves undo/redo', async () => {
+    const open = vi.fn().mockResolvedValue({ sRGBHex: '#123456' });
+    vi.stubGlobal('EyeDropper', class { open = open; });
+    try {
+      const user = userEvent.setup(); renderApp(); const canvas = getCanvas(); mockCanvasBounds(canvas);
+      await selectZoneTool(user); createRectangleZone(canvas); await screen.findByLabelText('Zone 1');
+      const before = store.getState().encounter.present;
+      const id = before.zones.allIds[0], history = store.getState().encounter.past.length;
+      await user.click(screen.getByRole('button', { name: 'Pick fill color from screen' }));
+      await waitFor(() => expect(store.getState().encounter.present.zones.byId[id].colorFill).toBe('#123456'));
+      expect(open).toHaveBeenCalledOnce(); expect(store.getState().encounter.past).toHaveLength(history + 1);
+      act(() => store.dispatch(undoEncounterChange())); expect(store.getState().encounter.present).toEqual(before);
+      act(() => store.dispatch(redoEncounterChange())); expect(store.getState().encounter.present.zones.byId[id].colorFill).toBe('#123456');
+    } finally { vi.unstubAllGlobals(); }
   });
 
   it("edits tabbed zone colors and shows controls only on their relevant tabs", async () => {
@@ -83,7 +92,6 @@ describe("ZonePropertiesPanel", () => {
     });
     expect(matchBorder).toBeChecked();
     expect(screen.getByRole("button", { name: "Engagements color" })).toBeDisabled();
-    expect(screen.queryByRole("group", { name: "Engagements color palette" })).not.toBeInTheDocument();
     await user.click(matchBorder);
     await user.click(screen.getByRole("button", { name: "Engagements color" }));
     await user.click(
@@ -203,17 +211,17 @@ describe("ZonePropertiesPanel", () => {
     fireEvent.pointerDown(opacity);
     fireEvent.change(opacity, { target: { value: "0.1" } });
     fireEvent.change(opacity, { target: { value: "0.2" } });
-    fireEvent.change(opacity, { target: { value: "0.35" } });
+    fireEvent.change(opacity, { target: { value: "0.3574" } });
 
-    expect(opacity).toHaveValue("0.35");
-    expect(screen.getByText("35%")).toBeInTheDocument();
+    expect(opacity).toHaveValue("0.3574");
+    expect(screen.getByText("36%")).toBeInTheDocument();
     expect(store.getState().encounter.past).toHaveLength(historyLength);
     await waitFor(() => {
       expect(store.getState().interaction.zoneOpacityPreview).toMatchObject({
-        opacity: 0.35,
+        opacity: 0.3574,
         zoneId: zone.getAttribute("data-entity-id")
       });
-      expect(zone).toHaveAttribute("fill-opacity", "0.35");
+      expect(zone).toHaveAttribute("fill-opacity", "0.3574");
     });
 
     fireEvent.pointerUp(opacity);
@@ -224,9 +232,14 @@ describe("ZonePropertiesPanel", () => {
         store.getState().encounter.present.zones.byId[
           zone.getAttribute("data-entity-id") ?? ""
         ]?.opacity
-      ).toBe(0.35);
+      ).toBe(0.3574);
       expect(store.getState().interaction.zoneOpacityPreview).toBeNull();
     });
+    const zoneId = zone.getAttribute("data-entity-id")!;
+    act(() => store.dispatch(undoEncounterChange()));
+    expect(store.getState().encounter.present.zones.byId[zoneId].opacity).toBe(0.7);
+    act(() => store.dispatch(redoEncounterChange()));
+    expect(store.getState().encounter.present.zones.byId[zoneId].opacity).toBe(0.3574);
   });
 
   it("exports first selected zone properties to the rest of a multi-selection", async () => {

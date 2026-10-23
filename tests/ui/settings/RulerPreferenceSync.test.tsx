@@ -9,7 +9,7 @@ afterEach(() => {
 });
 it('synchronizes ruler preferences locally, across tabs and after reset', () => {
   const { result } = renderHook(useCanvasPreferences);
-  const changed = { ...DEFAULT_CANVAS_PREFERENCES, rulerCellCoverage: 'majority' as const, rulerFeel: 'flexible' as const, rulerColor: '#abcdef', rulerOpacity: 0.4, showActorMovementDistance: false };
+  const changed = { ...DEFAULT_CANVAS_PREFERENCES, rulerCellCoverage: 'majority' as const, rulerFeel: 'flexible' as const, rulerColor: '#abcdef', rulerOpacity: 0.4, rulerActorHighlightIntensity: 0.73, showActorMovementDistance: false };
   act(() => saveCanvasPreferences(changed));
   expect(result.current.preferences).toEqual(changed);
   localStorage.setItem(CANVAS_PREFERENCES_KEY, JSON.stringify({ ...changed, rulerColor: '#123456' }));
@@ -20,6 +20,6 @@ it('synchronizes ruler preferences locally, across tabs and after reset', () => 
   expect(result.current.preferences).toEqual(DEFAULT_CANVAS_PREFERENCES);
 });
 it('defaults invalid stored ruler colors and opacity', () => {
-  localStorage.setItem(CANVAS_PREFERENCES_KEY, JSON.stringify({ rulerCellCoverage: 'invalid', rulerFeel: 'unknown', rulerColor: 'red', rulerOpacity: 2 }));
-  expect(readCanvasPreferences()).toMatchObject({ rulerCellCoverage: 'corners-or-center', rulerFeel: 'rigid', rulerColor: null, rulerOpacity: 1, showActorMovementDistance: true });
+  localStorage.setItem(CANVAS_PREFERENCES_KEY, JSON.stringify({ rulerCellCoverage: 'invalid', rulerFeel: 'unknown', rulerColor: 'red', rulerOpacity: 2, rulerActorHighlightIntensity: -1 }));
+  expect(readCanvasPreferences()).toMatchObject({ rulerCellCoverage: 'corners-or-center', rulerFeel: 'rigid', rulerColor: null, rulerOpacity: 1, rulerActorHighlightIntensity: 0.5, showActorMovementDistance: true });
 });

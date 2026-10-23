@@ -172,7 +172,7 @@ export function ZoneColorSection({
                   onPointerCancel={opacityControl.handlePointerCancel}
                   onPointerDown={opacityControl.handlePointerDown}
                   onPointerUp={opacityControl.handlePointerUp}
-                  step="0.05"
+                  step="any"
                   type="range"
                   value={opacityControl.draftOpacity}
                 />

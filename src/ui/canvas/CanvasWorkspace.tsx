@@ -173,6 +173,7 @@ export function CanvasWorkspace({
   const paintCursorClass = useCanvasPaintCursor();
   const colorSampler = useCanvasColorSampler(encounter);
   const dispatch = useDispatch();
+  const namePreview = useSelector((state: RootState) => state.interaction.namePreview);
   const tracing = useSelector((state: RootState) => state.interaction.cellTracerActive);
   const [rulerHitTarget, setRulerHitTarget] = useState<SVGGElement | null>(null);
   const [tracerPointer, setTracerPointer] = useState<LayoutPoint | null>(null);
@@ -281,7 +282,7 @@ export function CanvasWorkspace({
                 }
               >
                 <g ref={setRulerHitTarget} aria-label="Ruler hit targets" className="outline-none" />
-                <ActorLayer
+                <ActorLayer namePreview={namePreview}
                   activeToolId={calibrating ? "background" : activeToolId}
                   actorDrag={actorDrag}
                   placements={actorRenderPlacements}
@@ -316,7 +317,7 @@ export function CanvasWorkspace({
         {tracerPreview ? <polyline data-cell-tracer-preview points={tracerPreview.map(p => `${p.x},${p.y}`).join(" ")} fill="none" stroke={polygonDraftColor} strokeWidth={2} strokeDasharray="6 4" pointerEvents="none" /> : null}
         <ActorMovementOverlay encounter={encounter} drag={actorDrag} />
         {keyboardOverlay}
-        <RulerOverlay encounter={encounter} hitTarget={rulerHitTarget} />
+        <RulerOverlay encounter={encounter} hitTarget={rulerHitTarget} placements={actorRenderPlacements} actorDrag={actorDrag} zoneActorTranslation={zoneActorTranslation} />
       </motion.svg>
     </MotionConfig>
   );

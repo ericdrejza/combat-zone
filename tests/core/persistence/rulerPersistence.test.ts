@@ -1,3 +1,4 @@
+import { ENCOUNTER_SCHEMA_VERSION } from '@core/encounter/types';
 import { createEncounterState } from '@core/encounter/createEncounterState';
 import { saveRuler } from '@core/measurement/rulerMutations';
 import type { LockedRuler } from '@core/measurement/types';
@@ -5,7 +6,7 @@ import { assertEncounterState, migrateEncounterState, parseExportEnvelope } from
 import { InMemoryWorkspaceRepository } from '@core/persistence/memoryRepository';
 import { validateEncounter, CLOUD_RECORD_SCHEMA_VERSION } from '@combat-zone/firebase-api';
 
-const artifact = (id = 'ruler', shape: LockedRuler['options']['shape'] = 'cone'): LockedRuler => ({ id, name: 'Blast', points: [{ x: 160, y: 160 }, { x: 320, y: 320 }], options: { shape, angle: 45 }, color: '#abcdef', opacity: 0.65 });
+const artifact = (id = 'ruler', shape: LockedRuler['options']['shape'] = 'cone'): LockedRuler => ({ id, name: 'Blast', points: [{ x: 160, y: 160 }, { x: 320, y: 320 }], options: { shape, angle: 45, showDistance: false, highlightActors: true }, color: '#abcdef', opacity: 0.65 });
 function fixture() {
   return (['path', 'line', 'circle', 'cone', 'rectangle'] as const).reduce((state, shape) => saveRuler(state, artifact(shape, shape)), createEncounterState({ id: 'rulers', name: 'Rulers' }));
 }
@@ -13,7 +14,7 @@ const cloud = (state: unknown) => validateEncounter({ schemaVersion: CLOUD_RECOR
 it('migrates schema 28 to an empty normalized ruler collection without changing its source or other facts', () => {
   const legacy = { ...fixture(), schemaVersion: 28 } as Record<string, unknown>; delete legacy.rulers;
   const before = structuredClone(legacy), migrated = migrateEncounterState(legacy);
-  assertEncounterState(migrated); expect(migrated.schemaVersion).toBe(29); expect(migrated.rulers).toEqual({ allIds: [], byId: {} });
+  assertEncounterState(migrated); expect(migrated.schemaVersion).toBe(ENCOUNTER_SCHEMA_VERSION); expect(migrated.rulers).toEqual({ allIds: [], byId: {} });
   expect({ ...migrated, schemaVersion: 28, rulers: undefined }).toEqual({ ...legacy, rulers: undefined }); expect(legacy).toEqual(before);
 });
 it('round trips all ruler shapes, names, appearance, and stable IDs through repository, recovery, export and cloud', async () => {
@@ -31,6 +32,7 @@ it.each([
   { points: [{ x: 1, y: 2 }] }, { points: [{ x: NaN, y: 2 }, { x: 3, y: 4 }] },
   { points: [{ x: 1, y: 2 }, { x: 3, y: Infinity }] }, { options: { shape: 'invalid' } },
   { options: { shape: 'cone', angle: 181 } }, { options: { shape: 'cone', angle: -1 } },
+  { options: { shape: 'circle', showDistance: 'no' } }, { options: { shape: 'path', highlightActors: 1 } },
   { name: 42 }, { color: 'red' }, { opacity: -0.1 }, { opacity: 1.1 }
 ])('rejects invalid ruler data %j locally/cloud and preserves the last valid record', async patch => {
   const repository = new InMemoryWorkspaceRepository(), state = fixture(), record = await repository.createEncounter(state);
@@ -51,8 +53,8 @@ it('preserves rulers on revision conflicts and rejects unsupported newer version
   await repository.createEncounter(state);
   await expect(repository.saveEncounter(saveRuler(state, { ...artifact('cone'), name: 'Conflict' }), { expectedRevision: 10 })).rejects.toThrow();
   expect((await repository.getEncounter(state.id))?.state).toEqual(state);
-  expect(() => assertEncounterState(migrateEncounterState({ ...state, schemaVersion: 30 }))).toThrow(/unsupported/);
-  expect(() => cloud({ ...state, schemaVersion: 30 })).toThrow(/unsupported/);
+  expect(() => assertEncounterState(migrateEncounterState({ ...state, schemaVersion: ENCOUNTER_SCHEMA_VERSION + 1 }))).toThrow(/unsupported/);
+  expect(() => cloud({ ...state, schemaVersion: ENCOUNTER_SCHEMA_VERSION + 1 })).toThrow(/unsupported/);
 });
 it('retains ruler IDs within imported encounters, backs up overwrite state, and rejects invalid imports atomically', async () => {
   const source = new InMemoryWorkspaceRepository(), destination = new InMemoryWorkspaceRepository(), state = fixture();

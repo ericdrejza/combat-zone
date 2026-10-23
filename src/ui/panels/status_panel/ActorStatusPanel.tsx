@@ -1,3 +1,4 @@
+import { previewedName } from '@interaction/namePreviewState';
 import { actorResourceBars, setResourceBars } from "@entities/actor/resourceBars";
 import { getAvailableCounterName } from "@entities/actor/counterNames";
 import { abbreviateDistanceUnit } from "@core/measurement/distanceUnits";
@@ -22,6 +23,7 @@ import { ActorStatusHealthRow } from "./ActorStatusHealthRow";
 
 /** Frequently updated actor details, with bulk commands committed as one history entry. */
 export function ActorStatusPanel() {
+  const namePreview = useSelector((state: RootState) => state.interaction.namePreview);
   const dashboard = useStatusDashboard();
   const selection = useSelector((state: RootState) => state.interaction.selection);
   const encounter = useSelector((state: RootState) => state.encounter.present);
@@ -34,9 +36,10 @@ export function ActorStatusPanel() {
   const visibleConditions = CONDITIONS.filter(({ id }) => (visibility.showConditions && !visibility.hiddenConditions.includes(id)) || actors.some((actor) => actor.statusEffects.includes(id)));
   const actor = actors.length === 1 ? actors[0] : undefined;
   if (!actors.length) return <p className="p-4 text-sm text-canvas-muted">Select an actor to view status.</p>;
+  const displayName = (actor: (typeof actors)[number]) => previewedName(namePreview, encounter.id, 'actor', actor.id, actor.name);
   return <div aria-label="Actor status" className="space-y-4 py-2">
-    <ActorStatusHealthRow actor={actor} names={
-      <div aria-label="Selected actor names" className="space-y-1">{actors.map((actor) => <ActorStatusName actor={actor} key={actor.id} largeImage={actors.length === 1} showImage={!dashboard || actors.length > 1} />)}</div>
+    <ActorStatusHealthRow actor={actor} displayName={actor ? displayName(actor) : undefined} names={
+      <div aria-label="Selected actor names" className="space-y-1">{actors.map((actor) => <ActorStatusName actor={actor} displayName={displayName(actor)} key={actor.id} largeImage={actors.length === 1} showImage={!dashboard || actors.length > 1} />)}</div>
     }>
     {actor ? <HealthStatusControl actor={actor} disabled={readOnly} onChange={(status) => void commit("actor.setStatus", { actorId: actor.id, status }, (state) => updateActorStatus(state, actor.id, status))} /> : null}
     <HitPointControls key={`hp:${ids.join("|")}`} actors={actors} disabled={readOnly} label={healthCounterName}

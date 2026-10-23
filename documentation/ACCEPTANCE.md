@@ -632,6 +632,7 @@ these back into `AGENT.md` or `DESIGN.md`.
       and atomic validated undo/redo including Engagement membership.
 - [x] Size shortcuts step bulk actors within bounds; paste prefers the copied zone.
 - [x] Keybind override and pan presets are atomic, persisted, and protect fixed shortcuts.
+- [x] Legacy keybind snapshots inherit updated Ruler R, Rename N, Annotation T, and Background B defaults. Only custom overrides (including cleared assignments) persist; versioned intentional overrides survive reload, tab synchronization, and resets. Every declared shortcut has unit coverage for matching and preference round trips.
 - [x] Zoom, Library, and global audio shortcuts use existing application behaviors.
 - [x] H toggles responsive heal/damage UI with shared HP rules, dismissal, and keep-open preference.
 
@@ -773,6 +774,22 @@ these back into `AGENT.md` or `DESIGN.md`.
 
 ## Ruler, movement measurement, and grid styles (#26)
 
+- [x] Actor, Zone, and Ruler name typing previews on canvas; Zone/Actor names also preview in Status and Actor names in Initiative, including popouts, without altering EncounterState or history. Other lists retain committed names. Properties Escape and dialog cancellation restore saved/draft labels; commits remain undoable, multi-selection previews all targets, and active ruler edits keep their draft boundary. Tool/selection changes, editor cleanup, and snapshot loads discard transient names.
+
+- [x] Opening a panel color picker scrolls only its owning scroll area enough to reveal it; oversized pickers align at the visible top. Fully visible pickers do not scroll. Ancestor clipping, scroll limits, motion preferences, manual interruption, and no repeated scrolling during edits are covered.
+
+- [x] Zone Properties and Canvas Settings opacity sliders accept values between former increments; Zone dragging previews without history and commits once with exact undo/redo, and default Zone/Ruler preferences survive reload without quantization.
+
+- [x] All ruler point handles coalesce pointer bursts per frame, preserve grab offsets, skip unchanged snapped points, and flush the final release/Space position. Touch and isometric input, cancellation, saved geometry, and exact undo/redo retain their behavior; Circle translation and cone-angle dragging remain covered.
+
+- [x] Ruler Properties opens for right-click/touch-hold targets only while the Ruler tool is active and always resolves active editing drafts. Name, display/glow toggles, a Color section with direct gesture commits and no Save/Cancel buttons, Delete, and shared shape icons work without an Edit button. Shape is the last section with equal-width icons fitting one row without overflow, and Highlight precedes distance. Lock sits to the right of Delete ruler with a gap and matching height, keeping Delete ruler on one line; it commits the active draft through shared locking and disables for saved/incomplete/read-only rulers. Paths with more than two placed points cannot convert through UI, commands, or editing options. Saved changes undo/redo exactly; pending changes join re-lock or cancel with the draft. Writer guards block saved and pending command changes. All properties-panel Name inputs restore their last committed value on Escape without a later blur history entry.
+
+- [x] Editable Cones expose a left arc-corner handle. Mouse/touch drags change only the angle (1–180°), update the existing angle field, retain two control points and fixed origin/range, work through projection/snapping, and commit once on re-lock with exact undo/redo. Escape discards pending edits and read-only drafts cannot be locked. Locked rulers hide point markers while retaining context actions; editing restores their handles.
+
+- [x] Circle center drags use the latest pointer position per display frame, skip unchanged snapped origins, preserve radius/grab offset, and keep visuals synchronized. Release and Space retain the final geometry; cancellation/reload never replay queued edits; re-lock remains one undoable edit.
+
+- [x] Path point clicks and completed-area clicks lock with Space retained; Circle center drags preserve radius. Mobile point removal supports tap/hold with touch-only hints. Radial distance/glow toggles persist per artifact with exact undo/redo and writer guarding. Glow uses shared cells when snapped, continuous AoE overlap or the Path line otherwise, and live actor positions. Canvas intensity defaults to 50%, persists/synchronizes/resets locally, and does not mutate encounter history.
+
 - [x] Four grid styles preserve appearance through settings, alignment and sizing.
 - [x] Independent whole-number cell measurement scale and units persist locally/cloud.
 - [x] Transient ruler supports all approved shapes, snapping, highlighting, touch, cancellation and read-only use.
@@ -783,13 +800,13 @@ these back into `AGENT.md` or `DESIGN.md`.
 - [x] Ruler icon subtools, shared snapping/configurable cell highlighting, multiple saved artifacts and editable points support mouse and touch locking.
 - [x] Shift movement pivots, abbreviated captions, fixed-origin reachable-area glow and local ruler appearance preferences pass regression/browser verification.
 
-- [x] Drop previews stop before position publication; automatic outward source-cell cone origins, corner-or-center AoE inclusion, optional area labels, bounded captions, grouped controls and D/number shortcuts pass browser and regression verification. R renames selected Zones with exact undo/redo.
+- [x] Drop previews stop before position publication; automatic outward source-cell cone origins, corner-or-center AoE inclusion, optional area labels, bounded captions, grouped controls and R/number shortcuts pass browser and regression verification. N renames selected Actors, Zones, and targeted Rulers with exact undo/redo; T activates Annotation and B remains Background.
 
 - [x] Hotkey Zone rename and undo/redo immediately update the selected Zone’s Properties name field without reselection or a stale blur overwrite.
 
 - [x] Locked ruler geometry, names and appearance survive autosave/reload, draft recovery, export/import and Firebase validation; schema 28 migration and invalid-write preservation pass. Writer guards block durable ruler mutations and replay in read-only tabs.
 - [x] Ruler create/delete/clear/name/color and completed geometry edits use shared undo/redo. Initial drafts stay outside history; edits commit once on re-lock, and Escape restores the saved artifact.
-- [x] Ruler hints match lockable/idle states; second-point clicks restore the live preview. Path is the default; locking excludes unplaced cursor points. Rigid/Flexible feel preferences persist/synchronize/reset without changing saved geometry.
+- [x] Ruler hints match lockable/idle states and advertise point-click/Spacebar locking; second-point clicks restore the live preview. Path is the default; locking excludes unplaced cursor points. Rigid/Flexible feel preferences persist/synchronize/reset without changing saved geometry.
 - [x] Saved ruler hit targets allow primary placement and preview through occupied cells; touch taps place and holds offer options. During creation/editing, right-click over another artifact picks up the last placed point without opening its menu.
 
 - [x] Five Canvas cell-coverage choices update saved and draft ruler highlights and optional area labels without encounter/history mutations. Corner thresholds are 3 square/isometric vertices and 4 hex vertices; center-only and exact geometric strict-majority decisions are covered, including half-area equality and tangencies. Cone-origin variants include either the first forward cell or all forward cells touching the origin, excluding the source. Settings persist, synchronize and reset; compact browser verification passes.

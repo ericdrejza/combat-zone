@@ -78,7 +78,7 @@ export const MVP_TOOLS: ToolDefinition[] = [
       selectableEntityTypes: ["annotation"],
       dragBehavior: "Place or adjust annotations in later roadmap work.",
       clickBehavior: "Select annotations before annotation creation behavior is implemented.",
-      keyboardShortcut: "n"
+      keyboardShortcut: "t"
     }
   },
   {
@@ -107,7 +107,7 @@ export const MVP_TOOLS: ToolDefinition[] = [
 
 export const TOOL_DEFINITIONS_BY_ID: Record<ToolId, ToolDefinition> =
   { ...(Object.fromEntries(MVP_TOOLS.map((tool) => [tool.id, tool])) as Record<ToolId, ToolDefinition>),
-    ruler: { id: 'ruler', label: 'Ruler', tooltip: 'Measure distances and areas.', contract: { selectableEntityTypes: [], dragBehavior: 'Adjust ruler control points.', clickBehavior: 'Set measurement points.', keyboardShortcut: 'd' } },
+    ruler: { id: 'ruler', label: 'Ruler', tooltip: 'Measure distances and areas.', contract: { selectableEntityTypes: [], dragBehavior: 'Adjust ruler control points.', clickBehavior: 'Set measurement points.', keyboardShortcut: 'r' } },
     grid: { id: 'grid', label: 'Grid', tooltip: 'Configure square, hex, or isometric grids and move actors on the grid.',
       contract: { selectableEntityTypes: ['actor'], dragBehavior: 'Move actors between grid anchors.', clickBehavior: 'Select actors.', keyboardShortcut: '' } },
   } as Record<ToolId, ToolDefinition>;

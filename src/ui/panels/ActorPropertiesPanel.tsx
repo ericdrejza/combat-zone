@@ -1,3 +1,5 @@
+import { useNamePreview } from '@ui/controls/useNamePreview';
+import { PropertiesNameInput } from '@ui/controls/PropertiesNameInput';
 import { ActorMovementTotal } from './actor_properties/ActorMovementTotal';
 import { BookOpen, Link2 } from "lucide-react";
 import { useRef } from "react";
@@ -30,6 +32,7 @@ export function ActorPropertiesPanel({
 }: ActorPropertiesPanelProps) {
   const tokenInputRef = useRef<HTMLInputElement>(null);
   const { actor, commitActorProperties } = useActorPropertiesActions();
+  const previewName = useNamePreview('actor', actor ? [actor.id] : []);
   const tokens = useSelector((state: RootState) => state.library.sections.tokens);
 
   if (!actor) {
@@ -104,18 +107,9 @@ export function ActorPropertiesPanel({
     <div key={actor.id} className="space-y-3 text-sm">
       <label className="block space-y-1">
         <span className="font-semibold text-canvas-ink">Name</span>
-        <input
-          className="w-full rounded-xl border border-canvas-line bg-canvas-surface px-3 py-1.5 text-canvas-ink"
-          onBlur={(event) =>
-            commitActorProperties({ name: event.currentTarget.value.trim() })
-          }
-          onKeyDown={(event) => {
-            if (event.key === "Enter") {
-              event.currentTarget.blur();
-            }
-          }}
-          type="text"
-          defaultValue={actor.name}
+        <PropertiesNameInput
+          className="w-full rounded-xl border border-canvas-line bg-canvas-surface px-3 py-1.5 text-canvas-ink enabled:hover:border-canvas-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-canvas-ink"
+          committedValue={actor.name} onPreview={previewName} onCommit={name => commitActorProperties({ name })}
         />
       </label>
       <ActorMovementTotal actorId={actor.id} />

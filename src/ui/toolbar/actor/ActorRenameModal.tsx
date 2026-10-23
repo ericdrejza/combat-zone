@@ -1,3 +1,4 @@
+import { useNamePreview } from '@ui/controls/useNamePreview';
 import { useDispatch, useSelector } from "react-redux";
 
 import { createEncounterActionRecord } from "@core/history/createEncounterActionRecord";
@@ -16,6 +17,8 @@ export function ActorRenameModal({ onClose }: ActorRenameModalProps) {
   const selection = useSelector((state: RootState) => state.interaction.selection);
   const actorIds =
     selection.selectedEntityType === "actor" ? selection.selectedIds : [];
+
+  const previewName = useNamePreview('actor', actorIds);
 
   function rename(nextName: string) {
     const nextEncounter = actorIds.reduce(
@@ -43,6 +46,7 @@ export function ActorRenameModal({ onClose }: ActorRenameModalProps) {
       inputLabel="New actor name"
       onClose={onClose}
       onRename={rename}
+      onPreview={previewName}
       title="Rename actors"
     />
   );

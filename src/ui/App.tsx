@@ -16,6 +16,7 @@ import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { useSelector } from "react-redux";
 
+import { selectRulerPropertiesArtifact } from "@interaction/rulerState";
 import { setActiveTool } from "@interaction/interactionState";
 import { MVP_TOOLS, TOOL_DEFINITIONS_BY_ID } from "@interaction/tools/toolRegistry";
 import { CanvasShell } from "./canvas/CanvasShell";
@@ -116,6 +117,7 @@ function AppContent() {
   const encounter = useSelector((state: RootState) => state.encounter.present);
   const library = useSelector((state: RootState) => state.library);
   const selection = useSelector((state: RootState) => state.interaction.selection);
+  const hasRulerRenameTarget = useSelector((state: RootState) => Boolean(selectRulerPropertiesArtifact(state)));
   const compactLayout = useCompactLayout();
   const visualViewport = useVisualViewportRect();
   const panelLayout = encounter.panelLayout;
@@ -186,8 +188,9 @@ function AppContent() {
 
       if (
         matchesKeybind(event, bindings["actor.rename"]) &&
-        ["actor", "zone"].includes(selection.selectedEntityType ?? "") &&
-        selection.selectedIds.length > 0
+        (hasRulerRenameTarget ||
+          (["actor", "zone"].includes(selection.selectedEntityType ?? "") &&
+            selection.selectedIds.length > 0))
       ) {
         event.preventDefault();
         setRenameModalOpen(true);
@@ -211,7 +214,7 @@ function AppContent() {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [bindings, dispatch, selection, persistenceUi]);
+  }, [bindings, dispatch, selection, hasRulerRenameTarget, persistenceUi]);
 
   function mapLibraryPanel(
     layout: PanelLayout,

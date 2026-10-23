@@ -98,7 +98,7 @@ describe("App", () => {
         "true"
       );
     });
-    fireEvent.keyDown(window, { key: "r" });
+    fireEvent.keyDown(window, { key: "n" });
     const dialog = screen.getByRole("dialog", { name: "Rename actors" });
     await user.type(
       within(dialog).getByRole("textbox", { name: "New actor name" }),
@@ -140,7 +140,7 @@ describe("App", () => {
         "true"
       );
     });
-    fireEvent.keyDown(window, { key: "r" });
+    fireEvent.keyDown(window, { key: "n" });
     await user.type(screen.getByRole("textbox", { name: "New actor name" }), "Changed");
     fireEvent.keyDown(screen.getByRole("textbox", { name: "New actor name" }), {
       key: "Escape"

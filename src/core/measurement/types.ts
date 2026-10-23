@@ -10,6 +10,9 @@ export type RulerShape = 'line' | 'circle' | 'rectangle' | 'cone' | 'path';
 export type RulerOptions = {
   shape: RulerShape;
   angle?: number;
+  /** Omitted legacy flags use visible text and shape-dependent glow defaults. */
+  showDistance?: boolean;
+  highlightActors?: boolean;
 };
 export type LockedRuler = { id: string; points: LayoutPoint[]; options: RulerOptions; name: string; color: string | null; opacity: number | null };
 export type RulerDraft = { points: LayoutPoint[]; complete: boolean };

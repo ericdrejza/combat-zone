@@ -16,6 +16,8 @@ import {
   type KeybindMap
 } from "./keybindDefinitions";
 
+import { decodeKeybindPreferences, encodeKeybindPreferences } from "./keybindPreferences";
+
 export const KEYBIND_STORAGE_KEY = "combat-zone.keybinds";
 
 type KeybindContextValue = {
@@ -40,29 +42,7 @@ const KeybindContext = createContext<KeybindContextValue>(defaultValue);
 
 function readPreferences(): { bindings: KeybindMap; ctrlWheelZoomEnabled: boolean } {
   try {
-    const stored = JSON.parse(localStorage.getItem(KEYBIND_STORAGE_KEY) ?? "null");
-    if (!stored || typeof stored !== "object") return { bindings: DEFAULT_KEYBINDS, ctrlWheelZoomEnabled: true };
-    const next = { ...DEFAULT_KEYBINDS };
-    for (const { editable, id } of KEYBIND_DEFINITIONS) {
-      if (!editable) continue;
-      const candidate = stored[id];
-      if (candidate !== undefined && (!isKeybind(candidate))) {
-        return { bindings: DEFAULT_KEYBINDS, ctrlWheelZoomEnabled: true };
-      }
-      if (typeof candidate === "string") next[id] = candidate;
-    }
-    // New defaults may conflict with an older customized letter; keep the saved choice.
-    const assigned: string[] = [];
-    for (const { id } of KEYBIND_DEFINITIONS.filter((d) => !d.editable)) assigned.push(next[id]);
-    const ordered = KEYBIND_DEFINITIONS.filter((d) => d.editable).sort((a, b) => Number(typeof stored[b.id] === "string") - Number(typeof stored[a.id] === "string"));
-    for (const { id } of ordered) {
-      if (assigned.some((binding) => bindingsConflict(binding, next[id]))) next[id] = "";
-      if (next[id]) assigned.push(next[id]);
-    }
-    return {
-      bindings: next,
-      ctrlWheelZoomEnabled: typeof stored.ctrlWheelZoomEnabled === "boolean" ? stored.ctrlWheelZoomEnabled : true
-    };
+    return decodeKeybindPreferences(JSON.parse(localStorage.getItem(KEYBIND_STORAGE_KEY) ?? "null"));
   } catch {
     return { bindings: DEFAULT_KEYBINDS, ctrlWheelZoomEnabled: true };
   }
@@ -72,6 +52,17 @@ function readPreferences(): { bindings: KeybindMap; ctrlWheelZoomEnabled: boolea
 export function KeybindProvider({ children }: { children: ReactNode }) {
   const [preferences, setPreferences] = useState(readPreferences);
   const { bindings, ctrlWheelZoomEnabled } = preferences;
+
+  // Rewrite existing snapshots as overrides only; a fresh install need not write defaults.
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(KEYBIND_STORAGE_KEY);
+      const next = JSON.stringify(encodeKeybindPreferences(bindings, ctrlWheelZoomEnabled));
+      if (stored !== null && stored !== next) localStorage.setItem(KEYBIND_STORAGE_KEY, next);
+    } catch {
+      // Storage failures must not prevent shortcuts from working in memory.
+    }
+  }, [bindings, ctrlWheelZoomEnabled]);
 
   useEffect(() => {
     const reset = () => setPreferences({ bindings: DEFAULT_KEYBINDS, ctrlWheelZoomEnabled: true });
@@ -95,14 +86,7 @@ export function KeybindProvider({ children }: { children: ReactNode }) {
     try {
       localStorage.setItem(
         KEYBIND_STORAGE_KEY,
-        JSON.stringify({
-          ...Object.fromEntries(
-            KEYBIND_DEFINITIONS
-              .filter(({ editable }) => editable)
-              .map(({ id }) => [id, next[id]])
-          ),
-          ctrlWheelZoomEnabled: nextCtrlWheelZoomEnabled
-        })
+        JSON.stringify(encodeKeybindPreferences(next, nextCtrlWheelZoomEnabled))
       );
     } catch {
       // The in-memory preference remains usable when storage is unavailable.

@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react';
+import { render, within } from '@testing-library/react';
 
 import { createEncounterState } from '@core/encounter/createEncounterState';
 import type { SelectionState } from '@interaction/selection/types';
@@ -40,8 +40,7 @@ describe('ActorLayer', () => {
       </svg>
     );
 
-    expect(container.querySelector('text[dy="46"]')).toBeNull();
-    expect(container.querySelector('text')?.textContent).toBe('AEGIS');
+    expect(within(container).getAllByText(actor.name.toUpperCase())).toHaveLength(1);
   });
 
   it('uses the containing zone background luminance for selected actor labels', () => {

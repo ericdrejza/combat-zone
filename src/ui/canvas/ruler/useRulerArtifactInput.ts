@@ -12,10 +12,13 @@ export function useRulerArtifactInput({ active, place, preview, openMenu }: Inpu
   const hold = useRef<ReturnType<typeof setTimeout> | null>(null);
   const touch = useRef<{ x: number; y: number; moved: boolean; held: boolean } | null>(null);
   const clearTimer = () => { if (hold.current) clearTimeout(hold.current); hold.current = null; };
-  useEffect(() => () => { if (hold.current) clearTimeout(hold.current); }, []);
+  useEffect(() => {
+    if (!active) { clearTimer(); touch.current = null; }
+    return () => { if (hold.current) clearTimeout(hold.current); };
+  }, [active]);
   return (id: string) => ({
     onPointerDown(event: PointerEvent<SVGGElement>) {
-      if (event.button !== 0) return;
+      if (!active || event.button !== 0) return;
       if (event.pointerType !== 'touch') { if (active) place(event); return; }
       if (active) event.stopPropagation(); clearTimer();
       const point = { x: event.clientX, y: event.clientY, moved: false, held: false };

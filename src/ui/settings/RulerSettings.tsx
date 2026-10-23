@@ -1,7 +1,7 @@
 import { useCanvasPreferences } from '@ui/canvas_preferences/useCanvasPreferences';
 import { ColorOpacityFields } from '@ui/controls/ColorOpacityFields';
 import { PreferenceSwitch } from './PreferenceSwitch';
-import { SettingsField, SettingsSection, SETTINGS_CONTROL } from './SettingsLayout';
+import { SettingsField, SettingsSection, SETTINGS_CONTROL, SETTINGS_SLIDER } from './SettingsLayout';
 
 export function RulerSettings() {
   const { preferences, save } = useCanvasPreferences();
@@ -22,8 +22,12 @@ export function RulerSettings() {
         <option value="corners-and-adjacent">Corners + all forward cells touching cone origin</option>
       </select>
     </SettingsField>
+    <SettingsField label="Actor highlight intensity for ruler AoE overlap" valueLabel={`${Math.round(preferences.rulerActorHighlightIntensity * 100)}%`}>
+      <input type="range" className={SETTINGS_SLIDER} min={0} max={100} step={1} value={Math.round(preferences.rulerActorHighlightIntensity * 100)}
+        onChange={event => save({ ...preferences, rulerActorHighlightIntensity: event.currentTarget.valueAsNumber / 100 })} />
+    </SettingsField>
     <PreferenceSwitch label="Show calculated ruler area" checked={preferences.showRulerArea} onChange={showRulerArea => save({ ...preferences, showRulerArea })} />
-    <ColorOpacityFields keepPickerOpen allowColorReset label="Ruler" value={{ color: preferences.rulerColor, opacity: preferences.rulerOpacity }}
+    <ColorOpacityFields opacityStep="any" keepPickerOpen allowColorReset label="Ruler" value={{ color: preferences.rulerColor, opacity: preferences.rulerOpacity }}
       onChange={value => save({ ...preferences, rulerColor: value.color, rulerOpacity: value.opacity })} />
   </SettingsSection>;
 }

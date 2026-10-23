@@ -1,3 +1,5 @@
+import { useNamePreview } from '@ui/controls/useNamePreview';
+import { PropertiesNameInput } from '@ui/controls/PropertiesNameInput';
 import { Eye, EyeOff } from "lucide-react";
 
 import type { Zone } from "@entities/zone/types";
@@ -13,6 +15,7 @@ export function ZoneNameSection({
   onCommitZoneProperties,
   zone
 }: ZoneNameSectionProps) {
+  const previewName = useNamePreview('zone', [zone.id]);
   return (
     <section className="space-y-3 rounded-2xl border border-canvas-line bg-canvas-surface p-3">
       <div className="flex justify-between">
@@ -40,26 +43,9 @@ export function ZoneNameSection({
           </div>
       </div>
       <label className="block space-y-1">
-        {/* Refresh the blur-committed field when rename or history changes the saved name. */}
-        <input
-          aria-label="Zone name"
-          className="w-full rounded-xl border border-canvas-line bg-canvas-surface px-3 py-2"
-          key={zone.name}
-          defaultValue={zone.name}
-          onBlur={(event) => {
-            const name = event.currentTarget.value.trim();
-
-            if (name !== zone.name) {
-              onCommitZoneProperties({ name });
-            }
-          }}
-          onKeyDown={(event) => {
-            if (event.key === "Enter") {
-              event.currentTarget.blur();
-            }
-          }}
-          type="text"
-        />
+        <PropertiesNameInput aria-label="Zone name" key={zone.id} committedValue={zone.name} onPreview={previewName}
+          className="w-full rounded-xl border border-canvas-line bg-canvas-surface px-3 py-2 enabled:hover:border-canvas-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-canvas-ink"
+          onCommit={name => onCommitZoneProperties({ name })} />
       </label>
       <div className="">
         {zone.showName ? (

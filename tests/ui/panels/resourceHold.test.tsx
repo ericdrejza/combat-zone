@@ -1,4 +1,5 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
+import { DEFAULT_RESOURCE_BARS } from "@entities/actor/resourceBars";
 import { createActor } from "@entities/actor/actorMutations";
 import { createEncounterState } from "@core/encounter/createEncounterState";
 import { HitPointControls } from "@ui/panels/status_panel/HitPointControls";
@@ -55,7 +56,7 @@ it("repeats both HP editor fields without committing until Save", () => {
   expect(screen.getByLabelText("Current hit points")).toHaveValue(0);
   expect(screen.getByRole("button", { name: "Decrease current hit points" })).toBeDisabled();
   fireEvent.click(screen.getByRole("button", { name: "Save" }));
-  expect(onSet).toHaveBeenCalledWith("a", { current: 0, maximum: 23 });
+  expect(onSet).toHaveBeenCalledWith("a", { current: 0, maximum: 23 }, DEFAULT_RESOURCE_BARS);
 });
 it.each([
   ["Increase current value", "Current value", 3],
@@ -100,5 +101,5 @@ it("resets the HP draft to its edited maximum and commits only on Save", () => {
   expect(screen.getByLabelText("Current hit points")).toHaveValue(10);
   fireEvent.click(screen.getByRole("button", { name: "Reset current hit points to maximum" }));
   fireEvent.click(screen.getByRole("button", { name: "Save" }));
-  expect(onSet).toHaveBeenCalledWith("a", { current: 20, maximum: 20 });
+  expect(onSet).toHaveBeenCalledWith("a", { current: 20, maximum: 20 }, DEFAULT_RESOURCE_BARS);
 });

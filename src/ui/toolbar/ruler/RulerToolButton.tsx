@@ -1,6 +1,8 @@
+import { canConvertRulerShape } from '@core/measurement/rulerShapeConversion';
+import { RULER_SHAPE_OPTIONS } from './rulerShapeOptions';
 import { usePersistence } from '@ui/persistence/PersistenceProvider';
 import { ConeAngleField } from './ConeAngleField';
-import { Eraser, Footprints, Waypoints, Radius, Cone, RectangleHorizontal, RectangleEllipsis } from 'lucide-react';
+import { Eraser, Footprints } from 'lucide-react';
 import { useCanvasPreferences } from '@ui/canvas_preferences/useCanvasPreferences';
 import { selectRulerOptions, selectLockedRulers } from '@interaction/rulerState';
 import { createPortal } from 'react-dom';
@@ -20,16 +22,15 @@ export function RulerToolButton({ activeToolId, compactLayout, compactSubtoolHos
   const dispatch = useDispatch();
   const encounter = useSelector((state: RootState) => state.encounter.present);
   const options = useSelector(selectRulerOptions);
+  const editing = useSelector((state: RootState) => state.interaction.editingRuler);
   const locked = useSelector(selectLockedRulers), draft = useSelector((state: RootState) => state.interaction.rulerDraft);
   const hasRulers = !!draft || locked.length > 0, { readOnly } = usePersistence();
   const { preferences, save } = useCanvasPreferences();
   const square = isSquareTopology(encounter.grid.type);
   const controls = activeToolId === 'ruler' ? <ToolbarSubtoolBar aria-label="Ruler options">
     <ToolbarOptionGroup role="group" aria-label="Ruler shape">
-      {([{ shape: 'path', label: 'Path ruler', Icon: Waypoints }, { shape: 'circle', label: 'Circle ruler', Icon: Radius },
-        { shape: 'cone', label: 'Cone ruler', Icon: Cone }, { shape: 'rectangle', label: 'Rectangle ruler', Icon: RectangleHorizontal },
-        { shape: 'line', label: 'Line ruler', Icon: RectangleEllipsis }] as const).map(({ shape, label, Icon }, index) =>
-        <ToolbarOptionButton key={shape} aria-label={label} title={`${label} (${index + 1})`} aria-pressed={options.shape === shape} active={options.shape === shape}
+      {RULER_SHAPE_OPTIONS.map(({ shape, label, Icon }, index) =>
+        <ToolbarOptionButton key={shape} aria-label={label} title={`${label} (${index + 1})`} disabled={!!editing && !canConvertRulerShape(editing, shape)} aria-pressed={options.shape === shape} active={options.shape === shape}
           onClick={() => dispatch(setRulerOptions({ shape }))}><Icon size={18} className={shape === 'line' ? 'rotate-90' : undefined} aria-hidden="true" /><ToolbarOptionKeybind active={options.shape === shape}>{index + 1}</ToolbarOptionKeybind></ToolbarOptionButton>)}
     </ToolbarOptionGroup>
     {options.shape === 'cone' ? <ConeAngleField className={control} value={options.angle ?? (square ? 90 : 60)} onChange={angle => dispatch(setRulerOptions({ angle }))} /> : null}

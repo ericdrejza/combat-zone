@@ -24,6 +24,7 @@ function setup(ids = ["a"]) {
   return render(<Provider store={store}><CombatPreferenceProvider><PanelInterfaceSettings /><StatusPanel /></CombatPreferenceProvider></Provider>);
 }
 function conditions() { return within(screen.getByRole("group", { name: "Conditions" })); }
+function conditionToggles() { return conditions().getAllByRole("button").filter(button => button.hasAttribute("aria-pressed")); }
 
 it("defaults to every condition and section visible, and saves preferences without history", () => {
   setup();
@@ -60,7 +61,7 @@ it("hides all inactive conditions with the master switch and preserves individua
   setup(["b"]);
   fireEvent.click(screen.getByRole("button", { name: "Show Burning" }));
   fireEvent.click(screen.getByRole("switch", { name: "Show conditions" }));
-  expect(conditions().getAllByRole("button").map((button) => button.getAttribute("aria-label"))).toEqual(["Blinded"]);
+  expect(conditionToggles().map((button) => button.getAttribute("aria-label"))).toEqual(["Blinded"]);
   expect(conditions().queryByRole("group", { name: "Buffs" })).not.toBeInTheDocument();
   expect(within(conditions().getByRole("group", { name: "Debuffs" })).getByRole("button", { name: "Blinded" })).toBeInTheDocument();
   fireEvent.click(screen.getByRole("switch", { name: "Show conditions" }));
@@ -85,7 +86,7 @@ it("reloads, synchronizes and resets visibility, preserving actor conditions and
   expect(conditions().queryByRole("button", { name: "Blessed" })).not.toBeInTheDocument();
   expect(screen.getByRole("group", { name: "Weapons" })).toBeInTheDocument();
   act(() => window.dispatchEvent(new Event(LOCAL_PREFERENCES_RESET_EVENT)));
-  expect(conditions().getAllByRole("button")).toHaveLength(CONDITIONS.length);
+  expect(conditionToggles()).toHaveLength(CONDITIONS.length);
   expect(screen.getByRole("switch", { name: "Show conditions" })).toBeChecked();
   expect(screen.getByRole("group", { name: "Armor" })).toBeInTheDocument();
 });
@@ -93,13 +94,13 @@ it("reloads, synchronizes and resets visibility, preserving actor conditions and
 it("falls back safely for malformed stored visibility and for older preferences", () => {
   localStorage.setItem(COMBAT_PREFERENCES_STORAGE_KEY, JSON.stringify({ visibility: { hiddenConditions: "blinded", showWeapons: "false", showArmor: null } }));
   setup();
-  expect(conditions().getAllByRole("button")).toHaveLength(CONDITIONS.length);
+  expect(conditionToggles()).toHaveLength(CONDITIONS.length);
   expect(screen.getByRole("switch", { name: "Show weapons" })).toBeChecked();
   expect(screen.getByRole("switch", { name: "Show armor" })).toBeChecked();
   localStorage.setItem(COMBAT_PREFERENCES_STORAGE_KEY, JSON.stringify({ limits: "unbounded" }));
   act(() => window.dispatchEvent(new StorageEvent("storage", { key: COMBAT_PREFERENCES_STORAGE_KEY })));
   expect(screen.getByRole("switch", { name: "Show conditions" })).toBeChecked();
-  expect(conditions().getAllByRole("button")).toHaveLength(CONDITIONS.length);
+  expect(conditionToggles()).toHaveLength(CONDITIONS.length);
 });
 
 

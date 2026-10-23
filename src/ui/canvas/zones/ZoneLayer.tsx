@@ -1,3 +1,4 @@
+import { previewedName } from '@interaction/namePreviewState';
 import { useSelector } from "react-redux";
 import type { RootState } from "@store/store";
 import { displayedZoneDragPolygon } from './displayedZoneDragPolygon';
@@ -11,6 +12,7 @@ type Handlers = Pick<ZoneLayerProps, "onResizeHandleDrag" | "onResizeHandleDragE
   "onResizeHandleMouseDown" | "onZoneMotionComplete">;
 
 export function ZoneLayer(props: ZoneLayerProps) {
+  const namePreview = useSelector((state: RootState) => state.interaction.namePreview);
   const colorPreviewZoneId = useSelector((state: RootState) => state.interaction.zoneColorPreview?.zoneId);
   // Memoized visuals need stable callbacks that still see the current gesture.
   const latest = useRef(props);
@@ -23,8 +25,10 @@ export function ZoneLayer(props: ZoneLayerProps) {
   }), []);
 
   const zones = props.encounter.zones.allIds.map(zoneId => {
-    const zone = props.encounter.zones.byId[zoneId];
-    if (!zone) return null;
+    const committed = props.encounter.zones.byId[zoneId];
+    if (!committed) return null;
+    const name = previewedName(namePreview, props.encounter.id, 'zone', zoneId, committed.name);
+    const zone = name === committed.name ? committed : { ...committed, name };
     const zoneDrag = props.zoneDrag?.zoneId === zoneId ? props.zoneDrag : null;
     const previewingOpacity = props.zoneOpacityPreview?.zoneId === zoneId;
     return <ZoneVisual key={zoneId} {...handlers}
