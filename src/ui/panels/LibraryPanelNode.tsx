@@ -1,3 +1,4 @@
+import { ImageFocusFrame } from "@core/rendering/ImageFocusFrame";
 import { FileImage, Folder, Link } from "lucide-react";
 import { AudioAssetIcon } from "@ui/library/AudioAssetIcon";
 import type { DragEvent, PointerEvent } from "react";
@@ -105,20 +106,20 @@ export function LibraryPanelNode({
         {isAudio ? (
           <AudioAssetIcon asset={asset} className="h-7 w-7" />
         ) : asset ? (
-          videoAsset && enableAssetAnimation ? (
+          <ImageFocusFrame focus={isToken ? asset.imageFocus : undefined}>{videoAsset && enableAssetAnimation ? (
             <ControlledVideo
-              className="h-full w-full object-cover transition duration-150 ease-out group-hover:scale-[1.2]"
+              className={isToken ? `h-full w-full ${asset.imageFocus ? "object-fill" : "object-cover"}` : "h-full w-full object-cover transition duration-150 ease-out group-hover:scale-[1.2]"}
               play={enableAssetAnimation}
               src={imageUrl ?? ""}
             />
           ) : (
             <img
               alt=""
-              className="h-full w-full object-cover transition duration-150 ease-out group-hover:scale-[1.2]"
+              className={isToken ? `h-full w-full ${asset.imageFocus ? "object-fill" : "object-cover"}` : "h-full w-full object-cover transition duration-150 ease-out group-hover:scale-[1.2]"}
               draggable={false}
               src={displayedImageUrl ?? ""}
             />
-          )
+          )}</ImageFocusFrame>
         ) : node.type === "link" ? (
           <Link aria-hidden="true" className="h-4 w-4" />
         ) : (

@@ -960,3 +960,24 @@ these back into `AGENT.md` or `DESIGN.md`.
       through zoom and letterboxing. Focus prevents canvas edits, respects input
       guards and reduced motion, releases reliably, and preserves encounter
       state/history/logs in every validation mode and read-only tabs.
+
+## Token image focus — #52
+
+- [x] Right-clicking a token asset or its Library link opens default focus editing;
+      links share the original asset's setting and thumbnails update on Save.
+- [x] The square and circle guides remain fixed while the artwork moves; zoom
+      spans 100–400%, dragging stays within source bounds, and arrow keys work.
+- [x] Reset, Cancel, Escape, backdrop dismissal, load failures, and read-only
+      workspaces preserve saved data until a valid Save.
+- [x] Actor Properties has a ScanSquare button immediately after the web-link
+      button; custom framing changes only that Actor and supports undo/redo.
+- [x] Reset to token match copies today's token default into the actor draft, is
+      hidden without a resolvable token, and does not follow future token edits.
+- [x] Creation/application copies defaults; source replacement clears framing;
+      all token views agree, mirroring follows framing, and Transparent stays whole.
+- [x] Legacy migration retains artwork; saves, exports/imports, and cloud sync
+      retain valid focus and reject invalid data without replacing the last snapshot.
+- [x] Keep the grabbing cursor active throughout Actor and focus-image drags,
+      including over panels, and restore it on release or cancellation.
+- [x] Share live Motion positions between canvas Actors and floating drag visuals
+      so the first drag frame does not jump back to an older state snapshot.

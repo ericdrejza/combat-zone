@@ -1,4 +1,5 @@
 import {
+  ScanSquare,
   Copy,
   AudioLines,
   Music,
@@ -99,6 +100,7 @@ export function EncounterContextMenu({
 }
 
 type AssetContextMenuProps = {
+  onAdjustFocus?: (node: LibraryNode) => void;
   audioAsset?: LibraryImageAsset | null;
   onSetAudioIcon?: (node: LibraryNode, icon: "audio" | "music") => void;
   contextMenu: NonNullable<ContextMenuState>;
@@ -114,6 +116,7 @@ type AssetContextMenuProps = {
 };
 
 export function AssetContextMenu({
+  onAdjustFocus,
   audioAsset,
   onSetAudioIcon,
   contextMenu,
@@ -153,6 +156,12 @@ export function AssetContextMenu({
           onClick={() => onSetAudioIcon(node, audioAsset.audioIcon === "music" ? "audio" : "music")} role="menuitem" type="button">
           {audioAsset.audioIcon === "music" ? <AudioLines aria-hidden="true" className="h-4 w-4" /> : <Music aria-hidden="true" className="h-4 w-4" />}
           {audioAsset.audioIcon === "music" ? "Mark as Effect" : "Mark as Track"}
+        </button>
+      ) : null}
+      {node.sectionId === "tokens" && node.type !== "folder" && audioAsset && onAdjustFocus ? (
+        <button className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left enabled:hover:bg-canvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-canvas-ink disabled:cursor-not-allowed disabled:opacity-40"
+          disabled={readOnly} onClick={() => onAdjustFocus(node)} role="menuitem" type="button">
+          <ScanSquare aria-hidden="true" className="h-4 w-4" />Adjust focus
         </button>
       ) : null}
       {isImageAsset ? (

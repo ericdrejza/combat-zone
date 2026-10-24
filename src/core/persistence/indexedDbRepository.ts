@@ -1,3 +1,4 @@
+import { assertLibraryState } from "./envelope";
 import { assertEncounterState, validateExportEnvelope } from "./envelope";
 import {
   hydrateEncounterRecord,
@@ -253,6 +254,7 @@ export class IndexedDbWorkspaceRepository implements WorkspaceRepository {
   }
 
   async saveLibrary(state: LibraryState): Promise<LibraryRecord> {
+    assertLibraryState(state);
     const previous = await this.getLibrary();
     const internalized = await internalizeLibrary(state);
     const record: LibraryRecord = { state: internalized.value, revision: previous.revision + 1, updatedAt: now() };

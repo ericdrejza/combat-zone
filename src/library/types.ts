@@ -1,8 +1,10 @@
+import type { ImageFocus } from "@core/assets/imageFocus";
 export type LibrarySectionId = "encounters" | "backgrounds" | "tokens" | "audio";
 
 export type LibraryNodeType = "folder" | "image" | "link";
 
 export type LibraryImageAsset = {
+  imageFocus?: ImageFocus;
   audioIcon?: "audio" | "music";
   animated?: boolean;
   source: ImageAssetSource;

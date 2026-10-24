@@ -84,3 +84,8 @@ body {
 .scrollbar-hidden::-webkit-scrollbar {
   display: none;
 }
+
+/* Descendant cursor utilities must not replace active drag feedback. */
+html.actor-drag-grabbing, html.actor-drag-grabbing * {
+  cursor: grabbing !important;
+}

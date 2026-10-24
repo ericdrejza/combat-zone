@@ -1,3 +1,5 @@
+import { ImageFocusFrame } from "@core/rendering/ImageFocusFrame";
+import type { ImageFocus } from "@core/assets/imageFocus";
 import { ImageOff, LoaderCircle } from "lucide-react";
 import { motion, type MotionValue } from "motion/react";
 import { useState } from "react";
@@ -9,6 +11,8 @@ import { ControlledVideo } from "@core/rendering/ControlledVideo";
 import { useStillImageSource } from "@core/assets/useStillImageSource";
 
 type AssetImagePreviewProps = {
+  square?: boolean;
+  imageFocus?: ImageFocus;
   imageAlt?: string;
   mediaType?: string;
   name: string;
@@ -22,6 +26,8 @@ type ResolvedAssetImagePreviewProps = Omit<AssetImagePreviewProps, "source"> & {
 };
 
 function ResolvedAssetImagePreview({
+  square,
+  imageFocus,
   imageAlt = "",
   mediaType = "image/*",
   name,
@@ -59,6 +65,7 @@ function ResolvedAssetImagePreview({
           className="h-7 w-7 text-canvas-muted"
         />
       ) : null}
+      <ImageFocusFrame focus={imageFocus} square={square}>
       {displaySrc ? isVideo && !freeze ? (
         <ControlledVideo
           ariaLabel={imageAlt || `${name} video`}
@@ -78,12 +85,15 @@ function ResolvedAssetImagePreview({
           src={displaySrc}
         />
       ) : null}
+      </ImageFocusFrame>
     </>
   );
 }
 
 /** Keeps every pending card on one shared rotation value so loaders stay in phase. */
 export function AssetImagePreview({
+  square,
+  imageFocus,
   imageAlt = "",
   mediaType = "image/*",
   name,
@@ -98,6 +108,8 @@ export function AssetImagePreview({
   // from restoring "loading" after a cached image has already fired onLoad.
   return (
     <ResolvedAssetImagePreview
+      square={square}
+      imageFocus={imageFocus}
       imageAlt={imageAlt}
       key={src ?? "unresolved"}
       mediaType={mediaType}

@@ -1,3 +1,4 @@
+import { isImageFocus, sameImageFocus, type ImageFocus } from "@core/assets/imageFocus";
 import type { PayloadAction } from "@reduxjs/toolkit";
 import { createSlice, nanoid } from "@reduxjs/toolkit";
 
@@ -255,6 +256,7 @@ export const librarySlice = createSlice({
         name: payload.name?.trim() || node.name
       };
       node.name = node.asset.name;
+      delete node.asset.imageFocus;
       delete node.targetId;
     },
     replaceWithAssetLink(
@@ -328,6 +330,13 @@ export const librarySlice = createSlice({
         node.asset.name = name;
       }
     },
+    setTokenImageFocus(state, { payload }: PayloadAction<NodePayload & { focus?: ImageFocus }>) {
+      if (payload.sectionId !== "tokens" || (payload.focus !== undefined && !isImageFocus(payload.focus))) return;
+      const asset = resolveLibraryAsset(state.sections.tokens, payload.nodeId);
+      if (!asset || (payload.focus && !isImageFocus(payload.focus, asset)) || sameImageFocus(asset.imageFocus, payload.focus)) return;
+      if (payload.focus) asset.imageFocus = payload.focus;
+      else delete asset.imageFocus;
+    },
     setAudioAssetIcon(state, { payload }: PayloadAction<NodePayload & { icon: "audio" | "music" }>) {
       if (payload.sectionId !== "audio" || !["audio", "music"].includes(payload.icon)) return;
       const asset = resolveLibraryAsset(state.sections.audio, payload.nodeId);
@@ -379,6 +388,7 @@ export const {
   replaceWithAssetLink,
   renameNode,
   setAudioAssetIcon,
+  setTokenImageFocus,
   resetLibraryState,
   uploadImage
 } = librarySlice.actions;

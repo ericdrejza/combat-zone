@@ -1,3 +1,5 @@
+import { focusImageBox } from "@core/assets/imageFocus";
+import { ImageFocusFrame } from "@core/rendering/ImageFocusFrame";
 import { ActorTokenName } from "./ActorTokenName";
 import { ActorOverlay } from "./ActorOverlayLayers";
 import { ActorConditionIcons } from "./ActorConditionIcons";
@@ -63,6 +65,8 @@ export const ActorVisual = memo(function ActorVisual({
   projectionRotation, projectionAngle
 }: ActorVisualProps) {
   const innerRadius = Math.max(radius - (actor.shape === 'transparent' ? 0 : 3), 1);
+  const focus = actor.shape === "transparent" ? undefined : actor.imageFocus;
+  const imageBox = focus ? focusImageBox(focus) : { x: 0, y: 0, width: 1, height: 1 };
   const tokenContrastColor = getReadableTextColor(fillColor);
   const selectionRadius = radius + 5;
   const factionRadius = radius + 9;
@@ -158,6 +162,7 @@ export const ActorVisual = memo(function ActorVisual({
           </clipPath> : null}
           <motion.g initial={false} animate={{ scaleX: actor.imageFlippedHorizontal ? -1 : 1 }}
             style={{ transformOrigin: "0px 0px" }} transition={transition} data-actor-image-artwork>
+          <g clipPath={actor.shape === "transparent" ? undefined : `url(#${clipId})`}>
           {isVideo && enableAssetAnimation ? (
             <motion.foreignObject
               height={innerRadius * 2}
@@ -169,27 +174,27 @@ export const ActorVisual = memo(function ActorVisual({
               x={-innerRadius}
               y={-innerRadius}
             >
-              <ControlledVideo
-                className={actor.shape === "transparent" ? "h-full w-full object-contain" : `h-full w-full object-cover ${actor.shape === "circle" ? "rounded-full" : "rounded"}`}
+              <ImageFocusFrame focus={focus}><ControlledVideo
+                className={focus ? "h-full w-full object-fill" : actor.shape === "transparent" ? "h-full w-full object-contain" : `h-full w-full object-cover ${actor.shape === "circle" ? "rounded-full" : "rounded"}`}
                 play={enableAssetAnimation}
                 src={imageUrl}
-              />
+              /></ImageFocusFrame>
             </motion.foreignObject>
           ) : (
             <motion.image
-              clipPath={actor.shape === "transparent" ? undefined : `url(#${clipId})`}
               href={renderedImageUrl ?? undefined}
               initial={false}
               animate={{
-                attrX: -innerRadius,
-                attrY: -innerRadius,
-                height: innerRadius * 2,
-                width: innerRadius * 2
+                attrX: -innerRadius + imageBox.x * innerRadius * 2,
+                attrY: -innerRadius + imageBox.y * innerRadius * 2,
+                height: imageBox.height * innerRadius * 2,
+                width: imageBox.width * innerRadius * 2
               }}
-              preserveAspectRatio={actor.shape === "transparent" ? "xMidYMid meet" : "xMidYMid slice"}
+              preserveAspectRatio={focus ? "none" : actor.shape === "transparent" ? "xMidYMid meet" : "xMidYMid slice"}
               transition={transition}
             />
           )}
+          </g>
           </motion.g>
         </>
       ) : null}

@@ -1,3 +1,4 @@
+import { isImageFocus } from "./imageFocus.js";
 import { validRulerCollection } from './rulerArtifacts.js';
 import { validateSpatialState } from './spatialState.js';
 import { validateEdgeAppearance } from './edgeAppearance.js';
@@ -126,6 +127,9 @@ function validateEncounterStateShape(state: JsonObject): void {
   const actors = record(record(state.actors, "encounter.state.actors").byId, "encounter.state.actors.byId");
   for (const actor of Object.values(actors)) {
     const value = record(actor, "Actor");
+    if (value.imageFocus !== undefined && (!value.image || !isImageFocus(value.imageFocus))) {
+      throw new ApiContractValidationError("Actor.imageFocus is invalid.");
+    }
     if (value.imageFlippedHorizontal !== undefined && typeof value.imageFlippedHorizontal !== "boolean") {
       throw new ApiContractValidationError("Actor.imageFlippedHorizontal must be a boolean.");
     }
@@ -282,6 +286,9 @@ export function validateLibrary(value: unknown): LibraryPayload {
       const node = record(value, `library.state.sections.${sectionId}.nodesById.${nodeId}`);
       if (node.type === "image") {
         const asset = record(node.asset, `library image ${nodeId}.asset`);
+        if (asset.imageFocus !== undefined && (sectionId !== "tokens" || !isImageFocus(asset.imageFocus, asset))) {
+          throw new ApiContractValidationError("Library asset imageFocus is invalid.");
+        }
         const assetId = cloudImageAssetId(asset.source, `library image ${nodeId}.asset.source`);
         if (assetId) referenced.push(assetId);
       }

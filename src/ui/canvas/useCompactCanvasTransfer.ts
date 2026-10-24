@@ -48,6 +48,7 @@ function getLibraryActorPreview(
 
   return {
     image: asset.source,
+    imageFocus: asset.imageFocus,
     imageAnimated: asset.animated,
     imageMediaType: asset.mediaType,
     imageName: asset.name,

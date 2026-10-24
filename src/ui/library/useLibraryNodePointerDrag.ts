@@ -1,3 +1,4 @@
+import { useGrabbingCursor } from "@hooks/useGrabbingCursor";
 import { useMotionValue, type MotionValue } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
@@ -53,6 +54,7 @@ export function useLibraryNodePointerDrag({
   const y = useMotionValue(0);
   const cancelActiveRef = useRef<(() => void) | null>(null);
   const [preview, setPreview] = useState<LibraryPointerDragPreview>(null);
+  useGrabbingCursor(Boolean(preview));
 
   useEffect(() => {
     const cancel = () => cancelActiveRef.current?.();

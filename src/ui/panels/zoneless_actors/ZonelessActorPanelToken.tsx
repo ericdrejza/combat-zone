@@ -1,3 +1,4 @@
+import { ImageFocusFrame } from "@core/rendering/ImageFocusFrame";
 import { motion } from "motion/react";
 import type { DragEvent, MouseEvent, PointerEvent } from "react";
 
@@ -70,12 +71,12 @@ export function ZonelessActorPanelToken({
         }}
       >
         {imageUrl ? (
-          <motion.img initial={false} animate={{ scaleX: actor.imageFlippedHorizontal ? -1 : 1 }}
-            alt=""
-            className={`h-full w-full ${actor.shape === "transparent" ? "object-contain" : "object-cover"}`}
-            draggable={false}
-            src={imageUrl}
-          />
+          <motion.span className="block h-full w-full" initial={false} animate={{ scaleX: actor.imageFlippedHorizontal ? -1 : 1 }}>
+            <ImageFocusFrame focus={actor.shape === "transparent" ? undefined : actor.imageFocus}>
+              <img alt="" className={`h-full w-full ${actor.shape === "transparent" ? "object-contain" : "object-cover"}`}
+                draggable={false} src={imageUrl} />
+            </ImageFocusFrame>
+          </motion.span>
         ) : (
           actor.name.slice(0, 2).toUpperCase()
         )}

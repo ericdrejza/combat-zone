@@ -1,3 +1,4 @@
+import { useGrabbingCursor } from "@hooks/useGrabbingCursor";
 import { CanvasActorDragVisual } from "./CanvasActorDragVisual";
 import { ActorSurfaceProvider } from './actors/ActorSurfaceProvider';
 import { RulerLockButton } from './ruler/RulerLockButton';
@@ -282,6 +283,7 @@ export function CanvasShell({
     library
   });
 
+  useGrabbingCursor(actorDrag?.phase === "dragging" || Boolean(compactTransferPreview), canvasShellElement?.ownerDocument);
   useEncounterOperation(Boolean(actorDrag?.phase === "dragging" || actorDrag?.phase === "validating" || edgeDrag || zoneDrag?.phase === "dragging" || vertexDrag || shapeDraft || boxSelection || zoneDraftPoints.length || engagementDrag?.phase === "dragging" || compactTransferPreview || gridCalibrationActive || pendingAudioDrop));
 
   const polygonDraftColor = getTextColorForLuminance(

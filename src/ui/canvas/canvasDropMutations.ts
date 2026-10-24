@@ -114,6 +114,7 @@ export function commitActorFromCreation(
       id: actorId,
       image: data.image
         ? {
+            imageFocus: data.imageFocus,
             animated: data.imageAnimated,
             libraryNodeId: data.imageLibraryNodeId,
             mediaType: data.imageMediaType ?? 'image/*',
