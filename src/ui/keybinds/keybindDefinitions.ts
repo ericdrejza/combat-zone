@@ -1,6 +1,9 @@
 import { TOOL_DEFINITIONS_BY_ID } from "@interaction/tools/toolRegistry";
 
 export const KEYBIND_DEFINITIONS = [
+  { id: "canvas.focus", group: "Viewport", label: "Focus light", defaultBinding: "f", editable: true },
+  { id: "player.preview", group: "Viewport", label: "Toggle player preview", defaultBinding: "v", editable: true },
+  { id: "player.popout", group: "Viewport", label: "Toggle player window", defaultBinding: "ctrl+shift+v", editable: true },
   { id: "history.undo", group: "History", label: "Undo encounter change", defaultBinding: "mod+z", editable: true },
   { id: "history.redo", group: "History", label: "Redo encounter change", defaultBinding: "mod+shift+z", editable: true },
   { id: "actor.moveUp", group: "Entities", label: "Move actors up", defaultBinding: "arrowup", editable: true },

@@ -1,6 +1,6 @@
 import { DEFAULT_KEYBINDS, KEYBIND_DEFINITIONS, bindingsConflict, isKeybind, type KeybindMap } from './keybindDefinitions';
 
-export const KEYBIND_DEFAULTS_VERSION = 1;
+export const KEYBIND_DEFAULTS_VERSION = 2;
 const legacyDefaults = { 'actor.rename': 'r', 'tool.ruler': 'd', 'tool.annotation': 'n' } as const;
 const defaults = () => ({ bindings: { ...DEFAULT_KEYBINDS }, ctrlWheelZoomEnabled: true });
 
@@ -9,10 +9,12 @@ export function decodeKeybindPreferences(value: unknown): { bindings: KeybindMap
   if (!value || typeof value !== 'object' || Array.isArray(value)) return defaults();
   const stored = { ...value } as Record<string, unknown>;
   const version = stored.defaultsVersion;
-  if (version !== undefined && version !== KEYBIND_DEFAULTS_VERSION) return defaults();
+  if (version !== undefined && version !== 1 && version !== KEYBIND_DEFAULTS_VERSION) return defaults();
   for (const { editable, id } of KEYBIND_DEFINITIONS) {
     if (editable && stored[id] !== undefined && !isKeybind(stored[id])) return defaults();
   }
+  // V now previews the player output; old inherited Select bindings move to S.
+  if ((version === undefined || version === 1) && stored['tool.select'] === 'v') delete stored['tool.select'];
   if (version === undefined) {
     for (const [id, binding] of Object.entries(legacyDefaults)) {
       // Omission lets the current default participate below customized bindings.

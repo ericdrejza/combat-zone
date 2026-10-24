@@ -3,6 +3,8 @@ import { decodeKeybindPreferences, encodeKeybindPreferences, KEYBIND_DEFAULTS_VE
 
 // Independent contract: adding or changing a shortcut requires updating its behavioral cases.
 const expected: KeybindMap = {
+  'canvas.focus': 'f',
+  'player.preview': 'v', 'player.popout': 'ctrl+shift+v',
   'history.undo': 'mod+z', 'history.redo': 'mod+shift+z',
   'actor.moveUp': 'arrowup', 'actor.moveDown': 'arrowdown', 'actor.moveLeft': 'arrowleft', 'actor.moveRight': 'arrowright',
   'actor.sizeDecrease': 'shift+minus', 'actor.sizeIncrease': 'shift+plus', 'actor.healDamage': 'h',
@@ -13,8 +15,13 @@ const expected: KeybindMap = {
   'initiative.toggle': 'i', 'actor.copy': 'mod+c', 'actor.paste': 'mod+v', 'actor.rename': 'n',
   'actor.showFactionOutlines': 'o', 'selection.selectAll': 'mod+a',
   'tool.ruler': 'r', 'tool.actor': 'a', 'tool.audio': 'm', 'tool.annotation': 't', 'tool.background': 'b',
-  'tool.edge': 'e', 'tool.select': 'v', 'tool.zone': 'z', 'workspace.save': 'mod+s'
+  'tool.edge': 'e', 'tool.select': 's', 'tool.zone': 'z', 'workspace.save': 'mod+s'
 };
+it('preserves an existing F customization instead of displacing it with Focus', () => {
+  const { bindings } = decodeKeybindPreferences({ defaultsVersion: 2, 'tool.actor': 'f' });
+  expect(bindings['tool.actor']).toBe('f');
+  expect(bindings['canvas.focus']).toBe('');
+});
 function eventFor(binding: string, platform: 'ctrl' | 'meta') {
   const parts = binding.replace('mod+', `${platform}+`).split('+'), key = parts.at(-1)!;
   return new KeyboardEvent('keydown', { key: key === 'plus' ? '+' : key === 'minus' ? '-' : key,
@@ -71,4 +78,12 @@ it('never lets saved data override fixed shortcuts', () => {
 });
 it.each([null, [], 'invalid', { 'tool.ruler': 4 }, { 'actor.rename': 'space' }, { defaultsVersion: 999 }])('falls back safely for invalid preferences: %j', stored => {
   expect(decodeKeybindPreferences(stored)).toEqual({ bindings: DEFAULT_KEYBINDS, ctrlWheelZoomEnabled: true });
+});
+
+it('migrates inherited Select V to S without losing custom bindings', () => {
+  expect(decodeKeybindPreferences({ defaultsVersion: 1, 'tool.select': 'v' }).bindings).toEqual(expected);
+  expect(decodeKeybindPreferences({ defaultsVersion: 1, 'tool.select': 'alt+s' }).bindings['tool.select']).toBe('alt+s');
+  const deliberate = decodeKeybindPreferences({ defaultsVersion: 2, 'tool.select': 'v' }).bindings;
+  expect(deliberate['tool.select']).toBe('v');
+  expect(deliberate['player.preview']).toBe('');
 });

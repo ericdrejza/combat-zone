@@ -1,3 +1,4 @@
+import { usePlayerAudience } from '@ui/player_view/PlayerSceneSource';
 import { useMemo } from 'react';
 import { createPortal } from "react-dom";
 import { RulerPreviewPolyline } from './RulerPreviewPolyline';
@@ -21,6 +22,8 @@ export function RulerGraphic({ encounter, points, options, policy, name, childre
   hitTarget?: SVGGElement | null; renderUnderlay?: (area: AreaMeasurement | null) => ReactNode;
   flexible?: boolean; children?: ReactNode; onContextMenu?: (event: React.MouseEvent<SVGElement>) => void;
 }) {
+  const player = usePlayerAudience();
+  if (player) { hitTarget = undefined; onContextMenu = undefined; }
   const { preferences } = useCanvasPreferences();
   const grid = resolveGridGeometry(encounter.grid), unit = encounter.grid.distanceUnit ?? 'feet';
   const route = useMemo(() => options.shape === 'path' ? measureRoute(encounter.grid, points, rulerSnapEnabled(encounter, options), policy) : null, [encounter, points, options, policy]);

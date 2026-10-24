@@ -1,3 +1,4 @@
+import { usePlayerAudience } from '@ui/player_view/PlayerSceneSource';
 import { Ban, ChevronsDown, Dices, EyeDashed, EyeOff, Info, Tag } from "lucide-react";
 import { useState } from "react";
 
@@ -59,6 +60,8 @@ export function EdgeBadges({ edge, edgeColor, point }: {
   edgeColor: string;
   point: LayoutPoint;
 }) {
+  const player = usePlayerAudience();
+  const movementRules = edge.movementRules.filter(rule => !player || rule !== "skillCheck");
   const [tooltip, setTooltip] = useState<MetadataTooltip | null>(null);
   const visibility = edge.visibilityRule === "obscured"
     ? { Icon: EyeDashed, label: "Obscured" }
@@ -67,7 +70,7 @@ export function EdgeBadges({ edge, edgeColor, point }: {
       : undefined;
   const icons = [
     ...(visibility ? [{ ...visibility, tooltip: undefined }] : []),
-    ...edge.movementRules.map((rule) => ({ ...movementIcon(rule), tooltip: undefined })),
+    ...movementRules.map((rule) => ({ ...movementIcon(rule), tooltip: undefined })),
     ...(edge.interactionTags.length ? [{ Icon: Tag, label: "Tags", tooltip: "tags" as const }] : []),
     ...(edge.notes?.trim() ? [{ Icon: Info, label: "Notes", tooltip: "notes" as const }] : [])
   ];
@@ -77,7 +80,7 @@ export function EdgeBadges({ edge, edgeColor, point }: {
 
   return (
     <g className="cursor-pointer" data-entity-id={edge.id} data-entity-type="edge"
-      aria-label={`${edge.visibilityRule} visibility${edge.movementRules.length ? `; ${edge.movementRules.join(", ")}` : ""}`}>
+      aria-label={`${edge.visibilityRule} visibility${movementRules.length ? `; ${movementRules.join(", ")}` : ""}`}>
       <rect fill={EDGE_BADGE_FILL_COLOR} height="20" opacity="0.9" rx="10" width={width} x={point.x - width / 2} y={point.y - 10} />
       {icons.map(({ Icon, label, tooltip: iconTooltip }, index) => (
         <g
@@ -91,7 +94,7 @@ export function EdgeBadges({ edge, edgeColor, point }: {
           onFocus={() => iconTooltip && setTooltip(iconTooltip)}
           onPointerEnter={() => iconTooltip && setTooltip(iconTooltip)}
           onPointerLeave={() => iconTooltip && setTooltip(null)}
-          tabIndex={iconTooltip ? 0 : undefined}
+          tabIndex={!player && iconTooltip ? 0 : undefined}
         >
           <title>{label}</title>
           <rect
@@ -112,7 +115,7 @@ export function EdgeBadges({ edge, edgeColor, point }: {
           />
         </g>
       ))}
-      {tooltip ? <EdgeMetadataTooltip edge={edge} edgeColor={edgeColor} point={point} type={tooltip} /> : null}
+      {!player && tooltip ? <EdgeMetadataTooltip edge={edge} edgeColor={edgeColor} point={point} type={tooltip} /> : null}
     </g>
   );
 }

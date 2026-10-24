@@ -11,12 +11,14 @@ export function useCanvasZoom({ canvasSize, viewportElement, getViewportSize }: 
 }) {
   const [zoom, setZoom] = useState(1);
   const zoomRef = useRef(zoom);
+  const committedZoomRef = useRef(zoom);
   const temporaryZoomRef = useRef<object | null>(null);
   const pendingScrollRef = useRef<{ element: HTMLDivElement; left: number; top: number } | null>(null);
   zoomRef.current = zoom;
 
   // React must resize the canvas before scrolling, but both must finish before paint.
   useLayoutEffect(() => {
+    committedZoomRef.current = zoom;
     const pending = pendingScrollRef.current;
     pendingScrollRef.current = null;
     if (pending?.element === viewportElement) {
@@ -71,7 +73,7 @@ export function useCanvasZoom({ canvasSize, viewportElement, getViewportSize }: 
       temporaryZoomRef.current = null;
       const nextZoom = clampZoom(requestedZoom);
       const currentZoom = zoomRef.current;
-      if (nextZoom === currentZoom) return;
+      if (nextZoom === currentZoom && !canvasPoint) return;
       const pending = pendingScrollRef.current;
       const scroll = viewportElement
         ? getZoomScrollAtPoint({
@@ -87,7 +89,12 @@ export function useCanvasZoom({ canvasSize, viewportElement, getViewportSize }: 
         : null;
 
       if (viewportElement && scroll) {
-        pendingScrollRef.current = { element: viewportElement, ...scroll };
+        if (nextZoom === currentZoom && nextZoom === committedZoomRef.current) {
+          // A two-finger gesture can translate without changing its distance/zoom.
+          pendingScrollRef.current = null;
+          viewportElement.scrollLeft = scroll.left;
+          viewportElement.scrollTop = scroll.top;
+        } else pendingScrollRef.current = { element: viewportElement, ...scroll };
       }
       zoomRef.current = nextZoom;
       setZoom(nextZoom);

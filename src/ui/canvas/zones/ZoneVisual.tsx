@@ -1,3 +1,4 @@
+import { useSceneId } from '@ui/player_view/PlayerSceneSource';
 import { displayedZoneDragPolygon } from './displayedZoneDragPolygon';
 import { getZoneLocalPolygon, rotatePoint } from '@entities/zone/zoneRotation';
 import { ZoneSelectionOutline } from "./ZoneSelectionOutline";
@@ -78,7 +79,7 @@ export const ZoneVisual = memo(function ZoneVisual({ zone, polygon, selected, ac
           splitSectionOrder: splitInput?.splitSectionOrder
         }).map(divider => ({ ...divider, start: rotatePoint(divider.start, zone.rotation ?? 0), end: rotatePoint(divider.end, zone.rotation ?? 0) }))
       : [];
-  const sectionClipId = `zone-section-clip-${zone.id}`;
+  const sectionClipId = useSceneId(`zone-section-clip-${zone.id}`);
   const invalidResizePreview =
     directManipulation &&
     !isZonePolygonSizeValid(displayedPolygon);

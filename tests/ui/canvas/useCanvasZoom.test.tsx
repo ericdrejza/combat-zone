@@ -79,3 +79,17 @@ it("keeps explicit touch anchors and temporary zoom restoration working", () => 
   act(() => release());
   expect(result.current.zoom).toBe(3.9);
 });
+
+it('pans explicit touch anchors at unchanged zoom and composes with a pending zoom', () => {
+  const { result, element } = setup();
+  act(() => result.current.setZoomAtPoint(1, { x: 120, y: 180 }, { x: 400, y: 300 }));
+  expect(element.scrollLeft).toBe(280);
+  expect(element.scrollTop).toBe(120);
+  act(() => {
+    result.current.setZoomAtPoint(2, { x: 120, y: 180 }, { x: 400, y: 300 });
+    result.current.setZoomAtPoint(2, { x: 140, y: 200 }, { x: 400, y: 300 });
+  });
+  expect(result.current.zoom).toBe(2);
+  expect(element.scrollLeft).toBe(660);
+  expect(element.scrollTop).toBe(400);
+});

@@ -844,7 +844,10 @@ actions. Ctrl + wheel up/down provides additional 10-point zoom steps around
 the pointer, independently of the customizable zoom shortcuts. Its switch is
 on the Fixed shortcuts row in Keybind settings and defaults on. While enabled,
 Ctrl + wheel cannot trigger browser page zoom, including outside the canvas.
-Canvas scale and its compensating scroll update together before paint.
+Canvas scale and its compensating scroll update together before paint. Player
+preview and projection consume that committed camera snapshot, so a new zoom
+never appears with the previous scroll position. Rapid navigation input composes
+without dropping zoom steps or changing the pointer anchor.
 
 A canvas-size mutation preserves zoom and keeps the same proportional canvas
 point centered by mapping it through the top-left resize transform. When the
@@ -853,7 +856,7 @@ rendered canvas no longer overflows an axis, it centers on that axis.
 The canvas viewport scrolls on both axes with scrollbar chrome hidden. The mouse wheel scrolls vertically,
 Shift + mouse wheel scrolls horizontally. Keyboard panning uses configurable,
 initially unbound directional shortcuts. Right-button drag panning is enabled
-by default and can be toggled from the toolbar. A right-click without a pan gesture retains the
+by default and configured in Canvas Settings. A right-click without a pan gesture retains the
 active tool's existing context action. While the Ruler tool is active, right-drag
 pans without changing placed points; a stationary right-click removes the last
 placed draft/edit point. On browsers that emit a context menu on button press,
@@ -929,6 +932,103 @@ unbinding displaced editable actions; read-only bindings cannot be displaced.
 All navigation is session-only. Text editing and unrelated modal workflows
 suppress application shortcuts. Stored existing assignments take precedence
 over conflicting newly introduced defaults.
+
+
+### 5.8 Player View and Projected Viewport
+
+V toggles a GM player preview that replaces the workspace, including its panels
+and editing toolbar. The preview has a responsive GM-only navigation strip with
+exit, zoom/fit/reset, player aspect ratio, and dropdown controls. Player
+controls start with Follow GM View, Player Preview, and Player Window in the
+extended zoom dropdown in the GM toolbar, compact zoom controls, and preview
+navigation strip. Follow GM View always uses the unbroken link icon; its active
+state indicates whether following is enabled. All three controls keep the
+dropdown open. Switching preview transfers that open menu to the active header.
+The preview header keeps exit and aspect-ratio controls on the left and
+zoom navigation on the right, wrapping as needed on compact screens.
+Right-click drag panning follows the existing Canvas Settings preference.
+Ctrl+Shift+V opens or closes a browser-owned, canvas-only player window. Both
+shortcuts are customizable and respect editing/modal/repeat guards. Select now
+defaults to S; inherited Select V preferences migrate without discarding real
+customizations. Exiting preview restores the GM's tool and selection.
+
+Preview and popout share the same live scene and visible region. They include
+entity movement, geometry/appearance/name previews, resource bars, conditions,
+locked rulers, and active ruler measurements. They omit selection and targeting
+cues, editing handles, tool cursors, panels, and editor dialogs. Skill Check edge
+badges are GM-only; their edges, other badges, and movement rules are unchanged.
+There is no separate trap property or trap behavior.
+
+Follow GM is enabled initially. It fits the exact GM-visible canvas region into
+the projected frame with letterboxing when aspect ratios differ. Navigation in
+following preview adjusts the underlying GM camera. Turning follow off preserves
+the visible region and zoom, then permits independent player navigation with the
+same zoom bounds and pan/zoom inputs. Turning follow on resumes GM framing.
+Changing the popout's actual size scales/letterboxes the configured frame without
+changing the visible region. The player window cannot edit or navigate the scene;
+the GM controls it from the workspace/preview.
+
+The player window has an upper-right fullscreen toggle, also available immediately
+to the right of the aspect-ratio selector in the GM preview header. Both controls
+target the player window and track the same browser fullscreen state. The GM
+control is disabled until the player window is open or when fullscreen is
+unavailable. A browser-granted automatic-fullscreen permission, or a valid recent
+interaction in the player window, permits immediate entry from the GM header.
+Otherwise the GM control automatically focuses the player window and arms Enter or Spacebar
+to request fullscreen. Both outputs display the keyboard instruction; no click
+on the player-window button is required. Only Enter or Spacebar in the armed player window
+confirms, ignoring repeats, composition, modified chords, text fields and modal
+workflows. Escape, player-window blur/backgrounding/closure, or a fullscreen
+change clears the pending handoff. The application never simulates user input.
+Exiting remains immediately available without automatic-fullscreen permission,
+and the direct player-window button still supports ordinary fullscreen clicks.
+Both controls share pending/fullscreen state and track browser-initiated exits.
+Browser rejection preserves the view and permits retry through the controls.
+Fullscreen changes only presentation, preserving camera and history.
+
+Aspect-ratio choices are 16:9 (default), 16:10, 4:3, 21:9, and Custom. Custom
+ratios accept positive whole-number width and height proportions, including
+portrait ratios. Invalid drafts leave the valid frame intact. Ratios define
+framing and letterboxing; SVG output automatically scales to each window/display
+without selecting a pixel resolution. Independent fit commands use a stable
+logical frame with the selected ratio. Legacy saved pixel dimensions migrate to
+their equivalent ratio, preserving framing.
+Canvas Settings persists the default ratio, and Canvas reset restores 16:9.
+Preview ratio changes override the default for the session, surviving
+popout reopening and encounter changes. Reload uses the saved default. Loading
+another encounter resumes following GM. All camera, follow, preview, and popup
+state is session-only; projection controls never change encounter history or logs
+and remain available in read-only tabs and every validation mode.
+
+### 5.9 Focus Light
+
+Focus is a temporary canvas laser pointer for directing players' attention. Its
+customizable shortcut defaults to F. Canvas Settings → Focus offers Hold shortcut
+(default) or Press to toggle. Holding ends on key release; toggle ends on the next
+press. Auto-repeat never toggles repeatedly. Escape, window blur, backgrounding,
+encounter changes, and activation-setting/shortcut changes clear active Focus.
+Typing and modal workflows suppress activation. Existing customized shortcuts
+take priority over the new F default.
+
+The glowing red circle follows the GM pointer precisely, with a smooth flowing
+trail behind it. It appears above the scene and rulers in the GM canvas, player
+preview, and player window at matching canvas coordinates. Preview input accounts
+for both projection letterboxes; the light hides outside the canvas/visible scene
+and resumes on re-entry while activated. Player output does not control Focus.
+An existing pointer gesture must finish before Focus activates. While Focus is
+active, canvas editing and editing shortcuts are suppressed, preserving the
+current tool and selection. Ending Focus restores normal canvas interaction.
+
+Canvas Settings → Focus includes the shared color picker (red by default), tail
+length (50% by default; zero removes the trail), and glow intensity (65% by
+default; zero removes the glow). The tail range is capped so 50% corresponds to
+the original 15% length and 100% corresponds to the original 30% length.
+Preferences persist locally, synchronize through
+the Canvas preference mechanism, and reset with Canvas Settings. Reduced-motion
+mode retains the pointer but removes the flowing trail. Motion drives one shared
+pointer/trail animation for every output. Focus activation, coordinates, and
+trails are session-only: they never modify encounter state, undo/redo history, or
+logs, and remain available in read-only tabs and all validation modes.
 
 ## 6. Layout System
 

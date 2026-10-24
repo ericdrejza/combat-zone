@@ -1,3 +1,5 @@
+import { useLiveSceneMotion } from '@ui/player_view/LiveSceneMotion';
+import { useSceneId } from '@ui/player_view/PlayerSceneSource';
 import { EdgeArrowMarkers } from "./EdgeArrowMarkers";
 import { useEdgeRouteMotion } from "./useEdgeRouteMotion";
 import type { PathSpace } from "@entities/edge/edgePathCollision";
@@ -37,11 +39,13 @@ type Props = {
 
 /** Badges follow the rendered path, including its curvature and geometry animation. */
 export function EdgeRouteVisual({ edge, pathData, edgeColor, dash, markerStart, fromName, toName, preview, selected, selectionMode, badgeFraction, fallbackBadgePoint, editable, getPath, baselineData, curvaturePolygons, curveSpace, gridAligned, routePending = false }: Props) {
+  const markerPrefix = useSceneId('');
   const { edgeThickness } = useInterfacePreferences();
   const strokeWidth = edgeThickness + (selected ? 1 : 0);
   const editing = useEdgeRouteEditing({ edge, enabled: editable, getPath, baselineData, curvaturePolygons, curveSpace });
   const displayedPath = editing.pathData ?? pathData;
-  const animatedPath = useEdgeRouteMotion(displayedPath, editing.dragging, routePending);
+  const localPath = useEdgeRouteMotion(displayedPath, editing.dragging, routePending);
+  const animatedPath = useLiveSceneMotion(`edge-${edge.id}-path`, localPath);
   // Keep a curve's midpoint handle accessible when its badge uses the same midpoint.
   const displayedBadgeFraction = editing.editable && edge.shape === "curved" ? Math.min(0.85, badgeFraction + 0.15) : badgeFraction;
   const [badgePoint, setBadgePoint] = useState<LayoutPoint>();
@@ -65,7 +69,7 @@ export function EdgeRouteVisual({ edge, pathData, edgeColor, dash, markerStart, 
   const endAngle = coordinates.length >= 4 ? arrowAngle({ x: coordinates.at(-2)! - coordinates.at(-4)!, y: coordinates.at(-1)! - coordinates.at(-3)! }) : "auto";
   const startAngle = coordinates.length >= 4 ? arrowAngle({ x: coordinates[0] - coordinates[2], y: coordinates[1] - coordinates[3] }) : "auto-start-reverse";
   return <>
-    <EdgeArrowMarkers id={edge.id} color={edgeColor} thickness={edgeThickness} startAngle={startAngle} endAngle={endAngle} />
+    <EdgeArrowMarkers id={edge.id} prefix={markerPrefix} color={edgeColor} thickness={edgeThickness} startAngle={startAngle} endAngle={endAngle} />
     <SelectionOutline mode={selected && !preview ? selectionMode : "static"} pointerEvents="auto">
       <g opacity={preview ? 0.6 : 1}>
       <motion.path
@@ -75,7 +79,7 @@ export function EdgeRouteVisual({ edge, pathData, edgeColor, dash, markerStart, 
         data-entity-id={preview ? undefined : edge.id}
         data-entity-type={preview ? undefined : "edge"}
         initial={false}
-        markerEnd={`url(#edge-arrow-end-${edge.id})`}
+        markerEnd={`url(#${markerPrefix}edge-arrow-end-${edge.id})`}
         markerStart={markerStart}
         stroke={edgeColor}
         strokeDasharray={dash}

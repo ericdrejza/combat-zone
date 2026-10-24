@@ -94,6 +94,18 @@ describe("CanvasSettings", () => {
     expect(JSON.parse(localStorage.getItem(INTERFACE_PREFERENCES_STORAGE_KEY)!))
       .toMatchObject({ zoneColorDefaults: { border: null } });
   });
+  it('persists and resets the default player aspect ratio without changing encounter history', () => {
+    const before = store.getState().encounter;
+    const view = renderSettings();
+    fireEvent.change(screen.getByRole('combobox', { name: 'Default player aspect ratio' }), { target: { value: '4:3' } });
+    expect(JSON.parse(localStorage.getItem(CANVAS_PREFERENCES_KEY)!)).toMatchObject({ playerAspectRatio: { width: 4, height: 3 } });
+    view.unmount(); renderSettings();
+    expect(screen.getByRole('combobox', { name: 'Default player aspect ratio' })).toHaveValue('4:3');
+    fireEvent.click(screen.getByRole('button', { name: 'Reset Canvas to defaults' }));
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Reset to defaults' }));
+    expect(screen.getByRole('combobox', { name: 'Default player aspect ratio' })).toHaveValue('16:9');
+    expect(store.getState().encounter).toBe(before);
+  });
 });
 
 describe('ruler appearance', () => {

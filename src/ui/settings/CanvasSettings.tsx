@@ -1,4 +1,6 @@
+import { PlayerAspectRatioControl } from '@ui/player_view/PlayerAspectRatioControl';
 import { RulerSettings } from './RulerSettings';
+import { FocusSettings } from './FocusSettings';
 import { BorderThicknessSettings } from "./BorderThicknessSettings";
 import { ResetSettingsButton } from "./ResetSettingsButton";
 import { useResetSettingsCategory } from "./useResetSettingsCategory";
@@ -59,8 +61,12 @@ export function CanvasSettings() {
       </SettingsField>
     </SettingsSection>
     <RulerSettings />
+    <FocusSettings />
     <SelectionOutlineSettings />
     <BorderThicknessSettings />
+    <SettingsSection title="Player projection" description="Default player aspect ratio. The view scales to fit any display; preview changes apply only to the current session.">
+      <PlayerAspectRatioControl label="Default player aspect ratio" value={preferences.playerAspectRatio} onChange={playerAspectRatio => save({ ...preferences, playerAspectRatio })} />
+    </SettingsSection>
     <SettingsSection title="Navigation">
       <PreferenceSwitch checked={panWithRightClickDrag} label="Pan with right-click drag" onChange={setPanWithRightClickDrag} />
     </SettingsSection>

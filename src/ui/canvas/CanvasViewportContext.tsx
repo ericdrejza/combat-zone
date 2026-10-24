@@ -1,3 +1,4 @@
+import { CanvasViewportSnapshotContext, usePublishCanvasViewportSnapshot } from './useCanvasViewportSnapshot';
 import { useCanvasPan } from "./useCanvasPan";
 import {
   createContext,
@@ -24,7 +25,8 @@ import {
 
 import { useCanvasZoom } from "./useCanvasZoom";
 
-type CanvasViewportValue = {
+export type CanvasViewportValue = {
+  element?: HTMLDivElement | null;
   getViewportSize: () => CanvasSize;
   panEnabled: boolean;
   stopPanAnimation: () => void;
@@ -51,7 +53,7 @@ type CanvasViewportValue = {
   zoomToFitWidth: () => void;
 };
 
-const CanvasViewportContext = createContext<CanvasViewportValue | null>(null);
+export const CanvasViewportContext = createContext<CanvasViewportValue | null>(null);
 
 function readViewportSize(
   element: HTMLDivElement,
@@ -221,6 +223,7 @@ export function CanvasViewportProvider({ children }: PropsWithChildren) {
 
   const value = useMemo<CanvasViewportValue>(
     () => ({
+      element: viewportElement,
       getViewportSize,
       beginTemporaryMaxZoom,
       panEnabled: panWithRightClickDrag,
@@ -262,10 +265,13 @@ export function CanvasViewportProvider({ children }: PropsWithChildren) {
     ]
   );
 
+  const snapshot = usePublishCanvasViewportSnapshot({ element: viewportElement, zoom, getViewportSize });
   return (
+    <CanvasViewportSnapshotContext.Provider value={snapshot}>
     <CanvasViewportContext.Provider value={value}>
       {children}
     </CanvasViewportContext.Provider>
+    </CanvasViewportSnapshotContext.Provider>
   );
 }
 

@@ -1,3 +1,4 @@
+import { usePlayerAudience, useSceneId } from '@ui/player_view/PlayerSceneSource';
 import { useCanvasPreferences } from "@ui/canvas_preferences/useCanvasPreferences";
 import { useEdgeRoutes } from "./useEdgeRoutes";
 import { useMemo } from "react";
@@ -44,6 +45,8 @@ function pairKey(edge: Pick<Edge, "fromZoneId" | "toZoneId">) {
 }
 
 export function EdgeLayer({ activeToolId, directManipulationZoneId = null, zoneEditPending = false, edgeDrag, edgeTool, encounter, canvasBackgroundLuminance, getDisplayedPolygon, selection }: Props) {
+  const player = usePlayerAudience();
+  const markerPrefix = useSceneId('');
   const { edgeThickness } = useInterfacePreferences();
   const { preferences } = useCanvasPreferences();
   const selectionMode = useSelectionOutlineMode("edge");
@@ -123,11 +126,11 @@ export function EdgeLayer({ activeToolId, directManipulationZoneId = null, zoneE
     const edgeColor = renderable
       ? edge.color ?? getTextColorForLuminance(canvasBackgroundLuminance)
       : "#dc2626";
-    const selected = selection.selectedEntityType === "edge" && selection.selectedIds.includes(edge.id);
+    const selected = !player && selection.selectedEntityType === "edge" && selection.selectedIds.includes(edge.id);
     const badgePoint = pointAlongRoute(path, lane.badgeFraction);
     const dash = !renderable ? "4 4" : edge.visibilityRule === "obscured" ? "10 6" : edge.visibilityRule === "hidden" ? "3 5" : undefined;
     const markerStart = edge.directionality === "bilateral"
-      ? `url(#edge-arrow-start-${edge.id})`
+      ? `url(#${markerPrefix}edge-arrow-start-${edge.id})`
       : undefined;
     return (
       <g key={edge.id} data-edge-route-valid={renderable} data-edge-route-pending={pending}>
@@ -136,7 +139,7 @@ export function EdgeLayer({ activeToolId, directManipulationZoneId = null, zoneE
           markerStart={markerStart} fromName={from.name} toName={to.name}
           routePending={pending} gridAligned={route.gridAligned} preview={preview} selected={selected} selectionMode={selectionMode}
           badgeFraction={completed.badgeFraction} fallbackBadgePoint={badgePoint}
-          editable={activeToolId === "edge" && selected && !preview && renderable && !completed.automatic && !pending}
+          editable={!player && activeToolId === "edge" && selected && !preview && renderable && !completed.automatic && !pending}
           curvaturePolygons={[fromPolygon, toPolygon]} getPath={getPath} baselineData={getDefaultEdgePath(path, edge.shape)}
           curveSpace={space}
         /> : null}
@@ -168,7 +171,7 @@ export function EdgeLayer({ activeToolId, directManipulationZoneId = null, zoneE
   const edgeColor = getTextColorForLuminance(canvasBackgroundLuminance);
   return <>
     {edges.map((edge) => renderEdge(edge))}
-    {activeToolId === "edge" && previewEdge ? renderEdge(previewEdge, true) : null}
-    {freePreview ? <g className="pointer-events-none opacity-60"><defs><marker id="edge-preview-arrow" markerUnits="userSpaceOnUse" viewBox="0 0 8 8" markerHeight={8 * edgeThickness} markerWidth={8 * edgeThickness} orient="auto-start-reverse" refX="7" refY="4"><path d="M 0 0 L 8 4 L 0 8 z" fill={edgeColor} /></marker></defs><motion.path className="fill-none" d={freePreview} data-edge-free-preview="true" initial={false} markerEnd="url(#edge-preview-arrow)" markerStart={edgeTool.directionality === "bilateral" ? "url(#edge-preview-arrow)" : undefined} stroke={edgeColor} strokeDasharray="6 5" strokeWidth={edgeThickness + 1} /></g> : null}
+    {!player && activeToolId === "edge" && previewEdge ? renderEdge(previewEdge, true) : null}
+    {!player && freePreview ? <g className="pointer-events-none opacity-60"><defs><marker id="edge-preview-arrow" markerUnits="userSpaceOnUse" viewBox="0 0 8 8" markerHeight={8 * edgeThickness} markerWidth={8 * edgeThickness} orient="auto-start-reverse" refX="7" refY="4"><path d="M 0 0 L 8 4 L 0 8 z" fill={edgeColor} /></marker></defs><motion.path className="fill-none" d={freePreview} data-edge-free-preview="true" initial={false} markerEnd="url(#edge-preview-arrow)" markerStart={edgeTool.directionality === "bilateral" ? "url(#edge-preview-arrow)" : undefined} stroke={edgeColor} strokeDasharray="6 5" strokeWidth={edgeThickness + 1} /></g> : null}
   </>;
 }

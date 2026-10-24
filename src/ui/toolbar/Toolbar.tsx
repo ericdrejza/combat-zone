@@ -1,6 +1,7 @@
+import { useOptionalPlayerView } from '@ui/player_view/PlayerViewProvider';
 import { RulerToolButton } from './ruler/RulerToolButton';
 import { GridToolButton } from './grid/GridToolButton';
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 import { getEncounterLoadTool } from "@core/encounter";
@@ -59,12 +60,18 @@ export function Toolbar({
   saveStatus = "idle"
 }: ToolbarProps) {
   const compactLayout = useCompactLayout();
+  const player = useOptionalPlayerView();
   const { encounterCreationTool } = useInterfacePreferences();
   const dispatch = useDispatch();
   const [compactSubtoolHost, setCompactSubtoolHost] =
     useState<HTMLDivElement | null>(null);
   const [compactEncounterOpen, setCompactEncounterOpen] = useState(false);
   const [compactZoomOpen, setCompactZoomOpen] = useState(false);
+  useLayoutEffect(() => {
+    if (compactLayout && player && !player.preview && player.zoomOptionsOpen) {
+      setCompactEncounterOpen(false); setCompactZoomOpen(true);
+    }
+  }, [compactLayout, player?.preview, player?.zoomOptionsOpen]);
   const lastToolSelectionRequest = useRef<number | null>(null);
   const encounter = useSelector((state: RootState) => state.encounter.present);
   const activeToolId = useSelector(

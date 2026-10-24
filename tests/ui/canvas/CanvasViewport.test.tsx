@@ -138,11 +138,14 @@ describe("canvas viewport navigation", () => {
     });
 
     const fit = screen.getByRole("button", { name: "More zoom options" });
-    expect(screen.queryByRole("toolbar", { name: "Zoom to fit options" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("toolbar", { name: "Extended zoom options" })).not.toBeInTheDocument();
     await user.hover(fit);
-    const tray = screen.getByRole("toolbar", { name: "Zoom to fit options" });
+    const tray = screen.getByRole("toolbar", { name: "Extended zoom options" });
     expect(tray).toBeInTheDocument();
     expect(within(tray).getAllByRole("button").map((button) => button.getAttribute("aria-label"))).toEqual([
+      "Follow GM view",
+      "Toggle player preview",
+      "Toggle player window",
       "Zoom to fit width",
       "Zoom to fit height",
       "Reset zoom"
@@ -165,7 +168,7 @@ describe("canvas viewport navigation", () => {
     });
 
     expect(
-      screen.getByRole("toolbar", { name: "Zoom to fit options" })
+      screen.getByRole("toolbar", { name: "Extended zoom options" })
     ).toBeInTheDocument();
   });
 
@@ -179,21 +182,21 @@ describe("canvas viewport navigation", () => {
     fireEvent.pointerLeave(options, { pointerType: "mouse" });
     act(() => vi.advanceTimersByTime(200));
     expect(
-      screen.getByRole("toolbar", { name: "Zoom to fit options" })
+      screen.getByRole("toolbar", { name: "Extended zoom options" })
     ).toBeInTheDocument();
 
     fireEvent.pointerDown(document.body, { pointerType: "mouse" });
     expect(
-      screen.queryByRole("toolbar", { name: "Zoom to fit options" })
+      screen.queryByRole("toolbar", { name: "Extended zoom options" })
     ).not.toBeInTheDocument();
 
     fireEvent.click(options);
     expect(
-      screen.getByRole("toolbar", { name: "Zoom to fit options" })
+      screen.getByRole("toolbar", { name: "Extended zoom options" })
     ).toBeInTheDocument();
     fireEvent.click(options);
     expect(
-      screen.queryByRole("toolbar", { name: "Zoom to fit options" })
+      screen.queryByRole("toolbar", { name: "Extended zoom options" })
     ).not.toBeInTheDocument();
   });
 

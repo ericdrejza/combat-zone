@@ -394,3 +394,32 @@ Implementation plan: [Ruler, movement and grid styles](plans/ruler_movement_and_
       otherwise expand both, preserving encounter history and shortcut guards.
 - [x] Migrate Zoneless docking through schema 31 with history, local persistence,
       cloud contract, and Firebase emulator coverage.
+
+## Player view and projected viewport (#43)
+
+Implementation plan: [Player view and projected viewport](plans/player_view.md).
+
+- [x] Add player-window fullscreen with browser-state synchronization, support
+      detection, and rejected-request handling; document logical resolution sizing.
+- [x] Add replacement GM preview, canvas-only browser popout, live scene parity,
+      GM follow/independent camera controls, and player-hidden Skill Check badges.
+- [x] Add configurable V/Ctrl+Shift+V shortcuts, Select S migration, projected
+      aspect-ratio presets/custom ratios, and a saved Canvas default without history.
+- [x] Mirror fullscreen beside the GM preview ratio selector and migrate legacy
+      pixel dimensions to aspect ratios, with automatic display scaling.
+- [x] Provide a GM fullscreen handoff with automatic player-window focus and
+      Enter/Spacebar confirmation, using immediate entry when the browser permits.
+
+- [x] Start the extended zoom dropdown with Follow GM View, Player Preview, and
+      Player Window on desktop, compact layouts, and preview navigation. All
+      three retain the open dropdown across preview transitions; Follow GM View
+      keeps its unbroken link icon and indicates following through active state.
+- [x] Publish matched zoom/scroll camera snapshots before paint and accumulate
+      rapid preview navigation without intermediate jumps or lost zoom steps.
+
+## Focus light
+
+Implementation plan: [Focus light](plans/focus_light.md).
+
+- [x] Add shared glowing laser pointer and flowing trail, configurable F hold or
+      toggle activation, temporary edit suppression, and Canvas Focus preferences.

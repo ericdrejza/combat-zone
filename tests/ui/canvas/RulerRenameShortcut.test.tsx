@@ -80,7 +80,7 @@ it.each(['fresh', 'legacy'] as const)('activates R/T/B and reserves N for rename
   renderApp();
   fireEvent.keyDown(window, { key: 'n' });
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-  for (const [key, tool] of [['r', 'ruler'], ['t', 'annotation'], ['b', 'background'], ['a', 'actor'], ['m', 'audio'], ['e', 'edge'], ['v', 'select'], ['z', 'zone']]) {
+  for (const [key, tool] of [['r', 'ruler'], ['t', 'annotation'], ['b', 'background'], ['a', 'actor'], ['m', 'audio'], ['e', 'edge'], ['s', 'select'], ['z', 'zone']]) {
     fireEvent.keyDown(window, { key });
     expect(store.getState().interaction.activeToolId).toBe(tool);
   }

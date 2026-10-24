@@ -1,3 +1,4 @@
+import { PlayerSceneSource, EditorSceneOnly } from '@ui/player_view/PlayerSceneSource';
 import { previewedName } from '@interaction/namePreviewState';
 import { setRulerPropertiesTarget, setRulerAppearancePreview } from '@interaction/interactionState';
 import { coneAngleHandle } from '@core/measurement/coneAngleHandle';
@@ -55,9 +56,9 @@ export function RulerOverlay({ encounter, hitTarget, placements = [], actorDrag,
   const appearance = (color: string | null, opacity: number | null) => ({ color: color ?? canvas.rulerColor ?? undefined, opacity: opacity ?? canvas.rulerOpacity });
   if (!active && !lockedRulers.length) return null;
   return <>
-    <g aria-label="Ruler measurement" className="text-canvas-ink">
-      {active ? <rect aria-label="Ruler drawing surface" width={encounter.canvasSize.width} height={encounter.canvasSize.height} fill="transparent" style={{ touchAction: 'none' }} className="cursor-crosshair"
-        {...interaction.canvas} onClick={event => event.stopPropagation()} onDoubleClick={event => event.stopPropagation()} /> : null}
+    <PlayerSceneSource layer="rulers" scene={<g aria-label="Ruler measurement" className="text-canvas-ink">
+      {active ? <EditorSceneOnly><rect aria-label="Ruler drawing surface" width={encounter.canvasSize.width} height={encounter.canvasSize.height} fill="transparent" style={{ touchAction: 'none' }} className="cursor-crosshair"
+        {...interaction.canvas} onClick={event => event.stopPropagation()} onDoubleClick={event => event.stopPropagation()} /></EditorSceneOnly> : null}
       {lockedRulers.filter(ruler => ruler.id !== editingRulerId).map(ruler => <g key={ruler.id} data-ruler-id={ruler.id} style={appearancePreview?.encounterId === encounter.id && appearancePreview.id === ruler.id
         ? appearance(appearancePreview.color, appearancePreview.opacity) : appearance(ruler.color, ruler.opacity)}
         {...artifactInput(ruler.id)}>
@@ -73,7 +74,7 @@ export function RulerOverlay({ encounter, hitTarget, placements = [], actorDrag,
         <RulerGraphic encounter={encounter} points={preview} options={options} policy={preferences.diagonalCost} name={editing ? previewedName(namePreview, encounter.id, 'ruler', editing.id, editing.name) : undefined} flexible={flexible}
           renderUnderlay={area => <RulerActorGlow encounter={encounter} points={preview} options={options} policy={preferences.diagonalCost} area={area}
             coverage={canvas.rulerCellCoverage} placements={placements} drag={actorDrag} translation={zoneActorTranslation} projectTokens={canvas.projectIsometricTokens} intensity={canvas.rulerActorHighlightIntensity} />}>
-          {points.map((p, index) => { const point = rulerMarker(encounter, p, index, options, preview.at(-1)); return <circle key={index} aria-label={`Ruler point ${index + 1}`} cx={point.x} cy={point.y} r={6}
+          <EditorSceneOnly>{points.map((p, index) => { const point = rulerMarker(encounter, p, index, options, preview.at(-1)); return <circle key={index} aria-label={`Ruler point ${index + 1}`} cx={point.x} cy={point.y} r={6}
             className="touch-none cursor-grab active:cursor-grabbing fill-current hover:fill-canvas-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-canvas-ink" tabIndex={0} role="button"
             {...interaction.pointHandlers(editingRulerId, index)} />; })}
           {angleHandle ? <circle aria-label="Cone angle handle" cx={angleHandle.point.x} cy={angleHandle.point.y} r={6}
@@ -82,9 +83,10 @@ export function RulerOverlay({ encounter, hitTarget, placements = [], actorDrag,
             {...interaction.coneAngleHandlers(editingRulerId)}><title>Drag to adjust cone angle</title></circle> : null}
           {cursor ? <motion.circle aria-label="Ruler preview point" initial={false} animate={{ cx: cursor.x, cy: cursor.y }}
             transition={flexible ? RULER_PREVIEW_SPRING : { duration: 0 }} r={6} fill="#ffffff" pointerEvents="none" /> : null}
+          </EditorSceneOnly>
         </RulerGraphic>
       </g> : null}
-    </g>
+    </g>} />
     {active && menu && menuRuler ? <RulerContextWheel key={menu.id} ruler={menuRuler} x={menu.x} y={menu.y} onClose={close} onAppearancePreview={value => dispatch(setRulerAppearancePreview({ ...value, id: menu.id, encounterId: encounter.id }))} /> : null}
   </>;
 }

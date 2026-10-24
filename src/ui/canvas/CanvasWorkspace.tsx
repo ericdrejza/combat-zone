@@ -1,3 +1,9 @@
+import type { CanvasWorkspaceProps } from './canvasWorkspaceTypes';
+import { FocusLightLayer } from './focus/FocusLightLayer';
+import { useFocusSurface } from './focus/useFocusSurface';
+import { canvasFocusPoint } from './focus/focusCoordinates';
+import { ActorSurfaceProvider, useActorBackgroundPixel } from './actors/ActorSurfaceProvider';
+import { PlayerSceneSource, EditorSceneOnly } from '@ui/player_view/PlayerSceneSource';
 import { useZoneColorPreview } from "./zones/useZoneColorPreview";
 import { actorSurfaceZones } from './actors/actorSurfaceZones';
 import { ActorMovementOverlay } from './actors/ActorMovementOverlay';
@@ -14,109 +20,19 @@ import { addGridCalibrationPoint, removeGridCalibrationPoint } from '@interactio
 import { toSvgPoint } from './zones/zoneGeometry';
 import { GridLayer } from './grid/GridLayer';
 import { GridCalibrationMarkers } from './grid/GridCalibrationOverlay';
-import type {
-  ReactNode,
-  DragEventHandler,
-  MouseEvent,
-  MouseEventHandler,
-  PointerEvent as ReactPointerEvent
-} from "react";
 import { MotionConfig, motion } from "motion/react";
 
 import type { LayoutPoint } from "@core/layout/types";
-import type { Zone } from "@entities/zone/types";
 import { RENDER_LAYERS } from "@core/rendering/types";
 import type { RootState } from "@store/store";
-import type {
-  ActorDragEndEvent,
-  ActorDragStartEvent,
-  ActorDragState,
-  EngagementDragState,
-  EdgeDragState,
-  ShapeDraftState,
-  ZoneDragState
-} from "./canvasInteractionTypes";
 import { ActorLayer } from "./actors/ActorLayer";
 import { CanvasBackgroundLayer } from "./background/CanvasBackgroundLayer";
 import { CanvasOverlays } from "./CanvasOverlays";
-import type { LocalBoxSelectionState } from "./zones/zoneGeometry";
 import { ZoneLayer } from "./zones/ZoneLayer";
 import { EngagementLayer } from './engagements/EngagementLayer';
-import type { ActorRenderPlacement } from "./actors/actorCanvasLayout";
-import type { ActorPlacementTranslation } from "./actors/actorPlacementTranslation";
 import { EdgeLayer } from "./edges/EdgeLayer";
-import type { EdgePreset } from "@entities/edge/edgeMutations";
 import { createCanvasMotionPointTransform } from "./canvasCoordinates";
 
-type CanvasWorkspaceProps = {
-  rotationPreview?: { zoneId: string; rotation: number; active: boolean };
-  onZoneRotationCancel?: () => void;
-  keyboardOverlay?: ReactNode;
-  activeToolId: RootState["interaction"]["activeToolId"];
-  actorDrag: ActorDragState | null;
-  actorTargetZoneId: string | null;
-  engagementDrag: EngagementDragState | null;
-  backgroundImage: RootState["encounter"]["present"]["backgroundImage"];
-  backgroundLuminanceByZoneId: Record<string, number>;
-  boxSelection: LocalBoxSelectionState | null;
-  canvasBackgroundLuminance: number;
-  canvasRef: { current: SVGSVGElement | null };
-  directManipulationZoneId: string | null;
-  encounter: RootState["encounter"]["present"];
-  edgeDrag: EdgeDragState | null;
-  edgeTool: EdgePreset;
-  actorRenderPlacements: ActorRenderPlacement[];
-  zoneActorTranslation: ActorPlacementTranslation | null;
-  getDisplayedPolygon: (zone: Zone) => LayoutPoint[];
-  onActorDragStart: (
-    actorId: string,
-    point: LayoutPoint,
-    event: ActorDragStartEvent
-  ) => void;
-  onActorDrag: (point: LayoutPoint) => void;
-  onActorDragEnd: (event: ActorDragEndEvent) => void;
-  onActorIncomingPointCommitted: (actorId: string) => void;
-  onActorReturnComplete: (actorId: string) => void;
-  onEngagementDrag: (point: LayoutPoint) => void;
-  onEngagementDragEnd: () => void;
-  onEngagementDragReturnComplete: () => void;
-  onEngagementDragStart: (engagementId: string, point: LayoutPoint) => void;
-  onEngagementSelect: (engagementId: string, toggle?: boolean) => void;
-  handleCanvasClick: MouseEventHandler<SVGSVGElement>;
-  handleCanvasContextMenu: MouseEventHandler<SVGSVGElement>;
-  handleCanvasDoubleClick: MouseEventHandler<SVGSVGElement>;
-  handleCanvasDragOver: DragEventHandler<SVGSVGElement>;
-  handleCanvasDrop: DragEventHandler<SVGSVGElement>;
-  handleCanvasMouseDown: (
-    event: MouseEvent<SVGSVGElement> | ReactPointerEvent<SVGSVGElement>
-  ) => void;
-  handleCanvasMouseMove: (
-    event: MouseEvent<SVGSVGElement> | ReactPointerEvent<SVGSVGElement>
-  ) => void;
-  handleCanvasMouseUp: (
-    event: MouseEvent<SVGSVGElement> | ReactPointerEvent<SVGSVGElement>
-  ) => void;
-  handleResizeHandleMouseDown: (
-    zone: Zone,
-    polygon: LayoutPoint[],
-    point: LayoutPoint,
-    vertexIndex: number,
-    event: MouseEvent<SVGCircleElement> | ReactPointerEvent<SVGCircleElement>
-  ) => number | undefined;
-  onResizeHandleDrag: (point: LayoutPoint, gestureId?: number, timeStamp?: number) => void;
-  onResizeHandleDragEnd: (event: ActorDragEndEvent, gestureId?: number) => void;
-  onZoneMotionComplete: () => void;
-  polygonDraftColor: string;
-  selection: RootState["interaction"]["selection"];
-  shapeDraft: ShapeDraftState | null;
-  showFactionOutlines: boolean;
-  onActorMouseEnter: (actorId: string) => void;
-  onActorMouseLeave: (actorId: string) => void;
-  zoneDraftPoints: LayoutPoint[];
-  zoneOpacityPreview: RootState["interaction"]["zoneOpacityPreview"];
-  zoneShapeMode: RootState["interaction"]["zoneShapeMode"];
-  zoneDrag: ZoneDragState | null;
-};
 
 export function CanvasWorkspace({
   rotationPreview, onZoneRotationCancel,
@@ -170,6 +86,7 @@ export function CanvasWorkspace({
   zoneDrag,
   onZoneMotionComplete
 }: CanvasWorkspaceProps) {
+  const readBackground = useActorBackgroundPixel();
   const appearanceEncounter = useZoneColorPreview(encounter);
   const paintCursorClass = useCanvasPaintCursor();
   const colorSampler = useCanvasColorSampler(encounter);
@@ -186,10 +103,12 @@ export function CanvasWorkspace({
   // Changing this callback invalidates Motion context for every canvas element.
   // The transform reads the current SVG geometry through the ref when invoked.
   const transformPagePoint = useMemo(() => createCanvasMotionPointTransform(canvasRef), [canvasRef]);
+  useFocusSurface(canvasRef, canvasFocusPoint);
   return (
     <MotionConfig transformPagePoint={transformPagePoint}>
       <motion.svg
         aria-label="SVG encounter workspace"
+        data-focus-surface
         className={`h-full min-h-0 w-full bg-canvas-panel${paintCursorClass}`}
         ref={(svg) => {
           canvasRef.current = svg;
@@ -229,7 +148,7 @@ export function CanvasWorkspace({
         role="img"
         viewBox={`0 0 ${encounter.canvasSize.width} ${encounter.canvasSize.height}`}
       >
-        {RENDER_LAYERS.map((layer) => (
+        <PlayerSceneSource layer="canvas" scene={<ActorSurfaceProvider readBackground={readBackground ?? undefined}>{RENDER_LAYERS.map((layer) => (
           <g
             key={layer.id}
             aria-label={`${layer.label} layer`}
@@ -282,7 +201,7 @@ export function CanvasWorkspace({
                   activeToolId === "zone" ? "pointer-events-none" : undefined
                 }
               >
-                <g ref={setRulerHitTarget} aria-label="Ruler hit targets" className="outline-none" />
+                <EditorSceneOnly><g ref={setRulerHitTarget} aria-label="Ruler hit targets" className="outline-none" /></EditorSceneOnly>
                 <ActorLayer namePreview={namePreview}
                   surfaceZones={actorSurfaceZones(appearanceEncounter.zones, getDisplayedPolygon, zoneDrag, zoneOpacityPreview)}
                   activeToolId={calibrating ? "background" : activeToolId}
@@ -305,21 +224,21 @@ export function CanvasWorkspace({
               </g>
             ) : null}
             {layer.id === "uiOverlays" ? (
-              <CanvasOverlays
+              <EditorSceneOnly><CanvasOverlays
                 boxSelection={boxSelection}
                 polygonDraftColor={polygonDraftColor}
                 shapeDraft={shapeDraft}
                 zoneDraftPoints={zoneDraftPoints}
                 zoneShapeMode={zoneShapeMode}
-              />
+              /></EditorSceneOnly>
             ) : null}
           </g>
-        ))}
+        ))}<ActorMovementOverlay encounter={encounter} drag={actorDrag} /></ActorSurfaceProvider>} />
         {calibrating ? <GridCalibrationMarkers /> : null}
         {tracerPreview ? <polyline data-cell-tracer-preview points={tracerPreview.map(p => `${p.x},${p.y}`).join(" ")} fill="none" stroke={polygonDraftColor} strokeWidth={2} strokeDasharray="6 4" pointerEvents="none" /> : null}
-        <ActorMovementOverlay encounter={encounter} drag={actorDrag} />
         {keyboardOverlay}
         <RulerOverlay encounter={encounter} hitTarget={rulerHitTarget} placements={actorRenderPlacements} actorDrag={actorDrag} zoneActorTranslation={zoneActorTranslation} />
+        <FocusLightLayer />
       </motion.svg>
     </MotionConfig>
   );

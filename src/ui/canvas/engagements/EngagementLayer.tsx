@@ -1,3 +1,4 @@
+import { usePlayerAudience } from '@ui/player_view/PlayerSceneSource';
 import type { EncounterState } from '@core/encounter/types';
 import type { LayoutPoint } from '@core/layout/types';
 import { getZoneEngagementColor } from '@entities/zone/zoneColors';
@@ -60,6 +61,7 @@ export function EngagementLayer({
   selection,
   zoneActorTranslation = null
 }: EngagementLayerProps) {
+  const player = usePlayerAudience();
   const placementByActorId = new Map(
     placements.map((placement) => [placement.actor.id, placement])
   );
@@ -175,7 +177,7 @@ export function EngagementLayer({
         return (
           <EngagementVisual
             key={model.engagementId}
-            activeToolId={activeToolId}
+            activeToolId={player ? "background" : activeToolId}
             color={model.color}
             connectors={connectors}
             drag={
@@ -188,15 +190,15 @@ export function EngagementLayer({
               movesCompleteEngagement ? undefined : draggedParticipantIds
             }
             isDropTarget={
-              engagementDrag?.phase === 'dragging' &&
+              !player && engagementDrag?.phase === 'dragging' &&
               engagementDrag.hoverTargetEngagementId === model.engagementId
             }
             onDrag={onEngagementDrag}
             onDragEnd={onEngagementDragEnd}
-            onDragReturnComplete={onEngagementDragReturnComplete}
+            onDragReturnComplete={player ? () => {} : onEngagementDragReturnComplete}
             onDragStart={onEngagementDragStart}
             onSelect={onEngagementSelect}
-            selected={selected}
+            selected={!player && selected}
             token={
               movesCompleteEngagement
                 ? addOffset(model.token, dragOffset)

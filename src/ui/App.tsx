@@ -1,3 +1,8 @@
+import { LiveSceneMotionProvider } from '@ui/player_view/LiveSceneMotion';
+import { PlayerSceneProvider } from '@ui/player_view/PlayerSceneSource';
+import { PlayerViewProvider } from '@ui/player_view/PlayerViewProvider';
+import { PlayerWorkspace } from '@ui/player_view/PlayerWorkspace';
+import { FocusLightProvider } from '@ui/canvas/focus/FocusLightProvider';
 import { CanvasStatusVisibilityButton } from "@ui/panels/status_panel/CanvasStatusVisibilityButton";
 import { nextLibraryPanelView } from "@ui/interface_preferences/libraryPreferences";
 import { ColorSamplerProvider } from '@ui/canvas/color_sampler/ColorSamplerProvider';
@@ -469,6 +474,7 @@ function AppContent() {
             } as CSSProperties
           }
         >
+      <FocusLightProvider><PlayerViewProvider>
       <ZoneResizeApprovalProvider>
       <EncounterHistoryKeyboard />
       <WorkspaceKeyboardShortcuts onOpenLibrary={openLibraryForActiveTool} onTogglePanels={() => {
@@ -480,6 +486,7 @@ function AppContent() {
       }} />
       <InitiativePopoutProvider>
       <StatusPopoutProvider>
+      <PlayerWorkspace>
       <Toolbar
         actorCreationImage={actorCreationImage}
         encounterToolSelectionRequest={
@@ -584,6 +591,7 @@ function AppContent() {
         />
         ) : null}
       </main>
+      </PlayerWorkspace>
       {persistenceUi.dialogs}
       {audioAssignment.dialog}
       {renameModalOpen ? (
@@ -595,6 +603,7 @@ function AppContent() {
       </StatusPopoutProvider>
       </InitiativePopoutProvider>
       </ZoneResizeApprovalProvider>
+      </PlayerViewProvider></FocusLightProvider>
         </div>
       </TouchTooltipProvider>
     </MotionPreferenceProvider>
@@ -612,7 +621,7 @@ export function App() {
               <KeybindProvider>
                 <CanvasViewportProvider>
                   <ColorSamplerProvider>
-                  <AppContent />
+                  <LiveSceneMotionProvider><PlayerSceneProvider><AppContent /></PlayerSceneProvider></LiveSceneMotionProvider>
                   <MembershipChoiceDialog />
                   </ColorSamplerProvider>
                 </CanvasViewportProvider>

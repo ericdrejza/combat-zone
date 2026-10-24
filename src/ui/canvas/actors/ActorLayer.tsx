@@ -1,3 +1,4 @@
+import { usePlayerAudience, useSceneId } from '@ui/player_view/PlayerSceneSource';
 import { previewedName, type NamePreview } from '@interaction/namePreviewState';
 import { getDraggedPoint } from './actorDragPoint';
 import { ActorTrim } from './ActorTrim';
@@ -72,6 +73,8 @@ export function ActorLayer({
   onIncomingPointCommitted,
   onActorReturnComplete
 }: ActorLayerProps) {
+  const player = usePlayerAudience();
+  const clipPrefix = useSceneId('');
   const { animationsDisabled } = useMotionPreference();
   const readBackground = useActorBackgroundPixel();
   const { preferences } = useCanvasPreferences();
@@ -111,7 +114,7 @@ export function ActorLayer({
             actor.currentZoneId === zoneActorTranslation.zoneId)
       );
       const selected =
-        selection.selectedEntityType === "actor" &&
+        !player && selection.selectedEntityType === "actor" &&
         selection.selectedIds.includes(actor.id);
       const colors = ACTOR_LAYOUT_GROUP_COLORS[actor.layoutGroup];
       const actorZone = encounter.zones.byId[actor.currentZoneId];
@@ -124,7 +127,7 @@ export function ActorLayer({
       const surfaceContrast = readBackground
         ? createActorSurfaceContrast(renderedPoint, surfaceZones, readBackground)
         : undefined;
-      const clipId = `${actor.id}-clip`;
+      const clipId = `${clipPrefix}${actor.id}-clip`;
       const actorTransition = getCanvasTransition(
         isDirectManipulation,
         animationsDisabled
@@ -138,6 +141,7 @@ export function ActorLayer({
         >
           {(animatePoint, completeTrack) => (
             <ActorDragMotionGroup
+              sceneMotionKey={actor.id}
               aria-label={name}
               className="cursor-grab select-none active:cursor-grabbing"
               data-entity-id={actor.id}
@@ -152,7 +156,7 @@ export function ActorLayer({
                   ? undefined
                   : () => onActorMouseLeave(actor.id)
               }
-              drag={["actor", "select", "grid"].includes(activeToolId)}
+              drag={!player && ["actor", "select", "grid"].includes(activeToolId)}
               dragMomentum={false}
               dragElastic={0}
               dragOrigin={zoneMovedPoint}
@@ -162,7 +166,7 @@ export function ActorLayer({
                 onDragEnd: event => onActorDragEnd?.(event)
               }}
               initial={false}
-              animate={isMotionDraggedActor ? undefined : animatePoint}
+              animate={!player && isMotionDraggedActor ? undefined : animatePoint}
               transition={actorTransition}
               onAnimationComplete={() => {
                 const completedMotion = completeTrack();
@@ -171,8 +175,8 @@ export function ActorLayer({
                   completedMotion === "track" &&
                   placementIncomingPoint
                 ) {
-                    clearOptimisticActorPlacement(actor.id, placementIncomingPoint);
-                  onIncomingPointCommitted?.(actor.id);
+                    if (!player) clearOptimisticActorPlacement(actor.id, placementIncomingPoint);
+                  if (!player) onIncomingPointCommitted?.(actor.id);
                 }
 
                 if (
@@ -182,12 +186,12 @@ export function ActorLayer({
                   (completedMotion === "track" ||
                     Boolean(actorDrag.returnPointsByActorId?.[actor.id]))
                 ) {
-                  onActorReturnComplete?.(actor.id);
+                  if (!player) onActorReturnComplete?.(actor.id);
                 }
               }}
             >
               <ActorTrim encounter={encounter} actor={actor} point={renderedPoint}>{artworkClipId => <ActorVisual showResourceBars showConditions
-                hidden={!!actorDrag?.hasMoved && actorDrag.phase !== "returning" && actorDrag.actorIds.includes(actor.id)}
+                hidden={!player && !!actorDrag?.hasMoved && actorDrag.phase !== "returning" && actorDrag.actorIds.includes(actor.id)}
                 artworkClipId={artworkClipId}
                 actor={actor} displayName={name}
                 projectionRotation={projectionRotation} projectionAngle={encounter.grid.isometricAngle}
@@ -198,7 +202,7 @@ export function ActorLayer({
                 selected={selected}
                 selectedTextColor={selectedActorTextColor}
                 surfaceContrast={surfaceContrast}
-                showFactionOutline={showFactionOutlines}
+                showFactionOutline={!player && showFactionOutlines}
                 transition={actorTransition}
               />}
               </ActorTrim>

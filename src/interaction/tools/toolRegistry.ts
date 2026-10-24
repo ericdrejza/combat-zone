@@ -34,7 +34,7 @@ export const MVP_TOOLS: ToolDefinition[] = [
       selectableEntityTypes: ["zone", "edge", "actor", "engagement", "annotation"],
       dragBehavior: "Move selected entities or box select when dragging empty canvas.",
       clickBehavior: "Select an entity, ctrl-click to toggle one item, or ctrl-a to select all zones.",
-      keyboardShortcut: "v"
+      keyboardShortcut: "s"
     }
   },
   {

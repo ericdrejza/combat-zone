@@ -1,3 +1,5 @@
+import { useLiveSceneMotion } from '@ui/player_view/LiveSceneMotion';
+import { usePlayerAudience } from '@ui/player_view/PlayerSceneSource';
 import { useEffect, useRef } from 'react';
 import { Swords } from 'lucide-react';
 import {
@@ -99,18 +101,20 @@ export function EngagementVisual({
   const isActiveDrag = drag?.engagementId === engagementId;
   const initialPoint =
     isActiveDrag && drag.phase === 'dragging' ? drag.current : token;
-  const tokenX = useMotionValue(initialPoint.x);
-  const tokenY = useMotionValue(initialPoint.y);
+  const player = usePlayerAudience();
+  const localX = useMotionValue(initialPoint.x), localY = useMotionValue(initialPoint.y);
+  const tokenX = useLiveSceneMotion(`engagement-${engagementId}-x`, localX);
+  const tokenY = useLiveSceneMotion(`engagement-${engagementId}-y`, localY);
 
   useEffect(() => {
-    if (!isActiveDrag) {
+    if (!player && !isActiveDrag) {
       tokenX.set(token.x);
       tokenY.set(token.y);
     }
-  }, [isActiveDrag, token.x, token.y, tokenX, tokenY]);
+  }, [isActiveDrag, token.x, token.y, tokenX, tokenY, player]);
 
   useEffect(() => {
-    if (!isActiveDrag || drag.phase !== 'returning') {
+    if (player || !isActiveDrag || drag.phase !== 'returning') {
       return;
     }
 
@@ -131,6 +135,7 @@ export function EngagementVisual({
       yAnimation.stop();
     };
   }, [
+    player,
     drag?.phase,
     isActiveDrag,
     onDragReturnComplete,

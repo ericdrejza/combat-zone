@@ -1,11 +1,16 @@
+import { DEFAULT_PLAYER_ASPECT_RATIO, normalizePlayerAspectRatio, validPlayerAspectRatio } from '@ui/player_view/playerAspectRatio';
+import type { CanvasSize } from '@core/layout/polygonCanvasBounds';
 import { RULER_CELL_COVERAGE_CHOICES, type RulerCellCoverage } from '@core/measurement/cellCoverage';
 import { DEFAULT_MOVEMENT_RULES, validMovementRules, type MovementRules } from '@core/movement/types';
 import { LOCAL_PREFERENCES_RESET_EVENT } from '@ui/motion_preferences/MotionPreferenceProvider';
+import { DEFAULT_FOCUS_PREFERENCES, readFocusPreferences, type FocusPreferences } from '@ui/canvas/focus/focusPreferences';
 export const CANVAS_PREFERENCES_KEY = 'combat-zone.canvas-preferences';
 export const CANVAS_PREFERENCES_EVENT = 'combat-zone:canvas-preferences';
 export type MembershipMethod = 'center' | 'cells' | 'overlap';
 export type MembershipDecider = 'cells' | 'nearest' | 'current' | 'ask';
 export type CanvasPreferences = {
+  focus: FocusPreferences;
+  playerAspectRatio: CanvasSize;
   rulerCellCoverage: RulerCellCoverage;
   rulerFeel: 'rigid' | 'flexible';
   showRulerArea: boolean;
@@ -23,6 +28,8 @@ export type CanvasPreferences = {
   tracerInvalidRoute: 'reject' | 'detour';
 };
 export const DEFAULT_CANVAS_PREFERENCES: CanvasPreferences = {
+  focus: { ...DEFAULT_FOCUS_PREFERENCES },
+  playerAspectRatio: { ...DEFAULT_PLAYER_ASPECT_RATIO },
   rulerCellCoverage: 'corners-or-center', rulerFeel: 'rigid', showRulerArea: false, rulerColor: null, rulerOpacity: 1, rulerActorHighlightIntensity: 0.5, showActorMovementDistance: true,
   edgeRoutingDuringDrag: "estimates",
   selectOnUndoRedo: false,
@@ -40,8 +47,12 @@ globalThis.addEventListener?.('storage', (event: Event) => {
 export function readCanvasPreferences(): CanvasPreferences {
   if (sessionPreferences) return structuredClone(sessionPreferences);
   try {
-    const value = JSON.parse(localStorage.getItem(CANVAS_PREFERENCES_KEY) ?? 'null') as Partial<CanvasPreferences> | null;
+    const value = JSON.parse(localStorage.getItem(CANVAS_PREFERENCES_KEY) ?? 'null') as (Partial<CanvasPreferences> & { projectedResolution?: unknown }) | null;
+    const ratio = validPlayerAspectRatio(value?.playerAspectRatio) ? value.playerAspectRatio
+      : validPlayerAspectRatio(value?.projectedResolution) ? value.projectedResolution : DEFAULT_PLAYER_ASPECT_RATIO;
     return {
+      focus: readFocusPreferences(value?.focus),
+      playerAspectRatio: normalizePlayerAspectRatio(ratio),
       rulerCellCoverage: RULER_CELL_COVERAGE_CHOICES.includes(value?.rulerCellCoverage as RulerCellCoverage) ? value!.rulerCellCoverage! : 'corners-or-center',
       rulerFeel: value?.rulerFeel === 'flexible' ? 'flexible' : 'rigid',
       showRulerArea: value?.showRulerArea === true,

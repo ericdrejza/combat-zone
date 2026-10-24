@@ -1,3 +1,5 @@
+import { useLiveSceneMotion } from '@ui/player_view/LiveSceneMotion';
+import { usePlayerAudience } from '@ui/player_view/PlayerSceneSource';
 import { createContext, useContext, useState, type ComponentProps, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { motion, useMotionValue, type MotionValue } from "motion/react";
@@ -18,11 +20,14 @@ export function ActorOverlayLayers({ children }: { children: ReactNode }) {
 }
 
 /** Share the token's live Motion coordinates, including pointer-driven dragging, with its overlays. */
-export function ActorMotionGroup({ children, ...props }: ComponentProps<typeof motion.g>) {
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
+export function ActorMotionGroup({ children, sceneMotionKey, ...props }: ComponentProps<typeof motion.g> & { sceneMotionKey: string }) {
+  const localX = useMotionValue(0), localY = useMotionValue(0);
+  const key = `actor-${sceneMotionKey}`;
+  const x = useLiveSceneMotion(`${key}-x`, localX);
+  const y = useLiveSceneMotion(`${key}-y`, localY);
+  const player = usePlayerAudience();
   return <PositionContext.Provider value={{ x, y }}>
-    <motion.g {...props} style={{ ...props.style, x, y }}>{children}</motion.g>
+    <motion.g {...props} animate={player ? undefined : props.animate} style={{ ...props.style, x, y }}>{children}</motion.g>
   </PositionContext.Provider>;
 }
 

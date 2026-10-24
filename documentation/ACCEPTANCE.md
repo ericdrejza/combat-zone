@@ -914,3 +914,49 @@ these back into `AGENT.md` or `DESIGN.md`.
       and release with mouse or touch, including after moving the dialog. Selecting
       a palette color keeps it expanded. Right-dragging over saved rulers with any
       non-ruler tool never creates a shared focus rectangle or a history entry.
+
+## Player view and projected viewport (#43)
+
+- [x] The player window and GM preview header provide fullscreen toggles for the
+      player window that track browser exits, disable unavailable fullscreen,
+      handle rejection, and preserve framing.
+      GM entry uses automatic permission or existing player activation when
+      available; otherwise it focuses the player window for an Enter/Spacebar confirmation,
+      without requiring a player-button click. Escape/blur/closure cancel the
+      shared pending handoff; exit remains immediately available.
+- [x] V replaces the GM workspace with player preview and a responsive GM-only
+      navigation strip; Ctrl+Shift+V toggles a canvas-only player window. Shortcuts
+      are configurable and yield to typing/modals/repeats. Select defaults to S;
+      old inherited V bindings migrate while real customizations remain intact.
+- [x] Preview and popout mirror live movement, names, appearance, conditions,
+      resource bars, and ruler measurements. Player output omits Skill Check edge
+      badges, selection/target cues, handles, tool cursors, and editor dialogs.
+- [x] Follow starts enabled and letterboxes the exact GM-visible canvas region.
+      Preview navigation while following adjusts the GM camera. Unfollowing
+      preserves framing/zoom and allows independent navigation; following again
+      resumes GM framing. Popout resize scales without changing the region.
+- [x] 16:9, 16:10, 4:3, 21:9, and valid custom ratios update both outputs.
+      Invalid drafts preserve the valid frame. Canvas Settings persists/resets the 16:9
+      default; preview overrides remain session-only and survive encounter changes.
+      Loading an encounter resets follow. Popup close/reopen retains session state.
+      Legacy pixel dimensions migrate to their equivalent aspect ratio.
+- [x] Preview, popout, camera, and sizing controls preserve encounter history and
+      logs in every validation mode and read-only tabs. Undo/redo of GM edits is
+      reflected in both outputs. Exiting preview restores the GM tool/selection.
+
+- [x] Start the extended zoom dropdown with Follow GM View, Player Preview, and
+      Player Window on desktop, compact layouts, and preview navigation. All
+      three retain the open dropdown across preview transitions; Follow GM View
+      keeps its unbroken link icon and indicates following through active state.
+- [x] Publish matched zoom/scroll camera snapshots before paint and accumulate
+      rapid preview navigation without intermediate jumps or lost zoom steps.
+
+## Focus light
+
+- [x] F defaults to held Focus; Canvas settings offer toggle activation, shared
+      color picker, flow/tail length and glow intensity. Preferences persist and
+      reset, while invalid stored fields fall back safely.
+- [x] GM canvas, preview and player window share matching pointer/trail geometry
+      through zoom and letterboxing. Focus prevents canvas edits, respects input
+      guards and reduced motion, releases reliably, and preserves encounter
+      state/history/logs in every validation mode and read-only tabs.
