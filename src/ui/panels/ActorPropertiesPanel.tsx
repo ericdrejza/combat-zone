@@ -1,3 +1,4 @@
+import { ActorImageFocusControl } from "./actor_properties/ActorImageFocusControl";
 import { useNamePreview } from '@ui/controls/useNamePreview';
 import { PropertiesNameInput } from '@ui/controls/PropertiesNameInput';
 import { ActorMovementTotal } from './actor_properties/ActorMovementTotal';
@@ -100,6 +101,7 @@ export function ActorPropertiesPanel({
       >
         <Link2 aria-hidden="true" className="h-4 w-4" />
       </button>
+      <ActorImageFocusControl actor={actor} onChange={commitActorProperties} />
     </div>
   );
 

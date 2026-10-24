@@ -4,6 +4,11 @@ import { usePlayerAudience } from './PlayerSceneSource';
 
 const Context = createContext<Map<string, MotionValue> | null>(null);
 
+/** Subscribe to an existing GM track without replacing the value's owner. */
+export function useRegisteredSceneMotion<T extends string | number>(key: string): MotionValue<T> | undefined {
+  return useContext(Context)?.get(key) as MotionValue<T> | undefined;
+}
+
 export function LiveSceneMotionProvider({ children }: PropsWithChildren) {
   const [values] = useState(() => new Map<string, MotionValue>());
   return <Context.Provider value={values}>{children}</Context.Provider>;

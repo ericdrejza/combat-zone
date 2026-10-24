@@ -179,6 +179,7 @@ export function LibraryPanel({
     dragPreviewCleanupRef.current?.();
     dragPreviewCleanupRef.current = setActorDragImage(event.dataTransfer, {
       image: asset.source,
+      imageFocus: asset.imageFocus,
       imageUrl,
       layoutGroup: actorTool.layoutGroup,
       mediaType: mediaType ?? asset.mediaType,

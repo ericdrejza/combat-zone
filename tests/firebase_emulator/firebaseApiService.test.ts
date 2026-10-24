@@ -67,6 +67,47 @@ afterAll(async () => {
 });
 
 describe("Firebase API service", () => {
+  it("persists schema 32 actor focus and Library defaults, rejecting invalid replacements", async () => {
+    const focus = { x: 0.25, y: 0.25, width: 0.5, height: 0.5 };
+    const image = { kind: "url", url: "https://example.com/token.png" };
+    const command = encounterCommand("image-focus");
+    Object.assign(command.payload.state, {
+      schemaVersion: 32,
+      movementRules: { zoneLocked: false, snapToGrid: false, snapZoneVertices: false, allowOverlap: true, trimTokens: false },
+      grid: { type: "square", cellSize: 64, origin: { x: 0, y: 0 }, rotation: 0, visible: false,
+        color: "#808080", opacity: 0.5, lineStyle: "solid", distancePerCell: 5, distanceUnit: "feet" },
+      counters: { byId: {}, allIds: [] }, clocks: { byId: {}, allIds: [] },
+      audioCues: { byId: {}, allIds: [] }, audioCueGroups: { byId: {}, allIds: [] },
+      musicGroupIds: [], rulers: { byId: {}, allIds: [] },
+      actors: { allIds: ["a"], byId: { a: { id: "a", name: "Actor", actorType: "creature", layoutGroup: "neutral", size: "medium", shape: "circle",
+        currentZoneId: "zoneless", metadata: {}, statusEffects: [], counters: { byId: {}, allIds: [] }, image, imageFocus: focus } } }
+    });
+    command.payload.state.panelLayout.left.push({ id: "zoneless", collapsed: false });
+    command.payload.state.panelLayout.right.push({ id: "audio", collapsed: false });
+    await service.commitEncounter("alice", command);
+    const ref = getFirestore().doc("users/alice/encounters/encounter-1");
+    expect((await ref.get()).data()?.state).toEqual(command.payload.state);
+    const invalid = structuredClone(command);
+    invalid.mutationId = "invalid-focus"; invalid.expectedRevision = 1;
+    Object.assign(invalid.payload.state.actors.byId, { a: { ...((command.payload.state.actors.byId as Record<string, object>).a), imageFocus: { ...focus, x: 2 } } });
+    expect(() => service.commitEncounter("alice", invalid)).toThrow(/imageFocus/);
+    expect((await ref.get()).data()?.state).toEqual(command.payload.state);
+
+    const sections = Object.fromEntries(["encounters", "backgrounds", "tokens", "audio"].map(id => [id, { rootId: `${id}-root`, nodesById: {
+      [`${id}-root`]: { id: `${id}-root`, sectionId: id, type: "folder", childIds: id === "tokens" ? ["token"] : [] },
+      ...(id === "tokens" ? { token: { id: "token", sectionId: id, type: "image", asset: { name: "Token", mediaType: "image/png", source: image, imageFocus: focus } } } : {})
+    } }]));
+    const library = { apiVersion: FIREBASE_API_VERSION, mutationId: "library-focus", expectedRevision: null,
+      payload: { schemaVersion: CLOUD_RECORD_SCHEMA_VERSION, assetIds: [], state: { sections } } };
+    await service.commitLibrary("alice", library);
+    const libraryRef = getFirestore().doc("users/alice/singletons/library");
+    expect((await libraryRef.get()).data()?.state).toEqual(library.payload.state);
+    const invalidLibrary = { ...structuredClone(library), mutationId: "invalid-library-focus", expectedRevision: 1 };
+    Object.assign(invalidLibrary.payload.state.sections.tokens.nodesById.token!.asset!, { imageFocus: { ...focus, width: -1 } });
+    expect(() => service.commitLibrary("alice", invalidLibrary)).toThrow(/imageFocus/);
+    expect((await libraryRef.get()).data()?.state).toEqual(library.payload.state);
+  });
+
   it("persists schema 31 Zoneless docking and preserves the last snapshot after invalid layouts", async () => {
     const command = encounterCommand("zoneless-layout");
     command.payload.state.schemaVersion = 31;

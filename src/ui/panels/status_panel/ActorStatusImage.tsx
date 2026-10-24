@@ -1,3 +1,4 @@
+import { ImageFocusFrame } from "@core/rendering/ImageFocusFrame";
 import { motion } from 'motion/react';
 import type { Actor } from '@entities/actor/types';
 import { useActorStatusNavigation } from './ActorStatusNavigationProvider';
@@ -7,10 +8,15 @@ export function ActorStatusImage({ actor, displayName = actor.name, src, classNa
   const navigation = useActorStatusNavigation();
   const dimensions = size === undefined ? undefined : { width: size, height: size };
   const shape = actor.shape === 'transparent' ? 'object-contain' : `object-cover ${actor.shape === 'rectangle' ? 'rounded-md' : 'rounded-full'}`;
-  const image = <motion.img alt={`${displayName} token`} src={src} draggable={false}
+  const focus = actor.shape === 'transparent' ? undefined : actor.imageFocus;
+  const image = focus ? <span style={navigation ? undefined : dimensions} className={`${navigation ? 'h-full w-full' : className} ${actor.shape === 'circle' ? 'rounded-full' : 'rounded-md'} block overflow-hidden`}>
+    <motion.span className="block h-full w-full" initial={false} animate={{ scaleX: actor.imageFlippedHorizontal ? -1 : 1 }}>
+      <ImageFocusFrame focus={focus}><img alt={`${displayName} token`} src={src} draggable={false}
+        className={`h-full w-full ${focus ? 'object-fill' : shape}`} /></ImageFocusFrame>
+    </motion.span>
+  </span> : <motion.img alt={`${displayName} token`} src={src} draggable={false}
     initial={false} animate={{ scaleX: actor.imageFlippedHorizontal ? -1 : 1 }}
-    style={navigation ? undefined : dimensions}
-    className={`${navigation ? 'h-full w-full' : className} ${shape}`} />;
+    style={navigation ? undefined : dimensions} className={`${navigation ? "h-full w-full" : className} ${shape}`} />;
   if (!navigation) return image;
   const placed = navigation.points.has(actor.id);
   const label = placed ? `Center viewport on ${displayName}` : `${displayName} is not on the canvas`;

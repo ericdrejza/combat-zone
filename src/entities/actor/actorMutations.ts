@@ -1,3 +1,4 @@
+import { isImageFocus, type ImageFocus } from "@core/assets/imageFocus";
 import type {
   Actor,
   ActorLayoutGroup,
@@ -16,6 +17,7 @@ import { removeActorFromInitiative } from '@core/encounter/initiativeMutations';
 import type { ImageAssetSource } from '@core/assets/imageAssetSource';
 
 export type ActorImageInput = {
+  imageFocus?: ImageFocus;
   animated?: boolean;
   libraryNodeId?: string;
   source: ImageAssetSource;
@@ -38,6 +40,7 @@ export type UpdateActorPropertiesInput = {
   movementLimit?: number | null;
   actorType?: ActorType;
   image?: ImageAssetSource;
+  imageFocus?: ImageFocus | null;
   imageFlippedHorizontal?: boolean;
   imageAssetAnimated?: boolean | null;
   imageAssetMediaType?: string | null;
@@ -149,6 +152,7 @@ export function buildActor({
     currentZoneId,
     id,
     image: image?.source,
+    ...(image?.imageFocus ? { imageFocus: image.imageFocus } : {}),
     layoutGroup,
     metadata: {
       sourceLibraryNodeId: image?.libraryNodeId,
@@ -215,6 +219,7 @@ export function updateActorProperties(
 
   const {
     movementLimit,
+    imageFocus,
     imageAssetAnimated,
     imageAssetMediaType,
     imageAssetName,
@@ -222,7 +227,13 @@ export function updateActorProperties(
     ...actorProperties
   } = properties;
   if (movementLimit !== undefined && movementLimit !== null && (!Number.isFinite(movementLimit) || movementLimit < 0)) return state;
+  if (imageFocus != null && !isImageFocus(imageFocus)) return state;
   const updatedActor = { ...actor, ...actorProperties };
+  // Replacing artwork must not carry the previous image's crop onto it.
+  const sourceChanged = Object.prototype.hasOwnProperty.call(properties, "image") && JSON.stringify(properties.image) !== JSON.stringify(actor.image);
+  if (sourceChanged || imageFocus === null) delete updatedActor.imageFocus;
+  if (imageFocus && !updatedActor.image) return state;
+  if (imageFocus) updatedActor.imageFocus = imageFocus;
   if (movementLimit === null) delete updatedActor.movementLimit;
   else if (movementLimit !== undefined) updatedActor.movementLimit = movementLimit;
   const metadata = { ...actor.metadata };

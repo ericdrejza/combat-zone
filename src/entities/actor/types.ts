@@ -1,3 +1,4 @@
+import type { ImageFocus } from "@core/assets/imageFocus";
 import type { ActorZoneAssignment } from "@core/encounter/types";
 import type { ImageAssetSource } from "@core/assets/imageAssetSource";
 
@@ -28,6 +29,7 @@ export type Actor = {
   size: ActorSize;
   shape: ActorShape;
   image?: ImageAssetSource;
+  imageFocus?: ImageFocus;
   /** Reflect artwork about its vertical axis; absent legacy values mean false. */
   imageFlippedHorizontal?: boolean;
   currentZoneId: ActorZoneAssignment;

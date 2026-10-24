@@ -1,3 +1,4 @@
+import type { ImageFocus } from "@core/assets/imageFocus";
 import type { ActorLayoutGroup, ActorShape, ActorSize } from "@entities/actor/types";
 import type { ImageAssetSource } from "@core/assets/imageAssetSource";
 
@@ -5,6 +6,7 @@ export const ACTOR_CREATION_DRAG_TYPE = "combat-zone/new-actor";
 
 export type NewActorDragData = {
   image?: ImageAssetSource;
+  imageFocus?: ImageFocus;
   imageAnimated?: boolean;
   imageLibraryNodeId?: string;
   imageMediaType?: string;

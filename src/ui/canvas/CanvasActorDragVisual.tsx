@@ -12,6 +12,19 @@ import { ActorTrim } from "./actors/ActorTrim";
 import { getDraggedPoint } from "./actors/actorDragPoint";
 import { useActorBackgroundPixel } from './actors/ActorSurfaceProvider';
 import { createActorSurfaceContrast } from './actors/actorSurfaceContrast';
+import { useRegisteredSceneMotion } from '@ui/player_view/LiveSceneMotion';
+import type { LayoutPoint } from '@core/layout/types';
+import type { ReactNode } from 'react';
+
+/** The portal must follow the original token's live track, including its first drag frame. */
+function ActorDragPosition({ actorId, target, children }: { actorId: string; target: LayoutPoint; children: ReactNode }) {
+  const x = useRegisteredSceneMotion<number>(`actor-${actorId}-x`);
+  const y = useRegisteredSceneMotion<number>(`actor-${actorId}-y`);
+  const position = x && y ? { x, y } : undefined;
+  return <motion.g initial={false} style={position} animate={position ? undefined : target} transition={{ duration: 0 }}>
+    {children}
+  </motion.g>;
+}
 
 type Props = {
   drag: ActorDragState | null;
@@ -52,7 +65,7 @@ export function CanvasActorDragVisual({
           : undefined;
 
         return (
-          <motion.g key={actor.id} initial={false} animate={{ x: target.x, y: target.y }} transition={{ duration: 0 }}>
+          <ActorDragPosition key={actor.id} actorId={actor.id} target={target}>
             <ActorTrim idPrefix="drag-actor-trim" actor={actor} encounter={encounter} point={target}>
               {artworkClipId => (
                 <ActorVisual
@@ -75,7 +88,7 @@ export function CanvasActorDragVisual({
                 />
               )}
             </ActorTrim>
-          </motion.g>
+          </ActorDragPosition>
         );
       })}
     </svg>,

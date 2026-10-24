@@ -340,6 +340,7 @@ Properties:
 - image
 - size
 - shape (circle / rectangle / transparent)
+- imageFocus (optional normalized source-image crop snapshot: x, y, width, height)
 - imageFlippedHorizontal (optional boolean, defaults to false)
 - movementLimit (optional nonnegative distance in encounter measurement units; advisory)
 - stats (optional system-specific blob)
@@ -360,6 +361,33 @@ Actor Properties adds a SquareCenterlineDashedHorizontal header toggle with
 vertical axis, leaving names, outlines, and placement unchanged. It is disabled
 without an image. This Actor property persists through saves, exports, and sync
 and supports undo/redo; absent flags in older encounters mean unflipped.
+
+Actor Properties places a ScanSquare “Adjust actor image focus” button immediately
+right of the web-link image-source button. It opens the shared focus editor for
+this Actor only, and is disabled without artwork or in read-only workspaces.
+Save creates one validated, undoable Actor change; cancelling or saving unchanged
+framing creates none. The dialog's “Reset to token match” action copies the
+currently linked token's default into its draft, or centered 100% framing when
+that token has no custom default. This action is hidden when the Library token
+cannot be resolved. Saving the match takes a snapshot: subsequent Library edits
+do not change this Actor. Reset and token match change only the draft until Save.
+Changing the Actor or its source while editing dismisses the draft.
+
+The floating Actor drag visual reads the same live Motion position as the canvas
+Actor. The handoff from rest must not replay an older drag-state position or
+introduce a backward jump; validation and history continue using their existing
+encounter snapshots.
+
+Actor drags, Library transfers, and focus-image drags retain the grabbing cursor
+across canvas, panels, and dialog controls until release or cancellation. Cursor
+feedback clears on pointer cancellation, Escape, window blur, and unmount.
+
+Circle and rectangle artwork uses the saved focus consistently on the canvas,
+in Properties, Status, Zoneless, and drag/creation previews, with horizontal
+mirroring applied after framing. Transparent artwork ignores the crop while
+retaining it for subsequent circle/rectangle rendering. Source replacement or
+applying an uncropped token clears the prior framing. Schema 32 preserves older
+encounters' existing centered artwork without adding a crop.
 
 Transparent uses the SquareDashed icon in Actor toolbar and Properties, with
 “Transparent” tooltips. Its artwork preserves aspect ratio within the existing
@@ -1179,6 +1207,28 @@ currently shows an empty scaffold using the shared asset explorer and card views
 with adding disabled. The future Characters feature will store separate character
 records that link to existing token assets and retain state across encounters;
 character behavior and its data contract will be specified with that feature.
+Token asset context menus offer “Adjust image focus”, including on links. A
+single default crop belongs to the original Library asset; links share it. The
+shared editor shows fixed, simultaneous square and inscribed-circle outlines.
+Only the source artwork moves or scales beneath them. A zoom slider spans
+100–400%, where 100% is the smallest scale covering the square. Pointer dragging
+(mouse, touch, or pen) and arrow keys reposition the image, clamped so the square
+stays covered; Shift+arrow moves farther. Neither outline changes shape or size
+while editing. Reset restores centered 100% framing. Cancel, Escape, and backdrop
+dismissal discard the draft. Save is unavailable until artwork dimensions load,
+on load failure, or in a read-only workspace. Source media bytes remain intact,
+including animated media and existing animation preferences.
+
+A saved token default updates its Library card and panel thumbnails using the
+square crop, without recropping to card proportions. The full Library preview
+retains its existing source-image presentation. Creating an Actor or applying a
+Library token copies the current default into that Actor; existing Actors remain
+unchanged when the default is edited. Replacing the token's source clears its
+default and the framing of Actors updated by the existing source-replacement
+workflow. Crops persist as normalized source coordinates (x, y, width, height),
+with zoom and offsets derived from that rectangle rather than stored separately.
+Library default edits remain outside encounter history.
+
 Interface Settings includes Library preferences: closing the modal by clicking
 outside it (initially off), separate modal and panel default views (initially
 Grid and Two columns respectively), and a modal card size slider with four

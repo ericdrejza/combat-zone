@@ -4,7 +4,8 @@ type ControlledVideoProps = {
   ariaLabel?: string;
   className?: string;
   onError?: () => void;
-  onLoadedData?: () => void;
+  onLoadedData?: import("react").ReactEventHandler<HTMLVideoElement>;
+  onLoadedMetadata?: import("react").ReactEventHandler<HTMLVideoElement>;
   play: boolean;
   src: string;
 };
@@ -15,6 +16,7 @@ export function ControlledVideo({
   className,
   onError,
   onLoadedData,
+  onLoadedMetadata,
   play,
   src
 }: ControlledVideoProps) {
@@ -78,6 +80,7 @@ export function ControlledVideo({
       muted
       onError={onError}
       onLoadedData={onLoadedData}
+      onLoadedMetadata={onLoadedMetadata}
       playsInline
       preload={shouldPlay ? "auto" : "metadata"}
       ref={videoRef}

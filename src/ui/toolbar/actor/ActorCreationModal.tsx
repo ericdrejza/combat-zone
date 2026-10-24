@@ -1,3 +1,5 @@
+import { ImageFocusFrame } from "@core/rendering/ImageFocusFrame";
+import { resolveLibraryAsset } from "@library/librarySlice";
 import { consumeEncounterChange } from "@store/consumeEncounterChange";
 import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -32,7 +34,10 @@ export function ActorCreationModal({
   const encounter = useSelector((state: RootState) => state.encounter.present);
   const actorTool = useSelector((state: RootState) => state.interaction.actorTool);
   const [name, setName] = useState(initialImage?.name ?? "");
-  const [image, setImage] = useState<ActorImageInput | null>(initialImage);
+  const [draftImage, setImage] = useState<ActorImageInput | null>(initialImage);
+  const tokens = useSelector((state: RootState) => state.library.sections.tokens);
+  const token = draftImage?.libraryNodeId ? resolveLibraryAsset(tokens, draftImage.libraryNodeId) : null;
+  const image = token ? { ...token, libraryNodeId: draftImage?.libraryNodeId } : draftImage;
   const [transferActive, setTransferActive] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const targetZone = actorTool.targetZoneId
@@ -104,6 +109,7 @@ export function ActorCreationModal({
   function getDragData(): NewActorDragData {
     return {
       layoutGroup: actorTool.layoutGroup,
+      imageFocus: image?.imageFocus,
       imageAnimated: image?.animated,
       imageLibraryNodeId: image?.libraryNodeId,
       imageMediaType: image?.mediaType,
@@ -167,12 +173,12 @@ export function ActorCreationModal({
             }}
           >
             {imageUrl ? (
-              <img
+              <ImageFocusFrame focus={actorTool.shape === "transparent" ? undefined : image?.imageFocus}><img
                 alt="Actor image"
                 className={`h-full w-full ${actorTool.shape === "transparent" ? "object-contain" : "object-cover"}`}
                 draggable={false}
                 src={imageUrl}
-              />
+              /></ImageFocusFrame>
             ) : (
               displayName
             )}

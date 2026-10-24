@@ -423,3 +423,16 @@ Implementation plan: [Focus light](plans/focus_light.md).
 
 - [x] Add shared glowing laser pointer and flowing trail, configurable F hold or
       toggle activation, temporary edit suppression, and Canvas Focus preferences.
+
+## Token image focus — #52
+
+- [x] Edit shared Library token default focus with fixed square/circle guides,
+      constrained 100–400% zoom, dragging, keyboard input, and draft reset/cancel.
+- [x] Add Actor Properties ScanSquare focus editing and reset to current token
+      match, preserving independent actor snapshots and exact undo/redo.
+- [x] Preserve source media, consistent previews, Transparent behavior, schema 32
+      persistence/sync validation, source replacement resets, and writer guards.
+- [x] Keep the grabbing cursor active throughout Actor and focus-image drags,
+      including over panels, and restore it on release or cancellation.
+- [x] Share live Motion positions between canvas Actors and floating drag visuals
+      so the first drag frame does not jump back to an older state snapshot.

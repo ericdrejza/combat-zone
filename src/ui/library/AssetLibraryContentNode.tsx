@@ -104,6 +104,8 @@ export function AssetLibraryContentNode({
           <>
             {asset ? (
               <AssetImagePreview
+                square={node.sectionId === "tokens"}
+                imageFocus={node.sectionId === "tokens" ? asset.imageFocus : undefined}
                 name={node.name}
                 mediaType={asset.mediaType}
                 playAnimations={playAnimations}
@@ -116,6 +118,8 @@ export function AssetLibraryContentNode({
           </>
         ) : asset ? (
           <AssetImagePreview
+            square={node.sectionId === "tokens"}
+            imageFocus={node.sectionId === "tokens" ? asset.imageFocus : undefined}
             name={node.name}
             mediaType={asset.mediaType}
             playAnimations={playAnimations}

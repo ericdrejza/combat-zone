@@ -1,3 +1,4 @@
+import { TokenImageFocusEditor } from "./TokenImageFocusEditor";
 import { CircleUserRound, Crosshair, Target, X } from "lucide-react";
 import { useRef, useState } from "react";
 import { useSelector } from "react-redux";
@@ -132,6 +133,7 @@ export function AssetLibraryModal({
   const [focusedNodeId, setFocusedNodeId] = useState<string | null>(
     initialFocusedNodeId ?? null
   );
+  const [focusNodeId, setFocusNodeId] = useState<string | null>(null);
   const [showCharacters, setShowCharacters] = useState(false);
   const [showEncounterActorTokens, setShowEncounterActorTokens] = useState(false);
   const [audioPreviewContainer, setAudioPreviewContainer] = useState<HTMLDivElement | null>(null);
@@ -811,8 +813,10 @@ export function AssetLibraryModal({
         type="file"
         {...{ directory: "", multiple: true, webkitdirectory: "" }}
       />
+      {focusNodeId ? <TokenImageFocusEditor nodeId={focusNodeId} onClose={() => setFocusNodeId(null)} /> : null}
       {controller.contextMenu && controller.contextNode ? (
         <AssetContextMenu
+          onAdjustFocus={node => { controller.setContextMenu(null); setFocusNodeId(node.id); }}
           canLinkAssets={controller.imageNodes.some(
             (candidate) => candidate.id !== controller.contextNode?.id
           )}

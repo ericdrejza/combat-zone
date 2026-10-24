@@ -1,3 +1,4 @@
+import { focusImageStyle, type ImageFocus } from "@core/assets/imageFocus";
 import type {
   ActorLayoutGroup,
   ActorShape,
@@ -13,6 +14,7 @@ import { isVideoMediaType } from '@library/mediaAsset';
 
 type ActorDragPreviewInput = {
   image?: ImageAssetSource;
+  imageFocus?: ImageFocus;
   imageFlippedHorizontal?: boolean;
   imageUrl?: string | null;
   mediaType?: string;
@@ -26,6 +28,7 @@ const PREVIEW_TOKEN_SIZE = 56;
 
 function createPreviewElement({
   image,
+  imageFocus,
   imageFlippedHorizontal,
   imageUrl: resolvedImageUrl,
   mediaType,
@@ -77,7 +80,8 @@ function createPreviewElement({
 
     imageElement.setAttribute('alt', '');
     imageElement.src = imageUrl;
-    imageElement.style.transform = imageFlippedHorizontal ? "scaleX(-1)" : "";
+    const artwork = document.createElement("div");
+    Object.assign(artwork.style, { position: "relative", width: "100%", height: "100%", overflow: "hidden", transform: imageFlippedHorizontal ? "scaleX(-1)" : "" });
     imageElement.style.height = '100%';
     imageElement.style.objectFit = shape === 'transparent' ? 'contain' : 'cover';
     imageElement.style.width = '100%';
@@ -89,7 +93,11 @@ function createPreviewElement({
     } else {
       imageElement.draggable = false;
     }
-    token.append(imageElement);
+    if (imageFocus && shape !== "transparent") {
+      Object.assign(imageElement.style, focusImageStyle(imageFocus), { objectFit: "fill" });
+    }
+    artwork.append(imageElement);
+    token.append(artwork);
   } else {
     token.textContent = name.slice(0, 2).toUpperCase();
   }

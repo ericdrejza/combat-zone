@@ -1,3 +1,4 @@
+import { isImageFocus } from "@core/assets/imageFocus";
 import { migrateZonelessPanel } from "./zonelessPanelSchema";
 import { migrateResourceBars } from "./resourceBarSchema";
 import { migrateRulerArtifacts, assertRulerState } from './rulerSchema';
@@ -165,6 +166,9 @@ export function assertEncounterState(value: unknown, name = "encounter", expecte
     if (isRecord(actor) && actor.status !== undefined && !isActorStatus(actor.status)) {
       throw new PersistenceValidationError(`${name}.actors.${actorId}.status is invalid.`);
     }
+    if (isRecord(actor) && actor.imageFocus !== undefined && (!actor.image || !isImageFocus(actor.imageFocus))) {
+      throw new PersistenceValidationError(`${name}.actors.${actorId}.imageFocus is invalid.`);
+    }
     if (isRecord(actor) && actor.imageFlippedHorizontal !== undefined && typeof actor.imageFlippedHorizontal !== "boolean") {
       throw new PersistenceValidationError(`${name}.actors.${actorId}.imageFlippedHorizontal is invalid.`);
     }
@@ -283,6 +287,10 @@ export function assertLibraryState(value: unknown, name = "library"): asserts va
         (!isRecord(node.asset) || !isImageAssetSource(node.asset.source))
       ) {
         throw new PersistenceValidationError(`${name} image ${nodeId} has an invalid source.`);
+      }
+      if (isRecord(node.asset) && node.asset.imageFocus !== undefined &&
+        (sectionId !== "tokens" || node.type !== "image" || !isImageFocus(node.asset.imageFocus, node.asset))) {
+        throw new PersistenceValidationError(`${name} asset ${nodeId} has an invalid image focus.`);
       }
       if (isRecord(node.asset) && node.asset.audioIcon !== undefined &&
         (node.type !== "image" || sectionId !== "audio" ||
@@ -600,6 +608,10 @@ export function migrateEncounterState(value: unknown): unknown {
   if (migrated.schemaVersion === 30) {
     assertEncounterState(migrated, "encounter", 30);
     return migrateZonelessPanel(migrated as unknown as EncounterState);
+  }
+  if (migrated.schemaVersion === 31) {
+    assertEncounterState(migrated, "encounter", 31);
+    migrated.schemaVersion = 32;
   }
   return migrated;
 }

@@ -74,6 +74,7 @@ export function replaceEncounterLibraryAssetReferences(
     nextActorsById[actorId] = {
       ...actor,
       image: asset.source,
+      imageFocus: undefined,
       metadata: {
         ...actor.metadata,
         sourceAssetAnimated: asset.animated === true,

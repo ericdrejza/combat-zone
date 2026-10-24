@@ -31,6 +31,7 @@ export function applyActorTokenFromLibrary({
 
   const properties = {
     image: asset.source,
+    imageFocus: asset.imageFocus ?? null,
     imageAssetAnimated: asset.animated === true,
     imageAssetMediaType: asset.mediaType,
     imageAssetName: asset.name,

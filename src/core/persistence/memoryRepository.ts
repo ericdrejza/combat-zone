@@ -1,3 +1,4 @@
+import { assertLibraryState } from "./envelope";
 import { assertEncounterState, validateExportEnvelope } from "./envelope";
 import {
   EXPORT_SCHEMA_VERSION,
@@ -168,6 +169,7 @@ export class InMemoryWorkspaceRepository implements WorkspaceRepository {
   async getLibrary(): Promise<LibraryRecord> { await this.ready(); return clone(this.library); }
 
   async saveLibrary(state: LibraryState): Promise<LibraryRecord> {
+    assertLibraryState(state);
     const record: LibraryRecord = { state: clone(state), revision: this.library.revision + 1, updatedAt: now() };
     this.library = record;
     return clone(record);
