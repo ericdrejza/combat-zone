@@ -28,7 +28,7 @@ describe('EngagementLayer', () => {
         <EngagementLayer
           activeToolId="select"
           actorDrag={null}
-          backgroundLuminanceByZoneId={{ zone: 255 }}
+          backgroundLuminanceByZoneId={{ zone: 1 }}
           encounter={encounter}
           engagementDrag={null}
           onEngagementDrag={() => undefined}
@@ -72,7 +72,7 @@ describe('EngagementLayer', () => {
         <EngagementLayer
           activeToolId="select"
           actorDrag={null}
-          backgroundLuminanceByZoneId={{ zone: 255 }}
+          backgroundLuminanceByZoneId={{ zone: 1 }}
           encounter={encounter}
           engagementDrag={null}
           onEngagementDrag={() => undefined}
@@ -122,7 +122,7 @@ describe('EngagementLayer', () => {
       engagements: collection([{ id: 'melee', parentZoneId: 'zone', participantIds: ['a', 'b'], layoutOrientation: 'LEFT_RIGHT' as const, layoutStrategy: 'FLEX' as const }])
     };
     const onEngagementSelect = vi.fn();
-    const { container } = render(<svg><EngagementLayer activeToolId="select" actorDrag={null} backgroundLuminanceByZoneId={{ zone: 255 }} encounter={encounter} engagementDrag={null} onEngagementDrag={() => undefined} onEngagementDragEnd={() => undefined} onEngagementDragReturnComplete={() => undefined} onEngagementDragStart={() => undefined} onEngagementSelect={onEngagementSelect} placements={[
+    const { container } = render(<svg><EngagementLayer activeToolId="select" actorDrag={null} backgroundLuminanceByZoneId={{ zone: 1 }} encounter={encounter} engagementDrag={null} onEngagementDrag={() => undefined} onEngagementDragEnd={() => undefined} onEngagementDragReturnComplete={() => undefined} onEngagementDragStart={() => undefined} onEngagementSelect={onEngagementSelect} placements={[
       { actor: encounter.actors.byId.a!, point: { x: 70, y: 100 }, radius: 15 },
       { actor: encounter.actors.byId.b!, point: { x: 220, y: 100 }, radius: 15 }
     ]} selection={{ selectedEntityType: null, selectedIds: [], overlayTargets: [] }} /></svg>);
@@ -131,7 +131,7 @@ describe('EngagementLayer', () => {
     expect(container.querySelector('circle[r="12"]')).toHaveAttribute('fill', '#fed7aa');
     const swordsIcon = container.querySelector('[aria-label="Crossed swords"]');
     expect(swordsIcon?.tagName.toLowerCase()).toBe('svg');
-    expect(swordsIcon).toHaveAttribute('stroke', '#111827');
+    expect(swordsIcon).toHaveAttribute('stroke', '#000000');
     fireEvent.click(container.querySelector('circle[r="12"]')!);
     fireEvent.click(container.querySelector('circle[r="12"]')!, {
       ctrlKey: true
@@ -157,7 +157,7 @@ describe('EngagementLayer', () => {
     const commonProps = {
       activeToolId: 'select' as const,
       actorDrag: null,
-      backgroundLuminanceByZoneId: { zone: 255 },
+      backgroundLuminanceByZoneId: { zone: 1 },
       encounter,
       onEngagementDrag: () => undefined,
       onEngagementDragEnd: () => undefined,
@@ -181,7 +181,7 @@ describe('EngagementLayer', () => {
     );
     expect(container.querySelector('line[data-engagement-connector]')).toHaveAttribute('x1', '145');
     expect(container.querySelector('line[data-engagement-connector]')).toHaveAttribute('y1', '160');
-    expect(container.querySelector('[aria-label="Crossed swords"]')).toHaveAttribute('stroke', '#111827');
+    expect(container.querySelector('[aria-label="Crossed swords"]')).toHaveAttribute('stroke', '#000000');
   });
 
   it('outlines a token in its zone-name color when targeted by a merge drag', () => {
@@ -199,7 +199,7 @@ describe('EngagementLayer', () => {
         <EngagementLayer
           activeToolId="select"
           actorDrag={null}
-          backgroundLuminanceByZoneId={{ zone: 255 }}
+          backgroundLuminanceByZoneId={{ zone: 1 }}
           encounter={encounter}
           engagementDrag={{ engagementId: 'source', current: { x: 145, y: 100 }, hasMoved: true, hoverTargetEngagementId: 'target', phase: 'dragging', start: { x: 0, y: 0 } }}
           onEngagementDrag={() => undefined}
@@ -218,6 +218,6 @@ describe('EngagementLayer', () => {
 
     expect(
       container.querySelector('[data-engagement-drop-target="true"]')
-    ).toHaveAttribute('stroke', '#111827');
+    ).toHaveAttribute('stroke', '#000000');
   });
 });

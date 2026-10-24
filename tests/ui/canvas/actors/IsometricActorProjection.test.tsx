@@ -18,7 +18,7 @@ it.each(['circle', 'rectangle'] as const)('projects %s artwork and outlines whil
   const before = structuredClone(encounter);
   function view() {
     return <><CanvasSettings /><svg><ActorLayer encounter={encounter} placements={[{ actor, point: { x: 192, y: 192 }, radius: 30 }]}
-      actorDrag={null} backgroundLuminanceByZoneId={{ [zone.id]: 0 }} canvasBackgroundLuminance={255}
+      actorDrag={null} backgroundLuminanceByZoneId={{ [zone.id]: 0 }} canvasBackgroundLuminance={1}
       onActorMouseEnter={() => undefined} onActorMouseLeave={() => undefined}
       selection={{ selectedEntityType: 'actor', selectedIds: [actor.id], overlayTargets: [] }} showFactionOutlines /></svg></>;
   }

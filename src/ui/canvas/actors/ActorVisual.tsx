@@ -3,8 +3,8 @@ import { ActorOverlay } from "./ActorOverlayLayers";
 import { ActorConditionIcons } from "./ActorConditionIcons";
 import { ActorResourceBars } from "./ActorResourceBars";
 import { resolvedResourceBars } from "@entities/actor/resourceBars";
-import { SelectionOutline } from "@core/rendering/SelectionOutline";
-import { useSelectionOutlineMode } from "@ui/canvas/useSelectionOutlineMode";
+import { ActorSelectionOutline } from './ActorSelectionOutline';
+import { actorSelectionSampleOffsets, type ActorSurfaceContrast } from './actorSurfaceContrast';
 import { actorLabelOffset } from './actorLabelGeometry';
 import { motion, type Transition } from "motion/react";
 import { memo } from "react";
@@ -31,6 +31,7 @@ type ActorVisualProps = {
   radius: number;
   selected: boolean;
   selectedTextColor: string;
+  surfaceContrast?: ActorSurfaceContrast;
   showFactionOutline: boolean;
   clipId: string;
   transition: Transition;
@@ -55,13 +56,14 @@ export const ActorVisual = memo(function ActorVisual({
   radius,
   selected,
   selectedTextColor,
+  surfaceContrast,
   showFactionOutline,
   clipId,
   transition,
   projectionRotation, projectionAngle
 }: ActorVisualProps) {
-  const selectionOutlineMode = useSelectionOutlineMode("actor");
   const innerRadius = Math.max(radius - (actor.shape === 'transparent' ? 0 : 3), 1);
+  const tokenContrastColor = getReadableTextColor(fillColor);
   const selectionRadius = radius + 5;
   const factionRadius = radius + 9;
   const imageUrl = useResolvedImageSource(actor.image);
@@ -84,14 +86,19 @@ export const ActorVisual = memo(function ActorVisual({
     !enableAssetAnimation && (isAnimatedWebp || isVideo),
     isVideo ? "video" : "image"
   );
-  const barTop = actorLabelOffset(actor.shape, radius, projectionRotation, projectionAngle) - 5;
+  const labelOffset = actorLabelOffset(actor.shape, radius, projectionRotation, projectionAngle);
+  const barTop = labelOffset - 8;
+  const conditionTop = 10 - labelOffset;
   const barCount = showResourceBars && showActorStatusesOnCanvas ? resolvedResourceBars(actor).length : 0;
   const showExternalActorName = Boolean(imageUrl) && (showFactionOutline || selected);
+  const surfaceColor = surfaceContrast?.({ x: 0, y: 0 }) ?? selectedTextColor;
+  const selectionColor = selected ? surfaceContrast?.(actorSelectionSampleOffsets(actor.shape, selectionRadius, projectionRotation, projectionAngle)) ?? selectedTextColor : selectedTextColor;
+  const nameOffset = labelOffset - 5 + (barCount ? barCount * 7 + 1 : 0);
 
   // A token without artwork keeps its identifying text visible inside its own shape.
   const tokenName = !imageUrl ? (
     <ActorTokenName name={displayName} shape={actor.shape} radius={radius}
-      color={actor.shape === "transparent" ? selectedTextColor : getReadableTextColor(fillColor)}
+      color={actor.shape === "transparent" ? surfaceColor : tokenContrastColor}
       transition={transition} />
   ) : null;
 
@@ -104,8 +111,8 @@ export const ActorVisual = memo(function ActorVisual({
       <ActorProjection rotation={projectionRotation} angle={projectionAngle} transition={transition}>
       {actor.shape === "transparent" ? null : actor.shape === "rectangle" ? (
         <motion.rect
-          className="stroke-white"
           fill={fillColor}
+          stroke={tokenContrastColor}
           initial={false}
           animate={{
             attrX: -radius,
@@ -119,8 +126,8 @@ export const ActorVisual = memo(function ActorVisual({
         />
       ) : (
         <motion.circle
-          className="stroke-white"
           fill={fillColor}
+          stroke={tokenContrastColor}
           initial={false}
           animate={{ r: radius, strokeWidth: actorBorderThickness + (selected ? 2 : 0) }}
           transition={transition}
@@ -191,37 +198,8 @@ export const ActorVisual = memo(function ActorVisual({
       {!selected ? tokenName : null}
       <ActorProjection rotation={projectionRotation} angle={projectionAngle} transition={transition}>
       {selected ? (
-        <SelectionOutline mode={selectionOutlineMode}>
-          {actor.shape !== "circle" ? (
-            <motion.rect
-              className="pointer-events-none fill-none"
-              initial={false}
-              animate={{
-                attrX: -selectionRadius,
-                attrY: -selectionRadius,
-                height: selectionRadius * 2,
-                strokeDasharray: "5 5",
-                strokeWidth: actorSelectionOutlineWidth,
-                width: selectionRadius * 2
-              }}
-              rx="8"
-              stroke={selectedTextColor}
-              transition={transition}
-            />
-          ) : (
-            <motion.circle
-              className="pointer-events-none fill-none"
-              initial={false}
-              animate={{
-                r: selectionRadius,
-                strokeDasharray: "5 5",
-                strokeWidth: actorSelectionOutlineWidth
-              }}
-              stroke={selectedTextColor}
-              transition={transition}
-            />
-          )}
-        </SelectionOutline>
+        <ActorSelectionOutline shape={actor.shape} radius={selectionRadius}
+          color={selectionColor} width={actorSelectionOutlineWidth} transition={transition} />
       ) : null}
       {showFactionOutline && actor.shape !== "transparent" ? (
         actor.shape !== "circle" ? (
@@ -252,15 +230,15 @@ export const ActorVisual = memo(function ActorVisual({
       </ActorProjection>
       <ActorOverlay selected={selected} hidden={hidden}>
       {selected ? tokenName : null}
-      {showConditions && showActorStatusesOnCanvas ? <ActorConditionIcons selected={selected} actor={actor} radius={radius} top={-barTop} transition={transition} /> : null}
-      {showResourceBars && showActorStatusesOnCanvas ? <ActorResourceBars selected={selected} textColor={selectedTextColor} actor={actor} radius={radius} top={barTop} transition={transition} /> : null}
+      {showConditions && showActorStatusesOnCanvas ? <ActorConditionIcons selected={selected} actor={actor} radius={radius} top={conditionTop} transition={transition} /> : null}
+      {showResourceBars && showActorStatusesOnCanvas ? <ActorResourceBars selected={selected} textColor={surfaceColor} surfaceContrast={surfaceContrast} actor={actor} radius={radius} top={barTop} transition={transition} /> : null}
       {showExternalActorName ? (
         <motion.text
           className="pointer-events-none text-[10px] font-bold z-10"
           dominantBaseline="middle"
-          fill={selectedTextColor}
+          fill={surfaceContrast?.({ x: 0, y: nameOffset }) ?? selectedTextColor}
           initial={false}
-          animate={{ dy: actorLabelOffset(actor.shape, radius, projectionRotation, projectionAngle) + (barCount ? barCount * 7 + 3 : 0) }}
+          animate={{ dy: nameOffset }}
           textAnchor="middle"
           transition={transition}
         >

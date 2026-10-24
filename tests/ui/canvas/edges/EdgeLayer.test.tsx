@@ -59,19 +59,19 @@ describe('EdgeLayer luminance colors', () => {
   });
 
   it('uses dark ink consistently for target and free creation previews on a light canvas', () => {
-    const props = edgeLayerProps(255);
+    const props = edgeLayerProps(1);
     const { container, rerender } = render(
       <svg><EdgeLayer {...props} edgeDrag={{ current: { x: 300, y: 160 }, sourceZoneId: 'source', start: { x: 160, y: 160 }, targetZoneId: 'target' }} activeToolId="edge" /></svg>
     );
 
     const targetPreview = container.querySelectorAll('path[aria-label="bilateral edge from Source to Target"]')[1];
-    expect(targetPreview).toHaveAttribute('stroke', '#111827');
-    expect(container.querySelector('#edge-arrow-end-edge-preview path')).toHaveAttribute('fill', '#111827');
+    expect(targetPreview).toHaveAttribute('stroke', '#000000');
+    expect(container.querySelector('#edge-arrow-end-edge-preview path')).toHaveAttribute('fill', '#000000');
 
     rerender(
       <svg><EdgeLayer {...props} edgeDrag={{ current: { x: 300, y: 300 }, sourceZoneId: 'source', start: { x: 160, y: 160 } }} activeToolId="edge" /></svg>
     );
-    expect(container.querySelector('[data-edge-free-preview="true"]')).toHaveAttribute('stroke', '#111827');
-    expect(container.querySelector('#edge-preview-arrow path')).toHaveAttribute('fill', '#111827');
+    expect(container.querySelector('[data-edge-free-preview="true"]')).toHaveAttribute('stroke', '#000000');
+    expect(container.querySelector('#edge-preview-arrow path')).toHaveAttribute('fill', '#000000');
   });
 });

@@ -1,4 +1,5 @@
 import { useZoneColorPreview } from "./zones/useZoneColorPreview";
+import { actorSurfaceZones } from './actors/actorSurfaceZones';
 import { ActorMovementOverlay } from './actors/ActorMovementOverlay';
 import { RulerOverlay } from './ruler/RulerOverlay';
 import { useMemo, useState } from 'react';
@@ -283,6 +284,7 @@ export function CanvasWorkspace({
               >
                 <g ref={setRulerHitTarget} aria-label="Ruler hit targets" className="outline-none" />
                 <ActorLayer namePreview={namePreview}
+                  surfaceZones={actorSurfaceZones(appearanceEncounter.zones, getDisplayedPolygon, zoneDrag, zoneOpacityPreview)}
                   activeToolId={calibrating ? "background" : activeToolId}
                   actorDrag={actorDrag}
                   placements={actorRenderPlacements}

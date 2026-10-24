@@ -3,10 +3,12 @@ import { motion, type Transition } from "motion/react";
 import type { Actor } from "@entities/actor/types";
 import { actorResourceBars, resolvedResourceBars } from "@entities/actor/resourceBars";
 import { useInterfacePreferences } from "@ui/interface_preferences/InterfacePreferenceProvider";
+import type { ActorSurfaceContrast } from './actorSurfaceContrast';
 
 /** Selected tokens expose bar hover labels while the labels remain outside hit testing. */
-export function ActorResourceBars({ actor, radius, top, transition, selected, textColor }: {
+export function ActorResourceBars({ actor, radius, top, transition, selected, textColor, surfaceContrast }: {
   actor: Actor; radius: number; top: number; transition: Transition; selected: boolean; textColor: string;
+  surfaceContrast?: ActorSurfaceContrast;
 }) {
   const { resourceBar1Color, resourceBar2Color, resourceBar1Gradient, resourceBar2Gradient, healthCounterName } = useInterfacePreferences();
   const bars = resolvedResourceBars(actor);
@@ -25,8 +27,8 @@ export function ActorResourceBars({ actor, radius, top, transition, selected, te
       <motion.rect height={5} rx={2} fill={bar.slot === "first" ? resourceBarFill(resourceBar1Color, resourceBar1Gradient, bar.fraction) : resourceBarFill(resourceBar2Color, resourceBar2Gradient, bar.fraction)}
         initial={false} animate={{ width: radius * 2 * bar.fraction }} transition={transition} />
       {selected ? <text x={-5} y={2.5} textAnchor="end" dominantBaseline="middle"
-        pointerEvents="none" fill={textColor} strokeWidth={3} paintOrder="stroke"
-        className="hidden stroke-canvas-panel text-[8px] font-semibold group-hover/resource-bar:block">
+        pointerEvents="none" fill={surfaceContrast?.({ x: -radius - 5, y: top + index * 7 + 2.5 }) ?? textColor}
+        className="hidden text-[8px] font-semibold group-hover/resource-bar:block">
         {name}
       </text> : null}
     </motion.g>;

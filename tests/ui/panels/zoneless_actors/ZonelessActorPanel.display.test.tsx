@@ -99,7 +99,7 @@ describe("ZonelessActorPanel display", () => {
     );
 
     expect(screen.getByText("Aegis")).toHaveStyle("color: #ffffff");
-    expect(screen.getByText("Boulder")).toHaveStyle("color: #111827");
+    expect(screen.getByText("Boulder")).toHaveStyle("color: #000000");
   });
 
   it("uses the sampled background image luminance for collapsed panel colors", async () => {
@@ -150,7 +150,7 @@ describe("ZonelessActorPanel display", () => {
     });
 
     await waitFor(() => {
-      expect(panel).toHaveStyle({ color: "#111827" });
+      expect(panel).toHaveStyle({ color: "#000000" });
     });
 
     await user.click(

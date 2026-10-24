@@ -1,4 +1,5 @@
 import { useActorMovementWaypoints } from '@ui/canvas/actors/useActorMovementWaypoints';
+import { updateActorDragPoint } from './actorDragHelpers';
 import { snapZoneResizePolygon } from '@ui/canvas/zones/snapZoneResizePolygon';
 import { getZoneRotationCenter, normalizeRotation, rotatePoint } from '@entities/zone/zoneRotation';
 import { isPersistenceWritable } from '@store/persistenceWriteGuardMiddleware';
@@ -75,6 +76,10 @@ export function useCanvasPointerHandlers(input: PointerHandlerInput) {
     zoneShapeMode,
     touchMultiSelect = false
   } = input;
+  // Motion can report the first movement in the same frame as onDragStart,
+  // before React renders the new draft into these callback closures.
+  const actorDragRef = useRef(actorDrag);
+  actorDragRef.current = actorDrag;
   const isActorDragCurrent = useActorMovementWaypoints(input);
   input = { ...input, isActorDragCurrent };
   const { updateIntent } = useEngagementHoverIntent(
@@ -298,8 +303,11 @@ export function useCanvasPointerHandlers(input: PointerHandlerInput) {
       );
     }
     suppressNextCanvasClickRef.current = true;
+    // A moved token may be hidden during the drag, so the click can land on
+    // the empty canvas and must not clear the selection on release.
+    suppressNextCanvasClickUnconditionallyRef.current = true;
     suppressNextEntityClickRef.current = actorId;
-    setActorDrag({
+    const nextDrag = {
       actorId,
       actorIds: dragActorIds,
       current: point,
@@ -313,30 +321,21 @@ export function useCanvasPointerHandlers(input: PointerHandlerInput) {
           return [dragActorId, placement?.point ?? point];
         })
       ),
-      phase: 'dragging',
+      phase: 'dragging' as const,
       start: point
-    });
+    };
+    actorDragRef.current = nextDrag;
+    setActorDrag(nextDrag);
   }
 
   function handleActorDrag(point: LayoutPoint) {
-    if (!actorDrag) {
+    const currentDrag = actorDragRef.current;
+    if (!currentDrag || currentDrag.phase !== 'dragging') {
       return;
     }
 
-    const target: { actorId?: string; engagementId?: string } = encounter.movementRules.zoneLocked ? updateIntent(actorDrag, point) : {};
-    setActorDrag((drag) => drag ? {
-      ...drag,
-      current: point,
-      engagementIntentActorId:
-        target.actorId === drag.engagementIntentActorId
-          ? drag.engagementIntentActorId
-          : undefined,
-      engagementIntentEngagementId:
-        target.engagementId === drag.engagementIntentEngagementId
-          ? drag.engagementIntentEngagementId
-          : undefined,
-      hasMoved: drag.hasMoved || distance(drag.start, point) >= 1
-    } : null);
+    const target: { actorId?: string; engagementId?: string } = encounter.movementRules.zoneLocked ? updateIntent(currentDrag, point) : {};
+    setActorDrag(drag => updateActorDragPoint(drag, point, target));
   }
 
   function handleActorDragEnd(event: { stopPropagation: () => void }) {

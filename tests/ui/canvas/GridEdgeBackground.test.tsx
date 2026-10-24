@@ -15,10 +15,14 @@ describe('background placement in completed canvas', () => {
     rerender(<svg><CanvasBackgroundLayer backgroundImage={{ ...background, frame: undefined }} canvasSize={{ width: 300, height: 300 }} /></svg>);
     expect(image).toHaveAttribute('x', '0'); expect(image).toHaveAttribute('width', '300');
   });
-  it('samples luminance using the same placement, filling new margins first', () => {
+  it.each([
+    { x: 5, y: 5, width: 290, height: 290 },
+    { x: 0, y: 0, width: 300, height: 300 }
+  ])('samples image placement over an opaque canvas for frame %o', (frame) => {
     const context = { drawImage: vi.fn(), fillRect: vi.fn(), fillStyle: '' }, image = {} as CanvasImageSource;
-    drawCanvasBackgroundImage(context as unknown as CanvasRenderingContext2D, image, { width: 300, height: 300 }, background.frame, 'dark');
-    expect(context.drawImage).toHaveBeenCalledWith(image, 5, 5, 290, 290);
+    drawCanvasBackgroundImage(context as unknown as CanvasRenderingContext2D, image, { width: 300, height: 300 }, frame, 'dark');
+    expect(context.drawImage).toHaveBeenCalledWith(image, frame.x, frame.y, frame.width, frame.height);
     expect(context.fillRect).toHaveBeenCalledWith(0, 0, 300, 300);
+    expect(context.fillRect.mock.invocationCallOrder[0]).toBeLessThan(context.drawImage.mock.invocationCallOrder[0]);
   });
 });

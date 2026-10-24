@@ -109,7 +109,7 @@ describe("ZonePropertiesPanel", () => {
     expect(zone).toHaveAttribute("stroke-width", "0");
     expect(screen.getByText("Zone 1", { selector: "text" })).toHaveAttribute(
       "fill",
-      "#111827"
+      "#000000"
     );
     expect(store.getState().encounter.present.zones.byId[
       zone.getAttribute("data-entity-id") ?? ""

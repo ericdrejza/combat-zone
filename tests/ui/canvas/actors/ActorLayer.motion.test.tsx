@@ -26,7 +26,7 @@ describe('ActorLayer', () => {
         <ActorLayer
           actorDrag={null}
           backgroundLuminanceByZoneId={{ [zone.id]: 0 }}
-          canvasBackgroundLuminance={255}
+          canvasBackgroundLuminance={1}
           encounter={encounter}
           placements={[placement]}
           zoneActorTranslation={{
@@ -63,7 +63,7 @@ describe('ActorLayer', () => {
         <ActorLayer
           actorDrag={null}
           backgroundLuminanceByZoneId={{ [zone.id]: 0 }}
-          canvasBackgroundLuminance={255}
+          canvasBackgroundLuminance={1}
           encounter={encounter}
           placements={[{
             actor,
@@ -126,7 +126,7 @@ describe('ActorLayer', () => {
         [sourceZone.id]: 0,
         [destinationZone.id]: 0
       },
-      canvasBackgroundLuminance: 255,
+      canvasBackgroundLuminance: 1,
       encounter,
       onActorMouseEnter: () => undefined,
       onActorMouseLeave: () => undefined,
@@ -214,7 +214,7 @@ describe('ActorLayer', () => {
     const onActorReturnComplete = vi.fn();
     const commonProps = {
       backgroundLuminanceByZoneId: { [zone.id]: 0 },
-      canvasBackgroundLuminance: 255,
+      canvasBackgroundLuminance: 1,
       encounter,
       onActorMouseEnter: () => undefined,
       onActorMouseLeave: () => undefined,

@@ -16,11 +16,11 @@ it('shows unmasked, aspect-preserving artwork with a square hit box and no perma
   expect(image.getAttribute('width')).toBe('120');
   const hit = container.querySelector('[data-actor-logical-hit-area]')!;
   expect(hit.tagName).toBe('rect'); expect(hit.getAttribute('width')).toBe('120');
-  expect(container.querySelectorAll('[stroke]')).toHaveLength(0);
+  expect(container.querySelectorAll('rect[stroke], circle[stroke]')).toHaveLength(0);
   expect(container.querySelector('circle')).toBeNull();
   rerender(<svg><ActorVisual {...props} selected /></svg>);
-  expect(container.querySelectorAll('[stroke]')).toHaveLength(1);
-  expect(container.querySelector('[stroke]')!.getAttribute('stroke-dasharray')).toBe('5 5');
+  expect(container.querySelectorAll('rect[stroke], circle[stroke]')).toHaveLength(1);
+  expect(container.querySelector('rect[stroke]')!.getAttribute('stroke-dasharray')).toBe('5 5');
 });
 
 it('retains the upright name fallback without an image or colored background', () => {
@@ -43,7 +43,7 @@ it('uses the configured angle and rotation when positioning upright projected na
   expect(actorLabelOffset('rectangle', 60, 0, 30)).toBeCloseTo(60 * Math.tan(Math.PI / 6) + 16);
   expect(actorLabelOffset('circle', 60, 90, 30)).toBeCloseTo(60 * Math.SQRT1_2 + 16);
   const { container } = render(<svg><ActorVisual {...props} projectionRotation={0} projectionAngle={30} /></svg>);
-  expect(Number(container.querySelector('text')!.getAttribute('dy'))).toBeCloseTo(actorLabelOffset('transparent', 60, 0, 30));
+  expect(Number(container.querySelector('text')!.getAttribute('dy'))).toBeCloseTo(actorLabelOffset('transparent', 60, 0, 30) - 5);
 });
 
 it('reflects artwork without reflecting its label or faction outlines', () => {

@@ -336,6 +336,8 @@ Implementation plan: [Zone rotation](plans/zone_rotation.md).
 - [x] Solid, dashed, dotted and crosshair grid styles.
 - [x] Ruler shapes, cell highlighting and independent map measurement scale.
 - [x] Actor movement previews, advisory limits and optional turn/round accounting.
+- [x] Right-click backtracking during pivoted movement, preserving the live drag and single-step movement undo/redo.
+- [x] Recenter the movement range on the latest pivot using the remaining distance and accumulated diagonal costs; restore the range when pivots are removed.
 - [x] Schema 28 local/cloud persistence, history and acceptance verification.
 
 Implementation plan: [Ruler, movement and grid styles](plans/ruler_movement_and_grid_styles.md).

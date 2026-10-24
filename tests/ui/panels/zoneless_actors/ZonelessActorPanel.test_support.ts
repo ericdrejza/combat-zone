@@ -91,6 +91,7 @@ export function mockBackgroundImageLuminance(pixel: [number, number, number]) {
   vi.stubGlobal("Image", MockImage);
   vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue({
     drawImage: vi.fn(),
+    fillRect: vi.fn(),
     getImageData: () => ({ data: [...pixel, 255] })
   } as unknown as CanvasRenderingContext2D);
 }

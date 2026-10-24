@@ -76,7 +76,7 @@ const placements = actors.map((placedActor, index) => ({
 }));
 const sharedLayerProps = {
   activeToolId: 'select' as const,
-  backgroundLuminanceByZoneId: { zone: 255 },
+  backgroundLuminanceByZoneId: { zone: 1 },
   encounter,
   engagementDrag: null,
   onEngagementDrag: () => undefined,

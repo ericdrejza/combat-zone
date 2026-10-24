@@ -11,7 +11,7 @@ it.each([false, true])('holds the pointer endpoint through validation and snap s
   encounter.movementRules.zoneLocked = false;
   const actor = encounter.actors.byId.a, origin = { x: 160, y: 160 }, dropped = { x: 250, y: 210 }, snapped = { x: 256, y: 224 };
   const props = {
-    encounter, backgroundLuminanceByZoneId: {}, canvasBackgroundLuminance: 255,
+    encounter, backgroundLuminanceByZoneId: {}, canvasBackgroundLuminance: 1,
     onActorMouseEnter: () => undefined, onActorMouseLeave: () => undefined, showFactionOutlines: false,
     selection: { selectedEntityType: null, selectedIds: [], overlayTargets: [] }
   };

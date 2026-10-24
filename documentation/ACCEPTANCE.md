@@ -124,8 +124,9 @@ truth.
 - [x] While collapsed, the zoneless panel is transparent and uses a
       luminance-derived color for its border and controls.
 - [x] Actor name text uses the canvas luminance helpers to choose a readable
-      black or white contrast color; selected canvas actor labels use the fill
-      color of their containing zone.
+      black or white contrast color from their local rendered surface, including
+      Zone opacity over background images or the themed canvas. Actor text and
+      selection dashes use color alone without contrast halos.
 - [x] Uploaded token names omit their source file extension, while actors
       inherit the token name when created from the library.
 - [ ] Actor can be dragged from Library Panel onto canvas into a zone.
@@ -855,11 +856,12 @@ these back into `AGENT.md` or `DESIGN.md`.
 - [x] Independent whole-number cell measurement scale and units persist locally/cloud.
 - [x] Transient ruler supports all approved shapes, snapping, highlighting, touch, cancellation and read-only use.
 - [x] Unlocked actor movement previews and waypoints use shared geometry and advisory limits.
+- [x] Right-click during pivoted movement removes the latest pivot without moving the live actor, ending the drag, or panning. Repeated removal returns to a direct path; new pivots remain available and the final movement uses one undo/redo step.
 - [x] Combat diagonal costs and optional turn/round accounting preserve exact undo/redo.
 - [x] Schema 28 migration, writer guards and invalid-data preservation pass.
 
 - [x] Ruler icon subtools, shared snapping/configurable cell highlighting, multiple saved artifacts and editable points support mouse and touch locking.
-- [x] Shift movement pivots, abbreviated captions, fixed-origin reachable-area glow and local ruler appearance preferences pass regression/browser verification.
+- [x] Shift movement pivots, abbreviated captions, pivot-centered reachable-area glow using the remaining movement budget and local ruler appearance preferences pass regression/browser verification.
 
 - [x] Drop previews stop before position publication; automatic outward source-cell cone origins, corner-or-center AoE inclusion, optional area labels, bounded captions, grouped controls and R/number shortcuts pass browser and regression verification. N renames selected Actors, Zones, and targeted Rulers with exact undo/redo; T activates Annotation and B remains Background.
 

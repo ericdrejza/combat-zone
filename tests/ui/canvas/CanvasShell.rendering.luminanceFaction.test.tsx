@@ -47,7 +47,7 @@ describe("CanvasShell rendering", () => {
         (element) => element.textContent === "Zone 1"
       );
 
-      expect(zoneNameText).toHaveAttribute("fill", "#111827");
+      expect(zoneNameText).toHaveAttribute("fill", "#000000");
     });
   });
 
@@ -188,6 +188,6 @@ describe("CanvasShell rendering", () => {
       (text) =>
         text.textContent === "HERO" && text.getAttribute("dy") !== null
     );
-    expect(selectedActorName).toHaveAttribute("fill", "#111827");
+    expect(selectedActorName).toHaveAttribute("fill", "#000000");
   });
 });

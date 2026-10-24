@@ -47,10 +47,10 @@ describe("CanvasShell polygon draft", () => {
     const draftLine = draft.querySelector("polyline");
     const draftVertices = draft.querySelectorAll("circle");
 
-    expect(draftLine).toHaveAttribute("stroke", "#111827");
+    expect(draftLine).toHaveAttribute("stroke", "#000000");
     expect(draftVertices).toHaveLength(2);
     draftVertices.forEach((vertex) => {
-      expect(vertex).toHaveAttribute("fill", "#111827");
+      expect(vertex).toHaveAttribute("fill", "#000000");
     });
   });
 

@@ -16,17 +16,28 @@ export function getReadableTextColor(backgroundColor: string): string {
   return getTextColorForLuminance(getHexLuminance(backgroundColor));
 }
 
+/** Selects whichever of black or white has the stronger WCAG contrast ratio. */
 export function getTextColorForLuminance(luminance: number): string {
-  return luminance > 128 ? '#111827' : '#ffffff';
+  const normalizedLuminance = Math.max(0, Math.min(1, luminance));
+  const blackContrast = (normalizedLuminance + 0.05) / 0.05;
+  const whiteContrast = 1.05 / (normalizedLuminance + 0.05);
+  return blackContrast >= whiteContrast ? '#000000' : '#ffffff';
 }
 
+function linearizeSrgbChannel(channel: number): number {
+  const normalized = channel / 255;
+  return normalized <= 0.04045
+    ? normalized / 12.92
+    : ((normalized + 0.055) / 1.055) ** 2.4;
+}
+
+/** Returns WCAG relative luminance on a 0–1 scale for a #RRGGBB color. */
 export function getHexLuminance(backgroundColor: string): number {
   const normalizedColor = backgroundColor.replace('#', '');
-  const red = Number.parseInt(normalizedColor.slice(0, 2), 16);
-  const green = Number.parseInt(normalizedColor.slice(2, 4), 16);
-  const blue = Number.parseInt(normalizedColor.slice(4, 6), 16);
-
-  return 0.299 * red + 0.587 * green + 0.114 * blue;
+  const red = linearizeSrgbChannel(Number.parseInt(normalizedColor.slice(0, 2), 16));
+  const green = linearizeSrgbChannel(Number.parseInt(normalizedColor.slice(2, 4), 16));
+  const blue = linearizeSrgbChannel(Number.parseInt(normalizedColor.slice(4, 6), 16));
+  return 0.2126 * red + 0.7152 * green + 0.0722 * blue;
 }
 
 export function usesBackgroundLuminanceForZoneName(zone: Zone): boolean {
@@ -91,10 +102,9 @@ export function drawCanvasBackgroundImage(
   frame: BackgroundFrame = { ...canvasSize, x: 0, y: 0 },
   theme: CanvasColorTheme = 'light'
 ) {
-  if (frame.x || frame.y || frame.width !== canvasSize.width || frame.height !== canvasSize.height) {
-    context.fillStyle = CANVAS_BACKGROUND_COLORS[theme];
-    context.fillRect(0, 0, canvasSize.width, canvasSize.height);
-  }
+  // Transparent pixels reveal the themed canvas, including in full-size images.
+  context.fillStyle = CANVAS_BACKGROUND_COLORS[theme];
+  context.fillRect(0, 0, canvasSize.width, canvasSize.height);
   context.drawImage(image, frame.x, frame.y, frame.width, frame.height);
 }
 
@@ -112,7 +122,10 @@ export function getAverageCanvasLuminance(
         1
       ).data;
 
-      return total + 0.299 * pixel[0] + 0.587 * pixel[1] + 0.114 * pixel[2];
+      return total +
+        0.2126 * linearizeSrgbChannel(pixel[0]) +
+        0.7152 * linearizeSrgbChannel(pixel[1]) +
+        0.0722 * linearizeSrgbChannel(pixel[2]);
     }, 0) / points.length
   );
 }

@@ -1,4 +1,5 @@
 import { CanvasActorDragVisual } from "./CanvasActorDragVisual";
+import { ActorSurfaceProvider } from './actors/ActorSurfaceProvider';
 import { RulerLockButton } from './ruler/RulerLockButton';
 import { EncounterHistoryControls } from "@ui/history/EncounterHistoryControls";
 import { useEncounterOperation } from "@ui/history/useEncounterOperation";
@@ -300,6 +301,7 @@ export function CanvasShell({
     useActorReturnCompletion(actorDrag, () => setActorDrag(null));
 
   return (
+    <ActorSurfaceProvider readBackground={backgroundLuminance.readBackgroundPixel}>
     <section
       aria-label="Encounter canvas"
       data-sampler={colorSampler.session?.kind}
@@ -477,5 +479,6 @@ export function CanvasShell({
         </div>
       ) : null}
     </section>
+    </ActorSurfaceProvider>
   );
 }

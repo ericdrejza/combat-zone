@@ -10,6 +10,8 @@ import { getTextColorForLuminance, getZoneNameTextColor } from "./canvasLuminanc
 import { ActorVisual } from "./actors/ActorVisual";
 import { ActorTrim } from "./actors/ActorTrim";
 import { getDraggedPoint } from "./actors/actorDragPoint";
+import { useActorBackgroundPixel } from './actors/ActorSurfaceProvider';
+import { createActorSurfaceContrast } from './actors/actorSurfaceContrast';
 
 type Props = {
   drag: ActorDragState | null;
@@ -26,6 +28,7 @@ export function CanvasActorDragVisual({
   drag, placements, canvas, encounter, canvasLuminance, zoneLuminance, showFactionOutlines
 }: Props) {
   const { preferences } = useCanvasPreferences();
+  const readBackground = useActorBackgroundPixel();
   if (!drag?.hasMoved || drag.phase === "returning" || !canvas) return null;
   const bounds = canvas.getBoundingClientRect();
 
@@ -44,6 +47,9 @@ export function CanvasActorDragVisual({
         const selectedTextColor = zone
           ? getZoneNameTextColor(zone, zoneLuminance[zone.id])
           : getTextColorForLuminance(canvasLuminance);
+        const surfaceContrast = readBackground
+          ? createActorSurfaceContrast(target, encounter.zones, readBackground)
+          : undefined;
 
         return (
           <motion.g key={actor.id} initial={false} animate={{ x: target.x, y: target.y }} transition={{ duration: 0 }}>
@@ -58,6 +64,7 @@ export function CanvasActorDragVisual({
                   radius={radius}
                   selected
                   selectedTextColor={selectedTextColor}
+                  surfaceContrast={surfaceContrast}
                   showFactionOutline={showFactionOutlines}
                   showResourceBars
                   showConditions

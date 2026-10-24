@@ -34,6 +34,7 @@ function releaseCanvasMedia(media: HTMLImageElement | HTMLVideoElement) {
 export type CanvasBackgroundLuminance = {
   byZoneId: Record<string, number>;
   canvas: number;
+  readBackgroundPixel?: (point: LayoutPoint) => string;
 };
 
 export function useCanvasBackgroundLuminance(
@@ -125,7 +126,14 @@ export function useCanvasBackgroundLuminance(
 
         setBackgroundLuminance({
           byZoneId: luminanceByZoneId,
-          canvas: sampleCanvasBackgroundLuminance(context, canvasSize)
+          canvas: sampleCanvasBackgroundLuminance(context, canvasSize),
+          readBackgroundPixel: point => {
+            const pixel = context.getImageData(
+              Math.max(0, Math.min(canvasSize.width - 1, Math.floor(point.x))),
+              Math.max(0, Math.min(canvasSize.height - 1, Math.floor(point.y))), 1, 1
+            ).data;
+            return '#' + Array.from(pixel).slice(0, 3).map(value => value.toString(16).padStart(2, '0')).join('');
+          }
         });
       } catch {
         // Remote hosts may allow display while blocking cross-origin pixel reads.

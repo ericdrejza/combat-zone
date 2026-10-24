@@ -1,8 +1,11 @@
 import { previewedName, type NamePreview } from '@interaction/namePreviewState';
 import { getDraggedPoint } from './actorDragPoint';
 import { ActorTrim } from './ActorTrim';
+import { useActorBackgroundPixel } from './ActorSurfaceProvider';
+import { createActorSurfaceContrast } from './actorSurfaceContrast';
 import { useCanvasPreferences } from '@ui/canvas_preferences/useCanvasPreferences';
-import { ActorMotionGroup, ActorOverlayLayers } from "./ActorOverlayLayers";
+import { ActorOverlayLayers } from "./ActorOverlayLayers";
+import { ActorDragMotionGroup } from './ActorDragMotionGroup';
 
 import type { LayoutPoint } from "@core/layout/types";
 import { ACTOR_LAYOUT_GROUP_COLORS } from "@entities/actor/actorVisuals";
@@ -32,6 +35,7 @@ type ActorLayerProps = {
   canvasBackgroundLuminance: number;
   showFactionOutlines: boolean;
   encounter: RootState["encounter"]["present"];
+  surfaceZones?: RootState['encounter']['present']['zones'];
   placements: ActorRenderPlacement[];
   zoneActorTranslation?: ActorPlacementTranslation | null;
   onActorMouseEnter: (actorId: string) => void;
@@ -56,6 +60,7 @@ export function ActorLayer({
   canvasBackgroundLuminance,
   showFactionOutlines,
   encounter,
+  surfaceZones = encounter.zones,
   placements,
   zoneActorTranslation = null,
   onActorMouseEnter,
@@ -68,6 +73,7 @@ export function ActorLayer({
   onActorReturnComplete
 }: ActorLayerProps) {
   const { animationsDisabled } = useMotionPreference();
+  const readBackground = useActorBackgroundPixel();
   const { preferences } = useCanvasPreferences();
   const projectionRotation = encounter.grid.type === 'isometric' && preferences.projectIsometricTokens
     ? encounter.grid.rotation : undefined;
@@ -115,6 +121,9 @@ export function ActorLayer({
             backgroundLuminanceByZoneId[actorZone.id]
           )
         : getTextColorForLuminance(canvasBackgroundLuminance);
+      const surfaceContrast = readBackground
+        ? createActorSurfaceContrast(renderedPoint, surfaceZones, readBackground)
+        : undefined;
       const clipId = `${actor.id}-clip`;
       const actorTransition = getCanvasTransition(
         isDirectManipulation,
@@ -128,7 +137,7 @@ export function ActorLayer({
           target={renderedPoint}
         >
           {(animatePoint, completeTrack) => (
-            <ActorMotionGroup
+            <ActorDragMotionGroup
               aria-label={name}
               className="cursor-grab select-none active:cursor-grabbing"
               data-entity-id={actor.id}
@@ -146,16 +155,12 @@ export function ActorLayer({
               drag={["actor", "select", "grid"].includes(activeToolId)}
               dragMomentum={false}
               dragElastic={0}
-              onDragStart={(event) =>
-                onActorDragStart?.(actor.id, zoneMovedPoint, event)
-              }
-              onDrag={(_, info) =>
-                onActorDrag?.({
-                  x: zoneMovedPoint.x + info.offset.x,
-                  y: zoneMovedPoint.y + info.offset.y
-                })
-              }
-              onDragEnd={(event) => onActorDragEnd?.(event)}
+              dragOrigin={zoneMovedPoint}
+              dragCallbacks={{
+                onDragStart: event => onActorDragStart?.(actor.id, zoneMovedPoint, event),
+                onDrag: onActorDrag,
+                onDragEnd: event => onActorDragEnd?.(event)
+              }}
               initial={false}
               animate={isMotionDraggedActor ? undefined : animatePoint}
               transition={actorTransition}
@@ -192,11 +197,12 @@ export function ActorLayer({
                 radius={radius}
                 selected={selected}
                 selectedTextColor={selectedActorTextColor}
+                surfaceContrast={surfaceContrast}
                 showFactionOutline={showFactionOutlines}
                 transition={actorTransition}
               />}
               </ActorTrim>
-            </ActorMotionGroup>
+            </ActorDragMotionGroup>
           )}
         </ActorMotionTrack>
       );

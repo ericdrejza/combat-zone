@@ -21,7 +21,7 @@ describe('ActorLayer', () => {
     const commonProps = {
       actorDrag: null,
       backgroundLuminanceByZoneId: { [zone.id]: 0 },
-      canvasBackgroundLuminance: 255,
+      canvasBackgroundLuminance: 1,
       encounter,
       onActorMouseEnter: () => undefined,
       onActorMouseLeave: () => undefined,
@@ -96,7 +96,7 @@ describe('ActorLayer', () => {
     const commonProps = {
       actorDrag,
       backgroundLuminanceByZoneId: { [zone.id]: 0 },
-      canvasBackgroundLuminance: 255,
+      canvasBackgroundLuminance: 1,
       encounter,
       onActorMouseEnter: () => undefined,
       onActorMouseLeave: () => undefined,

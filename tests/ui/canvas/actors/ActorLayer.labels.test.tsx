@@ -25,7 +25,7 @@ describe('ActorLayer', () => {
         <ActorLayer
           actorDrag={null}
           backgroundLuminanceByZoneId={{ [zone.id]: 0 }}
-          canvasBackgroundLuminance={255}
+          canvasBackgroundLuminance={1}
           encounter={encounter}
           placements={getActorRenderPlacements(encounter)}
           onActorMouseEnter={() => undefined}
@@ -65,7 +65,7 @@ describe('ActorLayer', () => {
         <ActorLayer
           actorDrag={null}
           backgroundLuminanceByZoneId={{ [zone.id]: 0 }}
-          canvasBackgroundLuminance={255}
+          canvasBackgroundLuminance={1}
           encounter={encounter}
           placements={getActorRenderPlacements(encounter)}
           onActorMouseEnter={() => undefined}
@@ -76,7 +76,7 @@ describe('ActorLayer', () => {
       </svg>
     );
 
-    expect(container.querySelector('text[dy="46"]')).toHaveAttribute(
+    expect(container.querySelector('text[dy="41"]')).toHaveAttribute(
       'fill',
       '#ffffff'
     );
@@ -99,7 +99,7 @@ describe('ActorLayer', () => {
         <ActorLayer
           actorDrag={null}
           backgroundLuminanceByZoneId={{ [zone.id]: 0 }}
-          canvasBackgroundLuminance={255}
+          canvasBackgroundLuminance={1}
           encounter={encounter}
           placements={getActorRenderPlacements(encounter)}
           onActorMouseEnter={() => undefined}
@@ -115,7 +115,7 @@ describe('ActorLayer', () => {
     );
 
     expect(container.querySelector('text')?.textContent).toBe('AEGIS');
-    expect(container.querySelectorAll('text[dy="46"]')).toHaveLength(2);
+    expect(container.querySelectorAll('text[dy="41"]')).toHaveLength(2);
     expect(container.textContent).toContain('BASTION');
   });
 });
