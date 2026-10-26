@@ -29,6 +29,7 @@ it.each([false, true])('includes functional Grid settings in its subtool group (
     fireEvent.click(group.getByRole('button', { name: 'Grid settings' }));
     const applied = within(screen.getByRole('dialog', { name: 'Grid settings' }));
     fireEvent.change(applied.getByRole('spinbutton', { name: 'Cell size' }), { target: { value: '32' } });
+    fireEvent.blur(applied.getByRole('spinbutton', { name: 'Cell size' }));
     fireEvent.click(applied.getByRole('button', { name: 'Apply' }));
     await waitFor(() => expect(store.getState().encounter.present.grid.cellSize).toBe(32));
     const saved = store.getState().encounter.present;

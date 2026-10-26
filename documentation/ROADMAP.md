@@ -249,6 +249,10 @@ the design as future or nice-to-have work.
 - [x] Cell-size edits resize coverage inversely with fixed 64-unit rendered spacing; background controls update the same scale value.
 - [x] Detection/alignment normalize map coverage and preserve fitted geometry; previews cancel without durable mutations.
 - [x] Grid settings remains inside the Grid subtool button group, matching Background on compact and desktop layouts.
+- [x] Keep keyboard cell-size previews responsive with snapped Zone actors; avoid exhaustive reservations for disjoint nearest anchors and argument-limit crashes (#59).
+- [x] Support hold-to-repeat on every Grid Settings increment/decrement button while preserving whole-number steps, rotation acceleration, and positive cell-size bounds.
+- [x] Defer typed cell-size, rotation, and origin previews until blur; restore zero for blank rotation/origins and the last valid positive cell size for a blank size, retaining immediate stepping.
+- [x] Select the current text when focusing or clicking any numeric Grid Settings field for quick replacement.
 - [x] Schema 21 preserves legacy map alignment and validates local/cloud round trips, history, overflow, and writer boundaries.
 
 

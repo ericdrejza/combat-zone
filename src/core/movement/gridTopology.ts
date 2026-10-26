@@ -38,8 +38,8 @@ export function cellVertices(grid: GridGeometry, center: LayoutPoint): LayoutPoi
   ] : Array.from({ length: 6 }, (_, k) => ({ x: local.x + size / Math.sqrt(3) * Math.cos(k * Math.PI / 3), y: local.y + size / Math.sqrt(3) * Math.sin(k * Math.PI / 3) }))).map(p => gridToWorld(grid, p));
 }
 
-export function canvasAnchors(state: EncounterState, size: ActorSize): LayoutPoint[] {
-  const grid = resolveGridGeometry(state.grid), centers = canvasCellCenters(state);
+export function canvasAnchors(state: EncounterState, size: ActorSize, region?: Parameters<typeof canvasCellCenters>[1]): LayoutPoint[] {
+  const grid = resolveGridGeometry(state.grid), centers = canvasCellCenters(state, region);
   const points = size === 'large' ? centers.flatMap(center => cellVertices(grid, center)) : centers;
   return [...new Map(points.map(p => [anchorKey(p), p])).values()].sort(pointOrder);
 }

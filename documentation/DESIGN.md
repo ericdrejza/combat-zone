@@ -2328,14 +2328,23 @@ Color and opacity preview in transient interaction state and commit once when
 focus leaves their control. Line style commits immediately. Line color retains its native color input; clicking
 it again blurs the field, closes its picker, and commits its draft.
 Grid Settings retains all existing fields in an Apply/Cancel form with transient
-preview. Isometric also offers a projection-angle field from 1–45°. Detection
+preview. Typed cell-size, rotation, and origin X/Y edits stay local to their
+field until it loses focus; Enter blurs the field before submitting. Blank
+rotation and origin fields become zero on blur; blank cell size restores its
+previous valid positive value, preserving fractional sizes. Increment/decrement buttons,
+held repeats, and arrow-key stepping update the preview immediately.
+Numeric fields select their current text on focus and click for quick replacement.
+Isometric also offers a projection-angle field from 1–45°. Detection
 estimates this angle automatically; manual alignment uses the configured angle. Alignment temporarily owns previews and disables Properties editing.
 Configured zoom-in/out, fit, fit-width, fit-height, and reset shortcuts remain
 active while Grid Settings is open, including focused fields; other shortcuts
 retain modal protection.
 Opacity uses the Zone-style percentage slider;
 visibility uses a switch. Increment/decrement first reaches the next integer
-in that direction, then steps by one, except rotation. Rotation clicks step by
+in that direction, then steps by one, except rotation. All Grid Settings
+increment/decrement buttons support holding: repeat after 400ms, every 80ms,
+stopping on release, leaving the control, cancellation, or a disabled bound.
+Rotation clicks step by
 0.1 degrees; holding for 400ms repeats every 80ms, continuing by 0.1 degrees
 until reaching the next whole degree without overshoot, then stepping by 1
 degree until release.

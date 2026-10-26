@@ -34,7 +34,8 @@ it('steps by 0.1, accelerates held presses to 1, and stops without a release inc
 it('accelerates keyboard repeats, resets on key release, and rounds typed degrees to hundredths', () => {
   render(<Harness />);
   const field = screen.getByRole('spinbutton', { name: 'Rotation' });
-  fireEvent.change(field, { target: { value: '17.236' } }); expect(field).toHaveValue(17.24);
+  fireEvent.change(field, { target: { value: '17.236' } }); expect(field).toHaveValue(17.236);
+  fireEvent.blur(field); expect(field).toHaveValue(17.24);
   fireEvent.keyDown(field, { key: 'ArrowUp' }); expect(field).toHaveValue(17.34);
   act(() => vi.advanceTimersByTime(REPEAT_DELAY_MS));
   fireEvent.keyDown(field, { key: 'ArrowUp', repeat: true }); expect(field).toHaveValue(17.44);
@@ -72,7 +73,8 @@ it('retains full-turn angles, wraps both directions, and accepts hundredths in t
   fireEvent.change(field, { target: { value: '270.24' } });
   expect(field).toHaveValue(270.24);
   expect((field as HTMLInputElement).checkValidity()).toBe(true);
-  fireEvent.change(field, { target: { value: '360' } }); expect(field).toHaveValue(0);
+  fireEvent.change(field, { target: { value: '360' } }); expect(field).toHaveValue(360);
+  fireEvent.blur(field); expect(field).toHaveValue(0);
   fireEvent.click(screen.getByRole('button', { name: 'Decrease Rotation' })); expect(field).toHaveValue(359.9);
   fireEvent.click(screen.getByRole('button', { name: 'Increase Rotation' })); expect(field).toHaveValue(0);
 });

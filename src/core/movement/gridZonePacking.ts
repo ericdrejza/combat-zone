@@ -15,6 +15,7 @@ import { actorAnchorCells, anchorKey, canvasAnchors, pointDistance, pointOrder }
 import { footprintFits } from './gridGeometry';
 import { polygonCentroid } from './zoneMembership';
 import type { Actor } from '@entities/actor/types';
+import { preferredGridZonePositions } from './preferredGridZonePositions';
 
 export type GridPlacement = { actorId: string; point: LayoutPoint; radius: number; sectionPolygon?: LayoutPoint[]; engagementTokenPoint?: LayoutPoint };
 
@@ -49,27 +50,36 @@ export function packGridZone(state: EncounterState, zoneId: string): { fits: boo
     members.forEach((actor, i) => goals.set(actor.id, targets[i]));
   }
   const anchorsBySize = new Map<string, LayoutPoint[]>();
-  const candidates = actors.map(actor => {
-    const section = sections.get(sectionIds.get(actor.id) ?? '');
-    let anchors = anchorsBySize.get(actor.size);
-    if (!anchors) { anchors = canvasAnchors(state, actor.size); anchorsBySize.set(actor.size, anchors); }
-    const goal = goals.get(actor.id) ?? polygonCentroid(section ?? zone.polygon);
-    return anchors.filter(point => footprintFits(point, getActorRadius(actor), state.canvasSize) && actorFitsPolygon(actor, point, section ?? zone.polygon))
-      .sort((a, b) => pointDistance(a, goal) - pointDistance(b, goal) || pointOrder(a, b));
-  });
-  const cellKeysBySize = new Map<string, Map<string, string[]>>();
-  const cellCandidates = candidates.map((points, index) => {
-    const size = actors[index].size;
-    if (!cellKeysBySize.has(size)) cellKeysBySize.set(size, new Map());
-    const cache = cellKeysBySize.get(size)!;
-    return points.map(point => {
-      const key = anchorKey(point);
-      let cells = cache.get(key);
-      if (!cells) { cells = actorAnchorCells(state, point, size).map(cell => anchorKey(cell.center)); cache.set(key, cells); }
-      return { point, cells };
+  const goalFor = (actor: Actor) => goals.get(actor.id) ?? polygonCentroid(sections.get(sectionIds.get(actor.id) ?? '') ?? zone.polygon);
+  const anchorFits = (actor: Actor, point: LayoutPoint) => footprintFits(point, getActorRadius(actor), state.canvasSize) &&
+    actorFitsPolygon(actor, point, sections.get(sectionIds.get(actor.id) ?? '') ?? zone.polygon);
+  let positions = preferredGridZonePositions(state, actors, goalFor, anchorFits);
+  if (!positions) {
+    const candidates = actors.map(actor => {
+      let anchors = anchorsBySize.get(actor.size);
+      if (!anchors) { anchors = canvasAnchors(state, actor.size); anchorsBySize.set(actor.size, anchors); }
+      const goal = goalFor(actor);
+      return anchors.filter(point => anchorFits(actor, point))
+        .sort((a, b) => pointDistance(a, goal) - pointDistance(b, goal) || pointOrder(a, b));
     });
-  });
-  const positions = assignGridCells(cellCandidates);
+    const cellKeysBySize = new Map<string, Map<string, string[]>>();
+    const cellCandidates = candidates.map((points, index) => {
+      const size = actors[index].size;
+      if (!cellKeysBySize.has(size)) cellKeysBySize.set(size, new Map());
+      const cache = cellKeysBySize.get(size)!;
+      return points.map(point => {
+        // Most roomy layouts accept their preferred anchors. Resolve reservations
+        // only when the solver inspects a candidate, retaining the per-size cache.
+        return { point, get cells() {
+          const key = anchorKey(point);
+          let cells = cache.get(key);
+          if (!cells) { cells = actorAnchorCells(state, point, size).map(cell => anchorKey(cell.center)); cache.set(key, cells); }
+          return cells;
+        } };
+      });
+    });
+    positions = assignGridCells(cellCandidates);
+  }
   if (!positions) return { fits: false, placements: [] };
   const placements = actors.map((actor, index) => ({ actorId: actor.id, point: positions.get(index)!, radius: getActorRadius(actor),
     ...(sections.get(sectionIds.get(actor.id) ?? '') ? { sectionPolygon: sections.get(sectionIds.get(actor.id) ?? '') } : {}) }));

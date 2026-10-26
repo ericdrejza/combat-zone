@@ -746,6 +746,10 @@ these back into `AGENT.md` or `DESIGN.md`.
 - [x] Cell-size edits resize coverage inversely with fixed 64-unit rendered spacing; background controls update the same scale value.
 - [x] Detection/alignment normalize map coverage and preserve fitted geometry; previews cancel without durable mutations.
 - [x] Grid settings remains inside the Grid subtool button group, matching Background on compact and desktop layouts.
+- [x] Replacing cell size with keyboard input, including intermediate `64` → `6` text, remains local until blur and responsive with snapped Zone actors; Cancel preserves the encounter, and Apply is one undoable/redoable change (#59).
+- [x] Grid Settings increment/decrement buttons repeat while held with mouse, touch, or pen; cell size remains positive, origins can cross zero, and release or leaving the control stops repetition without an extra step.
+- [x] Typed cell-size, rotation, and origin edits update the preview on blur; blank rotation/origins become zero and blank cell size restores its last valid positive value. Buttons, held repeats, and arrow-key stepping remain immediate.
+- [x] Clicking or focusing numeric Grid Settings fields selects their current text, including distance per cell and the isometric angle, so typing replaces the value.
 - [x] Schema 21 preserves legacy map alignment and validates local/cloud round trips, history, overflow, and writer boundaries.
 
 

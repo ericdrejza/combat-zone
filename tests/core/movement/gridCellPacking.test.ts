@@ -10,6 +10,23 @@ import { createEncounterHistoryState } from '@core/history/types';
 import { createEncounterActionRecord } from '@core/history/createEncounterActionRecord';
 import reducer, { commitEncounterChange, undoEncounterChange, redoEncounterChange } from '@store/encounterSlice';
 
+it('does not inspect unused reservations when every preferred choice fits', () => {
+  const unused = vi.fn(() => ['unused']);
+  const result = assignGridCells([
+    [{ point: { x: 1, y: 1 }, cells: ['a'] }, { point: { x: 2, y: 2 }, get cells() { return unused(); } }],
+    [{ point: { x: 3, y: 3 }, cells: ['b'] }]
+  ]);
+  expect([...result!.values()]).toEqual([{ x: 1, y: 1 }, { x: 3, y: 3 }]);
+  expect(unused).not.toHaveBeenCalled();
+});
+
+it('handles candidate counts beyond the JavaScript argument limit during backtracking', () => {
+  const choices = Array.from({ length: 150_000 }, (_, index) => ({ point: { x: index, y: 0 }, cells: [`cell-${index}`] }));
+  const result = assignGridCells([choices, [{ point: { x: 0, y: 1 }, cells: ['cell-0'] }]]);
+  expect(result?.get(0)).toEqual({ x: 1, y: 0 });
+  expect(result?.get(1)).toEqual({ x: 0, y: 1 });
+});
+
 it('backtracks across entire cell sets when the preferred multi-cell placement blocks another actor', () => {
   const preferred = { x: 1, y: 1 }, alternative = { x: 2, y: 2 };
   const result = assignGridCells([
