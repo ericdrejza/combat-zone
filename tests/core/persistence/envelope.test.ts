@@ -25,11 +25,21 @@ function validEnvelope(): EncounterExportEnvelope {
 }
 
 describe("persistence export envelopes", () => {
+  it("round trips shuffle and accepts legacy groups without it, rejecting invalid values", () => {
+    const value = validEnvelope();
+    value.encounter = createAudioCueGroup(value.encounter, { id: "actor", section: "actor" });
+    expect(parseExportEnvelope(JSON.parse(JSON.stringify(value)))).toEqual(value);
+    value.encounter.audioCueGroups.byId.actor.shuffleTriggers = true;
+    expect(parseExportEnvelope(JSON.parse(JSON.stringify(value)))).toEqual(value);
+    Object.assign(value.encounter.audioCueGroups.byId.actor, { shuffleTriggers: "true" });
+    expect(() => validateExportEnvelope(value)).toThrow(/audioCueGroups/);
+  });
+
   it("round trips actor movement, health, and damage trigger selections", () => {
     const value = validEnvelope();
     value.encounter = createAudioCue(createAudioCueGroup(value.encounter, { id: "actor", section: "actor" }), {
       id: "effect", libraryNodeId: "sound", placement: { type: "group", groupId: "actor" }, type: "effect",
-      triggers: ["actor_changes_zone", "actor_takes_damage", "actor_health_dead", "actor_health_unconscious", "actor_health_injured"]
+      triggers: ["actor_changes_zone", "actor_takes_damage", "actor_health_dead", "actor_health_unconscious", "actor_health_injured", "actor_health_healthy"]
     });
     expect(parseExportEnvelope(JSON.parse(JSON.stringify(value)))).toEqual(value);
     value.encounter.audioCueGroups.byId.actor.section = "zone";

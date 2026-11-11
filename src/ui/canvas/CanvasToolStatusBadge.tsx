@@ -1,3 +1,5 @@
+import { useSelector } from "react-redux";
+import type { RootState } from "@store/store";
 import { useRulerToolHint } from './ruler/useRulerToolHint';
 type CanvasToolStatusBadgeProps = {
   belowHistoryControls?: boolean;
@@ -18,6 +20,12 @@ export function CanvasToolStatusBadge({
   zoneStatuses,
   zoneShapeMode
 }: CanvasToolStatusBadgeProps) {
+  const audioSourceName = useSelector((state: RootState) => {
+    const brush = state.interaction.audioPaintBrush;
+    if (!brush) return null;
+    const entities = brush.entityType === "actor" ? state.encounter.present.actors : state.encounter.present.zones;
+    return entities.byId[brush.entityId]?.name ?? null;
+  });
   const rulerHint = useRulerToolHint(activeToolId);
   const actorStatus =
     (["actor", "select", "grid"].includes(activeToolId)) && actorNames.length > 0
@@ -34,7 +42,7 @@ export function CanvasToolStatusBadge({
       ? edgeStatuses.join("; ")
       : null;
 
-  const info = activeToolId === 'ruler' ? rulerHint : movementSummary ??
+  const info = audioSourceName !== null ? `Applying audio properties from ${audioSourceName}` : activeToolId === 'ruler' ? rulerHint : movementSummary ??
     actorStatus ??
     zoneStatus ??
     edgeStatus ??

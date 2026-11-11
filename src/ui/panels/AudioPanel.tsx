@@ -1,5 +1,4 @@
 import { MoveDown, MoveUp, Volume2 } from "lucide-react";
-import { motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
@@ -11,6 +10,7 @@ import { AudioPanelSection } from "./AudioPanelSection";
 import { AudioGroupMemberBadge } from "./AudioGroupMemberBadge";
 import { AudioTransportControls } from "@ui/audio/AudioTransportControls";
 import { AudioCueRow } from "@ui/audio/AudioCueRow";
+import { getSelectedAudioGroupIds } from "@ui/audio/audioSelection";
 import { getAudioSections, type AudioDisplayGroup } from "@ui/audio/audioGroups";
 import { SoundboardLauncherButton } from "@ui/audio/SoundboardLauncherButton";
 import { useInterfacePreferences } from "@ui/interface_preferences/InterfacePreferenceProvider";
@@ -40,12 +40,13 @@ export function AudioPanel({ showVolume }: { showVolume: boolean }) {
     ? encounter[selection.selectedEntityType === "zone" ? "zones" : "actors"].byId[selection.selectedIds[0]]
     : null;
 
+  const selectedGroupIds = getSelectedAudioGroupIds(encounter, selection);
+
   return <div className="space-y-3">
     <AudioTransportControls />
     {showVolume ? <label className="block text-xs text-canvas-muted">Master volume: {Math.round(masterVolume * 100)}%<input aria-label="Audio panel master volume" className="mt-1 w-full" max="100" min="0" onBlur={() => commitMasterVolume()} onChange={(event) => setMasterVolume(Number(event.target.value) / 100)} onKeyUp={() => commitMasterVolume()} onPointerUp={(event) => commitMasterVolume(Number(event.currentTarget.value) / 100)} type="range" value={Math.round(masterVolume * 100)} /></label> : null}
-    {getAudioSections(encounter).filter((section) => !selectedEntity || section.id === selection.selectedEntityType).map((section) => {
-      const selectedIds = selectedEntity?.audioGroupIds ?? [];
-      const groups = selectedEntity ? section.groups.filter((group) => selectedIds.includes(group.id)) : section.groups;
+    {getAudioSections(encounter).filter((section) => !selectedEntity || section.id === selection.selectedEntityType || (selection.selectedEntityType === "zone" && section.id === "actor")).map((section) => {
+      const groups = selectedEntity ? section.groups.filter((group) => selectedGroupIds.has(group.id)) : section.groups;
       if (section.id === "encounter") {
         const ambiance = groups.filter((group) => group.section === "ambiance");
         const music = groups.filter((group) => group.section === "music");
@@ -64,7 +65,7 @@ export function AudioPanel({ showVolume }: { showVolume: boolean }) {
 }
 
 function AudioGroupCard({ encounter, group, onCommit, onMove, showVolume }: { encounter: RootState["encounter"]["present"]; group: AudioDisplayGroup; onCommit: (next: RootState["encounter"]["present"], type: string, payload: Parameters<typeof createEncounterActionRecord>[1]) => void; onMove?: (offset: number) => void; showVolume: boolean }) {
-  return <motion.article className="space-y-2 rounded-xl border border-canvas-line bg-canvas-surface p-3" layout="position"><div className="flex items-center gap-2"><input aria-label={`Name for ${group.label}`} className="min-w-0 flex-1 bg-transparent font-semibold" defaultValue={group.label} onBlur={(event) => onCommit(renameAudioCueGroup(encounter, group.id, event.currentTarget.value), "audio.renameGroup", { groupId: group.id })} onKeyDown={(event) => { if (event.key === "Enter") event.currentTarget.blur(); }} />{encounter.audioCueGroups.byId[group.id] ? <AudioGroupMemberBadge encounter={encounter} group={encounter.audioCueGroups.byId[group.id]} /> : null}{onMove ? <span className="flex gap-1"><button aria-label={`Move ${group.label} up`} className="text-canvas-muted hover:text-canvas-ink disabled:cursor-default disabled:opacity-30" disabled={encounter.musicGroupIds.indexOf(group.id) === 0} onClick={() => onMove(-1)} type="button"><MoveUp aria-hidden="true" className="h-4 w-4" /></button><button aria-label={`Move ${group.label} down`} className="text-canvas-muted hover:text-canvas-ink disabled:cursor-default disabled:opacity-30" disabled={encounter.musicGroupIds.indexOf(group.id) === encounter.musicGroupIds.length - 1} onClick={() => onMove(1)} type="button"><MoveDown aria-hidden="true" className="h-4 w-4" /></button></span> : null}</div>{group.cues.length ? group.cues.map((cue) => <AudioCueRow cue={cue} key={cue.id} showVolume={showVolume} />) : <p className="text-xs text-canvas-muted">No cues.</p>}</motion.article>;
+  return <article className="space-y-2 rounded-xl border border-canvas-line bg-canvas-surface p-3"><div className="flex items-center gap-2"><input aria-label={`Name for ${group.label}`} className="min-w-0 flex-1 bg-transparent font-semibold" defaultValue={group.label} onBlur={(event) => onCommit(renameAudioCueGroup(encounter, group.id, event.currentTarget.value), "audio.renameGroup", { groupId: group.id })} onKeyDown={(event) => { if (event.key === "Enter") event.currentTarget.blur(); }} />{encounter.audioCueGroups.byId[group.id] ? <AudioGroupMemberBadge encounter={encounter} group={encounter.audioCueGroups.byId[group.id]} /> : null}{onMove ? <span className="flex gap-1"><button aria-label={`Move ${group.label} up`} className="text-canvas-muted hover:text-canvas-ink disabled:cursor-default disabled:opacity-30" disabled={encounter.musicGroupIds.indexOf(group.id) === 0} onClick={() => onMove(-1)} type="button"><MoveUp aria-hidden="true" className="h-4 w-4" /></button><button aria-label={`Move ${group.label} down`} className="text-canvas-muted hover:text-canvas-ink disabled:cursor-default disabled:opacity-30" disabled={encounter.musicGroupIds.indexOf(group.id) === encounter.musicGroupIds.length - 1} onClick={() => onMove(1)} type="button"><MoveDown aria-hidden="true" className="h-4 w-4" /></button></span> : null}</div>{group.cues.length ? group.cues.map((cue) => <AudioCueRow cue={cue} key={cue.id} showVolume={showVolume} />) : <p className="text-xs text-canvas-muted">No cues.</p>}</article>;
 }
 
 export function AudioPanelHeaderActions({ onToggleVolume, showVolume }: { onToggleVolume: () => void; showVolume: boolean }) {

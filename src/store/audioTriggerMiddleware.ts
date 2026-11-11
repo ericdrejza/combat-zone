@@ -17,31 +17,51 @@ function request(cueId: string, sourceId: string): AudioTriggerRequest {
 }
 
 function requestsForTrigger(state: EncounterState, actorId: string, zoneId: string, trigger: AudioCueTrigger): AudioTriggerRequest[] {
-  return state.audioCues.allIds.flatMap((cueId) => {
+  const pools = new Map<string, string[]>();
+  for (const cueId of state.audioCues.allIds) {
     const cue = state.audioCues.byId[cueId];
-    if (cue.type !== "effect" || !cue.triggersEnabled || !cue.triggers.includes(trigger)) return [];
+    if (cue.type !== "effect" || cue.repeat || !cue.triggersEnabled || !cue.triggers.includes(trigger)) continue;
     const group = state.audioCueGroups.byId[cue.placement.groupId];
     const inherited = group?.section === "zone"
       ? (state.zones.byId[zoneId]?.audioGroupIds ?? []).includes(group.id)
       : group?.section === "actor"
         ? (state.actors.byId[actorId]?.audioGroupIds ?? []).includes(group.id)
         : false;
-    return inherited ? [request(cueId, `${actorId}-${zoneId}-${trigger}`)] : [];
+    if (inherited) {
+      const pool = pools.get(group.id) ?? [];
+      pool.push(cueId);
+      pools.set(group.id, pool);
+    }
+  }
+  // Each occurrence samples independently; playback deduplicates shared selections.
+  return [...pools].flatMap(([groupId, pool]) => {
+    const selected = state.audioCueGroups.byId[groupId].shuffleTriggers
+      ? [pool[Math.floor(Math.random() * pool.length)]] : pool;
+    return selected.map((cueId) => request(cueId, `${actorId}-${zoneId}-${trigger}`));
   });
 }
 
-/** Emits zone exit/entry cues and one actor cue for each changed assignment. */
-function movementRequests(before: EncounterState, after: EncounterState): AudioTriggerRequest[] {
+/** Zone boundaries track membership; Moves tracks committed, deliberate actor movement. */
+function movementRequests(before: EncounterState, after: EncounterState, action: EncounterActionRecord): AudioTriggerRequest[] {
   const movements = after.actors.allIds.flatMap((actorId) => {
     const previous = before.actors.byId[actorId]?.currentZoneId;
     const current = after.actors.byId[actorId]?.currentZoneId;
     return previous !== current ? [{ actorId, current, previous }] : [];
   });
+  const deliberate = ["actor.move", "actor.moveMany", "actor.moveSpatial", "engagement.join", "engagement.create"].includes(action.type);
+  const actorMovements = deliberate ? after.actors.allIds.filter((actorId) => {
+    const previous = before.actors.byId[actorId];
+    const current = after.actors.byId[actorId];
+    if (!previous) return false;
+    const changedPosition = action.type === "actor.moveSpatial" && !after.movementRules.zoneLocked &&
+      (previous.spatialPosition?.x !== current.spatialPosition?.x || previous.spatialPosition?.y !== current.spatialPosition?.y);
+    return previous.currentZoneId !== current.currentZoneId || changedPosition;
+  }) : [];
   const real = (zoneId: string | null | undefined): zoneId is string => Boolean(zoneId && zoneId !== "zoneless");
   return [
     ...movements.flatMap(({ actorId, previous }) => real(previous) ? requestsForTrigger(after, actorId, previous, "zone_leave") : []),
     ...movements.flatMap(({ actorId, current }) => real(current) ? requestsForTrigger(after, actorId, current, "zone_enter") : []),
-    ...movements.flatMap(({ actorId, current }) => requestsForTrigger(after, actorId, current ?? "zoneless", "actor_changes_zone"))
+    ...actorMovements.flatMap((actorId) => requestsForTrigger(after, actorId, after.actors.byId[actorId].currentZoneId, "actor_changes_zone"))
   ];
 }
 
@@ -49,7 +69,7 @@ function movementRequests(before: EncounterState, after: EncounterState): AudioT
 function healthRequests(before: EncounterState, after: EncounterState, action: EncounterActionRecord): AudioTriggerRequest[] {
   const damage = action.type === "actor.adjustHitPoints" && typeof action.payload.amount === "number" && action.payload.amount < 0;
   const damagedIds = damage && Array.isArray(action.payload.actorIds) ? action.payload.actorIds : [];
-  const healthTriggers = ["actor_health_dead", "actor_health_unconscious", "actor_health_injured"] as const;
+  const healthTriggers = ["actor_health_dead", "actor_health_unconscious", "actor_health_injured", "actor_health_healthy"] as const;
   return after.actors.allIds.flatMap((actorId) => {
     const previous = before.actors.byId[actorId];
     const current = after.actors.byId[actorId];
@@ -59,7 +79,7 @@ function healthRequests(before: EncounterState, after: EncounterState, action: E
       requests.push(...requestsForTrigger(after, actorId, current.currentZoneId, "actor_takes_damage"));
     }
     const status = getActorStatus(current);
-    if (status !== 3 && status !== getActorStatus(previous)) {
+    if (status !== getActorStatus(previous)) {
       requests.push(...requestsForTrigger(after, actorId, current.currentZoneId, healthTriggers[status]));
     }
     return requests;
@@ -71,7 +91,7 @@ export const audioTriggerMiddleware: Middleware<unknown, AudioTriggerState> = (a
   const result = next(action);
   const after = api.getState();
   if (commitEncounterChange.match(action) && before.encounter.present !== after.encounter.present) {
-    emitAudioTriggers([...movementRequests(before.encounter.present, after.encounter.present), ...healthRequests(before.encounter.present, after.encounter.present, action.payload.action)]);
+    emitAudioTriggers([...movementRequests(before.encounter.present, after.encounter.present, action.payload.action), ...healthRequests(before.encounter.present, after.encounter.present, action.payload.action)]);
   }
   return result;
 };

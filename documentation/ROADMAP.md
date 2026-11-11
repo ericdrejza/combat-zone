@@ -11,6 +11,26 @@ After completing a numbered section (## X.), move the completed section to the e
 
 ## 15. MVP Acceptance Hardening
 
+- [x] Add Soundboard selection highlight and filter toggles with white group glow,
+      union matching across selected Actors/Zones and Zone occupants, dynamic
+      assignments, empty/no-selection results, and unchanged encounter history.
+
+- [x] Generalize Actor audio Changes zones to Moves for deliberate zone/spatial
+      movement, preserving saved selections and keeping automatic repositioning,
+      no-op movement and undo/redo silent.
+
+- [x] Add Healthy to Actor audio health triggers, with manual and automatic
+      status-transition playback, silent undo/redo and no-ops, and persisted selections.
+
+- [x] Add per-trigger Shuffle to Actor/Zone audio group headers (#105), with
+      independent random selections for overlapping pools, shared playback
+      deduplication, unrestricted manual playback, persistence and undo/redo.
+      Include occupant Actor groups when filtering the Audio panel by Zone.
+
+- [x] Add the Audio Properties paintbrush before the Soundboard launcher, copying
+      ordered group assignments to same-type selections with validated atomic
+      history, no-op handling, cancellation, and the shared paint cursor.
+
 - [x] Standardize Settings category, section, subsection, and row presentation;
       regroup defaults and panel presentation by purpose. Rename the category
       group Workspace, simplify card size labels, and retain category/scroll

@@ -1,13 +1,14 @@
 import { configureStore } from "@reduxjs/toolkit";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { createEncounterState } from "@core/encounter/createEncounterState";
+import { placeSpatialActors } from "@core/movement/movementStrategies";
 import { createEncounterActionRecord } from "@core/history/createEncounterActionRecord";
 import { updateActorStatus } from "@entities/actor/actorStatus";
 import { DEFAULT_COMBAT_RULES } from "@entities/actor/actorResources";
 import { adjustHitPoints, setHitPoints, updateSelectedActors } from "@entities/actor/statusMutations";
 import { createActor, moveActor } from "@entities/actor/actorMutations";
-import { createAudioCue, createAudioCueGroup, setEntityAudioGroups, updateAudioCue } from "@entities/audio/audioMutations";
+import { createAudioCue, createAudioCueGroup, setEntityAudioGroups, setAudioCueGroupShuffle, updateAudioCue } from "@entities/audio/audioMutations";
 import { createZone } from "@entities/zone/zoneMutations";
 import interactionReducer from "@interaction/interactionState";
 import { audioTriggerMiddleware } from "@store/audioTriggerMiddleware";
@@ -41,6 +42,77 @@ describe("audio trigger middleware", () => {
   const listener = (event: Event) => events.push((event as CustomEvent<AudioTriggerRequest[]>).detail);
   afterEach(() => { window.removeEventListener(AUDIO_TRIGGER_EVENT, listener); events.length = 0; });
 
+  it("plays Moves for deliberate spatial changes within a zone and keeps replay and no-ops silent", () => {
+    window.addEventListener(AUDIO_TRIGGER_EVENT, listener);
+    const store = makeStore();
+    let encounter = automaticEncounter();
+    encounter = { ...encounter, movementRules: { ...encounter.movementRules, zoneLocked: false, snapToGrid: false } };
+    encounter = placeSpatialActors(encounter, { "actor-a": { x: 40, y: 40 } });
+    store.dispatch(loadEncounterState(encounter));
+    const moved = placeSpatialActors(encounter, { "actor-a": { x: 50, y: 45 } });
+    store.dispatch(commitEncounterChange({ action: createEncounterActionRecord("actor.moveSpatial", { actorIds: ["actor-a"] }), nextEncounter: moved }));
+    expect(events.flat().map(({ cueId }) => cueId)).toEqual(["actor-leave", "actor-enter"]);
+    events.length = 0;
+    store.dispatch(undoEncounterChange());
+    expect(store.getState().encounter.present.actors.byId["actor-a"].spatialPosition).toEqual({ x: 40, y: 40 });
+    store.dispatch(redoEncounterChange());
+    expect(store.getState().encounter.present.actors.byId["actor-a"].spatialPosition).toEqual({ x: 50, y: 45 });
+    store.dispatch(commitEncounterChange({ action: createEncounterActionRecord("actor.moveSpatial", {}), nextEncounter: { ...moved } }));
+    expect(events).toEqual([]);
+  });
+
+  it.each(["grid.update", "movement.updateRules", "zone.move"])("keeps Moves silent for automatic changes from %s", (type) => {
+    window.addEventListener(AUDIO_TRIGGER_EVENT, listener);
+    const store = makeStore();
+    let encounter = automaticEncounter();
+    encounter = { ...encounter, movementRules: { ...encounter.movementRules, zoneLocked: false, snapToGrid: false } };
+    encounter = placeSpatialActors(encounter, { "actor-a": { x: 40, y: 40 } });
+    store.dispatch(loadEncounterState(encounter));
+    const moved = moveActor(placeSpatialActors(encounter, { "actor-a": { x: 50, y: 45 } }), "actor-a", "hall");
+    store.dispatch(commitEncounterChange({ action: createEncounterActionRecord(type, {}), nextEncounter: moved }));
+    expect(events.flat().filter(({ cueId }) => cueId.startsWith("actor-"))).toEqual([]);
+  });
+
+  it("plays each actor's Moves cues once when a deliberate spatial move also crosses a zone", () => {
+    window.addEventListener(AUDIO_TRIGGER_EVENT, listener);
+    const store = makeStore();
+    let encounter = automaticEncounter();
+    encounter = { ...encounter, movementRules: { ...encounter.movementRules, zoneLocked: false, snapToGrid: false } };
+    encounter = placeSpatialActors(encounter, { "actor-a": { x: 40, y: 40 } });
+    store.dispatch(loadEncounterState(encounter));
+    const moved = moveActor(placeSpatialActors(encounter, { "actor-a": { x: 50, y: 45 } }), "actor-a", "hall");
+    store.dispatch(commitEncounterChange({ action: createEncounterActionRecord("actor.moveSpatial", {}), nextEncounter: moved }));
+    expect(events.flat().map(({ cueId }) => cueId)).toEqual(["zone-leave", "zone-enter", "actor-leave", "actor-enter"]);
+  });
+
+  it("samples overlapping trigger pools independently, including the same cue for both", () => {
+    window.addEventListener(AUDIO_TRIGGER_EVENT, listener);
+    const random = vi.spyOn(Math, "random").mockReturnValue(0);
+    try {
+      const store = makeStore();
+      let encounter = automaticEncounter();
+      encounter = setAudioCueGroupShuffle(encounter, "actor-sounds", true);
+      for (const id of ["shared", "other"]) encounter = createAudioCue(encounter, {
+        id, libraryNodeId: id, placement: { type: "group", groupId: "actor-sounds" },
+        triggers: ["actor_takes_damage", "actor_health_injured"], type: "effect"
+      });
+      const rules = { ...DEFAULT_COMBAT_RULES, automaticHealth: true, thresholds: [0, 2, 5] as [number, number, number] };
+      encounter = updateSelectedActors(encounter, ["actor-a"], (actor) => setHitPoints(actor, { current: 10, maximum: 10 }, rules));
+      store.dispatch(loadEncounterState(encounter));
+      const action = createEncounterActionRecord("actor.adjustHitPoints", { actorIds: ["actor-a"], amount: -5 });
+      random.mockClear();
+      const damage = () => store.dispatch(commitEncounterChange({ action, nextEncounter: adjustHitPoints(encounter, ["actor-a"], -5, rules) }));
+      damage();
+      expect(events.flat().map(({ cueId }) => cueId)).toEqual(["shared", "shared"]);
+      expect(random).toHaveBeenCalledTimes(2);
+      store.dispatch(undoEncounterChange());
+      events.length = 0;
+      random.mockReturnValueOnce(0).mockReturnValueOnce(0.99);
+      damage();
+      expect(events.flat().map(({ cueId }) => cueId)).toEqual(["shared", "other"]);
+    } finally { random.mockRestore(); }
+  });
+
   it("ignores retained trigger settings in repeat or disabled mode and restores them when Flag is enabled", () => {
     window.addEventListener(AUDIO_TRIGGER_EVENT, listener);
     const store = makeStore();
@@ -48,7 +120,7 @@ describe("audio trigger middleware", () => {
     encounter = updateAudioCue(encounter, "zone-enter", { repeat: true });
     encounter = updateAudioCue(encounter, "actor-enter", { triggersEnabled: false });
     store.dispatch(loadEncounterState(encounter));
-    const commit = (nextEncounter: typeof encounter) => store.dispatch(commitEncounterChange({ action: createEncounterActionRecord("test.change", {}), nextEncounter }));
+    const commit = (nextEncounter: typeof encounter) => store.dispatch(commitEncounterChange({ action: createEncounterActionRecord("actor.move", {}), nextEncounter }));
     commit(moveActor(encounter, "actor-a", "hall"));
     expect(events.flat().map((item) => item.cueId)).toEqual(["zone-leave", "actor-leave"]);
     expect(store.getState().encounter.present.audioCues.byId["zone-enter"].triggers).toEqual(["zone_enter"]);
@@ -77,7 +149,7 @@ describe("audio trigger middleware", () => {
     window.addEventListener(AUDIO_TRIGGER_EVENT, listener);
     const store = makeStore();
     let encounter = automaticEncounter();
-    for (const trigger of ["actor_takes_damage", "actor_health_dead", "actor_health_unconscious", "actor_health_injured"] as const) {
+    for (const trigger of ["actor_takes_damage", "actor_health_dead", "actor_health_unconscious", "actor_health_injured", "actor_health_healthy"] as const) {
       encounter = createAudioCue(encounter, { id: trigger, libraryNodeId: trigger, placement: { type: "group", groupId: "actor-sounds" }, triggers: [trigger], type: "effect" });
     }
     const rules = { ...DEFAULT_COMBAT_RULES, automaticHealth: true, thresholds: [0, 2, 5] as [number, number, number] };
@@ -102,11 +174,22 @@ describe("audio trigger middleware", () => {
     expect(events.flat().map(({ cueId }) => cueId)).toEqual(["actor_health_dead"]);
     events.length = 0;
     commit("actor.setStatus", updateActorStatus(encounter, "actor-a", 0));
-    commit("actor.adjustHitPoints", adjustHitPoints(encounter, ["actor-a"], 8, rules), 8);
     expect(events).toEqual([]);
+    commit("actor.adjustHitPoints", adjustHitPoints(encounter, ["actor-a"], 8, rules), 8);
+    expect(events.flat().map(({ cueId }) => cueId)).toEqual(["actor_health_healthy"]);
+    events.length = 0;
+    store.dispatch(undoEncounterChange());
+    store.dispatch(redoEncounterChange());
+    expect(events).toEqual([]);
+    commit("actor.setStatus", updateActorStatus(encounter, "actor-a", 3));
+    expect(events).toEqual([]);
+    commit("actor.setStatus", updateActorStatus(encounter, "actor-a", 2));
+    events.length = 0;
+    commit("actor.setStatus", updateActorStatus(encounter, "actor-a", 3));
+    expect(events.flat().map(({ cueId }) => cueId)).toEqual(["actor_health_healthy"]);
   });
 
-  it("emits one changes-zones request per cue for moves into and out of zoneless", () => {
+  it("emits one Moves request per cue for moves into and out of zoneless", () => {
     window.addEventListener(AUDIO_TRIGGER_EVENT, listener);
     const store = makeStore();
     store.dispatch(loadEncounterState(automaticEncounter()));

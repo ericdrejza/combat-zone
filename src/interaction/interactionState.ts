@@ -92,6 +92,7 @@ export type InteractionState = {
   gridCalibrationPoints: import('@core/layout/types').LayoutPoint[];
   gridCalibrationMode: 'simple' | 'quadrants' | 'detect';
   gridCalibrationType: GridConfiguration['type'];
+  audioPaintBrush: { entityType: "actor" | "zone"; entityId: string } | null;
   actorPaintBrush: boolean;
   actorTool: ActorToolState;
   audioTool: {
@@ -137,6 +138,7 @@ const initialState: InteractionState = {
   namePreview: null,
   editingRuler: null, rulerPropertiesId: null, rulerAppearancePreview: null, rulerOptions: DEFAULT_RULER_OPTIONS, rulerDraft: null,
   gridAppearancePreview: null, gridPreview: null, gridCalibrationActive: false, gridCalibrationPoints: [], gridCalibrationMode: 'simple', gridCalibrationType: 'square',
+  audioPaintBrush: null,
   actorPaintBrush: false,
   actorTool: {
     clipboardActorId: null,
@@ -234,6 +236,7 @@ export const interactionSlice = createSlice({
       state.dragActionPreview = null;
       state.draft = initialDraft;
       state.contextualActionRequest = null;
+      state.audioPaintBrush = null;
       state.actorPaintBrush = false;
       state.zonePaintBrush = null;
       state.zoneOpacityPreview = null;
@@ -249,6 +252,7 @@ export const interactionSlice = createSlice({
     },
     setAudioSectionType(state, { payload }: PayloadAction<AudioSectionType>) {
       state.audioTool.sectionType = payload;
+      state.audioPaintBrush = null;
       if (
         (payload === 'zone' && state.selection.selectedEntityType !== 'zone') ||
         (payload === 'actor' && state.selection.selectedEntityType !== 'actor') ||
@@ -281,6 +285,7 @@ export const interactionSlice = createSlice({
       state.draft = initialDraft;
       state.dragActionPreview = null;
       state.contextualActionRequest = null;
+      state.audioPaintBrush = null;
       state.actorPaintBrush = false;
       state.zonePaintBrush = null;
       state.actorTool.targetZoneId = null;
@@ -348,6 +353,10 @@ export const interactionSlice = createSlice({
     clearZonePaintBrush(state) {
       state.zonePaintBrush = null;
     },
+    toggleAudioPaintBrush(state, { payload }: PayloadAction<NonNullable<InteractionState["audioPaintBrush"]>>) {
+      state.audioPaintBrush = state.audioPaintBrush ? null : payload;
+    },
+    clearAudioPaintBrush(state) { state.audioPaintBrush = null; },
     toggleActorPaintBrush(state) {
       state.actorPaintBrush = !state.actorPaintBrush;
     },
@@ -457,8 +466,8 @@ export const interactionSlice = createSlice({
     }
   },
   extraReducers: builder => {
-    builder.addCase(loadEncounterState, state => { state.namePreview = null; });
-    builder.addCase(resetEncounterState, state => { state.namePreview = null; });
+    builder.addCase(loadEncounterState, state => { state.namePreview = null; state.audioPaintBrush = null; });
+    builder.addCase(resetEncounterState, state => { state.namePreview = null; state.audioPaintBrush = null; });
   }
 });
 
@@ -500,6 +509,8 @@ export const {
   toggleEdgeMovementRule,
   toggleZonePaintBrush,
   toggleActorPaintBrush,
+  toggleAudioPaintBrush,
+  clearAudioPaintBrush,
   toggleTouchMultiSelect,
   startBoxSelection,
   updateBoxSelection

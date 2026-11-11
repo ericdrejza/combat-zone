@@ -43,19 +43,36 @@ describe("Audio group and section controls", () => {
   beforeEach(() => { FakeAudio.instances = []; vi.stubGlobal("Audio", FakeAudio); });
   afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
+  it("persists shuffle through history while manual group playback remains unrestricted", () => {
+    const { board } = setup();
+    const encounter = store.getState().encounter.present;
+    const cue = encounter.audioCues.byId["actor-cue"];
+    act(() => store.dispatch(commitEncounterChange({ action: { id: "extra", type: "test.setup", payload: {}, timestamp: 2 }, nextEncounter: createAudioCue(encounter, { ...cue, id: "extra" }) })));
+    const button = within(board).getByRole("button", { name: "Shuffle triggers for actor" });
+    expect(button).toHaveAttribute("aria-pressed", "false");
+    fireEvent.click(button);
+    expect(store.getState().encounter.present.audioCueGroups.byId.actor.shuffleTriggers).toBe(true);
+    act(() => store.dispatch(undoEncounterChange()));
+    expect(button).toHaveAttribute("aria-pressed", "false");
+    act(() => store.dispatch(redoEncounterChange()));
+    expect(button).toHaveAttribute("aria-pressed", "true");
+    fireEvent.click(within(board).getByRole("button", { name: "Play actor" }));
+    expect(FakeAudio.instances.filter((audio) => audio.play.mock.calls.length > 0)).toHaveLength(2);
+  });
+
   it("toggles each health trigger independently and restores the configuration with undo/redo", () => {
     const { board } = setup();
     const card = within(board.querySelector('[data-audio-cue-id="actor-cue"]') as HTMLElement);
     fireEvent.click(card.getByRole("button", { name: "Enable triggers" }));
     expect(card.getByText("Health status becomes")).toBeInTheDocument();
-    for (const name of ["Dead", "Unconscious / severely injured", "Injured"]) {
+    for (const name of ["Dead", "Unconscious / severely injured", "Injured", "Healthy"]) {
       fireEvent.click(card.getByRole("button", { name }));
       expect(card.getByRole("button", { name })).toHaveAttribute("aria-pressed", "true");
     }
     const selections = () => store.getState().encounter.present.audioCues.byId["actor-cue"].triggers;
-    expect(selections()).toEqual(["actor_health_dead", "actor_health_unconscious", "actor_health_injured"]);
+    expect(selections()).toEqual(["actor_health_dead", "actor_health_unconscious", "actor_health_injured", "actor_health_healthy"]);
     fireEvent.click(card.getByRole("button", { name: "Dead" }));
-    expect(selections()).toEqual(["actor_health_unconscious", "actor_health_injured"]);
+    expect(selections()).toEqual(["actor_health_unconscious", "actor_health_injured", "actor_health_healthy"]);
     act(() => store.dispatch(undoEncounterChange()));
     expect(card.getByRole("button", { name: "Dead" })).toHaveAttribute("aria-pressed", "true");
     act(() => store.dispatch(redoEncounterChange()));
@@ -65,7 +82,7 @@ describe("Audio group and section controls", () => {
   it.each(["zone-cue", "actor-cue"])("switches exclusive behaviors on %s while preserving settings and undo/redo", (id) => {
     const { board } = setup();
     const card = within(board.querySelector(`[data-audio-cue-id="${id}"]`) as HTMLElement);
-    const enter = id === "zone-cue" ? "Entering zone" : "Changes zones";
+    const enter = id === "zone-cue" ? "Entering zone" : "Moves";
     const cue = () => store.getState().encounter.present.audioCues.byId[id];
     // Setup starts with repeat enabled; switching to Flag must turn it off.
     fireEvent.change(card.getByRole("combobox", { name: "Repeat delay from" }), { target: { value: "5" } });
@@ -212,7 +229,7 @@ describe("Audio group and section controls", () => {
 
   it.each([
     { id: "zone-cue", enter: "Entering zone", leave: "Leaving zone" },
-    { id: "actor-cue", enter: "Changes zones", leave: "Takes damage" }
+    { id: "actor-cue", enter: "Moves", leave: "Takes damage" }
   ])("shows only enabled movement trigger indicators for $id and restores them with undo/redo", ({ id, enter, leave }) => {
     const { panel, board } = setup();
     const boardCard = board.querySelector(`[data-audio-cue-id="${id}"]`) as HTMLElement;

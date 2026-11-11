@@ -191,7 +191,7 @@ export function assertEncounterState(value: unknown, name = "encounter", expecte
   if (!Array.isArray(value.musicGroupIds)) throw new PersistenceValidationError(`${name}.musicGroupIds is invalid.`);
   for (const groupId of groups.allIds) {
     const group = groups.byId[groupId];
-    if (!isRecord(group) || group.id !== groupId || typeof group.name !== "string" || typeof group.repeat !== "boolean" || !["ambiance", "music", "zone", "actor"].includes(String(group.section))) {
+    if (!isRecord(group) || group.id !== groupId || typeof group.name !== "string" || typeof group.repeat !== "boolean" || (group.shuffleTriggers !== undefined && typeof group.shuffleTriggers !== "boolean") || !["ambiance", "music", "zone", "actor"].includes(String(group.section))) {
       throw new PersistenceValidationError(`${name}.audioCueGroups.${groupId} is invalid.`);
     }
   }

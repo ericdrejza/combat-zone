@@ -1707,6 +1707,43 @@ styles when present.
 
 ### 7.5 Soundboard trigger updates
 
+The Soundboard header offers independent Crosshair highlight and Filter toggles,
+initially off for the current Soundboard view. Highlight outlines matching groups
+with a white glow. Filter shows only matching groups and hides sections without
+matches. Matching uses the union of all selected Actors' assigned groups or all
+selected Zones' assigned groups plus their occupants' Actor groups. Shared groups
+appear once, and assignments and occupant changes update matching immediately.
+With no Actor or Zone selected, filtering shows all groups and none are
+highlighted. A selected entity without groups produces an empty filtered result.
+These display controls do not change assignments, playback, or encounter history.
+The Soundboard pop-out has a minimum content width of 370px. After 500ms
+without resize events, a narrower window requests one correction to that width.
+Each resize resets the delay; ignored corrections at the same width do not loop.
+This quiet period approximates drag completion because native resize-handle
+release is not observable by the page.
+All header icon buttons are 32px square. Pop-out remains separate at the top
+right. At Tailwind md and above, title, the evenly justified status/control group,
+and pop-out share one row, with selection toggles before status. Below md, title, status, selection toggles and pop-out
+stay in the first row in that order; media controls and volume occupy the second
+row. That control row can scroll horizontally on the narrowest screens.
+
+Actor and Zone group headers offer a Shuffle toggle immediately left of Play/Pause.
+It defaults off and is saved with the group through undo/redo. When enabled,
+each trigger occurrence selects one random eligible cue from that group's pool.
+Simultaneous trigger pools select independently; a cue selected by multiple pools
+plays once and satisfies all those selections. Manual cue and group playback
+remain unrestricted. Older snapshots without this setting behave as off.
+When a Zone is selected, the Audio panel includes its assigned groups and the
+Actor groups assigned to Actors currently within that Zone.
+Audio Properties has a Paintbrush immediately left of the Soundboard launcher.
+Enabling it retains the source entity and replaces subsequent selected entities'
+complete ordered audio group assignments, only within the same entity type.
+Empty assignments can be painted. Each selection batch is validated and undoable;
+identical assignments do not create history, and undo/redo does not repaint.
+Escape, right-click, changing tools or audio sections, and encounter loads clear
+the brush. The active brush uses the existing canvas paint cursor and shows
+“Applying audio properties from <source entity name>” in the canvas hint overlay.
+
 Soundboard group headers have a Play/Pause control immediately left of the drag
 handle. An idle group can start all its cues; Music starts its first track only.
 Pause/resume applies to that group with the existing section transport behavior.
@@ -1734,11 +1771,16 @@ Effect-only and Music remains Track-only. Classification does not modify
 existing cues or add a second persisted type to Library assets.
 
 Creating an audio group scrolls the Soundboard to reveal the entire group below
-its sticky header. Actor audio combines entering and leaving a zone into one
-“Changes zones” trigger. “Takes damage” fires when the Status panel's Apply damage
+its sticky header. Actor audio offers one “Moves” trigger for deliberate actor movement,
+including zone transfers and spatial dragging/keyboard steps within a zone.
+Automatic repositioning or membership changes from grid, movement-mode, or Zone
+edits do not fire Moves. A move crossing a Zone boundary fires Moves once per
+Actor, alongside the relevant Zone triggers. Existing saved movement trigger
+selections retain their behavior through the stable persisted key. “Takes damage” fires when the Status panel's Apply damage
 command reduces an Actor's hit points; manually setting hit points does not fire
 that trigger. “Health status becomes” contains independent icon toggles for Dead
-(Skull), Unconscious / severely injured (BoneFracture), and Injured (HeartCrack),
+(Skull), Unconscious / severely injured (BoneFracture), Injured (HeartCrack),
+and Healthy (HeartPulse),
 using the same names and icons as the health controls. These health triggers fire
 when the Actor changes to the selected status. Undo/redo does not play triggers.
 

@@ -2,6 +2,7 @@ import { createPortal } from "react-dom";
 import { createContext, type PropsWithChildren, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
 import { useTheme } from "@ui/theme/ThemeProvider";
+import { attachSoundboardMinimumWidth } from "./soundboardMinimumWidth";
 import { Soundboard } from "./Soundboard";
 import type { SoundboardEntityTarget, SoundboardNavigationRequest } from "./soundboardNavigation";
 
@@ -23,13 +24,15 @@ export function SoundboardProvider({ children }: PropsWithChildren) {
   const createPopup = useCallback(() => {
     const next = window.open("", "combat-zone-soundboard", "popup,width=1000,height=720,toolbar=no,location=no,menubar=no");
     if (!next) { window.alert("The Soundboard popup was blocked. Allow popups for this site and try again."); return; }
+    const detachMinimumWidth = attachSoundboardMinimumWidth(next);
     next.document.title = "Combat Zone Soundboard";
+    next.document.documentElement.style.minWidth = "370px";
     next.document.body.innerHTML = '<div id="soundboard-root"></div>';
     next.document.documentElement.classList.toggle("dark", theme === "dark");
     next.document.documentElement.dataset.theme = theme;
     try { const url = new URL(window.location.href); url.searchParams.set("view", "soundboard"); next.history.replaceState(null, "", url.href); } catch { /* Origin chrome is browser-owned. */ }
     document.querySelectorAll('style,link[rel="stylesheet"]').forEach((node) => next.document.head.append(node.cloneNode(true)));
-    next.addEventListener("beforeunload", () => setPopup(null), { once: true });
+    next.addEventListener("beforeunload", () => { detachMinimumWidth(); setPopup(null); }, { once: true });
     setPopup(next);
     setModalOpen(false);
   }, [theme]);

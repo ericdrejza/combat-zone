@@ -1,7 +1,8 @@
 import type { EntityId } from "@core/state/entityCollection";
 
 export type AudioCueType = "track" | "effect";
-export type AudioCueTrigger = "zone_enter" | "zone_leave" | "actor_changes_zone" | "actor_takes_damage" | "actor_health_dead" | "actor_health_unconscious" | "actor_health_injured";
+/** actor_changes_zone is the persisted key for Moves, including deliberate spatial movement. */
+export type AudioCueTrigger = "zone_enter" | "zone_leave" | "actor_changes_zone" | "actor_takes_damage" | "actor_health_dead" | "actor_health_unconscious" | "actor_health_injured" | "actor_health_healthy";
 export type AudioSectionType = "encounter" | "zone" | "actor";
 export type AudioCueGroupSection = "ambiance" | "music" | "zone" | "actor";
 
@@ -29,6 +30,8 @@ export type AudioCue = {
 export type AudioCueGroup = {
   id: EntityId;
   name: string;
+  /** Missing in older snapshots means all matching cues play. */
+  shuffleTriggers?: boolean;
   /** Music groups can wrap from their last cue back to their first cue. */
   repeat: boolean;
   section: AudioCueGroupSection;
@@ -41,6 +44,6 @@ export const DEFAULT_AUDIO_REPEAT_DELAY_SETTINGS: AudioRepeatDelaySettings = {
 
 /** Shared section constraints for mutation and persistence validation. */
 export const SECTION_AUDIO_TRIGGERS: Partial<Record<AudioCueGroupSection, AudioCueTrigger[]>> = {
-  actor: ["actor_changes_zone", "actor_takes_damage", "actor_health_dead", "actor_health_unconscious", "actor_health_injured"],
+  actor: ["actor_changes_zone", "actor_takes_damage", "actor_health_dead", "actor_health_unconscious", "actor_health_injured", "actor_health_healthy"],
   zone: ["zone_enter", "zone_leave"]
 };

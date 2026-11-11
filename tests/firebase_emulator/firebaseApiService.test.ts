@@ -285,7 +285,7 @@ describe("Firebase API service", () => {
     command.payload.state.zones = { allIds: ["z"], byId: { z: zone } } as never;
     command.payload.state.panelLayout.right.push({ id: "audio", collapsed: false });
     Object.assign(command.payload.state, { audioCues: { allIds: [], byId: {} }, audioCueGroups: { allIds: [], byId: {} }, musicGroupIds: [] });
-    const triggers = ["actor_changes_zone", "actor_takes_damage", "actor_health_dead", "actor_health_unconscious", "actor_health_injured"];
+    const triggers = ["actor_changes_zone", "actor_takes_damage", "actor_health_dead", "actor_health_unconscious", "actor_health_injured", "actor_health_healthy"];
     const cue = { id: "sound", libraryNodeId: "asset", placement: { type: "group", groupId: "group" }, type: "effect", volume: 1, repeat: false, triggersEnabled: true, triggers, repeatDelay: { minimumDelaySeconds: 0, maximumDelaySeconds: 0 } };
     Object.assign(command.payload.state, {
       audioCues: { allIds: ["sound"], byId: { sound: cue } },

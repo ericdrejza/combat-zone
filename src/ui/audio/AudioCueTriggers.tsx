@@ -4,15 +4,15 @@ import type { AudioCue, AudioCueTrigger } from "@entities/audio/types";
 import type { updateAudioCue } from "@entities/audio/audioMutations";
 import { HEALTH_STATUSES } from "@ui/status/healthCatalog";
 
-const healthTriggers = ["actor_health_dead", "actor_health_unconscious", "actor_health_injured"] as const;
-const healthChoices = HEALTH_STATUSES.filter(({ value }) => value < 3).map(({ value, label, Icon }) => ({
-  Icon, label, trigger: healthTriggers[value as 0 | 1 | 2]
+const healthTriggers = ["actor_health_dead", "actor_health_unconscious", "actor_health_injured", "actor_health_healthy"] as const;
+const healthChoices = HEALTH_STATUSES.map(({ value, label, Icon }) => ({
+  Icon, label, trigger: healthTriggers[value]
 }));
 
 function getTriggerChoices(owner: "zone" | "actor"): Array<{ Icon: typeof MoveLeft; label: string; trigger: AudioCueTrigger }> {
   return owner === "zone"
     ? [{ Icon: MoveLeft, label: "Entering zone", trigger: "zone_enter" }, { Icon: MoveRight, label: "Leaving zone", trigger: "zone_leave" }]
-    : [{ Icon: Waypoints, label: "Changes zones", trigger: "actor_changes_zone" }, { Icon: HeartMinus, label: "Takes damage", trigger: "actor_takes_damage" }];
+    : [{ Icon: Waypoints, label: "Moves", trigger: "actor_changes_zone" }, { Icon: HeartMinus, label: "Takes damage", trigger: "actor_takes_damage" }];
 }
 
 export function TriggerIndicators({ cue, owner }: { cue: AudioCue; owner?: "zone" | "actor" }) {

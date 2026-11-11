@@ -6,6 +6,9 @@ import { SETTINGS_CONTROL } from '@ui/settings/SettingsLayout';
 import { TouchTooltip } from '@ui/toolbar/TouchTooltip';
 import { RepeatButton } from '@ui/controls/RepeatButton';
 
+// Only the step buttons round the group's outer corners.
+const MOVEMENT_CONTROL = SETTINGS_CONTROL.replace('rounded-xl', 'rounded-none');
+
 export function ActorMovementLimit({ actor, unit, step, onChange }: { actor: Actor; unit: string; step: number; onChange: (value: number | null) => void }) {
   const { readOnly } = usePersistence();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -29,7 +32,7 @@ export function ActorMovementLimit({ actor, unit, step, onChange }: { actor: Act
     <div className="flex w-32 min-w-0 items-stretch">
       {stepButton(-1)}
       <input ref={inputRef} id={`movement-limit-${actor.id}`} key={`${actor.id}:${actor.movementLimit}`} aria-label="Movement limit" type="number" min="0" step={step}
-        disabled={readOnly} className={`${SETTINGS_CONTROL} flex-1 rounded-none text-center [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none`} defaultValue={actor.movementLimit ?? ''} placeholder="No limit"
+        disabled={readOnly} className={`${MOVEMENT_CONTROL} flex-1 text-center [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none`} defaultValue={actor.movementLimit ?? ''} placeholder="Unset"
         onFocus={event => event.currentTarget.select()} onClick={event => event.currentTarget.select()}
         onKeyDown={event => { if (event.key === 'Enter') event.currentTarget.blur(); }}
         onBlur={event => {

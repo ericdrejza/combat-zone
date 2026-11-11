@@ -38,6 +38,7 @@ import type {
 } from "./canvasInteractionTypes";
 import { useEngagementDrag } from './engagements/useEngagementDrag';
 import { type LocalBoxSelectionState } from "./zones/zoneGeometry";
+import { useAudioPaintBrush } from "@ui/audio/useAudioPaintBrush";
 import { useActorPaintBrush } from "./actors/useActorPaintBrush";
 import { useCanvasDropHandlers } from "./handlers/useCanvasDropHandlers";
 import { useCanvasInteractionHandlers } from "./handlers/useCanvasInteractionHandlers";
@@ -203,6 +204,8 @@ export function CanvasShell({
     selection,
     zonePaintBrush
   });
+
+  useAudioPaintBrush();
 
   useActorPaintBrush({
     actorPaintBrush,

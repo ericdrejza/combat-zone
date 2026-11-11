@@ -101,7 +101,7 @@ describe("Audio panel volume controls", () => {
 
     fireEvent.click(within(screen.getByLabelText("Audio panel")).getByRole("button", { name: "Open Soundboard" }));
     const modal = screen.getByRole("dialog", { name: "Soundboard modal" });
-    for (const label of ["Entering zone", "Leaving zone", "Changes zones", "Takes damage"]) expect(within(modal).queryByRole("checkbox", { name: label })).not.toBeInTheDocument();
+    for (const label of ["Entering zone", "Leaving zone", "Moves", "Takes damage"]) expect(within(modal).queryByRole("checkbox", { name: label })).not.toBeInTheDocument();
     const zoneCard = within(modal).getByLabelText("Name for Zone FX").closest("article") as HTMLElement;
     const actorCard = within(modal).getByLabelText("Name for Actor FX").closest("article") as HTMLElement;
     for (const card of [zoneCard, actorCard]) {
@@ -110,7 +110,35 @@ describe("Audio panel volume controls", () => {
       expect(within(card).getByRole("button", { name: "Enable repeat" }).querySelector(".lucide-repeat-1")).not.toBeNull();
       fireEvent.click(within(card).getByRole("button", { name: "Enable triggers" }));
     }
-    for (const label of ["Entering zone", "Leaving zone", "Changes zones", "Takes damage"]) expect(within(modal).getByRole("checkbox", { name: label })).toBeInTheDocument();
+    for (const label of ["Entering zone", "Leaving zone", "Moves", "Takes damage"]) expect(within(modal).getByRole("checkbox", { name: label })).toBeInTheDocument();
+  });
+
+  it("does not fight manual pop-out resizing below the content minimum", () => {
+    const frame = document.createElement("iframe");
+    document.body.append(frame);
+    const popup = frame.contentWindow!;
+    Object.defineProperties(popup, {
+      innerWidth: { configurable: true, value: 330 },
+      outerWidth: { configurable: true, value: 350 },
+      outerHeight: { configurable: true, value: 700 }
+    });
+    const resize = vi.spyOn(popup, "resizeTo").mockImplementation(() => undefined);
+    vi.spyOn(window, "open").mockReturnValue(popup);
+    renderApp();
+    fireEvent.click(within(screen.getByLabelText("Audio panel")).getByRole("button", { name: "Open Soundboard" }));
+    fireEvent.click(within(screen.getByRole("dialog", { name: "Soundboard modal" })).getByRole("button", { name: "Pop out Soundboard" }));
+    expect(resize).not.toHaveBeenCalled();
+    Object.defineProperty(popup, "innerWidth", { value: 400 });
+    fireEvent(popup, new Event("resize"));
+    expect(resize).not.toHaveBeenCalled();
+    Object.defineProperty(popup, "innerWidth", { value: 320 });
+    fireEvent(popup, new Event("resize"));
+    expect(resize).not.toHaveBeenCalled();
+    fireEvent(popup, new Event("beforeunload"));
+    resize.mockClear();
+    fireEvent(popup, new Event("resize"));
+    expect(resize).not.toHaveBeenCalled();
+    frame.remove();
   });
 
   it("opens the Soundboard in a modal and can pop it out and back in", () => {

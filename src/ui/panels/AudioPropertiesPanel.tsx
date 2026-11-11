@@ -1,7 +1,10 @@
-import { MoveDown, MoveUp } from "lucide-react";
+import { MoveDown, MoveUp, Paintbrush } from "lucide-react";
 import { motion } from "motion/react";
 import { useDispatch, useSelector } from "react-redux";
 
+import { toggleAudioPaintBrush } from "@interaction/interactionState";
+import { ToolbarOptionButton } from "@ui/toolbar/ToolbarOption";
+import { usePersistence } from "@ui/persistence/PersistenceProvider";
 import { createEncounterActionRecord } from "@core/history/createEncounterActionRecord";
 import { setEntityAudioGroups } from "@entities/audio/audioMutations";
 import { getAudioGroupsBySection } from "@entities/audio/audioSelectors";
@@ -12,7 +15,8 @@ import { SoundboardLauncherButton } from "@ui/audio/SoundboardLauncherButton";
 export function AudioPropertiesPanel() {
   const dispatch = useDispatch();
   const encounter = useSelector((state: RootState) => state.encounter.present);
-  const { audioTool, selection } = useSelector((state: RootState) => state.interaction);
+  const { readOnly } = usePersistence();
+  const { audioTool, audioPaintBrush, selection } = useSelector((state: RootState) => state.interaction);
   if (audioTool.sectionType === "encounter") return <div className="flex items-start gap-2"><p className="flex-1 text-sm text-canvas-muted">Manage Encounter Ambience and Music groups in the Soundboard.</p><SoundboardLauncherButton /></div>;
   if (selection.selectedEntityType !== audioTool.sectionType || selection.selectedIds.length !== 1) {
     return <div className="flex items-start gap-2"><p className="flex-1 text-sm text-canvas-muted">Select exactly one {audioTool.sectionType} to assign reusable audio groups.</p><SoundboardLauncherButton /></div>;
@@ -34,7 +38,7 @@ export function AudioPropertiesPanel() {
     [next[index], next[target]] = [next[target], next[index]];
     commitGroups(next, "audio.reorderGroups", groupId);
   }
-  return <div className="space-y-3"><div className="flex items-center justify-between gap-2"><h3 className="font-display text-base font-semibold">{entity?.name ?? `Selected ${audioTool.sectionType}`}</h3><SoundboardLauncherButton target={entity ? { entityId, entityType: audioTool.sectionType } : undefined} /></div><fieldset className="space-y-2"><legend className="text-sm font-semibold">Assigned {audioTool.sectionType} groups</legend>{orderedGroups.map((group) => {
+  return <div className="space-y-3"><div className="flex items-center justify-between gap-2"><h3 className="font-display text-base font-semibold">{entity?.name ?? `Selected ${audioTool.sectionType}`}</h3><div className="flex shrink-0 items-center gap-2"><ToolbarOptionButton aria-label="Paint audio groups" aria-pressed={Boolean(audioPaintBrush)} active={Boolean(audioPaintBrush)} disabled={readOnly || !entity} title="Apply these audio groups to selected entities of the same type. Escape or right-click to stop." onClick={() => dispatch(toggleAudioPaintBrush({ entityId, entityType: audioTool.sectionType as "zone" | "actor" }))}><Paintbrush aria-hidden="true" className="h-4 w-4" /></ToolbarOptionButton><SoundboardLauncherButton target={entity ? { entityId, entityType: audioTool.sectionType } : undefined} /></div></div><fieldset className="space-y-2"><legend className="text-sm font-semibold">Assigned {audioTool.sectionType} groups</legend>{orderedGroups.map((group) => {
     if (!group) return null;
     const checked = assignedIds.includes(group.id);
     const assignedIndex = assignedIds.indexOf(group.id);

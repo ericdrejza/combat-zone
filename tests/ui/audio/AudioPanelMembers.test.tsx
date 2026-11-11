@@ -2,7 +2,7 @@ import { act, fireEvent, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import { ZONELESS_ACTOR_ZONE_ID } from "@core/encounter/types";
-import { createActor } from "@entities/actor/actorMutations";
+import { createActor, moveActor } from "@entities/actor/actorMutations";
 import { createAudioCueGroup, setEntityAudioGroups } from "@entities/audio/audioMutations";
 import { createZone } from "@entities/zone/zoneMutations";
 import { selectEntity, setActiveTool, setAudioSectionType } from "@interaction/interactionState";
@@ -31,6 +31,24 @@ function setup() {
 }
 
 describe("Audio panel group members", () => {
+  it("includes groups of actors inside the selected zone and updates after movement", () => {
+    const panel = setup();
+    act(() => {
+      const state = store.getState().encounter.present;
+      store.dispatch(commitEncounterChange({ action: { id: "move", type: "actor.move", timestamp: 2, payload: {} }, nextEncounter: moveActor(state, "a", "zone-a") }));
+      store.dispatch(selectEntity({ entityType: "zone", ids: ["zone-a"] }));
+    });
+    expect(within(panel).getByRole("textbox", { name: "Name for Zone sounds" })).toBeInTheDocument();
+    expect(within(panel).getByRole("textbox", { name: "Name for Actor sounds" })).toBeInTheDocument();
+    expect(within(panel).queryByRole("textbox", { name: "Name for Unused" })).not.toBeInTheDocument();
+    act(() => {
+      const state = store.getState().encounter.present;
+      store.dispatch(commitEncounterChange({ action: { id: "leave", type: "actor.move", timestamp: 3, payload: {} }, nextEncounter: moveActor(state, "a", "zone-b") }));
+    });
+    expect(within(panel).queryByRole("textbox", { name: "Name for Actor sounds" })).not.toBeInTheDocument();
+    expect(within(panel).getByRole("textbox", { name: "Name for Zone sounds" })).toBeInTheDocument();
+  });
+
   it("shows numeric member counts and lists duplicate names on hover and focus", () => {
     const panel = setup();
     const badge = within(panel).getByRole("button", { name: "Select all 2 actor members of Actor sounds" });

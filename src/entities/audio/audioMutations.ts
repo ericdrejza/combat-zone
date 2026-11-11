@@ -158,3 +158,10 @@ export function moveAudioCueGroup(state: EncounterState, groupId: string, sectio
     zones: changedSection ? { ...state.zones, byId: Object.fromEntries(Object.entries(state.zones.byId).map(([id, zone]) => [id, { ...zone, audioGroupIds: (zone.audioGroupIds ?? []).filter((value) => value !== groupId) }])) } : state.zones
   };
 }
+
+/** Limits automatic triggers while leaving manual transports unrestricted. */
+export function setAudioCueGroupShuffle(state: EncounterState, groupId: string, shuffleTriggers: boolean): EncounterState {
+  const group = state.audioCueGroups.byId[groupId];
+  if (!group || !["actor", "zone"].includes(group.section) || Boolean(group.shuffleTriggers) === shuffleTriggers) return state;
+  return { ...state, audioCueGroups: upsert(state.audioCueGroups, { ...group, shuffleTriggers }) };
+}

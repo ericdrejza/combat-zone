@@ -7,7 +7,7 @@ import "./paintCursor.css";
 /** Native cursor feedback follows both paint tools without tracking pointer movement. */
 export function useCanvasPaintCursor(): string {
   const painting = useSelector((state: RootState) =>
-    state.interaction.actorPaintBrush || state.interaction.zonePaintBrush !== null
+    state.interaction.audioPaintBrush !== null || state.interaction.actorPaintBrush || state.interaction.zonePaintBrush !== null
   );
   const { readOnly } = usePersistence();
   return painting && !readOnly ? " canvas-paint-cursor" : "";
