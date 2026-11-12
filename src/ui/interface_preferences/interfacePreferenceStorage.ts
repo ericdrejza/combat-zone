@@ -34,6 +34,8 @@ export const DEFAULT_ZONE_COLOR_DEFAULTS: ZoneColorDefaults = {
 };
 
 export type DurableInterfacePreferences = {
+  chatNameColor: string | null;
+  chatMatchMessageColor: boolean;
   backgroundResizeOverflowBehavior: BackgroundResizeOverflowBehavior;
   audioCueVolumeDefault: number;
   audioAmbienceCueTypeDefault: AmbienceCueTypeDefault;
@@ -84,6 +86,8 @@ export type DurableInterfacePreferences = {
 };
 
 export type InterfacePreferences = DurableInterfacePreferences & {
+  setChatNameColor: (color: string | null) => void;
+  setChatMatchMessageColor: (enabled: boolean) => void;
   resetCategory: (category: PreferenceCategory) => void;
   setBackgroundResizeOverflowBehavior: (behavior: BackgroundResizeOverflowBehavior) => void;
   setAudioCueVolumeDefault: (volume: number) => void;
@@ -137,6 +141,8 @@ export type InterfacePreferences = DurableInterfacePreferences & {
 };
 
 export const defaultPreferences: DurableInterfacePreferences = {
+  chatNameColor: null,
+  chatMatchMessageColor: false,
   backgroundResizeOverflowBehavior: 'zoneless',
   audioCueVolumeDefault: 0.5,
   audioAmbienceCueTypeDefault: "asset_icon",
@@ -188,6 +194,8 @@ export const defaultPreferences: DurableInterfacePreferences = {
 
 export const defaultValue: InterfacePreferences = {
   ...defaultPreferences,
+  setChatNameColor: () => undefined,
+  setChatMatchMessageColor: () => undefined,
   resetCategory: () => undefined,
   setBackgroundResizeOverflowBehavior: () => undefined,
   autoSelectActiveActorDefault: true,
@@ -250,6 +258,8 @@ export function readPreferences(): DurableInterfacePreferences {
       localStorage.getItem(INTERFACE_PREFERENCES_STORAGE_KEY) ?? "null"
     ) as Partial<DurableInterfacePreferences> | null;
     return {
+      chatNameColor: typeof stored?.chatNameColor === "string" && /^#[0-9a-f]{6}$/i.test(stored.chatNameColor) ? stored.chatNameColor : null,
+      chatMatchMessageColor: stored?.chatMatchMessageColor === true,
       backgroundResizeOverflowBehavior: readBackgroundResizeOverflowBehavior(stored?.backgroundResizeOverflowBehavior),
       audioCueVolumeDefault: readAudioCueVolumeDefault(stored?.audioCueVolumeDefault),
       audioAmbienceCueTypeDefault: readAmbienceCueTypeDefault(stored?.audioAmbienceCueTypeDefault),

@@ -13,6 +13,9 @@ export function isPersistenceWritable(): boolean {
 function isProtectedMutation(action: UnknownAction): boolean {
   if (
     action.type === "encounter/commitEncounterChange" ||
+    action.type === "encounter/sendChatMessage" ||
+    action.type === "encounter/deleteChatMessage" ||
+    action.type === "encounter/clearChatMessages" ||
     action.type === "encounter/undoEncounterChange" ||
     action.type === "encounter/redoEncounterChange"
   ) {

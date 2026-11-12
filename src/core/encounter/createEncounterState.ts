@@ -24,6 +24,7 @@ export function createEncounterState({
   panelOrder = DEFAULT_ENCOUNTER_PANEL_ORDER
 }: CreateEncounterStateInput): EncounterState {
   return {
+    chatMessages: createEmptyEntityCollection(),
     movementRules: { ...movementRules },
     grid: createDefaultGrid(),
     schemaVersion: ENCOUNTER_SCHEMA_VERSION,

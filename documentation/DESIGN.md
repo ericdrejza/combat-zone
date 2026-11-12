@@ -1142,8 +1142,27 @@ side panels are hidden.
 - Library
 - Initiative
 - Properties
-- Log (committed actions and blocked validation attempts, categorized for
-  filtering)
+- Log displays saved encounter chat messages. A wrench toggle (off initially)
+  additionally shows session-only committed actions and blocked validation attempts.
+  The header trash button clears all saved chat and system entries, including
+  hidden system entries. Only user messages offer individual deletion, using a
+  theme-aware red trash icon without button chrome, revealed on message hover or
+  keyboard focus (also reachable by focusing the card on touch). System entries
+  cannot be individually deleted. Chat sending, deletion, and clearing are independent of encounter undo/redo;
+  removed system entries remain session-only. Deletion requires the writer boundary.
+  The composer stays at the bottom with a Send icon at its lower right. Its textbox
+  starts at one row, grows and shrinks with its content (including wrapped lines),
+  hides its scrollbar, and cannot be resized manually. Desktop
+  Enter sends, Shift+Enter inserts a newline, and mobile Enter inserts a newline;
+  mobile users send with the icon. Blank messages are not sent.
+  Each saved message includes an ID, timestamp, text, and a sender User snapshot
+  (ID, name, optional name color). Until user identities exist, the sender is
+  Game Master. Messages use repository persistence independently of encounter history; sending
+  requires the writer boundary. Chat does not affect encounter spatial validation.
+  Interface settings store a browser-wide chat name color (theme text by default)
+  and a switch (off by default) to render message text in its sender's name color.
+  The name color is captured when sending; the text matching switch applies to
+  displayed messages. Future shared encounter participation will share messages.
 - Status
 - Audio
 - Zoneless (when located in a sidebar)

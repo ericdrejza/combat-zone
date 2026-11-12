@@ -985,3 +985,16 @@ these back into `AGENT.md` or `DESIGN.md`.
       including over panels, and restore it on release or cancellation.
 - [x] Share live Motion positions between canvas Actors and floating drag visuals
       so the first drag frame does not jump back to an older state snapshot.
+
+## Encounter chat
+
+- [x] Saved chat preserves message IDs, timestamps, multiline text, and Game Master
+      sender snapshots through repository saves, recovery, and export/import;
+      legacy encounters migrate to an empty chat. Undo/redo preserves current chat; writer guards apply.
+- [x] The wrench toggle adds system logs to chat; the header trash button clears all
+      chat and system entries. Only user messages have a plain trash icon revealed on hover/focus; saved
+      chat deletions stay outside undo/redo and respect the writer boundary.
+      Desktop Enter sends, Shift+Enter inserts a newline, and mobile sends only
+      through its Send icon. Blank and composing input do not send.
+- [x] Browser-wide Interface chat settings choose the sender name color and toggle
+      matching message text, with validated storage and category reset support.

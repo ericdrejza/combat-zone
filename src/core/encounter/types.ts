@@ -12,7 +12,7 @@ import type { ImageAssetSource } from "@core/assets/imageAssetSource";
 import type { EncounterPanelLayout } from "./panelLayout";
 import type { AudioCue, AudioCueGroup } from "@entities/audio/types";
 
-export const ENCOUNTER_SCHEMA_VERSION = 32;
+export const ENCOUNTER_SCHEMA_VERSION = 33;
 export const ZONELESS_ACTOR_ZONE_ID = "zoneless";
 
 export type EncounterSchemaVersion = typeof ENCOUNTER_SCHEMA_VERSION;
@@ -47,6 +47,7 @@ export type EncounterBackgroundImage = {
 };
 
 export type EncounterState = {
+  chatMessages: EntityCollection<import("@core/chat/types").ChatMessage>;
   rulers: EntityCollection<import('@core/measurement/types').LockedRuler>;
   gridCoverage?: import('./backgroundFrame').BackgroundFrame;
   movementRules: import('@core/movement/types').MovementRules;

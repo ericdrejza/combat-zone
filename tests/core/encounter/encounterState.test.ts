@@ -182,6 +182,7 @@ describe('EncounterState foundation', () => {
         schemaVersion: ENCOUNTER_SCHEMA_VERSION,
       id: 'encounter-empty',
       name: 'Empty Encounter',
+      chatMessages: { byId: {}, allIds: [] },
       counters: { byId: {}, allIds: [] },
       clocks: { byId: {}, allIds: [] },
       backgroundImage: null,

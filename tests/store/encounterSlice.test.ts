@@ -53,6 +53,7 @@ describe("encounter Redux history", () => {
         schemaVersion: ENCOUNTER_SCHEMA_VERSION,
         id: "active-encounter",
         name: "Untitled Encounter",
+        chatMessages: { byId: {}, allIds: [] },
         counters: { byId: {}, allIds: [] },
         clocks: { byId: {}, allIds: [] },
         backgroundImage: null,

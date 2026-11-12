@@ -1,10 +1,16 @@
-import { Trash2 } from "lucide-react";
+import { Wrench } from "lucide-react";
 import { useLayoutEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 import type { EncounterLogCategory } from "@core/logging/types";
-import { resetEncounterLog } from "@store/encounterLogSlice";
+import { toggleSystemLogs } from "@store/encounterLogSlice";
 import type { RootState } from "@store/store";
+
+import { LogDeleteButton } from "./LogDeleteButton";
+import { useLogDeletionActions } from "./useLogDeletionActions";
+import { ChatComposer } from "./ChatComposer";
+import { TouchTooltip } from "@ui/toolbar/TouchTooltip";
+import { useInterfacePreferences } from "@ui/interface_preferences/InterfacePreferenceProvider";
 
 const CATEGORY_LABELS: Record<EncounterLogCategory, string> = {
   actor: "Actor",
@@ -44,25 +50,33 @@ function getLogScrollSnapshot(
 /** Provides the Log-specific action displayed before its dock reorder control. */
 export function LogPanelHeaderActions() {
   const dispatch = useDispatch();
+  const { clearAll, writable } = useLogDeletionActions();
+  const showSystemLogs = useSelector((state: RootState) => state.encounterLog.showSystemLogs);
 
   return (
-    <button
-      aria-label="Clear encounter log"
-      className="flex h-8 w-8 items-center justify-center rounded-full border border-canvas-line bg-canvas-surface text-canvas-muted transition hover:bg-canvas"
-      onClick={() => dispatch(resetEncounterLog())}
-      title="Clear encounter log"
-      type="button"
-    >
-      <Trash2 aria-hidden="true" className="h-4 w-4" />
-    </button>
+    <>
+    <TouchTooltip label="Show system logs"><button type="button" aria-label="Show system logs" title="Show system logs" aria-pressed={showSystemLogs}
+      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-canvas-ink ${showSystemLogs
+        ? "border-canvas-ink bg-canvas-ink text-canvas-on-ink hover:ring-2 hover:ring-canvas-ink/40"
+        : "border-canvas-line bg-canvas-surface text-canvas-muted hover:bg-canvas"}`}
+      onClick={() => dispatch(toggleSystemLogs())}><Wrench aria-hidden="true" className="h-4 w-4" /></button></TouchTooltip>
+    <LogDeleteButton label="Clear encounter log" disabled={!writable} onClick={clearAll} />
+    </>
   );
 }
 
-/** Presents the encounter audit stream without coupling the UI to action payloads. */
+/** Combines durable chat and optional session audit entries chronologically. */
 export function LogPanel() {
-  const entries = useSelector(
-    (state: RootState) => state.encounterLog.entries
-  );
+  const { deleteMessage, writable } = useLogDeletionActions();
+  const systemEntries = useSelector((state: RootState) => state.encounterLog.entries);
+  const showSystemLogs = useSelector((state: RootState) => state.encounterLog.showSystemLogs);
+  const messages = useSelector((state: RootState) => state.encounter.present.chatMessages);
+  const { chatMatchMessageColor } = useInterfacePreferences();
+  const entries = [
+    ...messages.allIds.map(id => ({ ...messages.byId[id], category: "chat" as const, kind: "chat" as const })),
+    ...(showSystemLogs ? systemEntries : [])
+  ].sort((a, b) => a.timestamp - b.timestamp);
+  const encounterSession = useSelector((state: RootState) => state.encounterLog.encounterSession);
   const listRef = useRef<HTMLOListElement>(null);
   const scrollSnapshotRef = useRef<LogScrollSnapshot>({
     entryCount: 0,
@@ -103,15 +117,9 @@ export function LogPanel() {
     }
   };
 
-  if (entries.length === 0) {
-    return (
-      <p className="text-sm text-canvas-muted">
-        Actions and blocked validation attempts will appear here.
-      </p>
-    );
-  }
-
   return (
+    <div className="min-w-0">
+    {entries.length === 0 ? <p className="text-sm text-canvas-muted">No messages yet.</p> : null}
     <ol
       aria-label="Encounter log"
       className="max-h-80 space-y-2 overflow-y-auto pr-1"
@@ -120,18 +128,29 @@ export function LogPanel() {
     >
       {entries.map((entry) => (
         <li
-          className="rounded-xl border border-canvas-line bg-canvas-surface px-3 py-2 text-sm"
-          key={entry.id}
+          className="group/message rounded-xl border border-canvas-line bg-canvas-surface px-3 pt-1 pb-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-canvas-ink"
+          tabIndex={entry.kind === "chat" ? 0 : undefined}
+          key={`${entry.kind}:${entry.id}`}
         >
           <div className="mb-1 flex items-center justify-between gap-2 text-xs font-semibold uppercase tracking-wide text-canvas-muted">
-            <span>{CATEGORY_LABELS[entry.category]}</span>
+            <span style={"sender" in entry ? { color: entry.sender.color ?? undefined } : undefined}>{"sender" in entry ? entry.sender.name : CATEGORY_LABELS[entry.category]}</span>
+            <div className="flex shrink-0 items-center gap-2">
             {entry.kind === "validation-block" ? (
               <span className="text-red-700 dark:text-red-500">Blocked</span>
             ) : null}
+            {entry.kind === "chat" ? (
+              <div className="pointer-events-none opacity-0 group-hover/message:pointer-events-auto group-hover/message:opacity-100 group-focus-within/message:pointer-events-auto group-focus-within/message:opacity-100">
+                <LogDeleteButton plain label="Delete chat message" disabled={!writable}
+                  onClick={() => deleteMessage(entry.id)} />
+              </div>
+            ) : null}
+            </div>
           </div>
-          <p className="text-canvas-ink">{entry.message}</p>
+          <p className="whitespace-pre-wrap break-words text-canvas-ink" style={"sender" in entry && chatMatchMessageColor ? { color: entry.sender.color ?? undefined } : undefined}>{entry.message}</p>
         </li>
       ))}
     </ol>
+    <ChatComposer key={encounterSession} />
+    </div>
   );
 }

@@ -23,5 +23,7 @@ export type EncounterLogEntry = {
 };
 
 export type EncounterLogState = {
+  showSystemLogs: boolean;
+  encounterSession: number;
   entries: EncounterLogEntry[];
 };

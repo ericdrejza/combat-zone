@@ -460,3 +460,10 @@ Implementation plan: [Focus light](plans/focus_light.md).
       including over panels, and restore it on release or cancellation.
 - [x] Share live Motion positions between canvas Actors and floating drag visuals
       so the first drag frame does not jump back to an older state snapshot.
+
+## Encounter chat
+
+- [x] Add durable Game Master chat independent of undo/redo, validated migration and sender snapshots.
+- [x] Add the system-log wrench toggle and responsive multiline composer with mobile Send.
+- [x] Add browser-wide chat name color and matching message text settings.
+- [x] Clear all chat/system entries and delete individual user messages with plain theme-aware red trash icons on hover/focus, chat independent of undo/redo, and writer protection.

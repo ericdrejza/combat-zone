@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen } from "@testing-library/react";
 import { Provider } from "react-redux";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { resetEncounterLog, appendEncounterLogEntry } from "@store/encounterLogSlice";
+import { resetEncounterLog, toggleSystemLogs, appendEncounterLogEntry } from "@store/encounterLogSlice";
 import { store } from "@store/store";
 import { LogPanel } from "@ui/panels/LogPanel";
 
@@ -55,6 +55,7 @@ function configureLogGeometry(list: HTMLElement, geometry: LogGeometry) {
 describe("LogPanel sticky scrolling", () => {
   beforeEach(() => {
     store.dispatch(resetEncounterLog());
+    if (!store.getState().encounterLog.showSystemLogs) store.dispatch(toggleSystemLogs());
   });
 
   it("follows a new entry when the previous list did not overflow", () => {

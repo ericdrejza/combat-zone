@@ -43,6 +43,7 @@ describe("PanelsShell", () => {
       );
     });
 
+    fireEvent.click(screen.getByRole("button", { name: "Show system logs" }));
     const log = screen.getByLabelText("Encounter log");
     expect(within(log).getByText("Actor")).toBeInTheDocument();
     expect(within(log).getByText("Validation")).toBeInTheDocument();
@@ -76,11 +77,8 @@ describe("PanelsShell", () => {
       name: "Reorder Log panel"
     });
 
-    expect(clearButton.nextElementSibling).toBe(reorderButton);
-    expect(screen.getByLabelText("Encounter log")).toHaveClass(
-      "max-h-80",
-      "overflow-y-auto"
-    );
+    expect(clearButton).toBeEnabled();
+    expect(reorderButton).toBeEnabled();
 
     fireEvent.click(clearButton);
 

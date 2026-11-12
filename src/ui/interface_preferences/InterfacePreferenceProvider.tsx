@@ -70,6 +70,8 @@ export function InterfacePreferenceProvider({ children }: { children: ReactNode 
     <InterfacePreferenceContext.Provider
       value={{
         ...preferences,
+        setChatNameColor: chatNameColor => updatePreferences({ chatNameColor }),
+        setChatMatchMessageColor: chatMatchMessageColor => updatePreferences({ chatMatchMessageColor }),
         resetCategory: category => {
           const defaults = Object.fromEntries(PREFERENCE_CATEGORY_KEYS[category].map(key => [key, structuredClone(defaultPreferences[key])]));
           updatePreferences(defaults);

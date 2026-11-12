@@ -1,3 +1,4 @@
+import { loadEncounterState, resetEncounterState } from "./encounterSlice";
 import type { PayloadAction } from "@reduxjs/toolkit";
 import { createSlice } from "@reduxjs/toolkit";
 import type { Dispatch } from "redux";
@@ -19,6 +20,8 @@ export type RecordEncounterValidationBlockPayload = {
 };
 
 const initialState: EncounterLogState = {
+  showSystemLogs: false,
+  encounterSession: 0,
   entries: []
 };
 
@@ -39,6 +42,11 @@ function appendUniqueEntry(
 const encounterLogSlice = createSlice({
   name: "encounterLog",
   initialState,
+  extraReducers: builder => {
+    // Reloading even the same encounter must discard its unsent composer draft.
+    builder.addCase(loadEncounterState, state => { state.encounterSession += 1; });
+    builder.addCase(resetEncounterState, state => { state.encounterSession += 1; });
+  },
   reducers: {
     appendEncounterLogEntry(state, { payload }: PayloadAction<EncounterLogEntry>) {
       appendUniqueEntry(state, payload);
@@ -52,14 +60,16 @@ const encounterLogSlice = createSlice({
         createValidationBlockLogEntry(payload.action, payload.encounter)
       );
     },
-    resetEncounterLog() {
-      return initialState;
+    toggleSystemLogs(state) { state.showSystemLogs = !state.showSystemLogs; },
+    resetEncounterLog(state) {
+      state.entries = [];
     }
   }
 });
 
 export const {
   appendEncounterLogEntry,
+  toggleSystemLogs,
   recordEncounterValidationBlock,
   resetEncounterLog
 } = encounterLogSlice.actions;

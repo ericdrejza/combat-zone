@@ -1,3 +1,4 @@
+import { assertChatMessages } from "./chatSchema";
 import { isImageFocus } from "@core/assets/imageFocus";
 import { migrateZonelessPanel } from "./zonelessPanelSchema";
 import { migrateResourceBars } from "./resourceBarSchema";
@@ -115,6 +116,7 @@ export function assertEncounterState(value: unknown, name = "encounter", expecte
       `${name}.schemaVersion ${String(value.schemaVersion)} is unsupported.`
     );
   }
+  if (expectedVersion >= 33) assertChatMessages(value.chatMessages);
   if (value.counters === undefined || value.clocks === undefined || !validCounters(value.counters) || !validClocks(value.clocks)) throw new PersistenceValidationError(`${name}.encounter resources are invalid.`);
   requiredString(value.id, `${name}.id`);
   if (typeof value.name !== "string") {
@@ -611,7 +613,12 @@ export function migrateEncounterState(value: unknown): unknown {
   }
   if (migrated.schemaVersion === 31) {
     assertEncounterState(migrated, "encounter", 31);
-    migrated.schemaVersion = 32;
+    (migrated as UnknownRecord).schemaVersion = 32;
+  }
+  if (migrated.schemaVersion === 32) {
+    assertEncounterState(migrated, "encounter", 32);
+    migrated.chatMessages = { byId: {}, allIds: [] };
+    migrated.schemaVersion = 33;
   }
   return migrated;
 }

@@ -1,3 +1,4 @@
+import { ChatSettings } from "./ChatSettings";
 import { ResetSettingsButton } from "./ResetSettingsButton";
 import { useResetSettingsCategory } from "./useResetSettingsCategory";
 import { useInterfacePreferences } from "@ui/interface_preferences/InterfacePreferenceProvider";
@@ -17,5 +18,6 @@ export function InterfaceSettings() {
     </SettingsSection>
     <LibraryInterfaceSettings />
     <PanelInterfaceSettings />
+    <ChatSettings />
   </SettingsCategory>;
 }

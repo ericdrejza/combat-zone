@@ -1,3 +1,4 @@
+import { createEncounterActionRecord } from "@core/history/createEncounterActionRecord";
 import type { Middleware } from "@reduxjs/toolkit";
 
 import type { EncounterHistoryState } from "@core/history/types";
@@ -7,6 +8,7 @@ import {
 } from "@core/logging/formatEncounterLogEntry";
 import type { EncounterLogEntry } from "@core/logging/types";
 import {
+  sendChatMessage, deleteChatMessage, clearChatMessages,
   commitEncounterChange,
   redoEncounterChange,
   undoEncounterChange
@@ -20,6 +22,18 @@ type StateWithEncounter = {
 /** Captures every successful history commit without coupling mutation callers to logging. */
 export const encounterLogMiddleware: Middleware<unknown, StateWithEncounter> =
   (storeApi) => (next) => (action) => {
+    const chatType = sendChatMessage.match(action) ? "chat.send"
+      : deleteChatMessage.match(action) ? "chat.delete"
+      : clearChatMessages.match(action) ? "chat.clear" : null;
+    if (chatType) {
+      const before = storeApi.getState().encounter.present;
+      const result = next(action);
+      const after = storeApi.getState().encounter.present;
+      if (before !== after) storeApi.dispatch(appendEncounterLogEntry(
+        createCommittedEncounterLogEntry(createEncounterActionRecord(chatType), { before, after })
+      ));
+      return result;
+    }
     const isCommit = commitEncounterChange.match(action);
     const isRulerCommit = isCommit && action.payload.action.type.startsWith('ruler.');
     const isUndo = undoEncounterChange.match(action);

@@ -4,6 +4,7 @@ import { ENCOUNTER_SCHEMA_VERSION, type EncounterState } from "@core/encounter/t
 export function migrateZonelessPanel(state: Omit<EncounterState, "schemaVersion">): EncounterState {
   return {
     ...state,
+    chatMessages: state.chatMessages ?? { byId: {}, allIds: [] },
     schemaVersion: ENCOUNTER_SCHEMA_VERSION,
     panelLayout: {
       left: [...state.panelLayout.left, { id: "zoneless", collapsed: false }],
