@@ -98,6 +98,8 @@ describe("canvas viewport navigation", () => {
   it("orders controls and changes perception only", async () => {
     const user = userEvent.setup();
     renderApp();
+    expect(screen.queryByRole("button", { name: "Zoom in" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Expand canvas navigation" }));
     const navigation = screen.getByLabelText("Canvas navigation");
     const buttons = within(navigation).getAllByRole("button");
 
@@ -131,6 +133,7 @@ describe("canvas viewport navigation", () => {
   it("opens fit options immediately on hover and fits either canvas axis", async () => {
     const user = userEvent.setup();
     renderApp();
+    fireEvent.click(screen.getByRole("button", { name: "Expand canvas navigation" }));
     const viewport = screen.getByLabelText("Canvas viewport");
     Object.defineProperties(viewport, {
       clientHeight: { configurable: true, value: 300 },
@@ -159,6 +162,7 @@ describe("canvas viewport navigation", () => {
 
   it("opens fit options when the options control is touched", () => {
     renderApp();
+    fireEvent.click(screen.getByRole("button", { name: "Expand canvas navigation" }));
     const options = screen.getByRole("button", { name: "More zoom options" });
 
     fireEvent.pointerDown(options, {
@@ -175,6 +179,7 @@ describe("canvas viewport navigation", () => {
   it("pins the zoom options on click until toggled or clicked away", () => {
     vi.useFakeTimers();
     renderApp();
+    fireEvent.click(screen.getByRole("button", { name: "Expand canvas navigation" }));
     const options = screen.getByRole("button", { name: "More zoom options" });
 
     fireEvent.pointerEnter(options, { pointerType: "mouse" });
@@ -203,6 +208,7 @@ describe("canvas viewport navigation", () => {
   it("re-reads the current workspace size every time zoom to fit runs", async () => {
     const user = userEvent.setup();
     renderApp();
+    fireEvent.click(screen.getByRole("button", { name: "Expand canvas navigation" }));
     const viewport = screen.getByLabelText("Canvas viewport");
     let height = 400;
     let width = 600;
@@ -263,6 +269,7 @@ describe("canvas viewport navigation", () => {
   it("preserves zoom and the proportionally centered point after canvas resize", async () => {
     const user = userEvent.setup();
     renderApp();
+    fireEvent.click(screen.getByRole("button", { name: "Expand canvas navigation" }));
     const viewport = screen.getByLabelText("Canvas viewport");
     Object.defineProperties(viewport, {
       clientHeight: { configurable: true, value: 300 },

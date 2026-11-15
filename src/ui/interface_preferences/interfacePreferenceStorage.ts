@@ -25,6 +25,8 @@ export type ZoneColorDefaults = {
   zone: string | null;
 };
 
+export type ToolMenu = "expanded" | "dropdown" | "dropdown_small_screen";
+
 export type EncounterCreationTool = "background" | "zone";
 
 export const DEFAULT_ZONE_COLOR_DEFAULTS: ZoneColorDefaults = {
@@ -55,6 +57,7 @@ export type DurableInterfacePreferences = {
   edgeThickness: number;
   zoneBorderThickness: number;
   actorBorderThickness: number;
+  toolMenu: ToolMenu;
   encounterCreationTool: EncounterCreationTool;
   zonelessPanelPlacement: "canvas" | "sidebar";
   panelTabMode: boolean;
@@ -100,6 +103,7 @@ export type InterfacePreferences = DurableInterfacePreferences & {
   setAudioRepeatDelayDefaults: (settings: AudioRepeatDelaySettings) => void;
   autoSelectActiveActorDefault: boolean;
   setAutoSelectActiveActor: (enabled: boolean) => void;
+  setToolMenu: (mode: ToolMenu) => void;
   setEncounterCreationTool: (tool: EncounterCreationTool) => void;
   setZonelessPanelPlacement: (placement: "canvas" | "sidebar") => void;
   setPanelTabMode: (enabled: boolean) => void;
@@ -162,6 +166,7 @@ export const defaultPreferences: DurableInterfacePreferences = {
   edgeThickness: DEFAULT_EDGE_THICKNESS,
   zoneBorderThickness: DEFAULT_ZONE_BORDER_THICKNESS,
   actorBorderThickness: DEFAULT_ACTOR_BORDER_THICKNESS,
+  toolMenu: "dropdown_small_screen",
   encounterCreationTool: "zone",
   zonelessPanelPlacement: "canvas",
   panelTabMode: false,
@@ -208,6 +213,7 @@ export const defaultValue: InterfacePreferences = {
   setAudioMasterVolume: () => undefined,
   setAudioRepeatDelayDefaults: () => undefined,
   setAutoSelectActiveActor: () => undefined,
+  setToolMenu: () => undefined,
   setEncounterCreationTool: () => undefined,
   setZonelessPanelPlacement: () => undefined,
   setPanelTabMode: () => undefined,
@@ -288,6 +294,7 @@ export function readPreferences(): DurableInterfacePreferences {
       edgeThickness: readSelectionOutlineWidth(stored?.edgeThickness, DEFAULT_EDGE_THICKNESS),
       zoneBorderThickness: readSelectionOutlineWidth(stored?.zoneBorderThickness, DEFAULT_ZONE_BORDER_THICKNESS),
       actorBorderThickness: readSelectionOutlineWidth(stored?.actorBorderThickness, DEFAULT_ACTOR_BORDER_THICKNESS),
+      toolMenu: stored?.toolMenu === "expanded" || stored?.toolMenu === "dropdown" || stored?.toolMenu === "dropdown_small_screen" ? stored.toolMenu : defaultPreferences.toolMenu,
       encounterCreationTool:
         stored?.encounterCreationTool === "background" ||
         stored?.encounterCreationTool === "zone"

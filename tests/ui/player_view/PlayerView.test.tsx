@@ -12,6 +12,8 @@ import { CANVAS_PREFERENCES_KEY, DEFAULT_CANVAS_PREFERENCES, saveCanvasPreferenc
 import { KEYBIND_STORAGE_KEY } from '@ui/keybinds';
 
 function playerToggle(name: 'Toggle player window' | 'Toggle player preview' | 'Follow GM view') {
+  const expand = screen.queryByRole('button', { name: 'Expand canvas navigation' });
+  if (expand) fireEvent.click(expand);
   if (!screen.queryByRole('button', { name })) fireEvent.click(screen.getByRole('button', { name: 'More zoom options' }));
   return screen.getByRole('button', { name });
 }

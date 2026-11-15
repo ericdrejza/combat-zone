@@ -91,6 +91,7 @@ export function InterfacePreferenceProvider({ children }: { children: ReactNode 
         setAutoSelectActiveActor,
         setAutoSelectActiveActorDefault: (enabled) =>
           updatePreferences({ autoSelectActiveActor: enabled }),
+        setToolMenu: (toolMenu) => updatePreferences({ toolMenu }),
         setEncounterCreationTool: (encounterCreationTool) =>
           updatePreferences({ encounterCreationTool }),
         setZonelessPanelPlacement: (zonelessPanelPlacement) => updatePreferences({ zonelessPanelPlacement }),

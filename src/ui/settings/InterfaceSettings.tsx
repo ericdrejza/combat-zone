@@ -1,8 +1,9 @@
+import type { ToolMenu } from "@ui/interface_preferences/interfacePreferenceStorage";
 import { ChatSettings } from "./ChatSettings";
 import { ResetSettingsButton } from "./ResetSettingsButton";
 import { useResetSettingsCategory } from "./useResetSettingsCategory";
 import { useInterfacePreferences } from "@ui/interface_preferences/InterfacePreferenceProvider";
-import { SettingsCategory, SettingsSection } from "./SettingsLayout";
+import { SettingsCategory, SettingsSection, SettingsField, SETTINGS_CONTROL } from "./SettingsLayout";
 import { ThemeSettings } from "./ThemeSettings";
 import { PreferenceSwitch } from "./PreferenceSwitch";
 import { LibraryInterfaceSettings } from "./LibraryInterfaceSettings";
@@ -10,9 +11,19 @@ import { PanelInterfaceSettings } from "./PanelInterfaceSettings";
 
 export function InterfaceSettings() {
   const resetCategory = useResetSettingsCategory("interface");
-  const { enableAssetAnimation, setEnableAssetAnimation } = useInterfacePreferences();
+  const { toolMenu, setToolMenu, enableAssetAnimation, setEnableAssetAnimation } = useInterfacePreferences();
   return <SettingsCategory actions={<ResetSettingsButton category="Interface" onReset={resetCategory} />} title="Interface" description="Appearance, accessibility, Library browsing, and panel presentation.">
     <SettingsSection title="Appearance"><ThemeSettings /></SettingsSection>
+    <SettingsSection title="Toolbar">
+      <SettingsField label="Tool Menu">
+        <select aria-label="Tool Menu" className={SETTINGS_CONTROL} value={toolMenu}
+          onChange={event => setToolMenu(event.currentTarget.value as ToolMenu)}>
+          <option value="dropdown">Dropdown</option>
+          <option value="dropdown_small_screen">Dropdown (small screen only)</option>
+          <option value="expanded">Expanded</option>
+        </select>
+      </SettingsField>
+    </SettingsSection>
     <SettingsSection title="Accessibility">
       <PreferenceSwitch checked={enableAssetAnimation} label="Enable animations" onChange={setEnableAssetAnimation} />
     </SettingsSection>

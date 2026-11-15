@@ -11,7 +11,9 @@ beforeEach(() => vi.useFakeTimers());
 afterEach(() => vi.useRealTimers());
 
 function setup() {
-  return render(<Provider store={store}><CanvasViewportProvider><TouchTooltipProvider><CanvasZoomControls /></TouchTooltipProvider></CanvasViewportProvider></Provider>);
+  const view = render(<Provider store={store}><CanvasViewportProvider><TouchTooltipProvider><CanvasZoomControls /></TouchTooltipProvider></CanvasViewportProvider></Provider>);
+  fireEvent.click(screen.getByRole("button", { name: "Expand canvas navigation" }));
+  return view;
 }
 
 it.each([

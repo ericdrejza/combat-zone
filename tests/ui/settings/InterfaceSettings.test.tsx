@@ -38,6 +38,19 @@ describe("InterfaceSettings", () => {
     );
   }
 
+  it.each(["dropdown", "expanded"])("persists Tool Menu %s and restores its Interface default", (mode) => {
+    const view = renderSettings();
+    const menu = screen.getByRole("combobox", { name: "Tool Menu" });
+    expect(menu).toHaveValue("dropdown_small_screen");
+    fireEvent.change(menu, { target: { value: mode } });
+    expect(JSON.parse(localStorage.getItem(INTERFACE_PREFERENCES_STORAGE_KEY)!)).toMatchObject({ toolMenu: mode });
+    view.unmount();
+    renderSettings();
+    expect(screen.getByRole("combobox", { name: "Tool Menu" })).toHaveValue(mode);
+    act(() => window.dispatchEvent(new Event(LOCAL_PREFERENCES_RESET_EVENT)));
+    expect(screen.getByRole("combobox", { name: "Tool Menu" })).toHaveValue("dropdown_small_screen");
+  });
+
   it.each(["box", "stack", "row"])("persists %s as the default clock style and resets to Traditional", (style) => {
     const view = renderSettings();
     const defaults = screen.getByRole("group", { name: "Status" });

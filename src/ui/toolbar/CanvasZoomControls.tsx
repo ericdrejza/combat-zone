@@ -33,7 +33,7 @@ export function CanvasZoomControls({
 }: CanvasZoomControlsProps) {
   const viewport = useCanvasViewport();
   const player = useOptionalPlayerView();
-  const [desktopExpanded, setDesktopExpanded] = useState(true);
+  const [desktopExpanded, setDesktopExpanded] = useState(false);
   useLayoutEffect(() => { if (player?.zoomOptionsOpen) setDesktopExpanded(true); }, [player?.zoomOptionsOpen]);
 
   function renderControls() {

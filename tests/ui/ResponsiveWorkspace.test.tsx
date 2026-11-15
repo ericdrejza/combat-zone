@@ -100,6 +100,7 @@ describe("responsive workspace", () => {
   });
 
   it("uses icon tools, a secondary option strip, and compact panel launcher", async () => {
+    localStorage.setItem(INTERFACE_PREFERENCES_STORAGE_KEY, JSON.stringify({ toolMenu: "expanded" }));
     const restoreMatchMedia = installCompactMatchMedia();
     const user = userEvent.setup();
 

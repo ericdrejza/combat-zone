@@ -14,6 +14,7 @@ import { SettingsButton } from "@ui/settings/SettingsButton";
 import { ActorToolButton } from "./actor/ActorToolButton";
 import { BackgroundToolButton } from "./background/BackgroundToolButton";
 import { LibraryToolbarButton } from "./LibraryToolbarButton";
+import { ToolMenu } from "./ToolMenu";
 import { ToolButton } from "./ToolButton";
 import { TOOLBAR_ITEMS } from "./toolbarItems";
 import { ZoneToolButton } from "./zone/ZoneToolButton";
@@ -61,7 +62,7 @@ export function Toolbar({
 }: ToolbarProps) {
   const compactLayout = useCompactLayout();
   const player = useOptionalPlayerView();
-  const { encounterCreationTool } = useInterfacePreferences();
+  const { encounterCreationTool, toolMenu } = useInterfacePreferences();
   const dispatch = useDispatch();
   const [compactSubtoolHost, setCompactSubtoolHost] =
     useState<HTMLDivElement | null>(null);
@@ -255,7 +256,13 @@ export function Toolbar({
             className="mx-1 hidden h-8 w-px shrink-0 self-center bg-canvas-line lg:block"
             role="separator"
           />
-          {TOOLBAR_ITEMS.map(renderTool)}
+          <ToolMenu dropdown={toolMenu === "dropdown" || (toolMenu === "dropdown_small_screen" && compactLayout)}
+            activeToolId={activeToolId} renderTool={renderTool} onSelect={tool => {
+              dispatch(setActiveTool(tool));
+              if (tool === "actor") onActorToolSelected();
+              setCompactZoomOpen(false);
+              setCompactEncounterOpen(false);
+            }} />
           {compactLayout ? (
           <CanvasZoomControls
             compactOpen={compactZoomOpen}

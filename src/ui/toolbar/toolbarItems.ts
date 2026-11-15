@@ -56,7 +56,6 @@ export const TOOLBAR_ITEMS: ToolbarItem[] = [
   { type: 'tool', tool: TOOL_DEFINITIONS_BY_ID.background },
   { id: 'background-grid', type: 'separator' },
   { type: 'tool', tool: TOOL_DEFINITIONS_BY_ID.grid },
-  { id: 'grid-zone', type: 'separator' },
   { type: 'tool', tool: TOOL_DEFINITIONS_BY_ID.zone },
   { id: 'zone-edge', type: 'separator' },
   { type: 'tool', tool: TOOL_DEFINITIONS_BY_ID.edge },

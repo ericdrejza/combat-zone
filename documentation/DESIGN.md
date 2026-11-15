@@ -730,6 +730,13 @@ Each tool defines:
 - keyboard shortcuts
 - tooltip description (mandatory UI element)
 
+Interface settings offer a Tool Menu preference: Dropdown,
+Dropdown (small screen only) (default), or Expanded. The small-screen option uses dropdown selection
+below 1024px and the expanded toolbar otherwise. Dropdown selection shows the
+current tool and retains its toolbar element with subtools in their normal
+position relative to that element. Tool switching and keyboard shortcuts share
+the same active tool state across presentations.
+
 Every primary tool has an established icon. At viewport widths below 1024px,
 the primary toolbar is an icon-only, horizontally scrollable row with touch
 targets of at least 44 CSS pixels. Holding a tooltip-bearing element with a

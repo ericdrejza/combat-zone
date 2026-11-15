@@ -84,10 +84,8 @@ describe("Toolbar motion and navigation", () => {
     expect(within(sidebar).getByRole("button", { name: "Engage selected actors" })).toBeDisabled();
     expect(within(sidebar).getByRole("button", { name: "Disengage selected actors" })).toBeDisabled();
     expect(screen.queryByRole("button", { name: "Delete" })).not.toBeInTheDocument();
-    expect(within(tools).getAllByRole("separator")).toHaveLength(9);
-    const separator = within(tools).getByRole('separator', { name: 'Grid and Zone tools' });
-    expect(screen.getByRole('button', { name: 'Grid' }).compareDocumentPosition(separator) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(separator.compareDocumentPosition(screen.getByRole('button', { name: 'Zone' })) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(within(tools).getAllByRole("separator")).toHaveLength(8);
+    expect(within(tools).queryByRole('separator', { name: 'Grid and Zone tools' })).not.toBeInTheDocument();
   });
 
   it("shows drag action previews on the sidebar actions", () => {

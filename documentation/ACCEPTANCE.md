@@ -445,6 +445,11 @@ truth.
 
 ## Responsive workspace
 
+- [x] Interface Tool Menu defaults to Dropdown (small screen only), persists all
+      three choices, and uses the default dropdown only below 1024px. Dropdown
+      selection and keyboard shortcuts share the active tool; its toolbar
+      element and subtools retain their normal relative placement.
+
 - [x] Below 1024px, every primary toolbar tool is an icon-only 44px-minimum
       target in a horizontally scrollable row and active subtools render in a
       separate horizontal bar.

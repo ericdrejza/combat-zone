@@ -11,6 +11,10 @@ After completing a numbered section (## X.), move the completed section to the e
 
 ## 15. MVP Acceptance Hardening
 
+- [x] Offer Interface Tool Menu preferences for Dropdown,
+      Dropdown (small screen only) (default), and Expanded, preserving selected-tool feedback,
+      keyboard switching, and existing subtool placement (#92).
+
 - [x] Add Soundboard selection highlight and filter toggles with white group glow,
       union matching across selected Actors/Zones and Zone occupants, dynamic
       assignments, empty/no-selection results, and unchanged encounter history.
