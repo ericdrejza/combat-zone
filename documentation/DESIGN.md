@@ -757,8 +757,10 @@ history-tracked workflow as the keyboard Delete command.
 Zoom is a utility rather than an entity-editing mode. On compact screens it is
 a primary toolbar icon whose controls occupy the subtool bar without changing
 the active editing tool. On larger screens the zoom controls remain at the
-right edge and can collapse to or expand from a single icon; they begin
-expanded each session.
+right edge and can collapse to or expand from a single icon. Interface > Toolbar
+provides an “Expand zoom controls on start” switch, off by default, that sets
+the initial expanded state on desktop and compact screens. Changing the
+preference affects the next session; manual expansion remains session-only.
 
 ### 5.2 Selection Rules
 

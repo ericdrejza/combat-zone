@@ -11,7 +11,7 @@ export function HexColorInput({ description, label, onCommit, placeholder, value
   value: string | null;
 }) {
   const inputId = useId(), helpId = useId();
-  return <SettingsRow label={label} controlId={inputId} descriptionId={helpId}
+  return <SettingsRow label={label} alignment="start" labelClassName="sm:flex sm:min-h-11 sm:items-center" controlId={inputId} descriptionId={helpId}
     description={`${description ?? ""} Picker changes save immediately. Hex values save when you leave the field or press Enter.`}>
     <ColorPicker label={label} value={value} fallbackColor={placeholder} allowEmpty resetValue={null}
       inputLabel={label} inputId={inputId} describedBy={helpId} onChange={onCommit} />

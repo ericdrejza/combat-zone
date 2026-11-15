@@ -14,7 +14,7 @@ export function FocusSettings() {
         <option value="hold">Hold shortcut</option><option value="toggle">Press to toggle</option>
       </select>
     </SettingsField>
-    <SettingsRow label="Focus color">
+    <SettingsRow label="Focus color" alignment="start" labelClassName="sm:flex sm:min-h-11 sm:items-center">
       <ColorPicker label="Focus" value={focus.color} fallbackColor={DEFAULT_FOCUS_PREFERENCES.color} resetValue={DEFAULT_FOCUS_PREFERENCES.color}
         onChange={color => update({ color: color ?? DEFAULT_FOCUS_PREFERENCES.color })} />
     </SettingsRow>

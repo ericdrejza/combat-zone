@@ -26,7 +26,7 @@ export function PreferenceSwitch({
   const controlId = useId();
   const helpId = `${controlId}-help`;
   return (
-    <SettingsRow controlId={controlId} label={label} descriptionId={helpId} description={description} compact={compact}>
+    <SettingsRow controlId={controlId} label={label} descriptionId={helpId} description={description} compact={compact} inline alignment="center">
       <div className={`flex items-center gap-3 ${secondaryControl ? "w-full justify-between" : "justify-end"}`}>
       {secondaryControl}
       <button

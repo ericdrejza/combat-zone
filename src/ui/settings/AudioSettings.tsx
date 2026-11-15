@@ -43,8 +43,8 @@ export function AudioSettings() {
       <SettingsSubsection title="Repetition">
         <PreferenceSwitch label="Repeat music cues by default" checked={preferences.audioMusicCueRepeatDefault} onChange={preferences.setAudioMusicCueRepeatDefault} />
         <PreferenceSwitch label="Loop new Music groups by default" checked={preferences.audioMusicGroupLoopDefault} onChange={preferences.setAudioMusicGroupLoopDefault} />
-        <SettingsRow label="Default Effect repeat delay" description="Repeated effects use a delay within this range." fullWidth>
-          <div className="grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-2">
+        <SettingsRow label="Default Effect repeat delay" description="Repeated effects use a delay within this range." wrap>
+          <div className="grid min-w-0 grid-cols-2 gap-2">
             <SettingsField label="From" fullWidth><Delay label="Default Effect repeat delay from" value={repeatDelay.minimumDelaySeconds} onChange={(value) => updateDelay("minimumDelaySeconds", value)} /></SettingsField>
             <SettingsField label="To" fullWidth><Delay label="Default Effect repeat delay to" value={repeatDelay.maximumDelaySeconds} onChange={(value) => updateDelay("maximumDelaySeconds", value)} /></SettingsField>
           </div>

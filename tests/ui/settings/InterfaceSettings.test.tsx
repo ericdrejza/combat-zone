@@ -38,6 +38,20 @@ describe("InterfaceSettings", () => {
     );
   }
 
+  it("persists the zoom startup switch and restores its default on reset", async () => {
+    const user = userEvent.setup();
+    const view = renderSettings();
+    const toggle = screen.getByRole("switch", { name: "Expand zoom controls on start" });
+    expect(toggle).not.toBeChecked();
+    await user.click(toggle);
+    expect(JSON.parse(localStorage.getItem(INTERFACE_PREFERENCES_STORAGE_KEY)!)).toMatchObject({ expandZoomControlsOnStart: true });
+    view.unmount();
+    renderSettings();
+    expect(screen.getByRole("switch", { name: "Expand zoom controls on start" })).toBeChecked();
+    act(() => window.dispatchEvent(new Event(LOCAL_PREFERENCES_RESET_EVENT)));
+    expect(screen.getByRole("switch", { name: "Expand zoom controls on start" })).not.toBeChecked();
+  });
+
   it.each(["dropdown", "expanded"])("persists Tool Menu %s and restores its Interface default", (mode) => {
     const view = renderSettings();
     const menu = screen.getByRole("combobox", { name: "Tool Menu" });

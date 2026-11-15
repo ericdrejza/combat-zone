@@ -11,10 +11,12 @@ import { PanelInterfaceSettings } from "./PanelInterfaceSettings";
 
 export function InterfaceSettings() {
   const resetCategory = useResetSettingsCategory("interface");
-  const { toolMenu, setToolMenu, enableAssetAnimation, setEnableAssetAnimation } = useInterfacePreferences();
+  const { expandZoomControlsOnStart, setExpandZoomControlsOnStart, toolMenu, setToolMenu, enableAssetAnimation, setEnableAssetAnimation } = useInterfacePreferences();
   return <SettingsCategory actions={<ResetSettingsButton category="Interface" onReset={resetCategory} />} title="Interface" description="Appearance, accessibility, Library browsing, and panel presentation.">
     <SettingsSection title="Appearance"><ThemeSettings /></SettingsSection>
     <SettingsSection title="Toolbar">
+      <PreferenceSwitch label="Expand zoom controls on start" checked={expandZoomControlsOnStart}
+        onChange={setExpandZoomControlsOnStart} />
       <SettingsField label="Tool Menu">
         <select aria-label="Tool Menu" className={SETTINGS_CONTROL} value={toolMenu}
           onChange={event => setToolMenu(event.currentTarget.value as ToolMenu)}>

@@ -11,6 +11,9 @@ After completing a numbered section (## X.), move the completed section to the e
 
 ## 15. MVP Acceptance Hardening
 
+- [x] Add the default-off Interface > Toolbar “Expand zoom controls on start”
+      switch with durable preferences and desktop/compact startup coverage.
+
 - [x] Offer Interface Tool Menu preferences for Dropdown,
       Dropdown (small screen only) (default), and Expanded, preserving selected-tool feedback,
       keyboard switching, and existing subtool placement (#92).

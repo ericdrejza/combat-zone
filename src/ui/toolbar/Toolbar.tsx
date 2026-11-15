@@ -62,12 +62,12 @@ export function Toolbar({
 }: ToolbarProps) {
   const compactLayout = useCompactLayout();
   const player = useOptionalPlayerView();
-  const { encounterCreationTool, toolMenu } = useInterfacePreferences();
+  const { encounterCreationTool, toolMenu, expandZoomControlsOnStart } = useInterfacePreferences();
   const dispatch = useDispatch();
   const [compactSubtoolHost, setCompactSubtoolHost] =
     useState<HTMLDivElement | null>(null);
   const [compactEncounterOpen, setCompactEncounterOpen] = useState(false);
-  const [compactZoomOpen, setCompactZoomOpen] = useState(false);
+  const [compactZoomOpen, setCompactZoomOpen] = useState(expandZoomControlsOnStart);
   useLayoutEffect(() => {
     if (compactLayout && player && !player.preview && player.zoomOptionsOpen) {
       setCompactEncounterOpen(false); setCompactZoomOpen(true);
@@ -111,7 +111,11 @@ export function Toolbar({
     activeToolId
   ]);
 
+  const previousActiveToolId = useRef(activeToolId);
   useEffect(() => {
+    // Preserve the startup preference until the user switches editing tools.
+    if (previousActiveToolId.current === activeToolId) return;
+    previousActiveToolId.current = activeToolId;
     setCompactZoomOpen(false);
     setCompactEncounterOpen(false);
   }, [activeToolId]);

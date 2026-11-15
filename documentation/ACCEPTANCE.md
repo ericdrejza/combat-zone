@@ -454,7 +454,9 @@ truth.
       target in a horizontally scrollable row and active subtools render in a
       separate horizontal bar.
 - [x] Compact Zoom opens in the subtool bar without changing the active editing
-      tool; desktop Zoom starts expanded and can collapse to one icon.
+      tool; desktop Zoom can collapse to one icon. Interface > Toolbar’s
+      Expand zoom controls on start switch defaults off, persists across loads,
+      and sets the initial expanded state on desktop and compact screens.
 - [x] While docked side panels are hidden below 1024px, the compact panel
       launcher defaults to Library, supports tap-to-toggle
       and 500ms hold/drag/release selection in the documented wrapping order,

@@ -1,4 +1,5 @@
 import { useOptionalPlayerView } from '@ui/player_view/PlayerViewProvider';
+import { useInterfacePreferences } from "@ui/interface_preferences/InterfacePreferenceProvider";
 import { ZoomOptionsControl } from './ZoomOptionsControl';
 import {
   ChevronRight,
@@ -33,7 +34,8 @@ export function CanvasZoomControls({
 }: CanvasZoomControlsProps) {
   const viewport = useCanvasViewport();
   const player = useOptionalPlayerView();
-  const [desktopExpanded, setDesktopExpanded] = useState(false);
+  const { expandZoomControlsOnStart } = useInterfacePreferences();
+  const [desktopExpanded, setDesktopExpanded] = useState(expandZoomControlsOnStart);
   useLayoutEffect(() => { if (player?.zoomOptionsOpen) setDesktopExpanded(true); }, [player?.zoomOptionsOpen]);
 
   function renderControls() {

@@ -91,6 +91,7 @@ export function InterfacePreferenceProvider({ children }: { children: ReactNode 
         setAutoSelectActiveActor,
         setAutoSelectActiveActorDefault: (enabled) =>
           updatePreferences({ autoSelectActiveActor: enabled }),
+        setExpandZoomControlsOnStart: (expandZoomControlsOnStart) => updatePreferences({ expandZoomControlsOnStart }),
         setToolMenu: (toolMenu) => updatePreferences({ toolMenu }),
         setEncounterCreationTool: (encounterCreationTool) =>
           updatePreferences({ encounterCreationTool }),

@@ -57,6 +57,7 @@ export type DurableInterfacePreferences = {
   edgeThickness: number;
   zoneBorderThickness: number;
   actorBorderThickness: number;
+  expandZoomControlsOnStart: boolean;
   toolMenu: ToolMenu;
   encounterCreationTool: EncounterCreationTool;
   zonelessPanelPlacement: "canvas" | "sidebar";
@@ -103,6 +104,7 @@ export type InterfacePreferences = DurableInterfacePreferences & {
   setAudioRepeatDelayDefaults: (settings: AudioRepeatDelaySettings) => void;
   autoSelectActiveActorDefault: boolean;
   setAutoSelectActiveActor: (enabled: boolean) => void;
+  setExpandZoomControlsOnStart: (enabled: boolean) => void;
   setToolMenu: (mode: ToolMenu) => void;
   setEncounterCreationTool: (tool: EncounterCreationTool) => void;
   setZonelessPanelPlacement: (placement: "canvas" | "sidebar") => void;
@@ -166,6 +168,7 @@ export const defaultPreferences: DurableInterfacePreferences = {
   edgeThickness: DEFAULT_EDGE_THICKNESS,
   zoneBorderThickness: DEFAULT_ZONE_BORDER_THICKNESS,
   actorBorderThickness: DEFAULT_ACTOR_BORDER_THICKNESS,
+  expandZoomControlsOnStart: false,
   toolMenu: "dropdown_small_screen",
   encounterCreationTool: "zone",
   zonelessPanelPlacement: "canvas",
@@ -213,6 +216,7 @@ export const defaultValue: InterfacePreferences = {
   setAudioMasterVolume: () => undefined,
   setAudioRepeatDelayDefaults: () => undefined,
   setAutoSelectActiveActor: () => undefined,
+  setExpandZoomControlsOnStart: () => undefined,
   setToolMenu: () => undefined,
   setEncounterCreationTool: () => undefined,
   setZonelessPanelPlacement: () => undefined,
@@ -294,6 +298,7 @@ export function readPreferences(): DurableInterfacePreferences {
       edgeThickness: readSelectionOutlineWidth(stored?.edgeThickness, DEFAULT_EDGE_THICKNESS),
       zoneBorderThickness: readSelectionOutlineWidth(stored?.zoneBorderThickness, DEFAULT_ZONE_BORDER_THICKNESS),
       actorBorderThickness: readSelectionOutlineWidth(stored?.actorBorderThickness, DEFAULT_ACTOR_BORDER_THICKNESS),
+      expandZoomControlsOnStart: stored?.expandZoomControlsOnStart === true,
       toolMenu: stored?.toolMenu === "expanded" || stored?.toolMenu === "dropdown" || stored?.toolMenu === "dropdown_small_screen" ? stored.toolMenu : defaultPreferences.toolMenu,
       encounterCreationTool:
         stored?.encounterCreationTool === "background" ||
