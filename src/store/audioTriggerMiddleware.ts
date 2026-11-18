@@ -68,7 +68,8 @@ function movementRequests(before: EncounterState, after: EncounterState, action:
 /** Compare committed values so rejected commands, direct HP edits, and history replay stay silent for damage. */
 function healthRequests(before: EncounterState, after: EncounterState, action: EncounterActionRecord): AudioTriggerRequest[] {
   const damage = action.type === "actor.adjustHitPoints" && typeof action.payload.amount === "number" && action.payload.amount < 0;
-  const damagedIds = damage && Array.isArray(action.payload.actorIds) ? action.payload.actorIds : [];
+  const applications = action.type === "actor.adjustRollHitPoints" && Array.isArray(action.payload.applications) ? action.payload.applications : [];
+  const damagedIds = damage && Array.isArray(action.payload.actorIds) ? action.payload.actorIds : applications.flatMap(item => item && typeof item === "object" && !Array.isArray(item) && item.kind === "damage" && typeof item.actorId === "string" ? [item.actorId] : []);
   const healthTriggers = ["actor_health_dead", "actor_health_unconscious", "actor_health_injured", "actor_health_healthy"] as const;
   return after.actors.allIds.flatMap((actorId) => {
     const previous = before.actors.byId[actorId];

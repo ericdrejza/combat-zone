@@ -85,7 +85,7 @@ it.each(["box", "stack", "row"])("saves %s clock edits and removals atomically",
   expect(Object.values(state().clocks.byId)[0]).toMatchObject({ name: "Clock 1", style: "traditional", value: 0, segments: 4 });
   act(() => store.dispatch(redoEncounterChange())); expect(state().clocks).toEqual(edited);
   fireEvent.click(screen.getByRole("button", { name: "Edit clocks" }));
-  fireEvent.click(screen.getByRole("button", { name: "Remove clock" }));
+  fireEvent.click(screen.getByRole("button", { name: "Delete" }));
   expect(state().clocks.allIds).toHaveLength(1);
   fireEvent.click(screen.getByRole("button", { name: "Save" }));
   await waitFor(() => expect(state().clocks.allIds).toHaveLength(0));
@@ -156,4 +156,17 @@ it("opens the card's clock in the shared editor and saves only that clock with h
   act(() => store.dispatch(redoEncounterChange())); expect(state().clocks.byId[secondId].name).toBe("Alarm");
   fireEvent.click(screen.getByRole("button", { name: "Edit clocks" }));
   expect(screen.getByRole("combobox", { name: "Clock to edit" })).toHaveValue(before.allIds[0]);
+});
+
+it("saves clock order-only changes through the shared editor with undo/redo", async () => {
+  setup(); await addClock(); await addClock();
+  const before = [...state().clocks.allIds];
+  fireEvent.click(screen.getByRole("button", { name: "Edit clocks" }));
+  fireEvent.click(screen.getByRole("combobox", { name: "Clock to edit" }));
+  fireEvent.click(screen.getByRole("button", { name: "Move Clock 2 up" }));
+  fireEvent.keyDown(screen.getByRole("dialog", { name: "Clock to edit" }), { key: "Escape" });
+  fireEvent.click(screen.getByRole("button", { name: "Save" }));
+  await waitFor(() => expect(state().clocks.allIds).toEqual([...before].reverse()));
+  act(() => { store.dispatch(undoEncounterChange()); }); expect(state().clocks.allIds).toEqual(before);
+  act(() => { store.dispatch(redoEncounterChange()); }); expect(state().clocks.allIds).toEqual([...before].reverse());
 });

@@ -18,10 +18,10 @@ export function SettingsCategory({ title, description, children, actions }: Grou
   </section>;
 }
 
-export function SettingsSection({ title, description, children, region = false, danger = false }: GroupProps & { region?: boolean; danger?: boolean }) {
+export function SettingsSection({ title, titleSuffix, description, children, region = false, danger = false }: GroupProps & { titleSuffix?: string; region?: boolean; danger?: boolean }) {
   const id = useId();
   return <section aria-labelledby={id} role={region ? "region" : "group"} className={`min-w-0 rounded-2xl border p-3 sm:p-4 ${danger ? "border-red-300 bg-red-50 dark:border-red-800 dark:bg-red-950" : "border-canvas-line bg-canvas-surface"}`}>
-    <h4 id={id} className={`text-base font-semibold ${danger ? "text-red-900 dark:text-red-400" : "text-canvas-ink"}`}>{title}</h4>
+    <h4 id={id} className={`text-base font-semibold ${danger ? "text-red-900 dark:text-red-400" : "text-canvas-ink"}`}>{title}{titleSuffix ? <span className="font-normal text-canvas-muted"> {titleSuffix}</span> : null}</h4>
     {description ? <p className="mt-1 text-xs text-canvas-muted">{description}</p> : null}
     <div className="mt-3 min-w-0 space-y-2">{children}</div>
   </section>;

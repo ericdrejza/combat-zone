@@ -4,6 +4,7 @@ import { ENCOUNTER_SCHEMA_VERSION, type EncounterState } from "@core/encounter/t
 export function migrateZonelessPanel(state: Omit<EncounterState, "schemaVersion">): EncounterState {
   return {
     ...state,
+    rollApplications: state.rollApplications ?? { byId: {}, allIds: [] },
     chatMessages: state.chatMessages ?? { byId: {}, allIds: [] },
     schemaVersion: ENCOUNTER_SCHEMA_VERSION,
     panelLayout: {

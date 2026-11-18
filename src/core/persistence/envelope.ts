@@ -1,3 +1,6 @@
+import { migrateCheckRollModes } from "./migrateCheckRollModes";
+import { migrateRollableEffects } from "./migrateRollableEffects";
+import { validateDiceState } from "@combat-zone/firebase-api";
 import { assertChatMessages } from "./chatSchema";
 import { isImageFocus } from "@core/assets/imageFocus";
 import { migrateZonelessPanel } from "./zonelessPanelSchema";
@@ -115,6 +118,9 @@ export function assertEncounterState(value: unknown, name = "encounter", expecte
     throw new PersistenceValidationError(
       `${name}.schemaVersion ${String(value.schemaVersion)} is unsupported.`
     );
+  }
+  if (expectedVersion >= 34) {
+    try { validateDiceState(value, expectedVersion === 34, expectedVersion); } catch { throw new PersistenceValidationError("Encounter chat or dice data is invalid."); }
   }
   if (expectedVersion >= 33) assertChatMessages(value.chatMessages);
   if (value.counters === undefined || value.clocks === undefined || !validCounters(value.counters) || !validClocks(value.clocks)) throw new PersistenceValidationError(`${name}.encounter resources are invalid.`);
@@ -618,7 +624,26 @@ export function migrateEncounterState(value: unknown): unknown {
   if (migrated.schemaVersion === 32) {
     assertEncounterState(migrated, "encounter", 32);
     migrated.chatMessages = { byId: {}, allIds: [] };
-    migrated.schemaVersion = 33;
+    (migrated as UnknownRecord).schemaVersion = 33;
+  }
+  if (migrated.schemaVersion === 33) {
+    assertEncounterState(migrated, "encounter", 33);
+    migrated.rollApplications = { byId: {}, allIds: [] };
+    (migrated as UnknownRecord).schemaVersion = 34;
+  }
+  if (migrated.schemaVersion === 34) {
+    assertEncounterState(migrated, "encounter", 34);
+    migrateRollableEffects(migrated);
+    (migrated as UnknownRecord).schemaVersion = 35;
+  }
+  if (migrated.schemaVersion === 35) {
+    assertEncounterState(migrated, "encounter", 35);
+    (migrated as UnknownRecord).schemaVersion = 36;
+  }
+  if (migrated.schemaVersion === 36) {
+    assertEncounterState(migrated, "encounter", 36);
+    migrateCheckRollModes(migrated);
+    migrated.schemaVersion = 37;
   }
   return migrated;
 }

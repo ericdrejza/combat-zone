@@ -1,4 +1,6 @@
-import { act, fireEvent, screen } from "@testing-library/react";
+import { openEditorSelector } from "@tests/ui/controls/editorSelectTestHelpers";
+import { chooseEditorRecord, expectEditorChoice } from "@tests/ui/controls/editorSelectTestHelpers";
+import { act, fireEvent, screen, within } from "@testing-library/react";
 import { undoEncounterChange, redoEncounterChange } from "@store/encounterSlice";
 import { store } from "@store/store";
 import { setup } from "./counterEditorSetup";
@@ -7,23 +9,23 @@ it("creates empty counters from the last dropdown option and saves them with all
   setup();
   expect(screen.getByRole("dialog", { name: "Edit counters" })).toBeInTheDocument();
   fireEvent.change(screen.getByLabelText("Current value"), { target: { value: "2" } });
-  const options = screen.getAllByRole("option");
-  expect(options.at(-1)).toHaveTextContent("Create new counter");
-  fireEvent.change(screen.getByLabelText("Counter to edit"), { target: { value: "" } });
+  const popup = openEditorSelector("Counter to edit");
+  expect(within(popup).getByRole("button", { name: "Create new counter" })).toBeInTheDocument();
+  chooseEditorRecord("Counter to edit", "");
   expect(screen.getByLabelText("Counter name")).toHaveValue("");
   expect(screen.getByLabelText("Counter name")).toHaveAttribute("placeholder", "Counter 1");
   expect(screen.getByLabelText("Current value")).toHaveValue(0);
   expect(screen.getByLabelText("Minimum (optional)")).toHaveValue(null);
   expect(screen.getByLabelText("Maximum (optional)")).toHaveValue(null);
-  expect(screen.getByRole("option", { name: "Counter 1 ✎" })).toBeInTheDocument();
-  const newId = (screen.getByLabelText("Counter to edit") as HTMLSelectElement).value;
+  expectEditorChoice("Counter to edit", "Counter 1");
+  const newId = (screen.getByLabelText("Counter to edit") as HTMLButtonElement).value;
   expect(store.getState().encounter.present.actors.byId.a.counters!.allIds).toEqual(["c"]);
   fireEvent.change(screen.getByLabelText("Current value"), { target: { value: "4" } });
-  fireEvent.change(screen.getByLabelText("Counter to edit"), { target: { value: "c" } });
+  chooseEditorRecord("Counter to edit", "c");
   expect(screen.getByLabelText("Current value")).toHaveValue(2);
-  fireEvent.change(screen.getByLabelText("Counter to edit"), { target: { value: newId } });
+  chooseEditorRecord("Counter to edit", newId);
   expect(screen.getByLabelText("Current value")).toHaveValue(4);
-  fireEvent.change(screen.getByLabelText("Counter to edit"), { target: { value: "" } });
+  chooseEditorRecord("Counter to edit", "");
   expect(screen.getByLabelText("Counter name")).toHaveAttribute("placeholder", "Counter 2");
   fireEvent.click(screen.getByRole("button", { name: "Save" }));
   await screen.findByRole("group", { name: "Counter 2" });
@@ -40,9 +42,8 @@ it("creates empty counters from the last dropdown option and saves them with all
 
 it("discards a counter created in the shared editor without adding history", () => {
   setup();
-  fireEvent.change(screen.getByLabelText("Counter to edit"), { target: { value: "" } });
+  chooseEditorRecord("Counter to edit", "");
   fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
-  fireEvent.click(screen.getByRole("button", { name: "Discard changes" }));
   expect(store.getState().encounter.present.actors.byId.a.counters!.allIds).toEqual(["c"]);
   expect(store.getState().encounter.past).toHaveLength(0);
 });
@@ -81,7 +82,7 @@ it("opens Edit counters with no counters and creates the first counter there", a
   setup(false, false, true);
   expect(screen.getByRole("dialog", { name: "Edit counters" })).toBeInTheDocument();
   expect(screen.getByText("No counters yet. Choose Create new counter to add one.")).toBeInTheDocument();
-  fireEvent.change(screen.getByLabelText("Counter to edit"), { target: { value: "create" } });
+  chooseEditorRecord("Counter to edit", "create");
   expect(screen.getByLabelText("Counter name")).toHaveAttribute("placeholder", "Counter 1");
   fireEvent.click(screen.getByRole("button", { name: "Save" }));
   await screen.findByRole("group", { name: "Counter 1" });

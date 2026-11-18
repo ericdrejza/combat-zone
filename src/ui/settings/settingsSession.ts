@@ -3,6 +3,7 @@ import type { SettingsTabId } from "./settingsTabs";
 /** In-memory navigation state owned by the application session, never persisted. */
 export type SettingsSession = {
   activeTab: SettingsTabId;
+  scrollTarget?: "dice-notation";
   scrollByTab: Partial<Record<SettingsTabId, number>>;
 };
 

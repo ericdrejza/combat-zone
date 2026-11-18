@@ -1,6 +1,8 @@
 export const AUDIO_TRIGGER_EVENT = "combat-zone:audio-trigger";
 
 export type AudioTriggerRequest = {
+  /** Explicit Rollable launches do not depend on movement/health trigger switches. */
+  explicit?: boolean;
   cueId: string;
   instanceId: string;
 };

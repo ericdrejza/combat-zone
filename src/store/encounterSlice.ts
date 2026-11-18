@@ -35,6 +35,16 @@ const encounterSlice = createSlice({
       state.present.chatMessages.byId[payload.id] = payload;
       state.present.chatMessages.allIds.push(payload.id);
     },
+    setChatRollDecisions(state, { payload }: PayloadAction<{ id: string; decisions: Record<string, "hit" | "miss"> }>) {
+      const invocation = state.present.chatMessages.byId[payload.id]?.invocation;
+      if (invocation?.phase === "pending") invocation.decisions = payload.decisions;
+    },
+    resolveChatRoll(state, { payload }: PayloadAction<{ id: string; invocation: NonNullable<ChatMessage["invocation"]>; rolls: NonNullable<ChatMessage["rolls"]> }>) {
+      const message = state.present.chatMessages.byId[payload.id];
+      if (!message || message.invocation?.phase !== "pending") return;
+      message.invocation = payload.invocation;
+      message.rolls = [...(message.rolls ?? []), ...payload.rolls];
+    },
     deleteChatMessage(state, { payload }: PayloadAction<string>) {
       if (!state.present.chatMessages.byId[payload]) return;
       delete state.present.chatMessages.byId[payload];
@@ -111,6 +121,8 @@ const encounterSlice = createSlice({
 
 export const {
   sendChatMessage,
+  resolveChatRoll,
+  setChatRollDecisions,
   deleteChatMessage,
   clearChatMessages,
   clearEncounterHistory,

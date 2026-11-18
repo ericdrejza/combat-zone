@@ -1,3 +1,4 @@
+import { DiceSettings } from "./DiceSettings";
 import { TouchTooltip } from "@ui/toolbar/TouchTooltip";
 import { SettingsCategory } from "./SettingsLayout";
 import { CanvasSettings } from './CanvasSettings';
@@ -31,6 +32,8 @@ export function SettingsModal(props: SettingsModalProps) {
   const fallbackSession = useRef<SettingsSession>(createSettingsSession());
   const session = props.session ?? fallbackSession.current;
   const contentRef = useRef<HTMLElement>(null);
+  const helpTrigger = useRef(document.activeElement as HTMLElement | null);
+  const [openedFromHelp] = useState(() => session.scrollTarget === "dice-notation");
   const [activeTab, setActiveTab] = useState<SettingsTabId>(session.activeTab);
   const [sidebarExpanded, setSidebarExpanded] = useState(() => !compact);
 
@@ -41,8 +44,21 @@ export function SettingsModal(props: SettingsModalProps) {
   useLayoutEffect(() => {
     const content = contentRef.current;
     if (!content) return;
-    content.scrollTop = session.scrollByTab[activeTab] ?? 0;
+    const target = session.scrollTarget && activeTab === "dice"
+      ? content.querySelector<HTMLElement>('[data-settings-anchor="dice-notation"]') : null;
+    if (target) {
+      content.scrollTop = target.getBoundingClientRect().top - content.getBoundingClientRect().top + content.scrollTop;
+      session.scrollByTab[activeTab] = content.scrollTop;
+      target.focus({ preventScroll: true });
+      delete session.scrollTarget;
+    } else content.scrollTop = session.scrollByTab[activeTab] ?? 0;
   }, [activeTab, session]);
+
+  useEffect(() => {
+    if (!openedFromHelp) return;
+    // The calling editor stays mounted so its unsaved draft survives reading help.
+    return () => { helpTrigger.current?.focus(); };
+  }, [openedFromHelp]);
 
   function rememberScroll() {
     if (contentRef.current) session.scrollByTab[activeTab] = contentRef.current.scrollTop;
@@ -69,6 +85,7 @@ export function SettingsModal(props: SettingsModalProps) {
     if (activeTab === "canvas") return <CanvasSettings />;
     if (activeTab === "combat") return <CombatSettings />;
     if (activeTab === "audio") return <AudioSettings />;
+    if (activeTab === "dice") return <DiceSettings />;
     if (activeTab === "data") return <DataSettings {...props} onClose={closeSettings} />;
     if (activeTab === "interface") return <InterfaceSettings />;
     if (activeTab === "keybinds") return <KeybindSettings />;
@@ -81,7 +98,17 @@ export function SettingsModal(props: SettingsModalProps) {
   }
 
   return (
-    <div aria-label="Settings" aria-modal="true" className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 p-2 sm:p-6" role="dialog">
+    <div aria-label="Settings" aria-modal="true" className={`fixed inset-0 ${openedFromHelp ? "z-[96]" : "z-[70]"} flex items-center justify-center bg-black/40 p-2 sm:p-6`} role="dialog" onKeyDown={event => {
+      if (!openedFromHelp) return;
+      event.stopPropagation();
+      if (event.key === "Escape") { event.preventDefault(); closeSettings(); }
+      if (event.key === "Tab") {
+        const controls = Array.from(event.currentTarget.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled), select:not(:disabled), a[href], [tabindex="0"]'));
+        const first = controls[0], last = controls[controls.length - 1];
+        if (event.shiftKey && (document.activeElement === first || document.activeElement?.getAttribute("data-settings-anchor"))) { event.preventDefault(); last?.focus(); }
+        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+      }
+    }}>
       <div className="flex h-[min(42rem,90vh)] w-[min(56rem,94vw)] flex-col overflow-hidden rounded-3xl border border-canvas-line bg-canvas-panel shadow-2xl">
         <header className="flex items-center justify-between border-b border-canvas-line px-5 py-4">
           <h2 className="font-display text-xl font-semibold">Settings</h2>

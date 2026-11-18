@@ -1,3 +1,4 @@
+import { reorderCollection } from "@core/state/reorderCollection";
 import { getAvailableCounterName } from "@core/entity_resources/counters";
 import { clockCounters, removeResourceClock, removeResourceCounter, saveResourceClock, saveResourceCounter, type ClockCounter, type StatusResources } from "@core/entity_resources/statusResources";
 import type { JsonObject } from "@core/history/types";
@@ -22,8 +23,9 @@ export function StatusResourceControls<T extends StatusResources>({ owner, disab
       const counter = isClock ? clockCounters(current.clocks).byId[id] : current.counters!.byId[id];
       return save(current, { ...counter, value: counter.value + amount }, isClock);
     })}
-    onSaveBatch={(counters, removedIds) => onChange(isClock ? "editClocks" : "editCounters", { counters, removedIds }, (current) => {
+    onSaveBatch={(counters, removedIds, _mapping, orderIds) => onChange(isClock ? "editClocks" : "editCounters", { counters, removedIds, orderIds: orderIds ?? null }, (current) => {
       const removed = removedIds.reduce((next, id) => isClock ? removeResourceClock(next, id) : removeResourceCounter(next, id), current);
-      return counters.reduce((next, counter) => save(next, counter, isClock), removed);
+      const updated = counters.reduce((next, counter) => save(next, counter, isClock), removed);
+      return orderIds ? { ...updated, [isClock ? "clocks" : "counters"]: reorderCollection(isClock ? updated.clocks : updated.counters, orderIds) } : updated;
     })} />)}</>;
 }

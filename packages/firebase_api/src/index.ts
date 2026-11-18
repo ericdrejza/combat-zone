@@ -3,3 +3,5 @@ export * from "./validation.js";
 export * from "./rulerArtifacts.js";
 export * from "./resourceBars.js";
 export * from "./imageFocus.js";
+
+export * from "./diceValidation.js";

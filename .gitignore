@@ -35,3 +35,6 @@ logs/
 
 # Output of 'npm pack'
 *.tgz
+
+# Generated from the installed MIT-licensed dice-box package.
+/public/dice-assets/

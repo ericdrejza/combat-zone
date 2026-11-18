@@ -1,3 +1,4 @@
+import { DICE_PREFERENCES_KEY } from "@ui/dice/dicePreferences";
 import { MOVEMENT_PREFERENCES_KEY } from '@ui/combat_preferences/movementPreferenceStorage';
 import { DEFAULT_MOVEMENT_RULES } from '@core/movement/types';
 import { CANVAS_PREFERENCES_KEY, readCanvasPreferences } from '@ui/canvas_preferences/canvasPreferenceStorage';
@@ -408,7 +409,7 @@ export function PersistenceProvider({
     await resetLocalPersistence(repository, draft, [
       MOTION_OVERRIDE_STORAGE_KEY,
       INTERFACE_PREFERENCES_STORAGE_KEY,
-      COMBAT_PREFERENCES_STORAGE_KEY, MOVEMENT_PREFERENCES_KEY, CANVAS_PREFERENCES_KEY,
+      DICE_PREFERENCES_KEY, COMBAT_PREFERENCES_STORAGE_KEY, MOVEMENT_PREFERENCES_KEY, CANVAS_PREFERENCES_KEY,
       IMAGE_COMPRESSION_STORAGE_KEY,
       THEME_STORAGE_KEY
     ]);
@@ -442,7 +443,7 @@ export function PersistenceProvider({
           await recoverInterruptedLocalReset(repository, [
             MOTION_OVERRIDE_STORAGE_KEY,
             INTERFACE_PREFERENCES_STORAGE_KEY,
-            COMBAT_PREFERENCES_STORAGE_KEY, MOVEMENT_PREFERENCES_KEY, CANVAS_PREFERENCES_KEY,
+            DICE_PREFERENCES_KEY, COMBAT_PREFERENCES_STORAGE_KEY, MOVEMENT_PREFERENCES_KEY, CANVAS_PREFERENCES_KEY,
             IMAGE_COMPRESSION_STORAGE_KEY,
             THEME_STORAGE_KEY
           ]);

@@ -1,4 +1,5 @@
-import { type ComponentProps, type ReactNode } from "react";
+import { useLayoutEffect, type ComponentProps, type ReactNode } from "react";
+import { useZonelessActorReveal } from "./zoneless_actors/zonelessActorReveal";
 import type { EncounterPanelId } from "@core/encounter/panelLayout";
 import { PanelsShell } from "./PanelsShell";
 import { PanelFooterTabs } from "./PanelFooterTabs";
@@ -25,6 +26,9 @@ export function WorkspaceSidebar({ collapsed, encounterId, footerActions, footer
   const footerScrollRef = usePanelReorderAutoScroll(tabMode && panelsProps.draggedPanelId !== null,
     panelsProps.onPreviewDrop, collapsed ? "vertical" : "horizontal");
   const { activePanelId, selectPanel: setPanel } = usePanelTabSelection(encounterId, panels, tabMode, libraryAvailable);
+  const reveal = useZonelessActorReveal();
+  const hasZoneless = panels.some(panel => panel.id === "zoneless");
+  useLayoutEffect(() => { if (reveal && hasZoneless) setPanel("zoneless"); }, [reveal, hasZoneless]);
   function selectPanel(panelId: EncounterPanelId) {
     setPanel(panelId);
     if (collapsed || panelId === activePanelId) onToggle();

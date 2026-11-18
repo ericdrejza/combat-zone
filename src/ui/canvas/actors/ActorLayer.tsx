@@ -1,3 +1,4 @@
+import { ActorTargetPreview } from "@ui/dice/ActorTargetPreview";
 import { usePlayerAudience, useSceneId } from '@ui/player_view/PlayerSceneSource';
 import { previewedName, type NamePreview } from '@interaction/namePreviewState';
 import { getDraggedPoint } from './actorDragPoint';
@@ -206,6 +207,7 @@ export function ActorLayer({
                 transition={actorTransition}
               />}
               </ActorTrim>
+              {!player ? <ActorTargetPreview actorId={actor.id} radius={radius} color={colors.outline} rectangle={actor.shape === "rectangle"} /> : null}
             </ActorDragMotionGroup>
           )}
         </ActorMotionTrack>

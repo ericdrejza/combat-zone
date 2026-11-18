@@ -1,3 +1,4 @@
+import { createSettingsSession } from "@ui/settings/settingsSession";
 import { Provider } from "react-redux";
 import { store } from "@store/store";
 import { fireEvent, render, screen, within } from "@testing-library/react";
@@ -92,7 +93,7 @@ describe("SettingsModal local reset", () => {
       within(screen.getByRole("tablist", { name: "Workspace settings" }))
         .getAllByRole("tab")
         .map((tab) => tab.textContent)
-    ).toEqual(["Audio", "Canvas", "Combat", "Interface", "Keybinds"]);
+    ).toEqual(["Audio", "Canvas", "Combat", "Dice", "Interface", "Keybinds"]);
     expect(
       within(screen.getByRole("tablist", { name: "Account settings" }))
         .getAllByRole("tab")
@@ -172,4 +173,22 @@ describe("SettingsModal local reset", () => {
       "Ctrl/Cmd + C"
     );
   });
+});
+
+it("opens dice notation at its anchor and restores the caller's focus on close", () => {
+  const session = createSettingsSession();
+  session.activeTab = "dice";
+  session.scrollTarget = "dice-notation";
+  session.scrollByTab.dice = 999;
+  const trigger = document.createElement("button");
+  document.body.append(trigger); trigger.focus();
+  const { unmount } = render(<SettingsModal session={session} onClose={() => undefined}
+    onExportWorkspace={() => undefined} onImportWorkspaceFile={() => undefined}
+    onResetLocalData={() => undefined} readOnly={false} />);
+  expect(screen.getByRole("tab", { name: "Dice" })).toHaveAttribute("aria-selected", "true");
+  expect(document.activeElement).toContainElement(screen.getByRole("heading", { name: "Notation guide" }));
+  expect(session.scrollTarget).toBeUndefined();
+  expect(screen.getByRole("tabpanel").scrollTop).toBe(0);
+  unmount();
+  expect(trigger).toHaveFocus(); trigger.remove();
 });

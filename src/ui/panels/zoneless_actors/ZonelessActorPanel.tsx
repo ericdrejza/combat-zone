@@ -1,7 +1,8 @@
 import { motion } from "motion/react";
 import { useMotionPreference } from "@ui/motion_preferences/MotionPreferenceProvider";
 import type { DragEvent } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useZonelessActorReveal } from "./zonelessActorReveal";
 import { getTextColorForLuminance } from "@ui/canvas/canvasLuminance";
 import { useResizablePanel } from "@ui/canvas/useResizablePanel";
 import { useInterfacePreferences } from "@ui/interface_preferences/InterfacePreferenceProvider";
@@ -37,6 +38,8 @@ export function ZonelessActorPanel({
   const [hovered, setHovered] = useState(false);
   const [keyboardFocused, setKeyboardFocused] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  const reveal = useZonelessActorReveal();
+  useEffect(() => { if (reveal) setExpanded(true); }, [reveal]);
   const [groupByFaction, setGroupByFaction] = useState(true);
   const { isResized, isResizing, resetSize, size, startResize } = useResizablePanel();
   const contrastColor = hovered || keyboardFocused ? "rgb(var(--color-canvas-ink))" : getTextColorForLuminance(canvasBackgroundLuminance);

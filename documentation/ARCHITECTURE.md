@@ -112,7 +112,9 @@ entry-point rules remain in the persistence decision record.
 ## PROCESS RULES (from original constraints — retained, not duplicated from documentation/DESIGN.md)
 
 - **No simulation logic.** Represent state and relationships only. Do not
-  implement RPG rules engines, dice systems, or narrative generation.
+  implement RPG rules engines or narrative generation. The approved dice roller
+  and GM-resolved Actor Rollables in `plans/dice_rolling.md` are permitted; they
+  do not infer hits, apply damage automatically, or simulate RPG rules.
 - **GM authority is absolute outside Strict mode except geometric fit.**
   Validation is advisory unless Strict mode is explicitly enabled (see
   `documentation/DESIGN.md` §5.5 for the four validation levels). The
@@ -472,3 +474,12 @@ order, and collapse flags. Cloud contracts accept schema 31. Interface preferenc
 upgrade older six-panel default orders without losing their arrangement.
 Panel Tabs and the stacked-mode Zoneless location are locally persisted Interface
 preferences; active tabs and whole-sidebar expansion remain session-only.
+
+Encounter schema 36 adds optional historical chat reference spans. Each stores
+UTF-16 offsets into the authoritative message text, a selected entity ID/kind,
+and a color snapshot. These IDs are historical identities, not live foreign-key
+requirements; entity deletion does not invalidate sent chat. Local and cloud
+validators reject overlapping/out-of-range spans and invalid colors. Schema 35
+migrates without inventing old reference snapshots. Reference suggestions,
+resolution, and target expansion share the `core/dice` grammar and resolver;
+member lists are derived from Actor `currentZoneId`, never stored on Zones.

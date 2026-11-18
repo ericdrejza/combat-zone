@@ -6,7 +6,7 @@ const gesture = vi.hoisted(() => ({ handlers: [] as any[], start: vi.fn() }));
 vi.mock("motion/react", async (importOriginal) => {
   const original = await importOriginal<typeof import("motion/react")>();
   const { createElement } = await import("react");
-  return { ...original, useDragControls: () => ({ start: gesture.start }), motion: {
+  return { ...original, useDragControls: () => ({ start: gesture.start, subscribe: () => () => {} }), motion: {
     ...original.motion,
     div: ({ children, onDragEnd, onPointerDown, onPointerCancel, onClickCapture, onDragStart, drag, dragControls, dragListener, dragMomentum, style, ...rest }: any) => {
       if (onDragEnd) gesture.handlers.push({ onDragEnd, onPointerDown, onPointerCancel, onDragStart });

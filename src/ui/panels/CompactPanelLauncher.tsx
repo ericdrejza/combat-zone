@@ -15,6 +15,7 @@ import {
 import { CompactPanelDrawer } from "./CompactPanelDrawer";
 import { CompactPanelMenu } from "./CompactPanelMenu";
 import { COMPACT_CANVAS_TRANSFER_EVENT } from "../canvas/compactCanvasTransfer";
+import { useZonelessActorReveal } from "./zoneless_actors/zonelessActorReveal";
 
 const HOLD_DURATION_MS = 500;
 
@@ -87,6 +88,13 @@ export function CompactPanelLauncher({
     setKeyboardMenuOpen(false);
     setHighlightedIndex(null);
   }, []);
+
+  const reveal = useZonelessActorReveal();
+  const hasZoneless = panels.some(panel => panel.id === "zoneless");
+  useLayoutEffect(() => {
+    if (!reveal || !hasZoneless) return;
+    closeMenu(); selectPanel("zoneless"); setDrawer(true);
+  }, [reveal, hasZoneless, closeMenu, selectPanel, setDrawer]);
 
   const finishPointer = useCallback(
     () => {

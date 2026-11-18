@@ -18,9 +18,14 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit && npm run typecheck --workspace=@combat-zone/firebase-api && npm run typecheck --workspace=@combat-zone/functions",
     "test:firebase-api": "vitest run --reporter=agent tests/core/persistence/cloud",
-    "build:functions": "npm run build --workspace=@combat-zone/functions"
+    "build:functions": "npm run build --workspace=@combat-zone/functions",
+    "predev": "node scripts/copy_dice_assets.mjs",
+    "prebuild": "node scripts/copy_dice_assets.mjs"
   },
   "dependencies": {
+    "@3d-dice/dice-box": "^1.1.4",
+    "@3d-dice/dice-parser-interface": "^0.2.1",
+    "@3d-dice/dice-roller-parser": "0.2.6",
     "@combat-zone/firebase-api": "0.1.0",
     "@reduxjs/toolkit": "^2.2.7",
     "firebase": "^12.2.1",

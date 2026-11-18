@@ -13,6 +13,7 @@ const TOOLTIP_DURATION_MS = 1800;
 type TouchTooltipProps = {
   children: ReactNode;
   label: string;
+  tone?: "default" | "panel";
 };
 
 type PendingTouch = {
@@ -28,12 +29,13 @@ type VisibleTooltip = {
   label: string;
   left: number;
   top: number;
+  tone: "default" | "panel";
 };
 
 /** Marks an element with a tooltip label for delegated touch-hold discovery. */
-export function TouchTooltip({ children, label }: TouchTooltipProps) {
+export function TouchTooltip({ children, label, tone = "default" }: TouchTooltipProps) {
   return (
-    <span className="relative inline-flex" data-touch-tooltip-label={label}>
+    <span className="relative inline-flex" data-touch-tooltip-label={label} data-touch-tooltip-tone={tone === "panel" ? tone : undefined}>
       {children}
     </span>
   );
@@ -42,6 +44,7 @@ export function TouchTooltip({ children, label }: TouchTooltipProps) {
 function findTooltipTarget(target: EventTarget): {
   element: HTMLElement;
   label: string;
+  tone?: "default" | "panel";
 } | null {
   // Portal events can originate in another browser window with its own Element constructor.
   if ((target as Element).nodeType !== 1) return null;
@@ -52,7 +55,7 @@ function findTooltipTarget(target: EventTarget): {
   const labeledWrapper = targetElement.closest<HTMLElement>("[data-touch-tooltip-label]");
   const wrapperLabel = labeledWrapper?.dataset.touchTooltipLabel?.trim();
   if (labeledWrapper && wrapperLabel) {
-    return { element: labeledWrapper, label: wrapperLabel };
+    return { element: labeledWrapper, label: wrapperLabel, tone: labeledWrapper.dataset.touchTooltipTone === "panel" ? "panel" : "default" };
   }
 
   const titledElement = targetElement.closest<HTMLElement>("[title]");
@@ -140,6 +143,7 @@ export function TouchTooltipProvider({ children }: { children: ReactNode }) {
         ownerDocument: pending.target.ownerDocument,
         above,
         label: resolved.label,
+        tone: resolved.tone ?? "default",
         left: Math.min(
           Math.max(rect.left + rect.width / 2, 80),
           Math.max(80, (pending.target.ownerDocument.defaultView?.innerWidth ?? window.innerWidth) - 80)
@@ -210,7 +214,7 @@ export function TouchTooltipProvider({ children }: { children: ReactNode }) {
         {tooltip ? (
           <motion.div
             animate={{ opacity: 1 }}
-            className="pointer-events-none fixed z-[100] max-w-[calc(100vw-1.5rem)] rounded-md bg-canvas-ink px-2 py-1 text-center text-xs font-medium text-canvas-on-ink shadow-lg"
+            className={`pointer-events-none fixed z-[100] max-w-[calc(100vw-1.5rem)] rounded-md px-2 py-1 text-center text-xs font-medium shadow-lg ${tooltip.tone === "panel" ? "border border-canvas-line bg-canvas-panel text-canvas-ink" : "bg-canvas-ink text-canvas-on-ink"}`}
             data-touch-tooltip="true"
             exit={{ opacity: 0 }}
             initial={{ opacity: 0 }}

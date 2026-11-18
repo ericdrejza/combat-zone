@@ -39,15 +39,16 @@ export function SidebarDock({
 
   const stackedHeader = collapsed || (side === "left" && hideToggle);
 
+  // Nested panels/tabs own scrolling; clipping also prevents focus from scrolling past the footer.
   return (
     <aside
       aria-label={`${side} sidebar`}
-      className={`flex min-h-0 ${collapsed || hideToggle ? "w-max" : "w-72"} min-w-10 flex-col gap-2 overflow-auto`}
+      className={`flex min-h-0 ${collapsed || hideToggle ? "w-max" : "w-72"} min-w-10 flex-col gap-2 overflow-clip`}
     >
       <div
         role="group"
         aria-label={`${side} sidebar controls`}
-        className={`flex gap-2 ${stackedHeader ? "flex-col" : "items-center"} ${side === "right" ? (headerActions ? "w-full justify-between" : "self-end") : stackedHeader ? "self-start" : "w-full justify-between"}`}
+        className={`flex shrink-0 gap-2 ${stackedHeader ? "flex-col" : "items-center"} ${side === "right" ? (headerActions ? "w-full justify-between" : "self-end") : stackedHeader ? "self-start" : "w-full justify-between"}`}
       >
       {stackedHeader ? null : headerActions}
       {hideToggle ? null : <TouchTooltip label={collapsed ? expandLabel : collapseLabel}><button
@@ -67,7 +68,7 @@ export function SidebarDock({
       </div>
       {collapsed && !hideToggle ? null : children}
       {footer ? (
-        <div className={`mt-auto flex min-h-0 flex-col ${collapsed ? "shrink-0" : "pt-1"}`}>{footer}</div>
+        <div className={`mt-auto flex min-h-0 shrink-0 flex-col ${collapsed ? "" : "pt-1"}`}>{footer}</div>
       ) : null}
     </aside>
   );

@@ -15,6 +15,7 @@ export type ActorShape = "circle" | "rectangle" | "transparent";
 export type ActorStatus = 0 | 1 | 2 | 3;
 
 export type Actor = {
+  rollables?: import("@core/state/entityCollection").EntityCollection<import("@core/dice/types").Rollable>;
   movementLimit?: number;
   /** Authoritative position while Zone lock is off; locked placement remains derived. */
   spatialPosition?: import('@core/layout/types').LayoutPoint;

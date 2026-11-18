@@ -1,4 +1,4 @@
-const AUTO_SCROLL_EDGE_PX = 40;
+export const AUTO_SCROLL_EDGE_PX = 40;
 const AUTO_SCROLL_MAX_STEP_PX = 14;
 
 export function getDragAutoScrollDelta(

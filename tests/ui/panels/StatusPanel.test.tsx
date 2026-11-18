@@ -286,7 +286,7 @@ describe("StatusPanel", () => {
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
     await waitFor(() => expect(Object.values(store.getState().encounter.present.actors.byId.a.counters!.byId)[0].value).toBe(1));
     fireEvent.click(screen.getByRole("button", { name: "Edit counters" }));
-    fireEvent.click(screen.getByRole("button", { name: "Remove counter" }));
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
     await waitFor(() => expect(store.getState().encounter.present.actors.byId.a.counters!.allIds).toHaveLength(0));
     act(() => store.dispatch(undoEncounterChange()));

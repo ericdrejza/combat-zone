@@ -45,6 +45,7 @@ import { getLibraryPanelSectionId } from "./panels/libraryPanelSection";
 import { EngageActionButton } from "./toolbar/EngageActionButton";
 import { DisengageActionButton } from "./toolbar/DisengageActionButton";
 import { ZonelessVisibilityButton } from "./panels/zoneless_actors/ZonelessVisibilityButton";
+import { useZonelessActorReveal } from "./panels/zoneless_actors/zonelessActorReveal";
 import { ActorPropertiesHeaderActions } from "./panels/ActorPropertiesPanel";
 import { ZonePropertiesHeaderActions } from "./panels/ZonePropertiesPanel";
 import { Toolbar } from "./toolbar/Toolbar";
@@ -120,7 +121,10 @@ function AppContent() {
   const { getViewportSize, zoom: viewportZoom } = useCanvasViewport();
   const { panelVisibility, libraryPanelViewDefault, panelTabMode, zonelessPanelPlacement } = useInterfacePreferences();
   const zonelessInSidebar = zonelessPanelPlacement === "sidebar";
-  const dockVisibility = { ...panelVisibility, zoneless: zonelessInSidebar && panelVisibility.zoneless };
+  const revealZoneless = useZonelessActorReveal();
+  const [zonelessRevealActive, setZonelessRevealActive] = useState(false);
+  const zonelessAvailable = panelVisibility.zoneless || zonelessRevealActive;
+  const dockVisibility = { ...panelVisibility, zoneless: zonelessInSidebar && zonelessAvailable };
   const activeToolId = useSelector(
     (state: RootState) => state.interaction.activeToolId
   );
@@ -139,6 +143,15 @@ function AppContent() {
       left: false,
       right: false
     });
+  useEffect(() => {
+    if (!revealZoneless) { setZonelessRevealActive(false); return; }
+    setZonelessRevealActive(true);
+    setZonelessVisible(true);
+    if (zonelessInSidebar) setSidebarCollapsed(current => ({
+      left: panelLayout.left.some(panel => panel.id === "zoneless") ? false : current.left,
+      right: panelLayout.right.some(panel => panel.id === "zoneless") ? false : current.right
+    }));
+  }, [revealZoneless, zonelessInSidebar]);
   const [draggedPanelId, setDraggedPanelId] = useState<string | null>(null);
   useEncounterOperation(draggedPanelId !== null);
   const [dropTarget, setDropTarget] = useState<DropTarget | null>(null);
@@ -171,14 +184,18 @@ function AppContent() {
       window.removeEventListener(RELINK_AUDIO_LIBRARY_EVENT, relinkAudio);
     };
   }, [persistenceUi.openAudioLibraryForCue, persistenceUi.openAudioLibraryForRelink]);
-  const effectivePanelLayout = libraryAutoCollapsedBySelect
+  const libraryEffectivePanelLayout = libraryAutoCollapsedBySelect
     ? mapLibraryPanel(panelLayout, (panel) => ({ ...panel, collapsed: true }))
     : panelLayout;
+  const effectivePanelLayout = zonelessRevealActive ? {
+    left: libraryEffectivePanelLayout.left.map(panel => panel.id === "zoneless" ? { ...panel, collapsed: false } : panel),
+    right: libraryEffectivePanelLayout.right.map(panel => panel.id === "zoneless" ? { ...panel, collapsed: false } : panel)
+  } : libraryEffectivePanelLayout;
   const visiblePanelLayout = getVisiblePanelLayout(
     effectivePanelLayout,
     dockVisibility
   );
-  const compactPanels = getVisibleCompactPanels(panelVisibility);
+  const compactPanels = getVisibleCompactPanels({ ...panelVisibility, zoneless: zonelessAvailable });
   usePanelNativeDragPreview(draggedPanelId, visiblePanelLayout, handlePanelDropPreview);
 
   useEffect(() => {
@@ -353,6 +370,7 @@ function AppContent() {
   }
 
   function handlePanelCollapsedChange(panelId: string, collapsed: boolean) {
+    if (panelId === "zoneless") setZonelessRevealActive(false);
     if (panelId === "library") {
       setLibraryAutoCollapsedBySelect(false);
     }
@@ -516,7 +534,7 @@ function AppContent() {
             visiblePanelLayout.left.length === 0 || sidebarCollapsed.left
           }
           footerActions={<SettingsButton onClick={persistenceUi.openSettings} />}
-          footerEnd={!zonelessInSidebar && panelVisibility.zoneless ? <ZonelessVisibilityButton
+          footerEnd={!zonelessInSidebar && zonelessAvailable ? <ZonelessVisibilityButton
             visible={zonelessVisible}
             onToggle={() => setZonelessVisible(value => !value)}
           /> : undefined}
@@ -544,7 +562,7 @@ function AppContent() {
         />
         ) : null}
         <CanvasShell
-          zonelessVisible={zonelessVisible && !zonelessInSidebar && panelVisibility.zoneless}
+          zonelessVisible={zonelessVisible && !zonelessInSidebar && zonelessAvailable}
           compactPanels={compactPanels}
           renderCompactPanelContent={renderPanelContent}
           renderCompactPanelHeaderActions={renderPanelHeaderActions}

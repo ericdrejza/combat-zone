@@ -1,3 +1,4 @@
+import { validateDiceState } from "./diceValidation.js";
 import { isImageFocus } from "./imageFocus.js";
 import { validRulerCollection } from './rulerArtifacts.js';
 import { validateSpatialState } from './spatialState.js';
@@ -94,6 +95,7 @@ function validateEncounterStateShape(state: JsonObject): void {
       (version !== 7 && (version < 13 || version > SUPPORTED_ENCOUNTER_SCHEMA_VERSION))) {
     throw new ApiContractValidationError("encounter.state.schemaVersion is unsupported.");
   }
+  if (version >= 34) validateDiceState(state, version === 34, version);
   if (version >= 29 && !validRulerCollection(state.rulers)) throw new ApiContractValidationError("Encounter ruler artifacts are invalid.");
   for (const key of ["zones", "edges", "actors", "engagements", "annotations"]) {
     validateEntityCollection(state[key], `encounter.state.${key}`);

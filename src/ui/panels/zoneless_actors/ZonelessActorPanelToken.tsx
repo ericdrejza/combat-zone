@@ -1,6 +1,8 @@
 import { ImageFocusFrame } from "@core/rendering/ImageFocusFrame";
 import { motion } from "motion/react";
 import type { DragEvent, MouseEvent, PointerEvent } from "react";
+import { useLayoutEffect, useRef } from "react";
+import { revealZonelessToken, useZonelessActorReveal } from "./zonelessActorReveal";
 
 import { ACTOR_LAYOUT_GROUP_COLORS, ACTOR_SIZE_MULTIPLIERS } from "@entities/actor/actorVisuals";
 import type { Actor } from "@entities/actor/types";
@@ -44,11 +46,22 @@ export function ZonelessActorPanelToken({
   ) => void;
 }) {
   const selected = selectedIds.includes(actor.id);
+  const tokenRef = useRef<HTMLButtonElement>(null);
+  const reveal = useZonelessActorReveal();
+  useLayoutEffect(() => {
+    if (!selected || reveal?.actorId !== actor.id) return;
+    const show = () => { if (tokenRef.current) revealZonelessToken(tokenRef.current); };
+    show();
+    // Tabs retain hidden tokens; their owning sidebar reveals the tab later in this commit.
+    const frame = requestAnimationFrame(show);
+    return () => cancelAnimationFrame(frame);
+  }, [selected, reveal, actor.id]);
   const colors = ACTOR_LAYOUT_GROUP_COLORS[actor.layoutGroup];
   const imageUrl = useResolvedImageSource(actor.image);
 
   return (
     <button
+      ref={tokenRef}
       aria-label={actor.name}
       aria-pressed={selected}
       className={`group flex min-w-16 touch-none cursor-grab select-none flex-col items-center gap-1 rounded-xl px-2 py-1.5 text-xs focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 hover:bg-canvas active:cursor-grabbing ${

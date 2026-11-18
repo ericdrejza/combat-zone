@@ -1,3 +1,5 @@
+import { RollResolutionHost } from "@ui/dice/RollResolutionHost";
+import { DiceTray } from "@ui/dice/DiceTray";
 import { useGrabbingCursor } from "@hooks/useGrabbingCursor";
 import { CanvasActorDragVisual } from "./CanvasActorDragVisual";
 import { ActorSurfaceProvider } from './actors/ActorSurfaceProvider';
@@ -316,6 +318,8 @@ export function CanvasShell({
       ref={setCanvasShellElement}
       role="main"
     >
+      <RollResolutionHost />
+      <DiceTray />
       <CanvasViewport canvasSize={renderEncounter.canvasSize}>
         <CanvasWorkspace
           rotationPreview={vertexDrag && (vertexDrag.rotation ?? vertexDrag.editingRotation) !== undefined

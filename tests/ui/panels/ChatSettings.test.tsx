@@ -11,7 +11,7 @@ import { resetEncounterState } from "@store/encounterSlice";
 beforeEach(() => { localStorage.clear(); store.dispatch(resetEncounterState()); });
 it("persists browser chat settings and captures the selected name color on new messages", () => {
   render(<Provider store={store}><InterfacePreferenceProvider><ChatSettings /><ChatComposer /></InterfacePreferenceProvider></Provider>);
-  const color = screen.getByRole("textbox", { name: "Chat name color" });
+  const color = screen.getByRole("textbox", { name: "Sender name color" });
   fireEvent.change(color, { target: { value: "#123456" } });
   fireEvent.blur(color);
   fireEvent.click(screen.getByRole("switch", { name: "Match message text to sender name color" }));
@@ -22,7 +22,7 @@ it("persists browser chat settings and captures the selected name color on new m
   expect(messages.byId[messages.allIds[0]].sender.color).toBe("#123456");
 });
 it("ignores malformed stored color settings", () => {
-  localStorage.setItem(INTERFACE_PREFERENCES_STORAGE_KEY, JSON.stringify({ chatNameColor: "red", chatMatchMessageColor: "true" }));
+  localStorage.setItem(INTERFACE_PREFERENCES_STORAGE_KEY, JSON.stringify({ chatNameColor: "red", chatMatchMessageColor: "true", logPanOnSelection: "false" }));
   expect(readPreferences()).toMatchObject({ chatNameColor: null, chatMatchMessageColor: false });
 });
 
@@ -31,8 +31,15 @@ function ResetInterface() {
   return <button onClick={() => resetCategory("interface")}>Reset interface</button>;
 }
 it("resets chat settings with the Interface category", () => {
-  localStorage.setItem(INTERFACE_PREFERENCES_STORAGE_KEY, JSON.stringify({ chatNameColor: "#123456", chatMatchMessageColor: true }));
+  localStorage.setItem(INTERFACE_PREFERENCES_STORAGE_KEY, JSON.stringify({ chatNameColor: "#123456", chatMatchMessageColor: true, logPanOnSelection: false }));
   render(<InterfacePreferenceProvider><ChatSettings /><ResetInterface /></InterfacePreferenceProvider>);
   fireEvent.click(screen.getByRole("button", { name: "Reset interface" }));
   expect(readPreferences()).toMatchObject({ chatNameColor: null, chatMatchMessageColor: false });
+});
+
+it("removes the navigation switch and ignores its obsolete saved value", () => {
+  localStorage.setItem(INTERFACE_PREFERENCES_STORAGE_KEY, JSON.stringify({ logPanOnSelection: false }));
+  render(<InterfacePreferenceProvider><ChatSettings /></InterfacePreferenceProvider>);
+  expect(screen.queryByRole("switch", { name: "Move viewport to selected references" })).not.toBeInTheDocument();
+  expect(readPreferences()).not.toHaveProperty("logPanOnSelection");
 });

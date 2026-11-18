@@ -1,5 +1,6 @@
 import {
   Swords,
+  Dices,
   Database,
   Grid3X3,
   Headphones,
@@ -21,6 +22,7 @@ const workspaceTabs: Tab[] = [
   { id: "audio", icon: Headphones, label: "Audio" },
   { id: "canvas", icon: Grid3X3, label: "Canvas" },
   { id: "combat", icon: Swords, label: "Combat" },
+  { id: "dice", icon: Dices, label: "Dice" },
   { id: "interface", icon: Monitor, label: "Interface" },
   { id: "keybinds", icon: Keyboard, label: "Keybinds" }
 ];

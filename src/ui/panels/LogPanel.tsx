@@ -1,5 +1,8 @@
+import { LogRollAgainButton } from "@ui/dice/LogRollAgainButton";
+import { ChatMessageText } from "@ui/dice/ChatMessageText";
+import { DiceMessageResults } from "@ui/dice/DiceMessageResults";
 import { Wrench } from "lucide-react";
-import { useLayoutEffect, useRef } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 import type { EncounterLogCategory } from "@core/logging/types";
@@ -67,6 +70,7 @@ export function LogPanelHeaderActions() {
 
 /** Combines durable chat and optional session audit entries chronologically. */
 export function LogPanel() {
+  const [rollAgainError, setRollAgainError] = useState<{ session: number; message: string } | null>(null);
   const { deleteMessage, writable } = useLogDeletionActions();
   const systemEntries = useSelector((state: RootState) => state.encounterLog.entries);
   const showSystemLogs = useSelector((state: RootState) => state.encounterLog.showSystemLogs);
@@ -139,17 +143,20 @@ export function LogPanel() {
               <span className="text-red-700 dark:text-red-500">Blocked</span>
             ) : null}
             {entry.kind === "chat" ? (
-              <div className="pointer-events-none opacity-0 group-hover/message:pointer-events-auto group-hover/message:opacity-100 group-focus-within/message:pointer-events-auto group-focus-within/message:opacity-100">
+              <div className="pointer-events-none flex items-center gap-1 opacity-0 group-hover/message:pointer-events-auto group-hover/message:opacity-100 group-focus-within/message:pointer-events-auto group-focus-within/message:opacity-100">
+                {entry.rolls?.length ? <LogRollAgainButton message={entry} disabled={!writable} onError={message => setRollAgainError({ session: encounterSession, message })} /> : null}
                 <LogDeleteButton plain label="Delete chat message" disabled={!writable}
                   onClick={() => deleteMessage(entry.id)} />
               </div>
             ) : null}
             </div>
           </div>
-          <p className="whitespace-pre-wrap break-words text-canvas-ink" style={"sender" in entry && chatMatchMessageColor ? { color: entry.sender.color ?? undefined } : undefined}>{entry.message}</p>
+          <p className="whitespace-pre-wrap break-words text-canvas-ink" style={"sender" in entry && chatMatchMessageColor ? { color: entry.sender.color ?? undefined } : undefined}>{entry.kind === "chat" ? <ChatMessageText message={entry.message} references={entry.references} /> : entry.message}</p>
+          {entry.kind === "chat" ? <DiceMessageResults message={entry} /> : null}
         </li>
       ))}
     </ol>
+    {rollAgainError?.session === encounterSession && rollAgainError.message ? <p role="alert" className="mt-2 text-sm text-red-600 dark:text-red-400">{rollAgainError.message}</p> : null}
     <ChatComposer key={encounterSession} />
     </div>
   );

@@ -1,4 +1,5 @@
-import { useRef, useState } from "react";
+import { OPEN_DICE_NOTATION_EVENT } from "@ui/settings/settingsNavigation";
+import { useEffect, useRef, useState } from "react";
 
 import {
   parseExportEnvelope,
@@ -89,6 +90,15 @@ export function useAppPersistenceUi({
     useState(0);
   const settingsSession = useRef(createSettingsSession());
   const [settingsOpen, setSettingsOpen] = useState(false);
+  useEffect(() => {
+    function openNotation() {
+      settingsSession.current.activeTab = "dice";
+      settingsSession.current.scrollTarget = "dice-notation";
+      setSettingsOpen(true);
+    }
+    window.addEventListener(OPEN_DICE_NOTATION_EVENT, openNotation);
+    return () => window.removeEventListener(OPEN_DICE_NOTATION_EVENT, openNotation);
+  }, []);
   const [draftDialogOpen, setDraftDialogOpen] = useState(false);
   const [deletedDialogOpen, setDeletedDialogOpen] = useState(false);
   const [pendingImport, setPendingImport] =

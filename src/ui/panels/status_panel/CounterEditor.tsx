@@ -2,12 +2,13 @@ import { unmapCounterBars } from "@entities/actor/resourceBars";
 import { CounterBarSwitches, type CounterBarMapping } from "./CounterBarSwitches";
 import { ClockStyleSelect } from "@ui/controls/ClockStyleSelect";
 import { isClockStyle } from "@core/entity_resources/clockStyle";
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
 import type { ClockCounter as Counter } from "@core/entity_resources/statusResources";
 import { DEFAULT_CLOCK_STYLE, type ClockStyle } from "@core/entity_resources/clockStyle";
 import { CounterValueField } from "./CounterValueField";
 import { CounterNumberField } from "./CounterNumberField";
-import { StatusDialog } from "./StatusDialog";
+import { ListEditDialog } from "@ui/controls/ListEditDialog";
+import type { OrderedEditorSelectProps } from "@ui/controls/OrderedEditorSelect";
 
 export type CounterDraft = { name: string; value: string; minimum: string; maximum: string; style?: ClockStyle };
 export function createCounterDraft(counter?: Counter): CounterDraft {
@@ -29,7 +30,7 @@ export function resolveCounterDraft(id: string, draft: CounterDraft): Counter {
     ...(draft.style === undefined ? {} : { style: draft.style }) };
 }
 
-export function CounterEditor({ kind = "counter", defaultClockStyle = DEFAULT_CLOCK_STYLE, counter, defaultName, selector, onClose, onSave, onRemove, draft: controlledDraft, onDraftChange, saveDisabled = false, title, barMapping, resourceCounterId }: {
+export function CounterEditor({ kind = "counter", defaultClockStyle = DEFAULT_CLOCK_STYLE, counter, defaultName, selection, onClose, onSave, onRemove, draft: controlledDraft, onDraftChange, saveDisabled = false, dirtyCount = 0, title, barMapping, resourceCounterId }: {
   kind?: "counter" | "clock";
   defaultClockStyle?: ClockStyle;
   title?: string;
@@ -37,13 +38,14 @@ export function CounterEditor({ kind = "counter", defaultClockStyle = DEFAULT_CL
   resourceCounterId?: string;
   counter?: Counter;
   defaultName: string;
-  selector?: ReactNode;
+  selection?: OrderedEditorSelectProps;
   onClose: () => void;
   onSave: (counter: Counter, useDefaultName: boolean) => void;
   onRemove?: () => void;
   draft?: CounterDraft;
   onDraftChange?: (draft: CounterDraft) => void;
   saveDisabled?: boolean;
+  dirtyCount?: number;
 }) {
   const [localDraft, setLocalDraft] = useState(() => kind === "clock" && !counter ? { ...createCounterDraft(), minimum: "0", maximum: "4", style: defaultClockStyle } : createCounterDraft(counter));
   const draft = controlledDraft ?? localDraft;
@@ -63,21 +65,15 @@ export function CounterEditor({ kind = "counter", defaultClockStyle = DEFAULT_CL
     if (onDraftChange) onDraftChange(updated);
     else setLocalDraft(updated);
   }
-  return <StatusDialog title={title ?? (counter ? `Edit ${plural}` : `Add ${kind}`)} onClose={onClose}>
-    <form className="space-y-3" onSubmit={(event) => { event.preventDefault(); if (valid && !saveDisabled) onSave({ id: counter?.id ?? resourceCounterId ?? crypto.randomUUID(), name: resolvedName, value: Number(value), ...(min === undefined ? {} : { minimum: min }), ...(max === undefined ? {} : { maximum: max }), ...(kind === "clock" ? { style: draft.style ?? DEFAULT_CLOCK_STYLE } : {}) }, !counter && !name.trim()); }}>
-      {selector}
-      <label className="block text-sm">Name<input aria-label={kind === "clock" ? "Clock name" : "Counter name"} className="mt-1 w-full rounded border border-canvas-line bg-canvas p-2 enabled:hover:border-canvas-ink focus-visible:ring-2 focus-visible:ring-canvas-ink" placeholder={counter ? undefined : defaultName} value={name} onChange={(event) => update("name", event.currentTarget.value)} /></label>
+  return <ListEditDialog title={title ?? (counter ? `Edit ${plural}` : `Add ${kind}`)} onClose={onClose}
+    dirtyCount={dirtyCount} selection={selection} onDelete={onRemove} saveDisabled={!valid || saveDisabled}
+    onSave={() => { if (valid && !saveDisabled) onSave({ id: counter?.id ?? resourceCounterId ?? crypto.randomUUID(), name: resolvedName, value: Number(value), ...(min === undefined ? {} : { minimum: min }), ...(max === undefined ? {} : { maximum: max }), ...(kind === "clock" ? { style: draft.style ?? DEFAULT_CLOCK_STYLE } : {}) }, !counter && !name.trim()); }}>
+      <label className="block text-sm">Name<input data-configurable-name data-dialog-initial-focus={!counter || undefined} aria-label={kind === "clock" ? "Clock name" : "Counter name"} className="mt-1 block w-full rounded border border-canvas-line bg-canvas p-2 enabled:hover:border-canvas-ink focus-visible:ring-2 focus-visible:ring-canvas-ink" placeholder={counter ? undefined : defaultName} value={name} onChange={(event) => update("name", event.currentTarget.value)} /></label>
       {kind === "clock" ? <ClockStyleSelect label="Clock style" value={draft.style ?? DEFAULT_CLOCK_STYLE} onChange={(style) => update("style", style)} /> : null}
       <CounterValueField value={value} minimum={min} maximum={max} onChange={(next) => update("value", next)} />
       {kind === "counter" ? <CounterNumberField label="Minimum (optional)" name="minimum" value={minimum} optional onChange={(next) => update("minimum", next)} /> : null}
       <CounterNumberField label={kind === "clock" ? "Segments (1–12)" : "Maximum (optional)"} name={kind === "clock" ? "segments" : "maximum"} value={maximum} minimum={kind === "clock" ? 1 : undefined} maximum={kind === "clock" ? 12 : undefined} emptyIncrementValue={1} optional={kind === "counter"} onChange={(next) => update("maximum", next)} />
       {kind === "counter" && barMapping && resourceCounterId ? <CounterBarSwitches counterId={resourceCounterId} maximum={maximum} mapping={barMapping} /> : null}
       {!valid ? <p className="text-xs text-canvas-muted">{kind === "clock" ? "Enter whole-number progress and 1–12 segments." : counter ? "Enter a name, whole numbers, and a minimum no greater than maximum." : "Enter whole numbers and a minimum no greater than maximum."}</p> : null}
-      <div className="flex flex-wrap justify-end gap-2">
-        {onRemove ? <button className="mr-auto rounded border border-canvas-line p-2 text-red-700 dark:text-red-500 enabled:hover:bg-canvas-surface" onClick={onRemove} type="button">Remove {kind}</button> : null}
-        <button type="button" onClick={onClose} className="rounded border border-canvas-line p-2 enabled:hover:bg-canvas-surface">Cancel</button>
-        <button type="submit" disabled={!valid || saveDisabled} className="rounded bg-canvas-ink p-2 text-canvas-on-ink enabled:hover:bg-canvas-ink/80 disabled:cursor-not-allowed disabled:border-canvas-line disabled:bg-canvas-surface disabled:text-canvas-muted disabled:opacity-40">Save</button>
-      </div>
-    </form>
-  </StatusDialog>;
+  </ListEditDialog>;
 }

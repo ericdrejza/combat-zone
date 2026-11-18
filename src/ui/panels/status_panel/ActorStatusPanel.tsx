@@ -1,3 +1,5 @@
+import { ActorRollables } from "@ui/dice/ActorRollables";
+import { reorderCollection } from "@core/state/reorderCollection";
 import { previewedName } from '@interaction/namePreviewState';
 import { actorResourceBars, setResourceBars } from "@entities/actor/resourceBars";
 import { getAvailableCounterName } from "@entities/actor/counterNames";
@@ -46,15 +48,17 @@ export function ActorStatusPanel() {
       onAdjust={(actorIds, amount) => void commit("actor.adjustHitPoints", { actorIds, amount, rules }, (state) => adjustHitPoints(state, actorIds, amount, rules))}
       onSet={(id, hp, mapping) => void commit("actor.setHitPoints", { actorId: id, hitPoints: hp, rules, mapping: mapping ?? null }, (state) => updateSelectedActors(state, [id], (actor) => setResourceBars(setHitPoints(actor, hp, rules), mapping ?? actorResourceBars(actor))))} />
     </ActorStatusHealthRow>
+    {actors.map(a => <ActorRollables key={a.id} actor={a} />)}
     {actor ? <CounterControls key={`counters:${actor.id}`} counters={actor.counters} resourceBars={actorResourceBars(actor)} disabled={readOnly}
       onSave={(counter, useDefaultName = false, mapping) => void commit("actor.saveCounter", { actorId: actor.id, counter, useDefaultName, mapping: mapping ?? null }, (state) => updateSelectedActors(state, [actor.id], (current) => setResourceBars(saveCounter(current, useDefaultName ? { ...counter, name: getAvailableCounterName(current.counters) } : counter), mapping ?? actorResourceBars(current))))}
       onAdjust={(id, amount) => void commit("actor.adjustCounter", { actorId: actor.id, counterId: id, amount }, (state) => updateSelectedActors(state, [actor.id], (current) => {
         const counter = current.counters?.byId[id];
         return counter ? saveCounter(current, { ...counter, value: counter.value + amount }) : current;
       }))}
-      onSaveBatch={(counters, removedIds, mapping) => void commit("actor.editCounters", { actorId: actor.id, counters, removedIds, mapping: mapping ?? null }, (state) => updateSelectedActors(state, [actor.id], (current) => {
+      onSaveBatch={(counters, removedIds, mapping, orderIds) => void commit("actor.editCounters", { actorId: actor.id, counters, removedIds, mapping: mapping ?? null, orderIds: orderIds ?? null }, (state) => updateSelectedActors(state, [actor.id], (current) => {
         const removed = removedIds.reduce((next, id) => removeCounter(next, id), current);
-        return setResourceBars(counters.reduce((next, counter) => saveCounter(next, counter), removed), mapping ?? actorResourceBars(current));
+        const updated = setResourceBars(counters.reduce((next, counter) => saveCounter(next, counter), removed), mapping ?? actorResourceBars(current));
+        return orderIds ? { ...updated, counters: reorderCollection(updated.counters, orderIds) } : updated;
       }))} /> : null}
     {visibleConditions.length ? <MarkerSection title="Conditions" collapsible actors={actors} markers={visibleConditions} subsections={CONDITION_GROUPS.map((group) => ({ ...group, markers: group.markers.filter((marker) => visibleConditions.includes(marker)) }))} disabled={readOnly} onToggle={(marker) => void commit("actor.toggleCondition", { actorIds: ids, marker }, (state) => toggleMarker(state, ids, marker))} /> : null}
     <div className={dashboard ? "flex flex-wrap items-start gap-x-6 gap-y-4" : "space-y-4"}>

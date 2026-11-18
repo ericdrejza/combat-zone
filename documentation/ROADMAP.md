@@ -474,3 +474,86 @@ Implementation plan: [Focus light](plans/focus_light.md).
 - [x] Add the system-log wrench toggle and responsive multiline composer with mobile Send.
 - [x] Add browser-wide chat name color and matching message text settings.
 - [x] Clear all chat/system entries and delete individual user messages with plain theme-aware red trash icons on hover/focus, chat independent of undo/redo, and writer protection.
+
+## Dice rolling and Actor Rollables (#35)
+
+- [x] Suggest spaced entity/Rollable names from compact unquoted reference
+      fragments while keeping sent-reference resolution strict.
+
+- [x] #73: Full-notation chat rolls, capped repeat modifiers, a terminable worker,
+      durable individual results, and the Dice settings guide.
+- [x] #75: Ordered actor Rollables in Status, shared counter/clock ordering,
+      chat mentions, target previews, and launch audio.
+- [x] #75: Durable Success/Failure resolution, one-use formula overrides, manual per-target
+      healing/damage amounts, and undoable HP/application receipts.
+- [x] #74: Text and dice-face images, lazy 3D canvas tray, physical-face result
+      parity, safe text fallback, and optional dice-ui evaluation.
+
+- [x] Refine Rollables with None effects, mandatory effect rolls, in-selector
+      creation/reordering that stays open, and a shared destructive-action footer.
+
+- [x] Share the Rollable/Counter/Clock list editor shell and red Delete / Cancel /
+      Save footer. Overlay selection menus without shifting fields; preserve
+      ordering, creation, focus containment, outside dismissal, and draft history.
+
+- [x] Auto-scroll shared edit-dialog dropdowns at drag edges, including stationary
+      pointer reordering, bounded content, pointer ownership, and cancellation.
+
+- [x] Add keyboard-accessible slash/reference completion with prefix ranking,
+      general colored chat references, scoped Zone/faction targets, and durable
+      historical reference colors and selected identities.
+
+- [x] Refine chat completion with saved-caret four-way keyboard navigation,
+      toolbar entity icons, an editor-anchored Send button, initiative/selection
+      priorities for bare references, and tool-aware canvas reference picking.
+
+- [x] Initially highlight the first match for every Log suggestion, including
+      slash commands and Actor Rollables, preview its remaining text
+      inline, and support sent-reference outline previews and tool-aware selection.
+- [x] Stabilize Log completion by updating the draft and suffix in the same render
+      and retaining a matching suggestion while typing or deleting its prefix.
+- [x] Recall unique own single-line messages with Up/Down, preserving draft/caret,
+      reference choices, and recalled edits while keeping suggestion priority.
+- [x] Hide completion while browsing recalled messages until typing resumes;
+      resolve hierarchical selector lists with scope-filtered suggestions, Actor
+      leaves, durable item identities, interactive unions, and conditional group pan.
+- [x] Apply Actor-group selection to every faction reference and support direct
+      faction roots, global membership, actor refinement, and Zoneless reveal.
+- [x] Make Log reference clicks select from every tool, switching incompatible
+      tools to Select and adapting Audio owner sections without changing history.
+- [x] Lighten dark-theme Actor reference faction hues to meet AA text contrast
+      while preserving historical color snapshots and Zone colors.
+- [x] Keep Space literal for quoted references with any multiword match, even when
+      the highlighted match is single-word; support matching
+      single/double quotes through completion and reference resolution.
+
+- [x] Show click-only stale-reference warning tooltips and reveal selected Zoneless
+      Actors in canvas, sidebar/tab, and compact presentations without history changes.
+
+- [x] Center the viewport on double-clicked canvas references using the Status image pan
+      behavior, preserving zoom, tool restrictions, and Zoneless navigation.
+- [x] Group Log settings into Colors and Reference navigation, rename Sender name
+      color, and explain single-click selection versus double-click navigation.
+
+- [x] Add alphabetical draft sorting beside Create new in the shared list editor.
+- [x] Standardize configurable creation/editing with a shared divider, dirty
+      indicators, discard policy, Name focus, direct empty-list creation, and field spacing.
+
+- [x] Share a wrapping row for roll totals and Apply controls; omit redundant
+      whole-expression parentheses while preserving meaningful inner grouping.
+- [x] Add a total tooltip with per-label final contributions and Other for mixed labeled and
+      unlabeled results, preserving existing result labels and saved data.
+
+- [x] Add `/rr` batches and current-reference Roll again cards; simplify repeat
+      examples and align right-justified Damage/Healing controls with totals.
+
+- [x] Replace application-list checkboxes with wrapping Actor token tiles,
+      faction grouping/color markers, overlaid checks, and missing-HP tooltips.
+- [x] Keep sidebar headers/footers pinned by confining scroll to panel/tab
+      viewports and suggestion navigation to its own menu.
+- [x] Match application tile previews to canvas tokens, compact amount editing,
+      show receipt-derived reapplication markers and centered applied counts,
+      expose Rollable formula tooltips, and refine attack/formula editor controls.
+- [x] Add per-Rollable shared/per-target/Ask me check modes with the 20-target
+      limit, versioned migration, target-linked results, Success/Failure/Mixed
+      outcomes, Check result headings, and right-aligned target resolution.

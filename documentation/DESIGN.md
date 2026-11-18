@@ -409,7 +409,7 @@ discards its value; adding that Actor again creates a blank entry.
 
 The initiative row's status control opens a row-width choice strip ordered:
 remove from initiative, dead, unconscious / severely injured, injured, healthy.
-Each icon has a descriptive tooltip. Interface settings > Panels > Status offers
+Each icon has a descriptive tooltip. Interface settings > Status offers
 “Reverse health status icon order”, off by default. It reverses the four health
 choices in both Status and Initiative quick select, including their popouts;
 Initiative removal stays first. Status keyboard navigation follows the displayed
@@ -417,7 +417,7 @@ order. This durable interface preference does not enter encounter history.
 Removing an entry preserves Actor status.
 Dead participants have muted row text and are skipped when starting combat or
 stepping forward/backward. Their names also have a strikethrough by default;
-the standard switch in Interface settings > Panels > Initiative toggles this
+the standard switch in Interface settings > Initiative toggles this
 decoration. This durable interface preference applies in the docked list and
 popout and does not change Actor status or encounter history.
 Marking the current Actor dead retains its turn
@@ -1507,7 +1507,7 @@ include its height when sizing their shared container. Box visuals sit slightly
 left of center with more room for boxes on the left, keeping two-digit maxima
 inset from the card edge; the maximum retains its confirmed-fill action. All styles use the same
 zero-to-segment-count bounds, progress mechanics, and exact current/total value.
-The clock editor exposes the style choice. Interface settings > Panels > Status stores
+The clock editor exposes the style choice. Interface settings > Status stores
 a Default clock style preference, initially Traditional, used only for newly
 created clocks (including creation from the shared editor). Existing clocks keep
 their own style when that default changes. The preference persists, synchronizes
@@ -1518,7 +1518,7 @@ already full, clicking that maximum instead offers to reset its progress to zero
 Cancel, Escape, or backdrop dismissal leaves progress unchanged. Completion has no automatic effect.
 Clock Add/Edit follows counter draft editing: a shared dropdown, creation and
 removal inside the editor, change indicators, atomic Save, and dirty-close
-Save/Discard/Keep editing confirmation. All Zone status changes pass validation,
+the shared discard confirmation rules. All Zone status changes pass validation,
 writer enforcement, and snapshot undo/redo; no-op operations create no history.
 
 Health uses the same four ordinal statuses as Initiative, without its removal
@@ -1600,12 +1600,16 @@ Custom counters have stable IDs, names, integer current values and optional
 integer bounds. Create, edit, remove and ±1 controls are available for one Actor.
 The header always shows an “Edit counters” pencil immediately before Add counter,
 including when no counters exist; rows have no edit or remove icons. The shared editor uses
-a counter dropdown whose last option, “Create new counter”, adds and selects
+a counter dropdown with a “Create new counter” button that adds and selects
 an empty draft counter (current value zero, no bounds, generated name placeholder).
 The modal title is “Edit counters”. It keeps all edits and removals in one local draft while
 switching counters. Changed counters show a pen indicator only beside their names inside the dropdown.
-Save commits the entire draft as one undoable change. Closing a dirty editor
-prompts to save, discard, or keep editing; invalid drafts cannot be saved.
+Save commits the entire draft as one undoable change; invalid drafts cannot be saved.
+Escape with unsaved changes asks whether to discard them. Cancel asks only when
+multiple configurable items have unsaved changes; otherwise it closes directly.
+The confirmation offers Continue editing at bottom left and Discard changes at
+bottom right, with initial focus on Discard changes. Returning to editing retains
+the draft and restores focus.
 Removal is available inside the editor and takes effect on save. On touch devices,
 swiping a status-panel counter row right reveals a red fill with a black trash icon
 and deletes the counter on release; swiping left reveals a theme-neutral fill with
@@ -1705,7 +1709,7 @@ recalculations create no history. HP-limit changes apply to subsequent HP edits.
 With automation enabled, effective current/maximum HP changes also recalculate
 health. Manual overrides persist until an effective HP change or cutoff recalculation; no-op HP commands preserve them.
 
-Interface settings > Panels > Status autosaves global Status panel visibility. All conditions
+Interface settings > Status autosaves global Status panel visibility. All conditions
 and equipment sections are shown by
 default. Conditions are individual icon toggles in an alphabetically sorted,
 wrapped row; the Status panel sorts within its Buffs and Debuffs subsections. Eye/EyeOff section controls match
@@ -2592,3 +2596,292 @@ Locked ruler artifacts have an ID, optional display name (empty when unnamed), s
 - Actor movement limits are optional and advisory in every validation mode. Unlocked movement previews routes; pressing Shift (or Space) during a drag fixes a pivot, preserving earlier segments and optimizing subsequent movement from the new pivot. Actor movement with pivots is called pivoted movement. Right-click during unlocked actor dragging removes the last pivot point, preserving earlier pivots and the live actor position so dragging continues. Repeated right-clicks remove one pivot at a time; with no pivots remaining, movement continues directly from its original start. These draft edits do not create history entries or start canvas panning; the completed movement retains its normal single undo/redo step. No Add waypoint button is shown during a drag. The movement caption shows only distance and abbreviated units at the actor’s bottom right. A footwear icon in ruler subtools toggles that caption. Movement distance/range overlays end on pointer release, before a new actor position commits, so no new range boundary flashes on drop. The token itself retains its last pointer position during validation and settles from there to the accepted position, without replaying movement from its original position. Movement limits use a glow anchored at the latest pivot, or the drag origin before any pivots, with the remaining distance after prior tracked movement and all fixed segments. The live segment does not reduce this envelope until fixed as a pivot. Adding or removing pivots recalculates the origin, remaining distance, and alternating-diagonal parity: whole reachable grid cells when snapped, a true radius when unsnapped. This is an advisory distance envelope, not obstacle pathfinding. Zone-locked movement has ruler only.
 - Turn accounting defaults off and applies only to the active initiative actor. Reset per turn (default) or per round; the reset selector is enabled only while tracking is enabled. Count accepted drags/keyboard moves; exclude placement, removal, automatic packing and map changes. Carry alternating parity within accounting periods; otherwise restart per gesture.
 - Movement and accounting commit atomically. Initiative changes, deletion and accounting changes preserve exact undo/redo. Changes to tracking/reset policy/costs/measurement units clear totals; limit edits retain totals.
+
+## Dice rolling and Actor Rollables
+
+The approved feature specification is recorded in
+[Dice rolling and Actor Rollables](plans/dice_rolling.md). Its product decisions
+extend this design: full-notation `/roll`, `/r`, and inline chat rolls; bounded
+repeat modifiers using `~m` (extra rolls, default 10); durable results independent
+of encounter history; ordered actor-owned Rollables edited in Status; resumable
+Success/Failure workflows; explicit per-target healing/damage application with undoable
+receipts; and text, image, and optional 3D presentations. Characters and Actor
+Templates are deferred. Application is manual; dice never determine hits or
+change HP without GM action. Existing HP and validation rules remain authoritative.
+
+Rollables require an effect roll; their optional check precedes Success/Failure
+resolution. Effect kinds are None, Damage, and Healing. None is for general
+rolls and never offers log-card HP application. The Rollables editor selects
+and reorders entries inside one dropdown that remains open during ordering.
+Its Create new Rollable choice creates/selects a draft, following Edit Counter's
+creation interaction. Delete Rollable uses red destructive styling and shares
+a responsive footer row with the Cancel/Save button group.
+
+Rollable, Counter, and Clock list editors share one dialog shell, selector, and
+action footer. Their selection menus overlay the dialog without changing its
+layout, remain open for ordering, and contain creation as the final choice.
+While open, the menu owns pointer/keyboard interaction; selecting, creating,
+Escape, or an outside click dismisses it before field editing continues. The
+menu fits the owning window (including compact and popout windows) and scrolls
+when needed. All three use a red Delete button, then Cancel and Save, with the
+same labels and styling. Save/Cancel and undo/redo retain existing draft rules.
+
+The shared configurable shell places a divider below its selection controls.
+Rollable, Counter, and Clock creation uses the same Edit dialog as editing, with
+a new draft selected and Name focused immediately. Create new from the selector
+also focuses Name. When no items exist, show the Create new button directly,
+without a dropdown or sort control. Empty Rollables show “No rollables yet. Choose
+Create new rollable to add one.” Fields use consistent spacing below the divider.
+Unsaved fields, additions, removals, and manual/sorted reordering participate in
+the shared discard policy. Pencil icons appear to the right of dirty item names
+inside the dropdown; reverting an edit clears its marker. Adding or removing an
+item does not mark unchanged neighbors dirty merely because their indices shift.
+Escape closes an open selector first; a subsequent Escape in a dirty editor opens
+the shared confirmation. Escape or backdrop dismissal of the confirmation returns
+to editing. Save remains in the editor, committing the complete draft atomically.
+
+During pointer or touch reordering in a shared edit-dialog dropdown, reaching
+the top or bottom edge scrolls that list in the corresponding direction.
+Scrolling continues while the dragged item is held at the edge and updates
+its order as hidden rows are revealed. It stops on release, cancellation,
+leaving the edge, or closing the menu, and stays bounded to the original
+content extent. Ordering remains a dialog draft until Save.
+
+The Rollables editor places an info icon beside each formula label. Its tooltip reads “Click to open dice notation”; activating it opens Dice settings at the Notation guide, preserving the editor's unsaved draft and returning focus when settings closes.
+Each notation-guide example has a top-right copy icon that copies only its formula.
+The Labels example is `2d6[Physical] + 1d6[Magic]`.
+
+Hovering or focusing a roll total shows a tooltip below it when the saved result
+contains at least one label and another label or an unlabeled portion. Sum repeated
+labels into one subtotal and sum unlabeled portions as Other. A result with no
+labels or only one label covering the entire result needs no breakdown. Show
+contributions to the final total: distribute scalar multiplication/division across
+the affected labels, without treating a multiplier/divisor as an Other summand.
+Split inseparable mixed-label operations and rounding proportionally by contribution
+magnitude, assigning any rounding residual to the last entry so contributions
+account for the saved total. A label on a parent expression owns that expression's
+whole contribution. Respect
+dropped/rerolled values and exclude auxiliary calculations and computed dice
+count/sides. Existing formula text and labels in individual results stay unchanged.
+Keyboard focus and touch-hold expose the same breakdown without mutating the roll.
+The subtotal tooltip uses the active theme's panel background, text, and border
+colors for both desktop/focus and touch-hold help.
+
+### Chat completion and references
+
+With no active suggestions, Up from the first visual line of the Log draft recalls
+the user's most recent single-line sent message. Continue Up/Down through unique
+sent message texts, keeping their most recent occurrence and skipping other
+senders and messages containing explicit line breaks. Visually wrapped single-line
+messages remain eligible. Stop at the oldest message; Down past the newest restores
+the original draft, caret, and chosen reference identities. Preserve edits to each
+recalled message while browsing, without changing its sent card. Once browsing
+starts, Up/Down continues immediately through history; suggestions stay hidden
+until typing or deletion edits the draft again. Outside recall, suggestions take
+priority. Successful sending resets browsing. Recall state is session-only and
+does not create encounter history entries.
+
+Chat suggests `/r` and `/roll`, actor/zone references, actor Rollables after `/`, and zone-specific references after `.`. Case-insensitive prefix matches precede substring matches. Arrow keys navigate suggestions; Tab, Enter, or Space accepts the focused suggestion without sending. Escape dismisses suggestions. Keyboard focus and pointer hover use the same faction-colored Actor outline pulse; zone/faction suggestions preview their member Actors. Reduced-motion preferences still apply.
+
+Unquoted, single-word reference fragments also compare against names with
+whitespace removed, including scoped names and Actor Rollables: `@hero1` suggests
+`Hero 1`. Accepting inserts the actual name with necessary quotes. This is only a
+suggestion convenience: sending `@hero1` unchanged does not resolve to `Hero 1`.
+Quoted fragments retain whitespace-sensitive matching. Compact prefix matches
+retain the usual priority and stable inline completion behavior.
+
+All Log suggestions, including slash commands, Actor Rollables, and entity
+references, initially highlight the first match, allowing immediate
+completion with Tab, Enter, or Space. At the end of the draft, a prefix match shows
+the remaining name muted after the typed portion; this preview is not draft text
+until accepted. Substring matches remain selectable without an inline suffix.
+Typing or deleting within the same reference retains the current suggestion while
+its name still matches the typed prefix; otherwise the best-ranked match takes
+over. The typed text and remaining muted suffix update together without a
+temporary gap, duplication, or clearing the preview between characters.
+When the typed reference starts with a single or double quote and any matching
+suggestion is multiword, Space inserts a space to refine the name, even if the
+highlighted suggestion is a single word. Tab, Enter, and clicking still explicitly
+accept it. Unquoted references and quoted references with only single-word
+matches retain Space completion. Single-quoted names resolve
+like double-quoted names, and completion preserves the manually entered quote style.
+Hovering a sent reference previews the same Actor outlines as its suggestion;
+Zone/faction references preview their matching current members. References show a
+pointer cursor and clicking selects their saved Actor or Zone identity. Like other
+panel selection controls, a reference click switches to Select if the current tool
+cannot select that entity type. Audio stays active and switches to the appropriate
+Actor/Zone owner section. Compatible tools stay active. Deleted entities retain their display text
+without selecting a replacement entity. A single click (or keyboard activation)
+only selects; double-click selects and navigates. Pointer clicks use the existing
+250 ms gesture window so selection-driven panel expansion cannot move the target
+before the second click. Keyboard activation selects immediately. Pending pointer
+gestures are canceled on unmount or encounter-session changes. Selection remains session-only.
+Deleted references retain their saved color and use the same pointer, hover, and
+keyboard-focus affordances as live references. Activating one only shows a
+warning-styled “Stale reference” tooltip beneath it; hover or focus alone never
+shows that warning. Escape, focus loss, or an outside pointer interaction dismisses
+it. Stale references never select another entity, preview outlines, move the
+viewport, or mutate history. Restoring the entity restores normal reference
+navigation. Double-clicking a Zoneless Actor reference opens its Zoneless presentation and
+scrolls its token into view, including canvas, sidebar/tab, and compact drawer
+layouts. This navigation does not change encounter history or saved panel settings.
+Double-clicking a live canvas reference animates the viewport to that entity,
+preserving zoom like Status Actor images. Actors use their current rendered
+placement (including Zone-locked layouts), while Zones use their polygon center.
+Zoneless Actors keep their panel reveal behavior. Stale or empty references never
+change the active tool or selection.
+Interface settings call this section Log, with Colors and Reference navigation
+subsections. Colors includes Sender name color and the message-color switch.
+Reference navigation explains single-click selection and double-click navigation.
+There is no navigation switch or stored preference; obsolete saved values are
+ignored. Single clicks do not pan or open/scroll the Zoneless panel. Status image
+navigation remains independent and retains its existing click behavior.
+
+The shared Rollable/Counter/Clock editor dropdown includes a Sort alphabetically
+icon to the right of Create new. It orders the draft items by name without
+changing the selected item or closing the dropdown; Save commits the order and
+Cancel discards it, like manual reordering.
+
+Plain `@Actor` or `@Zone` references can appear anywhere in chat without invoking dice validation. Only explicit `/r`, `/roll`, `/rr`, inline `[[...]]`, or `@Actor/Rollable` syntax initiates rolling. Unknown prose references remain ordinary text. Duplicate Actor/Zone names require an explicit choice with entity/Zone context; references are never silently resolved to an arbitrary duplicate.
+
+`@Zone` targets every Actor currently in that Zone. `@Zone.heroes`, `.allies`, `.enemies`, and `.neutrals` target that faction's members; only these plural faction names are accepted. `@Zone.Actor` identifies an Actor within the Zone, allowing same-named Actors in different Zones to be distinguished. Scoped suggestions include only that Zone's Actors and populated factions. Zone references can be mixed with individual references in target lists; overlapping targets are deduplicated. Empty Zone/faction targets block sending with a no-matching-targets explanation. Targets are resolved and snapshotted when sent, retaining the existing per-target Success/Failure and application workflow.
+
+References may continue through Zone → faction → Actor, for example
+`@Zone1.heroes.Actor1`. Flat comma-separated selector lists are supported at every
+level, including `@[Zone1,Zone2].[heroes,enemies].["Hero One","Enemy One"]`.
+Each step selects from the union of the previous scope's children; suggestions
+are filtered to that scope, and Actor leaves have no further entity suggestions.
+Quotes preserve literal names, including spaces and separators. A scoped Rollable
+source must resolve to exactly one Actor. Invalid/out-of-scope list entries block
+rolling with an explanation, with no partial roll or sent message. Actor target
+overlaps are deduplicated. Ambiguous names retain explicit choices per list item.
+
+Factions can also be referenced directly as `@heroes`, `@allies`, `@enemies`, or
+`@neutrals`. Direct faction scope includes all current encounter members, including
+Zoneless Actors. Lists such as `@[heroes,enemies]` and paths such as
+`@heroes.ActorName` use the same scope filtering. Only populated factions appear in
+suggestions. Clicking any faction reference—direct, Zone-scoped, or a union—selects
+its matching Actors, never its parent Zone. Direct faction text uses its faction
+color with the dark-theme accessibility variant. Double-clicking Zoneless members opens
+their panel and reveals the first matching Zoneless Actor.
+If a direct faction name also names an Actor or Zone, require an explicit choice,
+as with other ambiguous root references. Quoting a name denotes a named entity;
+accepted suggestions and saved reference choices preserve the intended match.
+
+Each actual Zone/Actor name retains its historical clickable reference identity.
+A faction selector belonging to multiple selected Zones uses the same interaction:
+hover/focus previews its matching current Actors, and clicking selects all of them,
+adapting the active tool through the same selection flow. Double-click additionally
+pans to the center of the selected token bounds only when all selected
+Actors have canvas placements and their complete bounds fit at the current zoom.
+Otherwise leave the viewport unchanged; union selection never changes zoom.
+Union membership is derived from saved parent identities; deleted parents cannot
+silently select replacement entities with the same name.
+
+Completion preserves manually entered quotes and automatically quotes names containing spaces. Simple names remain unquoted. Selecting an Actor reference does not force a trailing `/`; typing `/` offers its Rollables.
+
+Sent reference spelling, selected identity, and display color are historical snapshots, unaffected by later renaming, recoloring, movement, or deletion. Actor names use faction colors. Zone names use their fill color at full opacity if the fill is visible, otherwise their visible border color, otherwise default message text color. In qualified Actor references, the Zone portion uses the Zone color and the Actor portion uses its faction color. Reference spans are saved with chat independently of encounter undo/redo; older messages are preserved without inventing historical reference colors.
+In dark theme, render saved automatic Actor faction colors using lighter matching
+hues that meet WCAG AA normal-text contrast (at least 4.5:1) on Log cards. Apply
+this to live and stale Actor references without changing their stored color.
+Light-theme rendering and Zone reference colors retain their existing behavior.
+
+While keyboard suggestion focus is active, the textarea caret is hidden and all
+four arrow keys navigate suggestions. Native text selection stays at its saved
+position; typing resumes there with the caret visible. Escape or clicking the
+editor returns to text editing. Suggestions show Actor/Zone primary toolbar
+icons and the UsersRound group icon for factions; entity type names remain in
+accessible labels, with Zone context retained to distinguish duplicate Actors.
+The Send button stays inside the textarea wrapper, above the suggestion area.
+
+For a bare `@`, the current Actor is suggested first while initiative is running,
+followed by currently selected Actors, then other matches. Without an active
+combat Actor, selected Actors lead. Once any reference name characters are
+typed, only prefix/substring matching determines order.
+
+With a bare `@` pending at the caret, clicking an Actor, Zone, or Engagement on
+the canvas completes the prompt after normal tool selection. The active tool
+must permit selecting the clicked type. Actor/Zone picks insert that entity's
+reference; an Engagement pick inserts its current participants as an Actor
+reference list, extending an existing list without nesting brackets. Picks
+retain exact Actor identities even when names duplicate. Ordinary canvas
+selection still occurs, then keyboard focus returns to the prompt. Typed
+reference fragments and messages without a pending `@` are not replaced.
+
+Roll cards place their total and Apply-button container in one wrapping flex row:
+they share a line when space permits and wrap on compact screens. Result trees
+omit parentheses enclosing the complete expression, retaining parentheses that
+preserve nested arithmetic grouping or function-call notation.
+
+
+`/rr formula count` repeats one formula independently 1–20 times in one atomic
+chat message; the formula may be wrapped in parentheses and contain spaces.
+Every result has its own identity, faces, total, and eligible Apply controls.
+Invalid formulas or repeat counts keep the draft and publish nothing.
+
+Rolled chat cards show a clockwise Roll again icon immediately left of Delete,
+under the same card hover/focus visibility rule. Roll again creates a new message
+by resolving the original command and references against the current encounter,
+including the current Rollable definition and current Zone/faction membership.
+Explicit duplicate-name choices are reused only while their names still match.
+Missing references report an error without modifying the original card. Old
+results, pending decisions, and applications remain intact. Roll again respects
+writer access and disables duplicate clicks while its request is pending.
+
+Roll totals and Apply controls justify to opposite sides when sharing a row.
+When both application types are offered, Damage precedes Healing. The notation
+guide uses basic repeating-modifier examples without `~m`; the separate Extra
+roll limits section retains its limits and capped-notation examples.
+
+The damage/healing application dialog uses wrapping Actor token tiles, ordered
+left-to-right within each faction. All token previews use the same display size,
+retaining image shape, crop, and mirroring, with the Actor name below. Selected
+tiles show a check over the token area rather than a checkbox beside the name.
+Actors without configured hit points cannot be selected; their names are muted
+and their hover/touch tooltip reads “No hit points configured,” without permanent
+helper text. A UsersRound toggle in the dialog's upper-right header controls
+faction grouping, enabled by default. Faction names have a faction-colored circle
+on the right. Turning grouping off produces the existing alphabetical ordering;
+selection and per-Actor amount drafts survive regrouping.
+
+Sidebar headers and footers stay fixed within their dock. Only the nested panel
+viewports and designated footer tab strips may scroll; the whole sidebar cannot
+scroll past footer controls. Suggestion navigation reveals rows within its own
+menu, without scrolling ancestor docks or shifting the footer.
+
+Application tiles reuse the canvas Actor renderer, including faction fill and
+artwork/video preferences. Per-Actor amounts stay centered independently of the
+edit toggle. Editing places decrement/increment beside a compact three-digit
+number field without native spinners, with edit, halve, and double controls
+beneath. Previously applied Actors show a RotateCcwClock marker at the tile's
+upper left, with “This actor has already applied this effect” hover/touch help.
+The distinct applied-target count is centered at the bottom of the roll card.
+
+Hovering or focusing a Rollable reveals its configured check and effect rolls,
+separated by a middle dot when a check exists. A non-None effect kind follows
+another dot in italics. Touch-hold exposes the same setup as text.
+
+Success/Failure adjudication is labeled “Check result:” followed by the check total.
+Opening or reopening the dialog focuses the first target's Success button so
+Enter can confirm success immediately, including for shared and per-target checks.
+Success and its edit control form a joined button group. The effect editor spaces
+Back (Undo2), Revert to original (RotateCcw), and Roll (Dices) icon controls across
+its footer. Revert is disabled when the draft exactly equals the original formula.
+
+
+Each Rollable configures Check roll mode: One check for all targets (default),
+One check per target, or Ask me. Ask me prompts for the two modes before rolling
+only when there are multiple deduplicated targets. Cancel retains the chat draft
+and publishes nothing. Zero/one target always uses one check. Rollables without
+a check skip this setting. Per-target checks allow at most 20 targets; larger
+groups require fewer targets or a shared check.
+
+Shared checks append · Success, · Failure, or · Mixed beside the total after all
+decisions resolve. Mixed means target decisions differ. Per-target check cards
+identify each saved target and show its individual outcome; pending checks have
+no outcome suffix, and no aggregate total is added. The shared-check dialog is
+headed Check result: <total>; independent checks use Check results with each
+target's total beside its decision controls. Resolve targets aligns right.
+One shared effect roll follows when any target succeeds; only successful targets
+are initially selected for application. Roll again uses current definitions and
+targets, prompting again when appropriate.

@@ -85,10 +85,10 @@ describe("Settings categories", () => {
     expect(health.getByRole("textbox", { name: "Health counter name" })).toHaveAccessibleDescription();
     expect(screen.queryByRole("switch", { name: "Show conditions" })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("tab", { name: "Interface" }));
-    const initiative = within(screen.getByRole("group", { name: "Initiative" }));
+    const initiative = within(screen.getByRole("group", { name: "Initiative (Panel)" }));
     expect(initiative.getByRole("switch", { name: "Auto-select active actor in initiative" })).toBeInTheDocument();
     expect(initiative.getByRole("switch", { name: "Strikethrough dead actor names in initiative" })).toBeInTheDocument();
-    const status = within(screen.getByRole("group", { name: "Status" }));
+    const status = within(screen.getByRole("group", { name: "Status (Panel)" }));
     expect(status.getByRole("switch", { name: "Show conditions" })).toBeInTheDocument();
     expect(status.getByRole("combobox", { name: "Default clock style" })).toHaveAccessibleDescription();
     expect(screen.queryByRole("textbox", { name: "Health counter name" })).not.toBeInTheDocument();

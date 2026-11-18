@@ -67,7 +67,7 @@ describe("InterfaceSettings", () => {
 
   it.each(["box", "stack", "row"])("persists %s as the default clock style and resets to Traditional", (style) => {
     const view = renderSettings();
-    const defaults = screen.getByRole("group", { name: "Status" });
+    const defaults = screen.getByRole("group", { name: "Status (Panel)" });
     const select = within(defaults).getByRole("combobox", { name: "Default clock style" });
     expect(select).toHaveValue("traditional");
     expect(within(select).getAllByRole("option").map((option) => option.textContent)).toEqual(["Box", "Row", "Stack", "Traditional"]);
@@ -104,7 +104,7 @@ describe("InterfaceSettings", () => {
     renderSettings();
 
     const accessibility = screen.getByRole("group", { name: "Accessibility" });
-    const defaults = screen.getByRole("group", { name: "Initiative" });
+    const defaults = screen.getByRole("group", { name: "Initiative (Panel)" });
     const autoSelect = within(defaults).getByRole("switch", {
       name: "Auto-select active actor in initiative"
     });

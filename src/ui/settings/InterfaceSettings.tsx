@@ -8,6 +8,9 @@ import { ThemeSettings } from "./ThemeSettings";
 import { PreferenceSwitch } from "./PreferenceSwitch";
 import { LibraryInterfaceSettings } from "./LibraryInterfaceSettings";
 import { PanelInterfaceSettings } from "./PanelInterfaceSettings";
+import { InitiativeInterfaceSettings } from "./InitiativeInterfaceSettings";
+import { StatusInterfaceSettings } from "./StatusInterfaceSettings";
+import { ZonelessInterfaceSettings } from "./ZonelessInterfaceSettings";
 
 export function InterfaceSettings() {
   const resetCategory = useResetSettingsCategory("interface");
@@ -31,6 +34,9 @@ export function InterfaceSettings() {
     </SettingsSection>
     <LibraryInterfaceSettings />
     <PanelInterfaceSettings />
+    <InitiativeInterfaceSettings />
     <ChatSettings />
+    <StatusInterfaceSettings />
+    <ZonelessInterfaceSettings />
   </SettingsCategory>;
 }

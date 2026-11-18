@@ -3,6 +3,7 @@ export type SettingsTabId =
   | "audio"
   | "canvas"
   | "combat"
+  | "dice"
   | "data"
   | "interface"
   | "keybinds";

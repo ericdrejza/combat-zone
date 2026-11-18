@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { InterfacePreferenceProvider, useInterfacePreferences, INTERFACE_PREFERENCES_STORAGE_KEY } from "@ui/interface_preferences/InterfacePreferenceProvider";
 import { LOCAL_PREFERENCES_RESET_EVENT } from "@ui/motion_preferences/MotionPreferenceProvider";
-import { PanelInterfaceSettings } from "@ui/settings/PanelInterfaceSettings";
+import { ZonelessInterfaceSettings } from "@ui/settings/ZonelessInterfaceSettings";
 import { Provider } from "react-redux";
 import { store } from "@store/store";
 
@@ -13,7 +13,7 @@ function ResetInterface() {
 afterEach(() => localStorage.removeItem(INTERFACE_PREFERENCES_STORAGE_KEY));
 
 it("persists header expansion, restores it on mount, and resets with Interface and application preferences", () => {
-  const mount = () => render(<Provider store={store}><InterfacePreferenceProvider><PanelInterfaceSettings /><ResetInterface /></InterfacePreferenceProvider></Provider>);
+  const mount = () => render(<Provider store={store}><InterfacePreferenceProvider><ZonelessInterfaceSettings /><ResetInterface /></InterfacePreferenceProvider></Provider>);
   let view = mount();
   const control = () => screen.getByRole("switch", { name: "Click Zoneless header to expand or collapse" });
   expect(control()).toBeChecked();

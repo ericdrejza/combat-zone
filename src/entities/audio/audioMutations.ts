@@ -1,3 +1,4 @@
+import { clearRollableAudioLink } from "@entities/actor/rollableAudioLinks";
 import type { EncounterState } from "@core/encounter/types";
 import type { EntityCollection, EntityId } from "@core/state/entityCollection";
 import { DEFAULT_AUDIO_REPEAT_DELAY_SETTINGS, type AudioCue, type AudioCueGroup, type AudioCueGroupSection, SECTION_AUDIO_TRIGGERS } from "./types";
@@ -103,7 +104,7 @@ export function deleteAudioCueGroup(state: EncounterState, groupId: string): Enc
     audioCues: { byId: Object.fromEntries(cueIds.map((id) => [id, state.audioCues.byId[id]])), allIds: cueIds },
     musicGroupIds: state.musicGroupIds.filter((id) => id !== groupId),
     zones: { ...state.zones, byId: Object.fromEntries(Object.entries(state.zones.byId).map(([id, zone]) => [id, { ...zone, audioGroupIds: (zone.audioGroupIds ?? []).filter((value) => value !== groupId) }])) },
-    actors: { ...state.actors, byId: Object.fromEntries(Object.entries(state.actors.byId).map(([id, actor]) => [id, { ...actor, audioGroupIds: (actor.audioGroupIds ?? []).filter((value) => value !== groupId) }])) }
+    actors: { ...state.actors, byId: Object.fromEntries(Object.entries(state.actors.byId).map(([id, actor]) => [id, { ...clearRollableAudioLink(actor, groupId), audioGroupIds: (actor.audioGroupIds ?? []).filter((value) => value !== groupId) }])) }
   };
 }
 
@@ -151,7 +152,7 @@ export function moveAudioCueGroup(state: EncounterState, groupId: string, sectio
   }
   return {
     ...state,
-    actors: changedSection ? { ...state.actors, byId: Object.fromEntries(Object.entries(state.actors.byId).map(([id, actor]) => [id, { ...actor, audioGroupIds: (actor.audioGroupIds ?? []).filter((value) => value !== groupId) }])) } : state.actors,
+    actors: changedSection ? { ...state.actors, byId: Object.fromEntries(Object.entries(state.actors.byId).map(([id, actor]) => [id, { ...clearRollableAudioLink(actor, groupId), audioGroupIds: (actor.audioGroupIds ?? []).filter((value) => value !== groupId) }])) } : state.actors,
     audioCueGroups: { byId: { ...state.audioCueGroups.byId, [groupId]: nextGroup }, allIds },
     audioCues: { ...state.audioCues, byId: cueById },
     musicGroupIds,

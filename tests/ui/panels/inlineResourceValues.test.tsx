@@ -62,13 +62,13 @@ it("cancels a counter reset when clicking its confirmation backdrop", () => {
   expect(store.getState().encounter.past).toHaveLength(0);
 });
 
-it("cancels the discard/save confirmation on its backdrop while keeping the draft", () => {
+it("cancels the discard confirmation on its backdrop while keeping the draft", () => {
   setup();
   fireEvent.change(screen.getByLabelText("Current value"), { target: { value: "3" } });
-  fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
-  const dialog = screen.getByRole("dialog", { name: "Unsaved counter changes" });
+  fireEvent.keyDown(screen.getByRole("dialog", { name: "Edit counters" }), { key: "Escape" });
+  const dialog = screen.getByRole("dialog", { name: "Unsaved changes" });
   fireEvent.click(dialog.parentElement!);
-  expect(screen.queryByRole("dialog", { name: "Unsaved counter changes" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("dialog", { name: "Unsaved changes" })).not.toBeInTheDocument();
   expect(screen.getByRole("dialog", { name: "Edit counters" })).toBeInTheDocument();
   expect(screen.getByLabelText("Current value")).toHaveValue(3);
   expect(store.getState().encounter.past).toHaveLength(0);

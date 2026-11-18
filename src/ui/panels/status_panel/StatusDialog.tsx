@@ -2,7 +2,7 @@ import { X } from "lucide-react";
 import { useEffect, useRef, type ReactNode } from "react";
 
 /** Contains keyboard focus and restores it when a resource dialog closes. */
-export function StatusDialog({ title, onClose, children, cancelOnBackdrop = false, showClose = false, titleContent, compact = false, closeAboveTitle = false }: { title: string; onClose: () => void; children: ReactNode; cancelOnBackdrop?: boolean; showClose?: boolean; titleContent?: ReactNode; compact?: boolean; closeAboveTitle?: boolean }) {
+export function StatusDialog({ title, onClose, children, cancelOnBackdrop = false, showClose = false, titleContent, compact = false, closeAboveTitle = false, headerActions }: { title: string; onClose: () => void; children: ReactNode; cancelOnBackdrop?: boolean; showClose?: boolean; titleContent?: ReactNode; compact?: boolean; closeAboveTitle?: boolean; headerActions?: ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const dialog = ref.current;
@@ -25,6 +25,7 @@ export function StatusDialog({ title, onClose, children, cancelOnBackdrop = fals
     }}>
       <div className={`mb-3 flex ${closeAboveTitle ? "flex-col" : "items-start"} gap-2`}>
       <h3 className={`min-w-0 font-display text-lg font-semibold ${closeAboveTitle ? "w-full" : "flex-1"}`}>{titleContent ?? title}</h3>
+      {headerActions}
       {showClose ? <button aria-label="Close dialog" className={`shrink-0 rounded p-1 hover:bg-canvas-surface focus-visible:ring-2 focus-visible:ring-canvas-ink ${closeAboveTitle ? "order-first self-end" : ""}`} onClick={onClose} type="button"><X aria-hidden="true" className="h-4 w-4" /></button> : null}
       </div>
       {children}

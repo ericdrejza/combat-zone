@@ -1,3 +1,4 @@
+import { chooseEditorRecord, expectEditorChoice } from "@tests/ui/controls/editorSelectTestHelpers";
 import { setup } from "./counterEditorSetup";
 import { flushSync } from "react-dom";
 import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
@@ -53,8 +54,7 @@ describe("Edit counter numeric fields", () => {
     setup(true);
     fireEvent.click(screen.getByRole("button", { name: "Clear minimum" }));
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
-    expect(screen.getByRole("dialog", { name: "Unsaved counter changes" })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Discard changes" }));
+    expect(screen.queryByRole("dialog", { name: "Unsaved changes" })).not.toBeInTheDocument();
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(store.getState().encounter.present.actors.byId.a.counters!.byId.c.minimum).toBe(-2);
     expect(store.getState().encounter.past).toHaveLength(0);
@@ -76,8 +76,8 @@ describe("new counter placeholder names", () => {
     await screen.findByRole("group", { name: "Counter 2" });
     fireEvent.click(screen.getByRole("button", { name: "Edit counters" }));
     const firstCounterId = Object.values(store.getState().encounter.present.actors.byId.a.counters!.byId).find((counter) => counter.name === "Counter 1")!.id;
-    fireEvent.change(screen.getByLabelText("Counter to edit"), { target: { value: firstCounterId } });
-    fireEvent.click(screen.getByRole("button", { name: "Remove counter" }));
+    chooseEditorRecord("Counter to edit", firstCounterId);
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
     await waitFor(() => expect(screen.queryByRole("group", { name: "Counter 1" })).not.toBeInTheDocument());
     fireEvent.click(screen.getByRole("button", { name: "Add counter" }));
@@ -167,28 +167,29 @@ describe("counter selection in the shared editor", () => {
     expect(screen.getByRole("button", { name: "Edit counters" })).toHaveAttribute("title", "Edit counters");
     fireEvent.click(screen.getByRole("button", { name: "Edit counters" }));
     const secondId = Object.values(store.getState().encounter.present.actors.byId.a.counters!.byId).find((counter) => counter.name === "Spell slots")!.id;
-    fireEvent.change(screen.getByLabelText("Counter to edit"), { target: { value: secondId } });
+    chooseEditorRecord("Counter to edit", secondId);
     expect(screen.getByLabelText("Counter name")).toHaveValue("Spell slots");
     expect(screen.getByLabelText("Current value")).toHaveValue(3);
     expect(screen.getByLabelText("Minimum (optional)")).toHaveValue(null);
     expect(screen.getByLabelText("Maximum (optional)")).toHaveValue(7);
     fireEvent.change(screen.getByLabelText("Current value"), { target: { value: "4" } });
-    fireEvent.change(screen.getByLabelText("Counter to edit"), { target: { value: "c" } });
-    expect(screen.queryByRole("dialog", { name: "Unsaved counter changes" })).not.toBeInTheDocument();
-    expect(screen.getByRole("option", { name: "Spell slots ✎" })).toBeInTheDocument();
+    chooseEditorRecord("Counter to edit", "c");
+    expect(screen.queryByRole("dialog", { name: "Unsaved changes" })).not.toBeInTheDocument();
+    expectEditorChoice("Counter to edit", "Spell slots");
     expect(screen.getByLabelText("Counter name")).toHaveValue("Charges");
     expect(screen.getByLabelText("Current value")).toHaveValue(0);
     expect(screen.getByLabelText("Minimum (optional)")).toHaveValue(-2);
     expect(screen.getByLabelText("Maximum (optional)")).toHaveValue(5);
     expect(store.getState().encounter.present.actors.byId.a.counters!.byId[secondId].value).toBe(3);
     fireEvent.change(screen.getByLabelText("Current value"), { target: { value: "2" } });
-    fireEvent.change(screen.getByLabelText("Counter to edit"), { target: { value: secondId } });
+    chooseEditorRecord("Counter to edit", secondId);
     expect(screen.getByLabelText("Current value")).toHaveValue(4);
-    expect(screen.getByRole("option", { name: "Spell slots ✎" })).toBeInTheDocument();
+    expectEditorChoice("Counter to edit", "Spell slots");
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
-    fireEvent.click(screen.getByRole("button", { name: "Keep editing" }));
+    fireEvent.click(screen.getByRole("button", { name: "Continue editing" }));
     fireEvent.keyDown(screen.getByLabelText("Current value"), { key: "Escape" });
-    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+    fireEvent.click(screen.getByRole("button", { name: "Continue editing" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
     await waitFor(() => expect(store.getState().encounter.present.actors.byId.a.counters!.byId[secondId].value).toBe(4));
     expect(store.getState().encounter.present.actors.byId.a.counters!.byId.c.value).toBe(2);
     expect(store.getState().encounter.past).toHaveLength(2);
@@ -201,7 +202,7 @@ describe("counter selection in the shared editor", () => {
   });
   it("keeps Edit counters visible after removing the last counter and undoing", async () => {
     setup();
-    fireEvent.click(screen.getByRole("button", { name: "Remove counter" }));
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
     await waitFor(() => expect(store.getState().encounter.present.actors.byId.a.counters!.allIds).toHaveLength(0));
     expect(screen.getByRole("button", { name: "Edit counters" })).toBeInTheDocument();
@@ -214,17 +215,17 @@ describe("counter selection in the shared editor", () => {
 it("preserves invalid drafts across switching and disables saving the whole draft", () => {
   setup(false, true);
   fireEvent.change(screen.getByLabelText("Current value"), { target: { value: "" } });
-  fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
-  const prompt = screen.getByRole("dialog", { name: "Unsaved counter changes" });
-  expect(within(prompt).getByRole("button", { name: "Save changes" })).toBeDisabled();
-  fireEvent.click(within(prompt).getByRole("button", { name: "Keep editing" }));
-  fireEvent.change(screen.getByLabelText("Counter to edit"), { target: { value: "second" } });
+  fireEvent.keyDown(screen.getByRole("dialog", { name: "Edit counters" }), { key: "Escape" });
+  const prompt = screen.getByRole("dialog", { name: "Unsaved changes" });
+  expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
+  fireEvent.click(within(prompt).getByRole("button", { name: "Continue editing" }));
+  chooseEditorRecord("Counter to edit", "second");
   expect(screen.getByLabelText("Current value")).toHaveValue(3);
   expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
-  fireEvent.change(screen.getByLabelText("Counter to edit"), { target: { value: "c" } });
+  chooseEditorRecord("Counter to edit", "c");
   expect(screen.getByLabelText("Current value")).toHaveValue(null);
   fireEvent.change(screen.getByLabelText("Current value"), { target: { value: "0" } });
-  expect(screen.getByRole("option", { name: "Charges" })).toBeInTheDocument();
+  expectEditorChoice("Counter to edit", "Charges");
   fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   expect(store.getState().encounter.past).toHaveLength(0);
@@ -232,10 +233,24 @@ it("preserves invalid drafts across switching and disables saving the whole draf
 
 it("keeps counter removal in the draft and restores it when discarded", () => {
   setup();
-  fireEvent.click(screen.getByRole("button", { name: "Remove counter" }));
+  fireEvent.click(screen.getByRole("button", { name: "Delete" }));
   expect(store.getState().encounter.present.actors.byId.a.counters!.allIds).toEqual(["c"]);
-  fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+  fireEvent.keyDown(screen.getByRole("dialog", { name: "Edit counters" }), { key: "Escape" });
   fireEvent.click(screen.getByRole("button", { name: "Discard changes" }));
   expect(screen.getByRole("group", { name: "Charges" })).toBeInTheDocument();
   expect(store.getState().encounter.past).toHaveLength(0);
+});
+
+it("saves a counter order-only change and restores it with undo/redo", async () => {
+  setup(false, true);
+  fireEvent.click(screen.getByRole("combobox", { name: "Counter to edit" }));
+  fireEvent.click(screen.getByRole("button", { name: "Move Energy up" }));
+  fireEvent.keyDown(screen.getByRole("dialog", { name: "Counter to edit" }), { key: "Escape" });
+  expect(store.getState().encounter.present.actors.byId.a.counters!.allIds).toEqual(["c", "second"]);
+  fireEvent.click(screen.getByRole("button", { name: "Save" }));
+  await waitFor(() => expect(store.getState().encounter.present.actors.byId.a.counters!.allIds).toEqual(["second", "c"]));
+  act(() => { store.dispatch(undoEncounterChange()); });
+  expect(store.getState().encounter.present.actors.byId.a.counters!.allIds).toEqual(["c", "second"]);
+  act(() => { store.dispatch(redoEncounterChange()); });
+  expect(store.getState().encounter.present.actors.byId.a.counters!.allIds).toEqual(["second", "c"]);
 });

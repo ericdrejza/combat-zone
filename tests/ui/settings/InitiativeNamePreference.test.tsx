@@ -17,11 +17,11 @@ beforeEach(() => { resetAppStore(); localStorage.removeItem(INTERFACE_PREFERENCE
 afterEach(() => localStorage.removeItem(INTERFACE_PREFERENCES_STORAGE_KEY));
 
 describe("initiative name decoration preference", () => {
-  it("defaults on in the Initiative subsection and persists toggles without encounter history", () => {
+  it("defaults on in the Initiative section and persists toggles without encounter history", () => {
     const view = renderSettings();
-    const panels = screen.getByRole("region", { name: "Panels" });
-    const controls = within(within(panels).getByRole("group", { name: "Initiative" })).getAllByRole("switch");
-    const setting = within(panels).getByRole("switch", { name: label });
+    const initiative = screen.getByRole("group", { name: "Initiative (Panel)" });
+    const controls = within(initiative).getAllByRole("switch");
+    const setting = within(initiative).getByRole("switch", { name: label });
     expect(controls.at(-1)).toBe(setting);
     expect(setting).toHaveAttribute("aria-checked", "true");
     const encounterHistory = store.getState().encounter;
